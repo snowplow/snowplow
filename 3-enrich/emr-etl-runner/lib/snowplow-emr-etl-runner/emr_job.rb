@@ -61,7 +61,6 @@ module Snowplow
       JAVA_PACKAGE = "com.snowplowanalytics.snowplow"
       PARTFILE_REGEXP = ".*part-.*"
       BOOTSTRAP_FAILURE_INDICATOR = /BOOTSTRAP_FAILURE|bootstrap action|Master instance startup failed/
-      STANDARD_HOSTED_ASSETS = "s3://snowplow-hosted-assets"
 
       # Need to understand the status of all our jobflow steps
       @@running_states = Set.new(%w(WAITING RUNNING PENDING SHUTTING_DOWN))
@@ -70,15 +69,14 @@ module Snowplow
       include Monitoring::Logging
 
       # Initializes our wrapper for the Amazon EMR client.
-      Contract Bool, Bool, Bool, Bool, Bool, Bool, ConfigHash, ArrayOf[String], String => EmrJob
-      def initialize(debug, enrich, shred, elasticsearch, s3distcp, archive_raw, config, enrichments_array, resolver)
+      Contract Bool, Bool, Bool, Bool, Bool, ConfigHash, ArrayOf[String], String => EmrJob
+      def initialize(debug, enrich, shred, elasticsearch, s3distcp, config, enrichments_array, resolver)
 
         logger.debug "Initializing EMR jobflow"
 
         # Configuration
-        custom_assets_bucket = self.class.get_hosted_assets_bucket(config[:aws][:s3][:buckets][:assets], config[:aws][:emr][:region])
         assets = self.class.get_assets(
-          custom_assets_bucket,
+          config[:aws][:s3][:buckets][:assets],
           config[:enrich][:versions][:hadoop_enrich],
           config[:enrich][:versions][:hadoop_shred],
           config[:enrich][:versions][:hadoop_elasticsearch])
@@ -93,6 +91,15 @@ module Snowplow
           config[:aws][:s3][:region],
           config[:aws][:access_key_id],
           config[:aws][:secret_access_key])
+
+        # Check whether there are an even number of .lzo and .lzo.index files
+        if config[:collectors][:format] == 'thrift'
+          processing_location = Sluice::Storage::S3::Location.new(config[:aws][:s3][:buckets][:raw][:processing])
+          processing_file_count = Sluice::Storage::S3.list_files(s3, processing_location).size
+          unless processing_file_count % 2 == 0
+            raise UnmatchedLzoFilesError, "Processing bucket contains #{processing_file_count} .lzo and .lzo.index files, expected an even number"
+          end
+        end
 
         # Configure Elasticity with your AWS credentials
         Elasticity.configure do |c|
@@ -141,27 +148,6 @@ module Snowplow
         @jobflow.master_instance_type = config[:aws][:emr][:jobflow][:master_instance_type]
         @jobflow.slave_instance_type  = config[:aws][:emr][:jobflow][:core_instance_type]
 
-        unless config[:aws][:emr][:jobflow][:core_instance_ebs].nil?
-          ebs_bdc = Elasticity::EbsBlockDeviceConfig.new
-
-          ebs_bdc.volume_type          = config[:aws][:emr][:jobflow][:core_instance_ebs][:volume_type]
-          ebs_bdc.size_in_gb           = config[:aws][:emr][:jobflow][:core_instance_ebs][:volume_size]
-          ebs_bdc.volumes_per_instance = 1
-          if config[:aws][:emr][:jobflow][:core_instance_ebs][:volume_type] == "io1"
-            ebs_bdc.iops = config[:aws][:emr][:jobflow][:core_instance_ebs][:volume_iops]
-          end
-
-          ebs_c = Elasticity::EbsConfiguration.new
-          ebs_c.add_ebs_block_device_config(ebs_bdc)
-          ebs_c.ebs_optimized = true
-
-          unless config[:aws][:emr][:jobflow][:core_instance_ebs][:ebs_optimized].nil?
-            ebs_c.ebs_optimized = config[:aws][:emr][:jobflow][:core_instance_ebs][:ebs_optimized]
-          end
-
-          @jobflow.set_core_ebs_configuration(ebs_c)
-        end
-
         if config[:collectors][:format] == 'thrift'
           if @legacy
             [
@@ -184,14 +170,12 @@ module Snowplow
         end
 
         # Prepare a bootstrap action based on the AMI version
-        standard_assets_bucket = self.class.get_hosted_assets_bucket(STANDARD_HOSTED_ASSETS, config[:aws][:emr][:region])
         bootstrap_jar_location = if @legacy
-          "#{standard_assets_bucket}common/emr/snowplow-ami3-bootstrap-0.1.0.sh"
+          "s3://snowplow-hosted-assets/common/emr/snowplow-ami3-bootstrap-0.1.0.sh"
         else
-          "#{standard_assets_bucket}common/emr/snowplow-ami4-bootstrap-0.2.0.sh"
+          "s3://snowplow-hosted-assets/common/emr/snowplow-ami4-bootstrap-0.1.0.sh"
         end
-        cc_version = get_cc_version(config[:enrich][:versions][:hadoop_enrich])
-        @jobflow.add_bootstrap_action(Elasticity::BootstrapAction.new(bootstrap_jar_location, cc_version))
+        @jobflow.add_bootstrap_action(Elasticity::BootstrapAction.new(bootstrap_jar_location))
 
         # Install and launch HBase
         hbase = config[:aws][:emr][:software][:hbase]
@@ -213,7 +197,7 @@ module Snowplow
         end
 
         # For serialization debugging. TODO doesn't work yet
-        # install_ser_debug_action = Elasticity::BootstrapAction.new("#{STANDARD_HOSTED_ASSETS}/common/emr/cascading-ser-debug.sh")
+        # install_ser_debug_action = Elasticity::BootstrapAction.new("s3://snowplow-hosted-assets/common/emr/cascading-ser-debug.sh")
         # @jobflow.add_bootstrap_action(install_ser_debug_action)
 
         # Now let's add our task group if required
@@ -367,7 +351,7 @@ module Snowplow
               "--dest"       , enrich_step_output,
               "--srcPattern" , PARTFILE_REGEXP,
               "--s3Endpoint" , s3_endpoint
-            ] # Either user doesn't want compression, or files are already compressed
+            ] + output_codec_argument
             copy_to_hdfs_step.name << ": Enriched S3 -> HDFS"
             @jobflow.add_step(copy_to_hdfs_step)
           end
@@ -411,19 +395,6 @@ module Snowplow
           get_elasticsearch_steps(config, assets, enrich, shred).each do |step|
             @jobflow.add_step(step)
           end
-        end
-
-        if archive_raw
-          # We need to copy our enriched events from HDFS back to S3
-          archive_raw_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
-          archive_raw_step.arguments = [
-            "--src"        , csbr[:processing],
-            "--dest"       , self.class.partition_by_run(csbr[:archive], run_id),
-            "--s3Endpoint" , s3_endpoint,
-            "--deleteOnSuccess"
-          ]
-          archive_raw_step.name << ": Raw S3 Staging -> S3 Archive"
-          @jobflow.add_step(archive_raw_step)
         end
 
         self
@@ -543,19 +514,6 @@ module Snowplow
         scalding_step
       end
 
-      # Get commons-codec version required by Scala Hadoop Enrich
-      # for further replace
-      # See: https://github.com/snowplow/snowplow/issues/2735
-      Contract String => String
-      def get_cc_version(she_version)
-        she_version_normalized = Gem::Version.new(she_version)
-        if she_version_normalized > Gem::Version.new("1.8.0")
-          "1.10"
-        else
-          "1.5"
-        end
-      end
-
       # Wait for a jobflow.
       # Check its status every 5 minutes till it completes.
       #
@@ -600,12 +558,6 @@ module Snowplow
             sleep(300)
           rescue RestClient::InternalServerError => ise
             logger.warn "Got internal server error #{ise}, waiting 5 minutes before checking jobflow again"
-            sleep(300)
-          rescue Elasticity::ThrottlingException => te
-            logger.warn "Got Elasticity throttling exception #{te}, waiting 5 minutes before checking jobflow again"
-            sleep(300)
-          rescue ArgumentError => ae
-            logger.warn "Got Elasticity argument error #{ae}, waiting 5 minutes before checking jobflow again"
             sleep(300)
           rescue IOError => ioe
             logger.warn "Got IOError #{ioe}, waiting 5 minutes before checking jobflow again"
@@ -737,20 +689,6 @@ module Snowplow
         Base64.strict_encode64(resolver)
       end
 
-      # Builds the region-appropriate bucket name for Snowplow's
-      # hosted assets. Has to be region-specific because of
-      # https://github.com/boto/botocore/issues/424
-      #
-      # Parameters:
-      # +bucket+:: the specified hosted assets bucket
-      # +region+:: the AWS region to source hosted assets from
-      Contract String, String => String
-      def self.get_hosted_assets_bucket(bucket, region)
-        bucket = bucket.chomp('/')
-        suffix = if !bucket.eql? STANDARD_HOSTED_ASSETS or region.eql? "eu-west-1" then "" else "-#{region}" end
-        "#{bucket}#{suffix}/"
-      end
-
       Contract String, String, String, String => AssetsHash
       def self.get_assets(assets_bucket, hadoop_enrich_version, hadoop_shred_version, hadoop_elasticsearch_version)
         enrich_path_middle = hadoop_enrich_version[0] == '0' ? 'hadoop-etl/snowplow-hadoop-etl' : 'scala-hadoop-enrich/snowplow-hadoop-enrich'
@@ -785,8 +723,7 @@ module Snowplow
         if compression_format.nil?
           "none"
         else
-          codec = compression_format.downcase
-          codec == "gzip" ? "gz" : codec
+          compression_format.downcase
         end
       end
 

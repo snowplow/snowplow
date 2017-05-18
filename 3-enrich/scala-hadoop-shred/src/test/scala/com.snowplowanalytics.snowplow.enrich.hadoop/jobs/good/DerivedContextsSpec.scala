@@ -15,6 +15,13 @@ package hadoop
 package jobs
 package good
 
+// Scalding
+import com.twitter.scalding._
+
+// Cascading
+import cascading.tuple.TupleEntry
+import cascading.tap.SinkMode
+
 // This project
 import JobSpecHelpers._
 
@@ -34,7 +41,7 @@ object DerivedContextsSpec {
 
   object expected {
     val vendor = "org.schema"
-    val path = s"$vendor/WebPage/jsonschema/1-0-0"
+    val path = s"${vendor}/WebPage/jsonschema/1-0-0"
     val contents  = 
       s"""|{
             |"schema":{
@@ -82,7 +89,6 @@ class DerivedContextsSpec extends Specification {
       val lines = JobSpecHelpers.readFile(Sinks.output, "atomic-events")
       lines mustEqual Seq(DerivedContextsSpec.expected.event)
     }
-
     "shred the website page_context into its appropriate path" in {
       val lines = JobSpecHelpers.readFile(Sinks.output, DerivedContextsSpec.expected.path)
       lines mustEqual Seq(DerivedContextsSpec.expected.contents)
@@ -92,11 +98,9 @@ class DerivedContextsSpec extends Specification {
       val expectedFiles = List("atomic-events", DerivedContextsSpec.expected.path)
       JobSpecHelpers.listFilesWithExclusions(Sinks.output, expectedFiles) must be empty
     }
-
     "not trap any exceptions" in {
       Sinks.exceptions must beEmptyFile
     }
-
     "not write any bad row JSONs" in {
       Sinks.badRows must beEmptyFile
     }

@@ -17,7 +17,6 @@ package utils
 
 // Java
 import java.nio.ByteBuffer
-import java.nio.charset.StandardCharsets.UTF_8
 
 // Thrift
 import org.apache.thrift.TSerializer
@@ -29,20 +28,13 @@ import org.joda.time.format.DateTimeFormat
 // Snowplow
 import CollectorPayload.thrift.model1.CollectorPayload
 
-// Common Enrich
-import com.snowplowanalytics.snowplow.enrich.common.outputs.BadRow
-
-// Scalaz
-import scalaz._
-import Scalaz._
-
 /**
  * Object handling splitting an array of strings correctly
  */
 object SplitBatch {
 
   // Serialize Thrift CollectorPayload objects
-  val ThriftSerializer = new ThreadLocal[TSerializer] {
+  private val ThriftSerializer = new ThreadLocal[TSerializer] {
     override def initialValue = new TSerializer()
   }
 
@@ -81,7 +73,7 @@ object SplitBatch {
       }
 
       case h :: t => {
-        val headSize = ByteBuffer.wrap(h.getBytes(UTF_8)).capacity
+        val headSize = ByteBuffer.wrap(h.getBytes).capacity
         if (headSize + joinSize > maximum) {
           iterbatch(t, currentBatch, currentTotal, acc, h :: failedBigEvents)
         } else if (headSize + currentTotal + joinSize > maximum) {
@@ -117,7 +109,7 @@ object SplitBatch {
         case null => {
           // Event was a GET
           val err = "Cannot split record with null body"
-          val payload = BadRow.oversizedRow(wholeEventBytes, NonEmptyList(err)).getBytes(UTF_8)
+          val payload = getBadRow(wholeEventBytes, List(err)).getBytes
           EventSerializeResult(Nil, List(payload))
         }
         case body => {
@@ -131,12 +123,12 @@ object SplitBatch {
               case data => Some(data)
             }
 
-            val initialBodyDataBytes = ByteBuffer.wrap(compact(bodyDataArray).getBytes(UTF_8)).capacity
+            val initialBodyDataBytes = ByteBuffer.wrap(compact(bodyDataArray).getBytes).capacity
 
             // If the event minus the data array is too big, splitting is hopeless
             if (wholeEventBytes - initialBodyDataBytes >= maxBytes) {
               val err = "Even without the body, the serialized event is too large"
-              val payload = BadRow.oversizedRow(wholeEventBytes, NonEmptyList(err)).getBytes(UTF_8)
+              val payload = getBadRow(wholeEventBytes, List(err)).getBytes
               EventSerializeResult(Nil, List(payload))
             } else {
 
@@ -154,7 +146,7 @@ object SplitBatch {
 
                 case None => {
                   val err = "Bad record with no data field"
-                  val payload = BadRow.oversizedRow(wholeEventBytes, NonEmptyList(err)).getBytes(UTF_8)
+                  val payload = getBadRow(wholeEventBytes, List(err)).getBytes
                   EventSerializeResult(Nil, List(payload))
                 }
 
@@ -170,9 +162,9 @@ object SplitBatch {
                   })
 
                   val badList = batches.failedBigEvents.map(event => {
-                    val size = ByteBuffer.wrap(event.getBytes(UTF_8)).capacity
+                    val size = ByteBuffer.wrap(event.getBytes).capacity
                     val err = "Failed event with body still being too large"
-                    BadRow.oversizedRow(size, NonEmptyList(err)).getBytes(UTF_8)
+                    getBadRow(size, List(err)).getBytes
                   })
 
                   // Return Good and Bad Lists
@@ -183,13 +175,27 @@ object SplitBatch {
           } catch {
             case e: Exception => {
               val err = s"Could not parse payload body %s".format(e.getMessage)
-              val payload = BadRow.oversizedRow(wholeEventBytes, NonEmptyList(err)).getBytes(UTF_8)
+              val payload = getBadRow(wholeEventBytes, List(err)).getBytes
               EventSerializeResult(Nil, List(payload))
             }
           }
         }
       }
     }
+  }
+
+  /**
+   * Returns a Bad Row as a String
+   *
+   * @param size The size of the failed event
+   * @param errors A list of errors for this row
+   */
+  private def getBadRow(size: Int, errors: List[String]): String = {
+    compact(
+      ("size" -> size) ~
+      ("errors" -> errors) ~
+      ("failure_tstamp" -> getTimestamp(System.currentTimeMillis()))
+    )
   }
 
   /**

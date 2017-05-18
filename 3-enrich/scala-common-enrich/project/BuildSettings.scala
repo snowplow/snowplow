@@ -21,9 +21,9 @@ object BuildSettings {
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
     organization          :=  "com.snowplowanalytics",
-    version               :=  "1.24.0", //our Nordstrom version of common enrich
+    version               :=  "0.21.0",
     description           :=  "Common functionality for enriching raw Snowplow events",
-    scalaVersion          :=  "2.10.4",
+    scalaVersion          :=  "2.10.1",
     scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8",
                                   "-unchecked", "-feature",
                                   "-target:jvm-1.7"),

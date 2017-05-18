@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2015 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -65,6 +65,7 @@ object EnrichmentManager {
    *         NonHiveOutput.
    */
   def enrichEvent(registry: EnrichmentRegistry, hostEtlVersion: String, etlTstamp: DateTime, raw: RawEvent)(implicit resolver: Resolver): ValidatedEnrichedEvent = {
+
     // Placeholders for where the Success value doesn't matter.
     // Useful when you're updating large (>22 field) POSOs.
     val unitSuccess = ().success[String]
@@ -186,7 +187,7 @@ object EnrichmentManager {
           ("ti_nm"   , (ME.toTsvSafe, "ti_name")),
           ("ti_ca"   , (ME.toTsvSafe, "ti_category")),
           ("ti_pr"   , (CU.stringToDoublelike, "ti_price")),
-          ("ti_qu"   , (CU.stringToJInteger, "ti_quantity")),
+          ("ti_qu"   , (ME.toTsvSafe, "ti_quantity")),
           // Page pings
           ("pp_mix"  , (CU.stringToJInteger, "pp_xoffset_min")),
           ("pp_max"  , (CU.stringToJInteger, "pp_xoffset_max")),
@@ -406,16 +407,10 @@ object EnrichmentManager {
       case _ => ()
     })
 
-    // Validate custom contexts
-    val customContexts = Shredder.extractAndValidateCustomContexts(event) match {
+    // Validate contexts and unstructured events
+    val shred = Shredder.shred(event) match {
       case Failure(msgs) => msgs.map(_.toString).fail
-      case Success(cctx) => cctx.success
-    }
-
-    // Validate unstructured event
-    val unstructEvent = Shredder.extractAndValidateUnstructEvent(event) match {
-      case Failure(msgs) => msgs.map(_.toString).fail
-      case Success(ue) => ue.success
+      case Success(_) => unitSuccess.toValidationNel
     }
 
     // Extract the event vendor/name/format/version
@@ -456,15 +451,6 @@ object EnrichmentManager {
       case None => Nil
     }
 
-    // Execute header extractor enrichment
-    val httpHeaderExtractorContext = registry.getHttpHeaderExtractorEnrichment match {
-      case Some(hee) =>
-        val headers = raw.context.headers
-
-        hee.extract(headers)
-      case None => Nil
-    }
-
     // Fetch weather context
     val weatherContext = registry.getWeatherEnrichment match {
       case Some(we) => {
@@ -476,40 +462,14 @@ object EnrichmentManager {
       case None => None.success
     }
 
-    // Assemble array of contexts prepared by built-in enrichments
-    val preparedDerivedContexts = List(uaParser).collect {
+    // Assemble array of derived contexts
+    val derived_contexts = List(uaParser).collect {
       case Success(Some(context)) => context
     } ++ List(weatherContext).collect {
      case Success(Some(context)) => context
-    } ++ jsScript.getOrElse(Nil) ++ cookieExtractorContext ++ httpHeaderExtractorContext
+    } ++ jsScript.getOrElse(Nil) ++ cookieExtractorContext
 
-    // Derive some contexts with custom SQL Query enrichment
-    val sqlQueryContexts = registry.getSqlQueryEnrichment match {
-      case Some(enrichment) => (customContexts, unstructEvent) match {
-        case (Success(cctx), Success(ue)) =>
-          enrichment.lookup(event, preparedDerivedContexts, cctx, ue)
-        case _ => Nil.success // Skip. Unstruct event or custom context corrupted (event enrichment will fail anyway)
-      }
-      case None => Nil.success
-    }
-
-    // Derive some contexts with custom API Request enrichment
-    val apiRequestContexts = registry.getApiRequestEnrichment match {
-      case Some(enrichment) => (customContexts, unstructEvent, sqlQueryContexts) match {
-        case (Success(cctx), Success(ue), Success(sctx)) =>
-          enrichment.lookup(event, preparedDerivedContexts ++ sctx, cctx, ue)
-        case _ => Nil.success // Skip. Unstruct event or custom context corrupted (event enrichment will fail anyway)
-      }
-      case None => Nil.success
-    }
-
-    // Assemble prepared derived contexts with fetched via API Request
-    val derived_contexts =
-      apiRequestContexts.getOrElse(Nil) ++
-      sqlQueryContexts.getOrElse(Nil) ++
-      preparedDerivedContexts
-
-    if (derived_contexts.nonEmpty) {
+    if (derived_contexts.size > 0) {
       event.derived_contexts = ME.formatDerivedContexts(derived_contexts)
     }
 
@@ -523,25 +483,22 @@ object EnrichmentManager {
       uaParser.toValidationNel                |@|
       collectorVersionSet.toValidationNel     |@|
       pageUri.toValidationNel                 |@|
-      crossDomain.toValidationNel             |@|
       geoLocation.toValidationNel             |@|
       refererUri.toValidationNel) {
-      (_,_,_,_,_,_,_,_,_,_) => ()
+      (_,_,_,_,_,_,_,_,_) => ()
     }
     val second = 
       (transform                              |@|
       currency                                |@|
       secondPassTransform                     |@|
       pageQsMap.toValidationNel               |@|
+      crossDomain.toValidationNel             |@|
       jsScript.toValidationNel                |@|
       campaign                                |@|
-      customContexts                          |@|
-      unstructEvent                           |@|
-      apiRequestContexts                      |@|
-      sqlQueryContexts                        |@|
+      shred                                   |@|
       extractSchema.toValidationNel           |@|
       weatherContext.toValidationNel) {
-      (_,_,_,_,_,_,_,_,_,_,_,_) => ()
+      (_,_,_,_,_,_,_,_,_,_) => ()
     }
     (first |@| second) {
       (_,_) => event

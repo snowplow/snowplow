@@ -44,6 +44,4 @@ class TestSink extends AbstractSink {
   val MaxBytes = Long.MaxValue
 
   def storeRawEvents(events: List[Array[Byte]], key: String) = events
-
-  override def getType = Sink.Test
 }

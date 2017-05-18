@@ -16,9 +16,6 @@ package enrich
 package hadoop
 package utils
 
-// Scala
-import scala.util.control.NonFatal
-
 // Jackson
 import com.fasterxml.jackson.databind.{
   ObjectMapper,
@@ -52,7 +49,7 @@ object JsonUtils {
     try {
       Mapper.readTree(instance).success
     } catch {
-      case NonFatal(e) => s"Field [$field]: invalid JSON [%s] with parsing error: %s".format(instance, ValidationExceptions.stripInstanceEtc(e.getMessage)).fail
+      case e: Throwable => s"Field [$field]: invalid JSON [%s] with parsing error: %s".format(instance, ValidationExceptions.stripInstanceEtc(e.getMessage)).fail
     }
 
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -18,13 +18,11 @@ package sinks
 // Java
 import java.nio.ByteBuffer
 import java.util.concurrent.ScheduledThreadPoolExecutor
-import java.util.concurrent.ScheduledExecutorService
 
 // Amazon
 import com.amazonaws.services.kinesis.model.ResourceNotFoundException
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.auth.{
-  EnvironmentVariableCredentialsProvider,
   BasicAWSCredentials,
   ClasspathPropertiesFileCredentialsProvider
 }
@@ -73,8 +71,8 @@ object KinesisSink {
    * @param config
    * @param inputType
    */
-  def createAndInitialize(config: CollectorConfig, inputType: InputType.InputType, executorService: ScheduledExecutorService): KinesisSink = {
-    val ks = new KinesisSink(config, inputType, executorService)
+  def createAndInitialize(config: CollectorConfig, inputType: InputType.InputType): KinesisSink = {
+    val ks = new KinesisSink(config, inputType)
     ks.scheduleFlush()
 
     // When the application is shut down, stop accepting incoming requests
@@ -94,7 +92,7 @@ object KinesisSink {
 /**
  * Kinesis Sink for the Scala collector.
  */
-class KinesisSink private (config: CollectorConfig, inputType: InputType.InputType, val executorService: ScheduledExecutorService) extends AbstractSink {
+class KinesisSink private (config: CollectorConfig, inputType: InputType.InputType) extends AbstractSink {
 
   import log.{error, debug, info, trace}
 
@@ -113,6 +111,7 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
 
   info("Creating thread pool of size " + config.threadpoolSize)
 
+  val executorService = new ScheduledThreadPoolExecutor(config.threadpoolSize)
   implicit lazy val ec = concurrent.ExecutionContext.fromExecutorService(executorService)
 
   /**
@@ -172,7 +171,7 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
     if (exists) {
       info(s"Stream $name exists and is active")
     } else {
-      error(s"Stream $name doesn't exist or is not active")
+      info(s"Stream $name doesn't exist or is not active")
     }
 
     exists
@@ -187,9 +186,7 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
     if (streamExists(name)) {
       Kinesis.stream(name)
     } else {
-      error(s"Cannot write because stream $name doesn't exist or is not active")
-      System.exit(1)
-      throw new RuntimeException("System.exit should never fail")
+      throw new RuntimeException(s"Cannot write because stream $name doesn't exist or is not active")
     }
   }
 
@@ -203,10 +200,10 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
   private def createKinesisClient: Client = {
     val accessKey = config.awsAccessKey
     val secretKey = config.awsSecretKey
-    val client = if (isDefault(accessKey) && isDefault(secretKey)) {
-      new AmazonKinesisClient(new EnvironmentVariableCredentialsProvider())
-    } else if (isDefault(accessKey) || isDefault(secretKey)) {
-      throw new RuntimeException("access-key and secret-key must both be set to 'env', or neither")
+    val client = if (isCpf(accessKey) && isCpf(secretKey)) {
+      new AmazonKinesisClient(new ClasspathPropertiesFileCredentialsProvider())
+    } else if (isCpf(accessKey) || isCpf(secretKey)) {
+      throw new RuntimeException("access-key and secret-key must both be set to 'cpf', or neither of them")
     } else if (isIam(accessKey) && isIam(secretKey)) {
       new AmazonKinesisClient(InstanceProfile)
     } else if (isIam(accessKey) || isIam(secretKey)) {
@@ -289,7 +286,7 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
           info(s"Successfully wrote ${batch.size-failurePairs.size} out of ${batch.size} records")
           if (failurePairs.size > 0) {
             failurePairs foreach { f => error(s"Record failed with error code [${f._2.getErrorCode}] and message [${f._2.getErrorMessage}]") }
-            error(s"Retrying all failed records in $nextBackoff milliseconds...")
+            error("Retrying all failed records in $nextBackoff milliseconds...")
             val failures = failurePairs.map(_._1)
             scheduleBatch(failures, nextBackoff)
           }
@@ -312,13 +309,13 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
   private def getNextBackoff(lastBackoff: Long): Long = (minBackoff + randomGenerator.nextDouble() * (lastBackoff * 3 - minBackoff)).toLong.min(maxBackoff)
 
   /**
-   * Is the access/secret key set to the special value "default" i.e. use
-   * the standard provider chain for credentials.
+   * Is the access/secret key set to the special value "cpf" i.e. use
+   * the classpath properties file for credentials.
    *
    * @param key The key to check
-   * @return true if key is default, false otherwise
+   * @return true if key is cpf, false otherwise
    */
-  private def isDefault(key: String): Boolean = (key == "default")
+  private def isCpf(key: String): Boolean = (key == "cpf")
 
   /**
    * Is the access/secret key set to the special value "iam" i.e. use
@@ -337,6 +334,4 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
    * @return true if key is iam, false otherwise
    */
   private def isEnv(key: String): Boolean = (key == "env")
-  
-  override def getType = Sink.Kinesis
 }

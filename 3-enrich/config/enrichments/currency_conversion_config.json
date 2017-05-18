@@ -3,7 +3,7 @@
 
 	"data": {
 
-		"enabled": false,
+		"enabled": true,
 		"vendor": "com.snowplowanalytics.snowplow",
 		"name": "currency_conversion_config",
 		"parameters": {

@@ -49,10 +49,7 @@ object SnowplowHadoopShredBuild extends Build {
         Libraries.igluClient,
         // Scala (test only)
         Libraries.specs2,
-        Libraries.scalazSpecs2,
-        // Hadoop (test only)
-        Libraries.hadoopClientCommon
-
+        Libraries.scalazSpecs2
       )
     )
 }

@@ -56,7 +56,7 @@ object JobSpecHelpers {
   /**
    * The current version of our Hadoop ETL
    */
-  val EtlVersion = "hadoop-1.8.0-common-0.24.0"
+  val EtlVersion = "hadoop-1.6.0-common-0.21.0"
 
   val EtlTimestamp = "2001-09-09 01:46:40.000"
 
@@ -73,10 +73,10 @@ object JobSpecHelpers {
       .map(_.getName)
 
   /**
-   * Base64-encoded urlsafe resolver config used by default
-   * if `HADOOP_ENRICH_RESOLVER_CONFIG` env var is not set
+   * Base64-urlsafe encoded version of this standard
+   * Iglu configuration.
    */
-  private val IgluCentralConfig = {
+  private val IgluConfig = {
     val encoder = new Base64(true) // true means "url safe"
     new String(encoder.encode(
        """|{
@@ -99,20 +99,6 @@ object JobSpecHelpers {
           |}""".stripMargin.replaceAll("[\n\r]","").getBytes
       )
     )
-  }
-
-  /**
-   * Try to take resolver configuration from environment variable
-   * `HADOOP_ENRICH_RESOLVER_CONFIG` (must be base64-encoded).
-   * If not available - use default config with only Iglu Central
-   */
-  private val IgluConfig = {
-    val resolverEnvVar = for {
-      config <- sys.env.get("HADOOP_ENRICH_RESOLVER_CONFIG")
-      if config.nonEmpty
-    } yield config
-
-    resolverEnvVar.getOrElse(IgluCentralConfig)
   }
 
   private val oerApiKey = sys.env.get("OER_KEY").getOrElse("-")
@@ -268,15 +254,8 @@ object JobSpecHelpers {
     ))
   }
 
-  def getEnrichments(
-    collector: String,
-    anonOctets: String,
-    anonOctetsEnabled: Boolean,
-    lookups: List[String],
-    currencyConversionEnabled: Boolean,
-    javascriptScriptEnabled: Boolean,
-    apiRequest: Boolean,
-    sqlQuery: Boolean): String = {
+  def getEnrichments(collector: String, anonOctets: String, anonOctetsEnabled: Boolean,
+    lookups: List[String], currencyConversionEnabled: Boolean, javascriptScriptEnabled: Boolean): String = {
 
     val encoder = new Base64(true) // true means "url safe"
     val lookupsJson = lookups.map(getLookupJson(_)).mkString(",\n")
@@ -393,138 +372,15 @@ object JobSpecHelpers {
                     |"hashAlgorithm": "MD5"
                   |}
                 |}
-              |},
-              |{
-                |"schema": "iglu:com.snowplowanalytics.snowplow.enrichments/api_request_enrichment_config/jsonschema/1-0-0",
-                |"data": {
-                  |"vendor": "com.snowplowanalytics.snowplow.enrichments",
-                  |"name": "api_request_enrichment_config",
-                  |"enabled": ${apiRequest},
-                  |"parameters": ${apiRequestParameters}
-                |}
-              |},
-              |{
-                |"schema": "iglu:com.snowplowanalytics.snowplow.enrichments/sql_query_enrichment_config/jsonschema/1-0-0",
-                |"data": {
-                  |"vendor": "com.snowplowanalytics.snowplow.enrichments",
-                  |"name": "sql_query_enrichment_config",
-                  |"enabled": ${sqlQuery},
-                  |"parameters": ${sqlQueryParameters}
-                |}
               |}
             |]
           |}""".stripMargin.replaceAll("[\n\r]","").getBytes
       ))
   }
 
-  private val sqlQueryParameters =
-    """
-      |{
-        |"inputs": [
-          |{
-            |"placeholder": 1,
-            |"pojo": {
-              |"field": "geo_city"
-            |}
-          |},
-          |{
-            |"placeholder": 2,
-            |"json": {
-              |"field": "contexts",
-              |"schemaCriterion": "iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/*-*-*",
-              |"jsonPath": "$.speed"
-            |}
-          |}
-        |],
-        |"database": {
-          |"postgresql": {
-            |"host": "localhost",
-            |"port": 5432,
-            |"sslMode": false,
-            |"username": "enricher",
-            |"password": "supersecret1",
-            |"database": "sql_enrichment_test"
-          |}
-        |},
-        |"query": {
-          |"sql": "SELECT city, country, pk FROM enrichment_test WHERE city = ? and speed = ?"
-        |},
-        |"output": {
-          |"expectedRows": "AT_LEAST_ONE",
-          |"json": {
-            |"schema": "iglu:com.acme/user/jsonschema/1-0-0",
-            |"describes": "ALL_ROWS",
-            |"propertyNames": "CAMEL_CASE"
-          |}
-        |},
-        |"cache": {
-          |"size": 1000,
-          |"ttl": 60
-        |}
-      |}""".stripMargin
-
-  // Added separately because dollar sign in JSONPath breaks interpolation
-  private val apiRequestParameters =
-    """
-      |{
-           |"inputs": [
-              |{
-                |"key": "uhost",
-                |"pojo": {
-                  |"field": "page_urlhost"
-                |}
-              |},
-              |{
-                |"key": "os",
-                |"json": {
-                  |"field": "derived_contexts",
-                  |"schemaCriterion": "iglu:com.snowplowanalytics.snowplow/ua_parser_context/jsonschema/1-0-*",
-                  |"jsonPath": "$.osFamily"
-                |}
-              |},
-              |{
-                |"key": "device",
-                |"json": {
-                  |"field": "contexts",
-                  |"schemaCriterion": "iglu:com.snowplowanalytics.snowplow/mobile_context/jsonschema/1-*-*",
-                  |"jsonPath": "$.deviceModel"
-                |}
-              |},
-              |{
-                |"key": "service",
-                |"json": {
-                  |"field": "unstruct_event",
-                  |"schemaCriterion": "iglu:com.snowplowanalytics.snowplow-website/signup_form_submitted/jsonschema/1-0-*",
-                  |"jsonPath": "$.serviceType"
-                |}
-              |}
-            |],
-          |"api": {
-            |"http": {
-              |"method": "GET",
-              |"uri": "http://localhost:8000/guest/users/{{device}}/{{os}}/{{uhost}}/{{service}}?format=json",
-                |"timeout": 2000,
-                |"authentication": { }
-              |}
-            |},
-          |"outputs": [
-            |{
-              |"schema": "iglu:com.acme/user/jsonschema/1-0-0" ,
-              |"json": {
-                |"jsonPath": "$"
-              |}
-            |}
-          |],
-          |"cache": {
-            |"size": 2,
-            |"ttl": 60
-          |}
-      |}""".stripMargin
-
   // Standard JobSpec definition used by all integration tests
   def EtlJobSpec(collector: String, anonOctets: String, anonOctetsEnabled: Boolean, lookups: List[String],
-    currencyConversion: Boolean = false, javascriptScript: Boolean = false, apiRequest: Boolean = false,
-    sqlQuery: Boolean = false): JobTest =
+    currencyConversion: Boolean = false, javascriptScript: Boolean = false): JobTest =
     JobTest("com.snowplowanalytics.snowplow.enrich.hadoop.EtlJob").
       arg("input_folder", "inputFolder").
       arg("input_format", collector).
@@ -532,7 +388,7 @@ object JobSpecHelpers {
       arg("bad_rows_folder", "badFolder").
       arg("etl_tstamp", "1000000000000").      
       arg("iglu_config", IgluConfig).
-      arg("enrichments", getEnrichments(collector, anonOctets, anonOctetsEnabled, lookups, currencyConversion, javascriptScript, apiRequest, sqlQuery))
+      arg("enrichments", getEnrichments(collector, anonOctets, anonOctetsEnabled, lookups, currencyConversion, javascriptScript))
 
   case class Sinks(
     val output:     File,
@@ -555,8 +411,7 @@ object JobSpecHelpers {
    *         and exceptions temporary directories.
    */
   def runJobInTool(lines: Lines, collector: String, anonOctets: String, anonOctetsEnabled: Boolean,
-    lookups: List[String], currencyConversionEnabled: Boolean = false, javascriptScriptEnabled: Boolean = false,
-    apiRequestEnabled: Boolean = false, sqlQueryEnabled: Boolean = false): Sinks = {
+    lookups: List[String], currencyConversionEnabled: Boolean = false, javascriptScriptEnabled: Boolean = false): Sinks = {
 
     def mkTmpDir(tag: String, createParents: Boolean = false, containing: Option[Lines] = None): File = {
       val f = File.createTempFile(s"scala-hadoop-enrich-${tag}-", "")
@@ -578,7 +433,7 @@ object JobSpecHelpers {
       "--exceptions_folder", exceptions.getAbsolutePath,
       "--etl_tstamp",        "1000000000000",
       "--iglu_config",       IgluConfig,
-      "--enrichments",       getEnrichments(collector, anonOctets, anonOctetsEnabled, lookups, currencyConversionEnabled, javascriptScriptEnabled, apiRequestEnabled, sqlQueryEnabled))
+      "--enrichments",       getEnrichments(collector, anonOctets, anonOctetsEnabled, lookups, currencyConversionEnabled, javascriptScriptEnabled))
 
     // Execute
     Tool.main(args)

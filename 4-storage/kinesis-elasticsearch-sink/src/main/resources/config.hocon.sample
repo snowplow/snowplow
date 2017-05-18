@@ -1,0 +1,87 @@
+# Default configuration for kinesis-elasticsearch-sink
+
+sink {
+
+  # Sources currently supported are:
+  # 'kinesis' for reading records from a Kinesis stream
+  # 'stdin' for reading unencoded tab-separated events from stdin
+  # If set to "stdin", JSON documents will not be sent to Elasticsearch
+  # but will be written to stdout.
+  source = "kinesis"
+
+  # Sinks currently supported are:
+  # 'elasticsearch-kinesis' for writing good records to Elasticsearch and bad records to Kinesis
+  # 'stdouterr' for writing good records to stdout and bad records to stderr
+  sink = "elasticsearch-kinesis"
+
+  # The following are used to authenticate for the Amazon Kinesis sink.
+  #
+  # If both are set to 'default', the default provider chain is used
+  # (see http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/auth/DefaultAWSCredentialsProviderChain.html)
+  #
+  # If both are set to 'iam', use AWS IAM Roles to provision credentials.
+  #
+  # If both are set to 'env', use environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
+  aws {
+    access-key: "iam"
+    secret-key: "iam"
+  }
+
+  kinesis {
+
+    in {
+      stream-name: "{{sinkKinesisInStreamName}}" # Kinesis stream name
+
+      # "good" for a stream of successfully enriched events
+      # "bad" for a stream of bad events
+      stream-type: "{{sinkKinesisInStreamType}}"
+
+      # LATEST: most recent data.
+      # TRIM_HORIZON: oldest available data.
+      # Note: This only affects the first run of this application
+      # on a stream.
+      initial-position: "TRIM_HORIZON"
+    }
+
+    out {
+      # Stream for enriched events which are rejected by Elasticsearch
+      stream-name: "{{sinkKinesisOutStreamName}}"
+      shards: 1
+    }
+
+    region: "{{sinkElasticsearchRegion}}"
+
+    # "app-name" is used for a DynamoDB table to maintain stream state.
+    # You can set it automatically using: "SnowplowElasticsearchSink-$\\{connector.kinesis.in.stream-name\\}"
+    app-name: "{{sinkKinesisAppName}}"
+  }
+
+  elasticsearch {
+    cluster-name: "{{sinkElasticsearchClusterName}}"
+    endpoint: "{{sinkElasticsearchEndpoint}}"
+    max-timeout: "{{sinkElasticsearchMaxTimeout}}"
+    index: "{{sinkElasticsearchIndex}}" # Elasticsearch index name
+    type: "{{sinkElasticsearchType}}" # Elasticsearch type name
+  }
+
+  # Events are accumulated in a buffer before being sent to Elasticsearch.
+  # The buffer is emptied whenever:
+  # - the combined size of the stored records exceeds byte-limit or
+  # - the number of stored records exceeds record-limit or
+  # - the time in milliseconds since it was last emptied exceeds time-limit
+  buffer {
+    byte-limit: {{sinkElasticsearchBufferByteThreshold}}
+    record-limit: {{sinkElasticsearchBufferRecordThreshold}}
+    time-limit: {{sinkElasticsearchBufferTimeThreshold}}
+  }
+
+  # Optional section for tracking endpoints
+  monitoring {
+    snowplow {
+      collector-uri: "{{collectorUri}}"
+      collector-port: 80
+      app-id: "{{sinkKinesisAppName}}"
+      method: "GET"
+    }
+  }
+}

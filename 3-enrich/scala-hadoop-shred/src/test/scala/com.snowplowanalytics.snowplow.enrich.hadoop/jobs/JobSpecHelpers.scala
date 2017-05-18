@@ -44,7 +44,7 @@ import org.json4s.jackson.JsonMethods._
 import com.twitter.scalding._
 
 // Specs2
-import org.specs2.matcher.Matcher
+import org.specs2.matcher.{Matcher, Expectable}
 import org.specs2.matcher.Matchers._
 /**
  * Holds helpers for running integration
@@ -145,7 +145,11 @@ object JobSpecHelpers {
       arg("exceptions_folder", "exceptionsFolder").
       arg("iglu_config", IgluConfig)
 
-  case class Sinks(output: File, badRows: File, exceptions: File) {
+  case class Sinks(
+    val output:     File,
+    val badRows:    File,
+    val exceptions: File) {
+
     def deleteAll() {
       for (f <- List(exceptions, badRows, output)) {
         f.delete()

@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2014-2016 Snowplow Analytics Ltd. All rights reserved.
+/* 
+ * Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,11 +10,10 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-
 import sbt._
 import Keys._
 
-object SnowplowElasticsearchSinkBuild extends Build {
+object SnowplowKinesisEnrichBuild extends Build {
 
   import Dependencies._
   import BuildSettings._
@@ -28,33 +27,22 @@ object SnowplowElasticsearchSinkBuild extends Build {
   lazy val project = Project("snowplow-elasticsearch-sink", file("."))
     .settings(buildSettings: _*)
     .settings(
-      libraryDependencies ++= Dependencies.onVersion(
-        all = Seq(
-          Libraries.logging,
-          Libraries.argot,
-          Libraries.config,
-          Libraries.scalaUtil,
-          Libraries.snowplowCommonEnrich,
-          Libraries.igluClient,
-          Libraries.scalazon,
-          Libraries.scalaz7,
-          Libraries.specs2,
-          Libraries.scalazSpecs2,
-          Libraries.commonsLang3,
-          Libraries.slf4j,
-          Libraries.log4jOverSlf4j,
-          Libraries.kinesisClient,
-          Libraries.kinesisConnector,
-          Libraries.snowplowTracker
-        ),
-        on1x = Seq(
-          Libraries.jest._1x,
-          Libraries.elasticsearch._1x
-        ),
-        on2x = Seq(
-          Libraries.jest._2x,
-          Libraries.elasticsearch._2x
-        )
+      libraryDependencies ++= Seq(
+        Libraries.logging,
+        Libraries.argot,
+        Libraries.config,
+        Libraries.scalaUtil,
+        Libraries.snowplowCommonEnrich,
+        Libraries.scalazon,
+        Libraries.scalaz7,
+        Libraries.specs2,
+        Libraries.scalazSpecs2,
+        Libraries.commonsLang3,
+        Libraries.slf4j,
+        Libraries.kinesisClient,
+        Libraries.kinesisConnector,
+        Libraries.snowplowTracker,
+        Libraries.elasticsearch
       )
     )
 }

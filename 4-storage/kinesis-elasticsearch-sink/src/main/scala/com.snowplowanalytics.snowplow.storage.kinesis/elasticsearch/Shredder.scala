@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2014-2016 Snowplow Analytics Ltd.
+ /*
+ * Copyright (c) 2014 Snowplow Analytics Ltd.
  * All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
@@ -16,7 +16,6 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-
 package com.snowplowanalytics.snowplow.storage.kinesis.elasticsearch
 
 // Scalaz
@@ -38,8 +37,7 @@ import scala.annotation.tailrec
  */
 object Shredder {
 
-  private[elasticsearch] val schemaPattern =
-    """^iglu:([a-zA-Z0-9-_.]+)/([a-zA-Z0-9-_]+)/[a-zA-Z0-9-_]+/([0-9]+-[0-9]+-[0-9]+)$""".r
+  private val schemaPattern = """.+:([a-zA-Z0-9_\.]+)/([a-zA-Z0-9_]+)/[^/]+/(.*)""".r
 
   /**
    * Create an Elasticsearch field name from a schema
@@ -57,9 +55,9 @@ object Shredder {
       case schemaPattern(organization, name, schemaVer) => {
 
         // Split the vendor's reversed domain name using underscores rather than dots
-        val snakeCaseOrganization = organization.replaceAll("""[-.]""", "_").toLowerCase
+        val snakeCaseOrganization = organization.replaceAll("""\.""", "_").toLowerCase
 
-        // Change the name from PascalCase to snake_case if necessary and replace hyphens with underscores
+        // Change the name from PascalCase to snake_case if necessary
         val snakeCaseName = name.replaceAll("([^A-Z_])([A-Z])", "$1_$2").toLowerCase
 
         // Extract the schemaver version's model
@@ -154,7 +152,7 @@ object Shredder {
           val context = head
           val innerData = context \ "data" match {
             case JNothing => "Could not extract inner data field from custom context".failNel // TODO: decide whether to enforce object type of data
-            case d => (fixInnerData(d)).successNel
+            case d => d.successNel
           }
           val fixedSchema: ValidationNel[String, String] = context \ "schema" match {
             case JString(schema) => fixSchema("contexts", schema)
@@ -213,7 +211,7 @@ object Shredder {
     val schema = data \ "schema"
     val innerData = data \ "data" match {
       case JNothing => "Could not extract inner data field from unstructured event".failNel // TODO: decide whether to enforce object type of data
-      case d => (fixInnerData(d)).successNel
+      case d => d.successNel
     }
     val fixedSchema = schema match {
       case JString(s) => fixSchema("unstruct_event", s)
@@ -221,18 +219,5 @@ object Shredder {
     }
 
     (fixedSchema |@| innerData) {_ -> _}
-  }
-
-  /**
-   * Ensures that all field names within nested JSONs do not contain dots.
-   * For example, the JSON
-   *
-   * @param innerData the innerData JSON to process
-   * @return the fixed JSON
-   */
-  def fixInnerData(innerData: JValue): JValue = {
-    innerData transformField {
-      case (key, value) => (key.replace(".", "_"), value)
-    }
   }
 }

@@ -22,6 +22,7 @@ module Snowplow
       module Logging
 
         include Contracts
+        include Contracts::Modules
 
         $stdout.sync = true
 
@@ -38,7 +39,7 @@ module Snowplow
         end
 
         # Log a fatal Exception
-        Contract StandardError => nil
+        Contract Exception => nil
         def self.fatal_with(exception)
           logger.fatal("\n\n#{exception.class} (#{exception.message}):\n    " +
                        exception.backtrace.join("\n    ") +

@@ -158,10 +158,4 @@ package object common {
    * A (possibly empty) list of JsonSchemaPairs
    */
   type JsonSchemaPairs = List[JsonSchemaPair]
-
-  /**
-   * Type alias for either [[Throwable]] or successful value
-   * It has [[Monad]] instance unlike [[Validation]]
-   */
-  type ThrowableXor[+A] = Throwable \/ A
 }

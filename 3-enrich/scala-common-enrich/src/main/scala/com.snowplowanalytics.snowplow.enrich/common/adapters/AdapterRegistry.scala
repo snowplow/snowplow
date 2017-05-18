@@ -76,7 +76,6 @@ object AdapterRegistry {
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = (payload.api.vendor, payload.api.version) match {
     case (Vendor.Snowplow,     "tp1") => SpTp1Adapter.toRawEvents(payload)
     case (Vendor.Snowplow,     "tp2") => SpTp2Adapter.toRawEvents(payload)
-    case (Vendor.Snowplow,     "mob") => SpTp2Adapter.toRawEvents(payload)
     case (Vendor.Redirect,     "tp2") => SpRedirectAdapter.toRawEvents(payload)
     case (Vendor.Iglu,         "v1")  => IgluAdapter.toRawEvents(payload)
     case (Vendor.Callrail,     "v1")  => CallrailAdapter.toRawEvents(payload)

@@ -36,10 +36,10 @@ object Dependencies {
     val yodaConvert     = "1.2"
     // Scala
     val json4sJackson   = "3.2.11"
-    val commonEnrich    = "0.23.0"
+    val commonEnrich    = "0.18.0"
     val scalding        = "0.15.0"
     val scalaz7         = "7.0.0"
-    val igluClient      = "0.4.0"
+    val igluClient      = "0.3.2"
     // Scala (test only)
     val specs2          = "1.14" // Downgrade to prevent issues in job tests. WAS: "2.3.11"
     val scalazSpecs2    = "0.1.2"
@@ -64,11 +64,9 @@ object Dependencies {
     val scaldingArgs     = "com.twitter"                %% "scalding-args"           % V.scalding exclude( "cascading", "cascading-local" ) exclude( "cascading", "cascading-hadoop" ) exclude( "cascading", "cascading-hadoop2-mr1" )
     // val scaldingJson     = "com.twitter"                %% "scalding-json"           % V.scalding
     val scalaz7          = "org.scalaz"                 %% "scalaz-core"             % V.scalaz7
-    val igluClient       = "com.snowplowanalytics"      %% "iglu-scala-client"       % V.igluClient
+    val igluClient       = "com.snowplowanalytics"      %  "iglu-scala-client"       % V.igluClient
     // Scala (test only)
     val specs2           = "org.specs2"                 %% "specs2"                  % V.specs2          % "test"
     val scalazSpecs2     = "org.typelevel"              %% "scalaz-specs2"           % V.scalazSpecs2    % "test"
-    // Hadoop (test only)
-    val hadoopClientCommon = "org.apache.hadoop"        % "hadoop-mapreduce-client-common" % V.hadoop    % "test"
   }
 }

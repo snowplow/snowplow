@@ -1,0 +1,39 @@
+{
+  "jsonpaths": [
+  
+    "$.schema.vendor",
+    "$.schema.name",
+    "$.schema.format",
+    "$.schema.version",
+
+    "$.hierarchy.rootId",
+    "$.hierarchy.rootTstamp",
+    "$.hierarchy.refRoot",
+    "$.hierarchy.refTree",
+    "$.hierarchy.refParent",
+
+    "$.data.navigationStart",
+    "$.data.redirectStart",
+    "$.data.redirectEnd",
+    "$.data.fetchStart",
+    "$.data.domainLookupStart",
+    "$.data.domainLookupEnd",
+    "$.data.connectStart",
+    "$.data.secureConnectionStart",
+    "$.data.connectEnd",
+    "$.data.requestStart",
+    "$.data.responseStart",
+    "$.data.responseEnd",
+    "$.data.unloadEventStart",
+    "$.data.unloadEventEnd",
+    "$.data.domLoading",
+    "$.data.domInteractive",
+    "$.data.domContentLoadedEventStart",
+    "$.data.domContentLoadedEventEnd",
+    "$.data.domComplete",
+    "$.data.loadEventStart",
+    "$.data.loadEventEnd",
+    "$.data.msFirstPaint",
+    "$.data.chromeFirstPaint"
+    ]
+}
