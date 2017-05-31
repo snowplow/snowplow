@@ -16,7 +16,7 @@
 lazy val root = project.in(file("."))
   .settings(
     name        := "snowplow-rdb-shredder",
-    version     := "0.12.0-rc4",
+    version     := "0.12.0-rc5",
     description := "Spark job to shred event and context JSONs from Snowplow enriched events"
   )
   .settings(BuildSettings.buildSettings)
