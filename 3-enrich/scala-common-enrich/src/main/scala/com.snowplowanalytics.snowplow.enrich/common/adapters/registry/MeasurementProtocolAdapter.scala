@@ -40,10 +40,10 @@ object MeasurementProtocolAdapter extends Adapter {
   private val format = "jsonschema"
   private val schemaVersion = "1-0-0"
 
-  case class HitTypeData(schemaUri: String, translationTable: Map[String, String])
+  case class MPData(schemaUri: String, translationTable: Map[String, String])
 
   val hitTypeData = Map(
-    "pageview" -> HitTypeData(
+    "pageview" -> MPData(
       SchemaKey(vendor, "page_view", format, schemaVersion).toSchemaUri,
       Map(
         "dl" -> "documentLocationURL",
@@ -52,9 +52,9 @@ object MeasurementProtocolAdapter extends Adapter {
         "dt" -> "documentTitle"
       )
     ),
-    "screenview" -> HitTypeData(
+    "screenview" -> MPData(
       SchemaKey(vendor, "screen_view", format, schemaVersion).toSchemaUri, Map("cd" -> "name")),
-    "event" -> HitTypeData(
+    "event" -> MPData(
       SchemaKey(vendor, "event", format, schemaVersion).toSchemaUri,
       Map(
         "ec" -> "category",
@@ -63,7 +63,7 @@ object MeasurementProtocolAdapter extends Adapter {
         "ev" -> "value"
       )
     ),
-    "transaction" -> HitTypeData(
+    "transaction" -> MPData(
       SchemaKey(vendor, "transaction", format, schemaVersion).toSchemaUri,
       Map(
         "ti"  -> "id",
@@ -75,7 +75,7 @@ object MeasurementProtocolAdapter extends Adapter {
         "cu"  -> "currencyCode"
       )
     ),
-    "item" -> HitTypeData(
+    "item" -> MPData(
       SchemaKey(vendor, "item", format, schemaVersion).toSchemaUri,
       Map(
         "ti" -> "id",
@@ -87,7 +87,7 @@ object MeasurementProtocolAdapter extends Adapter {
         "cu" -> "currencyCode"
       )
     ),
-    "social" -> HitTypeData(
+    "social" -> MPData(
       SchemaKey(vendor, "social", format, schemaVersion).toSchemaUri,
       Map(
         "sn" -> "network",
@@ -95,14 +95,14 @@ object MeasurementProtocolAdapter extends Adapter {
         "st" -> "actionTarget"
       )
     ),
-    "exception" -> HitTypeData(
+    "exception" -> MPData(
       SchemaKey(vendor, "exception", format, schemaVersion).toSchemaUri,
       Map(
         "exd" -> "description",
         "exf" -> "isFatal"
       )
     ),
-    "timing" -> HitTypeData(
+    "timing" -> MPData(
       SchemaKey(vendor, "timing", format, schemaVersion).toSchemaUri,
       Map(
         "utc" -> "userTimingCategory",
@@ -123,7 +123,6 @@ object MeasurementProtocolAdapter extends Adapter {
 
   /**
    * Converts a CollectorPayload instance into raw events.
-   *
    * @param payload The CollectorPaylod containing one or more raw events as collected by
    * a Snowplow collector
    * @param resolver (implicit) The Iglu resolver used for schema lookup and validation
@@ -141,11 +140,11 @@ object MeasurementProtocolAdapter extends Adapter {
             trTable <- hitTypeData.get(hitType).map(_.translationTable)
               .toSuccess(NonEmptyList(s"No matching $vendorName hit type for hit type $hitType"))
             schema <- lookupSchema(hitType.some, vendorName, hitTypeData.mapValues(_.schemaUri))
-            unstructEventParams = translateParams(params, trTable, hitType)
+            unstructEvent = buildUnstructEvent(params, trTable, hitType)
           } yield NonEmptyList(RawEvent(
             api         = payload.api,
             parameters  = toUnstructEventParams(
-                            protocol, unstructEventParams, schema, buildFormatter(), "srv"),
+                            protocol, unstructEvent, schema, buildFormatter(), "srv"),
             contentType = payload.contentType,
             source      = payload.source,
             context     = payload.context
@@ -154,7 +153,15 @@ object MeasurementProtocolAdapter extends Adapter {
     }
   }
 
-  private def translateParams(
+  /**
+   * Builds an unstruct event by finding the appropriate fields in the original payload and
+   * translating them.
+   * @param originalParams original payload in key-value format
+   * @param translationTable mapping between MP and iglu schema for the specific hit type
+   * @param hitType hit type of this unstruct event
+   * @return an unstruct event in key-value format
+   */
+  private def buildUnstructEvent(
     originalParams: Map[String, String],
     translationTable: Map[String, String],
     hitType: String
@@ -162,4 +169,28 @@ object MeasurementProtocolAdapter extends Adapter {
     originalParams.foldLeft(Map("hitType" -> hitType)) { (m, e) =>
       translationTable.get(e._1).map(newName => m + (newName -> e._2)).getOrElse(m)
     }
+
+  /**
+   * Discovers the contexts in the payload in linear time (size of originalParams).
+   * @param originalParams original payload in key-value format
+   * @param referenceTable list of context schemas and their associated translation
+   * @param fieldToSchemaMap reverse indirection from referenceTable linking fields to schemas
+   * @return a map containing the discovered contexts keyed by schema
+   */
+  private def buildContexts(
+    originalParams: Map[String, String],
+    referenceTable: List[MPData],
+    fieldToSchemaMap: Map[String, String]
+  ): Map[String, Map[String, String]] = {
+    val refTable = referenceTable.map(d => d.schemaUri -> d.translationTable).toMap
+    originalParams.foldLeft(Map.empty[String, Map[String, String]]) { (m, e) =>
+      fieldToSchemaMap.get(e._1).map { s =>
+        // this is safe when fieldToSchemaMap is built from referenceTable
+        val translated = refTable(s)(e._1)
+        val trTable = m.getOrElse(s, Map.empty) + (translated -> e._2)
+        m + (s -> trTable)
+      }
+      .getOrElse(m)
+    }
+  }
 }
