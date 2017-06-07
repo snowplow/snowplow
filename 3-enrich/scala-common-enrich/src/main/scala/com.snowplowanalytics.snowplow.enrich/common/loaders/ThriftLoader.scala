@@ -14,9 +14,6 @@ package com.snowplowanalytics
 package snowplow.enrich.common
 package loaders
 
-// Apache Commons
-import org.apache.commons.lang3.StringUtils
-
 // Apache URLEncodedUtils
 import org.apache.http.NameValuePair
 

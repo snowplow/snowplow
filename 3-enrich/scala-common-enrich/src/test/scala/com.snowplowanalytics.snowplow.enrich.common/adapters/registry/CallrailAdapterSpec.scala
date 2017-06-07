@@ -28,7 +28,6 @@ import loaders.{
   CollectorContext,
   CollectorPayload
 }
-import utils.ConversionUtils
 import SpecHelpers._
 
 // Specs2
@@ -55,10 +54,8 @@ class CallrailAdapterSpec extends Specification with DataTables with ValidationM
       "tv" -> "com.callrail-v1",
       "e"  -> "ue",
       "cv" -> "clj-0.6.0-tom-0.0.4"
-      )
-    val static = staticNoPlatform ++ Map(
-      "p"  -> "srv"
     )
+    val static = staticNoPlatform + ("p" -> "srv")
   }
 
   def e1 = {
@@ -100,7 +97,7 @@ class CallrailAdapterSpec extends Specification with DataTables with ValidationM
       "utmz"           -> "",
       "cv"             -> "clj-0.6.0-tom-0.0.4",
       "nuid"           -> "-"
-      )
+    )
     val payload = CollectorPayload(Shared.api, params, None, None, Shared.source, Shared.context)
     val actual = CallrailAdapter.toRawEvents(payload)
 
@@ -147,7 +144,7 @@ class CallrailAdapterSpec extends Specification with DataTables with ValidationM
                 |"callsource":"keyword"
               |}
             |}
-          |}""".stripMargin.replaceAll("[\n\r]","")
+          |}""".stripMargin.replaceAll("[\n\r]", "")
 
     actual must beSuccessful(NonEmptyList(RawEvent(Shared.api, Expected.static ++ Map("ue_pr" -> expectedJson, "nuid" -> "-"), None, Shared.source, Shared.context)))
   }
