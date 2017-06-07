@@ -35,10 +35,7 @@ import scalaz._
 import Scalaz._
 
 // This project
-import adapters.{
-  RawEvent,
-  AdapterRegistry
-}
+import adapters.AdapterRegistry
 import enrichments.{
   EnrichmentRegistry,
   EnrichmentManager

@@ -22,11 +22,8 @@ import java.net.URI
 import org.apache.http.client.utils.URLEncodedUtils
 
 // Joda-Time
-import org.joda.time.{DateTime, DateTimeZone}
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
-
-// Jackson
-import com.fasterxml.jackson.databind.JsonNode
+import org.joda.time.DateTimeZone
+import org.joda.time.format.DateTimeFormat
 
 // Scala
 import scala.collection.JavaConversions._
@@ -65,7 +62,7 @@ object MailchimpAdapter extends Adapter {
   // Expected content type for a request body
   private val ContentType = "application/x-www-form-urlencoded"
 
-  // Tracker version for an Mailchimp Tracking webhook
+  // Tracker version for a Mailchimp Tracking webhook
   private val TrackerVersion = "com.mailchimp-v1"
 
   // Schemas for reverse-engineering a Snowplow unstructured event

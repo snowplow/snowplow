@@ -88,10 +88,9 @@ object EnrichmentManager {
 
     // Validate that the collectorTstamp exists and is Redshift-compatible
     val collectorTstamp = EE.formatCollectorTstamp(raw.context.timestamp) match {
-      case Success(t) => {
+      case Success(t) =>
         event.collector_tstamp = t
         unitSuccess
-      }
       case f => f
     }
 
@@ -100,10 +99,10 @@ object EnrichmentManager {
     val useragent = raw.context.useragent match {
       case Some(ua) =>
         val u = CU.decodeString(raw.source.encoding, "useragent", ua)
-        u.flatMap(ua => {
+        u.flatMap { ua =>
           event.useragent = ua
           ua.success
-          })
+        }
       case None => unitSuccess // No fields updated
     }
 

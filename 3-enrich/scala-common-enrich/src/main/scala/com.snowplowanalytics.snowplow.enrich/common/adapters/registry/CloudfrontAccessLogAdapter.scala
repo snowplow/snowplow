@@ -18,10 +18,7 @@ package adapters
 package registry
 
 // Iglu
-import iglu.client.{
-  SchemaKey,
-  Resolver
-}
+import iglu.client.Resolver
 
 // Scala
 import scala.util.control.NonFatal
@@ -36,7 +33,6 @@ import org.joda.time.DateTime
 // json4s
 import org.json4s._
 import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
 
 // This project
 import loaders.{
@@ -107,13 +103,13 @@ object CloudfrontAccessLogAdapter {
             case 24 => "1-0-5".successNel  // 29 Sep 2016
             case n => s"Access log TSV line contained $n fields, expected 12, 15, 18, 19, 23 or 24".failNel
           }
-          schemaVersion.flatMap(v => {
+          schemaVersion.flatMap { v =>
 
             // Combine the first two fields into a timestamp
             val schemaCompatibleFields = "%sT%sZ".format(fields(0), fields(1)) :: fields.toList.tail.tail
 
             // Attempt to build the json, accumulating errors from unparseable fields
-            def buildJson(errors: List[String], fields: List[(String, String)], json: JObject): (List[String], JObject) = {
+            def buildJson(errors: List[String], fields: List[(String, String)], json: JObject): (List[String], JObject) =
               fields match {
                 case Nil => (errors, json)
                 case head :: tail => head match {
@@ -137,7 +133,6 @@ object CloudfrontAccessLogAdapter {
                   case (name, field) => buildJson(errors, tail, json ~ ((name, field)))
                 }
               }
-            }
 
             val (errors, ueJson) = buildJson(Nil, FieldNames zip schemaCompatibleFields, JObject())
 
@@ -170,7 +165,7 @@ object CloudfrontAccessLogAdapter {
                 s"iglu:com.amazon.aws.cloudfront/wd_access_log/jsonschema/$v",
                 ueJson,
                 "srv"
-                )
+              )
               NonEmptyList(RawEvent(
                 api          = payload.api,
                 parameters   = parameters,
@@ -179,7 +174,7 @@ object CloudfrontAccessLogAdapter {
                 context      = CollectorContext(tstamp, ip, userAgent, None, Nil, None)
               ))
             }
-          })
+          }
         }
         case None => "Cloudfront TSV has no body - this should be impossible".failNel
       }

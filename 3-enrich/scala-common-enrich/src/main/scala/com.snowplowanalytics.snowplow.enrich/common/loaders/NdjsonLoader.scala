@@ -13,7 +13,6 @@
 package com.snowplowanalytics.snowplow.enrich.common.loaders
 
 import com.snowplowanalytics.snowplow.enrich.common.ValidatedMaybeCollectorPayload
-import org.joda.time.{DateTimeZone, DateTime}
 
 // Scalaz
 import scalaz._
