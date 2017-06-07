@@ -166,15 +166,16 @@ object MeasurementProtocolAdapter extends Adapter {
     translationTable: Map[String, String],
     hitType: String
   ): Map[String, String] =
-    originalParams.foldLeft(Map("hitType" -> hitType)) { (m, e) =>
-      translationTable.get(e._1).map(newName => m + (newName -> e._2)).getOrElse(m)
+    originalParams.foldLeft(Map("hitType" -> hitType)) { case (m, (fieldName, value)) =>
+      translationTable.get(fieldName).map(newName => m + (newName -> value)).getOrElse(m)
     }
 
   /**
    * Discovers the contexts in the payload in linear time (size of originalParams).
    * @param originalParams original payload in key-value format
    * @param referenceTable list of context schemas and their associated translation
-   * @param fieldToSchemaMap reverse indirection from referenceTable linking fields to schemas
+   * @param fieldToSchemaMap reverse indirection from referenceTable linking fields with the MP
+   * nomenclature to schemas
    * @return a map containing the discovered contexts keyed by schema
    */
   private def buildContexts(
@@ -183,14 +184,15 @@ object MeasurementProtocolAdapter extends Adapter {
     fieldToSchemaMap: Map[String, String]
   ): Map[String, Map[String, String]] = {
     val refTable = referenceTable.map(d => d.schemaUri -> d.translationTable).toMap
-    originalParams.foldLeft(Map.empty[String, Map[String, String]]) { (m, e) =>
-      fieldToSchemaMap.get(e._1).map { s =>
-        // this is safe when fieldToSchemaMap is built from referenceTable
-        val translated = refTable(s)(e._1)
-        val trTable = m.getOrElse(s, Map.empty) + (translated -> e._2)
-        m + (s -> trTable)
-      }
-      .getOrElse(m)
+    originalParams.foldLeft(Map.empty[String, Map[String, String]]) {
+      case (m, (fieldName, value)) =>
+        fieldToSchemaMap.get(fieldName).map { schema =>
+          // this is safe when fieldToSchemaMap is built from referenceTable
+          val translated = refTable(schema)(fieldName)
+          val trTable = m.getOrElse(schema, Map.empty) + (translated -> value)
+          m + (schema -> trTable)
+        }
+        .getOrElse(m)
     }
   }
 }
