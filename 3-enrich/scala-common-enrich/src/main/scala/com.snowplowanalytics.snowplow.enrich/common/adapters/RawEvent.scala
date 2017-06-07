@@ -13,9 +13,6 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 
-// Joda-Time
-import org.joda.time.DateTime
-
 // This project
 import loaders.{
   CollectorSource,
@@ -37,4 +34,4 @@ final case class RawEvent(
   contentType: Option[String], // Not yet used but should be logged
   source:      CollectorSource,
   context:     CollectorContext
-  )
+)

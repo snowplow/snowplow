@@ -47,7 +47,7 @@ object SpecHelpers {
                 |"vendorPrefixes": [ "com.snowplowanalytics" ],
                 |"connection": {
                   |"http": {
-                    |"uri": "http://iglucentral.com"
+                    |"uri": "localhost:8000"
                   |}
                 |}
               |}

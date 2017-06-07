@@ -23,9 +23,6 @@ import Scalaz._
 
 // json4s
 import org.json4s._
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
-import org.json4s.scalaz.JsonScalaz._
 
 // Snowplow
 import loaders.{
@@ -34,8 +31,6 @@ import loaders.{
   CollectorContext,
   CollectorPayload
 }
-import utils.ConversionUtils
-import SpecHelpers._
 
 // Specs2
 import org.specs2.{Specification, ScalaCheck}
