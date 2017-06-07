@@ -18,18 +18,11 @@ package adapters
 package registry
 package snowplow
 
-// Java
-import java.util.Map.{Entry => JMapEntry}
-
 // Jackson
 import com.fasterxml.jackson.databind.JsonNode
 
-// Scala
-import scala.collection.JavaConversions._
-
 // Iglu
 import iglu.client.{
-  SchemaCriterion,
   Resolver,
   SchemaKey
 }
@@ -94,7 +87,7 @@ object RedirectAdapter extends Adapter {
     } else {
       originalParams.get("u") match {
         case None    => "Querystring does not contain u parameter: not a valid URI redirect".failNel
-        case Some(u) => {
+        case Some(u) =>
 
           val json = buildUriRedirect(u)
           val newParams =
@@ -111,9 +104,7 @@ object RedirectAdapter extends Adapter {
               }
             } else {
               // Add URI redirect as an unstructured event 
-              Map("e"     -> "ue",
-                  "ue_pr" -> compact(toUnstructEvent(json))
-                ).successNel
+              Map("e" -> "ue", "ue_pr" -> compact(toUnstructEvent(json))).successNel
             }
 
           val fixedParams = Map(
@@ -131,7 +122,6 @@ object RedirectAdapter extends Adapter {
               context      = payload.context
               ))
           } yield ev
-        }
       }
     }
   }
