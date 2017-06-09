@@ -61,9 +61,9 @@ package model {
   final case class AWSConfig(accessKey: String, secretKey: String) {
     val provider = ((accessKey, secretKey) match {
       case (a, s) if isDefault(a) && isDefault(s) =>
-        Right(new EnvironmentVariableCredentialsProvider())
+        Right(new DefaultAWSCredentialsProviderChain())
       case (a, s) if isDefault(a) || isDefault(s) =>
-        Left("accessKey and secretKey must both be set to 'env' or neither")
+        Left("accessKey and secretKey must both be set to 'default' or neither")
       case (a, s) if isIam(a) && isIam(s) =>
         Right(InstanceProfileCredentialsProvider.getInstance())
       case (a, s) if isIam(a) && isIam(s) =>
