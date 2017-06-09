@@ -24,7 +24,7 @@ import java.util.concurrent.ScheduledExecutorService
 import com.amazonaws.services.kinesis.model.ResourceNotFoundException
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.auth.{
-  EnvironmentVariableCredentialsProvider,
+  DefaultAWSCredentialsProviderChain,
   BasicAWSCredentials,
   ClasspathPropertiesFileCredentialsProvider
 }
@@ -204,7 +204,7 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
     val accessKey = config.awsAccessKey
     val secretKey = config.awsSecretKey
     val client = if (isDefault(accessKey) && isDefault(secretKey)) {
-      new AmazonKinesisClient(new EnvironmentVariableCredentialsProvider())
+      new AmazonKinesisClient(new DefaultAWSCredentialsProviderChain())
     } else if (isDefault(accessKey) || isDefault(secretKey)) {
       throw new RuntimeException("access-key and secret-key must both be set to 'env', or neither")
     } else if (isIam(accessKey) && isIam(secretKey)) {
