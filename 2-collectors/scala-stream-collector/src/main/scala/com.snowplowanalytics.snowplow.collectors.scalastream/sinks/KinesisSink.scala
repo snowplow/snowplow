@@ -150,7 +150,7 @@ class KinesisSink private (
     val accessKey = kinesisConfig.aws.accessKey
     val secretKey = kinesisConfig.aws.secretKey
     val provider: AWSCredentialsProvider = if (isDefault(accessKey) && isDefault(secretKey)) {
-      new EnvironmentVariableCredentialsProvider()
+      new DefaultAWSCredentialsProviderChain()
     } else if (isDefault(accessKey) || isDefault(secretKey)) {
       throw new RuntimeException("access-key and secret-key must both be set to 'env', or neither")
     } else if (isIam(accessKey) && isIam(secretKey)) {
