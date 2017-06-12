@@ -96,8 +96,8 @@ class SnowplowElasticsearchEmitter(
   private val Log = LogFactory.getLog(getClass)
 
   private val newInstance: ElasticsearchSender = (
-    if (elasticsearchClientType == "http") {
-      new ElasticsearchSenderHTTP(configuration, tracker, maxConnectionWaitTimeMs, connTimeout, readTimeout)
+    if ((elasticsearchClientType == "http") || (elasticsearchClientType == "https")) {
+      new ElasticsearchSenderHTTP(configuration, tracker, maxConnectionWaitTimeMs, connTimeout, readTimeout, elasticsearchClientType)
     } else {
       new ElasticsearchSenderTransport(configuration, tracker, maxConnectionWaitTimeMs)
     }

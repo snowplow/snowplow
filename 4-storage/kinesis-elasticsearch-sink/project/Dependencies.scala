@@ -21,6 +21,7 @@ object Dependencies {
     "Snowplow Analytics Maven snapshot repo" at "http://maven.snplow.com/snapshots/",
     // For Scalazon
     "BintrayJCenter"                         at "http://jcenter.bintray.com",
+    "Twitter maven repo"                     at "http://maven.twttr.com/",
     // For user-agent-utils
     "user-agent-utils repo"                  at "https://raw.github.com/HaraldWalker/user-agent-utils/mvn-repo/"
   )
