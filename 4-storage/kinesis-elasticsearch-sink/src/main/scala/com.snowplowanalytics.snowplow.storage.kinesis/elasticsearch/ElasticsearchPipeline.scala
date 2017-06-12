@@ -21,20 +21,12 @@ package com.snowplowanalytics.snowplow
 package storage.kinesis.elasticsearch
 
 // AWS Kinesis Connector libs
-import com.amazonaws.services.kinesis.connectors.elasticsearch.{
-  ElasticsearchObject,
-  ElasticsearchEmitter,
-  ElasticsearchTransformer
-}
-import com.amazonaws.services.kinesis.connectors.interfaces.{
-  IEmitter,
-  IBuffer,
-  ITransformer,
-  IFilter,
-  IKinesisConnectorPipeline
-}
+import com.amazonaws.services.kinesis.connectors.elasticsearch.{ElasticsearchEmitter, ElasticsearchObject, ElasticsearchTransformer}
+import com.amazonaws.services.kinesis.connectors.interfaces.{IBuffer, IEmitter, IFilter, IKinesisConnectorPipeline, ITransformer}
 import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration
-import com.amazonaws.services.kinesis.connectors.impl.{BasicMemoryBuffer,AllPassFilter}
+import com.amazonaws.services.kinesis.connectors.impl.{AllPassFilter, BasicMemoryBuffer}
+import com.snowplowanalytics.snowplow.storage.kinesis.elasticsearch.clients.ElasticsearchSender
+import com.snowplowanalytics.snowplow.storage.kinesis.elasticsearch.generated.{ElasticsearchSenderHTTP, ElasticsearchSenderTransport}
 
 // This project
 import sinks._
@@ -69,8 +61,16 @@ class ElasticsearchPipeline(
   readTimeout: Int
 ) extends IKinesisConnectorPipeline[ValidatedRecord, EmitterInput] {
 
-  override def getEmitter(configuration: KinesisConnectorConfiguration): IEmitter[EmitterInput] =
-    new SnowplowElasticsearchEmitter(configuration, goodSink, badSink, tracker, maxConnectionTime, elasticsearchClientType, connTimeout, readTimeout)
+  override def getEmitter(configuration: KinesisConnectorConfiguration): IEmitter[EmitterInput] = {
+
+    val elasticsearchSender: ElasticsearchSender =
+      if (elasticsearchClientType == "http") {
+        new ElasticsearchSenderHTTP(configuration, tracker, maxConnectionTime, connTimeout, readTimeout)
+      } else {
+        new ElasticsearchSenderTransport(configuration, tracker, maxConnectionTime)
+      }
+    new SnowplowElasticsearchEmitter(configuration, goodSink, badSink, tracker, maxConnectionTime, Some(elasticsearchSender), connTimeout, readTimeout)
+  }
 
   override def getBuffer(configuration: KinesisConnectorConfiguration) = new BasicMemoryBuffer[ValidatedRecord](configuration)
 
