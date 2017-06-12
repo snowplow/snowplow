@@ -1,18 +1,17 @@
 language: scala
 scala:
-- 2.10.1
+  - 2.11.11
 jdk:
-- oraclejdk7
+  - oraclejdk8
 before_script:
-- psql -U postgres -c "CREATE USER enricher WITH password 'supersecret1';"
-- psql -U postgres -c "CREATE DATABASE sql_enrichment_test WITH OWNER = enricher;"
-- psql -U postgres -d sql_enrichment_test < integration-tests/sql-enrichment-test.sql
-- psql -U postgres -d sql_enrichment_test -c "GRANT ALL ON enrichment_test TO enricher;"
+  - psql -U postgres -c "CREATE USER enricher WITH password 'supersecret1';"
+  - psql -U postgres -c "CREATE DATABASE sql_enrichment_test WITH OWNER = enricher;"
+  - psql -U postgres -d sql_enrichment_test < integration-tests/sql-enrichment-test.sql
+  - psql -U postgres -d sql_enrichment_test -c "GRANT ALL ON enrichment_test TO enricher;"
 script:
-- python integration-tests/api-lookup-test.py &
-- cd 3-enrich/scala-common-enrich
-- sbt test
-- cd ../..
+  - python integration-tests/api-lookup-test.py &
+  - cd 3-enrich/scala-common-enrich && sbt publishLocal && cd ../..
+  - cd $TEST_DIR && sbt test && cd ../..
 env:
   global:
   - secure: j6RcEPeT5DCmThYA+KSvn5zoFdwhO9Tyk9xXVrW+L8oTTAehDvEWQ1nkJM7m+KYwUtWH1bvRd9IOZgKkWxJeYSDvn8V0zd0dJKSc7R4kykfI/S3V67uM1LCj24B1dF62uiTMOFd9inwB3SLhVFwRk+tcgrZMLs9ljqND77pGR4Y=
@@ -29,52 +28,66 @@ env:
   - secure: bfRy/ulcQNKTGB0KYQviCypBI8LbnWkwrt+WyPuoFlLBz+kqhjc5XuOOsfC2OQplkcsbyb/2QzPoM59btXp6SC+uv0AdE5F6aJ+7hEechpwRmq4oR4v5TRebUY7XrNiwZvhvw85VbLGLQPdTcRkii3hcs9QHQx6prMvw5o++vA8=
   # AWS_STAGING_ACCESS_KEY_ID
   - secure: stEnjuXCyIoTh0wluBNwgwflc9j+QNq5QbzeEOv8KZQ6KAVjwikX1gzMGNBaD5a0JFgUuE8Wd55l5RMfb+P5Wt8Th7WpyJ55SaOlTz6nDWGFxpOo1XJy4UI7Qr9CPEmqWwsS7Kxl7+jVEJPIYbItr0a+oGsajAtNsly9C88S5w0=
-  # AWS_STAGING_SECRET_ACCESS_KEY
+   # AWS_STAGING_SECRET_ACCESS_KEY
   - secure: tTXtm8oxwHDpHPGByCbSao7Kauq8SFpeyBYpBoN4e9uUYbgzmwMNLts/tWAZpHGmmnKhrEFVZp/tfqgA1fMgPGFvMmJTFrvceBkPzbc7T3Ck8bxpAGoL8TmSvET9lC+NxP8A0s1Uvdo1Y9ue6lkNh8l74oDDZSSfdGqnNOc2rJ4=
+  - SONA_USER=snowplow
+  # SONA_PASS
+  - secure: l826euZgoTP33un5ND8zbGpBTHjTZ/4c9l1aqCi2mEnoIE40DXFyYEr8mtGX0EJXUEATIY4G9RsdYTj6kdoxiZLNLP01f7bTTCB0773L9/CplQqajfQ4XqfteN80S8uvxVwxYM/1MyGKa6B54k8prlaOh+8Gsk5iwLSGvq7S/Lk=
+  matrix:
+  - TEST_DIR=3-enrich/scala-common-enrich/
+  - TEST_DIR=3-enrich/spark-enrich/
+  - TEST_DIR=4-storage/rdb-shredder/
 before_install:
-- pip install --user awscli
-- export PATH=$PATH:$HOME/.local/bin
+  - sudo apt-get -qq update
+  - sudo apt-get install -y lzop
+  - pip install --user awscli
+  - export PATH=$PATH:$HOME/.local/bin
 addons:
   postgresql: '9.3'
 services:
-- postgresql
+  - postgresql
 before_deploy:
   - pip install --user release-manager==0.2.0
 deploy:
   - provider: script
-    script: ./.travis/deploy_kinesis.sh $TRAVIS_TAG
+    script: ./.travis/deploy_sce.sh $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
-      condition: '"$(.travis/is_kinesis_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
+      condition: '"$(.travis/is_release_tag.sh scala_common_enrich $TRAVIS_TAG)" == "" && $? == 0 && $TEST_DIR = 3-enrich/scala-common-enrich/'
   - provider: script
-    script: ./.travis/deploy_hadoop_enrich.sh $TRAVIS_TAG
+    script: ./.travis/deploy.sh kinesis $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
-      condition: '"$(.travis/is_hadoop_enrich_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
+      condition: '"$(.travis/is_release_tag.sh kinesis $TRAVIS_TAG)" == "" && $? == 0 && $TEST_DIR = 3-enrich/scala-common-enrich/'
   - provider: script
-    script: ./.travis/deploy_hadoop_shred.sh $TRAVIS_TAG
+    script: ./.travis/deploy.sh spark_enrich $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
-      condition: '"$(.travis/is_hadoop_shred_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
+      condition: '"$(.travis/is_release_tag.sh spark_enrich $TRAVIS_TAG)" == "" && $? == 0 && $TEST_DIR = 3-enrich/spark-enrich/'
   - provider: script
-    script: ./.travis/deploy_hadoop_enrich.sh $TRAVIS_TAG
+    script: ./.travis/deploy.sh rdb_shredder $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
-      condition: '"$(.travis/is_hadoop_event_recovery_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
+      condition: '"$(.travis/is_release_tag.sh rdb_shredder $TRAVIS_TAG)" == "" && $? == 0 && $TEST_DIR = 4-storage/rdb-shredder/'
   - provider: script
-    script: ./.travis/deploy_emr.sh $TRAVIS_TAG
+    script: ./.travis/deploy.sh hadoop_event_recovery $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
-      condition: '"$(.travis/is_emr_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
+      condition: '"$(.travis/is_release_tag.sh hadoop_event_recovery $TRAVIS_TAG)" == "" && $? == 0 && $TEST_DIR = 3-enrich/scala-common-enrich/'
   - provider: script
-    script: ./.travis/deploy_event_manifest_populator.sh $TRAVIS_TAG
+    script: ./.travis/deploy.sh emr $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
-      condition: '"$(.travis/is_event_manifest_populator_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
-
+      condition: '"$(.travis/is_release_tag.sh emr $TRAVIS_TAG)" == "" && $? == 0 && $TEST_DIR = 3-enrich/scala-common-enrich/'
+  - provider: script
+    script: ./.travis/deploy.sh event_manifest_populator $TRAVIS_TAG
+    skip_cleanup: true
+    on:
+      tags: true
+      condition: '"$(.travis/is_release_tag.sh event_manifest_populator $TRAVIS_TAG)" == "" && $? == 0 && $TEST_DIR = 3-enrich/scala-common-enrich/'

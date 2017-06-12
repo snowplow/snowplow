@@ -28,14 +28,12 @@ import org.json4s.JValue
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
-class HttpHeaderExtractorEnrichmentSpec extends Specification with ValidationMatchers { def is =
-
-  "This is a specification to test the HttpHeaderExtractorEnrichment" ^
-                                                                 p^
-  "returns X-Forwarded-For header"                                ! e1^
-  "returns Accept header after Regex matching"                    ! e2^
-  "No headers"                                                    ! e3^
-                                                                  end
+class HttpHeaderExtractorEnrichmentSpec extends Specification with ValidationMatchers { def is = s2"""
+  This is a specification to test the HttpHeaderExtractorEnrichment
+  returns X-Forwarded-For header             $e1
+  returns Accept header after Regex matching $e2
+  No headers                                 $e3
+  """
 
   def e1 = {
     val expected = List(

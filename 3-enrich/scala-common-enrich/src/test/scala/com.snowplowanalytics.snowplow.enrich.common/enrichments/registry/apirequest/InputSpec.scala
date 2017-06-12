@@ -31,18 +31,17 @@ import org.json4s.jackson.parseJson
 // This project
 import outputs.EnrichedEvent
 
-class InputSpec extends Specification with ValidationMatchers { def is =
-  "This is a specification to test the Inputs and template context building of API Request Enrichment" ^
-                                                                      p^
-    "Create template context from POJO inputs"                        ! e1^
-    "Create template context from JSON inputs"                        ! e2^
-    "Colliding inputs from JSON and POJO didn't get merged"           ! e3^
-    "Collect failures"                                                ! e4^
-    "POJO null value return successful None"                          ! e5^
-    "POJO invalid key return failure"                                 ! e6^
-    "Skip lookup on missing (in event) key"                           ! e7^
-    "Match modelless criterion (*-*-*)"                               ! e8^
-                                                                      end
+class InputSpec extends Specification with ValidationMatchers { def is = s2"""
+  This is a specification to test the Inputs and template context building of API Request Enrichment
+  Create template context from POJO inputs              $e1
+  Create template context from JSON inputs              $e2
+  Colliding inputs from JSON and POJO didn't get merged $e3
+  Collect failures                                      $e4
+  POJO null value return successful None                $e5
+  POJO invalid key return failure                       $e6
+  Skip lookup on missing (in event) key                 $e7
+  Match modelless criterion (*-*-*)                     $e8
+  """
 
   object ContextCase {
     val ccInput = Input("nullableValue", pojo = None, json = JsonInput("contexts", "iglu:org.ietf/http_cookie/jsonschema/1-*-*", "$.value").some)

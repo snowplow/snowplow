@@ -26,9 +26,6 @@ import org.specs2.scalaz.ValidationMatchers
 import scalaz._
 import Scalaz._
 
-// SnowPlow Utils
-import com.snowplowanalytics.util.Tap._
-
 // referer-parser
 import com.snowplowanalytics.refererparser.scala.{Medium, Referer}
 
@@ -40,13 +37,11 @@ import com.snowplowanalytics.refererparser.scala.{Medium, Referer}
  *
  * https://github.com/snowplow/referer-parser/tree/master/java-scala/src/test/scala/com/snowplowanalytics/refererparser/scala
  */
-class ExtractRefererDetailsSpec extends Specification with DataTables { def is =
-
-  "This is a specification to test extractRefererDetails"              ^
-                                                                      p^
-    "Parsing referer URIs should work"                                 ! e1^
-    "Tabs and newlines in search terms should be replaced"             ! e2^
-                                                                       end
+class ExtractRefererDetailsSpec extends Specification with DataTables { def is = s2"""
+  This is a specification to test extractRefererDetails
+  Parsing referer URIs should work                     $e1
+  Tabs and newlines in search terms should be replaced $e2
+  """
 
   val PageHost = "www.snowplowanalytics.com"
 
@@ -57,11 +52,11 @@ class ExtractRefererDetailsSpec extends Specification with DataTables { def is =
     "Yahoo! Mail"      !! "http://36ohk6dgmcd1n-c.c.yom.mail.yahoo.net/om/api/1.0/openmail.app.invoke/36ohk6dgmcd1n/11/1.0.35/us/en-US/view.html/0" ! Medium.Email     ! Some("Yahoo! Mail") ! None                                     |
     "Internal referer" !! "https://www.snowplowanalytics.com/account/profile"                                                                       ! Medium.Internal  ! None                ! None                                     |
     "Custom referer"   !! "https://www.internaldomain.com/path"                                                                                     ! Medium.Internal  ! None                ! None                                     |
-    "Unknown referer"  !! "http://www.spyfu.com/domain.aspx?d=3897225171967988459"                                                                  ! Medium.Unknown   ! None                ! None                                     |> {                                                                                                                   
+    "Unknown referer"  !! "http://www.spyfu.com/domain.aspx?d=3897225171967988459"                                                                  ! Medium.Unknown   ! None                ! None                                     |> {
       (_, refererUri, medium, source, term) =>
         RefererParserEnrichment(List("www.internaldomain.com")).extractRefererDetails(new URI(refererUri), PageHost) must_== Some(Referer(medium, source, term))
     }
 
   def e2 =
-    RefererParserEnrichment(List()).extractRefererDetails(new URI("http://www.google.com/search?q=%0Agateway%09oracle%09cards%09denise%09linn&hl=en&client=safari"), PageHost) must_== Some(Referer(Medium.Search, Some("Google"), Some("gateway    oracle    cards    denise    linn"))) 
+    RefererParserEnrichment(List()).extractRefererDetails(new URI("http://www.google.com/search?q=%0Agateway%09oracle%09cards%09denise%09linn&hl=en&client=safari"), PageHost) must_== Some(Referer(Medium.Search, Some("Google"), Some("gateway    oracle    cards    denise    linn")))
 }

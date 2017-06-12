@@ -34,7 +34,6 @@ import iglu.client.{
 }
 import iglu.client.validation.ValidatableJsonMethods._
 import iglu.client.validation.ProcessingMessageMethods._
-import iglu.client.validation.ValidatableJsonNode
 
 // This project
 import registry.{
@@ -122,8 +121,8 @@ object EnrichmentRegistry {
   }
 
   /**
-   * Builds an Enrichment from a JValue if it has a 
-   * recognized name field and matches a schema key 
+   * Builds an Enrichment from a JValue if it has a
+   * recognized name field and matches a schema key
    *
    * @param enrichmentConfig JValue with enrichment information
    * @param schemaKey SchemaKey for the JValue
@@ -135,7 +134,7 @@ object EnrichmentRegistry {
   private def buildEnrichmentConfig(schemaKey: SchemaKey, enrichmentConfig: JValue, localMode: Boolean): ValidatedNelMessage[Option[Tuple2[String, Enrichment]]] = {
 
     val enabled = ScalazJson4sUtils.extract[Boolean](enrichmentConfig, "enabled").toValidationNel
-        
+
     enabled match {
       case Success(false) => None.success.toValidationNel // Enrichment is disabled
       case e => {
@@ -147,9 +146,9 @@ object EnrichmentRegistry {
           } else if (nm == "anon_ip") {
             AnonIpEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "referer_parser") {
-            RefererParserEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)            
+            RefererParserEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "campaign_attribution") {
-            CampaignAttributionEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)            
+            CampaignAttributionEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "user_agent_utils_config") {
             UserAgentUtilsEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "ua_parser_config") {

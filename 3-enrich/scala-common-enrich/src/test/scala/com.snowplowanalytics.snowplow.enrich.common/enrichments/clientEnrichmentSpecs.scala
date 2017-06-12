@@ -32,7 +32,7 @@ class ExtractViewDimensionsSpec extends Specification with DataTables {
   def err2: (String) => String = input => "Field [%s]: view dimensions [%s] exceed Integer's max range".format(FieldName, input)
 
   def is =
-    "Extracting screen dimensions (viewports, screen resolution etc) with extractViewDimensions should work" ! e1
+    s2"Extracting screen dimensions (viewports, screen resolution etc) with extractViewDimensions should work $e1"
 
   def e1 =
     "SPEC NAME"        || "INPUT VAL"       | "EXPECTED OUTPUT"            |

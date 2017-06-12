@@ -20,16 +20,16 @@ import org.specs2.scalaz.ValidationMatchers
 import org.json4s._
 import org.json4s.jackson.parseJson
 
-class JsonPathSpec extends Specification with ValidationMatchers { def is =
-  "This is a specification to test the JSONPath utils"                     ^
-    "Test JSONPath query"                                             ! e1 ^
-    "Test query of non-exist value"                                   ! e2 ^
-    "Test query of empty array"                                       ! e3 ^
-    "Test primtive JSON type (JString)"                               ! e6 ^
-    "Invalid JSONPath (JQ syntax) must fail"                          ! e4 ^
-    "Invalid JSONPath must fail"                                      ! e5 ^
-    "JNothing must fail"                                              ! e7 ^
-                                                                      end
+class JsonPathSpec extends Specification with ValidationMatchers { def is = s2"""
+  This is a specification to test the JSONPath utils
+  Test JSONPath query                     $e1
+  Test query of non-exist value           $e2
+  Test query of empty array               $e3
+  Test primtive JSON type (JString)       $e6
+  Invalid JSONPath (JQ syntax) must fail  $e4
+  Invalid JSONPath must fail              $e5
+  JNothing must fail                      $e7
+  """
 
   val someJson = parseJson("""
       |{ "store": {

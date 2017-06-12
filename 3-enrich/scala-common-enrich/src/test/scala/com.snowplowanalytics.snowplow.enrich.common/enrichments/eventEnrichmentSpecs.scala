@@ -25,14 +25,12 @@ import org.joda.time.DateTime
 import scalaz._
 import Scalaz._
 
-class ExtractEventTypeSpec extends Specification with DataTables with ValidationMatchers { def is =
-
-  "This is a specification to test the extractEventType function"                  ^
-                                                                                  p^
-  "extractEventType should return the event name for any valid event code"         ! e1^
-  "extractEventType should return a validation failure for any invalid event code" ! e2^
-  "formatCollectorTstamp should validate collector timestamps"                     ! e3^
-                                                                                   end
+class ExtractEventTypeSpec extends Specification with DataTables with ValidationMatchers { def is = s2"""
+  This is a specification to test the extractEventType function
+  extractEventType should return the event name for any valid event code         $e1
+  extractEventType should return a validation failure for any invalid event code $e2
+  formatCollectorTstamp should validate collector timestamps                     $e3
+  """
 
   val FieldName = "e"
   def err: (String) => String = input => "Field [%s]: [%s] is not a recognised event code".format(FieldName, input)

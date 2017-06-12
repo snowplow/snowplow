@@ -19,7 +19,7 @@ import java.lang.{Float => JFloat}
 import java.lang.{Byte => JByte}
 
 // Scala
-import scala.reflect.BeanProperty
+import scala.beans.BeanProperty
 
 /**
  * The canonical output format for enriched events.
@@ -36,7 +36,7 @@ import scala.reflect.BeanProperty
  * switch remaining Bytes to Booleans).
  */
 // TODO: make the EnrichedEvent Avro-format, not Redshift-specific
-class EnrichedEvent {
+class EnrichedEvent extends Serializable {
 
   // The application (site, game, app etc) this event belongs to, and the tracker platform
   @BeanProperty var app_id: String = _

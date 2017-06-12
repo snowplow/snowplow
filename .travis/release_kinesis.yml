@@ -34,8 +34,9 @@ packages:
     override : false
     continue_on_conflict: false
     version  : <%= CMD['echo `cat VERSION` | xargs echo -n'] %>
-    build_version : <%= ENV['TRAVIS_BUILD_RELEASE_TAG'] %> 
+    build_version : <%= ENV['TRAVIS_BUILD_RELEASE_TAG'] %>
     build_commands:
+      - cd 3-enrich/scala-common-enrich && sbt +publishLocal && cd ../..
       - cd 2-collectors/scala-stream-collector && sbt assembly
       - cd 3-enrich/stream-enrich && sbt assembly
       - cd 4-storage/kinesis-elasticsearch-sink && export ELASTICSEARCH_VERSION=1x && sbt assembly
@@ -49,7 +50,7 @@ packages:
           - "{{ binary_paths.stream_enrich }}-{{ versions.stream_enrich }}"
           - "{{ binary_paths.kinesis_elasticsearch_sink }}-{{ versions.kinesis_elasticsearch_sink }}-1x"
           - "{{ binary_paths.kinesis_elasticsearch_sink }}-{{ versions.kinesis_elasticsearch_sink }}-2x"
-  
+
   - repo     : "{{ repo }}"
     name     : "snowplow-scala-stream-collector"
     user_org : "{{ user_org }}"

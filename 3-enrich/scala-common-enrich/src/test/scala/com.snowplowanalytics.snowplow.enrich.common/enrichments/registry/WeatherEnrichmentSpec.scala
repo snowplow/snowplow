@@ -38,18 +38,19 @@ object WeatherEnrichmentSpec {
 
 import WeatherEnrichmentSpec._
 class WeatherEnrichmentSpec extends Specification  { def is =
+  skipAllIf(sys.env.get(OwmApiKey).isEmpty) ^  // Actually only e4 and e6 need to be skipped
+  s2"""
+  This is a specification to test the WeatherEnrichment
+  Fail event for null time          $e1
+  Fail event for invalid key        $e5
+  Fail with invalid cache size      $e3
+  Weather enrichment client is lazy $e2
+  Extract weather stamp             $e4
+  Extract humidity                  $e6
+  Extract configuration             $e7
+  Check time stamp transformation   $e8
+  """
 
-  "This is a specification to test the WeatherEnrichment" ^
-  skipAllIf(sys.env.get(OwmApiKey).isEmpty)               ^   // Actually only e4 and e6 need to be skipped
-  "Fail event for null time"                                     ! e1^
-  "Fail event for invalid key"                                   ! e5^
-  "Fail with invalid cache size"                                 ! e3^
-  "Weather enrichment client is lazy"                            ! e2^
-  "Extract weather stamp"                                        ! e4^
-  "Extract humidity"                                             ! e6^
-  "Extract configuration"                                        ! e7^
-  "Check time stamp transformation"                              ! e8^
-                                                                   end
   lazy val validAppKey = sys.env.get(OwmApiKey).getOrElse(throw new IllegalStateException(s"No ${OwmApiKey} environment variable found, test should have been skipped"))
 
   object invalidEvent {
@@ -61,7 +62,7 @@ class WeatherEnrichmentSpec extends Specification  { def is =
   object validEvent {
     var lat: JFloat = 20.713052f
     var lon: JFloat = 70.98224f
-    var time: DateTime = new DateTime("2015-08-29T23:56:01.003+00:00")
+    var time: DateTime = new DateTime("2017-05-01T23:56:01.003+00:00")
   }
 
   def e1 = {
@@ -98,7 +99,7 @@ class WeatherEnrichmentSpec extends Specification  { def is =
     stamp.toEither must beRight.like {
       case weather: JValue => {
         val temp = weather.findField { case JField("humidity", _) => true; case _ => false }
-        temp must beSome(("humidity", JDouble(100.0)))
+        temp must beSome(("humidity", JDouble(97.0)))
       }
     }
   }
@@ -131,7 +132,7 @@ class WeatherEnrichmentSpec extends Specification  { def is =
       case weather: JValue => {
         val e = (weather \ "data").extractOpt[TransformedWeather]
         e.map(_.dt) must beSome.like {                            // succesfull transformation
-          case dt => dt must equalTo("2015-08-30T00:00:00.000Z")  // closest stamp storing on server
+          case dt => dt must equalTo("2017-05-02T00:00:00.000Z")  // closest stamp storing on server
         }
       }
     }

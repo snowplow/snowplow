@@ -27,13 +27,12 @@ import org.specs2.Specification
 import org.specs2.scalaz.ValidationMatchers
 import org.specs2.mock.Mockito
 
-class CacheSpec extends Specification with ValidationMatchers with Mockito { def is =
-  "This is a specification to test the API Request enrichment cache" ^
-                                                                    p^
-    "Update on identical URLs"                                   ! e1^
-    "Preserve ttl of cache"                                      ! e2^
-    "Remove unused value"                                        ! e3^
-                                                                 end
+class CacheSpec extends Specification with ValidationMatchers with Mockito { def is = s2"""
+  This is a specification to test the API Request enrichment cache
+  Update on identical URLs $e1
+  Preserve ttl of cache    $e2
+  Remove unused value      $e3
+  """
 
   def e1 = {
     val cache = Cache(3, 2)

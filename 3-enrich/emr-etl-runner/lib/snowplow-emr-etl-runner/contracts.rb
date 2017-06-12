@@ -112,6 +112,7 @@ module Snowplow
             :lingual => Maybe[String]
             }),
           :jobflow => ({
+            :job_name => String,
             :master_instance_type => String,
             :core_instance_count => Num,
             :core_instance_type => String,
@@ -128,15 +129,17 @@ module Snowplow
         :format => String,
         }),
       :enrich => ({
-        :job_name => String,
         :versions => ({
-          :hadoop_enrich => String,
-          :hadoop_shred => String
+          :spark_enrich => String
           }),
         :continue_on_unexpected_error => Bool,
         :output_compression => CompressionFormat
         }),
       :storage => ({
+        :versions => ({
+          :rdb_shredder => String,
+          :hadoop_elasticsearch => String
+          }),
         :download => ({
           :folder => Maybe[String]
           })

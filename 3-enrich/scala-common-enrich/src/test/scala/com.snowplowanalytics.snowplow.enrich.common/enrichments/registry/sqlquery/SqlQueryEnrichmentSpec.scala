@@ -22,13 +22,12 @@ import org.specs2.scalaz.ValidationMatchers
 // Iglu
 import com.snowplowanalytics.iglu.client.SchemaKey
 
-class SqlQueryEnrichmentSpec extends Specification with ValidationMatchers { def is =
-  "This is a specification to test the SqlQueryEnrichment configuration" ^
-                                                                      p ^
-    "Extract correct configuration"                                   ! e1 ^
-    "Fail to parse invalid configuration"                             ! e2 ^
-    "Extract correct MySQL configuration"                             ! e3 ^
-                                                                      end
+class SqlQueryEnrichmentSpec extends Specification with ValidationMatchers { def is = s2"""
+  This is a specification to test the SqlQueryEnrichment configuration
+  Extract correct configuration       $e1
+  Fail to parse invalid configuration $e2
+  Extract correct MySQL configuration $e3
+  """
 
   val SCHEMA_KEY = SchemaKey("com.snowplowanalytics.snowplow.enrichments", "sql_query_enrichment_config", "jsonschema", "1-0-0")
 
