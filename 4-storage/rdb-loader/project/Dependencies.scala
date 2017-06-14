@@ -28,7 +28,7 @@ object Dependencies {
 
     // Java
     val postgres         = "42.0.0"
-    val redshift         = "latest.integration"
+    val redshift         = "1.2.1.1001"
     val aws              = "1.10.77"
 
     // Scala (test only)
@@ -52,6 +52,7 @@ object Dependencies {
 
   // Java
   val postgres          = "org.postgresql"        % "postgresql"               % V.postgres
+  val redshift          = "com.amazon.redshift"   % "redshift-jdbc42"          % V.redshift
   val s3                = "com.amazonaws"         % "aws-java-sdk-s3"          % V.aws
 
   // Scala (test only)

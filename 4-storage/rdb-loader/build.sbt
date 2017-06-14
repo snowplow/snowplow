@@ -44,6 +44,7 @@ lazy val root = project.in(file("."))
       Dependencies.circeGenericExtra,
 
       Dependencies.postgres,
+      Dependencies.redshift,
       Dependencies.s3,
 
       Dependencies.specs2,
