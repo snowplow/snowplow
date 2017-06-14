@@ -44,6 +44,7 @@ module Snowplow
         # Defaults
         options = {
           :skip => [],
+          :include => [],
           :debug => false
         }
 
@@ -60,14 +61,15 @@ module Snowplow
           opts.on('-d', '--debug', 'enable EMR Job Flow debugging') { |config| options[:debug] = true }
           opts.on('-s', '--start YYYY-MM-DD', 'optional start date *') { |config| options[:start] = config }
           opts.on('-e', '--end YYYY-MM-DD', 'optional end date *') { |config| options[:end] = config }
-          opts.on('-x', '--skip staging,s3distcp,emr{enrich,shred,elasticsearch,archive_raw}', Array, 'skip work step(s)') { |config| options[:skip] = config }
-          opts.on('-E', '--process-enrich LOCATION', 'run enrichment only on specified location. Implies --skip staging,shred,archive_raw') { |config|
+          opts.on('-i', '--include vacuum', Array, 'include additional step(s)') { |config| options[:include] = config }
+          opts.on('-x', '--skip staging,s3distcp,emr{enrich,shred,elasticsearch,archive_raw,analyze,archive_enriched}', Array, 'skip work step(s)') { |config| options[:skip] = config }
+          opts.on('-E', '--process-enrich LOCATION', 'run enrichment only on specified location. Implies --skip staging,shred,archive_raw,analyze,archive_enriched,rdb_load') { |config|
             options[:process_enrich_location] = config
-            options[:skip] = %w(staging shred archive_raw)
+            options[:skip] = %w(staging shred archive_raw archive_enriched rdb_load analyze)
           }
-          opts.on('-S', '--process-shred LOCATION', 'run shredding only on specified location. Implies --skip staging,enrich,archive_raw') { |config|
+          opts.on('-S', '--process-shred LOCATION', 'run shredding only on specified location. Implies --skip staging,enrich,archive_raw,analyze,archive_enriched,rdb_load') { |config|
             options[:process_shred_location] = config
-            options[:skip] = %w(staging enrich archive_raw)
+            options[:skip] = %w(staging enrich archive_raw analyze rdb_load archive_enriched)
           }
 
           opts.separator ""
@@ -100,6 +102,7 @@ module Snowplow
           :start                   => options[:start],
           :end                     => options[:end],
           :skip                    => options[:skip],
+          :include                 => options[:include],
           :process_enrich_location => options[:process_enrich_location],
           :process_shred_location  => options[:process_shred_location]
         }
