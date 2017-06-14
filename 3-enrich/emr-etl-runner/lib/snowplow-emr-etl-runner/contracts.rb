@@ -28,7 +28,9 @@ module Snowplow
     # The Hash containing assets for Hadoop.
     AssetsHash = ({
       :enrich  => String,
-      :shred   => String
+      :shred   => String,
+      :loader  => String,
+      :elasticsearch => String
       })
 
     # The Hash of the CLI arguments.
@@ -138,7 +140,8 @@ module Snowplow
       :storage => ({
         :versions => ({
           :rdb_shredder => String,
-          :hadoop_elasticsearch => String
+          :hadoop_elasticsearch => String,
+          :rdb_loader => String
           }),
         :download => ({
           :folder => Maybe[String]
