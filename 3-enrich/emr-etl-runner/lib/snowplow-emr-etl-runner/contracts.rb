@@ -28,7 +28,9 @@ module Snowplow
     # The Hash containing assets for Hadoop.
     AssetsHash = ({
       :enrich  => String,
-      :shred   => String
+      :shred   => String,
+      :loader  => String,
+      :elasticsearch => String
       })
 
     # The Hash of the CLI arguments.
@@ -37,6 +39,7 @@ module Snowplow
       :start => Maybe[String],
       :end => Maybe[String],
       :skip => Maybe[ArrayOf[String]],
+      :include => Maybe[ArrayOf[String]],
       :process_enrich_location => Maybe[String],
       :process_shred_location => Maybe[String]
       })
@@ -138,10 +141,8 @@ module Snowplow
       :storage => ({
         :versions => ({
           :rdb_shredder => String,
-          :hadoop_elasticsearch => String
-          }),
-        :download => ({
-          :folder => Maybe[String]
+          :hadoop_elasticsearch => String,
+          :rdb_loader => String
           })
         }),
       :monitoring => ({
@@ -171,6 +172,11 @@ module Snowplow
         :DUPLICATE_TRACKING => Maybe[Iglu::SelfDescribingJson],
         :FAILED_EVENTS => ArrayOf[Iglu::SelfDescribingJson],
         :ENRICHED_EVENTS => ArrayOf[Iglu::SelfDescribingJson]
+    })
+
+    RdbLoaderSteps = ({
+      :skip => ArrayOf[String],
+      :include => ArrayOf[String]
     })
 
   end
