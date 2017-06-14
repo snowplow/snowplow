@@ -28,17 +28,19 @@ describe EmrJob do
   end
 
   it 'returns the Hadoop assets' do
-    EmrJob.get_assets("s3://hadoop-assets/", "1.0.0", "0.3.0", "0.1.0").should == {
+    EmrJob.get_assets("s3://hadoop-assets/", "1.0.0", "0.3.0", "0.1.0", "0.11.0").should == {
       :enrich   => "s3://hadoop-assets/3-enrich/scala-hadoop-enrich/snowplow-hadoop-enrich-1.0.0.jar",
       :shred    => "s3://hadoop-assets/3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-0.3.0.jar",
+      :loader   => "s3://hadoop-assets/4-storage/rdb-loader/snowplow-rdb-loader-0.11.0.jar",
       :elasticsearch => "s3://hadoop-assets/4-storage/hadoop-elasticsearch-sink/hadoop-elasticsearch-sink-0.1.0.jar"
     }
   end
 
   it 'returns the Hadoop assets for old versions of Hadoop Shred' do
-    EmrJob.get_assets("s3://hadoop-assets/", "0.14.2", "0.3.0", "0.1.0").should == {
+    EmrJob.get_assets("s3://hadoop-assets/", "0.14.2", "0.3.0", "0.1.0", "0.11.0").should == {
       :enrich   => "s3://hadoop-assets/3-enrich/hadoop-etl/snowplow-hadoop-etl-0.14.2.jar",
       :shred    => "s3://hadoop-assets/3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-0.3.0.jar",
+      :loader   => "s3://hadoop-assets/4-storage/rdb-loader/snowplow-rdb-loader-0.11.0.jar",
       :elasticsearch => "s3://hadoop-assets/4-storage/hadoop-elasticsearch-sink/hadoop-elasticsearch-sink-0.1.0.jar"
     }
   end
