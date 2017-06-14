@@ -19,9 +19,11 @@ import java.nio.file.Path
 import java.sql.{Connection, SQLException}
 import java.util.Properties
 
-import org.postgresql.Driver
-import org.postgresql.jdbc.PgConnection
+import org.postgresql.{Driver => PgDriver}
 import org.postgresql.copy.CopyManager
+import org.postgresql.jdbc.PgConnection
+
+import com.amazon.redshift.jdbc42.{Driver => RedshiftDriver}
 
 import cats.implicits._
 import LoaderError._
@@ -30,7 +32,7 @@ import loaders.Common.SqlString
 
 object PgInterpreter {
 
-  def executeTransaction(conn: PgConnection, queries: List[SqlString]): Either[StorageTargetError, Unit] =
+  def executeTransaction(conn: Connection, queries: List[SqlString]): Either[StorageTargetError, Unit] =
     if (queries.nonEmpty) {
       val begin = SqlString.unsafeCoerce("BEGIN;")
       val commit = SqlString.unsafeCoerce("COMMIT;")
@@ -44,7 +46,7 @@ object PgInterpreter {
    * @param queries set of valid SQL statements in string representation
    * @return number of updated rows in case of success, first failure otherwise
    */
-  def executeQueries(conn: PgConnection, queries: List[SqlString]): Either[StorageTargetError, Long] =
+  def executeQueries(conn: Connection, queries: List[SqlString]): Either[StorageTargetError, Long] =
     queries.map(executeQuery(conn)).sequence.map(_.combineAll)
 
   /**
@@ -54,7 +56,7 @@ object PgInterpreter {
    * @param sql string with valid SQL statement
    * @return number of updated rows in case of success, failure otherwise
    */
-  def executeQuery(conn: PgConnection)(sql: SqlString): Either[StorageTargetError, Int] =
+  def executeQuery(conn: Connection)(sql: SqlString): Either[StorageTargetError, Int] =
     Either.catchNonFatal {
       conn.createStatement().executeUpdate(sql)
     } leftMap {
@@ -94,16 +96,26 @@ object PgInterpreter {
       case NonFatal(e) => Left(StorageTargetError(e.toString))
     }
 
-  def getConnection(target: StorageTarget): PgConnection = {
-    val url = s"jdbc:postgresql://${target.host}:${target.port}/${target.database}"
-
+  def getConnection(target: StorageTarget): Connection = {
     val props = new Properties()
     props.setProperty("user", target.username)
     props.setProperty("password", target.password)
-    props.setProperty("sslmode", target.sslMode.asProperty)
     props.setProperty("tcpKeepAlive", "true")
 
-    new Driver().connect(url, props).asInstanceOf[PgConnection]
-  }
+    target match {
+      case r: StorageTarget.RedshiftConfig =>
+        val url = s"jdbc:redshift://${target.host}:${target.port}/${target.database}"
+        if (r.sslMode == StorageTarget.Disable) {   // "disable" and "require" are not supported
+          props.setProperty("ssl", "false")         // by native Redshift JDBC Driver
+        } else {                                    // http://docs.aws.amazon.com/redshift/latest/mgmt/configure-jdbc-options.html
+          props.setProperty("ssl", "true")
+        }
+        new RedshiftDriver().connect(url, props)
 
+      case p: StorageTarget.PostgresqlConfig =>
+        val url = s"jdbc:postgresql://${target.host}:${target.port}/${target.database}"
+        props.setProperty("sslmode", target.sslMode.asProperty)
+        new PgDriver().connect(url, props)
+    }
+  }
 }
