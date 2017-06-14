@@ -52,6 +52,7 @@ object Dependencies {
 
   // Java
   val postgres          = "org.postgresql"        % "postgresql"               % V.postgres
+  val redshift          = "com.amazon.redshift"   % "redshift-jdbc42"          % V.redshift
   val s3                = "com.amazonaws"         % "aws-java-sdk-s3"          % V.aws
 
   // Scala (test only)

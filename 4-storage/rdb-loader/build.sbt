@@ -28,7 +28,8 @@ lazy val root = project.in(file("."))
   .settings(
     resolvers ++= Seq(
       Resolver.sonatypeRepo("snapshots"),
-      Resolver.sonatypeRepo("releases")
+      Resolver.sonatypeRepo("releases"),
+      "redshift" at "http://redshift-maven-repository.s3-website-us-east-1.amazonaws.com/release"
     ),
     libraryDependencies ++= Seq(
       Dependencies.scopt,
@@ -43,6 +44,7 @@ lazy val root = project.in(file("."))
       Dependencies.circeGenericExtra,
 
       Dependencies.postgres,
+      Dependencies.redshift,
       Dependencies.s3,
 
       Dependencies.specs2,

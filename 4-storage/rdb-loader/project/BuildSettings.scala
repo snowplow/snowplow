@@ -59,6 +59,7 @@ object BuildSettings {
 
     assemblyMergeStrategy in assembly := {
       case PathList("META-INF", xs @ _*) => MergeStrategy.discard
+      case PathList("reference.conf", xs @ _*) => MergeStrategy.concat
       case x => MergeStrategy.first
     }
   )
