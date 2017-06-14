@@ -47,7 +47,7 @@ import com.snowplowanalytics.snowplow.rdbloader.{ Log => ExitLog }
  */
 class Interpreter private(
   cliConfig: CliConfig,
-  dbConnection: PgConnection,
+  dbConnection: Connection,
   amazonS3: AmazonS3,
   tracker: Option[Tracker]) {
 
