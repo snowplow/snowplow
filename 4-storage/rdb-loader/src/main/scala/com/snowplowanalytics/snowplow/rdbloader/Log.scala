@@ -28,7 +28,7 @@ object Log {
    */
   case class LoadingSucceeded(steps: List[Step]) extends Log {
     override def toString: String = {
-      s"RDB Loader successfully loading"
+      s"RDB Loader successfully completed following steps: [${steps.mkString(", ")}]"
     }
   }
 
@@ -37,7 +37,7 @@ object Log {
    */
   case class LoadingFailed(error: String, steps: List[Step]) extends Log {
     override def toString: String = {
-      s"ERROR: $error\n"
+      s"ERROR: $error\nFollowing steps completed: [${steps.mkString(",")}]"
     }
   }
 }
