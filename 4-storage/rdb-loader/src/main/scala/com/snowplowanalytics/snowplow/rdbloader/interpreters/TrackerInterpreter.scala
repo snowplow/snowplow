@@ -115,18 +115,18 @@ object TrackerInterpreter {
    * @param result loading result
    * @param dumpResult S3 dumping result
    */
-  def exit(result: Log, dumpResult: Either[String, S3.Key]): Unit = {
+  def exit(result: Log, dumpResult: Either[String, S3.Key]): Int = {
     println(result)
     (result, dumpResult) match {
       case (Log.LoadingSucceeded(_), Right(key)) =>
         println(s"INFO: Logs successfully dumped to S3 [$key]")
-        sys.exit(0)
+        0
       case (Log.LoadingFailed(_, _), Right(key)) =>
         println(s"INFO: Logs successfully dumped to S3 [$key]")
-        sys.exit(1)
+        1
       case (_, Left(error)) =>
         println(s"ERROR: Log-dumping failed: [$error]")
-        sys.exit(1)
+        1
     }
   }
 

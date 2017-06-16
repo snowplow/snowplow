@@ -34,7 +34,8 @@ object Main {
   def main(argv: Array[String]): Unit = {
     CliConfig.parse(argv) match {
       case Some(Valid(config)) =>
-        run(config)
+        val status = run(config)
+        sys.exit(status)
       case Some(Invalid(errors)) =>
         println("Configuration error")
         errors.toList.foreach(error => println(error.message))
@@ -44,22 +45,23 @@ object Main {
     }
   }
 
-  def run(config: CliConfig) = {
+  /**
+   * Initalize interpreter from parsed configuration and
+   * run all IO actions through it. Should never throw exceptions
+   *
+   * @param config parsed configuration
+   * @return exit code status. 0 for success, 1 if anything went wrong
+   */
+  def run(config: CliConfig): Int = {
     val interpreter = Interpreter.initialize(config)
     val actions = for {
       result     <- load(config).value.run(Nil)
       message     = utils.Common.interpretResult(result)
       _          <- LoaderA.track(message)
       dumpResult <- LoaderA.dump(message)
-      _          <- LoaderA.exit(message, dumpResult) // exit(1) if dump wasn't successful
-    } yield message
+      status     <- LoaderA.exit(message, dumpResult) // exit(1) if dump wasn't successful
+    } yield status
 
-    try {
-      actions.foldMap(interpreter.run)
-    } catch {
-      case NonFatal(e) =>
-        println(e)
-        sys.exit(1)
-    }
+    actions.foldMap(interpreter.run)
   }
 }

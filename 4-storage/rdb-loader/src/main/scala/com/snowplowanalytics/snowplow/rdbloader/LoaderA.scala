@@ -44,7 +44,7 @@ object LoaderA {
   case class Sleep(timeout: Long) extends LoaderA[Unit]
   case class Track(exitLog: Log) extends LoaderA[Unit]
   case class Dump(exitLog: Log) extends LoaderA[Either[String, S3.Key]]
-  case class Exit(exitLog: Log, dumpResult: Either[String, S3.Key]) extends LoaderA[Unit]
+  case class Exit(exitLog: Log, dumpResult: Either[String, S3.Key]) extends LoaderA[Int]
 
 
   def listS3(bucket: S3.Folder, maxKeys: Int = 1000): Action[Stream[S3.Key]] =
@@ -86,7 +86,7 @@ object LoaderA {
   def dump(result: Log): Action[Either[String, S3.Key]] =
     Free.liftF[LoaderA, Either[String, S3.Key]](Dump(result))
 
-  def exit(result: Log, dumpResult: Either[String, S3.Key]): Action[Unit] =
-    Free.liftF[LoaderA, Unit](Exit(result, dumpResult))
+  def exit(result: Log, dumpResult: Either[String, S3.Key]): Action[Int] =
+    Free.liftF[LoaderA, Int](Exit(result, dumpResult))
 }
 
