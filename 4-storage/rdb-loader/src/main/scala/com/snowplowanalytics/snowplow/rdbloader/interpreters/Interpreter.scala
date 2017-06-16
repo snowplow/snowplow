@@ -92,7 +92,7 @@ class Interpreter private(
               val sanitizedMessage = Common.sanitize(message, List(cliConfig.target.password, cliConfig.target.username))
               TrackerInterpreter.trackError(tracker, sanitizedMessage)
           }
-        case Dump(result) =>    // TODO!
+        case Dump(result) =>
           TrackerInterpreter.dumpStdout(amazonS3, cliConfig.logKey, result.toString)
         case Exit(loadResult, dumpResult) =>
           dbConnection.close()
