@@ -37,8 +37,7 @@ class CliConfigSpec extends Specification { def is = s2"""
       "--target", target,
       "--logkey", "s3://log-bucket/run=2017-04-12-10-01-02/abcdef-1234-8912-abcdef")
 
-    val expectedSteps: Set[Step] =
-      Set(Step.Delete, Step.Load, Step.Analyze, Step.Shred, Step.Download, Step.Discover)
+    val expectedSteps: Set[Step] = Set(Step.Analyze, Step.Shred)
 
     val expected = CliConfig(validConfig, validTarget, expectedSteps, s3("s3://log-bucket/run=2017-04-12-10-01-02/abcdef-1234-8912-abcdef"))
 
@@ -51,17 +50,12 @@ class CliConfigSpec extends Specification { def is = s2"""
     val cli = Array(
       "--config", configYml,
       "--resolver", resolver,
-      "--skip", "shred,delete",
+      "--skip", "shred",
       "--target", target,
       "-i", "vacuum",
       "--logkey", "s3://log-bucket/run=2017-04-12-10-01-02/abcdef-1234-8912-abcdef")
 
-    val expectedSteps: Set[Step] = Set(
-      Step.Load,
-      Step.Analyze,
-      Step.Download,
-      Step.Vacuum,
-      Step.Discover)
+    val expectedSteps: Set[Step] = Set(Step.Analyze, Step.Vacuum)
 
     val expected = CliConfig(validConfig, validTarget, expectedSteps, s3("s3://log-bucket/run=2017-04-12-10-01-02/abcdef-1234-8912-abcdef"))
 
@@ -75,7 +69,7 @@ class CliConfigSpec extends Specification { def is = s2"""
       "--config", invalidConfigYml,
       "--resolver", resolver,
       "--logkey", "s3://log-bucket/run=2017-04-12-10-01-02/abcdef-1234-8912-abcdef",
-      "--skip", "shred,delete",
+      "--skip", "shred",
       "--target", invalidTarget,
       "-i", "vacuum")
 
@@ -94,7 +88,7 @@ class CliConfigSpec extends Specification { def is = s2"""
     val cli = Array(
       "--config", configYml,
       "--resolver", resolver,
-      "--skip", "shred,delete",
+      "--skip", "shred",
       "--target", target,
       "-i", "vacuum,nosuchstep")
 

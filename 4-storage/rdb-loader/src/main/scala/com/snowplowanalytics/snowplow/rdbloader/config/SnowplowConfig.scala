@@ -28,7 +28,7 @@ import LoaderError._
 import utils.Common._
 
 /**
- * Full Snowplow `config.yml` runtime representation
+ * FullDiscovery Snowplow `config.yml` runtime representation
  */
 case class SnowplowConfig(
     aws: SnowplowConfig.SnowplowAws,
