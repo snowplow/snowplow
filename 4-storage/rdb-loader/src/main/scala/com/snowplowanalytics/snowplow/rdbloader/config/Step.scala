@@ -19,26 +19,31 @@ import utils.Common._
 /**
  * Step is part of loading process or result SQL-statement
  */
-sealed trait Step extends StringEnum with Product with Serializable
+sealed trait Step extends Product with Serializable
 
 object Step {
 
   /**
    * Step that will be skipped if not include it explicitly
    */
-  sealed trait IncludeStep extends Step
+  sealed trait IncludeStep extends Step with StringEnum
   case object Vacuum extends IncludeStep { def asString = "vacuum" }
 
   /**
    * Step that will be included if not skip it explicitly
    */
   sealed trait SkipStep extends Step with StringEnum
-  case object Download extends SkipStep { def asString = "download" }
   case object Analyze extends SkipStep { def asString = "analyze" }
-  case object Delete extends SkipStep { def asString = "delete" }
   case object Shred extends SkipStep { def asString = "shred" }
-  case object Load extends SkipStep { def asString = "load" }
-  case object Discover extends SkipStep { def asString = "discover" }
+
+  /**
+   * Step that cannot be skipped nor included
+   */
+  sealed trait DefaultStep extends Step
+  case object Delete extends DefaultStep
+  case object Download extends DefaultStep
+  case object Discover extends DefaultStep
+  case object Load extends DefaultStep
 
 
   implicit val optionalStepRead =

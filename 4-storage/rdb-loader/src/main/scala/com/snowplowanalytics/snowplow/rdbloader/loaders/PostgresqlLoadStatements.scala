@@ -25,10 +25,7 @@ import config.Step
  * @param analyze
  * @param vacuum
  */
-case class PostgresqlLoadStatements(
-  events: SqlString,
-  analyze: Option[SqlString],
-  vacuum: Option[SqlString])
+case class PostgresqlLoadStatements(events: SqlString, analyze: Option[SqlString], vacuum: Option[SqlString])
 
 object PostgresqlLoadStatements {
 
