@@ -53,7 +53,7 @@ object Common {
    * @param result loading process state
    * @return log entry, which can be interpreted accordingly
    */
-  def interpretResult(result: (List[Step], Either[LoaderError, Unit])): Log = {
+  def interpret(result: (List[Step], Either[LoaderError, Unit])): Log = {
     result match {
       case (steps, Right(_)) => Log.LoadingSucceeded(steps.reverse)
       case (steps, Left(error)) => Log.LoadingFailed(error.show, steps.reverse)

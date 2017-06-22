@@ -12,7 +12,6 @@
  */
 package com.snowplowanalytics.snowplow.rdbloader
 
-import cats.Functor
 import cats.implicits._
 import cats.free.Free
 
@@ -28,25 +27,38 @@ import utils.Common.toSnakeCase
  * Container for S3 folder with shredded JSONs ready to load
  * Usually it represents self-describing event or custom/derived context
  *
- * @param prefix full S3 path, where folder with shredded JSONs resides
- * @param vendor self-describing type's vendor
- * @param name self-describing type's name
- * @param model self-describing type's SchemaVer model
+ * @param info raw metadata extracted from S3 Key
+ * @param jsonPaths existing JSONPaths file
  */
-case class ShreddedType(prefix: S3.Folder, vendor: String, name: String, model: Int, jsonPaths: S3.Key) {
+case class ShreddedType(info: ShreddedType.Info, jsonPaths: S3.Key) {
   /**
    * Get S3 prefix which Redshift should LOAD FROM
    */
-  def getObjectPath: String =
-    s"$prefix$vendor/$name/jsonschema/$model-"
+  def getLoadPath: String = {
+   if (info.shredJob <= ShreddedType.ShredJobBeforeSparkVersion) {
+     s"${info.base}${info.vendor}/${info.name}/jsonschema/${info.model}-"
+   } else {
+     s"${info.base}shredded-types/vendor=${info.vendor}/name=${info.name}/format=jsonschema/version=${info.model}-"
+   }
+  }
 }
 
 /**
  * Companion object for `ShreddedType` containing discovering functions
  */
 object ShreddedType {
-  
-  case class ShreddedTypeInfo(prefix: S3.Folder, vendor: String, name: String, model: Int)
+
+  /**
+   * Raw metadata that can be parsed from S3 Key.
+   * It cannot be counted as "final" shredded type,
+   * as it's not proven to have JSONPaths file
+   *
+   * @param base s3 path run folder (without `shredded-types` suffix)
+   * @param vendor self-describing type's vendor
+   * @param name self-describing type's name
+   * @param model self-describing type's SchemaVer model
+   */
+  case class Info(base: S3.Folder, vendor: String, name: String, model: Int, shredJob: Semver)
 
   /**
    * Basis for Snowplow hosted assets bucket.
@@ -63,7 +75,8 @@ object ShreddedType {
    * Regex to extract `SchemaKey` from `shredded/good`
    */
   val ShreddedSubpathPattern =
-    ("""vendor=(?<vendor>[a-zA-Z0-9-_.]+)""" +
+    ("""shredded\-types""" +
+     """/vendor=(?<vendor>[a-zA-Z0-9-_.]+)""" +
      """/name=(?<name>[a-zA-Z0-9-_]+)""" +
      """/format=(?<format>[a-zA-Z0-9-_]+)""" +
      """/version=(?<schemaver>[1-9][0-9]*(?:-(?:0|[1-9][0-9]*)){2})$""").r
@@ -77,7 +90,12 @@ object ShreddedType {
   /**
    * vendor + name + format + version + filename
    */
-  private val MinShreddedPathLength = 5
+  private val MinShreddedPathLengthLegacy = 5
+
+  /**
+   * "shredded-types" + vendor + name + format + version + filename
+   */
+  private val MinShreddedPathLengthModern = 6
 
   /**
    * Successfully fetched JSONPaths
@@ -85,30 +103,6 @@ object ShreddedType {
    * Value: "s3://my-jsonpaths/redshift/vendor/filename_1.json"
    */
   private val cache = collection.mutable.HashMap.empty[String, S3.Key]
-
-  private val DiscoveryErr = Functor[List].compose[DiscoveryStep]
-  private val DiscoveryErrAction = Functor[Action].compose[DiscoveryStep]
-
-  /**
-   * Searches S3 for all files that can contain shredded types
-   * (not `atomic-events` and not containing special symbols `$`)
-   *
-   * @param shreddedGood path to S3 bucket with shredded types
-   * @param shredJob version of shred job to decide what path format we're discovering
-   * @param region AWS region to look for JSONPaths
-   * @return sorted set (only unique values) of discovered shredded type results,
-   *         where result can be either shredded type, or discovery error
-   */
-  def discoverShreddedTypes(
-    shreddedGood: S3.Folder,
-    shredJob: Semver,
-    region: String,
-    assets: Option[S3.Folder]
-  ): Action[List[DiscoveryStep[ShreddedType]]] = {
-
-    val keys = LoaderA.listS3(shreddedGood)
-    keys.map(keys => getShreddedTypes(keys.toList, shredJob, region, assets)).flatten
-  }
 
   /**
    * Check where JSONPaths file for particular shredded type exists:
@@ -118,7 +112,7 @@ object ShreddedType {
    * @param shreddedType some shredded type (self-describing event or context)
    * @return full valid s3 path (with `s3://` prefix)
    */
-  def discoverJsonPath(region: String, jsonpathAssets: Option[S3.Folder], shreddedType: ShreddedTypeInfo): DiscoveryAction[S3.Key] = {
+  def discoverJsonPath(region: String, jsonpathAssets: Option[S3.Folder], shreddedType: Info): DiscoveryAction[S3.Key] = {
     val filename = s"""${toSnakeCase(shreddedType.name)}_${shreddedType.model}.json"""
     val key = s"${shreddedType.vendor}/$filename"
 
@@ -144,35 +138,13 @@ object ShreddedType {
   }
 
   /**
-   * Transform list of S3 keys into list of ShreddedTypes, with their JSONPath files,
-   * or errors (either occurred on ShreddedType-transformation or JSONPath-discovery)
-   *
-   * @param paths list of all found S3 keys
-   * @param shredJob version of shred job to decide what path format we're discovering
-   *
-   * @return list (with only unique values) of discovered shredded type results,
-   *         where result can be either shredded type, or discovery error
-   */
-  def getShreddedTypes(paths: List[S3.Key], shredJob: Semver, region: String, assets: Option[S3.Folder]): Action[List[Either[DiscoveryFailure, ShreddedType]]] = {
-    val keys = paths.filterNot(inAtomicEvents).filterNot(specialFile)
-    val infos = keys.map(transformPath(_: S3.Key, shredJob)).distinct
-
-    val shreddedTypes = DiscoveryErr.map(infos) { info =>
-      val jsonPath = discoverJsonPath(region, assets, info)
-      DiscoveryErrAction.map(jsonPath)(ShreddedType(info.prefix, info.vendor, info.name, info.model, _))
-    }
-
-    flattenEffects(shreddedTypes)
-  }
-
-  /**
    * Build valid table name for some shredded type
    *
    * @param shreddedType shredded type for self-describing event or context
    * @return valid table name
    */
   def getTableName(shreddedType: ShreddedType): String =
-    s"${toSnakeCase(shreddedType.vendor)}_${toSnakeCase(shreddedType.name)}_${shreddedType.model}"
+    s"${toSnakeCase(shreddedType.info.vendor)}_${toSnakeCase(shreddedType.info.name)}_${shreddedType.info.model}"
 
   /**
    * Check that JSONPaths file exists in Snowplow hosted assets bucket
@@ -210,16 +182,16 @@ object ShreddedType {
    * @param shredJob version of shred job to decide what path format should be present
    * @return either discovery failure
    */
-  def transformPath(key: S3.Key, shredJob: Semver): Either[DiscoveryFailure, ShreddedTypeInfo] = {
+  def transformPath(key: S3.Key, shredJob: Semver): Either[DiscoveryFailure, Info] = {
     val (bucket, path) = S3.splitS3Key(key)
-    val (subpath, shredpath) = splitFilpath(path)
+    val (subpath, shredpath) = splitFilpath(path, shredJob)
     extractSchemaKey(shredpath, shredJob) match {
       case Some(schemaKey) =>
         val prefix = S3.Folder.coerce("s3://" + bucket + "/" + subpath)
-        val result = ShreddedTypeInfo(prefix, schemaKey.vendor, schemaKey.name, schemaKey.version.model)
+        val result = Info(prefix, schemaKey.vendor, schemaKey.name, schemaKey.version.model, shredJob)
         result.asRight
       case None =>
-        ShreddedTypeDiscoveryFailure(key).asLeft
+        ShreddedTypeKeyFailure(key).asLeft
     }
   }
 
@@ -243,24 +215,6 @@ object ShreddedType {
     }
 
   /**
-   * Predicate to check if S3 key is in atomic-events folder
-   *
-   * @param key full S3 path
-   * @return true if path contains `atomic-events`
-   */
-  def inAtomicEvents(key: String): Boolean =
-    key.split("/").contains("atomic-events")
-
-  /**
-   * Predicate to check if S3 key is special file like `$folder$`
-   *
-   * @param key full S3 path
-   * @return true if path contains `atomic-events`
-   */
-  def specialFile(key: String): Boolean =
-    key.contains("$")
-
-  /**
    * Split S3 filepath (without bucket name) into subpath and shreddedpath
    * Works both for legacy and modern format. Omits file
    *
@@ -271,19 +225,17 @@ object ShreddedType {
    * @param path S3 key without bucket name
    * @return pair of subpath and shredpath
    */
-  private def splitFilpath(path: String): (String, String) = {
-    path.split("/").reverse.splitAt(MinShreddedPathLength) match {
-      case (reverseSchema, reversePath) =>
-        (reversePath.reverse.mkString("/"), reverseSchema.tail.reverse.mkString("/"))
+  private def splitFilpath(path: String, shredJob: Semver): (String, String) = {
+    if (shredJob <= ShredJobBeforeSparkVersion) {
+      path.split("/").reverse.splitAt(MinShreddedPathLengthLegacy) match {
+        case (reverseSchema, reversePath) =>
+          (reversePath.reverse.mkString("/"), reverseSchema.tail.reverse.mkString("/"))
+      }
+    } else {
+      path.split("/").reverse.splitAt(MinShreddedPathLengthModern) match {
+        case (reverseSchema, reversePath) =>
+          (reversePath.reverse.mkString("/"), reverseSchema.tail.reverse.mkString("/"))
+      }
     }
-  }
-
-  /**
-   * Flatten deeply nested effects of discovery actions
-   */
-  def flattenEffects(types: List[DiscoveryStep[Action[DiscoveryStep[ShreddedType]]]]): Action[List[DiscoveryStep[ShreddedType]]] = {
-    val flattenEithers: List[Action[DiscoveryStep[ShreddedType]]] =
-      types.map(err => err.sequence.map(_.flatten))
-    flattenEithers.sequence
   }
 }

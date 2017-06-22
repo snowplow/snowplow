@@ -57,7 +57,7 @@ object SpecHelpers {
         )
       ),
       Enrich(EnrichVersions(Semver(1,9,0,None)),NoneCompression),
-      Storage(Download(None),StorageVersions(Semver(0,12,0,Some(ReleaseCandidate(4))),Semver(0,1,0,None))),
+      Storage(StorageVersions(Semver(0,12,0,Some(ReleaseCandidate(4))),Semver(0,1,0,None))),
       Monitoring(Map(),Logging(DebugLevel),Some(SnowplowMonitoring(Some(GetMethod),Some("batch-pipeline"),Some("snplow.acme.com")))))
 
   val validTarget = StorageTarget.RedshiftConfig(

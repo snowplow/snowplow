@@ -13,10 +13,12 @@
 package com.snowplowanalytics.snowplow.rdbloader
 package loaders
 
+import cats.implicits._
+
 // This project
 import Common._
-import RedshiftLoader.ShreddedStatements
-import config.{ SnowplowConfig, Step }
+import DataDiscovery.{AtomicDiscovery, FullDiscovery}
+import config.{SnowplowConfig, Step}
 import config.StorageTarget.RedshiftConfig
 
 
@@ -24,7 +26,7 @@ import config.StorageTarget.RedshiftConfig
  * Result of discovery and SQL-statement generation steps
  *
  * @param events COPY FROM statement to load `events` table
- * @param shredded COPY FROM statements to load shredded table if necessary
+ * @param shredded COPY FROM statements to load shredded tables
  * @param vacuum VACUUM statements **including `events` table** if necessary
  * @param analyze ANALYZE statements **including `events` table** if necessary
  * @param manifest SQL statement to populate `manifest` table
@@ -39,6 +41,45 @@ case class RedshiftLoadStatements(
 object RedshiftLoadStatements {
 
   val EventFieldSeparator = "\t"
+
+  /**
+   * Properly sorted lift of Redshift statements
+   * `ANALYZE` and `VACUUM` are always in last group
+   */
+  type LoadQueue = List[RedshiftLoadStatements]
+
+  /**
+   * Creates queue of Redshift load statements for each discovered run folder
+   * If there's more than one run folder, only last group of statements
+   * will contain ANALYZE and VACUUM
+   */
+  def buildQueue(config: SnowplowConfig, target: RedshiftConfig, steps: Set[Step])(discoveries: List[DataDiscovery]): LoadQueue = {
+    val init = discoveries.map(getStatements(config, target, steps)).reverse
+    val vacuum: Option[List[SqlString]] =
+      init.map(_.vacuum).sequence.map { statements => statements.flatten.distinct }
+    val analyze: Option[List[SqlString]] =
+      init.map(_.analyze).sequence.map { statements => statements.flatten.distinct }
+    val cleaned = init.map { statements => statements.copy(vacuum = None, analyze = None) }
+    val result = cleaned.head.copy(vacuum = vacuum, analyze = analyze) :: cleaned.tail
+    result.reverse
+  }
+
+  /**
+   * Transform discovery results into group of load statements (atomic, shredded, etc)
+   * More than one `RedshiftLoadStatements` must be grouped with others using `buildQueue`
+   */
+  private def getStatements(config: SnowplowConfig, target: RedshiftConfig, steps: Set[Step])(discovery: DataDiscovery): RedshiftLoadStatements = {
+    discovery match {
+      case full: FullDiscovery =>
+        val shreddedTypes = full.shreddedTypes.keys.toList
+        val shreddedStatements = shreddedTypes.map(transformShreddedType(config, target, _))
+        val atomic = RedshiftLoadStatements.buildCopyFromTsvStatement(config, target, discovery.atomicEvents)
+        buildLoadStatements(target, steps, atomic, shreddedStatements)
+      case _: AtomicDiscovery =>
+        val atomic = RedshiftLoadStatements.buildCopyFromTsvStatement(config, target, discovery.atomicEvents)
+        buildLoadStatements(target, steps, atomic, Nil)
+    }
+  }
 
   /**
    * Constructor for `RedshiftLoadStatements`. Deconstructs discovered
@@ -84,10 +125,10 @@ object RedshiftLoadStatements {
    * @param config main Snowplow configuration
    * @param target Redshift storage target configuration
    * @param s3path S3 path to atomic-events folder with shredded TSV files
-   * @param steps SQL steps
    * @return valid SQL statement to LOAD
    */
-  def buildCopyFromTsvStatement(config: SnowplowConfig, target: RedshiftConfig, s3path: S3.Folder, steps: Set[Step]): SqlString = {
+  def buildCopyFromTsvStatement(config: SnowplowConfig, target: RedshiftConfig, s3path: S3.Folder): SqlString = {
+    val credentials = getCredentials(config.aws)
     val compressionFormat = getCompressionFormat(config.enrich.outputCompression)
 
     SqlString.unsafeCoerce(s"""
@@ -109,13 +150,13 @@ object RedshiftLoadStatements {
     val eventsTable = Common.getEventsTable(databaseSchema)
 
     SqlString.unsafeCoerce(s"""
-                              |INSERT INTO ${Common.getManifestTable(databaseSchema)}
-                              | SELECT etl_tstamp, sysdate AS commit_tstamp, count(*) AS event_count, $shreddedCardinality AS shredded_cardinality
-                              | FROM $eventsTable
-                              | WHERE etl_tstamp IS NOT null
-                              | GROUP BY 1
-                              | ORDER BY etl_tstamp DESC
-                              | LIMIT 1;""".stripMargin)
+      |INSERT INTO ${Common.getManifestTable(databaseSchema)}
+      | SELECT etl_tstamp, sysdate AS commit_tstamp, count(*) AS event_count, $shreddedCardinality AS shredded_cardinality
+      | FROM $eventsTable
+      | WHERE etl_tstamp IS NOT null
+      | GROUP BY 1
+      | ORDER BY etl_tstamp DESC
+      | LIMIT 1;""".stripMargin)
   }
 
   /**

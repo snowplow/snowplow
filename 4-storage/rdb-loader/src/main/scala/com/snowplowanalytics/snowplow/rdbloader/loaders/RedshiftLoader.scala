@@ -13,15 +13,11 @@
 package com.snowplowanalytics.snowplow.rdbloader
 package loaders
 
-import cats.Functor
-import cats.data._
 import cats.free.Free
 import cats.implicits._
 
 // This project
-import Common._
 import LoaderA._
-import LoaderError._
 import RedshiftLoadStatements._
 import Common.SqlString
 import config.{ SnowplowConfig, Step }
@@ -31,8 +27,8 @@ import config.StorageTarget.RedshiftConfig
 /**
  * Module containing specific for Redshift target loading
  * Works in three steps:
- * 1. Discover all data to load, including atomic and shredded
- * 2. Discover metadata and construct SQL-statements
+ * 1. Discover all data in shredded.good
+ * 2. Construct SQL-statements
  * 3. Load data into Redshift
  * Errors of discovering steps are accumulating
  */
@@ -56,13 +52,45 @@ object RedshiftLoader {
   }
 
   /**
-   * Perform data-loading and final statements execution in target database.
-   * Should be used as last step
+   * Discovers data in `shredded.good` folder with its associated metadata
+   * (types, JSONPath files etc) and build SQL-statements to load it
+   *
+   * @param config main Snowplow configuration
+   * @param target Redshift storage target configuration
+   * @param steps SQL steps
+   * @return action to perform all necessary S3 interactions
+   */
+  def discover(config: SnowplowConfig, target: RedshiftConfig, steps: Set[Step]): Discovery[LoadQueue] = {
+    val shreddedGood = config.aws.s3.buckets.shredded.good
+    val shredJob = config.storage.versions.rdbShredder
+    val region = config.aws.s3.region
+    val assets = config.aws.s3.buckets.jsonpathAssets
+
+    val discovery = if (steps.contains(Step.Shred)) {
+      DataDiscovery.discoverFull(shreddedGood, shredJob, region, assets)
+    } else {
+      DataDiscovery.discoverAtomic(shreddedGood)
+    }
+
+    Discovery.map(discovery)(buildQueue(config, target, steps))
+  }
+
+  /**
+   * Load all discovered data one by one
+   *
+   * @param queue propertly sorted list of load statements
+   * @return application state with performed steps and success/failure result
+   */
+  def load(queue: LoadQueue) =
+    queue.traverse(loadFolder).void
+
+  /**
+   * Perform data-loading for a single run folder.
    *
    * @param statements prepared load statements
-   * @return
+   * @return application state
    */
-  def load(statements: RedshiftLoadStatements) = {
+  def loadFolder(statements: RedshiftLoadStatements): TargetLoading[LoaderError, Unit] = {
     import LoaderA._
 
     val loadStatements = statements.events :: statements.shredded
@@ -100,110 +128,6 @@ object RedshiftLoader {
       case None =>
         val noop: Action[Either[LoaderError, Long]] = Free.pure(0L.asRight)
         noop.withoutStep
-    }
-  }
-
-  /**
-   * Discovers data in `shredded.good` folder with its associated metadata
-   * (types, JSONPath files etc) and build SQL-statements to load it
-   *
-   * @param config main Snowplow configuration
-   * @param target Redshift storage target configuration
-   * @param steps SQL steps
-   * @return action to perform all necessary S3 interactions
-   */
-  def discover(config: SnowplowConfig, target: RedshiftConfig, steps: Set[Step]): Discovery[RedshiftLoadStatements] = {
-    val noop: ActionValidated[List[ShreddedStatements]] =
-      Free.pure(Nil.validNel[DiscoveryFailure])
-
-    val atomicCopy: Action[ValidatedNel[DiscoveryFailure, SqlString]] =
-      getAtomicCopyStatements(config, target, steps).map(_.toValidatedNel)
-
-    val loadShred: Action[ValidatedNel[DiscoveryFailure, List[ShreddedStatements]]] =
-      if (steps.contains(Step.Shred)) ShreddedStatements.discover(config, target) else noop
-
-    val loadStatementsNested = (Nested(atomicCopy) |@| Nested(loadShred)).map {
-      (atomic: SqlString, shred: List[ShreddedStatements]) =>
-        buildLoadStatements(target, steps, atomic, shred)
-    }
-
-    loadStatementsNested.value.map {
-      case Validated.Valid(statements) => statements.asRight
-      case Validated.Invalid(failures) => DiscoveryError(failures.toList).asLeft
-    }
-  }
-
-  /**
-   * Find remaining run id in `shredded/good` folder and build SQL statement to
-   * COPY FROM this run id
-   *
-   * @param config main Snowplow configuration
-   * @param target Redshift storage target configuration
-   * @param steps SQL steps
-   * @return valid SQL statement to LOAD
-   */
-  def getAtomicCopyStatements(config: SnowplowConfig, target: RedshiftConfig, steps: Set[Step]): DiscoveryAction[SqlString] = {
-    val atomic = Common.discoverAtomic(config.aws.s3.buckets.shredded.good)
-    DiscoveryAction.map(atomic) { (folder: S3.Folder) =>
-      buildCopyFromTsvStatement(config, target, folder, steps)
-    }
-  }
-
-  /**
-   * SQL statements for particular shredded type, grouped by their purpose
-   *
-   * @param copy main COPY FROM statement to load shredded type in its dedicate table
-   * @param analyze ANALYZE SQL-statement for dedicated table
-   * @param vacuum VACUUM SQL-statement for dedicate table
-   */
-  case class ShreddedStatements(copy: SqlString, analyze: SqlString, vacuum: SqlString)
-
-  private[loaders] object ShreddedStatements {
-
-    type StatementsDiscovery = Action[List[DiscoveryStep[ShreddedStatements]]]
-
-    private val ALDF = Functor[Action].compose[List].compose[DiscoveryStep]
-    private val ALF = Functor[Action].compose[List]
-
-    /**
-     * Build groups of SQL statement for all shredded types
-     * It discovers all shredded types in `shredded/good` (if `shred` step is not omitted),
-     * Collects all error, either on Shredded types in discovering or JSONPaths discovering
-     *
-     * @param config main Snowplow configuration
-     * @param target Redshift storage target configuration
-     * @return either list of shredded statements or aggregated failures
-     */
-    def discover(config: SnowplowConfig, target: RedshiftConfig): Action[ValidatedNel[DiscoveryFailure, List[ShreddedStatements]]] = {
-      val shredJobVersion = config.storage.versions.rdbShredder
-      val shreddedGood = config.aws.s3.buckets.shredded.good
-      val region = config.aws.s3.region
-      val assets = config.aws.s3.buckets.jsonpathAssets
-
-      val shreddedTypes =
-        ShreddedType.discoverShreddedTypes(shreddedGood, shredJobVersion, region, assets).map(_.toList)
-
-      val shreddedStatements: StatementsDiscovery =
-        ALDF.map(shreddedTypes)(transformShreddedType(config, target, _))
-
-      // Aggregate errors
-      ALF.map(shreddedStatements)(_.toValidatedNel).map(_.sequence)
-    }
-
-    /**
-     * Build group of SQL statements for particular shredded type
-     *
-     * @param config main Snowplow configuration
-     * @param target Redshift storage target configuration
-     * @param shreddedType full info about shredded type found in `shredded/good`
-     * @return three SQL-statements to load `shreddedType` from S3
-     */
-    def transformShreddedType(config: SnowplowConfig, target: RedshiftConfig, shreddedType: ShreddedType): ShreddedStatements = {
-      val tableName = target.shreddedTable(ShreddedType.getTableName(shreddedType))
-      val copyFromJson = buildCopyFromJsonStatement(config, shreddedType.getObjectPath, shreddedType.jsonPaths, tableName, target.maxError)
-      val analyze = buildAnalyzeStatement(tableName)
-      val vacuum = buildVacuumStatement(tableName)
-      ShreddedStatements(copyFromJson, analyze, vacuum)
     }
   }
 }

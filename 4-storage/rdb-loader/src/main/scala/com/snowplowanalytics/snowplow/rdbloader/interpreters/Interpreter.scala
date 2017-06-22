@@ -55,8 +55,8 @@ class Interpreter private(
 
     def apply[A](effect: LoaderA[A]): Id[A] = {
       effect match {
-        case ListS3(folder, maxKeys) =>
-          S3Interpreter.list(amazonS3, folder, maxKeys).map(S3.getKey)
+        case ListS3(folder) =>
+          S3Interpreter.list(amazonS3, folder).map(summaries => summaries.map(S3.getKey))
         case KeyExists(key) =>
           S3Interpreter.keyExists(amazonS3, key)
         case DownloadData(source, dest) =>

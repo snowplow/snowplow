@@ -17,6 +17,7 @@ import java.nio.file.Path
 import cats.free.Free
 
 // This library
+import LoaderError.DiscoveryError
 import loaders.Common.SqlString
 
 /**
@@ -27,10 +28,12 @@ sealed trait LoaderA[A]
 
 object LoaderA {
 
-  case class ListS3(bucket: S3.Folder, maxKeys: Int = 1000) extends LoaderA[Stream[S3.Key]]
+  // Discovery ops
+  case class ListS3(bucket: S3.Folder) extends LoaderA[Either[DiscoveryError, List[S3.Key]]]
   case class KeyExists(key: S3.Key) extends LoaderA[Boolean]
   case class DownloadData(path: S3.Folder, dest: Path) extends LoaderA[Either[LoaderError, List[Path]]]
 
+  // Loading ops
   case class ExecuteQuery(query: SqlString) extends LoaderA[Either[LoaderError, Int]]
   case class ExecuteQueries(queries: List[SqlString]) extends LoaderA[Either[LoaderError, Long]]
   case class ExecuteTransaction(queries: List[SqlString]) extends LoaderA[Either[LoaderError, Unit]]
@@ -47,8 +50,8 @@ object LoaderA {
   case class Exit(exitLog: Log, dumpResult: Either[String, S3.Key]) extends LoaderA[Int]
 
 
-  def listS3(bucket: S3.Folder, maxKeys: Int = 1000): Action[Stream[S3.Key]] =
-    Free.liftF[LoaderA, Stream[S3.Key]](ListS3(bucket, maxKeys))
+  def listS3(bucket: S3.Folder): Action[Either[DiscoveryError, List[S3.Key]]] =
+    Free.liftF[LoaderA, Either[DiscoveryError, List[S3.Key]]](ListS3(bucket))
 
   def keyExists(key: S3.Key): Action[Boolean] =
     Free.liftF[LoaderA, Boolean](KeyExists(key))
