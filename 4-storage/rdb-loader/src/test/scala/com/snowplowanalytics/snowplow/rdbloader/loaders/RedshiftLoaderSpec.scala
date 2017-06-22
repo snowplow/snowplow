@@ -15,20 +15,18 @@ package loaders
 
 import cats.{Id, ~>}
 import cats.data.State
+import cats.implicits._
 
 // specs2
 import org.specs2.Specification
 
 // This project
-import S3.Folder.{coerce => s3}
 import Common.SqlString.{unsafeCoerce => sql}
-import LoaderError.JsonpathDiscoveryFailure
 import config.Step
-import config.SnowplowConfig._
 
 class RedshiftLoaderSpec extends Specification { def is = s2"""
-  Disover atomic events data $e1
-  Disover atomic events data $e4
+  Disover atomic events data and create load statements $e1
+  Disover full data and create load statements $e2
   """
 
   import SpecHelpers._
@@ -36,8 +34,6 @@ class RedshiftLoaderSpec extends Specification { def is = s2"""
 
   def e1 = {
     val separator = "\t"
-    val space = " "   // Because of missing COMPUPDATE
-
     val action = RedshiftLoader.discover(validConfig, validTarget, Set.empty)
     val result = action.foldMap(RedshiftLoaderSpec.findFirstInterpreter)
 
@@ -46,7 +42,7 @@ class RedshiftLoaderSpec extends Specification { def is = s2"""
         |COPY atomic.events FROM 's3://snowplow-acme-storage/shredded/good/run=2017-05-22-12-20-57/atomic-events/'
         | CREDENTIALS 'aws_iam_role=arn:aws:iam::123456789876:role/RedshiftLoadRole' REGION AS 'us-east-1'
         | DELIMITER '$separator' MAXERROR 1
-        | EMPTYASNULL FILLRECORD TRUNCATECOLUMNS$space
+        | EMPTYASNULL FILLRECORD TRUNCATECOLUMNS
         | TIMEFORMAT 'auto' ACCEPTINVCHARS ;""".stripMargin
 
     val manifest =
@@ -59,25 +55,23 @@ class RedshiftLoaderSpec extends Specification { def is = s2"""
         | ORDER BY etl_tstamp DESC
         | LIMIT 1;""".stripMargin
 
-    val expected = RedshiftLoadStatements(sql(atomic),Nil,None,None,sql(manifest))
+    val expected = List(RedshiftLoadStatements(sql(atomic),Nil,None,None,sql(manifest)))
 
     result must beRight(expected)
   }
 
-  def e4 = {
+  def e2 = {
     val separator = "\t"
 
-    val space = " "   // Because of missing COMPUPDATE
-
-    val steps = Step.defaultSteps ++ Set(Step.Vacuum)
+    val steps: Set[Step] = Step.defaultSteps ++ Set(Step.Vacuum)
     val action = RedshiftLoader.discover(validConfig, validTarget, steps)
-    val result: Either[LoaderError, RedshiftLoadStatements] = action.foldMap(RedshiftLoaderSpec.findFirstInterpreter2)
+    val result: Either[LoaderError, List[RedshiftLoadStatements]] = action.foldMap(RedshiftLoaderSpec.findFirstInterpreter2)
 
     val atomic = s"""
          |COPY atomic.events FROM 's3://snowplow-acme-storage/shredded/good/run=2017-05-22-12-20-57/atomic-events/'
          | CREDENTIALS 'aws_iam_role=arn:aws:iam::123456789876:role/RedshiftLoadRole' REGION AS 'us-east-1'
          | DELIMITER '$separator' MAXERROR 1
-         | EMPTYASNULL FILLRECORD TRUNCATECOLUMNS$space
+         | EMPTYASNULL FILLRECORD TRUNCATECOLUMNS
          | TIMEFORMAT 'auto' ACCEPTINVCHARS ;""".stripMargin
 
     val vacuum = List(
@@ -104,9 +98,9 @@ class RedshiftLoaderSpec extends Specification { def is = s2"""
         | ORDER BY etl_tstamp DESC
         | LIMIT 1;""".stripMargin
 
-    val expected = RedshiftLoadStatements(sql(atomic), shredded, Some(vacuum), Some(analyze), sql(manifest))
+    val expected = List(RedshiftLoadStatements(sql(atomic), shredded, Some(vacuum), Some(analyze), sql(manifest)))
 
-    result must beRight(expected)
+    result.map(_.head) must beRight(expected.head)
   }
 }
 
@@ -118,8 +112,8 @@ object RedshiftLoaderSpec {
   def findFirstInterpreter2: LoaderA ~> Id = new (LoaderA ~> Id) {
     def apply[A](effect: LoaderA[A]): Id[A] = {
       effect match {
-        case ListS3(bucket, _) =>
-          Stream(
+        case ListS3(bucket) =>
+          Right(List(
             S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/atomic-events/part-00001"),
             S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/atomic-events/part-00001"),
             S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/atomic-events/part-00001"),
@@ -128,7 +122,7 @@ object RedshiftLoaderSpec {
             S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/shredded-types/vendor=com.snowplowanalytics.snowplow/name=submit_form/format=jsonschema/version=1-0-0/part-00003-fba35670-9b83-494b-be87-e7a4b1f59906.txt"),
             S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/shredded-types/vendor=com.snowplowanalytics.snowplow/name=submit_form/format=jsonschema/version=1-0-0/part-00004-fba3866a-8b90-494b-be87-e7a4b1fa9906.txt"),
             S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/shredded-types/vendor=com.snowplowanalytics.snowplow/name=submit_form/format=jsonschema/version=1-0-0/part-00005-aba3568f-7b96-494b-be87-e7a4b1fa9906.txt")
-          )
+          ))
 
         case KeyExists(k) =>
           if (k == "s3://snowplow-hosted-assets-us-east-1/4-storage/redshift-storage/jsonpaths/com.snowplowanalytics.snowplow/submit_form_1.json") {
@@ -144,8 +138,8 @@ object RedshiftLoaderSpec {
   def findFirstInterpreter: LoaderA ~> Id = new (LoaderA ~> Id) {
     def apply[A](effect: LoaderA[A]): Id[A] = {
       effect match {
-        case ListS3(bucket, _) =>
-          Stream(
+        case ListS3(bucket) =>
+          Right(List(
             S3.Key.coerce(bucket + "random-file"),
             S3.Key.coerce(bucket + "run=2017-05-22-12-20-57_$folder$"),
             S3.Key.coerce(bucket + "run=2017-0-22-12-20-57/atomic-events"),
@@ -155,7 +149,7 @@ object RedshiftLoaderSpec {
             S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/atomic-events/_SUCCESS"),
             S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/atomic-events/$folder$"),
             S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/atomic-events/part-02")
-          )
+          ))
 
         case action =>
           throw new RuntimeException(s"Unexpected Action [$action]")
@@ -180,8 +174,8 @@ object RedshiftLoaderSpec {
   def listInterpreter: LoaderA ~> Id = new (LoaderA ~> Id) {
     def apply[A](effect: LoaderA[A]): Id[A] = {
       effect match {
-        case ListS3(bucket, _) =>
-          Stream(
+        case ListS3(bucket) =>
+          Right(List(
             // These "random-file" keys will fail process for discoverShreddedTypes
             S3.Key.coerce(bucket + "random-file"),
             S3.Key.coerce(bucket + "run=2017-05-22-12-20-57_$folder$"),
@@ -192,7 +186,7 @@ object RedshiftLoaderSpec {
             S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/atomic-events/_SUCCESS"),
             S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/atomic-events/$folder$"),
             S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/atomic-events/part-02")
-          )
+          ))
         case action => throw new RuntimeException(s"Unexpected Action [$action]")
       }
     }

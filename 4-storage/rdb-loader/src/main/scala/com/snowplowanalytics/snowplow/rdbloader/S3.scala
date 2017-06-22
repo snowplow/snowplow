@@ -51,6 +51,12 @@ object S3 {
       val string = key.split("/").dropRight(1).mkString("/")
       coerce(string)
     }
+
+    private def correctlyPrefixed(s: String): Boolean =
+      supportedPrefixes.foldLeft(false) { (result, prefix) =>
+        result || s.startsWith(s"$prefix://")
+      }
+
     private def appendTrailingSlash(s: String): String =
       if (s.endsWith("/")) s
       else s + "/"

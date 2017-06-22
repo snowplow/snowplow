@@ -13,6 +13,7 @@
 package com.snowplowanalytics.snowplow.rdbloader
 package loaders
 
+import cats.Functor
 import cats.implicits._
 
 import shapeless.tag
@@ -21,7 +22,7 @@ import shapeless.tag._
 // This project
 import config.CliConfig
 import config.StorageTarget.{ PostgresqlConfig, RedshiftConfig }
-import LoaderError.{AtomicDiscoveryFailure, DiscoveryError, DiscoveryFailure}
+import LoaderError.{DiscoveryError, DiscoveryFailure}
 
 
 object Common {
@@ -69,20 +70,6 @@ object Common {
         RedshiftLoader.run(cliConfig.configYaml, redshiftTarget, cliConfig.steps)
     }
   }
-
-  /**
-   * Find S3 folder with atomic events
-   *
-   * @param shreddedGood path to shredded good directory
-   * @return `LoaderA` structure to perform search
-   */
-  def discoverAtomic(shreddedGood: S3.Folder): DiscoveryAction[S3.Folder] =
-    LoaderA.listS3(shreddedGood, 10).map { keys =>
-      keys.collectFirst(Function.unlift(S3.getAtomicPath)) match {
-        case Some(path) => path.asRight
-        case None => AtomicDiscoveryFailure(shreddedGood).asLeft
-      }
-    }
 
   /**
    * Lift single discovery step (with possible `DiscoveryFailure`)

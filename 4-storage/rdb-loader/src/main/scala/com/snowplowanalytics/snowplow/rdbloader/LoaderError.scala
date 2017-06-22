@@ -24,7 +24,7 @@ object LoaderError {
   implicit object ErrorShow extends Show[LoaderError] {
     def show(error: LoaderError): String = error match {
       case c: ConfigError => "Configuration error" + c.message
-      case d: DiscoveryError => "Data discovery error with following issues:\n" + d.failures.mkString("\n")
+      case d: DiscoveryError => "Data discovery error with following issues:\n" + d.failures.map(_.getMessage).mkString("\n")
       case l: StorageTargetError => "Data loading error " + l.message
       case l: LoaderLocalError => "Internal Exeption " + l.message
     }
@@ -85,13 +85,42 @@ object LoaderError {
   }
 
   /**
-   * Invalid shredded type `path`
+   * General S3 Exception
    */
-  case class ShreddedTypeDiscoveryFailure(path: String) extends DiscoveryFailure {
-    def getMessage: String =
-      s"Cannot discover contexts/self-describing events at [$path]. Corrupted shredded/good state or unexpected Snowplow Shred job version"
+  case class S3Failure(error: String) extends DiscoveryFailure {
+    def getMessage = error
   }
+
+  /**
+   * Invalid path for S3 key
+   */
+  case class ShreddedTypeKeyFailure(path: S3.Key) extends DiscoveryFailure {
+    def getMessage: String =
+      s"Cannot extract contexts/self-describing from file [$path]. Corrupted shredded/good state or unexpected Snowplow Shred job version"
+  }
+
+  /**
+   * Cannot discovery shredded type in folder
+   */
+  case class ShreddedTypeDiscoveryFailure(path: S3.Folder) extends DiscoveryFailure {
+    def getMessage: String =
+      s"Cannot extract contexts/self-describing from directory [$path]. Corrupted shredded/good state or unexpected Snowplow Shred job version"
+  }
+
+  case object NoDataDiscovered extends DiscoveryFailure {
+    def getMessage: String = "No data found in shredded.good folder"
+  }
+
 
   case class LoaderLocalError(message: String) extends LoaderError
 
+  /**
+   * Aggregate some failures into more compact error-list to not pollute end-error
+   */
+  def aggregateDiscoveryFailures(failures: List[DiscoveryFailure]): List[DiscoveryFailure] = {
+    val (shreddedTypeFailures, otherFailures) = failures.span(_.isInstanceOf[ShreddedTypeKeyFailure])
+    val casted = shreddedTypeFailures.asInstanceOf[List[ShreddedTypeKeyFailure]]
+    val aggregatedByDir = casted.map(failure => ShreddedTypeDiscoveryFailure(S3.Key.getParent(failure.path))).distinct
+    aggregatedByDir ++ otherFailures
+  }
 }

@@ -54,9 +54,10 @@ object Main {
    */
   def run(config: CliConfig): Int = {
     val interpreter = Interpreter.initialize(config)
+
     val actions = for {
       result     <- load(config).value.run(Nil)
-      message     = utils.Common.interpretResult(result)
+      message     = utils.Common.interpret(result)
       _          <- LoaderA.track(message)
       dumpResult <- LoaderA.dump(message)
       status     <- LoaderA.exit(message, dumpResult) // exit(1) if dump wasn't successful
