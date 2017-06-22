@@ -43,22 +43,17 @@ object Main {
     }
   }
 
-  def run(config: CliConfig) = {
+  def run(config: CliConfig): Unit = {
     val interpreter = Interpreter.initialize(config)
+
     val actions = for {
       result     <- load(config).value.run(Nil)
-      message     = utils.Common.interpretResult(result)
+      message     = utils.Common.interpret(result)
       _          <- LoaderA.track(message)
       dumpResult <- LoaderA.dump(message)
       _          <- LoaderA.exit(message, dumpResult) // exit(1) if dump wasn't successful
     } yield message
 
-    try {
-      actions.foldMap(interpreter.run)
-    } catch {
-      case NonFatal(e) =>
-        println(e)
-        sys.exit(1)
-    }
+    actions.foldMap(interpreter.run)
   }
 }

@@ -85,6 +85,13 @@ object LoaderError {
   }
 
   /**
+   * General S3 Exception
+   */
+  case class S3Failure(error: String) extends DiscoveryFailure {
+    def getMessage = error
+  }
+
+  /**
    * Invalid shredded type `path`
    */
   case class ShreddedTypeDiscoveryFailure(path: String) extends DiscoveryFailure {

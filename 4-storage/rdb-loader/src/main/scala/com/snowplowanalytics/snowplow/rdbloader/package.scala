@@ -50,9 +50,11 @@ package object rdbloader {
   type ActionValidated[A] = Action[ValidatedNel[DiscoveryFailure, A]]
 
   /**
-   * Full discovery process,
+   * FullDiscovery discovery process,
    */
   type Discovery[A] = Action[Either[DiscoveryError, A]]
+
+  val Discovery = Functor[Action].compose[Either[DiscoveryError, ?]]
 
   /**
    * Single discovery step
@@ -85,5 +87,10 @@ package object rdbloader {
         case e @ Left(_) => (last, e)
       }))
     }
+  }
+
+  implicit class AggregateErrors[A, B](eithers: List[Either[A, B]]) {
+    def aggregatedErrors: ValidatedNel[A, List[B]] =
+      eithers.map(_.toValidatedNel).sequence
   }
 }

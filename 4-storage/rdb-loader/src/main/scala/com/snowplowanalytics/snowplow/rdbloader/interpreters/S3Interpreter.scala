@@ -20,6 +20,7 @@ import cats.implicits._
 
 import scala.collection.convert.wrapAsScala._
 
+import scala.collection.convert.wrapAsScala._
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3Client }
@@ -30,13 +31,15 @@ import scala.util.control.NonFatal
 // This project
 import S3._
 import config.SnowplowConfig._
-import LoaderError.{DiscoveryError, DownloadFailure}
+import LoaderError.{DiscoveryError, DownloadFailure, S3Failure}
 
 
 /**
  * Side-effecting functions for interpreting S3 actions
  */
 object S3Interpreter {
+
+  val F = Functor[Either[LoaderError, ?]].compose[List]
 
   /**
    * Create S3 client, backed by AWS Java SDK
@@ -60,16 +63,14 @@ object S3Interpreter {
    *
    * @param client AWS Client
    * @param s3folder valid S3 folder (with trailing slash) to list
-   * @param chunkSize amount of keys to retrieve in single response
    * @return list of valid S3 keys
    */
-  def list(client: AmazonS3, s3folder: Folder, chunkSize: Int = 1000): Stream[S3ObjectSummary] = {
+  def list(client: AmazonS3, s3folder: Folder): Either[DiscoveryError, List[S3ObjectSummary]] = {
     val (bucket, prefix) = splitS3Path(s3folder)
 
     val req = new ListObjectsV2Request()
       .withBucketName(bucket)
       .withPrefix(prefix)
-      .withMaxKeys(chunkSize)
 
     def keyUnfold(result: ListObjectsV2Result, attempt: Int = 1): Stream[S3ObjectSummary] =
       if (result.isTruncated || attempt == 1) {
@@ -80,7 +81,11 @@ object S3Interpreter {
         Stream.empty[S3ObjectSummary]
       }
 
-    keyUnfold(client.listObjectsV2(req))
+    try {
+      Right(keyUnfold(client.listObjectsV2(req)).toList)
+    } catch {
+      case NonFatal(e) => Left(DiscoveryError(List(S3Failure(e.toString))))
+    }
   }
 
   /**
@@ -130,10 +135,10 @@ object S3Interpreter {
       }
     }
 
-    files.sequence match {
+    files.map(stream => stream.sequence match {
       case Left(failure) => Left(DiscoveryError(List(failure)))
       case Right(success) => Right(success.toList)
-    }
+    }).flatten
   }
 
   /**
