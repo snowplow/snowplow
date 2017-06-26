@@ -90,13 +90,12 @@ object RedshiftLoadStatements {
   def buildCopyFromTsvStatement(config: SnowplowConfig, target: RedshiftConfig, s3path: S3.Folder, steps: Set[Step]): SqlString = {
     val credentials = getCredentials(config.aws)
     val compressionFormat = getCompressionFormat(config.enrich.outputCompression)
-    val comprows = if (steps.contains(Step.Compupdate)) s"COMPUPDATE COMPROWS ${target.compRows}" else ""
 
     SqlString.unsafeCoerce(s"""
                               |COPY ${target.eventsTable} FROM '$s3path'
                               | CREDENTIALS '$credentials' REGION AS '${config.aws.s3.region}'
                               | DELIMITER '$EventFieldSeparator' MAXERROR ${target.maxError}
-                              | EMPTYASNULL FILLRECORD TRUNCATECOLUMNS $comprows
+                              | EMPTYASNULL FILLRECORD TRUNCATECOLUMNS
                               | TIMEFORMAT 'auto' ACCEPTINVCHARS $compressionFormat;""".stripMargin)
   }
 
