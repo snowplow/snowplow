@@ -89,7 +89,6 @@ object RedshiftLoadStatements {
    */
   def buildCopyFromTsvStatement(config: SnowplowConfig, target: RedshiftConfig, s3path: S3.Folder, steps: Set[Step]): SqlString = {
     val compressionFormat = getCompressionFormat(config.enrich.outputCompression)
-    val comprows = if (steps.contains(Step.Compupdate)) s"COMPUPDATE COMPROWS ${target.compRows}" else ""
 
     SqlString.unsafeCoerce(s"""
       |COPY ${target.eventsTable} FROM '$s3path'
@@ -158,8 +157,6 @@ object RedshiftLoadStatements {
     SqlString.unsafeCoerce(s"VACUUM SORT ONLY $tableName;")
 
   /**
-<<<<<<< HEAD
-=======
    * SQL statements for particular shredded type, grouped by their purpose
    *
    * @param copy main COPY FROM statement to load shredded type in its dedicate table
@@ -185,7 +182,6 @@ object RedshiftLoadStatements {
   }
 
   /**
->>>>>>> f23db2b... To original
    * Stringify output codec to use in SQL statement
    */
   private def getCompressionFormat(outputCodec: SnowplowConfig.OutputCompression): String = outputCodec match {

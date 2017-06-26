@@ -27,7 +27,6 @@ object Step {
    * Step that will be skipped if not include it explicitly
    */
   sealed trait IncludeStep extends Step
-  case object Compupdate extends IncludeStep { def asString = "compupdate" }
   case object Vacuum extends IncludeStep { def asString = "vacuum" }
 
   /**
