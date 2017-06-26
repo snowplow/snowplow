@@ -60,7 +60,6 @@ class CliConfigSpec extends Specification { def is = s2"""
       Step.Load,
       Step.Analyze,
       Step.Download,
-      Step.Compupdate,
       Step.Vacuum,
       Step.Discover)
 
@@ -78,7 +77,7 @@ class CliConfigSpec extends Specification { def is = s2"""
       "--logkey", "s3://log-bucket/run=2017-04-12-10-01-02/abcdef-1234-8912-abcdef",
       "--skip", "shred,delete",
       "--target", invalidTarget,
-      "-i", "vacuum,compupdate")
+      "-i", "vacuum")
 
     val result = CliConfig.parse(cli)
 
