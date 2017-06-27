@@ -27,18 +27,28 @@ sealed trait DataDiscovery extends Product with Serializable {
   /**
    * Shred run folder full path
    */
-  def base: S3.Folder = S3.Folder.getParent(atomicEvents)
+  def base: S3.Folder
+
+  /**
+   * Amount of keys in atomic-events directory
+   */
+  def atomicCardinality: Long
 
   /**
    * `atomic-events` directory full path
    */
-  def atomicEvents = S3.Key.getParent(atomicData.head)
+  def atomicEvents = S3.Folder.append(base, "atomic-events")
 
   /**
-   * List of files in `atomic-events` dir
-   * Exactly one `atomic-events` directory must be present
+   * Time in ms for run folder to setup eventual consistency,
+   * based on amount of atomic and shredded files
    */
-  def atomicData: DataDiscovery.AtomicData
+  def consistencyTimeout: Long = this match {
+    case DataDiscovery.AtomicDiscovery(_, _) =>
+      ((atomicCardinality * 0.1).toLong + 5L) * 1000
+    case DataDiscovery.FullDiscovery(_, _, shreddedData) =>
+      ((atomicCardinality * 0.1 * shreddedData.length).toLong + 5L) * 1000
+  }
 }
 
 /**
@@ -53,25 +63,15 @@ sealed trait DataDiscovery extends Product with Serializable {
 object DataDiscovery {
 
   /**
-   * All objects from single `atomic-events` directory
-   */
-  type AtomicData = List[S3.Key]
-
-  /**
-   * Shredded types, each containing whole list of objects in it
-   */
-  type ShreddedData = Map[ShreddedType, List[S3.Key]]
-
-  /**
    * Discovery result that contains only atomic data (list of S3 keys in `atomic-events`)
    */
-  case class AtomicDiscovery(atomicData: AtomicData) extends DataDiscovery
+  case class AtomicDiscovery(base: S3.Folder, atomicCardinality: Long) extends DataDiscovery
 
   /**
    * Full discovery result that contains both atomic data (list of S3 keys in `atomic-events`)
    * and shredded data
    */
-  case class FullDiscovery(atomicData: AtomicData, shreddedTypes: ShreddedData) extends DataDiscovery
+  case class FullDiscovery(base: S3.Folder, atomicCardinality: Long, shreddedTypes: List[ShreddedType]) extends DataDiscovery
 
   /**
    * Discover list of shred run folders, each containing
@@ -152,8 +152,8 @@ object DataDiscovery {
     }
 
     if (atomicKeys.nonEmpty) {
-      val shreddedData = shreddedKeys.groupBy(_.info).mapValues(dataKeys => dataKeys.map(_.key).reverse)
-      FullDiscovery(atomicKeys.map(_.key).reverse, shreddedData).validNel
+      val shreddedData = shreddedKeys.map(_.info).distinct
+      FullDiscovery(base, atomicKeys.length, shreddedData).validNel
     } else {
       AtomicDiscoveryFailure(base).invalidNel
     }
@@ -242,7 +242,7 @@ object DataDiscovery {
   def validateFolderAtomic(groupOfKeys: (S3.Folder, List[AtomicDataKey])): ValidatedNel[DiscoveryFailure, AtomicDiscovery] = {
     val (base, keys) = groupOfKeys
     if (keys.nonEmpty) {
-      AtomicDiscovery(keys.map(_.key)).validNel
+      AtomicDiscovery(base, keys.length).validNel
     } else {
       AtomicDiscoveryFailure(base).invalidNel
     }
@@ -266,6 +266,60 @@ object DataDiscovery {
   }
 
   def isSpecial(key: S3.Key): Boolean = key.contains("$") || key == "_SUCCESS"
+
+  // Consistency
+
+  /**
+   * Wait until S3 list result becomes consistent
+   * Waits some time after initial request, depending on cardinality of discovered folders
+   * then does identical request, and compares results
+   * If results differ - wait and request again. Repeat 5 times until requests identical
+   *
+   * @param originalAction data-discovery action
+   * @return result of same request, but with more guarantees to be consistent
+   */
+  def checkConsistency(originalAction: Discovery[List[DataDiscovery]]): Discovery[List[DataDiscovery]] = {
+    def check(checkAttempt: Int, last: Option[Either[DiscoveryError, List[DataDiscovery]]]): Discovery[List[DataDiscovery]] = {
+      val action = last.map(Free.pure[LoaderA, Either[DiscoveryError, List[DataDiscovery]]]).getOrElse(originalAction)
+
+      for {
+        original <- action
+        _        <- sleepConsistency(original)
+        control  <- originalAction
+        result   <- retry(original, control, checkAttempt + 1)
+      } yield result
+    }
+
+    def retry(
+      original: Either[DiscoveryError, List[DataDiscovery]],
+      control: Either[DiscoveryError, List[DataDiscovery]],
+      attempt: Int): Discovery[List[DataDiscovery]] = {
+      if (attempt >= 5)
+        Free.pure(control.orElse(original))
+      else if (original.isRight && original == control)
+        Free.pure(original)
+      else if (control.isLeft || original.isLeft)
+        check(attempt, None)
+      else // Both Right, but not equal
+        check(attempt, Some(control))
+    }
+
+    check(1, None)
+  }
+
+  /**
+   * Aggregates wait time for all discovered folders or wait 10 sec in case action failed
+   */
+  private def sleepConsistency(result: Either[DiscoveryError, List[DataDiscovery]]): Action[Unit] = {
+    val timeoutMs = result match {
+      case Right(list) =>
+        list.map(_.consistencyTimeout).foldLeft(10000L)(_ + _)
+      case Left(_) => 10000L
+    }
+
+    LoaderA.sleep(timeoutMs)
+  }
+
 
   // Temporary "type tags", representing validated "atomic" or "shredded" S3 keys
 

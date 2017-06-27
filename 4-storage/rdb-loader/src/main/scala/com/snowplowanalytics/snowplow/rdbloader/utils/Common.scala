@@ -76,8 +76,6 @@ object Common {
       .toLowerCase
 
 
-  private val m = ru.runtimeMirror(getClass.getClassLoader)
-
   /**
    * Common trait for all ADTs that can be read from string
    * Must be extended by sealed hierarchy including only singletons
@@ -158,6 +156,8 @@ object Common {
     else None
     descendants.getOrElse(Set.empty).map(x => getCaseObject(x).asInstanceOf[Root])
   }
+
+  private val m = ru.runtimeMirror(getClass.getClassLoader)
 
   /**
    * Reflection method to get runtime object by compiler's `Symbol`
