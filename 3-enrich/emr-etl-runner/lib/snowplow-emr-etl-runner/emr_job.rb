@@ -236,6 +236,13 @@ module Snowplow
           enrich_final_output
         end
 
+        spark_configurations = [{
+          "Classification" => "yarn-site",
+          "Properties" => {
+            "yarn.resourcemanager.am.max-attempts" => "1"
+          }
+        }]
+
         if enrich
 
           # 1. Compaction to HDFS (if applicable)
@@ -290,6 +297,7 @@ module Snowplow
           enrich_step =
             if self.class.is_spark_enrich(config[:enrich][:versions][:spark_enrich]) then
               @jobflow.add_application("Spark")
+              spark_configurations.each { |config| @jobflow.add_configuration(config) }
               build_spark_step(
                 "Enrich Raw Events",
                 assets[:enrich],
@@ -382,6 +390,7 @@ module Snowplow
             if self.class.is_rdb_shredder(config[:storage][:versions][:rdb_shredder]) then
               duplicate_storage_config = self.class.build_duplicate_storage_json(targets[:DUPLICATE_TRACKING], false)
               @jobflow.add_application("Spark")
+              spark_configurations.each { |config| @jobflow.add_configuration(config) }
               build_spark_step(
                 "Shred Enriched Events",
                 assets[:shred],
