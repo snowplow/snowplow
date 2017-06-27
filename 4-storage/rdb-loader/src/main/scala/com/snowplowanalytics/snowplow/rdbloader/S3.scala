@@ -13,6 +13,7 @@
 package com.snowplowanalytics.snowplow.rdbloader
 
 import com.amazonaws.services.s3.model.S3ObjectSummary
+
 import cats.syntax.either._
 
 import shapeless.tag
@@ -61,10 +62,6 @@ object S3 {
       if (s.endsWith("/")) s
       else s + "/"
 
-    private def fixPrefix(s: String): String =
-      if (s.startsWith("s3n")) "s3" + s.stripPrefix("s3n")
-      else if (s.startsWith("s3a")) "s3" + s.stripPrefix("s3a")
-      else s
   }
 
   /**
@@ -107,7 +104,8 @@ object S3 {
       Folder.coerce(string)
     }
 
-    def coerce(s: String) = apply(s)
+    def coerce(s: String): Key =
+      fixPrefix(s).asInstanceOf[Key]
 
     def parse(s: String): Either[String, Key] = s match {
       case _ if !correctlyPrefixed(s) => "S3 key must start with s3:// prefix".asLeft
@@ -156,4 +154,9 @@ object S3 {
       case head :: tail => (head, tail.mkString("/").stripSuffix("/"))
       case _ => throw new IllegalArgumentException(s"Invalid S3 key [$key] was passed")  // Impossible
     }
+
+  private def fixPrefix(s: String): String =
+    if (s.startsWith("s3n")) "s3" + s.stripPrefix("s3n")
+    else if (s.startsWith("s3a")) "s3" + s.stripPrefix("s3a")
+    else s
 }

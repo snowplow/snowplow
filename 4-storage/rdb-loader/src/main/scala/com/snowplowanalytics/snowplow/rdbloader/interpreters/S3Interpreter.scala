@@ -21,9 +21,6 @@ import scala.util.control.NonFatal
 import cats.Functor
 import cats.implicits._
 
-import scala.collection.convert.wrapAsScala._
-
-import scala.collection.convert.wrapAsScala._
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3Client}

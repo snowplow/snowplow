@@ -13,7 +13,6 @@
 package com.snowplowanalytics.snowplow.rdbloader
 package loaders
 
-import cats.Functor
 import cats.implicits._
 
 import shapeless.tag

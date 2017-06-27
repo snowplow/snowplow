@@ -96,26 +96,33 @@ object PgInterpreter {
       case NonFatal(e) => Left(StorageTargetError(e.toString))
     }
 
-  def getConnection(target: StorageTarget): Connection = {
-    val props = new Properties()
-    props.setProperty("user", target.username)
-    props.setProperty("password", target.password)
-    props.setProperty("tcpKeepAlive", "true")
+  /**
+   * Get Redshift or Postgres connection
+   */
+  def getConnection(target: StorageTarget): Either[LoaderError, Connection] = {
+    try {
+      val props = new Properties()
+      props.setProperty("user", target.username)
+      props.setProperty("password", target.password)
+      props.setProperty("tcpKeepAlive", "true")
 
-    target match {
-      case r: StorageTarget.RedshiftConfig =>
-        val url = s"jdbc:redshift://${target.host}:${target.port}/${target.database}"
-        if (r.sslMode == StorageTarget.Disable) {   // "disable" and "require" are not supported
-          props.setProperty("ssl", "false")         // by native Redshift JDBC Driver
-        } else {                                    // http://docs.aws.amazon.com/redshift/latest/mgmt/configure-jdbc-options.html
-          props.setProperty("ssl", "true")
-        }
-        new RedshiftDriver().connect(url, props)
+      target match {
+        case r: StorageTarget.RedshiftConfig =>
+          val url = s"jdbc:redshift://${target.host}:${target.port}/${target.database}"
+          if (r.sslMode == StorageTarget.Disable) {   // "disable" and "require" are not supported
+            props.setProperty("ssl", "false")         // by native Redshift JDBC Driver
+          } else {                                    // http://docs.aws.amazon.com/redshift/latest/mgmt/configure-jdbc-options.html
+            props.setProperty("ssl", "true")
+          }
+          Right(new RedshiftDriver().connect(url, props))
 
-      case p: StorageTarget.PostgresqlConfig =>
-        val url = s"jdbc:postgresql://${target.host}:${target.port}/${target.database}"
-        props.setProperty("sslmode", target.sslMode.asProperty)
-        new PgDriver().connect(url, props)
+        case p: StorageTarget.PostgresqlConfig =>
+          val url = s"jdbc:postgresql://${target.host}:${target.port}/${target.database}"
+          props.setProperty("sslmode", target.sslMode.asProperty)
+          Right(new PgDriver().connect(url, props))
+      }
+    } catch {
+      case NonFatal(e) => Left(StorageTargetError(s"Problems with establishing DB connection\n${e.getMessage}"))
     }
   }
 }
