@@ -14,15 +14,12 @@ package com.snowplowanalytics.snowplow.rdbloader
 
 import org.scalacheck.Gen
 
-import cats.{Id, ~>}
 import cats.implicits._
 
 import org.specs2.Specification
 import org.specs2.ScalaCheck
 
 // This project
-import S3.Folder.{ coerce => s3 }
-import S3.Key.{ coerce => s3key }
 import ShreddedType._
 import config.Semver
 
@@ -70,7 +67,6 @@ object ShreddedTypeSpec {
 
 
 }
-
 
 class ShreddedTypeSpec extends Specification with ScalaCheck { def is = s2"""
   Transform correct S3 path $e1
