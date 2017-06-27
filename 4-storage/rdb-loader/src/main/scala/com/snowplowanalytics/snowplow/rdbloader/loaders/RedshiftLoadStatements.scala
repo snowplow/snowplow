@@ -70,9 +70,8 @@ object RedshiftLoadStatements {
    */
   private def getStatements(config: SnowplowConfig, target: RedshiftConfig, steps: Set[Step])(discovery: DataDiscovery): RedshiftLoadStatements = {
     discovery match {
-      case full: FullDiscovery =>
-        val shreddedTypes = full.shreddedTypes.keys.toList
-        val shreddedStatements = shreddedTypes.map(transformShreddedType(config, target, _))
+      case discovery: FullDiscovery =>
+        val shreddedStatements = discovery.shreddedTypes.map(transformShreddedType(config, target, _))
         val atomic = RedshiftLoadStatements.buildCopyFromTsvStatement(config, target, discovery.atomicEvents)
         buildLoadStatements(target, steps, atomic, shreddedStatements)
       case _: AtomicDiscovery =>

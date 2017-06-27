@@ -23,11 +23,7 @@ import com.amazonaws.services.s3.AmazonS3
 
 import java.sql.Connection
 import java.nio.file._
-import java.util.Comparator
 
-import org.postgresql.jdbc.PgConnection
-
-import com.snowplowanalytics.snowplow.rdbloader.LoaderError.{LoaderLocalError, StorageTargetError}
 
 import scala.util.control.NonFatal
 
@@ -36,6 +32,7 @@ import com.snowplowanalytics.snowplow.scalatracker.Tracker
 // This project
 import config.CliConfig
 import LoaderA._
+import LoaderError.LoaderLocalError
 import utils.Common
 import com.snowplowanalytics.snowplow.rdbloader.{ Log => ExitLog }
 
@@ -77,13 +74,16 @@ class Interpreter private(
 
         case CreateTmpDir =>
           try {
-            Right(Files.createTempDirectory("rdb-loader"))
+            Files.createTempDirectory("rdb-loader").asRight
           } catch {
-            case NonFatal(e) => Left(LoaderLocalError("Cannot create temporary directory.\n" + e.toString))
+            case NonFatal(e) => LoaderLocalError("Cannot create temporary directory.\n" + e.toString).asLeft
           }
         case DeleteDir(path) =>
-          Files.walkFileTree(path, Interpreter.DeleteVisitor)
-          ().asInstanceOf[Id[A]]
+          try {
+            Files.walkFileTree(path, Interpreter.DeleteVisitor).asRight[LoaderError].void
+          } catch {
+            case NonFatal(e) => LoaderLocalError(s"Cannot delete directory [${path.toString}].\n" + e.toString).asLeft
+          }
 
 
         case Sleep(timeout) =>
