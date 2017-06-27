@@ -25,7 +25,7 @@ module Snowplow
 
       # Supported options
       @@collector_format_regex = /^(?:cloudfront|clj-tomcat|thrift|(?:json\/.+\/.+)|(?:tsv\/.+\/.+)|(?:ndjson\/.+\/.+))$/
-      @@skip_options = Set.new(%w(staging s3distcp emr enrich shred elasticsearch archive_raw analyze))
+      @@skip_options = Set.new(%w(staging s3distcp emr enrich shred elasticsearch archive_raw analyze archive_enriched))
       @@include_options = Set.new(%w(vacuum))
       @@storage_targets = Set.new(%w(redshift_config postgresql_config elastic_config amazon_dynamodb_config))
 
@@ -66,6 +66,7 @@ module Snowplow
           elasticsearch = not(@args[:skip].include?('elasticsearch'))
           archive_raw = not(@args[:skip].include?('archive_raw'))
           rdb_load = not(@args[:skip].include?('rdb_load'))
+          archive_enriched = not(@args[:skip].include?('archive_enriched'))
 
           # Keep relaunching the job until it succeeds or fails for a reason other than a bootstrap failure
           tries_left = @config[:aws][:emr][:bootstrap_failure_tries]
@@ -73,7 +74,7 @@ module Snowplow
           while true
             begin
               tries_left -= 1
-              job = EmrJob.new(@args[:debug], enrich, shred, elasticsearch, s3distcp, archive_raw, rdb_load, @config, @enrichments_array, @resolver_config, @targets, rdbloader_steps)
+              job = EmrJob.new(@args[:debug], enrich, shred, elasticsearch, s3distcp, archive_raw, rdb_load, archive_enriched, @config, @enrichments_array, @resolver_config, @targets, rdbloader_steps)
               job.run(@config)
               break
             rescue BootstrapFailureError => bfe

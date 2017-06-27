@@ -73,8 +73,8 @@ module Snowplow
       include Monitoring::Logging
 
       # Initializes our wrapper for the Amazon EMR client.
-      Contract Bool, Bool, Bool, Bool, Bool, Bool, Bool, ConfigHash, ArrayOf[String], String, TargetsHash, RdbLoaderSteps => EmrJob
-      def initialize(debug, enrich, shred, elasticsearch, s3distcp, archive_raw, rdb_load, config, enrichments_array, resolver, targets, rdbloader_steps)
+      Contract Bool, Bool, Bool, Bool, Bool, Bool, Bool, Bool, ConfigHash, ArrayOf[String], String, TargetsHash, RdbLoaderSteps => EmrJob
+      def initialize(debug, enrich, shred, elasticsearch, s3distcp, archive_raw, rdb_load, archive_enriched, config, enrichments_array, resolver, targets, rdbloader_steps)
 
         logger.debug "Initializing EMR jobflow"
 
@@ -471,6 +471,32 @@ module Snowplow
           end
         end
 
+        if archive_enriched
+          archive_enriched_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
+          archive_enriched_step.arguments = [
+            "--src"        , self.class.partition_by_run(csbe[:good], run_id),
+            "--dest"       , self.class.partition_by_run(csbe[:archive], run_id),
+            "--s3Endpoint" , s3_endpoint,
+            "--deleteOnSuccess"
+          ]
+          archive_enriched_step.name << ": Enriched S3 -> S3 Enriched Archive"
+          @jobflow.add_step(archive_enriched_step)
+
+          if shred
+            csbs = config[:aws][:s3][:buckets][:shredded]
+            archive_shredded_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
+            archive_shredded_step.arguments = [
+              "--src"        , self.class.partition_by_run(csbs[:good], run_id),
+              "--dest"       , self.class.partition_by_run(csbs[:archive], run_id),
+              "--s3Endpoint" , s3_endpoint,
+              "--deleteOnSuccess"
+            ]
+            archive_shredded_step.name << ": Shredded S3 -> S3 Shredded Archive"
+            @jobflow.add_step(archive_shredded_step)
+          end
+
+        end
+
         self
       end
 
@@ -530,7 +556,7 @@ module Snowplow
         end
 
         status = wait_for()
-        
+
         output_rdb_loader_logs(config[:aws][:s3][:region], config[:aws][:access_key_id], config[:aws][:secret_access_key])
 
         if status.successful
