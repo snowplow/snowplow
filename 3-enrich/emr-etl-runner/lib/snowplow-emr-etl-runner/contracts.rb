@@ -21,6 +21,8 @@ module Snowplow
 
     include Contracts
 
+    C = Contracts
+
     CompressionFormat = lambda { |s| %w(NONE GZIP).include?(s) }
     VolumeTypes = lambda { |s| %w(standard gp2 io1).include?(s) }
     PositiveInt = lambda { |i| i.is_a?(Integer) && i > 0 }
@@ -173,6 +175,12 @@ module Snowplow
         :FAILED_EVENTS => ArrayOf[Iglu::SelfDescribingJson],
         :ENRICHED_EVENTS => ArrayOf[Iglu::SelfDescribingJson]
     })
+
+    # archive_enriched can be either run as:
+    # recover - without previous steps, archive latest run_id
+    # pipeline - following the enrich and rdb_load, with known run_id
+    # skip - don't archive
+    ArchiveEnrichedStep = C::Or['recover', 'pipeline', 'skip']
 
     RdbLoaderSteps = ({
       :skip => ArrayOf[String],
