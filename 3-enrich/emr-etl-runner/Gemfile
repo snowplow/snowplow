@@ -20,7 +20,7 @@ ruby "2.3.1"
 # built with Bundler, so we add in the
 # RubyGems it requires here.
 gem "contracts", "~> 0.9", "<= 0.11"
-gem "elasticity", "~> 6.0.11"
+gem "elasticity", "~> 6.0.12"
 gem "sluice", "~> 0.4.0"
 gem "awrence", "~> 0.1.0"
 gem "snowplow-tracker", "~> 0.5.2"
