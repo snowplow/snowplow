@@ -17,7 +17,6 @@ import cats.{Id, ~>}
 import cats.data.State
 import cats.implicits._
 
-// specs2
 import org.specs2.Specification
 
 // This project
@@ -31,11 +30,34 @@ class RedshiftLoaderSpec extends Specification { def is = s2"""
 
   import SpecHelpers._
 
-
   def e1 = {
+    def interpreter: LoaderA ~> Id = new (LoaderA ~> Id) {
+      def apply[A](effect: LoaderA[A]): Id[A] = {
+        effect match {
+          case LoaderA.ListS3(bucket) =>
+            Right(List(
+              S3.Key.coerce(bucket + "random-file"),
+              S3.Key.coerce(bucket + "run=2017-05-22-12-20-57_$folder$"),
+              S3.Key.coerce(bucket + "run=2017-0-22-12-20-57/atomic-events"),
+              S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/atomic-events"),
+              S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/random-file"),
+              S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/shredded-events/part-01"),
+              S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/atomic-events/_SUCCESS"),
+              S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/atomic-events/$folder$"),
+              S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/atomic-events/part-02")
+            ))
+
+          case LoaderA.Sleep(_) => ()
+
+          case action =>
+            throw new RuntimeException(s"Unexpected Action [$action]")
+        }
+      }
+    }
+
     val separator = "\t"
     val action = RedshiftLoader.discover(validConfig, validTarget, Set.empty)
-    val result = action.foldMap(RedshiftLoaderSpec.findFirstInterpreter)
+    val result = action.foldMap(interpreter)
 
     val atomic =
       s"""
@@ -61,11 +83,39 @@ class RedshiftLoaderSpec extends Specification { def is = s2"""
   }
 
   def e2 = {
+    def interpreter: LoaderA ~> Id = new (LoaderA ~> Id) {
+      def apply[A](effect: LoaderA[A]): Id[A] = {
+        effect match {
+          case LoaderA.ListS3(bucket) =>
+            Right(List(
+              S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/atomic-events/part-00001"),
+              S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/atomic-events/part-00001"),
+              S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/atomic-events/part-00001"),
+              S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/shredded-types/vendor=com.snowplowanalytics.snowplow/name=submit_form/format=jsonschema/version=1-0-0/part-00001-dbb35260-7b12-494b-be87-e7a4b1f59906.txt"),
+              S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/shredded-types/vendor=com.snowplowanalytics.snowplow/name=submit_form/format=jsonschema/version=1-0-0/part-00002-cba3a610-0b90-494b-be87-e7a4b1f59906.txt"),
+              S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/shredded-types/vendor=com.snowplowanalytics.snowplow/name=submit_form/format=jsonschema/version=1-0-0/part-00003-fba35670-9b83-494b-be87-e7a4b1f59906.txt"),
+              S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/shredded-types/vendor=com.snowplowanalytics.snowplow/name=submit_form/format=jsonschema/version=1-0-0/part-00004-fba3866a-8b90-494b-be87-e7a4b1fa9906.txt"),
+              S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/shredded-types/vendor=com.snowplowanalytics.snowplow/name=submit_form/format=jsonschema/version=1-0-0/part-00005-aba3568f-7b96-494b-be87-e7a4b1fa9906.txt")
+            ))
+
+          case LoaderA.KeyExists(k) =>
+            if (k == "s3://snowplow-hosted-assets-us-east-1/4-storage/redshift-storage/jsonpaths/com.snowplowanalytics.snowplow/submit_form_1.json") {
+              true
+            } else false
+
+          case LoaderA.Sleep(_) => ()
+
+          case action =>
+            throw new RuntimeException(s"Unexpected Action [$action]")
+        }
+      }
+    }
+
     val separator = "\t"
 
     val steps = Step.defaultSteps ++ Set(Step.Vacuum)
     val action = RedshiftLoader.discover(validConfig, validTarget, steps)
-    val result: Either[LoaderError, List[RedshiftLoadStatements]] = action.foldMap(RedshiftLoaderSpec.findFirstInterpreter2)
+    val result: Either[LoaderError, List[RedshiftLoadStatements]] = action.foldMap(interpreter)
 
     val atomic = s"""
          |COPY atomic.events FROM 's3://snowplow-acme-storage/shredded/good/run=2017-05-22-12-20-57/atomic-events/'
@@ -104,91 +154,3 @@ class RedshiftLoaderSpec extends Specification { def is = s2"""
   }
 }
 
-object RedshiftLoaderSpec {
-  import LoaderA._
-
-  type Requests[A] = State[List[String], A]
-
-  def findFirstInterpreter2: LoaderA ~> Id = new (LoaderA ~> Id) {
-    def apply[A](effect: LoaderA[A]): Id[A] = {
-      effect match {
-        case ListS3(bucket) =>
-          Right(List(
-            S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/atomic-events/part-00001"),
-            S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/atomic-events/part-00001"),
-            S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/atomic-events/part-00001"),
-            S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/shredded-types/vendor=com.snowplowanalytics.snowplow/name=submit_form/format=jsonschema/version=1-0-0/part-00001-dbb35260-7b12-494b-be87-e7a4b1f59906.txt"),
-            S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/shredded-types/vendor=com.snowplowanalytics.snowplow/name=submit_form/format=jsonschema/version=1-0-0/part-00002-cba3a610-0b90-494b-be87-e7a4b1f59906.txt"),
-            S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/shredded-types/vendor=com.snowplowanalytics.snowplow/name=submit_form/format=jsonschema/version=1-0-0/part-00003-fba35670-9b83-494b-be87-e7a4b1f59906.txt"),
-            S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/shredded-types/vendor=com.snowplowanalytics.snowplow/name=submit_form/format=jsonschema/version=1-0-0/part-00004-fba3866a-8b90-494b-be87-e7a4b1fa9906.txt"),
-            S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/shredded-types/vendor=com.snowplowanalytics.snowplow/name=submit_form/format=jsonschema/version=1-0-0/part-00005-aba3568f-7b96-494b-be87-e7a4b1fa9906.txt")
-          ))
-
-        case KeyExists(k) =>
-          if (k == "s3://snowplow-hosted-assets-us-east-1/4-storage/redshift-storage/jsonpaths/com.snowplowanalytics.snowplow/submit_form_1.json") {
-            true
-          } else false
-
-        case action =>
-          throw new RuntimeException(s"Unexpected Action [$action]")
-      }
-    }
-  }
-
-  def findFirstInterpreter: LoaderA ~> Id = new (LoaderA ~> Id) {
-    def apply[A](effect: LoaderA[A]): Id[A] = {
-      effect match {
-        case ListS3(bucket) =>
-          Right(List(
-            S3.Key.coerce(bucket + "random-file"),
-            S3.Key.coerce(bucket + "run=2017-05-22-12-20-57_$folder$"),
-            S3.Key.coerce(bucket + "run=2017-0-22-12-20-57/atomic-events"),
-            S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/atomic-events"),
-            S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/random-file"),
-            S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/shredded-events/part-01"),
-            S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/atomic-events/_SUCCESS"),
-            S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/atomic-events/$folder$"),
-            S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/atomic-events/part-02")
-          ))
-
-        case action =>
-          throw new RuntimeException(s"Unexpected Action [$action]")
-      }
-    }
-  }
-
-  // Aggregate keyExists requests
-  def aggregateInterpreter: LoaderA ~> Requests = new (LoaderA ~> Requests) {
-    val appendRequests = (key: String, state: List[String]) => {
-      val newState = key :: state
-      (newState, false)
-    }
-    def apply[A](effect: LoaderA[A]): Requests[A] = {
-      effect match {
-        case KeyExists(key) => State(appendRequests(key, _))
-        case action => throw new RuntimeException(s"Unknown action [$action]")
-      }
-    }
-  }
-
-  def listInterpreter: LoaderA ~> Id = new (LoaderA ~> Id) {
-    def apply[A](effect: LoaderA[A]): Id[A] = {
-      effect match {
-        case ListS3(bucket) =>
-          Right(List(
-            // These "random-file" keys will fail process for discoverShreddedTypes
-            S3.Key.coerce(bucket + "random-file"),
-            S3.Key.coerce(bucket + "run=2017-05-22-12-20-57_$folder$"),
-            S3.Key.coerce(bucket + "run=2017-0-22-12-20-57/atomic-events"),
-            S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/atomic-events"),
-            S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/random-file"),
-            S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/shredded-events/part-01"),
-            S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/atomic-events/_SUCCESS"),
-            S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/atomic-events/$folder$"),
-            S3.Key.coerce(bucket + "run=2017-05-22-12-20-57/atomic-events/part-02")
-          ))
-        case action => throw new RuntimeException(s"Unexpected Action [$action]")
-      }
-    }
-  }
-}

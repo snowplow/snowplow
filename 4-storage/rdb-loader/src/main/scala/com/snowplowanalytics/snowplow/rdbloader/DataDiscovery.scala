@@ -39,6 +39,17 @@ sealed trait DataDiscovery extends Product with Serializable {
    * Exactly one `atomic-events` directory must be present
    */
   def atomicData: DataDiscovery.AtomicData
+
+  /**
+   * Time in ms for run folder to setup eventual consistency,
+   * based on amount of atomic and shredded files
+   */
+  def consistencyTimeout: Long = this match {
+    case DataDiscovery.AtomicDiscovery(atomicData) =>
+      ((atomicData.length * 0.1).toLong + 5L) * 1000
+    case DataDiscovery.FullDiscovery(atomicData, shreddedData) =>
+      ((atomicData.length * 0.1 * shreddedData.keySet.size).toLong + 5L) * 1000
+  }
 }
 
 /**
@@ -72,6 +83,7 @@ object DataDiscovery {
    * and shredded data
    */
   case class FullDiscovery(atomicData: AtomicData, shreddedTypes: ShreddedData) extends DataDiscovery
+
 
   /**
    * Discover list of shred run folders, each containing
@@ -264,6 +276,61 @@ object DataDiscovery {
   }
 
   def isSpecial(key: S3.Key): Boolean = key.contains("$") || key == "_SUCCESS"
+
+  // Consistency
+
+  /**
+   * Wait until S3 list result becomes consistent
+   * Waits some time after initial request, depending on cardinality of discovered folders
+   * then does identical request, and compares results
+   * If results differ - wait and request again. Repeat 5 times until requests identical
+   *
+   * @param originalAction data-discovery action
+   * @return result of same request, but with more guarantees to be consistent
+   */
+  def checkConsistency(originalAction: Discovery[List[DataDiscovery]]): Discovery[List[DataDiscovery]] = {
+    def check(attempt: Int, last: Option[Either[DiscoveryError, List[DataDiscovery]]]): Discovery[List[DataDiscovery]] = {
+      val action = last.map(Free.pure[LoaderA, Either[DiscoveryError, List[DataDiscovery]]]).getOrElse(originalAction)
+
+      for {
+        original <- action
+        _        <- sleepConsistency(original)
+        control  <- originalAction
+        result   <- retry(original, control, attempt)
+      } yield result
+    }
+
+    def retry(
+      original: Either[DiscoveryError, List[DataDiscovery]],
+      control: Either[DiscoveryError, List[DataDiscovery]],
+      attempt: Int
+    ): Discovery[List[DataDiscovery]] = {
+      if (original.isRight && original == control)
+        Free.pure(original)
+      else if (control.isLeft || original.isLeft)
+        check(attempt + 1, None)
+      else if (attempt >= 5)
+        Free.pure(control.orElse(original))
+      else  // Both Right, but not equal
+        check(attempt + 1, Some(control))
+    }
+
+    check(1, None)
+  }
+
+  /**
+   * Aggregates wait time for all discovered folders or wait 10 sec in case action failed
+   */
+  private def sleepConsistency(result: Either[DiscoveryError, List[DataDiscovery]]): Action[Unit] = {
+    val timeoutMs = result match {
+      case Right(list) =>
+        list.map(_.consistencyTimeout).foldLeft(10000L)(_ + _)
+      case Left(_) => 10000L
+    }
+
+    LoaderA.sleep(timeoutMs)
+  }
+
 
   // Temporary "type tags", representing validated "atomic" or "shredded" S3 keys
 
