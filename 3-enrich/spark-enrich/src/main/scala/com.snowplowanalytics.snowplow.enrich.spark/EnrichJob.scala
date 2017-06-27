@@ -75,7 +75,6 @@ object EnrichJob extends SparkJob {
   override def sparkConfig(): SparkConf = new SparkConf()
     .setAppName(getClass().getSimpleName())
     .setIfMissing("spark.master", "local[*]")
-    .set("spark.yarn.maxAppAttempts", "1")
     .set("spark.serializer", classOf[KryoSerializer].getName())
     .registerKryoClasses(classesToRegister)
 
