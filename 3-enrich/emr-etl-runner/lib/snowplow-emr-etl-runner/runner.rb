@@ -67,13 +67,21 @@ module Snowplow
           archive_raw = not(@args[:skip].include?('archive_raw'))
           rdb_load = not(@args[:skip].include?('rdb_load'))
 
+          archive_enriched = if @args[:skip].include?('archive_enriched')
+            'skip'
+          elsif enrich
+            'pipeline'
+          else
+            'recover'
+          end
+
           # Keep relaunching the job until it succeeds or fails for a reason other than a bootstrap failure
           tries_left = @config[:aws][:emr][:bootstrap_failure_tries]
           rdbloader_steps = get_rdbloader_steps()
           while true
             begin
               tries_left -= 1
-              job = EmrJob.new(@args[:debug], enrich, shred, elasticsearch, s3distcp, archive_raw, rdb_load, @config, @enrichments_array, @resolver_config, @targets, rdbloader_steps)
+              job = EmrJob.new(@args[:debug], enrich, shred, elasticsearch, s3distcp, archive_raw, rdb_load, archive_enriched, @config, @enrichments_array, @resolver_config, @targets, rdbloader_steps)
               job.run(@config)
               break
             rescue BootstrapFailureError => bfe

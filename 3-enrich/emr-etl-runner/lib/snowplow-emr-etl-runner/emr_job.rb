@@ -73,8 +73,8 @@ module Snowplow
       include Monitoring::Logging
 
       # Initializes our wrapper for the Amazon EMR client.
-      Contract Bool, Bool, Bool, Bool, Bool, Bool, Bool, ConfigHash, ArrayOf[String], String, TargetsHash, RdbLoaderSteps => EmrJob
-      def initialize(debug, enrich, shred, elasticsearch, s3distcp, archive_raw, rdb_load, config, enrichments_array, resolver, targets, rdbloader_steps)
+      Contract Bool, Bool, Bool, Bool, Bool, Bool, Bool, ArchiveEnrichedStep, ConfigHash, ArrayOf[String], String, TargetsHash, RdbLoaderSteps => EmrJob
+      def initialize(debug, enrich, shred, elasticsearch, s3distcp, archive_raw, rdb_load, archive_enriched, config, enrichments_array, resolver, targets, rdbloader_steps)
 
         logger.debug "Initializing EMR jobflow"
 
@@ -237,6 +237,7 @@ module Snowplow
         s3_endpoint = self.class.get_s3_endpoint(config[:aws][:s3][:region])
         csbr = config[:aws][:s3][:buckets][:raw]
         csbe = config[:aws][:s3][:buckets][:enriched]
+        csbs = config[:aws][:s3][:buckets][:shredded]
 
         enrich_final_output = if enrich
           self.class.partition_by_run(csbe[:good], run_id)
@@ -370,7 +371,6 @@ module Snowplow
         if shred
 
           # 3. Shredding
-          csbs = config[:aws][:s3][:buckets][:shredded]
           shred_final_output = self.class.partition_by_run(csbs[:good], run_id)
           shred_step_output = if s3distcp
             "hdfs:///local/snowplow/shredded-events/"
@@ -469,6 +469,22 @@ module Snowplow
           get_rdb_loader_steps(config, targets[:ENRICHED_EVENTS], resolver, assets[:loader], rdbloader_steps).each do |step|
             @jobflow.add_step(step)
           end
+        end
+
+        if archive_enriched == 'pipeline'
+          archive_enriched_step = get_archive_enriched_step(csbe[:good], csbe[:archive], run_id, s3_endpoint, ": Enriched S3 -> S3 Enriched Archive")
+          @jobflow.add_step(archive_enriched_step)
+          archive_shredded_step = get_archive_enriched_step(csbs[:good], csbs[:archive], run_id, s3_endpoint, ": Shredded S3 -> S3 Shredded Archive")
+          @jobflow.add_step(archive_shredded_step)
+        elsif archive_enriched == 'recover'
+          latest_run_id = get_latest_run_id(s3, csbe[:good])
+
+          archive_enriched_step = get_archive_enriched_step(csbe[:good], csbe[:archive], latest_run_id, s3_endpoint, ': Enriched S3 -> S3 Enriched Archive')
+          @jobflow.add_step(archive_enriched_step)
+          archive_shredded_step = get_archive_enriched_step(csbs[:good], csbs[:archive], latest_run_id, s3_endpoint, ": Shredded S3 -> S3 Shredded Archive")
+          @jobflow.add_step(archive_shredded_step)
+        else    # skip
+          nil
         end
 
         self
@@ -584,9 +600,9 @@ module Snowplow
               logger.error e.message
             end
           end
-
-          nil
         end
+
+        nil
       end
 
     private
@@ -649,6 +665,48 @@ module Snowplow
           rdb_loader_step
         }
       end
+
+      # List bucket (enriched:good or shredded:good) and return latest run folder
+      # Assuming, there's usually just one folder
+      #
+      # Parameters:
+      # +s3+:: AWS S3 client
+      # +s3_path+:: Full S3 path to folder
+      def get_latest_run_id(s3, s3_path)
+        uri = URI.parse(s3_path)
+        folders = s3.directories.get(uri.host, delimiter: '/', prefix: uri.path[1..-1]).files.common_prefixes
+        run_folders = folders.select { |f| f.include?('run=') }
+        begin
+          folder = run_folders[-1].split('/')[-1]
+          folder.slice('run='.length, folder.length)
+        rescue NoMethodError => _
+          logger.error "No run folders in [#{s3_path}] found"
+          raise UnexpectedStateError, "No run folders in [#{s3_path}] found"
+        end
+      end
+
+      # Defines a S3DistCp step for archiving enriched or shred folder
+      #
+      # Parameters:
+      # +good_path+:: shredded:good or enriched:good full S3 path
+      # +archive_path+:: enriched:archive or shredded:archive full S3 path
+      # +run_id_folder+:: run id foler name (2017-05-10-02-45-30, without `=run`)
+      # +name+:: step description to show in EMR console
+      #
+      # Returns a step ready for adding to the Elasticity Jobflow.
+      Contract String, String, String, String, String => Elasticity::S3DistCpStep
+      def get_archive_enriched_step(good_path, archive_path, run_id_folder, s3_endpoint, name)
+        archive_enriched_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
+        archive_enriched_step.arguments = [
+          "--src"        , self.class.partition_by_run(good_path, run_id_folder),
+          "--dest"       , self.class.partition_by_run(archive_path, run_id_folder),
+          "--s3Endpoint" , s3_endpoint,
+          "--deleteOnSuccess"
+        ]
+        archive_enriched_step.name << name
+        archive_enriched_step
+      end
+
 
       # Defines an Elasticity Scalding step.
       #

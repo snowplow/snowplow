@@ -171,7 +171,6 @@ module Snowplow
           true
         end
       end
-
     end
   end
 end
