@@ -234,7 +234,14 @@ module Snowplow
           "Properties" => {
             "yarn.resourcemanager.am.max-attempts" => "1"
           }
+        },{
+          "Classification" => "spark",
+          "Properties" => {
+            "maximizeResourceAllocation" => "true"
+          }
         }]
+        # we can't have duplicated configuration options so we can set them only once
+        enrich_or_shred_is_spark = false
 
         if enrich
 
@@ -289,8 +296,7 @@ module Snowplow
 
           enrich_step =
             if self.class.is_spark_enrich(config[:enrich][:versions][:spark_enrich]) then
-              @jobflow.add_application("Spark")
-              spark_configurations.each { |config| @jobflow.add_configuration(config) }
+              enrich_or_shred_is_spark = true
               build_spark_step(
                 "Enrich Raw Events",
                 assets[:enrich],
@@ -382,9 +388,8 @@ module Snowplow
 
           shred_step =
             if self.class.is_rdb_shredder(config[:storage][:versions][:rdb_shredder]) then
+              enrich_or_shred_is_spark = true
               duplicate_storage_config = self.class.build_duplicate_storage_json(targets[:DUPLICATE_TRACKING], false)
-              @jobflow.add_application("Spark")
-              spark_configurations.each { |config| @jobflow.add_configuration(config) }
               build_spark_step(
                 "Shred Enriched Events",
                 assets[:shred],
@@ -433,6 +438,11 @@ module Snowplow
             copy_to_s3_step.name << ": Shredded HDFS -> S3"
             @jobflow.add_step(copy_to_s3_step)
           end
+        end
+
+        if enrich_or_shred_is_spark
+          @jobflow.add_application("Spark")
+          spark_configurations.each { |config| @jobflow.add_configuration(config) }
         end
 
         if elasticsearch
