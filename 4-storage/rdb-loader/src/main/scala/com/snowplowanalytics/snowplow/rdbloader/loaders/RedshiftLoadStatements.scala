@@ -52,16 +52,20 @@ object RedshiftLoadStatements {
    * Creates queue of Redshift load statements for each discovered run folder
    * If there's more than one run folder, only last group of statements
    * will contain ANALYZE and VACUUM
+   * May return empty queue if no data was discovered
    */
   def buildQueue(config: SnowplowConfig, target: RedshiftConfig, steps: Set[Step])(discoveries: List[DataDiscovery]): LoadQueue = {
-    val init = discoveries.map(getStatements(config, target, steps)).reverse
-    val vacuum: Option[List[SqlString]] =
-      init.map(_.vacuum).sequence.map { statements => statements.flatten.distinct }
-    val analyze: Option[List[SqlString]] =
-      init.map(_.analyze).sequence.map { statements => statements.flatten.distinct }
-    val cleaned = init.map { statements => statements.copy(vacuum = None, analyze = None) }
-    val result = cleaned.head.copy(vacuum = vacuum, analyze = analyze) :: cleaned.tail
-    result.reverse
+    if (discoveries.isEmpty) Nil
+    else {
+      val init = discoveries.map(getStatements(config, target, steps)).reverse
+      val vacuum: Option[List[SqlString]] =
+        init.map(_.vacuum).sequence.map { statements => statements.flatten.distinct }
+      val analyze: Option[List[SqlString]] =
+        init.map(_.analyze).sequence.map { statements => statements.flatten.distinct }
+      val cleaned = init.map { statements => statements.copy(vacuum = None, analyze = None) }
+      val result = cleaned.head.copy(vacuum = vacuum, analyze = analyze) :: cleaned.tail
+      result.reverse
+    }
   }
 
   /**
@@ -70,9 +74,8 @@ object RedshiftLoadStatements {
    */
   private def getStatements(config: SnowplowConfig, target: RedshiftConfig, steps: Set[Step])(discovery: DataDiscovery): RedshiftLoadStatements = {
     discovery match {
-      case full: FullDiscovery =>
-        val shreddedTypes = full.shreddedTypes.keys.toList
-        val shreddedStatements = shreddedTypes.map(transformShreddedType(config, target, _))
+      case discovery: FullDiscovery =>
+        val shreddedStatements = discovery.shreddedTypes.map(transformShreddedType(config, target, _))
         val atomic = RedshiftLoadStatements.buildCopyFromTsvStatement(config, target, discovery.atomicEvents)
         buildLoadStatements(target, steps, atomic, shreddedStatements)
       case _: AtomicDiscovery =>
@@ -128,7 +131,6 @@ object RedshiftLoadStatements {
    * @return valid SQL statement to LOAD
    */
   def buildCopyFromTsvStatement(config: SnowplowConfig, target: RedshiftConfig, s3path: S3.Folder): SqlString = {
-    val credentials = getCredentials(config.aws)
     val compressionFormat = getCompressionFormat(config.enrich.outputCompression)
 
     SqlString.unsafeCoerce(s"""

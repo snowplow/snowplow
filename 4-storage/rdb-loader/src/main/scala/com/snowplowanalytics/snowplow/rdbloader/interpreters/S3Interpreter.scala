@@ -21,9 +21,6 @@ import scala.util.control.NonFatal
 import cats.Functor
 import cats.implicits._
 
-import scala.collection.convert.wrapAsScala._
-
-import scala.collection.convert.wrapAsScala._
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3Client}
@@ -59,8 +56,8 @@ object S3Interpreter {
   }
 
   /**
-   * List all keys in S3 folder.
-   * This function will return as many keys as exist in bucket
+   * List all non-empty keys in S3 folder.
+   * This function will return as many matching keys as exist in bucket
    *
    * @param client AWS Client
    * @param s3folder valid S3 folder (with trailing slash) to list
@@ -73,17 +70,18 @@ object S3Interpreter {
       .withBucketName(bucket)
       .withPrefix(prefix)
 
-    def keyUnfold(result: ListObjectsV2Result, attempt: Int = 1): Stream[S3ObjectSummary] =
-      if (result.isTruncated || attempt == 1) {
+    def keyUnfold(result: ListObjectsV2Result): Stream[S3ObjectSummary] = {
+      if (result.isTruncated) {
         val loaded = result.getObjectSummaries()
         req.setContinuationToken(result.getNextContinuationToken)
-        loaded.toStream #::: keyUnfold(client.listObjectsV2(req), attempt + 1)
+        loaded.toStream #::: keyUnfold(client.listObjectsV2(req))
       } else {
-        Stream.empty[S3ObjectSummary]
+        result.getObjectSummaries().toStream
       }
+    }
 
     try {
-      Right(keyUnfold(client.listObjectsV2(req)).toList)
+      Right(keyUnfold(client.listObjectsV2(req)).filterNot(_.getSize == 0).toList)
     } catch {
       case NonFatal(e) => Left(DiscoveryError(List(S3Failure(e.toString))))
     }

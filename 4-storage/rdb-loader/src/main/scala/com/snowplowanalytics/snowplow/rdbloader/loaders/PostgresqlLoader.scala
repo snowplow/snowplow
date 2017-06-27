@@ -18,7 +18,6 @@ import cats.free.Free
 
 // This project
 import LoaderA._
-import Common._
 import config.{Step, SnowplowConfig}
 import config.StorageTarget.PostgresqlConfig
 
@@ -40,7 +39,7 @@ object PostgresqlLoader {
 
     for {
       folders <- discovery.addStep(Step.Discover)
-      _ <- folders.traverse(loadFolder(statements)).void
+      _ <- folders.traverse(loadFolder(statements))
       _ <- analyze(statements)
       _ <- vacuum(statements)
     } yield ()
@@ -53,13 +52,13 @@ object PostgresqlLoader {
    * @param discovery discovered run folder
    * @return changed app state
    */
-  def loadFolder(statement: PostgresqlLoadStatements)(discovery: DataDiscovery): TargetLoading[LoaderError, Unit] = {
+  def loadFolder(statement: PostgresqlLoadStatements)(discovery: DataDiscovery): TargetLoading[LoaderError, Long] = {
     for {
       tmpdir <- createTmpDir.withoutStep
-      files <- downloadData(discovery.base, tmpdir).addStep(Step.Download)
-      _ <- copyViaStdin(files, statement.events).addStep(Step.Load)
-      _ <- deleteDir(tmpdir).addStep(Step.Delete)
-    } yield ()
+      files  <- downloadData(discovery.atomicEvents, tmpdir).addStep(Step.Download)
+      count  <- copyViaStdin(files, statement.events).addStep(Step.Load)
+      _      <- deleteDir(tmpdir).addStep(Step.Delete)
+    } yield count
   }
 
   /**
