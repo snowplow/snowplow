@@ -70,8 +70,8 @@ module Snowplow
       include Monitoring::Logging
 
       # Initializes our wrapper for the Amazon EMR client.
-      Contract Bool, Bool, Bool, Bool, Bool, Bool, Bool, ConfigHash, ArrayOf[String], String, TargetsHash => EmrJob
-      def initialize(debug, enrich, shred, elasticsearch, s3distcp, archive_raw, rdb_load, config, enrichments_array, resolver, targets)
+      Contract Bool, Bool, Bool, Bool, Bool, Bool, Bool, Bool, ConfigHash, ArrayOf[String], String, TargetsHash => EmrJob
+      def initialize(debug, enrich, shred, elasticsearch, s3distcp, archive_raw, rdb_load, archive_enriched, config, enrichments_array, resolver, targets)
 
         logger.debug "Initializing EMR jobflow"
 
@@ -464,6 +464,32 @@ module Snowplow
           get_rdb_loader_steps(config, targets[:ENRICHED_EVENTS], resolver, assets[:loader]).each do |step|
             @jobflow.add_step(step)
           end
+        end
+
+        if archive_enriched
+          archive_enriched_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
+          archive_enriched_step.arguments = [
+            "--src"        , csbe[:good],
+            "--dest"       , self.class.partition_by_run(csbe[:archive], run_id),
+            "--s3Endpoint" , s3_endpoint,
+            "--deleteOnSuccess"
+          ]
+          archive_enriched_step.name << ": Enriched S3 -> S3 Enriched Archive"
+          @jobflow.add_step(archive_enriched_step)
+
+          if shred
+            csbs = config[:aws][:s3][:buckets][:shredded]
+            archive_shredded_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
+            archive_shredded_step.arguments = [
+              "--src"        , csbs[:good],
+              "--dest"       , self.class.partition_by_run(csbs[:archive], run_id),
+              "--s3Endpoint" , s3_endpoint,
+              "--deleteOnSuccess"
+            ]
+            archive_shredded_step.name << ": Shredded S3 -> S3 Shredded Archive"
+            @jobflow.add_step(archive_shredded_step)
+          end
+
         end
 
         self
