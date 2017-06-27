@@ -14,20 +14,14 @@ package com.snowplowanalytics.snowplow.rdbloader
 package interpreters
 
 import java.io.IOException
+import java.nio.file._
 import java.nio.file.attribute.BasicFileAttributes
+import java.sql.Connection
 
 import cats._
 import cats.implicits._
 
 import com.amazonaws.services.s3.AmazonS3
-
-import java.sql.Connection
-import java.nio.file._
-import java.util.Comparator
-
-import org.postgresql.jdbc.PgConnection
-
-import com.snowplowanalytics.snowplow.rdbloader.LoaderError.{LoaderLocalError, StorageTargetError}
 
 import scala.util.control.NonFatal
 
@@ -36,6 +30,7 @@ import com.snowplowanalytics.snowplow.scalatracker.Tracker
 // This project
 import config.CliConfig
 import LoaderA._
+import LoaderError.LoaderLocalError
 import utils.Common
 import com.snowplowanalytics.snowplow.rdbloader.{ Log => ExitLog }
 
@@ -47,7 +42,7 @@ import com.snowplowanalytics.snowplow.rdbloader.{ Log => ExitLog }
  */
 class Interpreter private(
   cliConfig: CliConfig,
-  dbConnection: Connection,
+  dbConnection: Either[LoaderError, Connection],
   amazonS3: AmazonS3,
   tracker: Option[Tracker]) {
 
@@ -63,23 +58,38 @@ class Interpreter private(
           S3Interpreter.downloadData(amazonS3, source, dest)
 
         case ExecuteQuery(query) =>
-          PgInterpreter.executeQuery(dbConnection)(query)
+          for {
+            conn <- dbConnection
+            res <- PgInterpreter.executeQuery(conn)(query)
+          } yield res
         case ExecuteTransaction(queries) =>
-          PgInterpreter.executeTransaction(dbConnection, queries)
+          for {
+            conn <- dbConnection
+            res <- PgInterpreter.executeTransaction(conn, queries)
+          } yield res
         case ExecuteQueries(queries) =>
-          PgInterpreter.executeQueries(dbConnection, queries)
+          for {
+            conn <- dbConnection
+            res <- PgInterpreter.executeQueries(conn, queries)
+          } yield res
         case CopyViaStdin(files, query) =>
-          PgInterpreter.copyViaStdin(dbConnection, files, query)
+          for {
+            conn <- dbConnection
+            res <- PgInterpreter.copyViaStdin(conn, files, query)
+          } yield res
 
         case CreateTmpDir =>
           try {
-            Right(Files.createTempDirectory("rdb-loader"))
+            Files.createTempDirectory("rdb-loader").asRight
           } catch {
-            case NonFatal(e) => Left(LoaderLocalError("Cannot create temporary directory.\n" + e.toString))
+            case NonFatal(e) => LoaderLocalError("Cannot create temporary directory.\n" + e.toString).asLeft
           }
         case DeleteDir(path) =>
-          Files.walkFileTree(path, Interpreter.DeleteVisitor)
-          ().asInstanceOf[Id[A]]
+          try {
+            Files.walkFileTree(path, Interpreter.DeleteVisitor).asRight[LoaderError].void
+          } catch {
+            case NonFatal(e) => LoaderLocalError(s"Cannot delete directory [${path.toString}].\n" + e.toString).asLeft
+          }
 
 
         case Sleep(timeout) =>
@@ -95,7 +105,7 @@ class Interpreter private(
         case Dump(result) =>
           TrackerInterpreter.dumpStdout(amazonS3, cliConfig.logKey, result.toString)
         case Exit(loadResult, dumpResult) =>
-          dbConnection.close()
+          dbConnection.foreach(c => c.close())
           TrackerInterpreter.exit(loadResult, dumpResult)
       }
     }
@@ -124,6 +134,7 @@ object Interpreter {
    */
   def initialize(cliConfig: CliConfig): Interpreter = {
 
+    // dbConnection is Either because not required for log dump
     val dbConnection = PgInterpreter.getConnection(cliConfig.target)
     val amazonS3 = S3Interpreter.getClient(cliConfig.configYaml.aws)
     val tracker = TrackerInterpreter.initializeTracking(cliConfig.configYaml.monitoring)

@@ -14,7 +14,6 @@ package com.snowplowanalytics.snowplow.rdbloader
 package loaders
 
 import Common.SqlString
-import DataDiscovery.AtomicDiscovery
 import config.Step
 
 /**
