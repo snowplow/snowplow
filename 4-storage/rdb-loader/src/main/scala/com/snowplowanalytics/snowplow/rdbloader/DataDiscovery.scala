@@ -16,7 +16,7 @@ import cats.data.{EitherT, Validated, ValidatedNel}
 import cats.implicits._
 import cats.free.Free
 import ShreddedType._
-import LoaderError.{AtomicDiscoveryFailure, DiscoveryError, DiscoveryFailure, NoDataDiscovered}
+import LoaderError.{AtomicDiscoveryFailure, DiscoveryError, DiscoveryFailure}
 import config.Semver
 
 /**
@@ -26,18 +26,28 @@ sealed trait DataDiscovery extends Product with Serializable {
   /**
    * Shred run folder full path
    */
-  def base: S3.Folder = S3.Folder.getParent(atomicEvents)
+  def base: S3.Folder
+
+  /**
+   * Amount of keys in atomic-events directory
+   */
+  def atomicCardinality: Long
 
   /**
    * `atomic-events` directory full path
    */
-  def atomicEvents = S3.Key.getParent(atomicData.head)
+  def atomicEvents = S3.Folder.append(base, "atomic-events")
 
   /**
-   * List of files in `atomic-events` dir
-   * Exactly one `atomic-events` directory must be present
+   * Time in ms for run folder to setup eventual consistency,
+   * based on amount of atomic and shredded files
    */
-  def atomicData: DataDiscovery.AtomicData
+  def consistencyTimeout: Long = this match {
+    case DataDiscovery.AtomicDiscovery(_, _) =>
+      ((atomicCardinality * 0.1).toLong + 5L) * 1000
+    case DataDiscovery.FullDiscovery(_, _, shreddedData) =>
+      ((atomicCardinality * 0.1 * shreddedData.length).toLong + 5L) * 1000
+  }
 }
 
 /**
@@ -52,25 +62,15 @@ sealed trait DataDiscovery extends Product with Serializable {
 object DataDiscovery {
 
   /**
-   * All objects from single `atomic-events` directory
-   */
-  type AtomicData = List[S3.Key]
-
-  /**
-   * Shredded types, each containing whole list of objects in it
-   */
-  type ShreddedData = Map[ShreddedType, List[S3.Key]]
-
-  /**
    * Discovery result that contains only atomic data (list of S3 keys in `atomic-events`)
    */
-  case class AtomicDiscovery(atomicData: AtomicData) extends DataDiscovery
+  case class AtomicDiscovery(base: S3.Folder, atomicCardinality: Long) extends DataDiscovery
 
   /**
    * Full discovery result that contains both atomic data (list of S3 keys in `atomic-events`)
    * and shredded data
    */
-  case class FullDiscovery(atomicData: AtomicData, shreddedTypes: ShreddedData) extends DataDiscovery
+  case class FullDiscovery(base: S3.Folder, atomicCardinality: Long, shreddedTypes: List[ShreddedType]) extends DataDiscovery
 
   /**
    * Discover list of shred run folders, each containing
@@ -84,7 +84,7 @@ object DataDiscovery {
    * @param shredJob shred job version to check path pattern
    * @param region AWS region for S3 buckets
    * @param assets optional JSONPath assets S3 bucket
-   * @return non-empty list (usually with single element) of discover results
+   * @return list (probably empty, but usually with single element) of discover results
    *         (atomic events and shredded types)
    */
   def discoverFull(shreddedGood: S3.Folder, shredJob: Semver, region: String, assets: Option[S3.Folder]): Discovery[List[DataDiscovery]] = {
@@ -94,8 +94,7 @@ object DataDiscovery {
     val result = for {
       keys <- EitherT(validatedDataKeys)
       discovery <- EitherT(groupKeysFull(keys))
-      list <- EitherT.fromEither[Action](checkNonEmpty(discovery))
-    } yield list
+    } yield discovery
     result.value
   }
 
@@ -152,8 +151,8 @@ object DataDiscovery {
     }
 
     if (atomicKeys.nonEmpty) {
-      val shreddedData = shreddedKeys.groupBy(_.info).mapValues(dataKeys => dataKeys.map(_.key).reverse)
-      FullDiscovery(atomicKeys.map(_.key).reverse, shreddedData).validNel
+      val shreddedData = shreddedKeys.map(_.info).distinct
+      FullDiscovery(base, atomicKeys.length, shreddedData).validNel
     } else {
       AtomicDiscoveryFailure(base).invalidNel
     }
@@ -242,7 +241,7 @@ object DataDiscovery {
   def validateFolderAtomic(groupOfKeys: (S3.Folder, List[AtomicDataKey])): ValidatedNel[DiscoveryFailure, AtomicDiscovery] = {
     val (base, keys) = groupOfKeys
     if (keys.nonEmpty) {
-      AtomicDiscovery(keys.map(_.key)).validNel
+      AtomicDiscovery(base, keys.length).validNel
     } else {
       AtomicDiscoveryFailure(base).invalidNel
     }
@@ -306,15 +305,6 @@ object DataDiscovery {
 
     check(1, None)
   }
-
-  /**
-   * Check that list of discovered folders is non-empty
-   */
-  private def checkNonEmpty(discovery: List[DataDiscovery]): Either[DiscoveryError, List[DataDiscovery]] =
-    if (discovery.isEmpty)
-      Left(DiscoveryError(List(NoDataDiscovered)))
-    else
-      Right(discovery)
 
   /**
    * Aggregates wait time for all discovered folders or wait 10 sec in case action failed

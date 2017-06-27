@@ -69,7 +69,7 @@ object BuildSettings {
     sourceGenerators in Compile += Def.task {
       val file = (sourceManaged in Compile).value / "settings.scala"
       IO.write(file, """package com.snowplowanalytics.snowplow.rdbloader.generated
-                       |object ProjectSettings {
+                       |object ProjectMetadata {
                        |  val version = "%s"
                        |  val name = "%s"
                        |  val organization = "%s"

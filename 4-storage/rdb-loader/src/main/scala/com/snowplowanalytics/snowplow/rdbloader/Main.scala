@@ -14,8 +14,6 @@ package com.snowplowanalytics.snowplow.rdbloader
 
 import cats.data.Validated._
 
-import scala.util.control.NonFatal
-
 // This project
 import interpreters.Interpreter
 import config.CliConfig

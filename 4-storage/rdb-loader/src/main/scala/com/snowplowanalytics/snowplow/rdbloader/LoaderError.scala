@@ -96,21 +96,16 @@ object LoaderError {
    */
   case class ShreddedTypeKeyFailure(path: S3.Key) extends DiscoveryFailure {
     def getMessage: String =
-      s"Cannot extract contexts/self-describing from file [$path]. Corrupted shredded/good state or unexpected Snowplow Shred job version"
+      s"Cannot extract contexts or self-describing events from file [$path]. Corrupted shredded/good state or unexpected Snowplow Shred job version"
   }
 
   /**
    * Cannot discovery shredded type in folder
    */
-  case class ShreddedTypeDiscoveryFailure(path: S3.Folder) extends DiscoveryFailure {
+  case class ShreddedTypeDiscoveryFailure(path: S3.Folder, invalidKeyCount: Int, example: S3.Key) extends DiscoveryFailure {
     def getMessage: String =
-      s"Cannot extract contexts/self-describing from directory [$path]. Corrupted shredded/good state or unexpected Snowplow Shred job version"
+      s"Cannot extract contexts or self-describing events from directory [$path].\nInvalid key example: $example. Total $invalidKeyCount invalid keys.\nCorrupted shredded/good state or unexpected Snowplow Shred job version"
   }
-
-  case object NoDataDiscovered extends DiscoveryFailure {
-    def getMessage: String = "No data found in shredded.good folder"
-  }
-
 
   case class LoaderLocalError(message: String) extends LoaderError
 
@@ -120,7 +115,11 @@ object LoaderError {
   def aggregateDiscoveryFailures(failures: List[DiscoveryFailure]): List[DiscoveryFailure] = {
     val (shreddedTypeFailures, otherFailures) = failures.span(_.isInstanceOf[ShreddedTypeKeyFailure])
     val casted = shreddedTypeFailures.asInstanceOf[List[ShreddedTypeKeyFailure]]
-    val aggregatedByDir = casted.map(failure => ShreddedTypeDiscoveryFailure(S3.Key.getParent(failure.path))).distinct
+    val aggregatedByDir = casted.groupBy { failure =>
+      S3.Key.getParent(failure.path) }.map {
+      case (k, v) => ShreddedTypeDiscoveryFailure(k, v.length, v.head.path)
+    }.toList
+
     aggregatedByDir ++ otherFailures
   }
 }

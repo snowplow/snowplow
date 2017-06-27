@@ -73,11 +73,11 @@ package object rdbloader {
    * state in `current`, but also can short-circuit
    * with error message
    */
-  implicit class StatefulLoading[A, B](loading: Action[Either[B, A]]) {
+  implicit class StatefulLoading[A, B](val loading: Action[Either[B, A]]) extends AnyVal {
     def addStep(current: Step): TargetLoading[B, A] = {
       EitherT(StateT((last: List[Step]) => loading.map {
-        case e @ Right(_) => (current :: last, e)
-        case e @ Left(_) => (last, e)
+        case Right(e) => (current :: last, Right(e))
+        case Left(e) => (last, Left(e))
       }))
     }
 
