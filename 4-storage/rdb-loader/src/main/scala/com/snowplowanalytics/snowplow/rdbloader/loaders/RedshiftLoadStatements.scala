@@ -70,9 +70,8 @@ object RedshiftLoadStatements {
    */
   private def getStatements(config: SnowplowConfig, target: RedshiftConfig, steps: Set[Step])(discovery: DataDiscovery): RedshiftLoadStatements = {
     discovery match {
-      case full: FullDiscovery =>
-        val shreddedTypes = full.shreddedTypes.keys.toList
-        val shreddedStatements = shreddedTypes.map(transformShreddedType(config, target, _))
+      case discovery: FullDiscovery =>
+        val shreddedStatements = discovery.shreddedTypes.map(transformShreddedType(config, target, _))
         val atomic = RedshiftLoadStatements.buildCopyFromTsvStatement(config, target, discovery.atomicEvents)
         buildLoadStatements(target, steps, atomic, shreddedStatements)
       case _: AtomicDiscovery =>
@@ -128,7 +127,6 @@ object RedshiftLoadStatements {
    * @return valid SQL statement to LOAD
    */
   def buildCopyFromTsvStatement(config: SnowplowConfig, target: RedshiftConfig, s3path: S3.Folder): SqlString = {
-    val credentials = getCredentials(config.aws)
     val compressionFormat = getCompressionFormat(config.enrich.outputCompression)
 
     SqlString.unsafeCoerce(s"""

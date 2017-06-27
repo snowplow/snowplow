@@ -197,8 +197,8 @@ object ShreddedType {
 
   /**
    * Extract `SchemaKey` from subpath, which can be
-   * legacy-style (pre 1.5.0) com.acme/schema-name/jsonschema/1-0-0 or
-   * modern-style (post-1.5.0) vendor=com.acme/name=schema-name/format=jsonschema/version=1-0-0
+   * legacy-style (pre-0.12.0) com.acme/schema-name/jsonschema/1-0-0 or
+   * modern-style (post-0.12.0) vendor=com.acme/name=schema-name/format=jsonschema/version=1-0-0
    * This function transforms any of above valid paths to `SchemaKey`
    *
    * @param subpath S3 subpath of four `SchemaKey` elements
