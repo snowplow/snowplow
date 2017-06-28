@@ -21,6 +21,8 @@ require 'json'
 require 'base64'
 require 'contracts'
 require 'iglu-client'
+require 'securerandom'
+require 'tempfile'
 
 # Global variable used to decide whether to patch Elasticity's AwsRequestV4 payload with Configurations
 # This is only necessary if we are loading Thrift with AMI >= 4.0.0
@@ -87,6 +89,8 @@ module Snowplow
         run_tstamp = Time.new
         run_id = run_tstamp.strftime("%Y-%m-%d-%H-%M-%S")
         @run_id = run_id
+        @rdb_loader_log_base = config[:aws][:s3][:buckets][:log] + "rdb-loader/#{@run_id}/"
+        @rdb_loader_logs = []
         etl_tstamp = (run_tstamp.to_f * 1000).to_i.to_s
         output_codec = self.class.output_codec_from_compression_format(config[:enrich][:output_compression])
         output_codec_argument = output_codec == 'none' ? [] : ["--outputCodec" , output_codec]
@@ -574,6 +578,32 @@ module Snowplow
         nil
       end
 
+      # Fetch logs from S3 left by RDB Loader steps
+      def output_rdb_loader_logs(region, aws_access_key_id, aws_secret_key)
+        if @rdb_loader_logs.empty
+          puts "RDB Loader logs were not found"
+        else
+          puts "RDB Loader logs:\n"
+
+          s3 = Sluice::Storage::S3::new_fog_s3_from(region, aws_access_key, aws_secret_key)
+
+          # Get S3 location of In Bucket plus local directory
+          in_location = Sluice::Storage::S3::Location.new(config[:aws][:s3][:buckets][:shredded][:good])
+          download_dir = config[:storage][:download][:folder]
+
+          log_files = @rdb_loader_logs.map do |l|
+            tmp = Tempfile.new("rdbloader")
+            puts "Downloading #{l} to #{tmp.path}"
+            Sluice::Storage::S3::download_file(s3, l, tmp.path)
+            tmp
+          end
+
+          log_files.each do |f|
+            puts f.read
+          end
+        end
+      end
+
     private
 
 
@@ -586,9 +616,13 @@ module Snowplow
       # +jar+:: s3 object with RDB Loader jar
       Contract ConfigHash, ArrayOf[Iglu::SelfDescribingJson], String, String => ArrayOf[Elasticity::CustomJarStep]
       def get_rdb_loader_steps(config, targets, resolver, jar)
+        log_key = @rdb_loader_log_base + SecureRandom.uuid
+        @rdb_loader_logs << log_key
+
         default_arguments = {
-          :config      => Base64.strict_encode64(config.to_yaml),
-          :resolver    => encoded_resolver = self.class.build_iglu_config_json(resolver)
+          :config      => Base64.strict_encode64(recursive_stringify_keys(config).to_yaml),
+          :resolver    => self.class.build_iglu_config_json(resolver),
+          :logkey      => log_key
         }
 
         targets.map { |target|
@@ -597,9 +631,10 @@ module Snowplow
           arguments = [
             "--config", default_arguments[:config],
             "--resolver", default_arguments[:resolver],
+            "--logkey", default_arguments[:logkey],
             "--target", encoded_target
           ]
-          puts arguments
+
           rdb_loader_step = Elasticity::CustomJarStep.new(jar)
           rdb_loader_step.arguments = arguments
           rdb_loader_step.name << ": Loading #{name} Storage Target"
@@ -952,6 +987,17 @@ module Snowplow
           "s3.amazonaws.com"
         else
           "s3-#{s3_region}.amazonaws.com"
+        end
+      end
+
+      # Recursively change the keys of a YAML from symbols to strings
+      def recursive_stringify_keys(h)
+        if h.class == [].class
+          h.map {|key| recursive_stringify_keys(key)}
+        elsif h.class == {}.class
+          Hash[h.map {|k,v| [k.to_s, recursive_stringify_keys(v)]}]
+        else
+          h
         end
       end
 
