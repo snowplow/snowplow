@@ -22,33 +22,6 @@ require 'base64'
 require 'contracts'
 require 'iglu-client'
 
-# Global variable used to decide whether to patch Elasticity's AwsRequestV4 payload with Configurations
-# This is only necessary if we are loading Thrift with AMI >= 4.0.0
-$patch_thrift_configuration = false
-
-# Monkey patched to support Configurations
-module Elasticity
-  class AwsRequestV4
-    def payload
-      if $patch_thrift_configuration
-        @ruby_service_hash["Configurations"] = [{
-          "Classification" => "core-site",
-          "Properties" => {
-            "io.file.buffer.size" => "65536"
-          }
-        },
-        {
-          "Classification" => "mapred-site",
-          "Properties" => {
-            "mapreduce.user.classpath.first" => "true"
-          }
-        }]
-      end
-      AwsUtils.convert_ruby_to_aws_v4(@ruby_service_hash).to_json
-    end
-  end
-end
-
 # Ruby class to execute Snowplow's Hive jobs against Amazon EMR
 # using Elasticity (https://github.com/rslifka/elasticity).
 module Snowplow
@@ -165,7 +138,20 @@ module Snowplow
               @jobflow.add_bootstrap_action(action)
             end
           else
-            $patch_thrift_configuration = true
+            [{
+              "Classification" => "core-site",
+              "Properties" => {
+                "io.file.buffer.size" => "65536"
+              }
+            },
+            {
+              "Classification" => "mapred-site",
+              "Properties" => {
+                "mapreduce.user.classpath.first" => "true"
+              }
+            }].each do |config|
+              @jobflow.add_configuration(config)
+            end
           end
         end
 
@@ -204,6 +190,14 @@ module Snowplow
         unless not lingual
           install_lingual_action = Elasticity::BootstrapAction.new("s3://files.concurrentinc.com/lingual/#{lingual}/lingual-client/install-lingual-client.sh")
           @jobflow.add_bootstrap_action(install_lingual_action)
+        end
+
+        # EMR configuration: Spark, YARN, etc
+        configuration = config[:aws][:emr][:configuration]
+        unless configuration.nil?
+          configuration.each do |k, h|
+            @jobflow.add_configuration({"Classification" => k, "Properties" => h})
+          end
         end
 
         # For serialization debugging. TODO doesn't work yet
@@ -388,8 +382,8 @@ module Snowplow
 
           shred_step =
             if self.class.is_rdb_shredder(config[:storage][:versions][:rdb_shredder]) then
-              duplicate_storage_config = self.class.build_duplicate_storage_json(targets[:DUPLICATE_TRACKING], false)
               @jobflow.add_application("Spark")
+              duplicate_storage_config = self.class.build_duplicate_storage_json(targets[:DUPLICATE_TRACKING], false)
               build_spark_step(
                 "Shred Enriched Events",
                 assets[:shred],
