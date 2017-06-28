@@ -127,7 +127,8 @@ module Snowplow
             :task_instance_bid => Maybe[Num]
             }),
           :additional_info => Maybe[String],
-          :bootstrap_failure_tries => Num
+          :bootstrap_failure_tries => Num,
+          :configuration => Maybe[HashOf[Symbol, HashOf[Symbol, String]]]
           }),
         }),
       :collectors => ({
