@@ -198,6 +198,14 @@ module Snowplow
           @jobflow.add_bootstrap_action(install_lingual_action)
         end
 
+        # EMR configuration: Spark, YARN, etc
+        configuration = config[:aws][:emr][:configuration]
+        unless configuration.nil?
+          configuration.each do |k, h|
+            @jobflow.add_configuration({"Classification" => k, "Properties" => h})
+          end
+        end
+
         # For serialization debugging. TODO doesn't work yet
         # install_ser_debug_action = Elasticity::BootstrapAction.new("#{STANDARD_HOSTED_ASSETS}/common/emr/cascading-ser-debug.sh")
         # @jobflow.add_bootstrap_action(install_ser_debug_action)
@@ -235,20 +243,6 @@ module Snowplow
         else
           enrich_final_output
         end
-
-        spark_configurations = [{
-          "Classification" => "yarn-site",
-          "Properties" => {
-            "yarn.resourcemanager.am.max-attempts" => "1"
-          }
-        },{
-          "Classification" => "spark",
-          "Properties" => {
-            "maximizeResourceAllocation" => "true"
-          }
-        }]
-        # we can't have duplicated configuration options so we can set them only once
-        enrich_or_shred_is_spark = false
 
         if enrich
 
@@ -303,7 +297,7 @@ module Snowplow
 
           enrich_step =
             if self.class.is_spark_enrich(config[:enrich][:versions][:spark_enrich]) then
-              enrich_or_shred_is_spark = true
+              @jobflow.add_application("Spark")
               build_spark_step(
                 "Enrich Raw Events",
                 assets[:enrich],
@@ -394,7 +388,7 @@ module Snowplow
 
           shred_step =
             if self.class.is_rdb_shredder(config[:storage][:versions][:rdb_shredder]) then
-              enrich_or_shred_is_spark = true
+              @jobflow.add_application("Spark")
               duplicate_storage_config = self.class.build_duplicate_storage_json(targets[:DUPLICATE_TRACKING], false)
               build_spark_step(
                 "Shred Enriched Events",
@@ -444,11 +438,6 @@ module Snowplow
             copy_to_s3_step.name << ": Shredded HDFS -> S3"
             @jobflow.add_step(copy_to_s3_step)
           end
-        end
-
-        if enrich_or_shred_is_spark
-          @jobflow.add_application("Spark")
-          spark_configurations.each { |config| @jobflow.add_configuration(config) }
         end
 
         if elasticsearch
