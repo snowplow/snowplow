@@ -25,7 +25,7 @@ module Snowplow
 
       # Supported options
       @@collector_format_regex = /^(?:cloudfront|clj-tomcat|thrift|(?:json\/.+\/.+)|(?:tsv\/.+\/.+)|(?:ndjson\/.+\/.+))$/
-      @@skip_options = Set.new(%w(staging s3distcp emr enrich shred elasticsearch archive_raw))
+      @@skip_options = Set.new(%w(staging s3distcp emr enrich shred elasticsearch archive_raw archive_enriched))
       @@storage_targets = Set.new(%w(redshift_config postgresql_config elastic_config amazon_dynamodb_config))
 
       include Monitoring::Logging
