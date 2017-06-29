@@ -20,7 +20,6 @@ packages:
     build_version : <%= ENV['TRAVIS_BUILD_RELEASE_TAG'] %>
     build_commands:
       - cd 3-enrich/emr-etl-runner  && ./build.sh
-      - cd 4-storage/storage-loader && ./build.sh
 
     # Required: Artifact
     artifacts:
@@ -31,5 +30,4 @@ packages:
         # The binaries to put in the zip
         binary_paths:
           - 3-enrich/emr-etl-runner/deploy/snowplow-emr-etl-runner
-          - 4-storage/storage-loader/deploy/snowplow-storage-loader
 
