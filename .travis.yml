@@ -48,7 +48,7 @@ addons:
 services:
   - postgresql
 before_deploy:
-  - pip install --user release-manager==0.2.0
+  - pip install --user release-manager==0.3.0
 deploy:
   - provider: script
     script: ./.travis/deploy_sce.sh $TRAVIS_TAG
