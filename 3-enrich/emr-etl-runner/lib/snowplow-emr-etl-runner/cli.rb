@@ -198,7 +198,7 @@ module Snowplow
           []
         else
           Dir.entries(targets_path).select do |f|
-            not f.start_with?('.')
+            f.end_with?('.json')
           end.map do |f|
             {:file => f, :json => JSON.parse(File.read(targets_path + '/' + f), {:symbolize_names => true}) }
           end
