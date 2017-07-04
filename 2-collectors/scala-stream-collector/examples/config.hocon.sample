@@ -131,11 +131,11 @@ spray.can.server {
   # adds the 'Remote-Address' header to every request automatically.
   remote-address-header = on
 
-  uri-parsing-mode = relaxed
   raw-request-uri-header = on
 
   # Define the maximum request length (the default is 2048)
   parsing {
     max-uri-length = 32768
+    uri-parsing-mode = relaxed-with-raw-query
   }
 }
