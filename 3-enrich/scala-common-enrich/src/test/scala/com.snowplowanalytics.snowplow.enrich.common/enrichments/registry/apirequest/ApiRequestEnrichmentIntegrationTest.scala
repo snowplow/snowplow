@@ -16,7 +16,7 @@ package registry
 package apirequest
 
 // json4s
-import org.json4s._
+import org.json4s.{JObject, JValue}
 import org.json4s.JsonDSL._
 import org.json4s.jackson.{ parseJson, prettyJson }
 import org.json4s.jackson.JsonMethods.asJsonNode
@@ -25,6 +25,9 @@ import org.json4s.jackson.JsonMethods.asJsonNode
 import org.specs2.Specification
 import org.specs2.scalaz.ValidationMatchers
 import org.specs2.matcher.Matcher
+
+// Scalaz
+import scalaz.Validation.FlatMap._
 
 // Iglu
 import com.snowplowanalytics.iglu.client.{ JsonSchemaPair, SchemaKey }

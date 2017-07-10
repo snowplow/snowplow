@@ -89,7 +89,7 @@ object SendgridAdapter extends Adapter {
       val parsed = parse(body)
 
       if (parsed.children.isEmpty) {
-        return List(s"$VendorName event failed json sanity check: has no events".failNel)
+        return List(s"$VendorName event failed json sanity check: has no events".failureNel)
       }
 
       for ((itm, index) <- parsed.children.zipWithIndex)
@@ -117,7 +117,7 @@ object SendgridAdapter extends Adapter {
     } catch {
       case e: JsonParseException => {
         val exception = JU.stripInstanceEtc(e.toString).orNull
-        List(s"$VendorName event failed to parse into JSON: [$exception]".failNel)
+        List(s"$VendorName event failed to parse into JSON: [$exception]".failureNel)
       }
     }
   }
@@ -137,9 +137,9 @@ object SendgridAdapter extends Adapter {
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
     (payload.body, payload.contentType) match {
-      case (None, _) => s"Request body is empty: no ${VendorName} event to process".failNel
-      case (_, None) => s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failNel
-      case (_, Some(ct)) if Try(new ContentType(ct).getBaseType).getOrElse(ct) != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failNel
+      case (None, _) => s"Request body is empty: no ${VendorName} event to process".failureNel
+      case (_, None) => s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failureNel
+      case (_, Some(ct)) if Try(new ContentType(ct).getBaseType).getOrElse(ct) != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failureNel
       case (Some(body), _) => {
         val events = payloadBodyToEvents(body, payload)
         rawEventsListProcessor(events)

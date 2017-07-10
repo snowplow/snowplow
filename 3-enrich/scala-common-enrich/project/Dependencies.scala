@@ -44,7 +44,7 @@ object Dependencies {
     val postgresDriver   = "9.4.1208.jre7"
     val mysqlConnector   = "5.1.39"
     // Scala
-    val scalaz7          = "7.0.9"
+    val scalaz7          = "7.2.14"
     val snowplowRawEvent = "0.1.0"
     val collectorPayload = "0.0.0"
     val schemaSniffer    = "0.0.0"
@@ -58,8 +58,8 @@ object Dependencies {
     val akkaStreams      = "2.0.2"
     val gatlingJsonpath  = "0.6.4"
     // Scala (test only)
-    val specs2           = "2.3.13"
-    val scalazSpecs2     = "0.2"
+    val specs2           = "3.9.2"
+    val scalazSpecs2     = "0.3.0"
     val scalaCheck       = "1.10.0"
     val scalaUri         = "0.4.3"
     val scaldingArgs     = "0.13.0"
@@ -92,7 +92,7 @@ object Dependencies {
     val maxmindIplookups = "com.snowplowanalytics"      %% "scala-maxmind-iplookups"   % V.maxmindIplookups
     val json4sJackson    = "org.json4s"                 %% "json4s-jackson"            % V.json4s
     val json4sScalaz     = "org.json4s"                 %% "json4s-scalaz"             % V.json4s
-    val igluClient       = "com.snowplowanalytics"      %%  "iglu-scala-client"        % V.igluClient
+    val igluClient       = "com.snowplowanalytics"      %% "iglu-scala-client"         % V.igluClient
     val scalaUri         = "com.netaporter"             %% "scala-uri"                 % V.scalaUri
     val scalaWeather     = "com.snowplowanalytics"      %% "scala-weather"             % V.scalaWeather
     val akka             = "com.typesafe.akka"          %% "akka-actor"                  % V.akka
@@ -101,10 +101,9 @@ object Dependencies {
     val akkaHttp         = "com.typesafe.akka"          %% "akka-http-experimental"      % V.akkaStreams
     val gatlingJsonpath  = "io.gatling"                 %% "jsonpath"                  % V.gatlingJsonpath
     // Scala (test only)
-    val specs2           = "org.specs2"                 %% "specs2"                    % V.specs2         % "test"
+    val specs2           = "org.specs2"                 %% "specs2-core"               % V.specs2         % "test"
+    val specs2SC         = "org.specs2"                 %% "specs2-scalacheck"         % V.specs2         % "test"
     val scalazSpecs2     = "org.typelevel"              %% "scalaz-specs2"             % V.scalazSpecs2   % "test"
-    val scalaCheck       = "org.scalacheck"             %% "scalacheck"                % V.scalaCheck     % "test"
-    val scaldingArgs     = "com.twitter"                %% "scalding-args"             % V.scaldingArgs   % "test"
     val mockito          = "org.mockito"                % "mockito-core"               % V.mockito        % "test"
   }
 }

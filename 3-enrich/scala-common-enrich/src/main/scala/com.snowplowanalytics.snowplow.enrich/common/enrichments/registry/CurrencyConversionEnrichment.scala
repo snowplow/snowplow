@@ -29,6 +29,7 @@ import scala.util.control.NonFatal
 // Scalaz
 import scalaz._
 import Scalaz._
+import Validation.FlatMap._
 
 // json4s
 import org.json4s.JValue
@@ -81,7 +82,7 @@ object CurrencyConversionEnrichmentConfig extends ParseableEnrichment {
           case Success("UNLIMITED")  => UnlimitedAccount.success
 
           // Should never happen (prevented by schema validation)
-          case Success(s) => "accountType [%s] is not one of DEVELOPER, ENTERPRISE, and UNLIMITED".format(s).toProcessingMessage.fail
+          case Success(s) => "accountType [%s] is not one of DEVELOPER, ENTERPRISE, and UNLIMITED".format(s).toProcessingMessage.failure
           case Failure(f) => Failure(f)
         })
         rateAt        <- ScalazJson4sUtils.extract[String](config, "parameters", "rateAt")
@@ -151,11 +152,11 @@ case class CurrencyConversionEnrichment(
             (_, _, _, _)
           }
         } catch {
-          case e : NoSuchElementException =>"Base currency [%s] not supported: [%s]".format(baseCurrency, e).failNel
-          case f : UnknownHostException => "Could not connect to Open Exchange Rates: [%s]".format(f).failNel
-          case NonFatal(g) => "Unexpected exception converting currency: [%s]".format(g).failNel
+          case e : NoSuchElementException =>"Base currency [%s] not supported: [%s]".format(baseCurrency, e).failureNel
+          case f : UnknownHostException => "Could not connect to Open Exchange Rates: [%s]".format(f).failureNel
+          case NonFatal(g) => "Unexpected exception converting currency: [%s]".format(g).failureNel
         }
-      case None => "Collector timestamp missing".failNel // This should never happen
+      case None => "Collector timestamp missing".failureNel // This should never happen
     }
   }
 }

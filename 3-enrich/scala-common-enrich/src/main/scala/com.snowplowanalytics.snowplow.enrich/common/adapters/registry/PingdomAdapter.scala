@@ -26,6 +26,7 @@ import scala.util.matching.Regex
 // Scalaz
 import scalaz._
 import Scalaz._
+import Validation.FlatMap._
 
 // Jackson
 import com.fasterxml.jackson.core.JsonParseException
@@ -83,15 +84,15 @@ object PingdomAdapter extends Adapter {
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = 
     (payload.querystring) match {
-      case (Nil) => s"${VendorName} payload querystring is empty: nothing to process".failNel
+      case (Nil) => s"${VendorName} payload querystring is empty: nothing to process".failureNel
       case (qs)  => {
 
         reformatMapParams(qs) match {
-          case Failure(f) => f.fail
+          case Failure(f) => f.failure
           case Success(s) => {
 
             s.get("message") match {
-              case None => s"${VendorName} payload querystring does not have 'message' as a key: no event to process".failNel
+              case None => s"${VendorName} payload querystring does not have 'message' as a key: no event to process".failureNel
               case Some(event) => {
 
                 for {
@@ -138,7 +139,7 @@ object PingdomAdapter extends Adapter {
     val formatted = params.map { 
       value => {
         (value.getName, value.getValue) match {
-          case (k, PingdomValueRegex(v)) => s"${VendorName} name-value pair [$k -> $v]: Passed regex - Collector is not catching unicode wrappers anymore".failNel
+          case (k, PingdomValueRegex(v)) => s"${VendorName} name-value pair [$k -> $v]: Passed regex - Collector is not catching unicode wrappers anymore".failureNel
           case (k, v) => (k -> v).successNel
         }
       }
@@ -150,14 +151,14 @@ object PingdomAdapter extends Adapter {
       } yield s
 
     val failures: List[String] = 
-      for {
-        Failure(NonEmptyList(f)) <- formatted 
-      } yield f
+      (for {
+        Failure(NonEmptyList((h, t))) <- formatted 
+      } yield h :: t.toList).flatten
 
     (successes, failures) match {
       case (s :: ss,     Nil) => (s :: ss).toMap.successNel // No Failures collected.
-      case (_,       f :: fs) => NonEmptyList(f, fs: _*).fail // Some Failures, return only those.
-      case (Nil,         Nil) => "Empty parameters list was passed - should never happen: empty querystring is not being caught".failNel
+      case (_,       f :: fs) => NonEmptyList(f, fs: _*).failure // Some Failures, return only those.
+      case (Nil,         Nil) => "Empty parameters list was passed - should never happen: empty querystring is not being caught".failureNel
     }
   }
 
@@ -175,7 +176,7 @@ object PingdomAdapter extends Adapter {
     } catch {
       case e: JsonParseException => {
         val exception = JU.stripInstanceEtc(e.toString).orNull
-        s"${VendorName} event failed to parse into JSON: [${exception}]".failNel
+        s"${VendorName} event failed to parse into JSON: [${exception}]".failureNel
       } 
     }
 

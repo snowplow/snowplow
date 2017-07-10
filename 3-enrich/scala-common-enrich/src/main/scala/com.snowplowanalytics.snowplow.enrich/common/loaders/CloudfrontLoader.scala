@@ -101,7 +101,7 @@ object CloudfrontLoader extends Loader[String] {
     
     // 2. Not a GET request
     case CfRegex(_, _, _, _, _, op, _, _, _, _, _, _) if op.toUpperCase != "GET" =>
-      s"Only GET operations supported for CloudFront Collector, not ${op.toUpperCase}".failNel[Option[CollectorPayload]]
+      s"Only GET operations supported for CloudFront Collector, not ${op.toUpperCase}".failureNel[Option[CollectorPayload]]
 
     // 4. Row matches CloudFront format
     case CfRegex(date,
@@ -151,7 +151,7 @@ object CloudfrontLoader extends Loader[String] {
     }
 
     // 3. Row not recognised
-    case _ => "Line does not match CloudFront header or data row formats".failNel[Option[CollectorPayload]]
+    case _ => "Line does not match CloudFront header or data row formats".failureNel[Option[CollectorPayload]]
   }
 
   /**
@@ -169,7 +169,7 @@ object CloudfrontLoader extends Loader[String] {
       DateTime.parse("%sT%s+00:00".format(date, time)).success // Construct a UTC ISO date from CloudFront date and time
     } catch {
       case NonFatal(e) =>
-        "Unexpected exception converting date [%s] and time [%s] to timestamp: [%s]".format(date, time, e.getMessage).fail
+        "Unexpected exception converting date [%s] and time [%s] to timestamp: [%s]".format(date, time, e.getMessage).failure
     }
 
   /**

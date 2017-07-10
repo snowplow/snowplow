@@ -38,6 +38,7 @@ import iglu.client.validation.ValidatableJsonMethods._
 // Scalaz
 import scalaz._
 import Scalaz._
+import Validation.FlatMap._
 
 // json4s
 import org.json4s._
@@ -90,17 +91,17 @@ object RedirectAdapter extends Adapter {
 
     val originalParams = toMap(payload.querystring)
     if (originalParams.isEmpty) {
-      "Querystring is empty: cannot be a valid URI redirect".failNel
+      "Querystring is empty: cannot be a valid URI redirect".failureNel
     } else {
       originalParams.get("u") match {
-        case None    => "Querystring does not contain u parameter: not a valid URI redirect".failNel
+        case None    => "Querystring does not contain u parameter: not a valid URI redirect".failureNel
         case Some(u) => {
 
           val json = buildUriRedirect(u)
-          val newParams =
+          val newParams: Validated[Map[String, String]] =
             if (originalParams.contains("e")) {
               // Already have an event so add the URI redirect as a context (more fiddly)
-              def newCo = Map("co" -> compact(toContexts(json))).successNel
+              def newCo: Validated[Map[String, String]] = Map("co" -> compact(toContexts(json))).successNel
               (originalParams.get("cx"), originalParams.get("co")) match {
                 case (None, None)                 => newCo
                 case (None, Some(co)) if co == "" => newCo

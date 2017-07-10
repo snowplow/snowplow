@@ -29,7 +29,7 @@ object LoaderSpec {
 
   val loader = new Loader[String] {
     // Make our trait whole
-    def toCollectorPayload(line: String): ValidatedMaybeCollectorPayload = "FAIL".failNel
+    def toCollectorPayload(line: String): ValidatedMaybeCollectorPayload = "FAIL".failureNel
   }
 }
 

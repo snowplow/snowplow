@@ -88,13 +88,13 @@ object PagerdutyAdapter extends Adapter {
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = 
     (payload.body, payload.contentType) match {
-      case (None, _)                          => s"Request body is empty: no ${VendorName} events to process".failNel
-      case (_, None)                          => s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failNel
-      case (_, Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failNel
+      case (None, _)                          => s"Request body is empty: no ${VendorName} events to process".failureNel
+      case (_, None)                          => s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failureNel
+      case (_, Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failureNel
       case (Some(body),_)                     => {
 
         payloadBodyToEvents(body) match {
-          case Failure(str)  => str.failNel
+          case Failure(str)  => str.failureNel
           case Success(list) => {
 
             // Create our list of Validated RawEvents
@@ -141,13 +141,13 @@ object PagerdutyAdapter extends Adapter {
       val parsed = parse(body)
       (parsed \ "messages") match {
         case JArray(list) => list.success
-        case JNothing     => s"${VendorName} payload does not contain the needed 'messages' key".fail
-        case _            => s"Could not resolve ${VendorName} payload into a JSON array of events".fail
+        case JNothing     => s"${VendorName} payload does not contain the needed 'messages' key".failure
+        case _            => s"Could not resolve ${VendorName} payload into a JSON array of events".failure
       }
     } catch {
       case e: JsonParseException => {
         val exception = JU.stripInstanceEtc(e.toString).orNull
-        s"${VendorName} payload failed to parse into JSON: [${exception}]".fail
+        s"${VendorName} payload failed to parse into JSON: [${exception}]".failure
       }
     }
 

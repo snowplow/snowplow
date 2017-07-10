@@ -65,7 +65,7 @@ class AdapterSpec extends Specification with DataTables with ValidationMatchers 
   implicit val resolver = SpecHelpers.IgluResolver
 
   object BaseAdapter extends Adapter {
-    def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver) = "Base".failNel
+    def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver) = "Base".failureNel
   }
 
   object Shared {

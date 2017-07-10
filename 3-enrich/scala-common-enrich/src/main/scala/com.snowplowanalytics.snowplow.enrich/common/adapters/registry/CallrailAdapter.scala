@@ -84,7 +84,7 @@ object CallrailAdapter extends Adapter {
 
     val params = toMap(payload.querystring)
     if (params.isEmpty) {
-      "Querystring is empty: no CallRail event to process".failNel
+      "Querystring is empty: no CallRail event to process".failureNel
     } else {
       NonEmptyList(RawEvent(
         api          = payload.api,

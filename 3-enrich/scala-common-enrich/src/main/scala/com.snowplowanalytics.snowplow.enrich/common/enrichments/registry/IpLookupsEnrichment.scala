@@ -29,6 +29,7 @@ import scala.util.control.NonFatal
 // Scalaz
 import scalaz._
 import Scalaz._
+import Validation.FlatMap._
 
 // json4s
 import org.json4s.JValue
@@ -116,7 +117,7 @@ object IpLookupsEnrichment extends ParseableEnrichment {
   private def getMaxmindUri(uri: String, database: String): ValidatedMessage[URI] =
     ConversionUtils.stringToUri(uri + "/" + database).flatMap(_ match {
       case Some(u) => u.success
-      case None => "URI to MaxMind file must be provided".fail
+      case None => "URI to MaxMind file must be provided".failure
       }).toProcessingMessage
 }
 
@@ -207,7 +208,7 @@ case class IpLookupsEnrichment(
     try {
       ipLookups.performLookups(ip).success
     } catch {
-      case NonFatal(e) => "Could not extract geo-location from IP address [%s]: [%s]".format(ip, e).fail
+      case NonFatal(e) => "Could not extract geo-location from IP address [%s]: [%s]".format(ip, e).failure
     }
   }
 }

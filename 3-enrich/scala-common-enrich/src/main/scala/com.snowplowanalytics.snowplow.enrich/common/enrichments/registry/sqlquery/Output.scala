@@ -19,6 +19,7 @@ import scala.collection.mutable.ListBuffer
 // scalaz
 import scalaz._
 import Scalaz._
+import Validation.FlatMap._
 
 // java
 import java.sql.{ ResultSetMetaData, ResultSet }
@@ -316,28 +317,28 @@ object JsonOutput {
    * with Throwable as left-side
    */
   def getMetaData(rs: ResultSet): ThrowableXor[ResultSetMetaData] =
-    \/ fromTryCatch rs.getMetaData
+    \/ fromTryCatchNonFatal rs.getMetaData
 
   /**
    * Lift failing [[ResultSetMetaData#getColumnCount]] into scalaz disjunction
    * with Throwable as left-side
    */
   def getColumnCount(rsMeta: ResultSetMetaData): ThrowableXor[Int] =
-    \/ fromTryCatch rsMeta.getColumnCount
+    \/ fromTryCatchNonFatal rsMeta.getColumnCount
 
   /**
    * Lift failing [[ResultSetMetaData#getColumnLabel]] into scalaz disjunction
    * with Throwable as left-side
    */
   def getColumnLabel(column: Int, rsMeta: ResultSetMetaData): ThrowableXor[String] =
-    \/ fromTryCatch rsMeta.getColumnLabel(column)
+    \/ fromTryCatchNonFatal rsMeta.getColumnLabel(column)
 
   /**
    * Lift failing [[ResultSetMetaData#getColumnClassName]] into scalaz disjunction
    * with Throwable as left-side
    */
   def getColumnType(column: Int, rsMeta: ResultSetMetaData): ThrowableXor[String] =
-    \/ fromTryCatch rsMeta.getColumnClassName(column)
+    \/ fromTryCatchNonFatal rsMeta.getColumnClassName(column)
 
   /**
    * Get value from [[ResultSet]] using column number
@@ -349,7 +350,7 @@ object JsonOutput {
    */
   def getColumnValue(datatype: String, columnIdx: Int, rs: ResultSet): ThrowableXor[JValue] =
     for {
-      value <- (\/ fromTryCatch rs.getObject(columnIdx)).map(Option.apply)
+      value <- (\/ fromTryCatchNonFatal rs.getObject(columnIdx)).map(Option.apply)
     } yield value.map(getValue(_, datatype)).getOrElse(JNull)
 
   /**

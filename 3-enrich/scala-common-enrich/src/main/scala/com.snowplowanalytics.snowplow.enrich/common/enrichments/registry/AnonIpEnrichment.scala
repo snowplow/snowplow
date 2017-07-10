@@ -24,6 +24,7 @@ import org.apache.maven.artifact.versioning.DefaultArtifactVersion
 // Scalaz
 import scalaz._
 import Scalaz._
+import Validation.FlatMap._
 
 // json4s
 import org.json4s.JValue
@@ -95,7 +96,7 @@ object AnonOctets extends Enumeration {
     try {
       AnonOctets(anonOctets).success
     } catch {
-      case nse: NoSuchElementException => "IP address octets to anonymize must be 1, 2, 3 or 4".toProcessingMessage.fail
+      case nse: NoSuchElementException => "IP address octets to anonymize must be 1, 2, 3 or 4".toProcessingMessage.failure
     }
   }
 }

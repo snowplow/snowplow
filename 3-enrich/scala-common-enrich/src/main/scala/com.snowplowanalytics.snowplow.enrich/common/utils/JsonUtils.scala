@@ -30,6 +30,7 @@ import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 // Scalaz
 import scalaz._
 import Scalaz._
+import Validation.FlatMap._
 
 // json4s
 import org.json4s._
@@ -196,7 +197,7 @@ object JsonUtils {
     try {
       Mapper.readTree(instance).success
     } catch {
-      case e: Throwable => s"Field [$field]: invalid JSON [$instance] with parsing error: ${stripInstanceEtc(e.getMessage).orNull}".fail
+      case e: Throwable => s"Field [$field]: invalid JSON [$instance] with parsing error: ${stripInstanceEtc(e.getMessage).orNull}".failure
     }
 
   /**

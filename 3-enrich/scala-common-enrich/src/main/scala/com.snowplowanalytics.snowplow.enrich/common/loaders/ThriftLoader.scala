@@ -32,6 +32,7 @@ import scala.collection.JavaConversions._
 // Scalaz
 import scalaz._
 import Scalaz._
+import Validation.FlatMap._
 
 // Iglu
 import iglu.client.{SchemaKey, SchemaCriterion}
@@ -84,7 +85,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
           res <- if (ExpectedSchema.matches(as)) {
               convertSchema1(line)
             } else {
-              s"Verifying record as $ExpectedSchema failed: found $as".failNel
+              s"Verifying record as $ExpectedSchema failed: found $as".failureNel
             }
         } yield res
 
@@ -94,7 +95,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
     } catch {
       // TODO: Check for deserialization errors.
       case e: Throwable =>
-        s"Error deserializing raw event: ${e.getMessage}".failNel[Option[CollectorPayload]]
+        s"Error deserializing raw event: ${e.getMessage}".failureNel[Option[CollectorPayload]]
     }
   }
 
@@ -135,7 +136,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
     val ip = IpAddressExtractor.extractIpAddress(headers, collectorPayload.ipAddress).some // Required
 
     val api = Option(collectorPayload.path) match {
-      case None => "Request does not contain a path".fail
+      case None => "Request does not contain a path".failure
       case Some(p) => CollectorApi.parse(p)
     }
 

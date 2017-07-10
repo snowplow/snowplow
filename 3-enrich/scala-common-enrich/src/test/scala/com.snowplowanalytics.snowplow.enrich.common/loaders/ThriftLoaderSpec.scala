@@ -81,6 +81,6 @@ class ThriftLoaderSpec extends Specification with DataTables with ValidationMatc
   // A bit of fun: the chances of generating a valid Thrift CollectorPayload at random are
   // so low that we can just use ScalaCheck here
   def e2 =
-    check { (raw: String) => ThriftLoader.toCollectorPayload(Base64.decodeBase64(raw)) must beFailing }
+    prop { (raw: String) => ThriftLoader.toCollectorPayload(Base64.decodeBase64(raw)) must beFailing }
 
 }

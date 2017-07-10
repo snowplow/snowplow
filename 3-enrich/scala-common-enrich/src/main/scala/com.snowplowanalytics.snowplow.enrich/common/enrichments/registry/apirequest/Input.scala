@@ -90,7 +90,7 @@ case class Input(key: String, pojo: Option[PojoInput], json: Option[JsonInput]) 
   def getFromJson(derived: List[JObject], custom: List[JObject], unstruct: Option[JObject]): TemplateContext =
     json match {
       case Some(jsonInput) => {
-        val validatedJson = jsonInput.field match {
+        val validatedJson: ValidationNel[String, Option[JValue]] = jsonInput.field match {
           case "derived_contexts" => getBySchemaCriterion(derived, jsonInput.schemaCriterion).successNel
           case "contexts"         => getBySchemaCriterion(custom, jsonInput.schemaCriterion).successNel
           case "unstruct_event"   => getBySchemaCriterion(unstruct.toList, jsonInput.schemaCriterion).successNel

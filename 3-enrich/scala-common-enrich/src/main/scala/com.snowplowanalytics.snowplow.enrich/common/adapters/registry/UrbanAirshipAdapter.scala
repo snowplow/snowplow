@@ -112,7 +112,7 @@ object UrbanAirshipAdapter extends Adapter {
     } catch {
       case e: JsonParseException => {
         val exception = JU.stripInstanceEtc(e.toString).orNull
-        s"$VendorName event failed to parse into JSON: [$exception]".failNel
+        s"$VendorName event failed to parse into JSON: [$exception]".failureNel
       }
     }
 
@@ -133,8 +133,8 @@ object UrbanAirshipAdapter extends Adapter {
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
     (payload.body, payload.contentType) match {
-      case (None, _) => s"Request body is empty: no ${VendorName} event to process".failNel
-      case (_, Some(ct)) => s"Content type of ${ct} provided, expected None for ${VendorName}".failNel
+      case (None, _) => s"Request body is empty: no ${VendorName} event to process".failureNel
+      case (_, Some(ct)) => s"Content type of ${ct} provided, expected None for ${VendorName}".failureNel
       case (Some(body), _) => {
         val event = payloadBodyToEvent(body, payload)
         rawEventsListProcessor(List(event))

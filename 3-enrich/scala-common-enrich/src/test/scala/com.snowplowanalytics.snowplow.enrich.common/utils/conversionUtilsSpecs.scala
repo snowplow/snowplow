@@ -116,7 +116,7 @@ class DecodeBase64UrlSpec extends Specification with DataTables with ValidationM
 
   // No string creates a failure
   def e2 =
-    check { (str: String) => ConversionUtils.decodeBase64Url(FieldName, str) must beSuccessful }
+    prop { (str: String) => ConversionUtils.decodeBase64Url(FieldName, str) must beSuccessful }
 
   // Taken from:
   // 1. Lua Tracker's base64_spec.lua
@@ -166,7 +166,7 @@ class ValidateUuidSpec extends Specification with DataTables with ValidationMatc
   // A bit of fun: the chances of generating a valid UUID at random are
   // so low that we can just use ScalaCheck here. Checks null too
   def e2 =
-    check { (str: String) => ConversionUtils.validateUuid(FieldName, str) must beFailing(s"Field [$FieldName]: [$str] is not a valid UUID") }
+    prop { (str: String) => ConversionUtils.validateUuid(FieldName, str) must beFailing(s"Field [$FieldName]: [$str] is not a valid UUID") }
 }
 
 class StringToDoublelikeSpec extends Specification with DataTables with ValidationMatchers { def is = s2"""

@@ -15,6 +15,7 @@ package com.snowplowanalytics.snowplow.enrich.common.utils
 // Scalaz
 import scalaz._
 import Scalaz._
+import Validation.FlatMap._
 
 // Json4s
 import org.json4s._
@@ -68,7 +69,7 @@ object JsonPath {
     convertToJValue(json).flatMap { pojo =>
       GatlingJsonPath.query(jsonPath, pojo) match {
         case Right(iterator) => iterator.map(anyToJValue).toList.success
-        case Left(error)     => error.reason.fail
+        case Left(error)     => error.reason.failure
       }
     }
   }

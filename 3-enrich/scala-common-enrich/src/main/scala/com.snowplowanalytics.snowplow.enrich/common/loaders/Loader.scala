@@ -54,7 +54,7 @@ object Loader {
     case "thrift"       => ThriftLoader.success // Finally - a data protocol rather than a piece of software
     case TsvRegex(f)    => TsvLoader(f).success
     case NdjsonRegex(f) => NdjsonLoader(f).success
-    case c              => "[%s] is not a recognised Snowplow event collector".format(c).fail
+    case c              => "[%s] is not a recognised Snowplow event collector".format(c).failure
   }
 }
 
@@ -105,7 +105,7 @@ abstract class Loader[T] {
         URLEncodedUtils.parse(URI.create("http://localhost/?" + q), enc).toList.success
       } catch {
         case NonFatal(e) =>
-          "Exception extracting name-value pairs from querystring [%s] with encoding [%s]: [%s]".format(q, enc, e.getMessage).fail
+          "Exception extracting name-value pairs from querystring [%s] with encoding [%s]: [%s]".format(q, enc, e.getMessage).failure
       }
     }
     case None => Nil.success

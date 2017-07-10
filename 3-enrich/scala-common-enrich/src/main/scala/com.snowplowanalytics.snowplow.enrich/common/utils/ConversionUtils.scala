@@ -40,6 +40,7 @@ import org.apache.commons.codec.binary.Base64
 // Scalaz
 import scalaz._
 import Scalaz._
+import Validation.FlatMap._
 
 // Scala URI
 import com.netaporter.uri.Uri
@@ -156,7 +157,7 @@ object ConversionUtils {
       result.success
     } catch {
       case NonFatal(e) =>
-        "Field [%s]: exception Base64-decoding [%s] (URL-safe encoding): [%s]".format(field, str, e.getMessage).fail
+        "Field [%s]: exception Base64-decoding [%s] (URL-safe encoding): [%s]".format(field, str, e.getMessage).failure
     }
   }
 
@@ -191,7 +192,7 @@ object ConversionUtils {
     val uuid = Try(UUID.fromString(str)).toOption.filter(check(str))
     uuid match {
       case Some(_) => str.toLowerCase.success
-      case None    => s"Field [$field]: [$str] is not a valid UUID".fail
+      case None    => s"Field [$field]: [$str] is not a valid UUID".failure
     }
   } 
 
@@ -207,7 +208,7 @@ object ConversionUtils {
       str.toInt
       str.success
     } catch {
-      case _ : java.lang.NumberFormatException => s"Field [$field]: [$str] is not a valid integer".fail
+      case _ : java.lang.NumberFormatException => s"Field [$field]: [$str] is not a valid integer".failure
     }
   }
 
@@ -245,7 +246,7 @@ object ConversionUtils {
       r.success
     } catch {
       case NonFatal(e) =>
-        "Field [%s]: Exception URL-decoding [%s] (encoding [%s]): [%s]".format(field, str, enc, e.getMessage).fail
+        "Field [%s]: Exception URL-decoding [%s] (encoding [%s]): [%s]".format(field, str, enc, e.getMessage).failure
     }
 
     /**
@@ -337,16 +338,16 @@ object ConversionUtils {
           val netaporterUri = try {
             Uri.parse(uri).success
           } catch {
-            case NonFatal(e) => "Provided URI string [%s] could not be parsed by Netaporter: [%s]".format(uri, ExceptionUtils.getRootCause(iae).getMessage).fail
+            case NonFatal(e) => "Provided URI string [%s] could not be parsed by Netaporter: [%s]".format(uri, ExceptionUtils.getRootCause(iae).getMessage).failure
           }
           for {
             parsedUri <- netaporterUri
             finalUri <- stringToUri(parsedUri.toString, true)
           } yield finalUri
         }
-        case true => "Provided URI string [%s] violates RFC 2396: [%s]".format(uri, ExceptionUtils.getRootCause(iae).getMessage).fail
+        case true => "Provided URI string [%s] violates RFC 2396: [%s]".format(uri, ExceptionUtils.getRootCause(iae).getMessage).failure
       }
-      case NonFatal(e) => "Unexpected error creating URI from string [%s]: [%s]".format(uri, e.getMessage).fail
+      case NonFatal(e) => "Unexpected error creating URI from string [%s]: [%s]".format(uri, e.getMessage).failure
     }
 
   /**
@@ -363,7 +364,7 @@ object ConversionUtils {
         Uri.parse(uri.toString).query.params.toMap.success
       } catch {
         case NonFatal(e2) =>
-          s"Could not parse uri [$uri]. Apache Httpclient threw exception: [$e1]. Net-a-porter threw exception: [$e2]".fail
+          s"Could not parse uri [$uri]. Apache Httpclient threw exception: [$e1]. Net-a-porter threw exception: [$e2]".failure
       }
     }
 
@@ -392,7 +393,7 @@ object ConversionUtils {
         jint.success
       } catch {
         case nfe: NumberFormatException =>
-          "Field [%s]: cannot convert [%s] to Int".format(field, str).fail
+          "Field [%s]: cannot convert [%s] to Int".format(field, str).failure
       }
     }
 
@@ -425,7 +426,7 @@ object ConversionUtils {
       }
     } catch {
       case nfe: NumberFormatException =>
-        "Field [%s]: cannot convert [%s] to Double-like String".format(field, str).fail
+        "Field [%s]: cannot convert [%s] to Double-like String".format(field, str).failure
     }
 
   /**
@@ -448,7 +449,7 @@ object ConversionUtils {
       }
     } catch {
      case nfe: NumberFormatException =>
-        "Field [%s]: cannot convert [%s] to Double-like String".format(field, str).fail
+        "Field [%s]: cannot convert [%s] to Double-like String".format(field, str).failure
     }
   }
 
@@ -472,7 +473,7 @@ object ConversionUtils {
     str match {
       case "1" => (1.toByte: JByte).success
       case "0" => (0.toByte: JByte).success
-      case _   => "Field [%s]: cannot convert [%s] to Boolean-like JByte".format(field, str).fail
+      case _   => "Field [%s]: cannot convert [%s] to Boolean-like JByte".format(field, str).failure
     }
 
   /**
@@ -491,7 +492,7 @@ object ConversionUtils {
     } else if (str == "0") {
       false.success
     } else {
-      "Cannot convert [%s] to boolean, only 1 or 0.".format(str).fail
+      "Cannot convert [%s] to boolean, only 1 or 0.".format(str).failure
     }
 
   /**
@@ -537,5 +538,5 @@ object ConversionUtils {
     else if (b == 1)
       true.success
     else
-      "Cannot convert byte [%s] to boolean, only 1 or 0.".format(b).fail   
+      "Cannot convert byte [%s] to boolean, only 1 or 0.".format(b).failure
 }

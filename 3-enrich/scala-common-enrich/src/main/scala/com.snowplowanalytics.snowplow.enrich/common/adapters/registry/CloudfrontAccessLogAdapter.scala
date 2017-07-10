@@ -29,6 +29,7 @@ import scala.util.control.NonFatal
 // Scalaz
 import scalaz._
 import Scalaz._
+import Validation.FlatMap._
 
 // Joda-Time
 import org.joda.time.DateTime
@@ -95,17 +96,17 @@ object CloudfrontAccessLogAdapter {
      */
     def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
       payload.body match {
-        case Some(p) => {
+        case Some(p) =>
           val fields = p.split("\t", -1)
           val schemaVersion = fields.size match {
-            case 12 => "1-0-0".successNel  // Before 12 Sep 2012
-            case 15 => "1-0-1".successNel  // 12 Sep 2012
-            case 18 => "1-0-2".successNel  // 21 Oct 2013
-            case 19 => "1-0-3".successNel  // 29 Apr 2014
-            case 23 => "1-0-4".successNel  // 01 Jul 2015
-            case n => s"Access log TSV line contained $n fields, expected 12, 15, 18, 19, or 23".failNel
+            case 12 => "1-0-0".successNel[String] // Before 12 Sep 2012
+            case 15 => "1-0-1".successNel[String] // 12 Sep 2012
+            case 18 => "1-0-2".successNel[String] // 21 Oct 2013
+            case 19 => "1-0-3".successNel[String] // 29 Apr 2014
+            case 23 => "1-0-4".successNel[String] // 01 Jul 2015
+            case n => s"Access log TSV line contained $n fields, expected 12, 15, 18, 19, or 23".failureNel[RawEvent]
           }
-          schemaVersion.flatMap(v => {
+          schemaVersion.flatMap { v =>
 
             // Combine the first two fields into a timestamp
             val schemaCompatibleFields = "%sT%sZ".format(fields(0), fields(1)) :: fields.toList.tail.tail
@@ -140,8 +141,8 @@ object CloudfrontAccessLogAdapter {
             val (errors, ueJson) = buildJson(Nil, FieldNames zip schemaCompatibleFields, JObject())
 
             val failures = errors match {
-              case Nil => None.successNel
-              case h :: t => (NonEmptyList(h) :::> t).fail // list to nonemptylist
+              case Nil => None.successNel[String]
+              case h :: t => (NonEmptyList(h) :::> IList.fromList(t)).failure // list to nonemptylist
             }
 
             val validatedTstamp = toTimestamp(fields(0), fields(1)).map(Some(_)).toValidationNel
@@ -177,9 +178,8 @@ object CloudfrontAccessLogAdapter {
                 context      = CollectorContext(tstamp, ip, userAgent, None, Nil, None)
               ))
             }
-          })
-        }
-        case None => "Cloudfront TSV has no body - this should be impossible".failNel
+          }
+        case None => "Cloudfront TSV has no body - this should be impossible".failureNel
       }
 
     /**
@@ -197,7 +197,7 @@ object CloudfrontAccessLogAdapter {
         DateTime.parse("%sT%s+00:00".format(date, time)).success // Construct a UTC ISO date from CloudFront date and time
       } catch {
         case NonFatal(e) =>
-          "Unexpected exception converting Cloudfront web distribution access log date [%s] and time [%s] to timestamp: [%s]".format(date, time, e.getMessage).fail
+          "Unexpected exception converting Cloudfront web distribution access log date [%s] and time [%s] to timestamp: [%s]".format(date, time, e.getMessage).failure
       }
   }
 }

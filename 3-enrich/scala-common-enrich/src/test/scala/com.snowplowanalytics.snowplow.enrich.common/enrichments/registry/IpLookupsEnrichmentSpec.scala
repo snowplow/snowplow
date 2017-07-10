@@ -48,7 +48,7 @@ class IpLookupsEnrichmentSpec extends Specification with DataTables with Validat
 
   // Impossible to make extractIpInformation throw a validation error
   def e1 =
-    check { (ipAddress: String) => config.extractIpInformation(ipAddress) must beSuccessful }
+    prop { (ipAddress: String) => config.extractIpInformation(ipAddress) must beSuccessful }
 
   def e2 =
     "SPEC NAME"             || "IP ADDRESS"    | "EXPECTED LOCATION" |

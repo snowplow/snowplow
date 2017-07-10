@@ -18,6 +18,9 @@ package apirequest
 import org.specs2.Specification
 import org.specs2.scalaz.ValidationMatchers
 
+// Scalaz
+import scalaz.Validation.FlatMap._
+
 // json4s
 import org.json4s.JObject
 import org.json4s.JsonDSL._

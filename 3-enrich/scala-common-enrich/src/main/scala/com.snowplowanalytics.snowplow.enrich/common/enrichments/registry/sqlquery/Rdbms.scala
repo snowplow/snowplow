@@ -73,7 +73,7 @@ trait Rdbms {
    * Get amount of placeholders (?-signs) in [[PreparedStatement]]
    */
   def getPlaceholderCount(preparedStatement: PreparedStatement): ThrowableXor[Int] =
-    \/ fromTryCatch preparedStatement.getParameterMetaData.getParameterCount
+    \/ fromTryCatchNonFatal preparedStatement.getParameterMetaData.getParameterCount
 
   /**
    * Transform SQL-string with placeholders (?-signs) into [[PreparedStatement]]

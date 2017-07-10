@@ -101,14 +101,14 @@ object MailchimpAdapter extends Adapter {
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
     (payload.body, payload.contentType) match {
-      case (None, _)                          => s"Request body is empty: no ${VendorName} event to process".failNel
-      case (_, None)                          => s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failNel
-      case (_, Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failNel
+      case (None, _)                          => s"Request body is empty: no ${VendorName} event to process".failureNel
+      case (_, None)                          => s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failureNel
+      case (_, Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failureNel
       case (Some(body), _)                    => {
 
         val params = toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), "UTF-8").toList)
         params.get("type") match {
-          case None => s"No ${VendorName} type parameter provided: cannot determine event type".failNel
+          case None => s"No ${VendorName} type parameter provided: cannot determine event type".failureNel
           case Some(eventType) => {
 
             val allParams = toMap(payload.querystring) ++ reformatParameters(params)

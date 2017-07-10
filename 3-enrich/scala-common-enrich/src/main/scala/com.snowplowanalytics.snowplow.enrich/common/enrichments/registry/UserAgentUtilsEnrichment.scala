@@ -115,7 +115,7 @@ case object UserAgentUtilsEnrichment extends Enrichment {
         deviceType = os.getDeviceType.getName,
         deviceIsMobile = os.isMobileDevice).success
       } catch {
-          case NonFatal(e) => "Exception parsing useragent [%s]: [%s]".format(useragent, e.getMessage).fail
+          case NonFatal(e) => "Exception parsing useragent [%s]: [%s]".format(useragent, e.getMessage).failure
       }
   }
 }

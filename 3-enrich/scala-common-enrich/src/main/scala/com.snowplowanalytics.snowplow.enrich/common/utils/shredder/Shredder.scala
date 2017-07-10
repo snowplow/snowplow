@@ -27,6 +27,7 @@ import scala.collection.JavaConversions._
 // Scalaz
 import scalaz._
 import Scalaz._
+import Validation.FlatMap._
 
 // Snowplow Common Enrich
 import common._

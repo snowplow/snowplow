@@ -19,6 +19,7 @@ import java.lang.reflect.Method
 // Scalaz
 import scalaz._
 import Scalaz._
+import Validation.FlatMap._
 
 /**
  * The problem we're trying to solve: converting maps to classes in Scala
@@ -184,7 +185,7 @@ object MapTransformer {
                 4.success[String] // +4 to the count of fields successfully set
             }
           case Failure(e) =>
-            e.fail[Int]
+            e.failure[Int]
         }
       } else {
         0.success[String] // Key not found: zero fields updated

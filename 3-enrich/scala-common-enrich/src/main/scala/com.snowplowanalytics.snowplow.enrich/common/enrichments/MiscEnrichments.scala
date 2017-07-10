@@ -69,7 +69,7 @@ object MiscEnrichments {
       case "cnsl" => "cnsl".success // Games Console
       case "tv"   => "tv".success   // Connected TV
       case "srv"  => "srv".success  // Server-side App
-      case p => "Field [%s]: [%s] is not a supported tracking platform".format(field, p).fail
+      case p => "Field [%s]: [%s] is not a supported tracking platform".format(field, p).failure
     }
   }
 

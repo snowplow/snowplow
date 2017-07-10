@@ -28,6 +28,7 @@ import scala.util.control.NonFatal
 // Scalaz
 import scalaz._
 import Scalaz._
+import Validation.FlatMap._
 
 // Joda time
 import org.joda.time.{ DateTime, DateTimeZone }
@@ -109,7 +110,7 @@ case class WeatherEnrichment(apiKey: String, cacheSize: Int, geoPrecision: Int, 
     try {
       getWeather(latitude, longitude, time).map(addSchema)
     } catch {
-      case NonFatal(exc) => exc.toString.fail
+      case NonFatal(exc) => exc.toString.failure
     }
 
   /**
@@ -127,10 +128,10 @@ case class WeatherEnrichment(apiKey: String, cacheSize: Int, geoPrecision: Int, 
           val transformedWeather = transformWeather(weatherStamp)
           Extraction.decompose(transformedWeather) match {
             case obj: JObject => obj.success
-            case _ => s"Couldn't transform weather object $transformedWeather into JSON".fail // Shouldn't ever happen
+            case _ => s"Couldn't transform weather object $transformedWeather into JSON".failure // Shouldn't ever happen
           }
         }
-      case _ => s"One of required event fields missing. latitude: $latitude, longitude: $longitude, tstamp: $time".fail
+      case _ => s"One of required event fields missing. latitude: $latitude, longitude: $longitude, tstamp: $time".failure
     }
 
   /**

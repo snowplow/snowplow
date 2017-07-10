@@ -32,6 +32,7 @@ import scala.util.control.NonFatal
 // Scalaz
 import scalaz._
 import Scalaz._
+import Validation.FlatMap._
 
 // json4s
 import org.json4s._
@@ -102,7 +103,7 @@ object JavascriptScriptEnrichment {
 
     // Script mustn't be null
     if (Option(script).isEmpty) {
-      return "JavaScript script for evaluation is null".fail
+      return "JavaScript script for evaluation is null".failure
     }
 
     val invoke =
@@ -120,7 +121,7 @@ object JavascriptScriptEnrichment {
     try {
       cx.compileString(invoke, "user-defined-script", 0, null).success
     } catch {
-      case NonFatal(se) => s"Error compiling JavaScript script: [${se}]".fail
+      case NonFatal(se) => s"Error compiling JavaScript script: [${se}]".failure
     }
   }
 
@@ -146,11 +147,11 @@ object JavascriptScriptEnrichment {
       scope.put(Variables.In, scope, Context.javaToJS(event, scope))
       val retVal = script.exec(cx, scope)
       if (Option(retVal).isDefined) {
-        return s"Evaluated JavaScript script should not return a value; returned: [${retVal}]".fail
+        return s"Evaluated JavaScript script should not return a value; returned: [${retVal}]".failure
       }
     } catch {
       case NonFatal(nf) =>
-        return s"Evaluating JavaScript script threw an exception: [${nf}]".fail
+        return s"Evaluating JavaScript script threw an exception: [${nf}]".failure
     } finally {
       Context.exit()
     }
@@ -161,11 +162,11 @@ object JavascriptScriptEnrichment {
         try {
           JsonMethods.parse(obj.asInstanceOf[String]) match {
             case JArray(elements) => failFastCast(List[JObject](), elements).success
-            case _ => s"JavaScript script must return an Array; got [${obj}]".fail
+            case _ => s"JavaScript script must return an Array; got [${obj}]".failure
           }
         } catch {
           case NonFatal(nf) =>
-            s"Could not convert object returned from JavaScript script to JValue AST: [${nf}]".fail
+            s"Could not convert object returned from JavaScript script to JValue AST: [${nf}]".failure
         }
       }
     }

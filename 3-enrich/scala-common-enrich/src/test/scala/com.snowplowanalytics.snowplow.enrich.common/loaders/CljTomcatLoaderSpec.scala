@@ -96,5 +96,5 @@ class CljTomcatLoaderSpec extends Specification with DataTables with ValidationM
   // A bit of fun: the chances of generating a valid Clojure Collector log record at random are
   // so low that we can just use ScalaCheck here
   def e4 =
-    check { (raw: String) => CljTomcatLoader.toCollectorPayload(raw) must beFailing(NonEmptyList("Line does not match raw event format for Clojure Collector")) }
+    prop { (raw: String) => CljTomcatLoader.toCollectorPayload(raw) must beFailing(NonEmptyList("Line does not match raw event format for Clojure Collector")) }
 }

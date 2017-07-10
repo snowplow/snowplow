@@ -26,6 +26,7 @@ import org.apache.commons.codec.digest.DigestUtils
 // Scalaz
 import scalaz._
 import Scalaz._
+import Validation.FlatMap._
 
 // json4s
 import org.json4s._
@@ -74,7 +75,7 @@ object EventFingerprintEnrichmentConfig extends ParseableEnrichment {
    */
   private[registry] def getAlgorithm(algorithmName: String): ValidatedMessage[String => String] = algorithmName match {
     case "MD5" => ((s: String) => DigestUtils.md5Hex(s)).success
-    case other => s"[$other] is not a supported event fingerprint generation algorithm".toProcessingMessage.fail
+    case other => s"[$other] is not a supported event fingerprint generation algorithm".toProcessingMessage.failure
   }
 
 }

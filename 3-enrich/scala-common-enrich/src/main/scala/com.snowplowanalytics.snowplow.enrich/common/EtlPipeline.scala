@@ -76,8 +76,8 @@ object EtlPipeline {
 
     def flattenToList[A](v: Validated[Option[Validated[NonEmptyList[Validated[A]]]]]): List[Validated[A]] = v match {
       case Success(Some(Success(nel))) => nel.toList
-      case Success(Some(Failure(f)))   => List(f.fail)
-      case Failure(f)                  => List(f.fail)
+      case Success(Some(Failure(f)))   => List(f.failure)
+      case Failure(f)                  => List(f.failure)
       case Success(None)               => Nil
     }
 
@@ -99,7 +99,7 @@ object EtlPipeline {
       case NonFatal(nf) => {
         val errorWriter = new StringWriter
         nf.printStackTrace(new PrintWriter(errorWriter))
-        List(s"Unexpected error processing events: $errorWriter".failNel)
+        List(s"Unexpected error processing events: $errorWriter".failureNel)
       }
     }
   }

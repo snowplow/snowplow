@@ -76,9 +76,12 @@ case class Input(placeholder: Int, pojo: Option[PojoInput], json: Option[JsonInp
         val option = Option(anyRef.asInstanceOf[placeholderType.PlaceholderType])
         (placeholder, option.map(placeholderType.Value.apply)).successNel
       } catch {
-        case NonFatal(e) => InvalidInput("SQL Query Enrichment: Extracting from POJO failed: " + e.toString).failureNel
+        case NonFatal(e) =>
+          Validation.failureNel[Throwable, (Int, Option[ExtractedValue])](
+            InvalidInput("SQL Query Enrichment: Extracting from POJO failed: " + e.toString))
       }
-      case None => InvalidInput("SQL Query Enrichment: Wrong POJO input field was specified").failureNel
+      case None => Validation.failureNel[Throwable, (Int, Option[ExtractedValue])](
+        InvalidInput("SQL Query Enrichment: Wrong POJO input field was specified"))
     }
 
     case None => (placeholder, none).successNel
@@ -129,12 +132,13 @@ case class JsonInput(field: String, schemaCriterion: String, jsonPath: String) {
    *         none means not-found value
    */
   def extract(derived: List[JObject], custom: List[JObject], unstruct: Option[JObject]): ValidationNel[Throwable, Option[JValue]] = {
-    val validatedJson = field match {
+    val validatedJson: ValidationNel[Throwable, Option[JValue]] = field match {
       case "derived_contexts" => getBySchemaCriterion(derived, schemaCriterion).successNel
       case "contexts"         => getBySchemaCriterion(custom, schemaCriterion).successNel
       case "unstruct_event"   => getBySchemaCriterion(unstruct.toList, schemaCriterion).successNel
-      case other => InvalidInput(s"SQL Query Enrichment: wrong field [$other] passed to Input.getFromJson. " +
-                                  "Should be one of: derived_contexts, contexts, unstruct_event").failureNel
+      case other => Validation.failureNel[Throwable, Option[JValue]](
+        InvalidInput(s"SQL Query Enrichment: wrong field [$other] passed to Input.getFromJson. " +
+          "Should be one of: derived_contexts, contexts, unstruct_event"))
     }
 
     val validatedJsonPath: Validation[Throwable, JsonPath] = compileQuery(jsonPath) match {

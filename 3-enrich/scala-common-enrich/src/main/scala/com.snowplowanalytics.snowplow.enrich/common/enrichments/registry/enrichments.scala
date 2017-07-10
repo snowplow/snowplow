@@ -66,7 +66,7 @@ trait ParseableEnrichment {
     } else {
       ("Schema key %s is not supported. A '%s' enrichment must have schema '%s'.")
         .format(schemaKey, supportedSchema.name, supportedSchema)
-        .toProcessingMessage.fail.toValidationNel
+        .toProcessingMessage.failure.toValidationNel
     }
   }
 }

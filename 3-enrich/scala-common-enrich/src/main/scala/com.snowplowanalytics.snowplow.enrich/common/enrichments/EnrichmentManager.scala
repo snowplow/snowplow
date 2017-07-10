@@ -25,6 +25,7 @@ import iglu.client.Resolver
 // Scalaz
 import scalaz._
 import Scalaz._
+import Validation.FlatMap._
 
 // This project
 import adapters.RawEvent
@@ -207,7 +208,7 @@ object EnrichmentManager {
 
     // The load fails if the collector version is not set
     val collectorVersionSet = event.v_collector match {
-      case ("" | null) => "Collector version not set".fail
+      case ("" | null) => "Collector version not set".failure
       case _ => unitSuccess
     }
 
@@ -407,13 +408,13 @@ object EnrichmentManager {
 
     // Validate custom contexts
     val customContexts = Shredder.extractAndValidateCustomContexts(event) match {
-      case Failure(msgs) => msgs.map(_.toString).fail
+      case Failure(msgs) => msgs.map(_.toString).failure
       case Success(cctx) => cctx.success
     }
 
     // Validate unstructured event
     val unstructEvent = Shredder.extractAndValidateUnstructEvent(event) match {
-      case Failure(msgs) => msgs.map(_.toString).fail
+      case Failure(msgs) => msgs.map(_.toString).failure
       case Success(ue) => ue.success
     }
 

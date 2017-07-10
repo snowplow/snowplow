@@ -53,18 +53,18 @@ class ExtractPlatformSpec extends Specification with DataTables {
   def is = s2"Extracting platforms with extractPlatform should work $e1"
 
   def e1 =
-    "SPEC NAME"                      || "INPUT VAL" | "EXPECTED OUTPUT" |
-    "valid web"                      !! "web"       ! "web".success     |
-    "valid mobile/tablet"            !! "mob"       ! "mob".success     |
-    "valid desktop/laptop/netbook"   !! "pc"        ! "pc".success      |
-    "valid server-side app"          !! "srv"       ! "srv".success     |
-    "valid general app"              !! "app"       ! "app".success     |
-    "valid connected TV"             !! "tv"        ! "tv".success      |
-    "valid games console"            !! "cnsl"      ! "cnsl".success    |
-    "valid iot (internet of things)" !! "iot"       ! "iot".success     |
-    "invalid empty"                  !! ""          !  err("").fail     |
-    "invalid null"                   !! null        !  err(null).fail   |
-    "invalid platform"               !! "ma"        !  err("ma").fail   |> {
+    "SPEC NAME"                      || "INPUT VAL" | "EXPECTED OUTPUT"  |
+    "valid web"                      !! "web"       ! "web".success      |
+    "valid mobile/tablet"            !! "mob"       ! "mob".success      |
+    "valid desktop/laptop/netbook"   !! "pc"        ! "pc".success       |
+    "valid server-side app"          !! "srv"       ! "srv".success      |
+    "valid general app"              !! "app"       ! "app".success      |
+    "valid connected TV"             !! "tv"        ! "tv".success       |
+    "valid games console"            !! "cnsl"      ! "cnsl".success     |
+    "valid iot (internet of things)" !! "iot"       ! "iot".success      |
+    "invalid empty"                  !! ""          !  err("").failure   |
+    "invalid null"                   !! null        !  err(null).failure |
+    "invalid platform"               !! "ma"        !  err("ma").failure |> {
 
       (_, input, expected) => MiscEnrichments.extractPlatform(FieldName, input) must_== expected
     }
@@ -80,7 +80,7 @@ class IdentitySpec extends Specification with ScalaCheck {
     "The identity function should work for any pair of Strings" ! e1
 
   def e1 =
-    check { (field: String, value: String) => MiscEnrichments.identity(field, value) must_== value.success }
+    prop { (field: String, value: String) => MiscEnrichments.identity(field, value) must_== value.success }
 }
 
 class FormatDerivedContextsSpec extends MutSpecification {

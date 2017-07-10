@@ -14,10 +14,13 @@ package com.snowplowanalytics.snowplow.enrich
 package common.enrichments.registry.sqlquery
 
 // json4s
-import org.json4s._
+import org.json4s.JObject
 import org.json4s.JsonDSL._
 import org.json4s.jackson.parseJson
 import org.json4s.jackson.JsonMethods.asJsonNode
+
+// Scalaz
+import scalaz.Validation.FlatMap._
 
 // specs2
 import org.specs2.Specification

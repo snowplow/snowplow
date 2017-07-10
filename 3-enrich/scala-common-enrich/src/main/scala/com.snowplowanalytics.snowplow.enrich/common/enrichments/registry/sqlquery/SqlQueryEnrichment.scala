@@ -23,6 +23,7 @@ import scala.collection.immutable.IntMap
 // Scalaz
 import scalaz._
 import Scalaz._
+import Validation.FlatMap._
 
 // json4s
 import org.json4s._

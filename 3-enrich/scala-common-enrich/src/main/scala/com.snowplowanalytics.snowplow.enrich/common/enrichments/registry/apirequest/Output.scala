@@ -19,6 +19,7 @@ package apirequest
 // Scalaz
 import scalaz._
 import Scalaz._
+import Validation.FlatMap._
 
 // Scala
 import scala.util.control.NonFatal

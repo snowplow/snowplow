@@ -49,7 +49,7 @@ object SchemaEnrichment {
     case "transaction"      => Schemas.transactionSchema
     case "transaction_item" => Schemas.transactionItemSchema
     case "unstruct"         => extractUnstructSchema(event)
-    case eventType          => "Unrecognized event [%s]".format(eventType).fail
+    case eventType          => "Unrecognized event [%s]".format(eventType).failure
   }
 
   private def extractUnstructSchema(event: EnrichedEvent)(implicit resolver: Resolver): Validation[String, SchemaKey] = {
@@ -57,7 +57,7 @@ object SchemaEnrichment {
       case Some(Success(List(json))) =>
         parseSchemaKey(Option(json.get("schema")))
       case _ =>
-        "Unstructured event couldn't be extracted".fail
+        "Unstructured event couldn't be extracted".failure
     }
   }
 
@@ -65,6 +65,6 @@ object SchemaEnrichment {
     case Some(textNode: TextNode) =>
       SchemaKey.parse(textNode.textValue()).<-:(_.toString)
     case _ =>
-      "Unrecognized unstructured event structure".fail // It's validated by the Shredder, so it should never happen
+      "Unrecognized unstructured event structure".failure // It's validated by the Shredder, so it should never happen
   }
 }

@@ -22,6 +22,7 @@ import org.apache.maven.artifact.versioning.DefaultArtifactVersion
 // Scalaz
 import scalaz._
 import Scalaz._
+import Validation.FlatMap._
 
 // json4s
 import org.json4s._
@@ -98,7 +99,7 @@ case class ApiRequestEnrichment(inputs: List[Input], api: HttpApi, outputs: List
     val templateContext = Input.buildTemplateContext(
       inputs, event, derivedContexts, jsonCustomContexts, jsonUnstructEvent)
 
-    templateContext.flatMap(getOutputs(_).toValidationNel)
+    templateContext.flatMap(o => getOutputs(o.map(_.mapValues(Tag.unwrap))).toValidationNel)
   }
 
   /**

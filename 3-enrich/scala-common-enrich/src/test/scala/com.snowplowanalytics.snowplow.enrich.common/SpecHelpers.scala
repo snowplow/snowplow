@@ -28,6 +28,7 @@ import utils.JsonUtils
 // Scalaz
 import scalaz._
 import Scalaz._
+import Validation.FlatMap._
 
 object SpecHelpers {
 

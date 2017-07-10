@@ -22,6 +22,7 @@ import java.net.URLEncoder
 // Scalaz
 import scalaz._
 import Scalaz._
+import Validation.FlatMap._
 
 // This project
 import utils.HttpClient

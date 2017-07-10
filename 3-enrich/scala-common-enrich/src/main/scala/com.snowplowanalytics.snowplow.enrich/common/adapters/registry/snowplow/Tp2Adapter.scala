@@ -37,6 +37,7 @@ import iglu.client.validation.ValidatableJsonMethods._
 // Scalaz
 import scalaz._
 import Scalaz._
+import Validation.FlatMap._
 
 // This project
 import loaders.CollectorPayload
@@ -74,10 +75,10 @@ object Tp2Adapter extends Adapter {
     // Verify: body + content type set; content type matches expected; body contains expected JSON Schema; body passes schema validation
     val validatedParamsNel: Validated[NonEmptyList[RawEventParameters]] =
       (payload.body, payload.contentType) match {
-        case (None,      _)        if qsParams.isEmpty => s"Request body and querystring parameters empty, expected at least one populated".failNel
-        case (_,         Some(ct)) if !ContentTypes.list.contains(ct) => s"Content type of ${ct} provided, expected one of: ${ContentTypes.str}".failNel
-        case (Some(_),   None)     => s"Request body provided but content type empty, expected one of: ${ContentTypes.str}".failNel
-        case (None,      Some(ct)) => s"Content type of ${ct} provided but request body empty".failNel
+        case (None,      _)        if qsParams.isEmpty => s"Request body and querystring parameters empty, expected at least one populated".failureNel
+        case (_,         Some(ct)) if !ContentTypes.list.contains(ct) => s"Content type of ${ct} provided, expected one of: ${ContentTypes.str}".failureNel
+        case (Some(_),   None)     => s"Request body provided but content type empty, expected one of: ${ContentTypes.str}".failureNel
+        case (None,      Some(ct)) => s"Content type of ${ct} provided but request body empty".failureNel
         case (None,      None)     => NonEmptyList(qsParams).success
         case (Some(bdy), Some(_))  => // Build our NEL of parameters
           for {
@@ -136,8 +137,8 @@ object Tp2Adapter extends Adapter {
 
     (successes, failures) match {
       case (s :: ss, Nil)     =>  NonEmptyList(s, ss: _*).success // No Failures collected
-      case (s :: ss, f :: fs) =>  NonEmptyList(f, fs: _*).fail    // Some Failures, return those. Should never happen, unless JSON Schema changed
-      case (Nil,     _)       => "List of events is empty (should never happen, did JSON Schema change?)".failNel
+      case (s :: ss, f :: fs) =>  NonEmptyList(f, fs: _*).failure // Some Failures, return those. Should never happen, unless JSON Schema changed
+      case (Nil,     _)       => "List of events is empty (should never happen, did JSON Schema change?)".failureNel
     }
   }
 
@@ -156,8 +157,8 @@ object Tp2Adapter extends Adapter {
 
     Option(rawValue.textValue) match {
       case Some(txt) => (key, txt).success
-      case None if rawValue.isTextual => s"Value for key ${key} is a null String (should never happen, did Jackson implementation change?)".fail
-      case _ => s"Value for key ${key} is not a String (should never happen, did JSON Schema change?)".fail
+      case None if rawValue.isTextual => s"Value for key ${key} is a null String (should never happen, did Jackson implementation change?)".failure
+      case _ => s"Value for key ${key} is not a String (should never happen, did JSON Schema change?)".failure
     }
   }
 

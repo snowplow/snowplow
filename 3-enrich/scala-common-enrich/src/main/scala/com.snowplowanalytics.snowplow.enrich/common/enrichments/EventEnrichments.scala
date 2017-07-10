@@ -68,11 +68,11 @@ object EventEnrichments {
    */
   def formatCollectorTstamp(collectorTstamp: Option[DateTime]): Validation[String, String] = {
     collectorTstamp match {
-      case None => "No collector_tstamp set".fail
+      case None => "No collector_tstamp set".failure
       case Some(t) => {
         val formattedTimestamp = toTimestamp(t)
         if (formattedTimestamp.startsWith("-")) {
-          s"Collector timestamp $formattedTimestamp is negative and will fail the Redshift load".fail
+          s"Collector timestamp $formattedTimestamp is negative and will fail the Redshift load".failure
         } else {
           formattedTimestamp.success
         }
@@ -117,7 +117,7 @@ object EventEnrichments {
           case _ => collectorTstamp
         }).success
       } catch {
-        case NonFatal(e) => s"Exception calculating derived timestamp: [$e]".fail
+        case NonFatal(e) => s"Exception calculating derived timestamp: [$e]".failure
       }
     }
 
@@ -141,13 +141,13 @@ object EventEnrichments {
       val dt = new DateTime(tstamp.toLong)
       val timestampString = toTimestamp(dt)
       if (timestampString.startsWith("-")) {
-        s"Field [$field]: [$tstamp] is formatted as [$timestampString] which isn't Redshift-compatible".fail
+        s"Field [$field]: [$tstamp] is formatted as [$timestampString] which isn't Redshift-compatible".failure
       } else {
         timestampString.success
       }
     } catch {
       case nfe: NumberFormatException =>
-        "Field [%s]: [%s] is not in the expected format (ms since epoch)".format(field, tstamp).fail
+        "Field [%s]: [%s] is not in the expected format (ms since epoch)".format(field, tstamp).failure
     }
 
   /**
@@ -172,7 +172,7 @@ object EventEnrichments {
       case "ti" => "transaction_item".success
       case "pv" => "page_view".success
       case "pp" => "page_ping".success
-      case  ec  => "Field [%s]: [%s] is not a recognised event code".format(field, ec).fail
+      case  ec  => "Field [%s]: [%s] is not a recognised event code".format(field, ec).failure
     }
 
   /**

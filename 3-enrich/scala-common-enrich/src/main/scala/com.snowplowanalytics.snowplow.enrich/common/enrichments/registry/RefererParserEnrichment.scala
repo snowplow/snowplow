@@ -26,6 +26,7 @@ import org.apache.maven.artifact.versioning.DefaultArtifactVersion
 // Scalaz
 import scalaz._
 import Scalaz._
+import Validation.FlatMap._
 
 // json4s
 import org.json4s.JValue

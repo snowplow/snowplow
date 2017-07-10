@@ -290,20 +290,20 @@ trait Adapter {
    */
   protected[registry] def rawEventsListProcessor(rawEventsList: List[Validated[RawEvent]]): ValidatedRawEvents = {
 
-    val successes: List[RawEvent] = 
+    val successes: List[RawEvent] =
       for {
-        Success(s) <- rawEventsList 
+        Success(s) <- rawEventsList
       } yield s
 
-    val failures: List[String] = 
-      for {
-        Failure(NonEmptyList(f)) <- rawEventsList 
-      } yield f
+    val failures: List[String] =
+      (for {
+        Failure(NonEmptyList((h, t))) <- rawEventsList
+      } yield h :: t.toList).flatten
 
     (successes, failures) match {
       case (s :: ss,     Nil) =>  NonEmptyList(s, ss: _*).success // No Failures collected.
-      case (_,       f :: fs) =>  NonEmptyList(f, fs: _*).fail    // Some or all are Failures, return these.
-      case (Nil,         Nil) => "List of events is empty (should never happen, not catching empty list properly)".failNel
+      case (_,       f :: fs) =>  NonEmptyList(f, fs: _*).failure // Some or all are Failures, return these.
+      case (Nil,         Nil) => "List of events is empty (should never happen, not catching empty list properly)".failureNel
     }
   }
 
@@ -324,19 +324,18 @@ trait Adapter {
    */
   protected[registry] def lookupSchema(eventOpt: Option[String], vendor: String, eventSchemaMap: Map[String,String]): Validated[String] =
     eventOpt match {
-      case None            => s"$vendor event failed: type parameter not provided - cannot determine event type".failNel
-      case Some(eventType) => {
+      case None            => s"$vendor event failed: type parameter not provided - cannot determine event type".failureNel
+      case Some(eventType) =>
         eventType match {
           case et if eventSchemaMap.contains(et) => {
             eventSchemaMap.get(et) match {
-              case None         => s"$vendor event failed: type parameter [$et] has no schema associated with it - check event-schema map".failNel
+              case None         => s"$vendor event failed: type parameter [$et] has no schema associated with it - check event-schema map".failureNel
               case Some(schema) => schema.success
             }
           }
-          case "" => s"$vendor event failed: type parameter is empty - cannot determine event type".failNel
-          case et => s"$vendor event failed: type parameter [$et] not recognized".failNel
+          case "" => s"$vendor event failed: type parameter is empty - cannot determine event type".failureNel
+          case et => s"$vendor event failed: type parameter [$et] not recognized".failureNel
         }
-      }
     }
 
   /**
@@ -358,19 +357,18 @@ trait Adapter {
    */
   protected[registry] def lookupSchema(eventOpt: Option[String], vendor: String, index: Int, eventSchemaMap: Map[String,String]): Validated[String] =
     eventOpt match {
-      case None            => s"$vendor event at index [$index] failed: type parameter not provided - cannot determine event type".failNel
-      case Some(eventType) => {
+      case None            => s"$vendor event at index [$index] failed: type parameter not provided - cannot determine event type".failureNel
+      case Some(eventType) =>
         eventType match {
           case et if eventSchemaMap.contains(et) => {
             eventSchemaMap.get(et) match {
-              case None         => s"$vendor event at index [$index] failed: type parameter [$et] has no schema associated with it - check event-schema map".failNel
+              case None         => s"$vendor event at index [$index] failed: type parameter [$et] has no schema associated with it - check event-schema map".failureNel
               case Some(schema) => schema.success
             }
           }
-          case "" => s"$vendor event at index [$index] failed: type parameter is empty - cannot determine event type".failNel
-          case et => s"$vendor event at index [$index] failed: type parameter [$et] not recognized".failNel
+          case "" => s"$vendor event at index [$index] failed: type parameter is empty - cannot determine event type".failureNel
+          case et => s"$vendor event at index [$index] failed: type parameter [$et] not recognized".failureNel
         }
-      }
     }
 
   /**
@@ -387,7 +385,7 @@ trait Adapter {
     } catch {
       case e: JsonParseException => {
         val exception = JU.stripInstanceEtc(e.toString).orNull
-        s"Event failed to parse into JSON: [${exception}]".failNel
+        s"Event failed to parse into JSON: [${exception}]".failureNel
       }
     }
 

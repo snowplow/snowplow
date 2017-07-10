@@ -50,7 +50,7 @@ object Tp1Adapter extends Adapter {
 
     val params = toMap(payload.querystring)
     if (params.isEmpty) {
-      "Querystring is empty: no raw event to process".failNel
+      "Querystring is empty: no raw event to process".failureNel
     } else {
       NonEmptyList(RawEvent(
         api          = payload.api,
@@ -58,7 +58,7 @@ object Tp1Adapter extends Adapter {
         contentType  = payload.contentType,
         source       = payload.source,
         context      = payload.context
-        )).success
+      )).success
     }
   }
 }

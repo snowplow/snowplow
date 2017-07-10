@@ -48,7 +48,7 @@ case class NdjsonLoader(adapter: String) extends Loader[String] {
       if (line.replaceAll("\r?\n", "").isEmpty) {
         Success(None)
       } else if (line.split("\r?\n").size > 1) {
-        "Too many lines! Expected single line".failNel
+        "Too many lines! Expected single line".failureNel
       } else {
         parse(line)
         CollectorApi.parse(adapter).map(
@@ -71,7 +71,7 @@ case class NdjsonLoader(adapter: String) extends Loader[String] {
       }
 
     } catch {
-      case e: JsonParseException => "Unparsable JSON".failNel
+      case e: JsonParseException => "Unparsable JSON".failureNel
     }
   }
 

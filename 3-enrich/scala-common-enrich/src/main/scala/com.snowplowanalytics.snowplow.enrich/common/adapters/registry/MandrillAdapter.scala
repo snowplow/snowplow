@@ -99,13 +99,13 @@ object MandrillAdapter extends Adapter {
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
     (payload.body, payload.contentType) match {
-      case (None, _)                          => s"Request body is empty: no ${VendorName} events to process".failNel
-      case (_, None)                          => s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failNel
-      case (_, Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failNel
+      case (None, _)                          => s"Request body is empty: no ${VendorName} events to process".failureNel
+      case (_, None)                          => s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failureNel
+      case (_, Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failureNel
       case (Some(body),_)                     => {
 
         payloadBodyToEvents(body) match {
-          case Failure(str)  => str.failNel
+          case Failure(str)  => str.failureNel
           case Success(list) => {
 
             // Create our list of Validated RawEvents
@@ -162,22 +162,22 @@ object MandrillAdapter extends Adapter {
     val bodyMap = toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + rawEventString), "UTF-8").toList)
 
     bodyMap match {
-      case map if map.size != 1 => s"Mapped ${VendorName} body has invalid count of keys: ${map.size}".fail
+      case map if map.size != 1 => s"Mapped ${VendorName} body has invalid count of keys: ${map.size}".failure
       case map                  => {
         map.get("mandrill_events") match {
-          case None       => s"Mapped ${VendorName} body does not have 'mandrill_events' as a key".fail
-          case Some("")   => s"${VendorName} events string is empty: nothing to process".fail
+          case None       => s"Mapped ${VendorName} body does not have 'mandrill_events' as a key".failure
+          case Some("")   => s"${VendorName} events string is empty: nothing to process".failure
           case Some(dStr) => {
             try {
               val parsed = parse(dStr)
               parsed match {
                 case JArray(list) => list.success
-                case _            => s"Could not resolve ${VendorName} payload into a JSON array of events".fail
+                case _            => s"Could not resolve ${VendorName} payload into a JSON array of events".failure
               }
             } catch {
               case e: JsonParseException => {
                 val exception = JU.stripInstanceEtc(e.toString).orNull
-                s"${VendorName} events string failed to parse into JSON: [${exception}]".fail
+                s"${VendorName} events string failed to parse into JSON: [${exception}]".failure
               }
             }
           }
