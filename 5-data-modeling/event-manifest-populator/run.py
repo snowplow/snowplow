@@ -26,7 +26,7 @@ from boto.emr.step import JarStep
 
 
 DIR_WITH_JAR = "./target/scala-2.11/"
-JAR_FILE = "event-manifest-populator-0.1.0.jar"
+JAR_FILE = "event-manifest-populator-0.1.1.jar"
 
 SINCE_SHORT_FORMAT = "%Y-%m-%d"
 SINCE_PRECISE_FORMAT = "%Y-%m-%d-%H-%M-%S"
