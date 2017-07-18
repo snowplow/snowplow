@@ -31,7 +31,6 @@ object Dependencies {
     // Java
     val awsSdk               = "1.6.10"
     val yodaTime             = "2.1"
-    val yodaConvert          = "1.2"
     val kafka                = "0.10.1.0"
     // Scala
     val snowplowCommonEnrich = "0.22.0"
@@ -54,7 +53,6 @@ object Dependencies {
     // Java
     val awsSdk               = "com.amazonaws"         %  "aws-java-sdk"              % V.awsSdk
     val yodaTime             = "joda-time"             %  "joda-time"                 % V.yodaTime
-    val yodaConvert          = "org.joda"              %  "joda-convert"              % V.yodaConvert
     val kafkaClients         = "org.apache.kafka"      %  "kafka-clients"             % V.kafka
 
     // Scala

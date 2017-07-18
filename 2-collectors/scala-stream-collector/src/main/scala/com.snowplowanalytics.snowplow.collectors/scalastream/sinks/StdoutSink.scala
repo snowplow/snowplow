@@ -21,22 +21,10 @@ package collectors
 package scalastream
 package sinks
 
-// Java
-import java.nio.ByteBuffer
-
 // Apache Commons
 import org.apache.commons.codec.binary.Base64
 
-// Thrift
-import org.apache.thrift.TSerializer
-
-// Config
-import com.typesafe.config.Config
-
-// Snowplow
-import CollectorPayload.thrift.model1.CollectorPayload
-
-class StdoutSink (inputType: InputType.InputType) extends AbstractSink {
+class StdoutSink(inputType: InputType.InputType) extends AbstractSink {
 
   val MaxBytes = Long.MaxValue
 

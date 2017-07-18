@@ -41,15 +41,9 @@ import io.github.cloudify.scala.aws.kinesis.Definitions.{
 import io.github.cloudify.scala.aws.kinesis.KinesisDsl._
 import io.github.cloudify.scala.aws.auth.CredentialsProvider.InstanceProfile
 
-// Config
-import com.typesafe.config.Config
-
 // Concurrent libraries
 import scala.concurrent.{Future,Await,TimeoutException}
 import scala.concurrent.duration._
-
-// Logging
-import org.slf4j.LoggerFactory
 
 // Scala
 import scala.util.{Success, Failure}

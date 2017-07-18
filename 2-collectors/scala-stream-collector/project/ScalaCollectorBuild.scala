@@ -34,7 +34,6 @@ object ScalaCollectorBuild extends Build {
         Libraries.akkaActor,
         Libraries.akkaSlf4j,
         Libraries.yodaTime,
-        Libraries.yodaConvert,
         Libraries.logback,
         Libraries.sprayCan,
         Libraries.sprayRouting,

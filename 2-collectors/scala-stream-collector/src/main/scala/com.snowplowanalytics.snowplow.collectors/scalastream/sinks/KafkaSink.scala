@@ -18,13 +18,7 @@ package sinks
 import java.util.Properties
 
 // Kafka
-import org.apache.kafka.clients.producer._;
-
-// Config
-import com.typesafe.config.Config
-
-// Logging
-import org.slf4j.LoggerFactory
+import org.apache.kafka.clients.producer._
 
 /**
  * Kafka Sink for the Scala collector

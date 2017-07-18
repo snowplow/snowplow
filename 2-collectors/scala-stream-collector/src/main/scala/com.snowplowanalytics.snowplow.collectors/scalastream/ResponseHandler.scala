@@ -75,9 +75,7 @@ import generated._
 import CollectorPayload.thrift.model1.CollectorPayload
 import sinks._
 import utils.SplitBatch
-
-// Common Enrich
-import com.snowplowanalytics.snowplow.enrich.common.outputs.BadRow
+import enrich.common.outputs.BadRow
 
 // Contains an invisible pixel to return for `/i` requests.
 object ResponseHandler {

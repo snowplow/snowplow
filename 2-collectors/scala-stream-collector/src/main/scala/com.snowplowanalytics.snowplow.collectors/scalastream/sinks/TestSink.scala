@@ -21,21 +21,6 @@ package collectors
 package scalastream
 package sinks
 
-// Java
-import java.nio.ByteBuffer
-
-// Apache Commons
-import org.apache.commons.codec.binary.Base64
-
-// Thrift
-import org.apache.thrift.TSerializer
-
-// Config
-import com.typesafe.config.Config
-
-// Snowplow
-import CollectorPayload.thrift.model1.CollectorPayload
-
 // Allow the testing framework to test collection events using the
 // same methods from AbstractSink as the other sinks.
 class TestSink extends AbstractSink {
