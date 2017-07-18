@@ -34,9 +34,6 @@ import java.nio.ByteBuffer
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
-// Argot
-import org.clapper.argot._
-
 // Config
 import com.typesafe.config.{ConfigFactory,Config,ConfigException}
 
@@ -51,36 +48,30 @@ object ScalaCollector extends App {
   lazy val log = LoggerFactory.getLogger(getClass())
   import log.{error, debug, info, trace}
 
-  import ArgotConverters._ // Argument specifications
-
-  val parser = new ArgotParser(
-    programName = generated.Settings.name,
-    compactUsage = true,
-    preUsage = Some("%s: Version %s. Copyright (c) 2015, %s.".format(
-      generated.Settings.name,
-      generated.Settings.version,
-      generated.Settings.organization)
-    )
-  )
-
-  // Mandatory config argument
-  val config = parser.option[Config](List("config"), "filename",
-    "Configuration file.") { (c, opt) =>
-    val file = new File(c)
-    if (file.exists) {
-      ConfigFactory.parseFile(file).resolve()
-    } else {
-      parser.usage("Configuration file \"%s\" does not exist".format(c))
-      ConfigFactory.empty()
-    }
+  case class FileConfig(config: File = new File("."))
+  val parser = new scopt.OptionParser[FileConfig](generated.Settings.name) {
+    head(generated.Settings.name, generated.Settings.version)
+    opt[File]("config").required().valueName("<filename>")
+      .action((f: File, c: FileConfig) => c.copy(f))
+      .validate(f =>
+        if (f.exists) success
+        else failure(s"Configuration file $f does not exist")
+      )
   }
 
-  parser.parse(args)
+  val conf = parser.parse(args, FileConfig()) match {
+    case Some(c) => ConfigFactory.parseFile(c.config).resolve()
+    case None    => ConfigFactory.empty()
+  }
 
-  val rawConf = config.value.getOrElse(throw new RuntimeException("--config option must be provided"))
-  val collectorConfig = new CollectorConfig(rawConf)
+  if (conf.isEmpty()) {
+    System.err.println("Empty configuration file")
+    System.exit(1)
+  }
 
-  implicit val system = ActorSystem.create("scala-stream-collector", rawConf)
+  val collectorConfig = new CollectorConfig(conf)
+
+  implicit val system = ActorSystem.create("scala-stream-collector", conf)
 
   lazy val executorService = new ScheduledThreadPoolExecutor(collectorConfig.threadpoolSize)
 

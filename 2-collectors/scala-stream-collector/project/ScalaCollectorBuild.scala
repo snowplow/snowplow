@@ -22,7 +22,7 @@ object ScalaCollectorBuild extends Build {
 
   // Configure prompt to show current project.
   override lazy val settings = super.settings :+ {
-    shellPrompt := { s => Project.extract(s).currentProject.id + " > " }
+    shellPrompt := { s => Project.extract(s).currentProject.id + "> " }
   }
 
   // Define our project, with basic project information and library
@@ -44,7 +44,7 @@ object ScalaCollectorBuild extends Build {
         Libraries.specs2,
         Libraries.scalazon,
         Libraries.awsSdk,
-        Libraries.argot,
+        Libraries.scopt,
         Libraries.snowplowCommonEnrich,
         Libraries.igluClient,
         Libraries.scalaz7,
