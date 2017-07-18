@@ -121,11 +121,9 @@ object ScalaCollector extends App {
 // Return Options from the configuration.
 object Helper {
   implicit class RichConfig(val underlying: Config) extends AnyVal {
-    def getOptionalString(path: String): Option[String] = try {
-      Some(underlying.getString(path))
-    } catch {
-      case e: ConfigException.Missing => None
-    }
+    def getOptionalString(path: String): Option[String] =
+      if (underlying.hasPath(path)) Some(underlying.getString(path))
+      else None
   }
 }
 

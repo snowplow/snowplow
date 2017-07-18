@@ -36,7 +36,6 @@ object ScalaCollectorBuild extends Build {
         Libraries.yodaTime,
         Libraries.yodaConvert,
         Libraries.logback,
-        Libraries.mimepull,
         Libraries.sprayCan,
         Libraries.sprayRouting,
         Libraries.commonsCodec,
