@@ -191,7 +191,16 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
       validatedMaybeEvent match {
         case Success(co) => (tabSeparateEnrichedEvent(co), if (config.useIpAddressAsPartitionKey) {
             co.user_ipaddress
-          } else {
+          } 
+	  else if (config.partitionKey != null) {
+          try
+            String.valueOf(co.getClass.getDeclaredField(config.partitionKey).get(co))
+          catch {
+            case _: Exception =>
+              UUID.randomUUID.toString
+            }
+          }
+	  else {
             UUID.randomUUID.toString
           }).success
         case Failure(errors) => {
