@@ -17,7 +17,6 @@ package collectors
 package scalastream
 
 // Java
-import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
 import java.net.URI
@@ -31,7 +30,6 @@ import scala.util.control.NonFatal
 
 // Scalaz
 import scalaz._
-import Scalaz._
 
 // Spray
 import spray.http.{
@@ -64,15 +62,12 @@ import spray.http.MediaTypes.`image/gif`
 // Akka
 import akka.actor.ActorRefFactory
 
-// Typesafe config
-import com.typesafe.config.Config
-
 // Java conversions
 import scala.collection.JavaConversions._
 
 // Snowplow
-import generated._
 import CollectorPayload.thrift.model1.CollectorPayload
+import model._
 import sinks._
 import utils.SplitBatch
 import enrich.common.outputs.BadRow
@@ -86,8 +81,6 @@ object ResponseHandler {
 
 // Receive requests and store data into an output sink.
 class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks)(implicit context: ActorRefFactory) {
-
-  import context.dispatcher
 
   val Collector = s"${generated.Settings.shortName}-${generated.Settings.version}-" + config.sinkEnabled.toString.toLowerCase
 

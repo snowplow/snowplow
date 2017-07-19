@@ -30,23 +30,22 @@ import scala.util.{Success, Failure}
 
 // Java
 import java.io.File
-import java.nio.ByteBuffer
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
 // Config
-import com.typesafe.config.{ConfigFactory,Config,ConfigException}
+import com.typesafe.config.{ConfigFactory, Config}
 
 // Logging
 import org.slf4j.LoggerFactory
 
 // Snowplow
+import model._
 import sinks._
 
 // Main entry point of the Scala collector.
 object ScalaCollector extends App {
   lazy val log = LoggerFactory.getLogger(getClass())
-  import log.{error, debug, info, trace}
 
   case class FileConfig(config: File = new File("."))
   val parser = new scopt.OptionParser[FileConfig](generated.Settings.name) {
@@ -112,7 +111,7 @@ object ScalaCollector extends App {
   bindResult onComplete {
     case Success(_) =>
     case Failure(f) => {
-      error("Failure binding to port", f)
+      log.error("Failure binding to port", f)
       System.exit(1)
     }
   }
@@ -198,7 +197,7 @@ class CollectorConfig(config: Config) {
   private val buffer = sink.getConfig("buffer")
   val byteLimit = buffer.getInt("byte-limit")
   val recordLimit = buffer.getInt("record-limit")
-  val timeLimit = buffer.getInt("time-limit")
+  val timeLimit = buffer.getLong("time-limit")
 
   val useIpAddressAsPartitionKey = kinesis.hasPath("useIpAddressAsPartitionKey") && kinesis.getBoolean("useIpAddressAsPartitionKey")
 

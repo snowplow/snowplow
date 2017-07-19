@@ -20,12 +20,12 @@ import java.util.Properties
 // Kafka
 import org.apache.kafka.clients.producer._
 
+import model._
+
 /**
  * Kafka Sink for the Scala collector
  */
 class KafkaSink(config: CollectorConfig, inputType: InputType.InputType) extends AbstractSink {
-
-  import log.{error, debug, info, trace}
 
   // Records must not exceed MaxBytes - 1MB
   val MaxBytes = 1000000L
@@ -45,7 +45,7 @@ class KafkaSink(config: CollectorConfig, inputType: InputType.InputType) extends
    */
   private def createProducer: KafkaProducer[String, Array[Byte]] = {
 
-    info(s"Create Kafka Producer to brokers: ${config.kafkaBrokers}")
+    log.info(s"Create Kafka Producer to brokers: ${config.kafkaBrokers}")
 
     val props = new Properties()
     props.put("bootstrap.servers", config.kafkaBrokers)
@@ -68,14 +68,14 @@ class KafkaSink(config: CollectorConfig, inputType: InputType.InputType) extends
    * @param key The partition key to use
    */
   override def storeRawEvents(events: List[Array[Byte]], key: String) = {
-    debug(s"Writing ${events.size} Thrift records to Kafka topic ${topicName} at key ${key}")
+    log.debug(s"Writing ${events.size} Thrift records to Kafka topic ${topicName} at key ${key}")
     events foreach {
       event => {
         try {
           kafkaProducer.send(new ProducerRecord(topicName, key, event))
         } catch {
           case e: Exception => {
-            error(s"Unable to send event, see kafka log for more details: ${e.getMessage}")
+            log.error(s"Unable to send event, see kafka log for more details: ${e.getMessage}")
             e.printStackTrace()
           }
         }
