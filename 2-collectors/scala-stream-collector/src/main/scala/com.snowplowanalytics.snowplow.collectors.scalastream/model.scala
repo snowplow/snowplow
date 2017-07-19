@@ -12,13 +12,12 @@
  * implied.  See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow
-package collectors
+package com.snowplowanalytics.snowplow.collectors.scalastream
 
 // Snowplow
-import scalastream.sinks._
+import sinks._
 
-package object scalastream {
+package model {
 
   /**
    * Whether the sink is for good rows or bad rows

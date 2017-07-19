@@ -34,7 +34,8 @@ import com.snowplowanalytics.snowplow.enrich.common.outputs.BadRow
 
 // Scalaz
 import scalaz._
-import Scalaz._
+
+import model._
 
 /**
  * Object handling splitting an array of strings correctly
@@ -107,7 +108,7 @@ object SplitBatch {
 
     val serializer = ThriftSerializer.get()
     val everythingSerialized = serializer.serialize(event)
-    val wholeEventBytes = ByteBuffer.wrap(everythingSerialized).capacity
+    val wholeEventBytes = ByteBuffer.wrap(everythingSerialized).capacity.toLong
 
     // If the event is below the size limit, no splitting is necessary
     if (wholeEventBytes < maxBytes) {
@@ -170,7 +171,7 @@ object SplitBatch {
                   })
 
                   val badList = batches.failedBigEvents.map(event => {
-                    val size = ByteBuffer.wrap(event.getBytes(UTF_8)).capacity
+                    val size = ByteBuffer.wrap(event.getBytes(UTF_8)).capacity.toLong
                     val err = "Failed event with body still being too large"
                     BadRow.oversizedRow(size, NonEmptyList(err)).getBytes(UTF_8)
                   })

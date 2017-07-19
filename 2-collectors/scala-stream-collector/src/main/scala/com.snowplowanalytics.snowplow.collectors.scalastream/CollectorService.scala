@@ -18,13 +18,11 @@ package scalastream
 
 // Akka
 import akka.actor.{Actor,ActorRefFactory}
-import akka.pattern.ask
 import akka.util.Timeout
 
 // Spray
 import spray.http.Timedout
 import spray.http.HttpCookie
-import spray.http.HttpHeaders.RawHeader
 import spray.routing.HttpService
 import spray.routing.Directive1
 
@@ -32,8 +30,7 @@ import spray.routing.Directive1
 import scala.concurrent.duration._
 
 // Snowplow
-import sinks._
-import utils.SplitBatch
+import model._
 
 // Actor accepting Http requests for the Scala collector.
 class CollectorServiceActor(collectorConfig: CollectorConfig,

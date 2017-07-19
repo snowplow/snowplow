@@ -24,6 +24,8 @@ package sinks
 // Apache Commons
 import org.apache.commons.codec.binary.Base64
 
+import model._
+
 class StdoutSink(inputType: InputType.InputType) extends AbstractSink {
 
   val MaxBytes = Long.MaxValue
