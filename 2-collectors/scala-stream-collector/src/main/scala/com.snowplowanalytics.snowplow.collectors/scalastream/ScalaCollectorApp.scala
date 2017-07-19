@@ -179,7 +179,7 @@ class CollectorConfig(config: Config) {
   private val stream = kinesis.getConfig("stream")
   val streamGoodName = stream.getString("good")
   val streamBadName = stream.getString("bad")
-  private val streamRegion = stream.getString("region")
+  val streamRegion = stream.getString("region")
   val streamEndpoint = s"https://kinesis.${streamRegion}.amazonaws.com"
   val threadpoolSize = kinesis.hasPath("thread-pool-size") match {
     case true => kinesis.getInt("thread-pool-size")

@@ -27,7 +27,7 @@ object Dependencies {
 
   object V {
     // Java
-    val awsSdk               = "1.6.10"
+    val awsSdk               = "1.11.115"
     val yodaTime             = "2.1"
     val kafka                = "0.10.1.0"
     // Scala
@@ -47,7 +47,7 @@ object Dependencies {
 
   object Libraries {
     // Java
-    val awsSdk               = "com.amazonaws"         %  "aws-java-sdk"              % V.awsSdk
+    val awsSdk               = "com.amazonaws"         %  "aws-java-sdk-kinesis"      % V.awsSdk
     val yodaTime             = "joda-time"             %  "joda-time"                 % V.yodaTime
     val kafkaClients         = "org.apache.kafka"      %  "kafka-clients"             % V.kafka
 
