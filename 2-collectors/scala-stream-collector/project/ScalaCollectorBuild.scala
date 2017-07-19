@@ -40,7 +40,6 @@ object ScalaCollectorBuild extends Build {
         Libraries.commonsCodec,
         Libraries.sprayTestkit,
         Libraries.specs2,
-        Libraries.scalazon,
         Libraries.awsSdk,
         Libraries.scopt,
         Libraries.snowplowCommonEnrich,

@@ -21,8 +21,6 @@ object Dependencies {
     "Snowplow Analytics Maven snapshot repo" at "http://maven.snplow.com/snapshots/",
     "Spray repo"                             at "http://repo.spray.io",
     "Typesafe repository"                    at "http://repo.typesafe.com/typesafe/releases/",
-    // For Scalazon
-    "BintrayJCenter"                         at "http://jcenter.bintray.com",
     // For sbt-thrift
     "bigtoast-github"                        at "http://bigtoast.github.com/repo/"
   )
@@ -41,7 +39,6 @@ object Dependencies {
     val akka                 = "2.3.9"
     val logback              = "1.0.13"
     val commonsCodec         = "1.5"
-    val scalazon             = "0.11"
     val scopt                = "3.6.0"
     val json4s               = "3.2.11"
     // Scala (test only)
@@ -66,7 +63,6 @@ object Dependencies {
     val akkaSlf4j            = "com.typesafe.akka"     %% "akka-slf4j"                % V.akka
     val logback              = "ch.qos.logback"        %  "logback-classic"           % V.logback
     val commonsCodec         = "commons-codec"         %  "commons-codec"             % V.commonsCodec
-    val scalazon             = "io.github.cloudify"    %% "scalazon"                  % V.scalazon
     val json4sJackson        = "org.json4s"            %% "json4s-jackson"            % V.json4s
 
     // Scala (test only)

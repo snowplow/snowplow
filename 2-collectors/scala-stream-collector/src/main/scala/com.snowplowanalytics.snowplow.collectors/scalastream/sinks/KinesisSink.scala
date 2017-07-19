@@ -21,25 +21,15 @@ import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.ScheduledExecutorService
 
 // Amazon
-import com.amazonaws.services.kinesis.model.ResourceNotFoundException
+import com.amazonaws.services.kinesis.model._
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.auth.{
   EnvironmentVariableCredentialsProvider,
   BasicAWSCredentials,
-  ClasspathPropertiesFileCredentialsProvider
+  ClasspathPropertiesFileCredentialsProvider,
+  InstanceProfileCredentialsProvider
 }
 import com.amazonaws.services.kinesis.AmazonKinesisClient
-
-// Scalazon (for Kinesis interaction)
-import io.github.cloudify.scala.aws.kinesis.Client
-import io.github.cloudify.scala.aws.kinesis.Client.ImplicitExecution._
-import io.github.cloudify.scala.aws.kinesis.Definitions.{
-  Stream,
-  PutResult,
-  Record
-}
-import io.github.cloudify.scala.aws.kinesis.KinesisDsl._
-import io.github.cloudify.scala.aws.auth.CredentialsProvider.InstanceProfile
 
 // Concurrent libraries
 import scala.concurrent.{Future,Await,TimeoutException}
@@ -89,12 +79,8 @@ object KinesisSink {
  * Kinesis Sink for the Scala collector.
  */
 class KinesisSink private (config: CollectorConfig, inputType: InputType.InputType, val executorService: ScheduledExecutorService) extends AbstractSink {
-
-  import log.{error, debug, info, trace}
-
   // Records must not exceed MaxBytes - 1MB
   val MaxBytes = 1000000L
-
   val BackoffTime = 3000L
 
   val ByteThreshold = config.byteLimit
@@ -105,7 +91,7 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
   private val minBackoff = config.minBackoff
   private val randomGenerator = new java.util.Random()
 
-  info("Creating thread pool of size " + config.threadpoolSize)
+  log.info("Creating thread pool of size " + config.threadpoolSize)
 
   implicit lazy val ec = concurrent.ExecutionContext.fromExecutorService(executorService)
 
@@ -133,14 +119,14 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
   }
 
   // Create a Kinesis client for stream interactions.
-  private implicit val kinesis = createKinesisClient
+  private val client = createKinesisClient()
 
   // The output stream for this sink.
   private val streamName = inputType match {
     case InputType.Good => config.streamGoodName
     case InputType.Bad  => config.streamBadName
   }
-  private val sinkStream = loadStream( streamName )
+  require(streamExists(streamName), s"Kinesis stream $streamName doesn't exist")
 
   /**
    * Check whether a Kinesis stream exists
@@ -149,42 +135,21 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
    * @param timeout How long to wait before timing out
    * @return Whether the stream exists
    */
-  def streamExists(name: String, timeout: Int = 60): Boolean = {
-
-    val exists: Boolean = try {
-      val streamDescribeFuture = for {
-        s <- Kinesis.stream(name).describe
-      } yield s
-
-      val description = Await.result(streamDescribeFuture, Duration(timeout, SECONDS))
-      description.isActive
-
+  private def streamExists(name: String): Boolean = {
+    val exists = try {
+      val describeStreamResult = client.describeStream(name)
+      describeStreamResult.getStreamDescription.getStreamStatus == "ACTIVE"
     } catch {
       case rnfe: ResourceNotFoundException => false
     }
 
     if (exists) {
-      info(s"Stream $name exists and is active")
+      log.info(s"Stream $name exists and is active")
     } else {
-      error(s"Stream $name doesn't exist or is not active")
+      log.info(s"Stream $name doesn't exist or is not active")
     }
 
     exists
-  }
-
-  /**
-   * Loads a Kinesis stream if it exists
-   *
-   * @return The stream
-   */
-  def loadStream(name: String): Stream = {
-    if (streamExists(name)) {
-      Kinesis.stream(name)
-    } else {
-      error(s"Cannot write because stream $name doesn't exist or is not active")
-      System.exit(1)
-      throw new RuntimeException("System.exit should never fail")
-    }
   }
 
   /**
@@ -194,7 +159,7 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
    *
    * @return the initialized AmazonKinesisClient
    */
-  private def createKinesisClient: Client = {
+  private def createKinesisClient(): AmazonKinesisClient = {
     val accessKey = config.awsAccessKey
     val secretKey = config.awsSecretKey
     val client = if (isDefault(accessKey) && isDefault(secretKey)) {
@@ -202,7 +167,7 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
     } else if (isDefault(accessKey) || isDefault(secretKey)) {
       throw new RuntimeException("access-key and secret-key must both be set to 'env', or neither")
     } else if (isIam(accessKey) && isIam(secretKey)) {
-      new AmazonKinesisClient(InstanceProfile)
+      new AmazonKinesisClient(new InstanceProfileCredentialsProvider())
     } else if (isIam(accessKey) || isIam(secretKey)) {
       throw new RuntimeException("access-key and secret-key must both be set to 'iam', or neither of them")
     } else if (isEnv(accessKey) && isEnv(secretKey)) {
@@ -214,7 +179,7 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
     }
 
     client.setEndpoint(config.streamEndpoint)
-    Client.fromClient(client)
+    client
   }
 
   object EventStorage {
@@ -226,7 +191,7 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
       val eventBytes = ByteBuffer.wrap(event)
       val eventSize = eventBytes.capacity
       if (eventSize >= MaxBytes) {
-        error(s"Record of size $eventSize bytes is too large - must be less than $MaxBytes bytes")
+        log.error(s"Record of size $eventSize bytes is too large - must be less than $MaxBytes bytes")
       } else {
         synchronized {
           storedEvents = (eventBytes, key) :: storedEvents
@@ -253,9 +218,7 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
   }
 
   def storeRawEvents(events: List[Array[Byte]], key: String) = {
-    events foreach {
-      e => EventStorage.store(e, key)
-    }
+    events.foreach(e => EventStorage.store(e, key))
     Nil
   }
 
@@ -271,31 +234,48 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
   // TODO: limit max retries?
   def sendBatch(batch: List[(ByteBuffer, String)], nextBackoff: Long = minBackoff) {
     if (batch.size > 0) {
-      info(s"Writing ${batch.size} Thrift records to Kinesis stream ${streamName}")
+      log.info(s"Writing ${batch.size} Thrift records to Kinesis stream ${streamName}")
       val putData = for {
-        p <- sinkStream.multiPut(batch)
+        p <- multiPut(streamName, batch)
       } yield p
 
       putData onComplete {
         case Success(s) => {
-          val results = s.result.getRecords.asScala.toList
+          val results = s.getRecords.asScala.toList
           val failurePairs = batch zip results filter { _._2.getErrorMessage != null }
-          info(s"Successfully wrote ${batch.size-failurePairs.size} out of ${batch.size} records")
+          log.info(s"Successfully wrote ${batch.size-failurePairs.size} out of ${batch.size} records")
           if (failurePairs.size > 0) {
-            failurePairs foreach { f => error(s"Record failed with error code [${f._2.getErrorCode}] and message [${f._2.getErrorMessage}]") }
-            error(s"Retrying all failed records in $nextBackoff milliseconds...")
+            failurePairs.foreach(f => log.error(s"Record failed with error code [${f._2.getErrorCode}] and message [${f._2.getErrorMessage}]"))
+            log.error(s"Retrying all failed records in $nextBackoff milliseconds...")
             val failures = failurePairs.map(_._1)
             scheduleBatch(failures, nextBackoff)
           }
         }
         case Failure(f) => {
-          error("Writing failed.", f)
-          error(s"Retrying in $nextBackoff milliseconds...")
+          log.error("Writing failed.", f)
+          log.error(s"Retrying in $nextBackoff milliseconds...")
           scheduleBatch(batch, nextBackoff)
         }
       }
     }
   }
+
+  private def multiPut(name: String, batch: List[(ByteBuffer, String)]): Future[PutRecordsResult] =
+    Future {
+      val putRecordsRequest = {
+        val prr = new PutRecordsRequest()
+        prr.setStreamName(name)
+        val putRecordsRequestEntryList = batch.map { case (b, s) =>
+          val prre = new PutRecordsRequestEntry()
+          prre.setPartitionKey(s)
+          prre.setData(b)
+          prre
+        }
+        prr.setRecords(putRecordsRequestEntryList.asJava)
+        prr
+      }
+      client.putRecords(putRecordsRequest)
+    }
 
   /**
    * How long to wait before sending the next request
