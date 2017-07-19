@@ -91,3 +91,4 @@ deploy:
     on:
       tags: true
       condition: '"$(.travis/is_release_tag.sh event_manifest_populator $TRAVIS_TAG)" == "" && $? == 0 && $TEST_DIR = 3-enrich/scala-common-enrich/'
+
