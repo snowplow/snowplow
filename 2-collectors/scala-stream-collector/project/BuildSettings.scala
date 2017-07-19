@@ -21,35 +21,52 @@ import Keys._
 object BuildSettings {
 
   // Basic settings for our app
-  lazy val basicSettings = Seq[Setting[_]](
+  lazy val basicSettings = Seq(
     organization          :=  "com.snowplowanalytics",
-    version               :=  "0.9.0",
-    description           :=  "Scala Stream Collector for Snowplow raw events",
     scalaVersion          :=  "2.11.11",
-    scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8",
-                                  "-unchecked", "-feature", "-target:jvm-1.7"),
-    scalacOptions in Test :=  Seq("-Yrangepos"),
-    maxErrors             := 5,
-    // http://www.scala-sbt.org/0.13.0/docs/Detailed-Topics/Forking.html
-    fork in run           := true,
+    scalacOptions         :=  compilerOptions,
+    javacOptions          :=  javaCompilerOptions,
     resolvers             ++= Dependencies.resolutionRepos
   )
 
+  lazy val compilerOptions = Seq(
+    "-deprecation",
+    "-encoding", "UTF-8",
+    "-feature",
+    "-language:existentials",
+    "-language:higherKinds",
+    "-language:implicitConversions",
+    "-unchecked",
+    "-Yno-adapted-args",
+    "-Ywarn-dead-code",
+    "-Ywarn-numeric-widen",
+    "-Ywarn-unused-import",
+    "-Xfuture",
+    "-Xlint"
+  )
+
+  lazy val javaCompilerOptions = Seq(
+    "-source", "1.7",
+    "-target", "1.7"
+  )
+
   // Makes our SBT app settings available from within the app
-  lazy val scalifySettings = Seq(sourceGenerators in Compile <+=
-      (sourceManaged in Compile, version, name, organization) map
-      { (d, v, n, o) =>
-    val file = d / "settings.scala"
-    IO.write(file, s"""package com.snowplowanalytics.snowplow.collectors.scalastream.generated
-      |object Settings {
-      |  val organization = "$o"
-      |  val version = "$v"
-      |  val name = "$n"
-      |  val shortName = "ssc"
-      |}
-      |""".stripMargin)
-    Seq(file)
-  })
+  lazy val scalifySettings = Seq(
+    sourceGenerators in Compile += Def.task {
+      val file = (sourceManaged in Compile).value / "settings.scala"
+      IO.write(file, """package com.snowplowanalytics.snowplow.collectors.scalastream.generated
+        |object Settings {
+        |  val organization = "%s"
+        |  val version = "%s"
+        |  val name = "%s"
+        |  val shortName = "ssc"
+        |}
+        |""".stripMargin.format(organization.value, version.value, name.value))
+      Seq(file)
+    }.taskValue
+  )
+
+  lazy val buildSettings = basicSettings ++ scalifySettings
 
   // sbt-assembly settings for building an executable
   import sbtassembly.Plugin._
@@ -60,6 +77,4 @@ object BuildSettings {
     // Name it as an executable
     jarName in assembly := { s"${name.value}-${version.value}" }
   )
-
-  lazy val buildSettings = basicSettings ++ scalifySettings ++ sbtAssemblySettings
 }
