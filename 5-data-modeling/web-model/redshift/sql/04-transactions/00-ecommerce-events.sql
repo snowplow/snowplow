@@ -91,7 +91,7 @@ AS (
 
     FROM snowplow.events AS ev
 
-    INNER JOIN snowplow_scratch.web_page_context AS wp -- an INNER JOIN guarantees that all rows have a page view ID
+    INNER JOIN scratch.web_page_context AS wp -- an INNER JOIN guarantees that all rows have a page view ID
       ON ev.event_id = wp.root_id
 
     WHERE ev.platform = 'web'
