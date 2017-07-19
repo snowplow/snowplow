@@ -1,3 +1,5 @@
+-- requires trackTrans, trackAddToCart and trackRemoveFromCart
+
 DROP TABLE IF EXISTS scratch.web_ecommerce_events;
 
 CREATE TABLE scratch.web_ecommerce_events
