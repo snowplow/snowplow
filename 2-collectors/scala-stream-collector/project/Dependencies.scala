@@ -45,7 +45,7 @@ object Dependencies {
     val scopt                = "3.6.0"
     val json4s               = "3.2.11"
     // Scala (test only)
-    val specs2               = "2.2.3"
+    val specs2               = "3.9.4"
   }
 
   object Libraries {
@@ -70,7 +70,7 @@ object Dependencies {
     val json4sJackson        = "org.json4s"            %% "json4s-jackson"            % V.json4s
 
     // Scala (test only)
-    val specs2               = "org.specs2"            %% "specs2"                    % V.specs2   % "test"
+    val specs2               = "org.specs2"            %% "specs2-core"               % V.specs2   % "test"
     val sprayTestkit         = "io.spray"              %% "spray-testkit"             % V.spray    % "test"
   }
 }
