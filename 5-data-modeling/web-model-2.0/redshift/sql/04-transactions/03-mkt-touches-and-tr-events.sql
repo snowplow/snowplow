@@ -24,7 +24,7 @@ AS (
 
     domain_userid,
     NULL AS marketing_event_timestamp,
-    event_timestamp AS transaction_event_timestamp,
+    derived_tstamp AS transaction_event_timestamp,
     NULL AS marketing_event_id,
     event_id AS transaction_event_id,
     'transaction event' AS event_type
