@@ -4,7 +4,7 @@ DROP TABLE IF EXISTS scratch.web_ecommerce_events;
 
 CREATE TABLE scratch.web_ecommerce_events
   DISTKEY(event_id) -- used for joins downstream
-  SORTKEY(event_timestamp)
+  SORTKEY(derived_tstamp)
 AS (
 
   WITH step1 AS (
@@ -91,7 +91,7 @@ AS (
 
       ev.derived_tstamp
 
-    FROM snowplow.events AS ev
+    FROM atomic.events AS ev
 
     INNER JOIN scratch.web_page_context AS wp -- an INNER JOIN guarantees that all rows have a page view ID
       ON ev.event_id = wp.root_id
