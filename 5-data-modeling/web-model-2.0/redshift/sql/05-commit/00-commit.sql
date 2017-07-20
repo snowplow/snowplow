@@ -36,9 +36,25 @@ BEGIN;
 
 COMMIT;
 
+BEGIN;
+
+  DROP TABLE IF EXISTS web.transactions;
+  ALTER TABLE web.transactions_tmp RENAME TO transactions;
+
+COMMIT;
+
 DROP TABLE IF EXISTS scratch.web_page_context;
 DROP TABLE IF EXISTS scratch.web_events;
 DROP TABLE IF EXISTS scratch.web_events_time;
 DROP TABLE IF EXISTS scratch.web_events_scroll_depth;
 DROP TABLE IF EXISTS scratch.web_ua_parser_context;
 DROP TABLE IF EXISTS scratch.web_timing_context;
+DROP TABLE IF EXISTS scratch.web_ecommerce_events;
+DROP TABLE IF EXISTS scratch.web_ecommerce_context;
+DROP TABLE IF EXISTS scratch.web_marketing_touches;
+DROP TABLE IF EXISTS scratch.web_marketing_touches_and_transaction_events;
+DROP TABLE IF EXISTS scratch.web_first_marketing_touch;
+DROP TABLE IF EXISTS scratch.web_first_marketing_touch_90_days;
+DROP TABLE IF EXISTS scratch.web_first_marketing_touch_30_days;
+DROP TABLE IF EXISTS scratch.web_first_marketing_touch_10_days;
+DROP TABLE IF EXISTS scratch.web_last_marketing_touch;
