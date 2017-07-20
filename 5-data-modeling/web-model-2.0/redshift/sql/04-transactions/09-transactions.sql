@@ -30,11 +30,11 @@ AS (
 
     -- event: time (replace Europe/London with the relevant timezone - no issues with DST)
 
-    CONVERT_TIMEZONE('UTC', 'Europe/London', a.event_timestamp) AS event_timestamp,
+    CONVERT_TIMEZONE('UTC', 'Europe/London', a.derived_tstamp) AS event_timestamp,
 
     -- event: time in the user's local timezone
 
-    CONVERT_TIMEZONE('UTC', a.os_timezone, a.event_timestamp) AS event_timestamp_local,
+    CONVERT_TIMEZONE('UTC', a.os_timezone, a.derived_tstamp) AS event_timestamp_local,
 
     -- location
 
