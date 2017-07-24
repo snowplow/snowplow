@@ -30,15 +30,15 @@ object Dependencies {
     val awsSdk               = "1.11.115"
     val yodaTime             = "2.1"
     val kafka                = "0.10.1.0"
+    val commonsCodec         = "1.5"
+    val slf4j                = "1.7.5"
     // Scala
     val snowplowCommonEnrich = "0.22.0"
     val igluClient           = "0.3.2"
-    val scalaz7              = "7.0.9"
     val collectorPayload     = "0.0.0"
-    val spray                = "1.3.3"
-    val akka                 = "2.3.9"
-    val logback              = "1.0.13"
-    val commonsCodec         = "1.5"
+    val scalaz7              = "7.0.9"
+    val akkaHttp             = "10.0.9"
+    val akkaSlf4j            = "2.4.19"
     val scopt                = "3.6.0"
     val json4s               = "3.2.11"
     // Scala (test only)
@@ -50,23 +50,22 @@ object Dependencies {
     val awsSdk               = "com.amazonaws"         %  "aws-java-sdk-kinesis"      % V.awsSdk
     val yodaTime             = "joda-time"             %  "joda-time"                 % V.yodaTime
     val kafkaClients         = "org.apache.kafka"      %  "kafka-clients"             % V.kafka
+    val slf4j                = "org.slf4j"             %  "slf4j-simple"              % V.slf4j
+    val log4jOverSlf4j       = "org.slf4j"             %  "log4j-over-slf4j"          % V.slf4j
+    val commonsCodec         = "commons-codec"         %  "commons-codec"             % V.commonsCodec
 
     // Scala
     val snowplowCommonEnrich = "com.snowplowanalytics" %  "snowplow-common-enrich"    % V.snowplowCommonEnrich intransitive
     val igluClient           = "com.snowplowanalytics" %  "iglu-scala-client"         % V.igluClient
-    val scalaz7              = "org.scalaz"            %% "scalaz-core"               % V.scalaz7
     val collectorPayload     = "com.snowplowanalytics" %  "collector-payload-1"       % V.collectorPayload
+    val scalaz7              = "org.scalaz"            %% "scalaz-core"               % V.scalaz7
     val scopt                = "com.github.scopt"      %% "scopt"                     % V.scopt
-    val sprayCan             = "io.spray"              %% "spray-can"                 % V.spray
-    val sprayRouting         = "io.spray"              %% "spray-routing"             % V.spray
-    val akkaActor            = "com.typesafe.akka"     %% "akka-actor"                % V.akka
-    val akkaSlf4j            = "com.typesafe.akka"     %% "akka-slf4j"                % V.akka
-    val logback              = "ch.qos.logback"        %  "logback-classic"           % V.logback
-    val commonsCodec         = "commons-codec"         %  "commons-codec"             % V.commonsCodec
+    val akkaHttp             = "com.typesafe.akka"     %% "akka-http"                 % V.akkaHttp
+    val akkaSlf4j            = "com.typesafe.akka"     %% "akka-slf4j"                % V.akkaSlf4j
     val json4sJackson        = "org.json4s"            %% "json4s-jackson"            % V.json4s
 
     // Scala (test only)
     val specs2               = "org.specs2"            %% "specs2-core"               % V.specs2   % "test"
-    val sprayTestkit         = "io.spray"              %% "spray-testkit"             % V.spray    % "test"
+    val akkaHttpTestkit      = "com.typesafe.akka"     %% "akka-http-testkit"         % V.akkaHttp % "test"
   }
 }

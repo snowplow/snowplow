@@ -16,30 +16,16 @@ package com.snowplowanalytics.snowplow
 package collectors
 package scalastream
 
-// Akka and Spray
-import akka.actor.{ActorSystem, Props}
-import akka.pattern.ask
-import akka.io.IO
-import spray.can.Http
-
-// Scala Futures
-import scala.concurrent.duration._
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.{Success, Failure}
-
-// Java
 import java.io.File
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
-// Config
+import akka.actor.ActorSystem
+import akka.http.scaladsl.Http
+import akka.stream.ActorMaterializer
 import com.typesafe.config.{ConfigFactory, Config}
-
-// Logging
 import org.slf4j.LoggerFactory
 
-// Snowplow
 import model._
 import sinks._
 
@@ -71,49 +57,38 @@ object ScalaCollector extends App {
   val collectorConfig = new CollectorConfig(conf)
 
   implicit val system = ActorSystem.create("scala-stream-collector", conf)
+  implicit val materializer = ActorMaterializer()
+  implicit val executionContext = system.dispatcher
 
   lazy val executorService = new ScheduledThreadPoolExecutor(collectorConfig.threadpoolSize)
 
   val sinks = collectorConfig.sinkEnabled match {
-    case Sink.Kinesis => {
+    case SinkType.Kinesis => {
       val good = KinesisSink.createAndInitialize(collectorConfig, InputType.Good, executorService)
       val bad  = KinesisSink.createAndInitialize(collectorConfig, InputType.Bad, executorService)
       CollectorSinks(good, bad) 
     }
-    case Sink.Kafka => {
+    case SinkType.Kafka => {
       val good = new KafkaSink(collectorConfig, InputType.Good)
       val bad  = new KafkaSink(collectorConfig, InputType.Bad)
       CollectorSinks(good, bad)
     }
-    case Sink.Stdout  => {
+    case SinkType.Stdout  => {
       val good = new StdoutSink(InputType.Good)
       val bad = new StdoutSink(InputType.Bad)
       CollectorSinks(good, bad) 
     }
   }
 
-  // The handler actor replies to incoming HttpRequests.
-  val handler = system.actorOf(
-    Props(classOf[CollectorServiceActor], collectorConfig, sinks),
-    name = "handler"
-  )
-
-  val bind = Http.Bind(
-    handler,
-    interface=collectorConfig.interface,
-    port=collectorConfig.port)
-
-  val bindResult = IO(Http).ask(bind)(5.seconds) flatMap {
-    case b: Http.Bound => Future.successful(())
-    case failed: Http.CommandFailed => Future.failed(new RuntimeException(failed.toString))
+  val route = new CollectorRoute {
+    override def collectorService = new CollectorService(collectorConfig, sinks)
   }
 
-  bindResult onComplete {
-    case Success(_) =>
-    case Failure(f) => {
-      log.error("Failure binding to port", f)
-      System.exit(1)
-    }
+  Http().bindAndHandle(route.collectorRoute, collectorConfig.interface, collectorConfig.port).map { binding =>
+    log.info(s"REST interface bound to ${binding.localAddress}")
+  } recover { case ex =>
+    log.error("REST interface could not be bound to " +
+      s"${collectorConfig.interface}:${collectorConfig.port}", ex.getMessage)
   }
 }
 
@@ -124,14 +99,6 @@ object Helper {
       if (underlying.hasPath(path)) Some(underlying.getString(path))
       else None
   }
-}
-
-// Instead of comparing strings and validating every time
-// the sink is accessed, validate the string here and
-// store this enumeration.
-object Sink extends Enumeration {
-  type Sink = Value
-  val Kinesis, Kafka, Stdout, Test = Value
 }
 
 // How a collector should set cookies
@@ -164,10 +131,10 @@ class CollectorConfig(config: Config) {
   
   // TODO: either change this to ADTs or switch to withName generation
   val sinkEnabled = sink.getString("enabled") match {
-    case "kinesis" => Sink.Kinesis
-    case "kafka" => Sink.Kafka
-    case "stdout" => Sink.Stdout
-    case "test" => Sink.Test
+    case "kinesis" => SinkType.Kinesis
+    case "kafka" => SinkType.Kafka
+    case "stdout" => SinkType.Stdout
+    case "test" => SinkType.Test
     case _ => throw new RuntimeException("collector.sink.enabled unknown.")
   }
 
