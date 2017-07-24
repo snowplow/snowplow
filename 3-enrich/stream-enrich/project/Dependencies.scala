@@ -36,20 +36,21 @@ object Dependencies {
     val awsSdk               = "1.6.11"
     val kinesisClient        = "1.6.1"
     val kafkaClients         = "0.10.1.0"
+    val nsqClient            = "1.0.0.RC4"
     // Scala
-    val argot                = "1.0.1"
-    val config               = "1.0.2"
+    val argot                = "1.0.3"
+    val config               = "1.3.1"
     val scalaUtil            = "0.1.0"
     val snowplowRawEvent     = "0.1.0"
-    val snowplowCommonEnrich = "0.24.0"
+    val snowplowCommonEnrich = "0.25.0"
     val scalazon             = "0.11"
-    val scalaz7              = "7.0.0"
-    val igluClient           = "0.4.0"
+    val scalaz7              = "7.0.9"
+    val igluClient           = "0.5.0"
     val snowplowTracker      = "0.3.0"
     // Scala (test only)
     // val specs2               = "2.3.6" Conflicts with com.chuusai:shapeless
-    val specs2               = "2.2.3"
-    val scalazSpecs2         = "0.1.2"
+    val specs2               = "2.3.11"
+    val scalazSpecs2         = "0.2"
     // Scala (compile only)
     val commonsLang3         = "3.1"
     val thrift               = "0.9.0"
@@ -66,12 +67,13 @@ object Dependencies {
     val awsSdk               = "com.amazonaws"              %  "aws-java-sdk"             % V.awsSdk
     val kinesisClient        = "com.amazonaws"              %  "amazon-kinesis-client"    % V.kinesisClient
     val kafkaClients         = "org.apache.kafka"           %  "kafka-clients"            % V.kafkaClients
+    val nsqClient            = "com.github.brainlag"        %  "nsq-client"               % V.nsqClient
     // Scala
     val argot                = "org.clapper"                %% "argot"                    % V.argot
     val config               = "com.typesafe"               %  "config"                   % V.config
     val scalaUtil            = "com.snowplowanalytics"      %  "scala-util"               % V.scalaUtil
     val snowplowRawEvent     = "com.snowplowanalytics"      % "snowplow-thrift-raw-event" % V.snowplowRawEvent
-    val snowplowCommonEnrich = "com.snowplowanalytics"      % "snowplow-common-enrich"    % V.snowplowCommonEnrich
+    val snowplowCommonEnrich = "com.snowplowanalytics"      %% "snowplow-common-enrich"    % V.snowplowCommonEnrich
     val scalazon             = "io.github.cloudify"         %% "scalazon"                 % V.scalazon
     val scalaz7              = "org.scalaz"                 %% "scalaz-core"              % V.scalaz7
     val igluClient           = "com.snowplowanalytics"      %% "iglu-scala-client"        % V.igluClient
