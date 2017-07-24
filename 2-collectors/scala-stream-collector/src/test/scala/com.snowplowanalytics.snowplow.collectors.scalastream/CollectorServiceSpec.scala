@@ -87,6 +87,13 @@ collector {
       }
     }
 
+    NSQ {
+        good-sink: "RawEvents"
+        bad-sink : "BadEvents"
+        nsq-host: 127.0.0.1
+        nsqd-port: 4150
+    }
+
     kafka {
       brokers: "localhost:9092"
 
