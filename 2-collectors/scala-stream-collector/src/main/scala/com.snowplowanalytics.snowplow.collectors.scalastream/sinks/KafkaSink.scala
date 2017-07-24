@@ -25,7 +25,7 @@ import model._
 /**
  * Kafka Sink for the Scala collector
  */
-class KafkaSink(config: CollectorConfig, inputType: InputType.InputType) extends AbstractSink {
+class KafkaSink(config: CollectorConfig, inputType: InputType.InputType) extends Sink {
 
   // Records must not exceed MaxBytes - 1MB
   val MaxBytes = 1000000L
@@ -84,5 +84,5 @@ class KafkaSink(config: CollectorConfig, inputType: InputType.InputType) extends
     Nil
   }
 
-  override def getType = Sink.Kafka
+  override def getType = SinkType.Kafka
 }

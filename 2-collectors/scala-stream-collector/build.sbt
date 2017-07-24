@@ -14,11 +14,19 @@
  */
 lazy val root = project.in(file("."))
   .settings(
-    name        := "snowplow-stream-collector",
-    version     := "0.9.0",
-    description := "Scala Stream Collector for Snowplow raw events"
+    organization  :=  "com.snowplowanalytics",
+    name          :=  "snowplow-stream-collector",
+    version       :=  "0.9.0",
+    scalaVersion  :=  "2.11.11",
+    description   :=  "Scala Stream Collector for Snowplow raw events",
+    scalacOptions :=  BuildSettings.compilerOptions,
+    scalacOptions in (Compile, console) ~= { _.filterNot(Set("-Ywarn-unused-import")) },
+    scalacOptions in (Test, console)    := (scalacOptions in (Compile, console)).value,
+    javacOptions  :=  BuildSettings.javaCompilerOptions,
+    resolvers     ++= Dependencies.resolutionRepos,
+    shellPrompt   :=  { _ => "stream-collector> "}
   )
-  .settings(BuildSettings.buildSettings)
+  .settings(BuildSettings.scalifySettings)
   .settings(BuildSettings.sbtAssemblySettings)
   .settings(
     libraryDependencies ++= Seq(
@@ -26,22 +34,19 @@ lazy val root = project.in(file("."))
       Dependencies.Libraries.awsSdk,
       Dependencies.Libraries.kafkaClients,
       Dependencies.Libraries.yodaTime,
-      Dependencies.Libraries.logback,
+      Dependencies.Libraries.slf4j,
+      Dependencies.Libraries.log4jOverSlf4j,
       Dependencies.Libraries.commonsCodec,
       // Scala
       Dependencies.Libraries.scopt,
       Dependencies.Libraries.scalaz7,
-      Dependencies.Libraries.sprayCan,
-      Dependencies.Libraries.sprayRouting,
-      Dependencies.Libraries.akkaActor,
+      Dependencies.Libraries.akkaHttp,
       Dependencies.Libraries.akkaSlf4j,
       Dependencies.Libraries.json4sJackson,
       Dependencies.Libraries.snowplowCommonEnrich,
       Dependencies.Libraries.collectorPayload,
       // Scala (test)
-      Dependencies.Libraries.sprayTestkit,
+      Dependencies.Libraries.akkaHttpTestkit,
       Dependencies.Libraries.specs2
     )
   )
-
-shellPrompt := { _ => "stream-collector> "}

@@ -26,7 +26,7 @@ import org.apache.commons.codec.binary.Base64
 
 import model._
 
-class StdoutSink(inputType: InputType.InputType) extends AbstractSink {
+class StdoutSink(inputType: InputType.InputType) extends Sink {
 
   val MaxBytes = Long.MaxValue
 
@@ -39,5 +39,5 @@ class StdoutSink(inputType: InputType.InputType) extends AbstractSink {
     Nil
   }
 
-  override def getType = Sink.Stdout
+  override def getType = SinkType.Stdout
 }

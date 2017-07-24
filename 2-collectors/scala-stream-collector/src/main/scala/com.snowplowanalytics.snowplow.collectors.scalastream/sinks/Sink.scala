@@ -22,8 +22,10 @@ package sinks
 // Logging
 import org.slf4j.LoggerFactory
 
+import model.SinkType
+
 // Define an interface for all sinks to use to store events.
-trait AbstractSink {
+trait Sink {
 
   // Maximum number of bytes that a single record can contain
   val MaxBytes: Long
@@ -32,5 +34,5 @@ trait AbstractSink {
 
   def storeRawEvents(events: List[Array[Byte]], key: String): List[Array[Byte]]
 
-  def getType: Sink.Value
+  def getType: SinkType.Value
 }

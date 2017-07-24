@@ -116,26 +116,25 @@ collector {
 }
 
 # Akka has a variety of possible configuration options defined at
-# http://doc.akka.io/docs/akka/2.2.3/general/configuration.html.
+# http://doc.akka.io/docs/akka/current/scala/general/configuration.html
 akka {
   loglevel = DEBUG # 'OFF' for no logging, 'DEBUG' for all logging.
   loggers = ["akka.event.slf4j.Slf4jLogger"]
-}
 
-# spray-can is the server the Stream collector uses and has configurable
-# options defined at
-# https://github.com/spray/spray/blob/master/spray-can/src/main/resources/reference.conf
-spray.can.server {
-  # To obtain the hostname in the collector, the 'remote-address' header
-  # should be set. By default, this is disabled, and enabling it
-  # adds the 'Remote-Address' header to every request automatically.
-  remote-address-header = on
+  # akka-http is the server the Stream collector uses and has configurable options defined at
+  # http://doc.akka.io/docs/akka-http/current/scala/http/configuration.html
+  http.server {
+    # To obtain the hostname in the collector, the 'remote-address' header
+    # should be set. By default, this is disabled, and enabling it
+    # adds the 'Remote-Address' header to every request automatically.
+    remote-address-header = on
 
-  raw-request-uri-header = on
+    raw-request-uri-header = on
 
-  # Define the maximum request length (the default is 2048)
-  parsing {
-    max-uri-length = 32768
-    uri-parsing-mode = relaxed-with-raw-query
+    # Define the maximum request length (the default is 2048)
+    parsing {
+      max-uri-length = 32768
+      uri-parsing-mode = relaxed
+    }
   }
 }
