@@ -95,6 +95,11 @@ object ScalaCollector extends App {
       val bad  = new KafkaSink(collectorConfig, InputType.Bad)
       CollectorSinks(good, bad)
     }
+    case Sink.EventHubs => {
+      val good = new EventHubSink(collectorConfig, InputType.Good)
+      val bad  = new EventHubSink(collectorConfig, InputType.Bad)
+      CollectorSinks(good, bad)
+    }
     case Sink.Stdout  => {
       val good = new StdoutSink(InputType.Good)
       val bad = new StdoutSink(InputType.Bad)
@@ -143,7 +148,7 @@ object Helper {
 // store this enumeration.
 object Sink extends Enumeration {
   type Sink = Value
-  val Kinesis, Kafka, Stdout, Test = Value
+  val Kinesis, Kafka, EventHubs, Stdout, Test = Value
 }
 
 // How a collector should set cookies
@@ -178,6 +183,7 @@ class CollectorConfig(config: Config) {
   val sinkEnabled = sink.getString("enabled") match {
     case "kinesis" => Sink.Kinesis
     case "kafka" => Sink.Kafka
+    case "eventhubs" => Sink.EventHubs
     case "stdout" => Sink.Stdout
     case "test" => Sink.Test
     case _ => throw new RuntimeException("collector.sink.enabled unknown.")
@@ -205,6 +211,15 @@ class CollectorConfig(config: Config) {
   private val kafkaTopic = kafka.getConfig("topic")
   val kafkaTopicGoodName = kafkaTopic.getString("good")
   val kafkaTopicBadName = kafkaTopic.getString("bad")
+
+  private val eventHubs = sink.getConfig("eventhubs")
+  val eventHubNamespace = eventHubs.getString("namespace")
+  private val eventHubNames = eventHubs.getConfig("names")
+  val eventHubGoodName = eventHubNames.getString("good")
+  val eventHubBadName = eventHubNames.getString("bad")
+  private val sas = eventHubs.getConfig("sas")
+  val sasKeyName = sas.getString("key-name")
+  val sasKey = sas.getString("key")
 
   private val buffer = sink.getConfig("buffer")
   val byteLimit = buffer.getInt("byte-limit")

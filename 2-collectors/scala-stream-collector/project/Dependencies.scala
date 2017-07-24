@@ -34,6 +34,7 @@ object Dependencies {
     val yodaTime         = "2.1"
     val yodaConvert      = "1.2"
     val kafka            = "0.10.1.0"
+    val eventHubs        = "0.14.2"
     // Scala
     val snowplowCommonEnrich = "0.22.0"
     val igluClient       = "0.3.2"
@@ -60,7 +61,7 @@ object Dependencies {
     val yodaTime         = "joda-time"             %  "joda-time"                 % V.yodaTime
     val yodaConvert      = "org.joda"              %  "joda-convert"              % V.yodaConvert
     val kafkaClients     = "org.apache.kafka"      %  "kafka-clients"             % V.kafka
-
+    val eventHubs        = "com.microsoft.azure"   %  "azure-eventhubs"           % V.eventHubs
     // Scala
     // Exclude netaporter to prevent conflicting cross-version suffixes for shapeless
     val snowplowCommonEnrich = "com.snowplowanalytics" % "snowplow-common-enrich" % V.snowplowCommonEnrich intransitive
