@@ -14,17 +14,20 @@
  */
 package com.snowplowanalytics.snowplow.collectors.scalastream
 
-// Snowplow
 import sinks._
 
 package model {
 
-  /**
-   * Whether the sink is for good rows or bad rows
-   */
+  /** Whether the sink is for good rows or bad rows */
   object InputType extends Enumeration {
     type InputType = Value
     val Good, Bad = Value
+  }
+
+  /** Type of sink */
+  object SinkType extends Enumeration {
+    type Sink = Value
+    val Kinesis, Kafka, Stdout, Test = Value
   }
 
   /**
@@ -34,7 +37,7 @@ package model {
    * @param good
    * @param bad
    */
-  case class CollectorSinks(good: AbstractSink, bad: AbstractSink)
+  case class CollectorSinks(good: Sink, bad: Sink)
 
   /**
    * Case class for holding the results of

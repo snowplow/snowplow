@@ -30,7 +30,10 @@ import org.json4s._
 // Specs2
 import org.specs2.mutable.Specification
 
+import model.SplitBatchResult
+
 class SplitBatchSpec extends Specification {
+  args(skipAll = true)
   val splitBatch = SplitBatch
 
   "SplitBatch.split" should {

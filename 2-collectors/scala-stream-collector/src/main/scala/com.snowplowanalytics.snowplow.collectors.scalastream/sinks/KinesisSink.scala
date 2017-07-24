@@ -69,7 +69,7 @@ object KinesisSink {
 /**
  * Kinesis Sink for the Scala collector.
  */
-class KinesisSink private (config: CollectorConfig, inputType: InputType.InputType, val executorService: ScheduledExecutorService) extends AbstractSink {
+class KinesisSink private (config: CollectorConfig, inputType: InputType.InputType, val executorService: ScheduledExecutorService) extends Sink {
   // Records must not exceed MaxBytes - 1MB
   val MaxBytes = 1000000L
   val BackoffTime = 3000L
@@ -308,5 +308,5 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
    */
   private def isEnv(key: String): Boolean = (key == "env")
 
-  override def getType = Sink.Kinesis
+  override def getType = SinkType.Kinesis
 }

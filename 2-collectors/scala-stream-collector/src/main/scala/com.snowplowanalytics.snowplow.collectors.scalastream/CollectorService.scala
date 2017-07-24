@@ -13,195 +13,284 @@
  * governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow
-package collectors
-package scalastream
+package collectors.scalastream
 
-// Akka
-import akka.actor.{Actor,ActorRefFactory}
-import akka.util.Timeout
+import java.util.UUID
 
-// Spray
-import spray.http.Timedout
-import spray.http.HttpCookie
-import spray.routing.HttpService
-import spray.routing.Directive1
+import scala.collection.JavaConverters._
 
-// Scala
-import scala.concurrent.duration._
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.headers._
+import org.apache.commons.codec.binary.Base64
+import org.apache.thrift.TSerializer
+import org.slf4j.LoggerFactory
+import scalaz._
 
-// Snowplow
+import CollectorPayload.thrift.model1.CollectorPayload
+import enrich.common.outputs.BadRow
+import generated.Settings
 import model._
-
-// Actor accepting Http requests for the Scala collector.
-class CollectorServiceActor(collectorConfig: CollectorConfig,
-    sinks: CollectorSinks) extends Actor with HttpService {
-  implicit val timeout: Timeout = 1.second // For the actor 'asks'
-  def actorRefFactory = context
-
-  // Deletage responses (content and storing) to the ResponseHandler.
-  private val responseHandler = new ResponseHandler(collectorConfig, sinks)
-
-  // Use CollectorService so the same route can be accessed differently
-  // in the testing framework.
-  private val collectorService = new CollectorService(collectorConfig, responseHandler, context)
-
-  // Message loop for the Spray service.
-  def receive = handleTimeouts orElse runRoute(collectorService.collectorRoute)
-
-  def handleTimeouts: Receive = {
-    case Timedout(_) => sender ! responseHandler.timeout
-  }
-}
+import sinks.KinesisSink
+import utils.SplitBatch
 
 /**
- * Companion object for the CollectorService class
+ * Service responding to HTTP requests, mainly setting a cookie identifying the user and storing
+ * events
  */
-object CollectorService {
-  private val QuerystringExtractor = "^[^?]*\\?([^#]*)(?:#.*)?$".r
+trait Service {
+  def preflightResponse(req: HttpRequest): HttpResponse
+  def flashCrossDomainPolicy: HttpResponse
+  def cookie(
+    queryString: Option[String],
+    body: Option[String],
+    path: String,
+    cookie: Option[HttpCookie],
+    userAgent: Option[String],
+    refererUri: Option[String],
+    hostname: String,
+    ip: RemoteAddress,
+    request: HttpRequest,
+    pixelExpected: Boolean,
+    contentType: Option[ContentType] = None
+  ): (HttpResponse, List[Array[Byte]])
+  def cookieName: Option[String]
 }
 
-// Store the route in CollectorService to be accessed from
-// both CollectorServiceActor and from the testing framework.
+object CollectorService {
+  // Contains an invisible pixel to return for `/i` requests.
+  val pixel = Base64.decodeBase64(
+    "R0lGODlhAQABAPAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==")
+}
+
 class CollectorService(
-    collectorConfig: CollectorConfig,
-    responseHandler: ResponseHandler,
-    context: ActorRefFactory) extends HttpService {
-  def actorRefFactory = context
+  config: CollectorConfig,
+  sinks: CollectorSinks
+) extends Service {
 
-  val cookieName = collectorConfig.cookieName
+  private val logger = LoggerFactory.getLogger(getClass)
 
-  // TODO: reduce code duplication here
-  val collectorRoute = {
-    post {
-      path(Segment / Segment) { (path1, path2) =>
-        cookieIfWanted(cookieName) { reqCookie =>
-          optionalHeaderValueByName("User-Agent") { userAgent =>
-            optionalHeaderValueByName("Referer") { refererURI =>
-              headerValueByName("Raw-Request-URI") { rawRequest =>
-                hostName { host =>
-                  clientIP { ip =>
-                    requestInstance{ request =>
-                      entity(as[String]) { body =>
-                        complete(
-                          responseHandler.cookie(
-                            null,
-                            body,
-                            reqCookie,
-                            userAgent,
-                            host,
-                            ip,
-                            request,
-                            refererURI,
-                            "/" + path1 + "/" + path2,
-                            false
-                          )._1
-                        )
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    } ~
-    get {
-      path("""ice\.png""".r | "i".r) { path =>
-        cookieIfWanted(cookieName) { reqCookie =>
-          optionalHeaderValueByName("User-Agent") { userAgent =>
-            optionalHeaderValueByName("Referer") { refererURI =>
-              headerValueByName("Raw-Request-URI") { rawRequest =>
-                hostName { host =>
-                  clientIP { ip =>
-                    requestInstance{ request =>
-                      complete(
-                        responseHandler.cookie(
-                          rawRequest match {
-                            case CollectorService.QuerystringExtractor(qs) => qs
-                            case _ => ""
-                          },
-                          null,
-                          reqCookie,
-                          userAgent,
-                          host,
-                          ip,
-                          request,
-                          refererURI,
-                          "/" + path,
-                          true
-                        )._1
-                      )
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    } ~
-    get {
-      path("health".r) { path =>
-        complete(responseHandler.healthy)
-      }
-    } ~
-    get {
-      path(Segment / Segment) { (path1, path2) =>
-        cookieIfWanted(cookieName) { reqCookie =>
-          optionalHeaderValueByName("User-Agent") { userAgent =>
-            optionalHeaderValueByName("Referer") { refererURI =>
-              headerValueByName("Raw-Request-URI") { rawRequest =>
-                hostName { host =>
-                  clientIP { ip =>
-                    requestInstance{ request =>
-                      complete(
-                        responseHandler.cookie(
-                          rawRequest match {
-                            case CollectorService.QuerystringExtractor(qs) => qs
-                            case _ => ""
-                          },
-                          null,
-                          reqCookie,
-                          userAgent,
-                          host,
-                          ip,
-                          request,
-                          refererURI,
-                          "/" + path1 + "/" + path2,
-                          true
-                        )._1
-                      )
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    } ~
-    options {
-      requestInstance { request =>
-        complete(responseHandler.preflightResponse(request))
-      }
-    } ~
-    get {
-      path("""crossdomain\.xml""".r) { path =>
-        complete(responseHandler.flashCrossDomainPolicy)
-      }
-    } ~
-    complete(responseHandler.notFound)
+  private val collector =
+    s"${Settings.shortName}-${Settings.version}-${config.sinkEnabled.toString.toLowerCase}"
+
+  override val cookieName = config.cookieName
+
+  override def cookie(
+    queryString: Option[String],
+    body: Option[String],
+    path: String,
+    cookie: Option[HttpCookie],
+    userAgent: Option[String],
+    refererUri: Option[String],
+    hostname: String,
+    ip: RemoteAddress,
+    request: HttpRequest,
+    pixelExpected: Boolean,
+    contentType: Option[ContentType] = None
+  ): (HttpResponse, List[Array[Byte]]) = {
+    val (ipAddress, partitionKey) = getIpAndPartitionKey(ip, config.useIpAddressAsPartitionKey)
+    val nuid = getNetworkUserId(request, cookie)
+    val ct = contentType.map(_.value.toLowerCase)
+    val event = buildEvent(
+      queryString, body, path, userAgent, refererUri, hostname, ipAddress, request, nuid, ct)
+    val sinkResponses = sinkEvent(event, partitionKey)
+
+    val headers = getCookieHeader(config.cookieConfig, nuid) ++ List(
+      RawHeader("P3P", "policyref=\"%s\", CP=\"%s\"".format(config.p3pPolicyRef, config.p3pCP)),
+      getAccessControlAllowOriginHeader(request),
+      `Access-Control-Allow-Credentials`(true)
+    )
+
+    val (httpResponse, badRedirectResponses) =
+      buildHttpResponse(event, partitionKey, queryString, path, headers.toList, pixelExpected)
+    (httpResponse, badRedirectResponses ++ sinkResponses)
   }
 
   /**
-   * Directive to extract a cookie if a cookie name is specified and if such a cookie exists
-   * 
-   * @param name Optionally configured cookie name
-   * @return Directive1[Option[HttpCookie]]
+   * Creates a response to the CORS preflight Options request
+   * @param request Incoming preflight Options request
+   * @return Response granting permissions to make the actual request
    */
-  def cookieIfWanted(name: Option[String]): Directive1[Option[HttpCookie]] = name match {
-    case Some(n) => optionalCookie(n)
-    case None => optionalHeaderValue(x => None)
+  override def preflightResponse(request: HttpRequest): HttpResponse =
+    HttpResponse()
+      .withHeaders(List(
+        getAccessControlAllowOriginHeader(request),
+        `Access-Control-Allow-Credentials`(true),
+        `Access-Control-Allow-Headers`("Content-Type")
+      ))
+
+  /** Creates a response with a cross domain policiy file */
+  override def flashCrossDomainPolicy: HttpResponse = HttpResponse(
+    entity = HttpEntity(
+      contentType = ContentType(MediaTypes.`text/xml`, HttpCharsets.`ISO-8859-1`),
+      string = "<?xml version=\"1.0\"?>\n<cross-domain-policy>\n  <allow-access-from domain=\"*\" secure=\"false\" />\n</cross-domain-policy>"
+    )
+  )
+
+  /** Builds a raw event from an Http request. */
+  def buildEvent(
+    queryString: Option[String],
+    body: Option[String],
+    path: String,
+    userAgent: Option[String],
+    refererUri: Option[String],
+    hostname: String,
+    ipAddress: String,
+    request: HttpRequest,
+    networkUserId: String,
+    contentType: Option[String]
+  ): CollectorPayload = {
+    val e = new CollectorPayload(
+      "iglu:com.snowplowanalytics.snowplow/CollectorPayload/thrift/1-0-0",
+      ipAddress,
+      System.currentTimeMillis,
+      "UTF-8",
+      collector
+    )
+    e.querystring = queryString.orNull
+    body.foreach(e.body = _)
+    e.path = path
+    userAgent.foreach(e.userAgent = _)
+    refererUri.foreach(e.refererUri = _)
+    e.hostname = hostname
+    e.networkUserId = networkUserId
+    e.headers = (getHeaders(request) ++ contentType).asJava
+    contentType.foreach(e.contentType = _)
+    e
   }
+
+  /** Produces the event to the configured sink. */
+  def sinkEvent(
+    event: CollectorPayload,
+    partitionKey: String
+  ): List[Array[Byte]] =
+    sinks.good.getType match {
+      case SinkType.Kinesis if KinesisSink.shuttingDown =>
+        logger.warn(s"Kinesis sink shutting down, cannot send event $event")
+        List.empty
+      case _ =>
+        // Split events into Good and Bad
+        val eventSplit = SplitBatch.splitAndSerializePayload(event, sinks.good.MaxBytes)
+        // Send events to respective sinks
+        val sinkResponseGood = sinks.good.storeRawEvents(eventSplit.good, partitionKey)
+        val sinkResponseBad  = sinks.bad.storeRawEvents(eventSplit.bad, partitionKey)
+        // Sink Responses for Test Sink
+        sinkResponseGood ++ sinkResponseBad
+    }
+
+  /** Builds the final http response from  */
+  def buildHttpResponse(
+    event: CollectorPayload,
+    partitionKey: String,
+    queryString: String,
+    path: String,
+    headers: List[HttpHeader],
+    pixelExpected: Boolean
+  ): (HttpResponse, List[Array[Byte]]) =
+    if (path.startsWith("/r/")) {
+      val (r, l) = buildRedirectHttpResponse(event, partitionKey, queryString)
+      (r.withHeaders(r.headers ++ headers), l)
+    } else if (sinks.good.getType == SinkType.Kinesis && KinesisSink.shuttingDown) {
+      logger.warn(s"Kinesis sink shutting down, cannot process request")
+      // So that the tracker knows the request failed and can try to resend later
+      (HttpResponse(404, entity = "404 not found"), Nil)
+    } else ((if (pixelExpected) {
+      HttpResponse(entity = HttpEntity(
+        contentType = ContentType(MediaTypes.`image/gif`),
+        bytes = CollectorService.pixel))
+    } else {
+      // See https://github.com/snowplow/snowplow-javascript-tracker/issues/482
+      HttpResponse(entity = "ok")
+    }).withHeaders(headers), Nil)
+
+  /** Builds the appropriate http response when dealing with click redirects. */
+  def buildRedirectHttpResponse(
+    event: CollectorPayload,
+    partitionKey: String,
+    queryString: String
+  ): (HttpResponse, List[Array[Byte]]) = {
+    val serializer = SplitBatch.ThriftSerializer.get()
+    Uri.Query(queryString).toMap.get("u") match {
+      case Some(target) => (HttpResponse(302).withHeaders(`Location`(target)), Nil)
+      case None =>
+        val serialized = new String(serializer.serialize(event))
+        val badRow = createBadRow(event, "Redirect failed due to lack of u parameter", serializer)
+        (HttpResponse(StatusCodes.BadRequest),
+          sinks.bad.storeRawEvents(List(badRow), partitionKey))
+    }
+  }
+
+  /**
+   * Builds a cookie header with the network user id as value.
+   * @param cookieConfig cookie configuration extracted from the collector configuration
+   * @param networkUserId value of the cookie
+   * @return the build cookie wrapped in a header
+   */
+  def getCookieHeader(
+    cookieConfig: Option[CookieConfig],
+    networkUserId: String
+  ): Option[HttpHeader] =
+    cookieConfig.map { config =>
+      val responseCookie = HttpCookie(
+        name    = config.name,
+        value   = networkUserId,
+        expires = Some(DateTime.now + config.expiration),
+        domain  = config.domain,
+        path    = Some("/")
+      )
+      `Set-Cookie`(responseCookie)
+    }
+
+  /** Retrieves all headers from the request except Remote-Address and Raw-Requet-URI */
+  def getHeaders(request: HttpRequest): Seq[String] = request.headers.flatMap {
+    case _: `Remote-Address` | _: `Raw-Request-URI` => None
+    case other => Some(other.toString)
+  }
+
+  /**
+   * Gets the IP from a RemoteAddress. If ipAsPartitionKey is false, a UUID will be generated.
+   * @param remoteAddress Address extracted from an HTTP request
+   * @param ipPartitionKey Whether to use the ip as a partition key or a random UUID
+   * @return a tuple of ip (unknown if it couldn't be extracted) and partition key
+   */
+  def getIpAndPartitionKey(
+    remoteAddress: RemoteAddress, ipAsPartitionKey: Boolean
+  ): (String, String) =
+    remoteAddress.toOption.map(_.getHostAddress) match {
+      case None     => ("unknown", UUID.randomUUID.toString)
+      case Some(ip) => (ip, if (ipAsPartitionKey) ip else UUID.randomUUID.toString)
+    }
+
+  /**
+   * Gets the network user id from the query string or the request cookie. If neither of those are
+   * present, the result is a random UUID.
+   * @param request Http request made
+   * @param requestCookie cookie associated to the Http request
+   * @return a network user id
+   */
+  def getNetworkUserId(request: HttpRequest, requestCookie: Option[HttpCookie]): String =
+    request.uri.query().get("nuid")
+      .orElse(requestCookie.map(_.value))
+      .getOrElse(UUID.randomUUID.toString)
+
+  /**
+   * Creates an Access-Control-Allow-Origin header which specifically allows the domain which made
+   * the request
+   * @param request Incoming request
+   * @return Header allowing only the domain which made the request or everything
+   */
+  def getAccessControlAllowOriginHeader(request: HttpRequest): HttpHeader =
+    `Access-Control-Allow-Origin`(request.headers.find(_ match {
+      case `Origin`(_) => true
+      case _ => false
+    }) match {
+      case Some(`Origin`(origin)) => HttpOriginRange.Default(origin)
+      case _ => HttpOriginRange.`*`
+    })
+
+  /** Puts together a bad row ready for sinking */
+  private def createBadRow(
+      event: CollectorPayload, message: String, serializer: TSerializer): Array[Byte] =
+    BadRow(new String(serializer.serialize(event)), NonEmptyList(message))
+      .toCompactJson
+      .getBytes("UTF-8")
 }

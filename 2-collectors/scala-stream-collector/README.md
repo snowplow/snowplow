@@ -5,15 +5,15 @@
 The Scala Stream Collector is an event collector for [Snowplow][snowplow], written in Scala.
 It sets a third-party cookie, allowing user tracking across domains.
 
-The Scala Stream Collector is designed to be easy to setup and store [Thrift][thrift] Snowplow events to [Amazon Kinesis][kinesis],
-and is built on top of [spray][spray] and [akka][akka] Actors. 
+The Scala Stream Collector is designed to be easy to setup and store [Thrift][thrift] Snowplow
+events to [Amazon Kinesis][kinesis], and is built on top of [akka-http][akka-http]. 
 
 ## Find out more
 
-| Technical Docs              | Setup Guide           | Roadmap & Contributing               |
-|-----------------------------|-----------------------|--------------------------------------|
-| ![i1][techdocs-image]      | ![i2][setup-image]   | ![i3][roadmap-image]                |
-| [Technical Docs][techdocs] | [Setup Guide][setup] | _coming soon_                        |
+| Technical Docs             | Setup Guide          | Roadmap & Contributing |
+|----------------------------|----------------------|------------------------|
+| ![i1][techdocs-image]      | ![i2][setup-image]   | ![i3][roadmap-image]   |
+| [Technical Docs][techdocs] | [Setup Guide][setup] | _coming soon_          |
 
 ## Copyright and license
 
@@ -32,8 +32,7 @@ limitations under the License.
 
 [thrift]: http://thrift.apache.org
 [kinesis]: http://aws.amazon.com/kinesis
-[spray]: http://spray.io/
-[akka]: http://akka.io/
+[akka-http]: http://doc.akka.io/docs/akka-http/current/scala/http/introduction.html
 
 [techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
 [setup-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png

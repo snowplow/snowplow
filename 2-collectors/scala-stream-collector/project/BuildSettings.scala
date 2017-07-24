@@ -20,15 +20,6 @@ import Keys._
 
 object BuildSettings {
 
-  // Basic settings for our app
-  lazy val basicSettings = Seq(
-    organization          :=  "com.snowplowanalytics",
-    scalaVersion          :=  "2.11.11",
-    scalacOptions         :=  compilerOptions,
-    javacOptions          :=  javaCompilerOptions,
-    resolvers             ++= Dependencies.resolutionRepos
-  )
-
   lazy val compilerOptions = Seq(
     "-deprecation",
     "-encoding", "UTF-8",
@@ -65,8 +56,6 @@ object BuildSettings {
       Seq(file)
     }.taskValue
   )
-
-  lazy val buildSettings = basicSettings ++ scalifySettings
 
   // sbt-assembly settings for building an executable
   import sbtassembly.Plugin._

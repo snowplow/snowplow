@@ -19,16 +19,18 @@
 package com.snowplowanalytics.snowplow
 package collectors
 package scalastream
-package sinks
+
+import model.SinkType
+import sinks.Sink
 
 // Allow the testing framework to test collection events using the
 // same methods from AbstractSink as the other sinks.
-class TestSink extends AbstractSink {
+class TestSink extends Sink {
 
   // Effectively no limit to the record size
   val MaxBytes = Long.MaxValue
 
   def storeRawEvents(events: List[Array[Byte]], key: String) = events
 
-  override def getType = Sink.Test
+  override def getType = SinkType.Test
 }
