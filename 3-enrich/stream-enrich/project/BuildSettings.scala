@@ -22,9 +22,9 @@ object BuildSettings {
     organization          :=  "com.snowplowanalytics",
     version               :=  "0.10.0",
     description           :=  "The Snowplow Enrichment process, implemented as an Amazon Kinesis app",
-    scalaVersion          :=  "2.10.1",
+    scalaVersion          :=  "2.11.8",
     scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8",
-                                  "-feature", "-target:jvm-1.7"),
+                                  "-feature", "-target:jvm-1.8"),
     scalacOptions in Test :=  Seq("-Yrangepos"),
     resolvers             ++= Dependencies.resolutionRepos
   )
@@ -46,10 +46,8 @@ object BuildSettings {
   import sbtassembly.Plugin._
   import AssemblyKeys._
   lazy val sbtAssemblySettings = assemblySettings ++ Seq(
-    // Executable jarfile
-    assemblyOption in assembly ~= { _.copy(prependShellScript = Some(defaultShellScript)) },
     // Name it as an executable
-    jarName in assembly := { s"${name.value}-${version.value}" }
+    jarName in assembly := { s"${name.value}-${version.value}.jar" }
   )
 
   lazy val buildSettings = basicSettings ++ scalifySettings ++ sbtAssemblySettings

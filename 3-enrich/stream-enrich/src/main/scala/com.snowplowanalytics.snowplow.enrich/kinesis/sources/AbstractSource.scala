@@ -157,6 +157,7 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
       case Sink.Kafka => new KafkaSink(config, inputType, tracker).some
       case Sink.Kinesis => new KinesisSink(kinesisProvider, config, inputType, tracker).some
       case Sink.Stdouterr => new StdouterrSink(inputType).some
+      case Sink.NSQ => new NSQSink(config, inputType).some
       case Sink.Test => None
     }
   }
