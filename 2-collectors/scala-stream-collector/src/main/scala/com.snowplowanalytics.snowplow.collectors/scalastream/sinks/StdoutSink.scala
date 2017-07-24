@@ -42,6 +42,7 @@ class StdoutSink (inputType: InputType.InputType) extends AbstractSink {
 
   // Print a Base64-encoded event.
   def storeRawEvents(events: List[Array[Byte]], key: String) = {
+
     inputType match {
       case InputType.Good => events foreach { e => println(Base64.encodeBase64String(e)) }
       case InputType.Bad  => events foreach { e => Console.err.println(Base64.encodeBase64String(e)) }
