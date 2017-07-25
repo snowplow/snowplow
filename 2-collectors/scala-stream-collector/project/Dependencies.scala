@@ -26,7 +26,7 @@ object Dependencies {
     // Java
     val awsSdk               = "1.11.115"
     val yodaTime             = "2.9.9"
-    val kafka                = "0.10.1.0"
+    val kafka                = "0.10.2.1"
     val slf4j                = "1.7.5"
     // Scala
     val snowplowCommonEnrich = "0.22.0"
@@ -46,8 +46,8 @@ object Dependencies {
     val awsSdk               = "com.amazonaws"         %  "aws-java-sdk-kinesis"   % V.awsSdk
     val yodaTime             = "joda-time"             %  "joda-time"              % V.yodaTime
     val kafkaClients         = "org.apache.kafka"      %  "kafka-clients"          % V.kafka
-    val slf4j                = "org.slf4j"             %  "slf4j-simple"            % V.slf4j
-    val log4jOverSlf4j       = "org.slf4j"             %  "log4j-over-slf4j"        % V.slf4j
+    val slf4j                = "org.slf4j"             %  "slf4j-simple"           % V.slf4j
+    val log4jOverSlf4j       = "org.slf4j"             %  "log4j-over-slf4j"       % V.slf4j
 
     // Scala
     val snowplowCommonEnrich = "com.snowplowanalytics" %  "snowplow-common-enrich" % V.snowplowCommonEnrich intransitive
