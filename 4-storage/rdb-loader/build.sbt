@@ -14,7 +14,7 @@
 lazy val root = project.in(file("."))
   .settings(
     name := "snowplow-rdb-loader",
-    version := "0.12.0-rc4",
+    version := "0.12.0-rc5",
     organization := "com.snowplowanalytics",
     scalaVersion := "2.11.11",
     initialCommands := "import com.snowplowanalytics.snowplow.rdbloader._",
