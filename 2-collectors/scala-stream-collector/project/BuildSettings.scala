@@ -37,8 +37,8 @@ object BuildSettings {
   )
 
   lazy val javaCompilerOptions = Seq(
-    "-source", "1.7",
-    "-target", "1.7"
+    "-source", "1.8",
+    "-target", "1.8"
   )
 
   // Makes our SBT app settings available from within the app
