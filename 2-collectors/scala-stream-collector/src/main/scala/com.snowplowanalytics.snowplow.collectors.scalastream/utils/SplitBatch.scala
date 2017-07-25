@@ -15,26 +15,16 @@ package collectors
 package scalastream
 package utils
 
-// Java
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets.UTF_8
 
-// Thrift
 import org.apache.thrift.TSerializer
-
-// Joda-Time
 import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.format.DateTimeFormat
-
-// Snowplow
-import CollectorPayload.thrift.model1.CollectorPayload
-
-// Common Enrich
-import com.snowplowanalytics.snowplow.enrich.common.outputs.BadRow
-
-// Scalaz
 import scalaz._
 
+import CollectorPayload.thrift.model1.CollectorPayload
+import enrich.common.outputs.BadRow
 import model._
 
 /**
@@ -48,12 +38,14 @@ object SplitBatch {
   }
 
   // An ISO valid timestamp formatter
-  private val TstampFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(DateTimeZone.UTC)
+  private val TstampFormat = DateTimeFormat
+    .forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+    .withZone(DateTimeZone.UTC)
 
   // json4s
+  import org.json4s._
   import org.json4s.JsonDSL._
   import org.json4s.jackson.JsonMethods._
-  import org.json4s._
 
   /**
    * Split a list of strings into batches, none of them exceeding a given size
