@@ -21,7 +21,6 @@ package collectors
 package scalastream
 package sinks
 
-// Apache Commons
 import org.apache.commons.codec.binary.Base64
 
 import model._

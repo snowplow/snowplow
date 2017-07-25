@@ -17,18 +17,15 @@ import sbt._
 object Dependencies {
 
   val resolutionRepos = Seq(
-    "Snowplow Analytics Maven repo"          at "http://maven.snplow.com/releases/",
-    "Snowplow Analytics Maven snapshot repo" at "http://maven.snplow.com/snapshots/",
-    "Spray repo"                             at "http://repo.spray.io",
-    "Typesafe repository"                    at "http://repo.typesafe.com/typesafe/releases/",
-    // For sbt-thrift
-    "bigtoast-github"                        at "http://bigtoast.github.com/repo/"
+    "Snowplow Analytics Maven repo" at "http://maven.snplow.com/releases/",
+    // For uaParser utils
+    "user-agent-parser repo" at "https://clojars.org/repo/"
   )
 
   object V {
     // Java
     val awsSdk               = "1.11.115"
-    val yodaTime             = "2.1"
+    val yodaTime             = "2.9.9"
     val kafka                = "0.10.1.0"
     val commonsCodec         = "1.5"
     val slf4j                = "1.7.5"

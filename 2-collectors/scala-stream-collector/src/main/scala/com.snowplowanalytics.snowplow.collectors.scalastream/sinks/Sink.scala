@@ -19,7 +19,6 @@
 package com.snowplowanalytics.snowplow.collectors.scalastream
 package sinks
 
-// Logging
 import org.slf4j.LoggerFactory
 
 import model.SinkType

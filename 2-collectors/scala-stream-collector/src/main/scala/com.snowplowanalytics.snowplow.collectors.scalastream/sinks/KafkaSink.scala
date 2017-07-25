@@ -14,10 +14,8 @@ package com.snowplowanalytics.snowplow.collectors
 package scalastream
 package sinks
 
-// Java
 import java.util.Properties
 
-// Kafka
 import org.apache.kafka.clients.producer._
 
 import model._
