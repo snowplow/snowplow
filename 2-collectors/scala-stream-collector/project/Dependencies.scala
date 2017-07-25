@@ -28,6 +28,7 @@ object Dependencies {
     val yodaTime             = "2.9.9"
     val kafka                = "0.10.2.1"
     val slf4j                = "1.7.5"
+    val config               = "1.3.1"
     // Scala
     val snowplowCommonEnrich = "0.22.0"
     val igluClient           = "0.3.2"
@@ -48,6 +49,7 @@ object Dependencies {
     val kafkaClients         = "org.apache.kafka"      %  "kafka-clients"          % V.kafka
     val slf4j                = "org.slf4j"             %  "slf4j-simple"           % V.slf4j
     val log4jOverSlf4j       = "org.slf4j"             %  "log4j-over-slf4j"       % V.slf4j
+    val config               = "com.typesafe"          %  "config"                 % V.config
 
     // Scala
     val snowplowCommonEnrich = "com.snowplowanalytics" %  "snowplow-common-enrich" % V.snowplowCommonEnrich intransitive
