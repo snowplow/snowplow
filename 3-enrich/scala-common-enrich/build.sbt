@@ -50,9 +50,7 @@ lazy val root = project.in(file("."))
       Dependencies.Libraries.scalaUri,
       Dependencies.Libraries.scalaForex,
       Dependencies.Libraries.scalaWeather,
-      Dependencies.Libraries.akka,
-      Dependencies.Libraries.akkaHttp,
-      Dependencies.Libraries.akkaHttpCore,
+      Dependencies.Libraries.scalaj,
       Dependencies.Libraries.gatlingJsonpath,
       // Scala (test only)
       Dependencies.Libraries.specs2,

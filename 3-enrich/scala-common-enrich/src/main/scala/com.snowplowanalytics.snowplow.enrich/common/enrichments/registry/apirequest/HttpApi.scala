@@ -55,11 +55,9 @@ case class HttpApi(method: String, uri: String, timeout: Int, authentication: Au
    * @param url URL to query
    * @return self-describing JSON ready to be attached to event contexts
    */
-  def perform(client: HttpClient, url: String): Validation[Throwable, String] = {
-    for {
-      request <- client.buildRequest(url, authUser = authUser, authPassword = authPassword, method)
-      response <- client.getBody(request, timeout)
-    } yield response
+  def perform(url: String): Validation[Throwable, String] = {
+    val req = HttpClient.buildRequest(url, authUser = authUser, authPassword = authPassword, method)
+    HttpClient.getBody(req)
   }
 
   /**
