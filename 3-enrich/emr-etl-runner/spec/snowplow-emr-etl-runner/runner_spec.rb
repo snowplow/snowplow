@@ -36,10 +36,10 @@ describe Runner do
       :resolver_file => resource("iglu_resolver.json"),
       :start => nil,
       :end => nil,
-      :skip => [],
       :process_enrich_location => nil,
       :process_shred_location => nil,
-      :targets_directory => nil
+      :targets_directory => nil,
+      :include => []
     }
 
     args, config, enrichments, resolver, targets = Cli.process_options(options, nil)
@@ -78,7 +78,7 @@ describe Runner do
   it 'should reject bogus skip stages' do
     args, config, enrichments, resolver, targets = get_mock_config
     args[:skip] = ["lunch"]
-    expect {Runner.new args, config, enrichments, resolver, targets}.to raise_exception(ConfigError, "Invalid option: skip can be 'staging', 'emr', 'enrich', 'shred', 'elasticsearch', or 'archive_raw', not 'lunch'")
+    expect {Runner.new args, config, enrichments, resolver, targets}.to raise_exception(ConfigError, "Invalid option: skip can be 'staging', 'emr', 'enrich', 'shred', 'elasticsearch', 'rdb_load', 'archive_raw' or 'analyze' not 'lunch'")
     puts targets.empty?
 
     %w(staging emr enrich shred elasticsearch archive_raw).each do |skip_arg|
