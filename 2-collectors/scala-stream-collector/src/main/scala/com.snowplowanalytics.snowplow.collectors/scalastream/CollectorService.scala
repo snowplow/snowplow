@@ -87,7 +87,10 @@ class CollectorService(
                       entity(as[String]) { body =>
                         complete(
                           responseHandler.cookie(
-                            null,
+                            rawRequest match {
+                              case CollectorService.QuerystringExtractor(qs) => qs
+                              case _ => ""
+                            },
                             body,
                             reqCookie,
                             userAgent,
