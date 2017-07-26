@@ -14,48 +14,27 @@ package com.snowplowanalytics.snowplow.enrich
 package common
 package utils
 
+import scala.util.control.NonFatal
+
 // Scalaz
 import scalaz._
 import Scalaz._
 
-// Scala
-import scala.concurrent.Await
-import scala.concurrent.duration._
-import scala.util.control.NonFatal
+// Scalaj
+import scalaj.http._
 
-// Akka
-import akka.actor.ActorSystem
-
-// Akka Streams
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model._
-import akka.stream.ActorMaterializer
-import akka.http.scaladsl.model.headers.{ Authorization, BasicHttpCredentials }
-
-
-class HttpClient(actorSystem: ActorSystem) {
-  /**
-   * Inner client to perform HTTP API requests
-   */
-  implicit val system = actorSystem
-  implicit val context = system.dispatcher
-  implicit val materializer = ActorMaterializer()
-
-  private val http = Http()
-
+object HttpClient {
   /**
    * Blocking method to get body of HTTP response
    *
    * @param request assembled request object
-   * @param timeout time in milliseconds after which request can be considered failed
-   *                used for both connection and receiving
    * @return validated body of HTTP request
    */
-  def getBody(request: HttpRequest, timeout: Int): Validation[Throwable, String] = {
+  def getBody(request: HttpRequest): Validation[Throwable, String] = {
     try {
-      val response = http.singleRequest(request)
-      val body = response.flatMap(_.entity.toStrict(timeout.milliseconds).map(_.data.utf8String))
-      Await.result(body, timeout.milliseconds).success
+      val res = request.asString
+      if (res.isSuccess) res.body.success
+      else new Exception(s"Request failed with status ${res.code} and body ${res.body}").failure
     } catch {
       case NonFatal(e) => e.failure
     }
@@ -68,27 +47,19 @@ class HttpClient(actorSystem: ActorSystem) {
    * @param authUser optional username for basic auth
    * @param authPassword optional password for basic auth
    * @param method HTTP method
-   * @return successful HTTP request or throwable in case of invalid URI or method
+   * @return HTTP request
    */
   def buildRequest(
-      uri: String,
-      authUser: Option[String],
-      authPassword: Option[String],
-      method: String = "GET"): Validation[Throwable, HttpRequest] = {
-    val auth = buildAuthorization(authUser, authPassword)
-    try {
-      HttpRequest(method = HttpMethods.getForKey(method).get, uri = uri, headers = auth.toList).success
-    } catch {
-      case NonFatal(e) => e.failure
+    uri: String,
+    authUser: Option[String],
+    authPassword: Option[String],
+    method: String = "GET"
+  ): HttpRequest = {
+    val req = Http(uri).method(method)
+    if (authUser.isDefined || authPassword.isDefined) {
+      req.auth(authUser.getOrElse(""), authPassword.getOrElse(""))
+    } else {
+      req
     }
   }
-
-  /**
-   * Build [[Authorization]] header .
-   * Unlike predefined behaviour which assumes both `authUser` and `authPassword` must be provided
-   * this will work if ANY of `authUser` or `authPassword` provided
-   */
-  private def buildAuthorization(authUser: Option[String], authPassword: Option[String]): Option[Authorization] =
-    if (List(authUser, authPassword).flatten.isEmpty) none
-    else Authorization(BasicHttpCredentials(authUser.getOrElse(""), authPassword.getOrElse(""))).some
 }

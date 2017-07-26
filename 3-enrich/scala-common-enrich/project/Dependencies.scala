@@ -54,8 +54,7 @@ object Dependencies {
     val igluClient       = "0.5.0"
     val scalaForex       = "0.5.0"
     val scalaWeather     = "0.2.0"
-    val akka             = "2.3.14"
-    val akkaStreams      = "2.0.2"
+    val scalaj           = "2.3.0"
     val gatlingJsonpath  = "0.6.4"
     // Scala (test only)
     val specs2           = "2.3.13"
@@ -95,10 +94,7 @@ object Dependencies {
     val igluClient       = "com.snowplowanalytics"      %%  "iglu-scala-client"        % V.igluClient
     val scalaUri         = "com.netaporter"             %% "scala-uri"                 % V.scalaUri
     val scalaWeather     = "com.snowplowanalytics"      %% "scala-weather"             % V.scalaWeather
-    val akka             = "com.typesafe.akka"          %% "akka-actor"                  % V.akka
-    val akkaStreams      = "com.typesafe.akka"          %% "akka-stream-experimental"    % V.akkaStreams
-    val akkaHttpCore     = "com.typesafe.akka"          %% "akka-http-core-experimental" % V.akkaStreams
-    val akkaHttp         = "com.typesafe.akka"          %% "akka-http-experimental"      % V.akkaStreams
+    val scalaj           = "org.scalaj"                 %% "scalaj-http"               % V.scalaj
     val gatlingJsonpath  = "io.gatling"                 %% "jsonpath"                  % V.gatlingJsonpath
     // Scala (test only)
     val specs2           = "org.specs2"                 %% "specs2"                    % V.specs2         % "test"

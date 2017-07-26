@@ -28,10 +28,6 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods.fromJsonNode
 
-// Akka
-import akka.actor.ActorSystem
-import com.typesafe.config.ConfigFactory
-
 // Iglu
 import com.snowplowanalytics.iglu.client.{ SchemaKey, SchemaCriterion }
 
@@ -128,7 +124,7 @@ case class ApiRequestEnrichment(inputs: List[Input], api: HttpApi, outputs: List
     val value = cache.get(url) match {
       case Some(cachedResponse) => cachedResponse
       case None => {
-        val json = api.perform(client, url).flatMap(output.parse)
+        val json = api.perform(url).flatMap(output.parse)
         cache.put(url, json)
         json
       }
@@ -141,13 +137,6 @@ case class ApiRequestEnrichment(inputs: List[Input], api: HttpApi, outputs: List
  * Companion object containing common methods for requests and manipulating data
  */
 object ApiRequestEnrichment {
-
-  // TODO: share it as soon as there will be another dependent enrichment
-  private lazy val actorSystem = ActorSystem("api-request-system",
-    ConfigFactory.parseString("akka.daemonic=on"))
-
-  private lazy val client = new HttpClient(actorSystem)
-
   /**
    * Transform pairs of schema and node obtained from [[utils.shredder.Shredder]]
    * into list of regular self-describing instance representing custom context
