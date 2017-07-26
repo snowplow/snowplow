@@ -1,0 +1,102 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>SnowplowDashDBConn</groupId>
+  <artifactId>SnowplowDashDBConn</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <name>SnowplowDashDBConn</name>
+  <url>http://maven.apache.org</url>
+
+  <properties>
+    <maven.compiler.source>1.7</maven.compiler.source> 
+    <maven.compiler.target>1.7</maven.compiler.target> 
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <dependencies>
+    <dependency>
+	    <groupId>args4j</groupId>
+	    <artifactId>args4j</artifactId>
+	    <version>2.33</version>
+	</dependency>
+    <dependency>
+  		<groupId>io.rest-assured</groupId>
+  		<artifactId>rest-assured</artifactId>
+  		<version>3.0.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-common</artifactId>
+      <version>2.7.2</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <finalName>sp_dashdb_connector</finalName>
+    <plugins>
+      <!-- download source code in Eclipse, best practice -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-eclipse-plugin</artifactId>
+        <version>2.10</version>
+        <configuration>
+          <downloadSources>true</downloadSources>
+          <downloadJavadocs>false</downloadJavadocs>
+        </configuration>
+      </plugin>
+      <!-- Set a compiler level -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.5.1</version>
+        <configuration>
+          <source>${maven.compiler.source}</source>
+          <target>${maven.compiler.target}</target>
+        </configuration>
+      </plugin>
+      <!-- Maven Shade Plugin -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>2.4.3</version>
+        <executions>
+          <execution>
+  	      <phase>package</phase>
+  	      <goals>
+  	        <goal>shade</goal>
+  	      </goals>
+  	      <configuration>
+  		    <artifactSet>
+  			  <includes>
+  			    <include>args4j:*</include>
+  			    <include>org.kohsuke.args4j:*</include>
+  			    <include>org.apache.hadoop:*</include>
+  			    <include>com.google.code.gson:*</include>
+  			    <include>io.rest-assured:*</include>
+  			    <include>org.codehaus.groovy:*</include>
+  			    <include>org.apache.httpcomponents:*</include>
+  			    <include>org.hamcrest:*</include>
+  			  </includes>
+  		    </artifactSet>
+  	        <relocations>
+                <relocation>
+                  <pattern>org.apache.http</pattern>
+                  <shadedPattern>shade.org.apache.http</shadedPattern>
+                </relocation>
+            </relocations>
+  	        <transformers>
+  	          <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+  		          <Main-Class>SnowplowDashDBConn.SnowplowDashDBConn.EMRHDFSToDashDB</Main-Class>
+  	          </transformer>
+  	        </transformers>
+  	      </configuration>
+           </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>
