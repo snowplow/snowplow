@@ -25,7 +25,8 @@ module Snowplow
 
       # Supported options
       @@collector_format_regex = /^(?:cloudfront|clj-tomcat|thrift|(?:json\/.+\/.+)|(?:tsv\/.+\/.+)|(?:ndjson\/.+\/.+))$/
-      @@skip_options = Set.new(%w(staging s3distcp emr enrich shred elasticsearch archive_raw))
+      @@skip_options = Set.new(%w(staging s3distcp emr enrich shred elasticsearch archive_raw analyze archive_enriched rdb_load))
+      @@include_options = Set.new(%w(vacuum))
       @@storage_targets = Set.new(%w(redshift_config postgresql_config elastic_config amazon_dynamodb_config))
 
       include Monitoring::Logging
@@ -64,13 +65,23 @@ module Snowplow
           s3distcp = not(@args[:skip].include?('s3distcp'))
           elasticsearch = not(@args[:skip].include?('elasticsearch'))
           archive_raw = not(@args[:skip].include?('archive_raw'))
+          rdb_load = not(@args[:skip].include?('rdb_load'))
+
+          archive_enriched = if @args[:skip].include?('archive_enriched')
+            'skip'
+          elsif enrich
+            'pipeline'
+          else
+            'recover'
+          end
 
           # Keep relaunching the job until it succeeds or fails for a reason other than a bootstrap failure
           tries_left = @config[:aws][:emr][:bootstrap_failure_tries]
+          rdbloader_steps = get_rdbloader_steps()
           while true
             begin
               tries_left -= 1
-              job = EmrJob.new(@args[:debug], enrich, shred, elasticsearch, s3distcp, archive_raw, @config, @enrichments_array, @resolver_config, @targets)
+              job = EmrJob.new(@args[:debug], enrich, shred, elasticsearch, s3distcp, archive_raw, rdb_load, archive_enriched, @config, @enrichments_array, @resolver_config, @targets, rdbloader_steps)
               job.run(@config)
               break
             rescue BootstrapFailureError => bfe
@@ -102,6 +113,28 @@ module Snowplow
         end
       end
 
+      Contract nil => RdbLoaderSteps
+      def get_rdbloader_steps()
+        steps = {
+          :skip => [],
+          :include => []
+        }
+
+        if @args[:skip].include?("analyze")
+          steps[:skip] << "analyze"
+        end
+
+        if @args[:skip].include?("shred")
+          steps[:skip] << "shred"
+        end
+
+        if @args[:include].include?("vacuum")
+          steps[:include] << "vacuum"
+        end
+
+        steps
+      end
+
       # Validate our arguments against the configuration Hash
       # Make updates to the configuration Hash based on the
       # arguments
@@ -111,7 +144,14 @@ module Snowplow
         # Check our skip argument
         args[:skip].each { |opt|
           unless @@skip_options.include?(opt)
-            raise ConfigError, "Invalid option: skip can be 'staging', 'emr', 'enrich', 'shred', 'elasticsearch', or 'archive_raw', not '#{opt}'"
+            raise ConfigError, "Invalid option: skip can be 'staging', 'emr', 'enrich', 'shred', 'elasticsearch', 'rdb_load', 'archive_raw' or 'analyze' not '#{opt}'"
+          end
+        }
+
+        # Check include argument
+        args[:include].each { |opt|
+          unless @@include_options.include?(opt)
+            raise ConfigError, "Invalid option: include can be 'vacuum' not '#{opt}'"
           end
         }
 

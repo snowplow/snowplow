@@ -1,4 +1,11 @@
 ---
+# --- Variables --- #
+
+local:
+  root_dir : <%= ENV['TRAVIS_BUILD_DIR'] %>
+
+# --- Release Manager Config --- #
+
 # Required: deployment targets
 targets:
   - type              : "awss3"
@@ -7,11 +14,50 @@ targets:
 
 # Required: packages to be deployed
 packages:
-  # AWS S3 plain upload example
-  - name     : "hadoop-enrich-hosted-asset"        # Just for convenience
-    bucket   : "snowplow-hosted-assets"
-    path     : "3-enrich/hadoop-event-recovery"
-    region   : "us-west-1"
+  - name     : "hadoop-event-recovery-hosted-asset"
+    locations:
+    - bucket   : "snowplow-hosted-assets"
+      path     : "3-enrich/hadoop-event-recovery"
+      region   : "eu-west-1"
+    - bucket   : "snowplow-hosted-assets-us-east-1"
+      path     : "3-enrich/hadoop-event-recovery"
+      region   : "us-east-1"
+    - bucket   : "snowplow-hosted-assets-us-west-1"
+      path     : "3-enrich/hadoop-event-recovery"
+      region   : "us-west-1"
+    - bucket   : "snowplow-hosted-assets-us-west-2"
+      path     : "3-enrich/hadoop-event-recovery"
+      region   : "us-west-2"
+    - bucket   : "snowplow-hosted-assets-sa-east-1"
+      path     : "3-enrich/hadoop-event-recovery"
+      region   : "sa-east-1"
+    - bucket   : "snowplow-hosted-assets-eu-central-1"
+      path     : "3-enrich/hadoop-event-recovery"
+      region   : "eu-central-1"
+    - bucket   : "snowplow-hosted-assets-ap-southeast-1"
+      path     : "3-enrich/hadoop-event-recovery"
+      region   : "ap-southeast-1"
+    - bucket   : "snowplow-hosted-assets-ap-southeast-2"
+      path     : "3-enrich/hadoop-event-recovery"
+      region   : "ap-southeast-2"
+    - bucket   : "snowplow-hosted-assets-ap-northeast-1"
+      path     : "3-enrich/hadoop-event-recovery"
+      region   : "ap-northeast-1"
+    - bucket   : "snowplow-hosted-assets-ap-south-1"
+      path     : "3-enrich/hadoop-event-recovery"
+      region   : "ap-south-1"
+    - bucket   : "snowplow-hosted-assets-us-east-2"
+      path     : "3-enrich/hadoop-event-recovery"
+      region   : "us-east-2"
+    - bucket   : "snowplow-hosted-assets-ca-central-1"
+      path     : "3-enrich/hadoop-event-recovery"
+      region   : "ca-central-1"
+    - bucket   : "snowplow-hosted-assets-eu-west-2"
+      path     : "3-enrich/hadoop-event-recovery"
+      region   : "eu-west-2"
+    - bucket   : "snowplow-hosted-assets-ap-northeast-2"
+      path     : "3-enrich/hadoop-event-recovery"
+      region   : "ap-northeast-2"
     publish  : true
     override : false
     continue_on_conflict : false

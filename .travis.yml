@@ -37,6 +37,7 @@ env:
   - TEST_DIR=3-enrich/scala-common-enrich/
   - TEST_DIR=3-enrich/spark-enrich/
   - TEST_DIR=4-storage/rdb-shredder/
+  - TEST_DIR=4-storage/rdb-loader/
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y lzop
@@ -47,7 +48,7 @@ addons:
 services:
   - postgresql
 before_deploy:
-  - pip install --user release-manager==0.2.0
+  - pip install --user release-manager==0.3.0
 deploy:
   - provider: script
     script: ./.travis/deploy_sce.sh $TRAVIS_TAG
@@ -91,3 +92,9 @@ deploy:
     on:
       tags: true
       condition: '"$(.travis/is_release_tag.sh event_manifest_populator $TRAVIS_TAG)" == "" && $? == 0 && $TEST_DIR = 3-enrich/scala-common-enrich/'
+  - provider: script
+    script: ./.travis/deploy.sh rdb_loader $TRAVIS_TAG
+    skip_cleanup: true
+    on:
+      tags: true
+      condition: '"$(.travis/is_release_tag.sh rdb_loader $TRAVIS_TAG)" == "" && $? == 0 && $TEST_DIR = 4-storage/rdb-loader/'

@@ -38,6 +38,7 @@ object BackpopulateJob {
     val config = new SparkConf()
       .setAppName(getClass.getSimpleName)
       .setIfMissing("spark.master", "local[*]")
+      .set("spark.hadoop.io.compression.codecs", classOf[R83Codec].getCanonicalName)
 
     val sc = new SparkContext(config)
 

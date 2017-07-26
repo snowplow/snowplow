@@ -21,6 +21,8 @@ module Snowplow
 
     include Contracts
 
+    C = Contracts
+
     CompressionFormat = lambda { |s| %w(NONE GZIP).include?(s) }
     VolumeTypes = lambda { |s| %w(standard gp2 io1).include?(s) }
     PositiveInt = lambda { |i| i.is_a?(Integer) && i > 0 }
@@ -28,7 +30,9 @@ module Snowplow
     # The Hash containing assets for Hadoop.
     AssetsHash = ({
       :enrich  => String,
-      :shred   => String
+      :shred   => String,
+      :loader  => String,
+      :elasticsearch => String
       })
 
     # The Hash of the CLI arguments.
@@ -37,6 +41,7 @@ module Snowplow
       :start => Maybe[String],
       :end => Maybe[String],
       :skip => Maybe[ArrayOf[String]],
+      :include => Maybe[ArrayOf[String]],
       :process_enrich_location => Maybe[String],
       :process_shred_location => Maybe[String]
       })
@@ -122,7 +127,8 @@ module Snowplow
             :task_instance_bid => Maybe[Num]
             }),
           :additional_info => Maybe[String],
-          :bootstrap_failure_tries => Num
+          :bootstrap_failure_tries => Num,
+          :configuration => Maybe[HashOf[Symbol, HashOf[Symbol, String]]]
           }),
         }),
       :collectors => ({
@@ -138,10 +144,8 @@ module Snowplow
       :storage => ({
         :versions => ({
           :rdb_shredder => String,
-          :hadoop_elasticsearch => String
-          }),
-        :download => ({
-          :folder => Maybe[String]
+          :hadoop_elasticsearch => String,
+          :rdb_loader => String
           })
         }),
       :monitoring => ({
@@ -171,6 +175,17 @@ module Snowplow
         :DUPLICATE_TRACKING => Maybe[Iglu::SelfDescribingJson],
         :FAILED_EVENTS => ArrayOf[Iglu::SelfDescribingJson],
         :ENRICHED_EVENTS => ArrayOf[Iglu::SelfDescribingJson]
+    })
+
+    # archive_enriched can be either run as:
+    # recover - without previous steps, archive latest run_id
+    # pipeline - following the enrich and rdb_load, with known run_id
+    # skip - don't archive
+    ArchiveEnrichedStep = C::Or['recover', 'pipeline', 'skip']
+
+    RdbLoaderSteps = ({
+      :skip => ArrayOf[String],
+      :include => ArrayOf[String]
     })
 
   end

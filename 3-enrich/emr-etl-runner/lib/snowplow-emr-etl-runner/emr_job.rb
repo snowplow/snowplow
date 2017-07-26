@@ -21,33 +21,9 @@ require 'json'
 require 'base64'
 require 'contracts'
 require 'iglu-client'
-
-# Global variable used to decide whether to patch Elasticity's AwsRequestV4 payload with Configurations
-# This is only necessary if we are loading Thrift with AMI >= 4.0.0
-$patch_thrift_configuration = false
-
-# Monkey patched to support Configurations
-module Elasticity
-  class AwsRequestV4
-    def payload
-      if $patch_thrift_configuration
-        @ruby_service_hash["Configurations"] = [{
-          "Classification" => "core-site",
-          "Properties" => {
-            "io.file.buffer.size" => "65536"
-          }
-        },
-        {
-          "Classification" => "mapred-site",
-          "Properties" => {
-            "mapreduce.user.classpath.first" => "true"
-          }
-        }]
-      end
-      AwsUtils.convert_ruby_to_aws_v4(@ruby_service_hash).to_json
-    end
-  end
-end
+require 'securerandom'
+require 'tempfile'
+require 'fog'
 
 # Ruby class to execute Snowplow's Hive jobs against Amazon EMR
 # using Elasticity (https://github.com/rslifka/elasticity).
@@ -70,8 +46,8 @@ module Snowplow
       include Monitoring::Logging
 
       # Initializes our wrapper for the Amazon EMR client.
-      Contract Bool, Bool, Bool, Bool, Bool, Bool, ConfigHash, ArrayOf[String], String, TargetsHash => EmrJob
-      def initialize(debug, enrich, shred, elasticsearch, s3distcp, archive_raw, config, enrichments_array, resolver, targets)
+      Contract Bool, Bool, Bool, Bool, Bool, Bool, Bool, ArchiveEnrichedStep, ConfigHash, ArrayOf[String], String, TargetsHash, RdbLoaderSteps => EmrJob
+      def initialize(debug, enrich, shred, elasticsearch, s3distcp, archive_raw, rdb_load, archive_enriched, config, enrichments_array, resolver, targets, rdbloader_steps)
 
         logger.debug "Initializing EMR jobflow"
 
@@ -81,11 +57,14 @@ module Snowplow
           custom_assets_bucket,
           config[:enrich][:versions][:spark_enrich],
           config[:storage][:versions][:rdb_shredder],
-          config[:storage][:versions][:hadoop_elasticsearch])
+          config[:storage][:versions][:hadoop_elasticsearch],
+          config[:storage][:versions][:rdb_loader])
 
         run_tstamp = Time.new
         run_id = run_tstamp.strftime("%Y-%m-%d-%H-%M-%S")
         @run_id = run_id
+        @rdb_loader_log_base = config[:aws][:s3][:buckets][:log] + "rdb-loader/#{@run_id}/"
+        @rdb_loader_logs = []   # pairs of target name and associated log
         etl_tstamp = (run_tstamp.to_f * 1000).to_i.to_s
         output_codec = self.class.output_codec_from_compression_format(config[:enrich][:output_compression])
         output_codec_argument = output_codec == 'none' ? [] : ["--outputCodec" , output_codec]
@@ -165,7 +144,20 @@ module Snowplow
               @jobflow.add_bootstrap_action(action)
             end
           else
-            $patch_thrift_configuration = true
+            [{
+              "Classification" => "core-site",
+              "Properties" => {
+                "io.file.buffer.size" => "65536"
+              }
+            },
+            {
+              "Classification" => "mapred-site",
+              "Properties" => {
+                "mapreduce.user.classpath.first" => "true"
+              }
+            }].each do |config|
+              @jobflow.add_configuration(config)
+            end
           end
         end
 
@@ -206,6 +198,14 @@ module Snowplow
           @jobflow.add_bootstrap_action(install_lingual_action)
         end
 
+        # EMR configuration: Spark, YARN, etc
+        configuration = config[:aws][:emr][:configuration]
+        unless configuration.nil?
+          configuration.each do |k, h|
+            @jobflow.add_configuration({"Classification" => k, "Properties" => h})
+          end
+        end
+
         # For serialization debugging. TODO doesn't work yet
         # install_ser_debug_action = Elasticity::BootstrapAction.new("#{STANDARD_HOSTED_ASSETS}/common/emr/cascading-ser-debug.sh")
         # @jobflow.add_bootstrap_action(install_ser_debug_action)
@@ -231,6 +231,7 @@ module Snowplow
         s3_endpoint = self.class.get_s3_endpoint(config[:aws][:s3][:region])
         csbr = config[:aws][:s3][:buckets][:raw]
         csbe = config[:aws][:s3][:buckets][:enriched]
+        csbs = config[:aws][:s3][:buckets][:shredded]
 
         enrich_final_output = if enrich
           self.class.partition_by_run(csbe[:good], run_id)
@@ -364,7 +365,6 @@ module Snowplow
         if shred
 
           # 3. Shredding
-          csbs = config[:aws][:s3][:buckets][:shredded]
           shred_final_output = self.class.partition_by_run(csbs[:good], run_id)
           shred_step_output = if s3distcp
             "hdfs:///local/snowplow/shredded-events/"
@@ -388,8 +388,8 @@ module Snowplow
 
           shred_step =
             if self.class.is_rdb_shredder(config[:storage][:versions][:rdb_shredder]) then
-              duplicate_storage_config = self.class.build_duplicate_storage_json(targets[:DUPLICATE_TRACKING], false)
               @jobflow.add_application("Spark")
+              duplicate_storage_config = self.class.build_duplicate_storage_json(targets[:DUPLICATE_TRACKING], false)
               build_spark_step(
                 "Shred Enriched Events",
                 assets[:shred],
@@ -398,8 +398,8 @@ module Snowplow
                   :good => shred_step_output,
                   :bad  => self.class.partition_by_run(csbs[:bad], run_id)
                 },
-                { 
-                  'iglu-config' => self.class.build_iglu_config_json(resolver) 
+                {
+                  'iglu-config' => self.class.build_iglu_config_json(resolver)
                 }.merge(duplicate_storage_config)
               )
             else
@@ -457,6 +457,28 @@ module Snowplow
           ]
           archive_raw_step.name << ": Raw S3 Staging -> S3 Archive"
           @jobflow.add_step(archive_raw_step)
+        end
+
+        if rdb_load
+          get_rdb_loader_steps(config, targets[:ENRICHED_EVENTS], resolver, assets[:loader], rdbloader_steps).each do |step|
+            @jobflow.add_step(step)
+          end
+        end
+
+        if archive_enriched == 'pipeline'
+          archive_enriched_step = get_archive_enriched_step(csbe[:good], csbe[:archive], run_id, s3_endpoint, ": Enriched S3 -> S3 Enriched Archive")
+          @jobflow.add_step(archive_enriched_step)
+          archive_shredded_step = get_archive_enriched_step(csbs[:good], csbs[:archive], run_id, s3_endpoint, ": Shredded S3 -> S3 Shredded Archive")
+          @jobflow.add_step(archive_shredded_step)
+        elsif archive_enriched == 'recover'
+          latest_run_id = get_latest_run_id(s3, csbe[:good])
+
+          archive_enriched_step = get_archive_enriched_step(csbe[:good], csbe[:archive], latest_run_id, s3_endpoint, ': Enriched S3 -> S3 Enriched Archive')
+          @jobflow.add_step(archive_enriched_step)
+          archive_shredded_step = get_archive_enriched_step(csbs[:good], csbs[:archive], latest_run_id, s3_endpoint, ": Shredded S3 -> S3 Shredded Archive")
+          @jobflow.add_step(archive_shredded_step)
+        else    # skip
+          nil
         end
 
         self
@@ -519,6 +541,8 @@ module Snowplow
 
         status = wait_for()
 
+        output_rdb_loader_logs(config[:aws][:s3][:region], config[:aws][:access_key_id], config[:aws][:secret_access_key])
+
         if status.successful
           logger.debug "EMR jobflow #{jobflow_id} completed successfully."
           if snowplow_tracking_enabled
@@ -541,7 +565,142 @@ module Snowplow
         nil
       end
 
+      # Fetch logs from S3 left by RDB Loader steps
+      #
+      # Parameters:
+      # +region+:: region for logs bucket
+      Contract String, String, String => nil
+      def output_rdb_loader_logs(region, aws_access_key_id, aws_secret_key)
+
+        if @rdb_loader_logs.empty?
+          logger.info "No RDB Loader logs"
+        else
+          logger.info "RDB Loader logs"
+
+          s3 = Sluice::Storage::S3::new_fog_s3_from(region, aws_access_key_id, aws_secret_key)
+
+          @rdb_loader_logs.each do |l|
+            tmp = Tempfile.new("rdbloader")
+            uri = URI.parse(l[1])
+            bucket, key = uri.host, uri.path[1..-1]
+            logger.debug "Downloading #{uri} to #{tmp.path}"
+            begin
+              log = s3.directories.get(bucket).files.head(key)
+              Sluice::Storage::S3::download_file(s3, log, tmp)
+              logger.info l[0]
+              logger.info tmp.read
+            rescue Exception => e
+              logger.error "Error while downloading RDB log #{l[1]}"
+              logger.error e.message
+            end
+          end
+        end
+
+        nil
+      end
+
     private
+
+
+      # Build an Elasticity RDB Loader step.
+      #
+      # Parameters:
+      # +config+:: main Snowplow config.yml
+      # +targets+:: list of Storage target config hashes
+      # +resolver+:: base64-encoded Iglu resolver JSON
+      # +jar+:: s3 object with RDB Loader jar
+      Contract ConfigHash, ArrayOf[Iglu::SelfDescribingJson], String, String, RdbLoaderSteps => ArrayOf[Elasticity::CustomJarStep]
+      def get_rdb_loader_steps(config, targets, resolver, jar, rdbloader_steps)
+        # Remove credentials from config
+        clean_config = deep_copy(config)
+        clean_config[:aws][:access_key_id] = ""
+        clean_config[:aws][:secret_access_key] = ""
+
+        default_arguments = {
+          :config      => Base64.strict_encode64(recursive_stringify_keys(clean_config).to_yaml),
+          :resolver    => self.class.build_iglu_config_json(resolver)
+        }
+
+        unless rdbloader_steps[:skip].empty?
+          default_arguments.merge({
+            :skip => rdbloader_steps[:skip].join(",")
+          })
+        end
+
+        unless rdbloader_steps[:include].empty?
+          default_arguments.merge({
+            :include => rdbloader_steps[:skip].join(",")
+          })
+        end
+
+        targets.map { |target|
+          name = target.data[:name]
+          log_key = @rdb_loader_log_base + SecureRandom.uuid
+          @rdb_loader_logs << [name, log_key]
+          encoded_target = Base64.strict_encode64(target.to_json.to_json)
+          arguments = [
+            "--config", default_arguments[:config],
+            "--resolver", default_arguments[:resolver],
+            "--logkey", log_key,
+            "--target", encoded_target
+          ] + unless rdbloader_steps[:skip].empty?
+            ["--skip", rdbloader_steps[:skip].join(",")]
+          else
+            []
+          end + unless rdbloader_steps[:include].empty?
+            ["--include", rdbloader_steps[:include].join(",")]
+          else
+            []
+          end
+
+          rdb_loader_step = Elasticity::CustomJarStep.new(jar)
+          rdb_loader_step.arguments = arguments
+          rdb_loader_step.name << ": Load #{name} Storage Target"
+          rdb_loader_step
+        }
+      end
+
+      # List bucket (enriched:good or shredded:good) and return latest run folder
+      # Assuming, there's usually just one folder
+      #
+      # Parameters:
+      # +s3+:: AWS S3 client
+      # +s3_path+:: Full S3 path to folder
+      def get_latest_run_id(s3, s3_path)
+        uri = URI.parse(s3_path)
+        folders = s3.directories.get(uri.host, delimiter: '/', prefix: uri.path[1..-1]).files.common_prefixes
+        run_folders = folders.select { |f| f.include?('run=') }
+        begin
+          folder = run_folders[-1].split('/')[-1]
+          folder.slice('run='.length, folder.length)
+        rescue NoMethodError => _
+          logger.error "No run folders in [#{s3_path}] found"
+          raise UnexpectedStateError, "No run folders in [#{s3_path}] found"
+        end
+      end
+
+      # Defines a S3DistCp step for archiving enriched or shred folder
+      #
+      # Parameters:
+      # +good_path+:: shredded:good or enriched:good full S3 path
+      # +archive_path+:: enriched:archive or shredded:archive full S3 path
+      # +run_id_folder+:: run id foler name (2017-05-10-02-45-30, without `=run`)
+      # +name+:: step description to show in EMR console
+      #
+      # Returns a step ready for adding to the Elasticity Jobflow.
+      Contract String, String, String, String, String => Elasticity::S3DistCpStep
+      def get_archive_enriched_step(good_path, archive_path, run_id_folder, s3_endpoint, name)
+        archive_enriched_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
+        archive_enriched_step.arguments = [
+          "--src"        , self.class.partition_by_run(good_path, run_id_folder),
+          "--dest"       , self.class.partition_by_run(archive_path, run_id_folder),
+          "--s3Endpoint" , s3_endpoint,
+          "--deleteOnSuccess"
+        ]
+        archive_enriched_step.name << name
+        archive_enriched_step
+      end
+
 
       # Defines an Elasticity Scalding step.
       #
@@ -851,16 +1010,17 @@ module Snowplow
         version[0] >= 1 && version[1] >= 9
       end
 
-      # Retrieve the s3 paths of the needed assets: Spark enrich, RDB Shredder and
-      # the Hadoop Elasticsearch sink.
+      # Retrieve the s3 paths of the needed assets: Spark enrich, RDB Shredder,
+      # RDB Loader and the Hadoop Elasticsearch sink.
       #
       # Parameters:
       # +assets_bucket+:: the s3 bucket where the assets are supposed to be located
       # +spark_enrich_version+:: version of the Spark enrich job to use
       # +rds_version+:: version of the rdb shredder job to use
       # +hadoop_elasticsearch_version+:: version of the Hadoop Elasticsearch sink to use
-      Contract String, String, String, String => AssetsHash
-      def self.get_assets(assets_bucket, spark_enrich_version, rds_version, hadoop_elasticsearch_version)
+      # +rdl_version+:: version of the rdb loader job to use
+      Contract String, String, String, String, String => AssetsHash
+      def self.get_assets(assets_bucket, spark_enrich_version, rds_version, hadoop_elasticsearch_version, rdl_version)
         enrich_path_middle = if is_spark_enrich(spark_enrich_version)
           'spark-enrich/snowplow-spark-enrich'
         else
@@ -874,6 +1034,7 @@ module Snowplow
         {
           :enrich   => "#{assets_bucket}3-enrich/#{enrich_path_middle}-#{spark_enrich_version}.jar",
           :shred    => "#{assets_bucket}#{shred_path}#{rds_version}.jar",
+          :loader   => "#{assets_bucket}4-storage/rdb-loader/snowplow-rdb-loader-#{rdl_version}.jar",
           :elasticsearch => "#{assets_bucket}4-storage/hadoop-elasticsearch-sink/hadoop-elasticsearch-sink-#{hadoop_elasticsearch_version}.jar",
         }
       end
@@ -887,6 +1048,21 @@ module Snowplow
         else
           "s3-#{s3_region}.amazonaws.com"
         end
+      end
+
+      # Recursively change the keys of a YAML from symbols to strings
+      def recursive_stringify_keys(h)
+        if h.class == [].class
+          h.map {|key| recursive_stringify_keys(key)}
+        elsif h.class == {}.class
+          Hash[h.map {|k,v| [k.to_s, recursive_stringify_keys(v)]}]
+        else
+          h
+        end
+      end
+
+      def deep_copy(o)
+        Marshal.load(Marshal.dump(o))
       end
 
       # Returns true if the jobflow seems to have failed due to a bootstrap failure
