@@ -17,6 +17,8 @@ package sinks
 // Java
 import java.util.Properties
 
+import org.apache.kafka.common.serialization.{ByteArraySerializer, StringSerializer}
+
 // Kafka
 import org.apache.kafka.clients.producer._;
 
@@ -37,8 +39,8 @@ class KafkaSink(config: CollectorConfig, inputType: InputType.InputType) extends
   val MaxBytes = 1000000L
 
   private val topicName = inputType match {
-    case InputType.Good => config.kafkaTopicGoodName
-    case InputType.Bad  => config.kafkaTopicBadName
+    case InputType.Good => config.Kafka.Topic.topicGoodName
+    case InputType.Bad  => config.Kafka.Topic.topicBadName
   }
 
   private var kafkaProducer = createProducer
@@ -51,20 +53,9 @@ class KafkaSink(config: CollectorConfig, inputType: InputType.InputType) extends
    */
   private def createProducer: KafkaProducer[String, Array[Byte]] = {
 
-    info(s"Create Kafka Producer to brokers: ${config.kafkaBrokers}")
-
-    val props = new Properties()
-    props.put("bootstrap.servers", config.kafkaBrokers)
-    props.put("acks", "all")
-    props.put("retries", "0")
-    props.put("batch.size", config.byteLimit.toString)
-    props.put("linger.ms", config.timeLimit.toString)
-    props.put("key.serializer", 
-      "org.apache.kafka.common.serialization.StringSerializer")
-    props.put("value.serializer", 
-      "org.apache.kafka.common.serialization.ByteArraySerializer")
-
-    new KafkaProducer[String, Array[Byte]](props)
+    val kafkaProps = config.Kafka.Producer.getProps
+    info(s"Create Kafka Producer to brokers: ${kafkaProps.getProperty("bootstrap.servers")}")
+    new KafkaProducer[String, Array[Byte]](kafkaProps)
   }
 
   /**
@@ -77,14 +68,13 @@ class KafkaSink(config: CollectorConfig, inputType: InputType.InputType) extends
     debug(s"Writing ${events.size} Thrift records to Kafka topic ${topicName} at key ${key}")
     events foreach {
       event => {
-        try {
-          kafkaProducer.send(new ProducerRecord(topicName, key, event))
-        } catch {
-          case e: Exception => {
-            error(s"Unable to send event, see kafka log for more details: ${e.getMessage}")
-            e.printStackTrace()
+        kafkaProducer.send(new ProducerRecord(topicName, key, event), new Callback() {
+          override def onCompletion(metadata: RecordMetadata, exception: Exception): Unit = {
+            if(exception != null)
+              error(s"Unable to send event, see kafka log for more details: ${exception.getMessage}")
+              exception.printStackTrace()
           }
-        }
+        })
       }
     }
     Nil

@@ -49,61 +49,8 @@ import CollectorPayload.thrift.model1.CollectorPayload
 
 class CollectorServiceSpec extends Specification with Specs2RouteTest with
      AnyMatchers {
-   val testConf: Config = ConfigFactory.parseString("""
-collector {
-  interface = "0.0.0.0"
-  port = 8080
 
-  production = true
-
-  p3p {
-    policyref = "/w3c/p3p.xml"
-    CP = "NOI DSP COR NID PSA OUR IND COM NAV STA"
-  }
-
-  cookie {
-    enabled = true
-    expiration = 365 days
-    name = sp
-    domain = "test-domain.com"
-  }
-
-  sink {
-    enabled = "test"
-
-    kinesis {
-      aws {
-        access-key: "cpf"
-        secret-key: "cpf"
-      }
-      stream {
-        region: "us-east-1"
-        good: "snowplow_collector_example"
-        bad: "snowplow_collector_example"
-      }
-      backoffPolicy {
-        minBackoff: 3000 # 3 seconds
-        maxBackoff: 600000 # 5 minutes
-      }
-    }
-
-    kafka {
-      brokers: "localhost:9092"
-
-      topic {
-        good: "good-topic"
-        bad: "bad-topic"
-      }
-    }
-
-    buffer {
-      byte-limit: 4000000 # 4MB
-      record-limit: 500 # 500 records
-      time-limit: 60000 # 1 minute
-    }
-  }
-}
-""")
+  val testConf: Config = ConfigFactory.load("application.test.conf")
   val collectorConfig = new CollectorConfig(testConf)
   val sink = new TestSink
   val sinks = CollectorSinks(sink, sink)

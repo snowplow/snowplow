@@ -42,7 +42,7 @@ import com.snowplowanalytics.snowplow.scalatracker.Tracker
  * Source to decode raw events (in base64)
  * from stdin.
  */
-class StdinSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichmentRegistry: EnrichmentRegistry, tracker: Option[Tracker])
+class StdinSource(config: EnrichConfig, igluResolver: Resolver, enrichmentRegistry: EnrichmentRegistry, tracker: Option[Tracker])
     extends AbstractSource(config, igluResolver, enrichmentRegistry, tracker) {
 
   /**

@@ -35,7 +35,7 @@ object Dependencies {
     val slf4j                = "1.7.5"
     val awsSdk               = "1.6.11"
     val kinesisClient        = "1.6.1"
-    val kafkaClients         = "0.10.1.0"
+    val kafkaClients         = "0.10.2.0"
     // Scala
     val argot                = "1.0.1"
     val config               = "1.0.2"

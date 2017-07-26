@@ -35,7 +35,7 @@ import com.snowplowanalytics.snowplow.scalatracker.Tracker
  * using the same methods from AbstractSource as the other
  * sources.
  */
-class TestSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichmentRegistry: EnrichmentRegistry, tracker: Option[Tracker])
+class TestSource(config: EnrichConfig, igluResolver: Resolver, enrichmentRegistry: EnrichmentRegistry, tracker: Option[Tracker])
     extends AbstractSource(config, igluResolver, enrichmentRegistry, tracker) {
 
   /**

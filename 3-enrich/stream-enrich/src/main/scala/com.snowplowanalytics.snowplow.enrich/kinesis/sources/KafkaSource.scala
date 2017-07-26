@@ -47,7 +47,7 @@ import com.snowplowanalytics.snowplow.scalatracker.Tracker
 /**
  * Source to read events from a Kafka topic
  */
-class KafkaSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichmentRegistry: EnrichmentRegistry, tracker: Option[Tracker])
+class KafkaSource(config: EnrichConfig, igluResolver: Resolver, enrichmentRegistry: EnrichmentRegistry, tracker: Option[Tracker])
     extends AbstractSource(config, igluResolver, enrichmentRegistry, tracker) {
 
   lazy val log = LoggerFactory.getLogger(getClass())
@@ -64,9 +64,9 @@ class KafkaSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichmen
     val consumer = createConsumer(config)
 
     info(s"Running Kafka consumer group: ${config.appName}.")
-    info(s"Processing raw input Kafka topic: ${config.rawInStream}")
+    info(s"Processing raw input Kafka topic: ${config.Kafka.Topic.topicIn}")
 
-    consumer.subscribe(List(config.rawInStream).asJava)
+    consumer.subscribe(List(config.Kafka.Topic.topicIn).asJava)
     while (true) {
       val recordValues = consumer
         .poll(100)    // Wait 100 ms if data is not available
@@ -78,24 +78,9 @@ class KafkaSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichmen
     }
   }
 
-  private def createConsumer(config: KinesisEnrichConfig): KafkaConsumer[String, Array[Byte]] = {
-    val properties = createProperties(config)
+  private def createConsumer(config: EnrichConfig): KafkaConsumer[String, Array[Byte]] = {
+    val properties = config.Kafka.Consumer.getProps
     new KafkaConsumer[String, Array[Byte]](properties)
   }
 
-  private def createProperties(config: KinesisEnrichConfig): Properties = {
-
-    val props = new Properties()
-    props.put("bootstrap.servers", config.kafkaBrokers)
-    props.put("group.id", config.appName)
-    props.put("enable.auto.commit", "true")
-    props.put("auto.commit.interval.ms", "1000")
-    props.put("auto.offset.reset", "earliest")
-    props.put("session.timeout.ms", "30000")
-    props.put("key.deserializer",
-      "org.apache.kafka.common.serialization.StringDeserializer")
-    props.put("value.deserializer",
-      "org.apache.kafka.common.serialization.ByteArrayDeserializer")
-    props
-  }
 }

@@ -17,9 +17,12 @@ package collectors
 package scalastream
 
 // Akka and Spray
+import java.util.Properties
+
 import akka.actor.{ActorSystem, Props}
 import akka.pattern.ask
 import akka.io.IO
+import org.apache.kafka.common.serialization.{ByteArraySerializer, StringSerializer}
 import spray.can.Http
 
 // Scala Futures
@@ -153,6 +156,7 @@ case class CookieConfig(name: String, expiration: Long, domain: Option[String])
 // the collector process starts rather than later.
 class CollectorConfig(config: Config) {
   import Helper.RichConfig
+  import CollectorConfig._
 
   private val collector = config.getConfig("collector")
   val interface = collector.getString("interface")
@@ -200,11 +204,42 @@ class CollectorConfig(config: Config) {
   val minBackoff = backoffPolicy.getLong("minBackoff")
   val maxBackoff = backoffPolicy.getLong("maxBackoff")
 
-  private val kafka = sink.getConfig("kafka")
-  val kafkaBrokers = kafka.getString("brokers")
-  private val kafkaTopic = kafka.getConfig("topic")
-  val kafkaTopicGoodName = kafkaTopic.getString("good")
-  val kafkaTopicBadName = kafkaTopic.getString("bad")
+  object Kafka {
+    private val kafkaConfig = sink.getConfig("kafka")
+
+    object Topic {
+      private val topicConfig = kafkaConfig.getConfig("topic")
+      val topicGoodName: String = topicConfig.getString("good")
+      val topicBadName: String = topicConfig.getString("bad")
+    }
+
+    // get producer related configurations
+    object Producer {
+      private val producerConfig = kafkaConfig.getConfig("producer")
+      assert(producerConfig.hasPath("bootstrap.servers"), "bootstrap.servers is required")
+
+      private val defaultProperties: Properties = {
+        val props = new Properties()
+        props.put("acks", "all")
+        props.put("buffer.memory", byteLimit.toString)
+        props.put("batch.size", recordLimit.toString)
+        props.put("linger.ms", timeLimit.toString)
+        props.put("key.serializer", classOf[StringSerializer])
+        props.put("value.serializer", classOf[ByteArraySerializer])
+        props.put("retries", "3")
+        props
+      }
+
+      val getProps: Properties = {
+        val producerProps = propsFromConfig(producerConfig, blacklist = Set("key.serialized","value.serializer"))
+        val merged = new Properties()
+        merged.putAll(defaultProperties)
+        merged.putAll(producerProps)
+        merged
+      }
+    }
+  }
+
 
   private val buffer = sink.getConfig("buffer")
   val byteLimit = buffer.getInt("byte-limit")
@@ -216,4 +251,20 @@ class CollectorConfig(config: Config) {
   def cookieName = cookieConfig.map(_.name)
   def cookieDomain = cookieConfig.flatMap(_.domain)
   def cookieExpiration = cookieConfig.map(_.expiration)
+}
+
+object CollectorConfig {
+  def propsFromConfig(config: Config, blacklist: Set[String]): Properties = {
+    import scala.collection.JavaConversions._
+
+    val props = new Properties()
+
+    val map: Map[String, String] = config.entrySet().map({ entry =>
+      entry.getKey.trim -> entry.getValue.unwrapped().toString.trim
+    })(collection.breakOut)
+
+    // apply blacklist
+    props.putAll(map.filterNot(elem => blacklist.contains(elem._1)))
+    props
+  }
 }

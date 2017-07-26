@@ -23,6 +23,8 @@ package sinks
 // Java
 import java.util.Properties
 
+import org.apache.kafka.clients.producer.{Callback, RecordMetadata}
+
 // Kafka
 import org.apache.kafka.clients.producer.{
   KafkaProducer,
@@ -38,15 +40,15 @@ import com.snowplowanalytics.snowplow.scalatracker.Tracker
 /**
  * Kafka Sink for Scala enrichment
  */
-class KafkaSink(config: KinesisEnrichConfig,
-    inputType: InputType.InputType, tracker: Option[Tracker]) extends ISink {
+class KafkaSink(config: EnrichConfig,
+                inputType: InputType.InputType, tracker: Option[Tracker]) extends ISink {
 
   private lazy val log = LoggerFactory.getLogger(getClass())
   import log.{error, debug, info, trace}
 
   private val topicName = inputType match {
-    case InputType.Good => config.enrichedOutStream
-    case InputType.Bad => config.badOutStream
+    case InputType.Good => config.Kafka.Topic.topicEnriched
+    case InputType.Bad => config.Kafka.Topic.topicBad
   }
 
   private val kafkaProducer = createProducer(config)
@@ -74,7 +76,13 @@ class KafkaSink(config: KinesisEnrichConfig,
 
     for ((value, key) <- events) {
       val pr = new ProducerRecord(topicName, key, value)
-      kafkaProducer.send(pr)
+      kafkaProducer.send(pr, new Callback() {
+        override def onCompletion(metadata: RecordMetadata, exception: Exception): Unit = {
+          if(exception != null)
+            error(s"Unable to send event, see kafka log for more details: ${exception.getMessage}")
+          exception.printStackTrace()
+        }
+      })
     }
 
     true // Always return true as our flush does nothing
@@ -88,24 +96,9 @@ class KafkaSink(config: KinesisEnrichConfig,
   def flush() {
   }
 
-  private def createProducer(config: KinesisEnrichConfig): KafkaProducer[String, String] = {
-    val properties = createProperties(config)
+  private def createProducer(config: EnrichConfig): KafkaProducer[String, String] = {
+    val properties = config.Kafka.Producer.getProps
     new KafkaProducer[String, String](properties)
-  }
-
-  private def createProperties(config: KinesisEnrichConfig): Properties = {
-
-    val props = new Properties()
-    props.put("bootstrap.servers", config.kafkaBrokers)
-    props.put("acks", "all")
-    props.put("retries", "0") // TODO yech
-    props.put("batch.size", config.byteLimit.toString)
-    props.put("linger.ms", config.timeLimit.toString)
-    props.put("key.serializer",
-      "org.apache.kafka.common.serialization.StringSerializer")
-    props.put("value.serializer",
-      "org.apache.kafka.common.serialization.StringSerializer")
-    props
   }
 
 }

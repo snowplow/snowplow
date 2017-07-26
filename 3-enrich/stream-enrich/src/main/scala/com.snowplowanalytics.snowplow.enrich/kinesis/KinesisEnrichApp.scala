@@ -22,6 +22,9 @@ package kinesis
 // Java
 import java.io.File
 import java.net.URI
+import java.util.Properties
+
+import org.apache.kafka.common.serialization.{ByteArraySerializer, StringSerializer}
 
 // Amazon
 import com.amazonaws.services.dynamodbv2.model.ScanRequest
@@ -117,12 +120,12 @@ object KinesisEnrichApp extends App {
   parser.parse(args)
 
   val parsedConfig = config.value.getOrElse(parser.usage("--config argument must be provided"))
-  val kinesisEnrichConfig = new KinesisEnrichConfig(parsedConfig)
+  val kinesisEnrichConfig = new EnrichConfig(parsedConfig)
 
   val tracker = if (parsedConfig.hasPath("enrich.monitoring.snowplow")) {
     SnowplowTracking.initializeTracker(parsedConfig.getConfig("enrich.monitoring.snowplow")).some
-  } else { 
-    None 
+  } else {
+    None
   }
 
   val nonOptionalResolver = resolverOption.value.getOrElse(parser.usage("--resolver argument must be provided"))
@@ -318,7 +321,9 @@ object KinesisEnrichApp extends App {
 
 // Rigidly load the configuration file here to error when
 // the enrichment process starts rather than later.
-class KinesisEnrichConfig(config: Config) {
+class EnrichConfig(config: Config) {
+  import EnrichConfig._
+
   private val enrich = config.resolve.getConfig("enrich")
 
   val source = enrich.getString("source") match {
@@ -340,9 +345,6 @@ class KinesisEnrichConfig(config: Config) {
   private val aws = enrich.getConfig("aws")
   val accessKey = aws.getString("access-key")
   val secretKey = aws.getString("secret-key")
-
-  private val kafka = enrich.getConfig("kafka")
-  val kafkaBrokers = kafka.getString("brokers")
 
   private val streams = enrich.getConfig("streams")
 
@@ -378,4 +380,94 @@ class KinesisEnrichConfig(config: Config) {
   val maxBackoff = backoffPolicy.getLong("maxBackoff")
 
   val useIpAddressAsPartitionKey = outStreams.hasPath("useIpAddressAsPartitionKey") && outStreams.getBoolean("useIpAddressAsPartitionKey")
+
+
+
+  object Kafka {
+    private val kafkaConfig = enrich.getConfig("kafka")
+
+    object Topic {
+      private val topicConfig = kafkaConfig.getConfig("topic")
+      val topicIn: String = topicConfig.getString("in")
+      val topicEnriched: String = topicConfig.getString("enriched")
+      val topicBad: String = topicConfig.getString("bad")
+    }
+
+    // get producer related configurations
+    object Consumer {
+      private val consumerConfig = kafkaConfig.getConfig("consumer")
+      assert(consumerConfig.hasPath("bootstrap.servers"), "bootstrap.servers is required")
+      assert(!consumerConfig.hasPath("group.id"),
+        """
+          |you can't specify group.id as part of the consumer config.
+          |instead please use enrich.app-name
+        """.stripMargin)
+
+      private val defaultProperties: Properties = {
+        val props = new Properties()
+
+        props.put("group.id", appName)
+        // we don't have much choice here, see https://github.com/snowplow/snowplow/issues/2975
+        props.put("enable.auto.commit", "true")
+        props.put("auto.commit.interval.ms", "1000")
+        props.put("auto.offset.reset", "earliest")
+        props.put("session.timeout.ms", "30000")
+        props.put("key.serializer", classOf[StringSerializer])
+        props.put("value.serializer", classOf[ByteArraySerializer])
+
+        props
+      }
+
+      val getProps: Properties = {
+        val producerProps = propsFromConfig(consumerConfig, blacklist = Set("key.serialized","value.serializer", "group.id", "enable.auto.commit"))
+        val merged = new Properties()
+        merged.putAll(defaultProperties)
+        merged.putAll(producerProps)
+        merged
+      }
+    }
+    // get producer related configurations
+    object Producer {
+      private val producerConfig = kafkaConfig.getConfig("producer")
+      assert(producerConfig.hasPath("bootstrap.servers"), "bootstrap.servers is required")
+
+      private val defaultProperties: Properties = {
+        val props = new Properties()
+        props.put("acks", "all")
+        props.put("buffer.memory", byteLimit.toString)
+        props.put("batch.size", recordLimit.toString)
+        props.put("linger.ms", timeLimit.toString)
+        props.put("key.serializer", classOf[StringSerializer])
+        props.put("value.serializer", classOf[ByteArraySerializer])
+        props.put("retries", "3")
+        props
+      }
+
+      val getProps: Properties = {
+        val producerProps = propsFromConfig(producerConfig, blacklist = Set("key.serialized","value.serializer"))
+        val merged = new Properties()
+        merged.putAll(defaultProperties)
+        merged.putAll(producerProps)
+        merged
+      }
+    }
+  }
+
+}
+
+
+object EnrichConfig {
+  def propsFromConfig(config: Config, blacklist: Set[String]): Properties = {
+    import scala.collection.JavaConversions._
+
+    val props = new Properties()
+
+    val map: Map[String, String] = config.entrySet().map({ entry =>
+      entry.getKey.trim -> entry.getValue.unwrapped().toString.trim
+    })(collection.breakOut)
+
+    // apply blacklist
+    props.putAll(map.filterNot(elem => blacklist.contains(elem._1)))
+    props
+  }
 }
