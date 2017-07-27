@@ -64,19 +64,16 @@ class KafkaSink(
    * @param events The list of events to send
    * @param key The partition key to use
    */
-  override def storeRawEvents(events: List[Array[Byte]], key: String) = {
+  override def storeRawEvents(events: List[Array[Byte]], key: String): List[Array[Byte]] = {
     log.debug(s"Writing ${events.size} Thrift records to Kafka topic ${topicName} at key ${key}")
-    events foreach {
-      event => {
-        try {
-          kafkaProducer.send(new ProducerRecord(topicName, key, event))
-        } catch {
-          case e: Exception => {
-            log.error(s"Unable to send event, see kafka log for more details: ${e.getMessage}")
-            e.printStackTrace()
-          }
+    events.foreach { event =>
+      kafkaProducer.send(
+        new ProducerRecord(topicName, key, event),
+        new Callback {
+          override def onCompletion(metadata: RecordMetadata, e: Exception): Unit =
+            if (e != null) log.error(s"Sending event failed: ${e.getMessage}")
         }
-      }
+      )
     }
     Nil
   }
