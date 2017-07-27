@@ -336,6 +336,7 @@ class KinesisEnrichConfig(config: Config) {
     case "kafka" => Sink.Kafka
     case "kinesis" => Sink.Kinesis
     case "stdouterr" => Sink.Stdouterr
+    case "NSQ" => Sink.NSQ
     case "test" => Sink.Test
     case _ => throw new RuntimeException("enrich.sink unknown.")
   }
