@@ -100,6 +100,11 @@ object ScalaCollector extends App {
       val bad = new StdoutSink(InputType.Bad)
       CollectorSinks(good, bad) 
     }
+    case Sink.NSQ  => {
+      val good = new NSQSink(collectorConfig, InputType.Good)
+      val bad = new NSQSink(collectorConfig, InputType.Bad)
+      CollectorSinks(good, bad)
+    }
   }
 
   // The handler actor replies to incoming HttpRequests.
@@ -143,7 +148,7 @@ object Helper {
 // store this enumeration.
 object Sink extends Enumeration {
   type Sink = Value
-  val Kinesis, Kafka, Stdout, Test = Value
+  val Kinesis, Kafka, Stdout, NSQ,Test = Value
 }
 
 // How a collector should set cookies
@@ -179,6 +184,7 @@ class CollectorConfig(config: Config) {
     case "kinesis" => Sink.Kinesis
     case "kafka" => Sink.Kafka
     case "stdout" => Sink.Stdout
+    case "NSQ" => Sink.NSQ
     case "test" => Sink.Test
     case _ => throw new RuntimeException("collector.sink.enabled unknown.")
   }
@@ -206,6 +212,12 @@ class CollectorConfig(config: Config) {
   val kafkaTopicGoodName = kafkaTopic.getString("good")
   val kafkaTopicBadName = kafkaTopic.getString("bad")
 
+  private val nsq = sink.getConfig("NSQ")
+  val nsqTopicGoodName = nsq.getString("good-sink")
+  val nsqTopicBadName = nsq.getString("bad-sink")
+  val nsqdPort = nsq.getInt("nsqd-port")
+  val nsqdHost = nsq.getString("nsqd-host")
+
   private val buffer = sink.getConfig("buffer")
   val byteLimit = buffer.getInt("byte-limit")
   val recordLimit = buffer.getInt("record-limit")
@@ -216,4 +228,6 @@ class CollectorConfig(config: Config) {
   def cookieName = cookieConfig.map(_.name)
   def cookieDomain = cookieConfig.flatMap(_.domain)
   def cookieExpiration = cookieConfig.map(_.expiration)
+
+
 }

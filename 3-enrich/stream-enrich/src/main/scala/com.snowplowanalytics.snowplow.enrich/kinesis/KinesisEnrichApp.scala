@@ -178,6 +178,8 @@ object KinesisEnrichApp extends App {
     case Source.Kafka => new KafkaSource(kinesisEnrichConfig, igluResolver, registry, tracker)
     case Source.Kinesis => new KinesisSource(kinesisEnrichConfig, igluResolver, registry, tracker)
     case Source.Stdin => new StdinSource(kinesisEnrichConfig, igluResolver, registry, tracker)
+    case Source.NSQ => new NSQSource(kinesisEnrichConfig, igluResolver, registry, tracker)
+
   }
 
   tracker match {
@@ -325,6 +327,7 @@ class KinesisEnrichConfig(config: Config) {
     case "kafka" => Source.Kafka
     case "kinesis" => Source.Kinesis
     case "stdin" => Source.Stdin
+    case "NSQ" => Source.NSQ
     case "test" => Source.Test
     case _ => throw new RuntimeException("enrich.source unknown.")
   }
@@ -333,6 +336,7 @@ class KinesisEnrichConfig(config: Config) {
     case "kafka" => Sink.Kafka
     case "kinesis" => Sink.Kinesis
     case "stdouterr" => Sink.Stdouterr
+    case "NSQ" => Sink.NSQ
     case "test" => Sink.Test
     case _ => throw new RuntimeException("enrich.sink unknown.")
   }
@@ -343,6 +347,14 @@ class KinesisEnrichConfig(config: Config) {
 
   private val kafka = enrich.getConfig("kafka")
   val kafkaBrokers = kafka.getString("brokers")
+
+  private val nsq = enrich.getConfig("NSQ")
+  val nsqGoodSourceTopicName = nsq.getString("good-source")
+  val nsqGoodSinkTopicName = nsq.getString("good-sink")
+  val nsqBadTopicName = nsq.getString("bad-sink")
+  val nsqdHost = nsq.getString("nsqd-host")
+  val nsqdPort = nsq.getInt("nsqd-port")
+  val nsqdLookupPort = nsq.getInt("nsqd-lookup-port")
 
   private val streams = enrich.getConfig("streams")
 

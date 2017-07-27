@@ -34,6 +34,7 @@ object Dependencies {
     val yodaTime         = "2.1"
     val yodaConvert      = "1.2"
     val kafka            = "0.10.1.0"
+    val nsqClient       = "1.0.0.RC4"
     // Scala
     val snowplowCommonEnrich = "0.22.0"
     val igluClient       = "0.3.2"
@@ -60,6 +61,7 @@ object Dependencies {
     val yodaTime         = "joda-time"             %  "joda-time"                 % V.yodaTime
     val yodaConvert      = "org.joda"              %  "joda-convert"              % V.yodaConvert
     val kafkaClients     = "org.apache.kafka"      %  "kafka-clients"             % V.kafka
+    val nsqClient        = "com.github.brainlag"   %  "nsq-client"                % V.nsqClient
 
     // Scala
     // Exclude netaporter to prevent conflicting cross-version suffixes for shapeless

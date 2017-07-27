@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2016 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0, and
 # you may not use this file except in compliance with the Apache License
@@ -37,8 +37,8 @@ collector {
   # The collector returns a cookie to clients for user identification
   # with the following domain and expiration.
   cookie {
-    enabled = true
-    expiration = {{collectorCookieExpiration}} # e.g. "365 days"
+    enabled = true 
+    expiration = {{collectorCookieExpiration}}
     # Network cookie name
     name = {{collectorCookieName}}
     # The domain is optional and will make the cookie accessible to other
@@ -52,8 +52,8 @@ collector {
   sink {
     # Sinks currently supported are:
     # 'kinesis' for writing Thrift-serialized records to a Kinesis stream
-    # 'kafka' for writing Thrift-serialized records to kafka
     # 'stdout' for writing Base64-encoded Thrift-serialized records to stdout
+    # 'NSQ' for writing Base64-encoded Thrift-serialized records to NSQ
     #    Recommended settings for 'stdout' so each line printed to stdout
     #    is a serialized record are:
     #      1. Setting 'akka.loglevel = OFF' and 'akka.loggers = []'
@@ -67,8 +67,8 @@ collector {
 
       # The following are used to authenticate for the Amazon Kinesis sink.
       #
-      # If both are set to 'default', the default provider chain is used
-      # (see http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/auth/DefaultAWSCredentialsProviderChain.html)
+      # If both are set to 'cpf', a properties file on the classpath is used.
+      # http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/auth/ClasspathPropertiesFileCredentialsProvider.html
       #
       # If both are set to 'iam', use AWS IAM Roles to provision credentials.
       #
@@ -92,6 +92,15 @@ collector {
       }
     }
 
+    # config for NSQ sink
+    NSQ {
+        good-sink: "{{collectorNSQTopicGoodName}}" #topic name for good raw event sink
+        bad-sink: "{{collectorNSQTopicBadName}}" #topic name for bad event sink
+        nsqd-host: {{NSQDHost}} #ip for NSQD
+        nsqd-port: {{NSQDPort}} #port for NSQD
+
+    }
+
     kafka {
       brokers: "{{collectorKafkaBrokers}}"
 
@@ -102,7 +111,7 @@ collector {
       }
     }
 
-    # Incoming events are stored in a buffer before being sent to Kinesis/Kafka.
+    # Incoming events are stored in a buffer before being sent to Kinesis.
     # The buffer is emptied whenever:
     # - the number of stored records reaches record-limit or
     # - the combined size of the stored records reaches byte-limit or
@@ -118,7 +127,7 @@ collector {
 # Akka has a variety of possible configuration options defined at
 # http://doc.akka.io/docs/akka/2.2.3/general/configuration.html.
 akka {
-  loglevel = DEBUG # 'OFF' for no logging, 'DEBUG' for all logging.
+  loglevel = OFF # 'OFF' for no logging, 'DEBUG' for all logging.
   loggers = ["akka.event.slf4j.Slf4jLogger"]
 }
 

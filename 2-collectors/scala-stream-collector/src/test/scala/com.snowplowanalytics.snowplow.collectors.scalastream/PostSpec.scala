@@ -96,6 +96,13 @@ collector {
       }
     }
 
+    NSQ {
+        good-sink: "RawEvents"
+        bad-sink : "BadEvents"
+        nsqd-host: 127.0.0.1
+        nsqd-port: 4150
+    }
+
     buffer {
       byte-limit: 4000000 # 4MB
       record-limit: 500 # 500 records
