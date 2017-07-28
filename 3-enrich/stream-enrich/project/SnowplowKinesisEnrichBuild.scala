@@ -31,6 +31,7 @@ object SnowplowStreamEnrichBuild extends Build {
         Libraries.awsSdk,
         Libraries.kinesisClient,
         Libraries.kafkaClients,
+        Libraries.commonsCodec,
         Libraries.config,
         Libraries.slf4j,
         Libraries.log4jOverSlf4j,
