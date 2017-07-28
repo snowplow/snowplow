@@ -28,29 +28,21 @@ object SnowplowStreamEnrichBuild extends Build {
     .settings(buildSettings: _*)
     .settings(
       libraryDependencies ++= Seq(
-        Libraries.logging,
-        Libraries.httpCore,
-        Libraries.httpClient,
-        Libraries.jacksonCore,
-        Libraries.argot,
-        Libraries.config,
-        Libraries.scalaUtil,
-        Libraries.snowplowRawEvent,
-        Libraries.snowplowCommonEnrich,
-        Libraries.scalazon,
-        Libraries.scalaz7,
-        Libraries.specs2,
-        Libraries.scalazSpecs2,
-        Libraries.commonsLang3,
-        Libraries.thrift,
-        Libraries.slf4j,
-        Libraries.log4jOverSlf4j,
         Libraries.awsSdk,
         Libraries.kinesisClient,
+        Libraries.kafkaClients,
+        Libraries.config,
+        Libraries.slf4j,
+        Libraries.log4jOverSlf4j,
+        Libraries.argot,
+        Libraries.scalazon,
+        Libraries.scalaz7,
+        Libraries.snowplowRawEvent,
+        Libraries.snowplowCommonEnrich,
         Libraries.igluClient,
         Libraries.snowplowTracker,
-        Libraries.kafkaClients
-        // Add your additional libraries here (comma-separated)...
+        Libraries.specs2,
+        Libraries.scalazSpecs2
       )
     )
 }
