@@ -27,12 +27,8 @@ trait ISink {
   /**
    * Side-effecting function to store the EnrichedEvent
    * to the given output stream.
-   *
-   * EnrichedEvent takes the form of a tab-delimited
-   * String until such time as https://github.com/snowplow/snowplow/issues/211
-   * is implemented.
    */
   def storeEnrichedEvents(events: List[(String, String)]): Boolean
 
-  def flush()
+  def flush(): Unit
 }
