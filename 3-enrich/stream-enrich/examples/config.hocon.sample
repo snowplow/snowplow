@@ -19,12 +19,14 @@ enrich {
   # 'kinesis' for reading Thrift-serialized records from a Kinesis stream
   # 'kafka' for reading Thrift-serialized records from a Kafka topic
   # 'stdin' for reading Base64-encoded Thrift-serialized records from stdin
+  # 'NSQ' for reading Base64-encoded Thrift-serialized records from NSQ
   source = "kinesis"
 
   # Sinks currently supported are:
   # 'kinesis' for writing enriched events to one Kinesis stream and invalid events to another.
   # 'kafka' for writing enriched events to one Kafka topic and invalid events to another.
   # 'stdouterr' for writing enriched events to stdout and invalid events to stderr.
+  # 'NSQ' for writing enriched events to one NSQ topic and invalid events to another.
   #    Using "sbt assembly" and "java -jar" is recommended to disable sbt
   #    logging.
   sink = "kinesis"
@@ -39,6 +41,15 @@ enrich {
   aws {
     access-key: "iam"
     secret-key: "iam"
+  }
+
+  # config for NSQ sink and NSQ source
+  NSQ {
+    good-source: "{{enrichNSQSourceTopicGoodName}}" #topic name for good event source
+    bad-sink: "{{enrichNSQSinkTopicBadName}}" #topic name for bad event sink
+    nsq-host: "{{nsqHost}}" #host name for NSQ tools
+    nsqd-port: "{{nsqdPort}}" #port for nsqd
+    nsqlookupd-port: {{nsqlookupdPort}} #port for nsqlookupd
   }
 
   # Kafka configuration

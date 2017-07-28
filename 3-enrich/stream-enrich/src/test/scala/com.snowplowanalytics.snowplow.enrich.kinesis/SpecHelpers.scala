@@ -50,7 +50,7 @@ object SpecHelpers {
   /**
    * The Stream Enrich being used
    */
-  val EnrichVersion = "kinesis-0.10.0-common-0.24.0"
+  val EnrichVersion = "kinesis-0.10.0-common-0.25.0"
 
   val TimestampRegex = "[0-9\\s-:.]+"
 
@@ -231,6 +231,15 @@ enrich {
   aws {
     access-key: "cpf"
     secret-key: "cpf"
+  }
+
+  NSQ {
+    good-source: "RawEvents"
+    good-sink: "EnrichedEvents"
+    bad-sink: "BadEvents"
+    nsq-host: 127.0.0.1
+    nsqd-port: 4150
+    nsqlookupd-port: 4161
   }
 
   kafka {

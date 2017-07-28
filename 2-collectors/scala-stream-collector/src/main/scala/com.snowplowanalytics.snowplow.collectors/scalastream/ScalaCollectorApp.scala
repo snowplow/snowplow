@@ -100,6 +100,11 @@ object ScalaCollector extends App {
       val bad = new StdoutSink(InputType.Bad)
       CollectorSinks(good, bad) 
     }
+    case Sink.Nsq  => {
+      val good = new NsqSink(collectorConfig, InputType.Good)
+      val bad = new NsqSink(collectorConfig, InputType.Bad)
+      CollectorSinks(good, bad)
+    }
   }
 
   // The handler actor replies to incoming HttpRequests.
@@ -143,7 +148,7 @@ object Helper {
 // store this enumeration.
 object Sink extends Enumeration {
   type Sink = Value
-  val Kinesis, Kafka, Stdout, Test = Value
+  val Kinesis, Kafka, Stdout, Nsq, Test = Value
 }
 
 // How a collector should set cookies
@@ -179,6 +184,7 @@ class CollectorConfig(config: Config) {
     case "kinesis" => Sink.Kinesis
     case "kafka" => Sink.Kafka
     case "stdout" => Sink.Stdout
+    case "NSQ" => Sink.Nsq
     case "test" => Sink.Test
     case _ => throw new RuntimeException("collector.sink.enabled unknown.")
   }
@@ -205,6 +211,12 @@ class CollectorConfig(config: Config) {
   private val kafkaTopic = kafka.getConfig("topic")
   val kafkaTopicGoodName = kafkaTopic.getString("good")
   val kafkaTopicBadName = kafkaTopic.getString("bad")
+
+  private val nsq = sink.getConfig("NSQ")
+  val nsqTopicGoodName = nsq.getString("good-sink")
+  val nsqTopicBadName = nsq.getString("bad-sink")
+  val nsqdPort = nsq.getInt("nsqd-port")
+  val nsqHost = nsq.getString("nsq-host")
 
   private val buffer = sink.getConfig("buffer")
   val byteLimit = buffer.getInt("byte-limit")
