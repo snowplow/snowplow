@@ -74,8 +74,8 @@ object SpecHelpers {
    * The names of the fields written out
    */
   lazy val OutputFields = classOf[EnrichedEvent]
-      .getDeclaredFields
-      .map(_.getName)
+    .getDeclaredFields
+    .map(_.getName)
 
   /**
    * User-friendly wrapper to instantiate
@@ -224,55 +224,55 @@ object SpecHelpers {
     |}""".stripMargin.replaceAll("[\n\r]","").stripMargin.replaceAll("[\n\r]","")
 
     val config = """
-enrich {
-  source = "test"
-  sink = "test"
+      enrich {
+        source = "test"
+        sink = "test"
 
-  aws {
-    access-key: "cpf"
-    secret-key: "cpf"
-  }
+        aws {
+          access-key: "cpf"
+          secret-key: "cpf"
+        }
 
-  kafka {
-    brokers: "localhost:9092"
-  }
+        kafka {
+          brokers: "localhost:9092"
+        }
 
-  streams {
-    in {
-      raw: "SnowplowRaw"
+        streams {
+          in {
+            raw: "SnowplowRaw"
 
-      buffer {
-        byte-limit: 4500000 # 4.5MB
-        record-limit: 500 # 500 records
-        time-limit: 60000 # 1 minute
+            buffer {
+              byte-limit: 4500000 # 4.5MB
+              record-limit: 500 # 500 records
+              time-limit: 60000 # 1 minute
+            }
+          }
+          out {
+            enriched: "SnowplowEnriched"
+            bad: "SnowplowBad" # Not used until #463
+
+            # Minimum and maximum backoff periods
+            backoffPolicy {
+              minBackoff: 3000 # 3 seconds
+              maxBackoff: 600000 # 5 minutes
+            }
+          }
+          app-name: SnowplowKinesisEnrich-${enrich.streams.in.raw}
+          initial-position = "TRIM_HORIZON"
+          region: "us-east-1"
+        }
+        enrichments {
+          geo_ip {
+            enabled: true # false not yet suported
+            maxmind_file: "/maxmind/GeoLiteCity.dat" # SBT auto-downloads into resource_managed/test
+          }
+          anon_ip {
+            enabled: true
+            anon_octets: 1 # Or 2, 3 or 4. 0 is same as enabled: false
+          }
+        }
       }
-    }
-    out {
-      enriched: "SnowplowEnriched"
-      bad: "SnowplowBad" # Not used until #463
-
-      # Minimum and maximum backoff periods
-      backoffPolicy {
-        minBackoff: 3000 # 3 seconds
-        maxBackoff: 600000 # 5 minutes
-      }
-    }
-    app-name: SnowplowKinesisEnrich-${enrich.streams.in.raw}
-    initial-position = "TRIM_HORIZON"
-    region: "us-east-1"
-  }
-  enrichments {
-    geo_ip {
-      enabled: true # false not yet suported
-      maxmind_file: "/maxmind/GeoLiteCity.dat" # SBT auto-downloads into resource_managed/test
-    }
-    anon_ip {
-      enabled: true
-      anon_octets: 1 # Or 2, 3 or 4. 0 is same as enabled: false
-    }
-  }
-}
-"""
+      """
 
     val validatedResolver = for {
       json <- JsonUtils.extractJson("", """{

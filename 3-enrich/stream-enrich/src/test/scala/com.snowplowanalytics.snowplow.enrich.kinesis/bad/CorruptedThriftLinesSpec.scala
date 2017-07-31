@@ -21,7 +21,6 @@ import org.apache.commons.codec.binary.Base64
 
 // Specs2
 import org.specs2.{Specification, ScalaCheck}
-import org.specs2.scalaz.ValidationMatchers
 
 // ScalaCheck
 import org.scalacheck._
@@ -30,7 +29,7 @@ import org.scalacheck.Arbitrary._
 // This project
 import SpecHelpers._
 
-class CorruptedThriftLinesSpec extends Specification with ScalaCheck with ValidationMatchers { def is =
+class CorruptedThriftLinesSpec extends Specification with ScalaCheck { def is =
 
   "This is a specification to test handling of corrupted Thrift payloads"                                   ^
                                                                                                            p^
@@ -42,7 +41,7 @@ class CorruptedThriftLinesSpec extends Specification with ScalaCheck with Valida
   def e1 = check {
     (raw: String) => {
       val eventBytes = Base64.decodeBase64(raw)
-      TestSource.enrichEvents(eventBytes)(0) must beFailing
+      TestSource.enrichEvents(eventBytes)(0).isFailure must beTrue
     }
   }
 
