@@ -35,7 +35,7 @@ object SnowplowStreamEnrichBuild extends Build {
         Libraries.config,
         Libraries.slf4j,
         Libraries.log4jOverSlf4j,
-        Libraries.argot,
+        Libraries.scopt,
         Libraries.scalazon,
         Libraries.scalaz7,
         Libraries.json4s,
