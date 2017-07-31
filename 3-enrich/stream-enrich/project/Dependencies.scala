@@ -35,7 +35,7 @@ object Dependencies {
     val config               = "1.0.2"
     val slf4j                = "1.7.5"
     // Scala
-    val argot                = "1.0.1"
+    val scopt                = "3.6.0"
     val scalazon             = "0.11"
     val scalaz7              = "7.0.0"
     val json4s               = "3.2.11"
@@ -58,7 +58,7 @@ object Dependencies {
     val slf4j                = "org.slf4j"             %  "slf4j-simple"              % V.slf4j
     val log4jOverSlf4j       = "org.slf4j"             %  "log4j-over-slf4j"          % V.slf4j
     // Scala
-    val argot                = "org.clapper"           %% "argot"                     % V.argot
+    val scopt                = "com.github.scopt"      %% "scopt"                     % V.scopt
     val scalazon             = "io.github.cloudify"    %% "scalazon"                  % V.scalazon
     val scalaz7              = "org.scalaz"            %% "scalaz-core"               % V.scalaz7
     val json4s               = "org.json4s"            %% "json4s"                    % V.json4s

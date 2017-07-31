@@ -24,6 +24,7 @@ import java.io.File
 import java.net.URI
 
 // Amazon
+import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.services.dynamodbv2.model.ScanRequest
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import com.amazonaws.services.dynamodbv2.document.DynamoDB
@@ -45,9 +46,6 @@ import com.typesafe.config.{
   ConfigFactory
 }
 
-// Argot
-import org.clapper.argot.ArgotParser
-
 // Scalaz
 import scalaz.{Sink => _, _}
 import Scalaz._
@@ -68,155 +66,160 @@ import sinks._
 /**
  * The main entry point for Stream Enrich.
  */
-object KinesisEnrichApp extends App {
+object KinesisEnrichApp {
 
   lazy val log = LoggerFactory.getLogger(getClass())
   import log.{error, debug, info, trace}
 
   val FilepathRegex = "^file:(.+)$".r
   val DynamoDBRegex = "^dynamodb:([^/]*)/([^/]*)/([^/]*)$".r
+  val regexMsg = "'file:[filename]' or 'dynamodb:[region/table/key]'"
 
-  val parser = new ArgotParser(
-    programName = generated.Settings.name,
-    compactUsage = true,
-    preUsage = Some("%s: Version %s. Copyright (c) 2013, %s.".format(
-      generated.Settings.name,
-      generated.Settings.version,
-      generated.Settings.organization)
-    )
+  case class EnrichConfig(
+    config: File = new File("."),
+    resolver: String = "",
+    enrichmentsDir: Option[String] = None
   )
 
-  // Mandatory config argument
-  val config = parser.option[Config](
-      List("config"), "filename", """
-        |Configuration file.""".stripMargin) {
-    (c, opt) =>
-      val file = new File(c)
-      if (file.exists) {
-        ConfigFactory.parseFile(file).resolve()
-      } else {
-        parser.usage("Configuration file \"%s\" does not exist".format(c))
-        ConfigFactory.empty()
-      }
-  }
+  def main(args: Array[String]): Unit = {
+    val parser = new scopt.OptionParser[EnrichConfig](generated.Settings.name) {
+      head(generated.Settings.name, generated.Settings.version)
+      opt[File]("config").required().valueName("<filename>")
+        .action((f: File, c: EnrichConfig) => c.copy(config = f))
+        .validate(f =>
+          if (f.exists) success
+          else failure(s"Configuration file $f does not exist")
+        )
+      opt[String]("resolver").required().valueName("<resolver uri>")
+        .text(s"Iglu resolver file, $regexMsg")
+        .action((r: String, c: EnrichConfig) => c.copy(resolver = r))
+        .validate(_ match {
+          case FilepathRegex(_) | DynamoDBRegex(_) => success
+          case _ => failure("Resolver doesn't match accepted uris: $regexMsg")
+        })
+      opt[String]("enrichments").optional().valueName("<enrichment directory uri>")
+        .text(s"Directory of enrichment configuration JSONs, $regexMsg")
+        .action((e: String, c: EnrichConfig) => c.copy(enrichmentsDir = Some(e)))
+        .validate(_ match {
+          case FilepathRegex(_) | DynamoDBRegex(_) => success
+          case _ => failure("Enrichments directory doesn't match accepted uris: $regexMsg")
+        })
+    }
 
-  // Mandatory resolver argument
-  val resolverOption = parser.option[String](
-      List("resolver"), "'file:[filename]' or 'dynamodb:[region/table/key]'", """
-        |Iglu resolver file.""".stripMargin) {
-    (c, opt) => c
-  }
-
-  // Optional directory of enrichment configuration JSONs
-  val enrichmentsOption = parser.option[String](
-      List("enrichments"), "'file:[filename]' or 'dynamodb:[region/table/partialKey]'", """
-        |Directory of enrichment configuration JSONs.""".stripMargin) {
-    (c, opt) => c
-  }
-
-  parser.parse(args)
-
-  val parsedConfig = config.value.getOrElse(parser.usage("--config argument must be provided"))
-  val kinesisEnrichConfig = new KinesisEnrichConfig(parsedConfig)
-
-  val tracker = if (parsedConfig.hasPath("enrich.monitoring.snowplow")) {
-    SnowplowTracking.initializeTracker(parsedConfig.getConfig("enrich.monitoring.snowplow")).some
-  } else { 
-    None 
-  }
-
-  val nonOptionalResolver = resolverOption.value.getOrElse(parser.usage("--resolver argument must be provided"))
-  val parsedResolver = extractResolver(nonOptionalResolver)
-
-  val enrichmentConfig = extractEnrichmentConfig(enrichmentsOption.value)
-
-  implicit val igluResolver: Resolver = (for {
-    json <- JsonUtils.extractJson("", parsedResolver)
-    resolver <- Resolver.parse(json).leftMap(_.toString)
-  } yield resolver) fold (
-    e => throw new RuntimeException(e),
-    s => s
-  )
-
-  val registry: EnrichmentRegistry = (for {
-    registryConfig <- JsonUtils.extractJson("", enrichmentConfig)
-    reg <- EnrichmentRegistry.parse(fromJsonNode(registryConfig), false).leftMap(_.toString)
-  } yield reg) fold (
-    e => throw new RuntimeException(e),
-    s => s
-  )
-
-  val filesToCache = registry.getIpLookupsEnrichment match {
-    case Some(ipLookups) => ipLookups.dbsToCache
-    case None => Nil
-  }
-
-  for (uriFilePair <- filesToCache) {
-    val targetFile = new File(uriFilePair._2)
-
-    // Ensure uri does not have doubled slashes
-    val cleanUri = new java.net.URI(uriFilePair._1.toString.replaceAll("(?<!(http:|https:|s3:))//", "/"))
-
-    // Download the database file if it doesn't already exist or is empty
-    // See http://stackoverflow.com/questions/10281370/see-if-file-is-empty
-    if (targetFile.length == 0L) {
-
-      // Check URI Protocol and download file
-      val downloadResult: Int = cleanUri.getScheme match {
-        case "http" | "https" => (cleanUri.toURL #> targetFile).! // using sys.process
-        case "s3"             => downloadFromS3(cleanUri, targetFile)
-        case s => throw new RuntimeException(s"Schema ${s} for file ${cleanUri} not supported")
-      }
-
-      if (downloadResult != 0) {
-        throw new RuntimeException(s"Attempt to download ${cleanUri} to $targetFile failed")
-      }
+    parser.parse(args, EnrichConfig()) match {
+      case Some(config) => 
+      case None => System.exit(-1)
     }
   }
 
-  val source = kinesisEnrichConfig.source match {
-    case Source.Kafka => new KafkaSource(kinesisEnrichConfig, igluResolver, registry, tracker)
-    case Source.Kinesis => new KinesisSource(kinesisEnrichConfig, igluResolver, registry, tracker)
-    case Source.Stdin => new StdinSource(kinesisEnrichConfig, igluResolver, registry, tracker)
-  }
+  def main(ec: EnrichConfig): Unit = {
+    val parsedConfig = ConfigFactory.parseFile(ec.config).resolve()
 
-  tracker match {
-    case Some(t) => SnowplowTracking.initializeSnowplowTracking(t)
-    case None    => None
-  }
+    val kinesisEnrichConfig = new KinesisEnrichConfig(parsedConfig)
+    val provider = kinesisEnrichConfig.credentialsProvider
 
-  source.run
+    val tracker = if (parsedConfig.hasPath("enrich.monitoring.snowplow")) {
+      SnowplowTracking.initializeTracker(
+        parsedConfig.getConfig("enrich.monitoring.snowplow")).some
+    } else { 
+      None 
+    }
+
+    implicit val igluResolver: Resolver = (for {
+      parsedResolver <- extractResolver(provider, ec.resolver)
+      json <- JsonUtils.extractJson("", parsedResolver)
+      resolver <- Resolver.parse(json).leftMap(_.toString)
+    } yield resolver) fold (
+      e => throw new RuntimeException(e),
+      s => s
+    )
+
+    val registry: EnrichmentRegistry = (for {
+      enrichmentConfig <- extractEnrichmentConfig(provider, ec.enrichmentsDir)
+      registryConfig <- JsonUtils.extractJson("", enrichmentConfig)
+      reg <- EnrichmentRegistry.parse(fromJsonNode(registryConfig), false).leftMap(_.toString)
+    } yield reg) fold (
+      e => throw new RuntimeException(e),
+      s => s
+    )
+
+    val filesToCache = registry.getIpLookupsEnrichment match {
+      case Some(ipLookups) => ipLookups.dbsToCache
+      case None => Nil
+    }
+
+    for (uriFilePair <- filesToCache) {
+      val targetFile = new File(uriFilePair._2)
+
+      // Ensure uri does not have doubled slashes
+      val cleanUri = new java.net.URI(uriFilePair._1.toString.replaceAll("(?<!(http:|https:|s3:))//", "/"))
+
+      // Download the database file if it doesn't already exist or is empty
+      // See http://stackoverflow.com/questions/10281370/see-if-file-is-empty
+      if (targetFile.length == 0L) {
+
+        // Check URI Protocol and download file
+        val downloadResult: Int = cleanUri.getScheme match {
+          case "http" | "https" => (cleanUri.toURL #> targetFile).! // using sys.process
+          case "s3"             => downloadFromS3(provider, cleanUri, targetFile)
+          case s => throw new RuntimeException(s"Schema ${s} for file ${cleanUri} not supported")
+        }
+
+        if (downloadResult != 0) {
+          throw new RuntimeException(s"Attempt to download ${cleanUri} to $targetFile failed")
+        }
+      }
+    }
+
+    val source = kinesisEnrichConfig.source match {
+      case Source.Kafka => new KafkaSource(kinesisEnrichConfig, igluResolver, registry, tracker)
+      case Source.Kinesis => new KinesisSource(kinesisEnrichConfig, igluResolver, registry, tracker)
+      case Source.Stdin => new StdinSource(kinesisEnrichConfig, igluResolver, registry, tracker)
+    }
+
+    tracker match {
+      case Some(t) => SnowplowTracking.initializeSnowplowTracking(t)
+      case None    => None
+    }
+
+    source.run
+  }
 
   /**
    * Return a JSON string based on the resolver argument
-   *
-   * @param resolverArgument
+   * @param provider AWS credentials provider
+   * @param resolverArgument location of the resolver
    * @return JSON from a local file or stored in DynamoDB
    */
-  def extractResolver(resolverArgument: String): String = resolverArgument match {
+  def extractResolver(
+    provider: AWSCredentialsProvider,
+    resolverArgument: String
+  ): Validation[String, String] = resolverArgument match {
     case FilepathRegex(filepath) => {
       val file = new File(filepath)
       if (file.exists) {
-        scala.io.Source.fromFile(file).mkString
+        scala.io.Source.fromFile(file).mkString.success
       } else {
-        parser.usage("Iglu resolver configuration file \"%s\" does not exist".format(filepath))
+        "Iglu resolver configuration file \"%s\" does not exist".format(filepath).failure
       }
     }
-    case DynamoDBRegex(region, table, key) => lookupDynamoDBConfig(region, table, key)
-    case _ => parser.usage(s"Resolver argument [$resolverArgument] must begin with 'file:' or 'dynamodb:'")
+    case DynamoDBRegex(region, table, key) =>
+      lookupDynamoDBConfig(provider, region, table, key).success
+    case _ => s"Resolver argument [$resolverArgument] must begin with 'file:' or 'dynamodb:'".failure
   }
 
   /**
    * Fetch configuration from DynamoDB
    * Assumes the primary key is "id" and the configuration's key is "json"
-   *
+   * @param prodiver AWS credentials provider
    * @param region DynamoDB region, e.g. "eu-west-1"
    * @param table
    * @param key The value of the primary key for the configuration
    * @return The JSON stored in DynamoDB
    */
-  def lookupDynamoDBConfig(region: String, table: String, key: String): String = {
-    val dynamoDBClient = new AmazonDynamoDBClient(kinesisEnrichConfig.credentialsProvider)
+  def lookupDynamoDBConfig(provider: AWSCredentialsProvider,
+      region: String, table: String, key: String): String = {
+    val dynamoDBClient = new AmazonDynamoDBClient(provider)
     dynamoDBClient.setEndpoint(s"https://dynamodb.${region}.amazonaws.com")
     val dynamoDB = new DynamoDB(dynamoDBClient)
     val item = dynamoDB.getTable(table).getItem("id", key)
@@ -225,45 +228,49 @@ object KinesisEnrichApp extends App {
 
   /**
    * Return an enrichment configuration JSON based on the enrichments argument
-   *
+   * @param provider AWS credentials provider
    * @param enrichmentArgument
    * @return JSON containing configuration for all enrichments
    */
-  def extractEnrichmentConfig(enrichmentArgument: Option[String]): String = {
-    val jsons: Iterable[String] = enrichmentArgument match {
-      case None => Nil
-      case Some(FilepathRegex(dir)) => new java.io.File(dir).listFiles.filter(_.getName.endsWith(".json"))
-                                        .map(scala.io.Source.fromFile(_).mkString)
-      case Some(DynamoDBRegex(region, table, partialKey)) => {
-        (lookupDynamoDBEnrichments(region, table, partialKey), tracker) match {
-          case (Nil, Some(t)) => {
-            SnowplowTracking.trackApplicationWarning(t, s"No enrichments found with partial key ${partialKey}")
-            Nil
-          }
-          case (Nil, None) => {
-            info(s"No enrichments found with partial key ${partialKey}")
-            Nil
-          }
-          case (jsons, _) => jsons
+  def extractEnrichmentConfig(
+    provider: AWSCredentialsProvider,
+    enrichmentArgument: Option[String]
+  ): Validation[String, String] = {
+    val jsons: Validation[String, List[String]] = enrichmentArgument.map {
+      case FilepathRegex(dir) =>
+        new java.io.File(dir).listFiles
+          .filter(_.getName.endsWith(".json"))
+          .map(scala.io.Source.fromFile(_).mkString)
+          .toList
+          .success
+      case DynamoDBRegex(region, table, partialKey) =>
+        lookupDynamoDBEnrichments(provider, region, table, partialKey) match {
+          case Nil => s"No enrichments found with partial key $partialKey".failure
+          case js => js.success
         }
-      }
-      case Some(other) => parser.usage(s"Enrichments argument [$other] must begin with 'file:' or 'dynamodb:'")
+      case other => s"Enrichments argument [$other] must match $regexMsg".failure
+    }.getOrElse(Nil.success)
+
+    jsons.map { js =>
+      val combinedJson = ("schema" -> "iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0") ~
+        ("data" -> js.toList.map(parse(_)))
+      compact(combinedJson)
     }
-    val combinedJson = ("schema" -> "iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0") ~
-    ("data" -> jsons.toList.map(parse(_)))
-    compact(combinedJson)
   }
 
   /**
    * Get a list of enrichment JSONs from DynamoDB
-   *
+   * @param provider AWS credentials provider
    * @param region DynamoDB region, e.g. "eu-west-1"
    * @param table
    * @param partialKey Primary key prefix, e.g. "enrichments-"
    * @return List of JSONs
    */
-  def lookupDynamoDBEnrichments(region: String, table: String, partialKey: String): List[String] = {
-    val dynamoDBClient = new AmazonDynamoDBClient(kinesisEnrichConfig.credentialsProvider)
+  def lookupDynamoDBEnrichments(
+    provider: AWSCredentialsProvider,
+    region: String, table: String, partialKey: String
+  ): List[String] = {
+    val dynamoDBClient = new AmazonDynamoDBClient(provider)
     dynamoDBClient.setEndpoint(s"https://dynamodb.${region}.amazonaws.com")
 
     // Each scan can only return up to 1MB
@@ -290,14 +297,13 @@ object KinesisEnrichApp extends App {
   /**
    * Downloads an object from S3 and returns whether
    * or not it was successful.
-   *
-   * @param uri The URI to reconstruct into a signed
-   *            S3 URL
+   * @param provider AWS credentials provider
+   * @param uri The URI to reconstruct into a signed S3 URL
    * @param outputFile The file object to write to
    * @return the download result
    */
-  def downloadFromS3(uri: URI, outputFile: File): Int = {
-    val s3Client = new AmazonS3Client(kinesisEnrichConfig.credentialsProvider)
+  def downloadFromS3(provider: AWSCredentialsProvider, uri: URI, outputFile: File): Int = {
+    val s3Client = new AmazonS3Client(provider)
     val bucket = uri.getHost
     val key = uri.getPath match { // Need to remove leading '/'
       case s if s.charAt(0) == '/' => s.substring(1)
