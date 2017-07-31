@@ -20,18 +20,14 @@ Assuming you already have [SBT 0.13.0][sbt] installed:
 Stream Enrich has the following command-line interface:
 
 ```
-snowplow-stream-enrich: Version 0.2.0. Copyright (c) 2013, Snowplow Analytics
-Ltd.
+snowplow-stream-enrich: Version 0.9.0.
+Usage: snowplow-stream-enrich [options]
 
-Usage: snowplow-stream-enrich [OPTIONS]
-
-OPTIONS
---config filename
-                        Configuration file.
---enrichments 'file:[filename]' or 'dynamodb:[region/table/partialKey]'
-                        Directory of enrichment configuration JSONs.
---resolver 'file:[filename]' or 'dynamodb:[region/table/partialKey]'
-                        Iglu resolver.
+--config <filename>
+--resolver <resolver uri>
+                         Iglu resolver file, 'file:[filename]' or 'dynamodb:[region/table/key]'
+--enrichments <enrichments directory uri>
+                         Direcotry of enrichment configuration JSONs, 'file:[filename]' or 'dynamodb:[region/table/key]'
 ```
 
 ## Copyright and license
