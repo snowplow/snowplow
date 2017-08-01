@@ -13,7 +13,7 @@
  * governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow
-package enrich.kinesis
+package enrich.stream
 package good
 
 // Commons Codec

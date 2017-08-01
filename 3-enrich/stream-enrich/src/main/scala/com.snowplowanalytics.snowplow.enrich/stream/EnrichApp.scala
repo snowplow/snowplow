@@ -17,7 +17,7 @@
  * governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich
-package kinesis
+package stream
 
 // Java
 import java.io.File
@@ -66,7 +66,7 @@ import sinks._
 /**
  * The main entry point for Stream Enrich.
  */
-object KinesisEnrichApp {
+object EnrichApp {
 
   lazy val log = LoggerFactory.getLogger(getClass())
   import log.{error, debug, info, trace}
