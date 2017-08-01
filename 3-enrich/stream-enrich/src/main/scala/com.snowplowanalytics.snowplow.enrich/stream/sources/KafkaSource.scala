@@ -19,7 +19,7 @@
 package com.snowplowanalytics
 package snowplow
 package enrich
-package kinesis
+package stream
 package sources
 
 // Java

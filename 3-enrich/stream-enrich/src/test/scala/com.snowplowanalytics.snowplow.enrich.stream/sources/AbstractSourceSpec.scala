@@ -18,7 +18,7 @@
  */
 package com.snowplowanalytics
 package snowplow.enrich
-package kinesis
+package stream
 package sources
 
 // Scalaz

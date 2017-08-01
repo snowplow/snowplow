@@ -19,7 +19,7 @@ package com.snowplowanalytics.snowplow.enrich
  * See:
  * http://www.artima.com/scalazine/articles/package_objects.html
  */
-package object kinesis {
+package object stream {
 
   /**
    * Kinesis records must not exceed 1MB

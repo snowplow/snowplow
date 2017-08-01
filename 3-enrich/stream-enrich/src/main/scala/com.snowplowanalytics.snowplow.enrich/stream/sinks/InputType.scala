@@ -16,19 +16,12 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich
-package kinesis.sinks
+package com.snowplowanalytics.snowplow.enrich.stream.sinks
 
 /**
- * An interface for all sinks to use to store events.
+ * Whether the sink is for good rows or bad rows
  */
-trait ISink {
-
-  /**
-   * Side-effecting function to store the EnrichedEvent
-   * to the given output stream.
-   */
-  def storeEnrichedEvents(events: List[(String, String)]): Boolean
-
-  def flush(): Unit
+object InputType extends Enumeration {
+  type InputType = Value
+  val Good, Bad = Value
 }
