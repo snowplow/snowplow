@@ -13,7 +13,7 @@
  * governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow
-package enrich.kinesis
+package enrich.stream
 package good
 
 // Commons Codec
@@ -26,19 +26,19 @@ import org.specs2.execute.Result
 // This project
 import SpecHelpers._
 
-object TransactionItemSpec {
+object StructEventSpec {
 
-  val raw = "CgABAAABQ/SiVfkLABQAAAAQc3NjLTAuMS4wLXN0ZG91dAsAHgAAAAVVVEYtOAsAKAAAAAgxMC4wLjIuMgwAKQgAAQAAAAEIAAIAAAABCwADAAAByWU9dGkmdGlfaWQ9b3JkZXItMTIzJnRpX3NrPTEwMDImdGlfbmE9UmVkK3Nob2VzJnRpX3ByPTQwMDAmdGlfcXU9MSZ0aV9jdT1KUFkmZHRtPTEzOTEzNzg3MTYyNzUmdGlkPTQwMDAxNyZ2cD0xNjgweDQxNSZkcz0xNjgweDQxNSZ2aWQ9MjYmZHVpZD0zYzE3NTc1NDRlMzliY2E0JnA9d2ViJnR2PWpzLTAuMTMuMSZmcD0xODA0OTU0NzkwJmFpZD1DRmUyM2EmbGFuZz1lbi1VUyZjcz1VVEYtOCZ0ej1FdXJvcGUvTG9uZG9uJnVpZD1hbGV4KzEyMyZmX3BkZj0wJmZfcXQ9MSZmX3JlYWxwPTAmZl93bWE9MCZmX2Rpcj0wJmZfZmxhPTEmZl9qYXZhPTAmZl9nZWFycz0wJmZfYWc9MCZyZXM9MTkyMHgxMDgwJmNkPTI0JmNvb2tpZT0xJnVybD1maWxlOi8vZmlsZTovLy9Vc2Vycy9hbGV4L0RldmVsb3BtZW50L2Rldi1lbnZpcm9ubWVudC9kZW1vLzEtdHJhY2tlci9ldmVudHMuaHRtbC9vdmVycmlkZGVuLXVybC8ACwAtAAAACWxvY2FsaG9zdAsAMgAAAFFNb3ppbGxhLzUuMCAoTWFjaW50b3NoOyBJbnRlbCBNYWMgT1MgWCAxMC45OyBydjoyNi4wKSBHZWNrby8yMDEwMDEwMSBGaXJlZm94LzI2LjAPAEYLAAAABwAAABZDb25uZWN0aW9uOiBrZWVwLWFsaXZlAAACcENvb2tpZTogX191dG1hPTExMTg3MjI4MS44NzgwODQ0ODcuMTM5MDIzNzEwNy4xMzkwOTMxNTIxLjEzOTExMTA1ODIuNzsgX191dG16PTExMTg3MjI4MS4xMzkwMjM3MTA3LjEuMS51dG1jc3I9KGRpcmVjdCl8dXRtY2NuPShkaXJlY3QpfHV0bWNtZD0obm9uZSk7IF9zcF9pZC4xZmZmPWI4OWE2ZmE2MzFlZWZhYzIuMTM5MDIzNzEwNy43LjEzOTExMTE4MTkuMTM5MDkzMTU0NTsgaGJsaWQ9Q1BqanVodkYwNXprdFA3SjdNNVZvM05JR1BMSnkxU0Y7IG9sZnNrPW9sZnNrNTYyOTIzNjM1NjE3NTU0OyBzcD03NWExMzU4My01Yzk5LTQwZTMtODFmYy01NDEwODRkZmM3ODQ7IHdjc2lkPUtSaGhrNEhFTHAyQWlwcUw3TTVWb25DUE9QeUFuRjFKOyBfb2tsdj0xMzkxMTExNzc5MzI4JTJDS1JoaGs0SEVMcDJBaXBxTDdNNVZvbkNQT1B5QW5GMUo7IF9fdXRtYz0xMTE4NzIyODE7IF9va2JrPWNkNCUzRHRydWUlMkN2aTUlM0QwJTJDdmk0JTNEMTM5MTExMDU4NTQ5MCUyQ3ZpMyUzRGFjdGl2ZSUyQ3ZpMiUzRGZhbHNlJTJDdmkxJTNEZmFsc2UlMkNjZDglM0RjaGF0JTJDY2Q2JTNEMCUyQ2NkNSUzRGF3YXklMkNjZDMlM0RmYWxzZSUyQ2NkMiUzRDAlMkNjZDElM0QwJTJDOyBfb2s9OTc1Mi01MDMtMTAtNTIyNwAAAB5BY2NlcHQtRW5jb2Rpbmc6IGd6aXAsIGRlZmxhdGUAAAAaQWNjZXB0LUxhbmd1YWdlOiBlbi1VUywgZW4AAAArQWNjZXB0OiBpbWFnZS9wbmcsIGltYWdlLyo7cT0wLjgsICovKjtxPTAuNQAAAF1Vc2VyLUFnZW50OiBNb3ppbGxhLzUuMCAoTWFjaW50b3NoOyBJbnRlbCBNYWMgT1MgWCAxMC45OyBydjoyNi4wKSBHZWNrby8yMDEwMDEwMSBGaXJlZm94LzI2LjAAAAAUSG9zdDogbG9jYWxob3N0OjQwMDELAFAAAAAkNzVhMTM1ODMtNWM5OS00MGUzLTgxZmMtNTQxMDg0ZGZjNzg0AA=="
+  val raw = "CgABAAABQ/Sevy0LABQAAAAQc3NjLTAuMS4wLXN0ZG91dAsAHgAAAAVVVEYtOAsAKAAAAAgxMC4wLjIuMgwAKQgAAQAAAAEIAAIAAAABCwADAAABvGU9c2Umc2VfY2E9TWl4ZXMmc2VfYWM9UGxheSZzZV9sYT1NUkMvZmFicmljLTA1MDMtbWl4JnNlX3ZhPTAuMCZkdG09MTM5MTM3ODQ4MTA3MSZ0aWQ9MzQ0MjE0JnZwPTE2ODB4NDE1JmRzPTE2ODB4NDE1JnZpZD0yNiZkdWlkPTNjMTc1NzU0NGUzOWJjYTQmcD13ZWImdHY9anMtMC4xMy4xJmZwPTE4MDQ5NTQ3OTAmYWlkPUNGZTIzYSZsYW5nPWVuLVVTJmNzPVVURi04JnR6PUV1cm9wZS9Mb25kb24mdWlkPWFsZXgrMTIzJmZfcGRmPTAmZl9xdD0xJmZfcmVhbHA9MCZmX3dtYT0wJmZfZGlyPTAmZl9mbGE9MSZmX2phdmE9MCZmX2dlYXJzPTAmZl9hZz0wJnJlcz0xOTIweDEwODAmY2Q9MjQmY29va2llPTEmdXJsPWZpbGU6Ly9maWxlOi8vL1VzZXJzL2FsZXgvRGV2ZWxvcG1lbnQvZGV2LWVudmlyb25tZW50L2RlbW8vMS10cmFja2VyL2V2ZW50cy5odG1sL292ZXJyaWRkZW4tdXJsLwALAC0AAAAJbG9jYWxob3N0CwAyAAAAUU1vemlsbGEvNS4wIChNYWNpbnRvc2g7IEludGVsIE1hYyBPUyBYIDEwLjk7IHJ2OjI2LjApIEdlY2tvLzIwMTAwMTAxIEZpcmVmb3gvMjYuMA8ARgsAAAAHAAAAFkNvbm5lY3Rpb246IGtlZXAtYWxpdmUAAAJwQ29va2llOiBfX3V0bWE9MTExODcyMjgxLjg3ODA4NDQ4Ny4xMzkwMjM3MTA3LjEzOTA5MzE1MjEuMTM5MTExMDU4Mi43OyBfX3V0bXo9MTExODcyMjgxLjEzOTAyMzcxMDcuMS4xLnV0bWNzcj0oZGlyZWN0KXx1dG1jY249KGRpcmVjdCl8dXRtY21kPShub25lKTsgX3NwX2lkLjFmZmY9Yjg5YTZmYTYzMWVlZmFjMi4xMzkwMjM3MTA3LjcuMTM5MTExMTgxOS4xMzkwOTMxNTQ1OyBoYmxpZD1DUGpqdWh2RjA1emt0UDdKN001Vm8zTklHUExKeTFTRjsgb2xmc2s9b2xmc2s1NjI5MjM2MzU2MTc1NTQ7IHNwPTc1YTEzNTgzLTVjOTktNDBlMy04MWZjLTU0MTA4NGRmYzc4NDsgd2NzaWQ9S1JoaGs0SEVMcDJBaXBxTDdNNVZvbkNQT1B5QW5GMUo7IF9va2x2PTEzOTExMTE3NzkzMjglMkNLUmhoazRIRUxwMkFpcHFMN001Vm9uQ1BPUHlBbkYxSjsgX191dG1jPTExMTg3MjI4MTsgX29rYms9Y2Q0JTNEdHJ1ZSUyQ3ZpNSUzRDAlMkN2aTQlM0QxMzkxMTEwNTg1NDkwJTJDdmkzJTNEYWN0aXZlJTJDdmkyJTNEZmFsc2UlMkN2aTElM0RmYWxzZSUyQ2NkOCUzRGNoYXQlMkNjZDYlM0QwJTJDY2Q1JTNEYXdheSUyQ2NkMyUzRGZhbHNlJTJDY2QyJTNEMCUyQ2NkMSUzRDAlMkM7IF9vaz05NzUyLTUwMy0xMC01MjI3AAAAHkFjY2VwdC1FbmNvZGluZzogZ3ppcCwgZGVmbGF0ZQAAABpBY2NlcHQtTGFuZ3VhZ2U6IGVuLVVTLCBlbgAAACtBY2NlcHQ6IGltYWdlL3BuZywgaW1hZ2UvKjtxPTAuOCwgKi8qO3E9MC41AAAAXVVzZXItQWdlbnQ6IE1vemlsbGEvNS4wIChNYWNpbnRvc2g7IEludGVsIE1hYyBPUyBYIDEwLjk7IHJ2OjI2LjApIEdlY2tvLzIwMTAwMTAxIEZpcmVmb3gvMjYuMAAAABRIb3N0OiBsb2NhbGhvc3Q6NDAwMQsAUAAAACQ3NWExMzU4My01Yzk5LTQwZTMtODFmYy01NDEwODRkZmM3ODQA"
 
   val expected = List(
     "CFe23a",
     "web",
     TimestampRegex,
-    "2014-02-02 22:05:16.153",
-    "2014-02-02 22:05:16.275",
-    "transaction_item",
+    "2014-02-02 22:01:20.941",
+    "2014-02-02 22:01:21.071",
+    "struct",
     Uuid4Regexp, // Regexp match
-    "400017",
+    "344214",
     "",
     "js-0.13.1",
     "ssc-0.1.0-stdout",
@@ -84,6 +84,11 @@ object TransactionItemSpec {
     "",
     "",
     "",
+    "Mixes",
+    "Play",
+    "MRC/fabric-0503-mix",
+    "",
+    "0.0",
     "",
     "",
     "",
@@ -98,12 +103,7 @@ object TransactionItemSpec {
     "",
     "",
     "",
-    "order-123",
-    "1002",
-    "Red shoes",
     "",
-    "4000",
-    "1",
     "",
     "",
     "",
@@ -143,7 +143,6 @@ object TransactionItemSpec {
     "",
     "",
     "",
-    "JPY",
     "",
     "",
     "",
@@ -155,9 +154,10 @@ object TransactionItemSpec {
     "",
     "",
     "",
-    "2014-02-02 22:05:16.153",
-    "com.snowplowanalytics.snowplow",
-    "transaction_item",
+    "",
+    "2014-02-02 22:01:20.941",
+    "com.google.analytics",
+    "event",
     "jsonschema",
     "1-0-0",
     "",
@@ -165,24 +165,24 @@ object TransactionItemSpec {
     )
 }
 
-class TransactionItemSpec extends Specification {
+class StructEventSpec extends Specification {
 
   "Stream Enrich" should {
 
-    "enrich a valid transaction item" in {
+    "enrich a valid structured event" in {
 
-      val rawEvent = Base64.decodeBase64(TransactionItemSpec.raw)
+      val rawEvent = Base64.decodeBase64(StructEventSpec.raw)
 
       val enrichedEvent = TestSource.enrichEvents(rawEvent)(0)
       enrichedEvent.isSuccess must beTrue
 
       // "-1" prevents empty strings from being discarded from the end of the array
       val fields = enrichedEvent.toOption.get._1.split("\t", -1)
-      fields.size must beEqualTo(TransactionItemSpec.expected.size)
+      fields.size must beEqualTo(StructEventSpec.expected.size)
 
       Result.unit(
-        for (idx <- TransactionItemSpec.expected.indices) {
-          fields(idx) must beFieldEqualTo(TransactionItemSpec.expected(idx), withIndex = idx)
+        for (idx <- StructEventSpec.expected.indices) {
+          fields(idx) must beFieldEqualTo(StructEventSpec.expected(idx), withIndex = idx)
         }
       )
     }

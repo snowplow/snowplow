@@ -17,7 +17,7 @@
  * governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich
-package kinesis
+package stream 
 package sinks
 
 // Java

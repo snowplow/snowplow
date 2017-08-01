@@ -14,7 +14,7 @@
  */
 package com.snowplowanalytics.snowplow
 package enrich
-package kinesis
+package stream
 
 // Java
 import java.util.regex.Pattern
