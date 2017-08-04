@@ -40,7 +40,9 @@ module Snowplow
       :debug => Bool,
       :resume_from => Maybe[String],
       :skip => Maybe[ArrayOf[String]],
-      :include => Maybe[ArrayOf[String]]
+      :include => Maybe[ArrayOf[String]],
+      :lock => Maybe[String],
+      :consul => Maybe[String]
       })
 
     # The Hash containing the buckets field from the configuration YAML
