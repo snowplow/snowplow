@@ -53,5 +53,12 @@ module Snowplow
         super(message)
       end
     end
+
+    # Raised if the lock is held
+    class LockHeldError < Error
+      def initialize(message)
+        super(message)
+      end
+    end
   end
 end
