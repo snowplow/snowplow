@@ -71,6 +71,8 @@ module Snowplow
             opts.on('-f', "--resume-from {#{RESUMABLES.to_a.join(',')}}", 'resume from the specified step') { |config| options[:resume_from] = config }
             opts.on('-x', "--skip {#{SKIPPABLES.to_a.join(',')}}", Array, 'skip the specified step(s)') { |config| options[:skip] = config }
             opts.on('-i', "--include {#{INCLUDES.to_a.join(',')}}", Array, 'include additional step(s)') { |config| options[:include] = config }
+            opts.on('-l', '--lock PATH', 'where to store the lock') { |config| options[:lock] = config }
+            opts.on('--consul ADDRESS', 'address to the Consul server') { |config| options[:consul] = config }
           end,
           'generate emr-config' => OptionParser.new do |opts|
             opts.banner = 'Usage: generate emr-config [options]'
@@ -179,7 +181,9 @@ module Snowplow
           :debug => options[:debug],
           :skip => options[:skip],
           :resume_from => options[:resume_from],
-          :include => options[:include]
+          :include => options[:include],
+          :lock => options[:lock],
+          :consul => options[:consul]
         }
 
         summary = optparse.to_s
