@@ -75,6 +75,11 @@ module Snowplow
           'recover'
         end
 
+        lock = get_lock(@args[:lock], @args[:consul])
+        if not lock.nil?
+          lock.try_lock
+        end
+
         # Keep relaunching the job until it succeeds or fails for a reason other than a bootstrap failure
         tries_left = @config[:aws][:emr][:bootstrap_failure_tries]
         rdbloader_steps = get_rdbloader_steps(steps, @args[:include])
@@ -99,8 +104,24 @@ module Snowplow
           end
         end
 
+        if not lock.nil?
+          lock.unlock
+        end
+
         logger.info "Completed successfully"
         nil
+      end
+
+      def get_lock(path, consul)
+        if not path.nil?
+          if not consul.nil?
+            Lock::ConsulLock.new(consul, path)
+          else
+            Lock::FileLock.new(path)
+          end
+        else
+          nil
+        end
       end
 
       # Adds trailing slashes to all non-nil bucket names in the hash
