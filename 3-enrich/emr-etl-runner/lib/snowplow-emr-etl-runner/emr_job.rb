@@ -939,7 +939,7 @@ module Snowplow
       Contract String, String => Elasticity::CustomJarStep
       def get_rmr_step(location, bucket)
         step = Elasticity::CustomJarStep.new("s3://#{@jobflow.region}.elasticmapreduce/libs/script-runner/script-runner.jar")
-        step.arguments = ["#{bucket}common/emr/snowplow-hadoop-fs-rmr-0.1.0.sh", location]
+        step.arguments = ["#{bucket}common/emr/snowplow-hadoop-fs-rmr-0.1.0-rc1.sh", location]
         step.name << ": Empty Raw HDFS"
         step
       end
