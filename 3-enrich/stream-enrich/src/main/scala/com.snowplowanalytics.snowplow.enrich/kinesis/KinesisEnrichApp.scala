@@ -385,4 +385,5 @@ class KinesisEnrichConfig(config: Config) {
   } else {
     None
   }
+
 }

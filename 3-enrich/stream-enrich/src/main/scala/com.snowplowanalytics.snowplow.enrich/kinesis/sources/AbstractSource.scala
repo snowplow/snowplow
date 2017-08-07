@@ -190,6 +190,7 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
    * @return List containing successful or failed events, each with a
    *         partition key
    */
+
   def enrichEvents(binaryData: Array[Byte]): List[Validation[(String, String), (String, String)]] = {
     val canonicalInput: ValidatedMaybeCollectorPayload = ThriftLoader.toCollectorPayload(binaryData)
     val processedEvents: List[ValidationNel[String, EnrichedEvent]] = EtlPipeline.processEvents(
@@ -207,7 +208,7 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
               case Some(p) => getProprertyValue(co, config.partitionKey.get)
               case None => UUID.randomUUID().toString
             }
-          }).success
+        }).success
         case Failure(errors) => {
           val line = new String(Base64.encodeBase64(binaryData), UTF_8)
           (BadRow(line, errors).toCompactJson -> Random.nextInt.toString).fail
@@ -215,7 +216,6 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
       }
     })
   }
-
 
   /**
    * Deserialize and enrich incoming Thrift records and store the results
