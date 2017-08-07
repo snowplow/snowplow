@@ -70,6 +70,11 @@ enrich {
       enriched: "{{enrichStreamsOutEnriched}}"
       bad: "{{enrichStreamsOutBad}}"
 
+      # Possible partition keys: event_id, event_fingerprint, domain_userid, network_userid,
+      # user_ipaddress, domain_sessionid, user_fingerprint.
+      # Otherwise or if absent, the partition key will be a random UUID.
+      partitionKey: "{{partitionKeyName}}"
+
       # Minimum and maximum backoff periods
       # - Units: Milliseconds
       backoffPolicy: {
