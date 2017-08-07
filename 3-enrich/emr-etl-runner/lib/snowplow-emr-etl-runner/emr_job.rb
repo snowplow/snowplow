@@ -37,7 +37,6 @@ module Snowplow
       JAVA_PACKAGE = "com.snowplowanalytics.snowplow"
       PARTFILE_REGEXP = ".*part-.*"
       SUCCESS_REGEXP = ".*_SUCCESS"
-      BOOTSTRAP_FAILURE_INDICATOR = /BOOTSTRAP_FAILURE|bootstrap action|Master instance startup failed/
       STANDARD_HOSTED_ASSETS = "s3://snowplow-hosted-assets"
       ENRICH_STEP_INPUT = 'hdfs:///local/snowplow/raw-events/'
       ENRICH_STEP_OUTPUT = 'hdfs:///local/snowplow/enriched-events/'
@@ -550,7 +549,9 @@ module Snowplow
 
         status = wait_for()
 
-        output_rdb_loader_logs(config[:aws][:s3][:region], config[:aws][:access_key_id], config[:aws][:secret_access_key])
+        if status.successful or status.rdb_loader_failure
+          output_rdb_loader_logs(config[:aws][:s3][:region], config[:aws][:access_key_id], config[:aws][:secret_access_key])
+        end
 
         if status.successful
           logger.debug "EMR jobflow #{jobflow_id} completed successfully."
@@ -779,8 +780,8 @@ module Snowplow
       def wait_for()
 
         success = false
-
         bootstrap_failure = false
+        rdb_loader_failure = false
 
         # Loop until we can quit...
         while true do
@@ -794,6 +795,7 @@ module Snowplow
             if statuses[0] == 0
               success = statuses[1] == 0 # True if no failures
               bootstrap_failure = EmrJob.bootstrap_failure?(@jobflow)
+              rdb_loader_failure = EmrJob.rdb_loader_failure?(@jobflow.cluster_step_status)
               break
             else
               # Sleep a while before we check again
@@ -827,7 +829,7 @@ module Snowplow
           end
         end
 
-        JobResult.new(success, bootstrap_failure)
+        JobResult.new(success, bootstrap_failure, rdb_loader_failure)
       end
 
       # Prettified string containing failure details
@@ -922,11 +924,19 @@ module Snowplow
         Marshal.load(Marshal.dump(o))
       end
 
+      # Returns true if the jobflow failed at a rdb loader step
+      Contract ArrayOf[Elasticity::ClusterStepStatus] => Bool
+      def self.rdb_loader_failure?(cluster_step_statuses)
+        rdb_loader_failure_indicator = /Storage Target/
+        cluster_step_statuses.any? { |s| s.state == 'FAILED' && !(s.name =~ rdb_loader_failure_indicator).nil? }
+      end
+
       # Returns true if the jobflow seems to have failed due to a bootstrap failure
       Contract Elasticity::JobFlow => Bool
       def self.bootstrap_failure?(jobflow)
+        bootstrap_failure_indicator = /BOOTSTRAP_FAILURE|bootstrap action|Master instance startup failed/
         jobflow.cluster_step_status.all? {|s| s.state == 'CANCELLED'} &&
-        (! (jobflow.cluster_status.last_state_change_reason =~ BOOTSTRAP_FAILURE_INDICATOR).nil?)
+          (!(jobflow.cluster_status.last_state_change_reason =~ bootstrap_failure_indicator).nil?)
       end
 
       Contract String, String => Elasticity::CustomJarStep
