@@ -173,6 +173,18 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
     }.mkString("\t")
   }
 
+  def getProprertyValue(ee: EnrichedEvent, property: Option[String]): String =
+    property.map {
+      case "event_id" => ee.event_id
+      case "event_fingerprint" => ee.event_fingerprint
+      case "domain_userid" => ee.domain_userid
+      case "network_userid" => ee.network_userid
+      case "user_ipaddress" => ee.user_ipaddress
+      case "domain_sessionid" => ee.domain_sessionid
+      case "user_fingerprint" => ee.user_fingerprint
+      case _ => UUID.randomUUID().toString
+    }.getOrElse(UUID.randomUUID().toString)
+
   /**
    * Convert incoming binary Thrift records to lists of enriched events
    *
@@ -189,15 +201,11 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
       canonicalInput)
     processedEvents.map(validatedMaybeEvent => {
       validatedMaybeEvent match {
-        case Success(co) => (tabSeparateEnrichedEvent(co), if (config.useIpAddressAsPartitionKey) {
-            co.user_ipaddress
-          } else {
-            UUID.randomUUID.toString
-          }).success
-        case Failure(errors) => {
+        case Success(co) =>
+          (tabSeparateEnrichedEvent(co), getProprertyValue(co, config.partitionKey)).success
+        case Failure(errors) =>
           val line = new String(Base64.encodeBase64(binaryData), UTF_8)
           (BadRow(line, errors).toCompactJson -> Random.nextInt.toString).fail
-        }
       }
     })
   }
