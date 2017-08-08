@@ -38,10 +38,9 @@ module Snowplow
     # The Hash of the CLI arguments.
     ArgsHash = ({
       :debug => Bool,
+      :resume_from => Maybe[String],
       :skip => Maybe[ArrayOf[String]],
-      :include => Maybe[ArrayOf[String]],
-      :process_enrich_location => Maybe[String],
-      :process_shred_location => Maybe[String]
+      :include => Maybe[ArrayOf[String]]
       })
 
     # The Hash containing the buckets field from the configuration YAML
