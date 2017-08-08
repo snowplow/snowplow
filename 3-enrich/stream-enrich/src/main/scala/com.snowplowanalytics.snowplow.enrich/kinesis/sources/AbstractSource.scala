@@ -174,14 +174,13 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
     }.mkString("\t")
   }
 
-  def getProprertyValue(co: EnrichedEvent, property: String): String = {
-    val info = Introspector.getBeanInfo(co.getClass)
-    info.getPropertyDescriptors.foreach { p =>
-      if (p.getName.equals(property))
-        return String.valueOf(p.getReadMethod.invoke(co))
-    }
-    UUID.randomUUID().toString
-  }
+  def getProprertyValue(ee: EnrichedEvent, property: String): String =
+    Introspector
+      .getBeanInfo(ee.getClass)
+      .getPropertyDescriptors
+      .find(_.getName == property)
+      .map(p => String.valueOf(p.getReadMethod.invoke(ee)))
+      .getOrElse(UUID.randomUUID().toString)
 
   /**
    * Convert incoming binary Thrift records to lists of enriched events

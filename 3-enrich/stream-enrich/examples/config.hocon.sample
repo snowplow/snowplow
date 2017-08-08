@@ -70,6 +70,10 @@ enrich {
       enriched: "{{enrichStreamsOutEnriched}}"
       bad: "{{enrichStreamsOutBad}}"
 
+      # See https://github.com/snowplow/snowplow/wiki/canonical-event-model for possible partition keys
+      # If "partitionKey" property is empty, the partition key will be null
+      partitionKey: "{{partitionKeyName}}"
+
       # Minimum and maximum backoff periods
       # - Units: Milliseconds
       backoffPolicy: {
