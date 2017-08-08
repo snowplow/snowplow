@@ -47,7 +47,7 @@ module Snowplow
 
       # Initializes our wrapper for the Amazon EMR client.
       Contract Bool, Bool, Bool, Bool, Bool, Bool, Bool, ArchiveEnrichedStep, ConfigHash, ArrayOf[String], String, TargetsHash, RdbLoaderSteps => EmrJob
-      def initialize(debug, enrich, shred, elasticsearch, s3distcp, archive_raw, rdb_load, archive_enriched, config, enrichments_array, resolver, targets, rdbloader_steps)
+      def initialize(debug, staging, enrich, shred, es, archive_raw, rdb_load, archive_enriched, config, enrichments_array, resolver, targets, rdbloader_steps)
 
         logger.debug "Initializing EMR jobflow"
 
@@ -55,7 +55,7 @@ module Snowplow
         custom_assets_bucket =
           get_hosted_assets_bucket(STANDARD_HOSTED_ASSETS, config[:aws][:s3][:buckets][:assets], config[:aws][:emr][:region])
         standard_assets_bucket =
-          get_hosted_assets_bucket(STANDARD_HOSTED_ASSETS, config[:aws][:s3][:buckets][:assets], config[:aws][:emr][:region])
+          get_hosted_assets_bucket(STANDARD_HOSTED_ASSETS, STANDARD_HOSTED_ASSETS, config[:aws][:emr][:region])
         assets = get_assets(
           custom_assets_bucket,
           config[:enrich][:versions][:spark_enrich],
@@ -262,30 +262,16 @@ module Snowplow
           @jobflow.set_task_instance_group(instance_group)
         end
 
-        s3_endpoint = get_s3_endpoint(config[:aws][:s3][:region])
-        csbr = config[:aws][:s3][:buckets][:raw]
-        csbe = config[:aws][:s3][:buckets][:enriched]
-        csbs = config[:aws][:s3][:buckets][:shredded]
-
         enrich_final_output = if enrich
           partition_by_run(csbe[:good], run_id)
         else
           csbe[:good] # Doesn't make sense to partition if enrich has already been done
         end
-        enrich_step_output = if s3distcp
-          "hdfs:///local/snowplow/enriched-events/"
-        else
-          enrich_final_output
-        end
+        enrich_step_output = "hdfs:///local/snowplow/enriched-events/"
 
         if enrich
 
-          # 1. Compaction to HDFS (if applicable)
           raw_input = csbr[:processing]
-
-          # TODO: throw exception if processing thrift with --skip s3distcp
-          # https://github.com/snowplow/snowplow/issues/1648
-
           enrich_step_input = "hdfs:///local/snowplow/raw-events/"
 
           # for ndjson/urbanairship we can group by everything, just aim for the target size
@@ -297,24 +283,20 @@ module Snowplow
             "--src"         , raw_input,
             "--dest"        , enrich_step_input,
             "--s3Endpoint"  , s3_endpoint
-            ] + [
-              "--groupBy"     , group_by,
-              "--targetSize"  , "128",
-              "--outputCodec" , "lzo"
-            ].select { |el|
-              is_cloudfront_log(collector_format) || is_ua_ndjson(collector_format)
-            }
-            compact_to_hdfs_step.name << ": Raw S3 -> HDFS"
+          ] + [
+            "--groupBy"     , group_by,
+            "--targetSize"  , "128",
+            "--outputCodec" , "lzo"
+          ].select { |el|
+            is_cloudfront_log(collector_format) || is_ua_ndjson(collector_format)
+          }
+          compact_to_hdfs_step.name << ": Raw S3 -> HDFS"
 
-            # Add to our jobflow
-            @jobflow.add_step(compact_to_hdfs_step)
+          # Add to our jobflow
+          @jobflow.add_step(compact_to_hdfs_step)
 
           # 2. Enrichment
-          enrich_step_output = if s3distcp
-            "hdfs:///local/snowplow/enriched-events/"
-          else
-            enrich_final_output
-          end
+          enrich_step_output = "hdfs:///local/snowplow/enriched-events/"
 
           enrich_step =
             if is_spark_enrich(config[:enrich][:versions][:spark_enrich]) then
@@ -358,43 +340,36 @@ module Snowplow
           end
           @jobflow.add_step(enrich_step)
 
-          if s3distcp
-            # We need to copy our enriched events from HDFS back to S3
-            copy_to_s3_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
-            copy_to_s3_step.arguments = [
-              "--src"        , enrich_step_output,
-              "--dest"       , enrich_final_output,
-              "--srcPattern" , PARTFILE_REGEXP,
-              "--s3Endpoint" , s3_endpoint
-            ] + output_codec
-            copy_to_s3_step.name << ": Enriched HDFS -> S3"
-            @jobflow.add_step(copy_to_s3_step)
+          # We need to copy our enriched events from HDFS back to S3
+          copy_to_s3_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
+          copy_to_s3_step.arguments = [
+            "--src"        , enrich_step_output,
+            "--dest"       , enrich_final_output,
+            "--srcPattern" , PARTFILE_REGEXP,
+            "--s3Endpoint" , s3_endpoint
+          ] + output_codec
+          copy_to_s3_step.name << ": Enriched HDFS -> S3"
+          @jobflow.add_step(copy_to_s3_step)
 
-            copy_success_file_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
-            copy_success_file_step.arguments = [
-              "--src"        , enrich_step_output,
-              "--dest"       , enrich_final_output,
-              "--srcPattern" , ".*_SUCCESS",
-              "--s3Endpoint" , s3_endpoint
-            ]
-            copy_success_file_step.name << ": Enriched HDFS _SUCCESS -> S3"
-            @jobflow.add_step(copy_success_file_step)
-          end
-
+          copy_success_file_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
+          copy_success_file_step.arguments = [
+            "--src"        , enrich_step_output,
+            "--dest"       , enrich_final_output,
+            "--srcPattern" , ".*_SUCCESS",
+            "--s3Endpoint" , s3_endpoint
+          ]
+          copy_success_file_step.name << ": Enriched HDFS _SUCCESS -> S3"
+          @jobflow.add_step(copy_success_file_step)
         end
 
         if shred
 
           # 3. Shredding
           shred_final_output = partition_by_run(csbs[:good], run_id)
-          shred_step_output = if s3distcp
-            "hdfs:///local/snowplow/shredded-events/"
-          else
-            shred_final_output
-          end
+          shred_step_output = "hdfs:///local/snowplow/shredded-events/"
 
           # If we didn't enrich already, we need to copy to HDFS
-          if s3distcp and !enrich
+          if !enrich
             copy_to_hdfs_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
             copy_to_hdfs_step.arguments = [
               "--src"        , enrich_final_output, # Opposite way round to normal
@@ -446,21 +421,19 @@ module Snowplow
           end
           @jobflow.add_step(shred_step)
 
-          if s3distcp
-            # We need to copy our shredded types from HDFS back to S3
-            copy_to_s3_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
-            copy_to_s3_step.arguments = [
-              "--src"        , shred_step_output,
-              "--dest"       , shred_final_output,
-              "--srcPattern" , PARTFILE_REGEXP,
-              "--s3Endpoint" , s3_endpoint
-            ] + output_codec
-            copy_to_s3_step.name << ": Shredded HDFS -> S3"
-            @jobflow.add_step(copy_to_s3_step)
-          end
+          # We need to copy our shredded types from HDFS back to S3
+          copy_to_s3_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
+          copy_to_s3_step.arguments = [
+            "--src"        , shred_step_output,
+            "--dest"       , shred_final_output,
+            "--srcPattern" , PARTFILE_REGEXP,
+            "--s3Endpoint" , s3_endpoint
+          ] + output_codec
+          copy_to_s3_step.name << ": Shredded HDFS -> S3"
+          @jobflow.add_step(copy_to_s3_step)
         end
 
-        if elasticsearch
+        if es
           get_elasticsearch_steps(config, assets, enrich, shred, targets[:FAILED_EVENTS]).each do |step|
             @jobflow.add_step(step)
           end

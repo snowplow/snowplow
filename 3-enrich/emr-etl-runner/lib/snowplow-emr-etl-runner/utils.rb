@@ -166,11 +166,11 @@ module Snowplow
       # Converts the output_compression configuration field to
       Contract Maybe[String] => ArrayOf[String]
       def output_codec_from_compression_format(compression_format)
-        if compression_format.nil?
-          []
+        # those are the supported compression codecs
+        if not compression_format.nil? and [ 'gzip', 'gz', 'lzo', 'snappy' ].include?(compression_format.downcase)
+          [ '--outputCodec', compression_format.downcase ]
         else
-          codec = compression_format.downcase
-          [ '--outputCodec', codec == "gzip" ? "gz" : codec ]
+          []
         end
       end
 

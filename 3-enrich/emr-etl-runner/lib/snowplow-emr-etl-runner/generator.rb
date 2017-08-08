@@ -29,14 +29,14 @@ module Snowplow
 
       # Print out the Avro record given by create_record to a file using the schema provided by
       # get_schema
-      Contract ConfigHash, String, String, String, Bool, ArrayOf[String], ArrayOf[String] => nil
-      def generate(config, resolver_config, version, filename, debug=false, skip=[], enrichments=[])
+      Contract ConfigHash, String, String, String, Bool, Maybe[String], ArrayOf[String] => nil
+      def generate(config, resolver_config, version, filename, debug=false, resume_from=nil, enrichments=[])
         json = JSON.parse(resolver_config, {:symbolize_names => true})
         resolver = Iglu::Resolver.parse(json)
         schema_key = get_schema_key(version)
         raw_schema = resolver.lookup_schema(schema_key)
         avro_schema = Avro::Schema.parse(raw_schema.to_json)
-        datum = create_datum(config, debug, skip, resolver_config, enrichments)
+        datum = create_datum(config, debug, resume_from, resolver_config, enrichments)
         if Avro::Schema.validate(avro_schema, datum)
           json = {
             "schema" => schema_key.as_uri,
@@ -58,8 +58,8 @@ module Snowplow
       end
 
       # Create a valid Avro datum
-      Contract ConfigHash, Bool, ArrayOf[String], String, ArrayOf[String] => Hash
-      def create_datum(config, debug=false, skip=[], resolver='', enrichments=[])
+      Contract ConfigHash, Bool, Maybe[String], String, ArrayOf[String] => Hash
+      def create_datum(config, debug=false, resume_from=nil, resolver='', enrichments=[])
         raise RuntimeError, '#create_datum needs to be defined in all generators.'
       end
 
