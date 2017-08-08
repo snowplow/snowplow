@@ -24,9 +24,6 @@ module Snowplow
       include Contracts
 
       # Supported options
-      @@collector_format_regex = /^(?:cloudfront|clj-tomcat|thrift|(?:json\/.+\/.+)|(?:tsv\/.+\/.+)|(?:ndjson\/.+\/.+))$/
-      @@skip_options = Set.new(%w(staging s3distcp emr enrich shred elasticsearch archive_raw analyze archive_enriched rdb_load))
-      @@include_options = Set.new(%w(vacuum))
       @@storage_targets = Set.new(%w(redshift_config postgresql_config elastic_config amazon_dynamodb_config))
 
       include Monitoring::Logging
@@ -39,7 +36,7 @@ module Snowplow
         Monitoring::Logging::set_level config[:monitoring][:logging][:level]
 
         @args = args
-        @config = validate_and_coalesce(args, config)
+        @config = config
         @enrichments_array = enrichments_array
         @resolver_config = resolver
         resolver_config_json = JSON.parse(@resolver_config, {:symbolize_names => true})
@@ -52,41 +49,52 @@ module Snowplow
       Contract None => nil
       def run
 
-        unless @args[:skip].include?('emr')
-          enrich = not(@args[:skip].include?('enrich'))
-          shred = not(@args[:skip].include?('shred'))
-          s3distcp = not(@args[:skip].include?('s3distcp'))
-          elasticsearch = not(@args[:skip].include?('elasticsearch'))
-          archive_raw = not(@args[:skip].include?('archive_raw'))
-          rdb_load = not(@args[:skip].include?('rdb_load'))
+        resume = @args[:resume_from]
+        skips = @args[:skip]
+        steps = {
+          :staging => (resume.nil? and not skips.include?('staging')),
+          :enrich => ((resume.nil? or resume == 'enrich') and not skips.include?('enrich')),
+          :shred => ((resume.nil? or [ 'enrich', 'shred' ].include?(resume)) and
+            not skips.include?('shred')),
+          :es => ((resume.nil? or [ 'enrich', 'shred', 'elasticsearch' ].include?(resume)) and
+            not skips.include?('elasticsearch')),
+          :archive_raw => ((resume.nil? or [ 'enrich', 'shred', 'elasticsearch', 'archive_raw' ].include?(resume)) and
+            not skips.include?('archive_raw')),
+          :rdb_load => ((resume.nil? or [ 'enrich', 'shred', 'elasticsearch', 'archive_raw', 'rdb_load' ].include?(resume)) and
+            not skips.include?('rdb_load')),
+          :analyze => ((resume.nil? or [ 'enrich', 'shred', 'elasticsearch', 'archive_raw', 'rdb_load', 'analyze' ].include?(resume)) and
+            not skips.include?('analyze')),
+          :archive_enriched => (not skips.include?('archive_enriched'))
+        }
 
-          archive_enriched = if @args[:skip].include?('archive_enriched')
-            'skip'
-          elsif enrich
-            'pipeline'
-          else
-            'recover'
-          end
+        archive_enriched = if not steps[:archive_enriched]
+          'skip'
+        elsif steps[:enrich]
+          'pipeline'
+        else
+          'recover'
+        end
 
-          # Keep relaunching the job until it succeeds or fails for a reason other than a bootstrap failure
-          tries_left = @config[:aws][:emr][:bootstrap_failure_tries]
-          rdbloader_steps = get_rdbloader_steps()
-          while true
-            begin
-              tries_left -= 1
-              job = EmrJob.new(@args[:debug], enrich, shred, elasticsearch, s3distcp, archive_raw, rdb_load, archive_enriched, @config, @enrichments_array, @resolver_config, @targets, rdbloader_steps)
-              job.run(@config)
-              break
-            rescue BootstrapFailureError => bfe
-              logger.warn "Job failed. #{tries_left} tries left..."
-              if tries_left > 0
-                # Random timeout between 0 and 10 minutes
-                bootstrap_timeout = rand(1..600)
-                logger.warn("Bootstrap failure detected, retrying in #{bootstrap_timeout} seconds...")
-                sleep(bootstrap_timeout)
-              else
-                raise
-              end
+        # Keep relaunching the job until it succeeds or fails for a reason other than a bootstrap failure
+        tries_left = @config[:aws][:emr][:bootstrap_failure_tries]
+        rdbloader_steps = get_rdbloader_steps(steps, @args[:include])
+        while true
+          begin
+            tries_left -= 1
+            job = EmrJob.new(@args[:debug], steps[:staging], steps[:enrich], steps[:shred], steps[:es],
+              steps[:archive_raw], steps[:rdb_load], archive_enriched, @config, @enrichments_array,
+              @resolver_config, @targets, rdbloader_steps)
+            job.run(@config)
+            break
+          rescue BootstrapFailureError => bfe
+            logger.warn "Job failed. #{tries_left} tries left..."
+            if tries_left > 0
+              # Random timeout between 0 and 10 minutes
+              bootstrap_timeout = rand(1..600)
+              logger.warn("Bootstrap failure detected, retrying in #{bootstrap_timeout} seconds...")
+              sleep(bootstrap_timeout)
+            else
+              raise
             end
           end
         end
@@ -106,79 +114,26 @@ module Snowplow
         end
       end
 
-      Contract nil => RdbLoaderSteps
-      def get_rdbloader_steps()
-        steps = {
+      Contract HashOf[Symbol, Bool], ArrayOf[String] => RdbLoaderSteps
+      def get_rdbloader_steps(steps, inclusions)
+        s = {
           :skip => [],
           :include => []
         }
 
-        if @args[:skip].include?("analyze")
-          steps[:skip] << "analyze"
+        if not steps[:analyze]
+          s[:skip] << "analyze"
         end
 
-        if @args[:skip].include?("shred")
-          steps[:skip] << "shred"
+        if not steps[:shred]
+          s[:skip] << "shred"
         end
 
-        if @args[:include].include?("vacuum")
-          steps[:include] << "vacuum"
+        if inclusions.include?("vacuum")
+          s[:include] << "vacuum"
         end
 
-        steps
-      end
-
-      # Validate our arguments against the configuration Hash
-      # Make updates to the configuration Hash based on the
-      # arguments
-      Contract ArgsHash, ConfigHash => ConfigHash
-      def validate_and_coalesce(args, config)
-
-        # Check our skip argument
-        args[:skip].each { |opt|
-          unless @@skip_options.include?(opt)
-            raise ConfigError, "Invalid option: skip can be 'staging', 'emr', 'enrich', 'shred', 'elasticsearch', 'rdb_load', 'archive_raw' or 'analyze' not '#{opt}'"
-          end
-        }
-
-        # Check include argument
-        args[:include].each { |opt|
-          unless @@include_options.include?(opt)
-            raise ConfigError, "Invalid option: include can be 'vacuum' not '#{opt}'"
-          end
-        }
-
-        input_collector_format = config[:collectors][:format]
-
-        # Validate the collector format
-        unless input_collector_format =~ @@collector_format_regex
-          raise ConfigError, "collector_format '%s' not supported" % input_collector_format
-        end
-
-        if input_collector_format == 'thrift'
-          if args[:skip].include?('s3distcp')
-            raise ConfigError, "Cannot process Thrift events with --skip s3distcp"
-          end
-          if config[:aws][:emr][:ami_version].start_with?('2')
-            raise ConfigError, "Cannot process Thrift events with AMI version 2.x.x"
-          end
-        end
-
-        # We can't process enrich and process shred
-        unless args[:process_enrich_location].nil? or args[:process_shred_location].nil?
-          raise ConfigError, "Cannot process enrich and process shred, choose one"
-        end
-        unless args[:process_enrich_location].nil?
-          config[:aws][:s3][:buckets][:raw][:processing] = args[:process_enrich_location]
-        end
-        unless args[:process_shred_location].nil?
-          config[:aws][:s3][:buckets][:enriched][:good] = args[:process_shred_location]
-        end
-
-        # Add trailing slashes if needed to the non-nil buckets
-        config[:aws][:s3][:buckets] = Runner.add_trailing_slashes(config[:aws][:s3][:buckets])
-
-        config
+        s
       end
 
       # Validate array of self-describing JSONs
