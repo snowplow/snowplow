@@ -71,14 +71,6 @@ module Snowplow
             opts.on('-f', "--resume-from {#{RESUMABLES.to_a.join(',')}}", 'resume from the specified step') { |config| options[:resume_from] = config }
             opts.on('-x', "--skip {#{SKIPPABLES.to_a.join(',')}}", Array, 'skip the specified step(s)') { |config| options[:skip] = config }
             opts.on('-i', "--include {#{INCLUDES.to_a.join(',')}}", Array, 'include additional step(s)') { |config| options[:include] = config }
-            opts.on('-E', '--process-enrich LOCATION', 'run enrichment only on specified location. Implies --skip staging,shred,archive_raw,archive_enriched,analyze,rdb_load') { |config|
-              options[:process_enrich_location] = config
-              options[:skip] = %w(staging shred archive_raw archive_enriched analyze)
-            }
-            opts.on('-S', '--process-shred LOCATION', 'run shredding only on specified location. Implies --skip staging,enrich,archive_raw,archive_enriched,analyze,rdb_load') { |config|
-              options[:process_shred_location] = config
-              options[:skip] = %w(staging shred archive_raw archive_enriched analyze)
-            }
           end,
           'generate emr-config' => OptionParser.new do |opts|
             opts.banner = 'Usage: generate emr-config [options]'
