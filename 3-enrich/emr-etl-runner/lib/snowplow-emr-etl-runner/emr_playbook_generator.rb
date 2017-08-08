@@ -33,13 +33,12 @@ module Snowplow
         Iglu::SchemaKey.parse_key("iglu:com.snowplowanalytics.dataflowrunner/PlaybookConfig/avro/#{version}")
       end
 
-      Contract ConfigHash, Bool, ArrayOf[String], String, ArrayOf[String] => Hash
-      def create_datum(config, debug, skip, resolver, enrichments)
-        enrich = not(skip.include?('enrich'))
-        shred = not(skip.include?('shred'))
-        s3distcp = not(skip.include?('s3distcp'))
-        elasticsearch = not(skip.include?('elasticsearch'))
-        archive_raw = not(skip.include?('archive_raw'))
+      Contract ConfigHash, Bool, Maybe[String], String, ArrayOf[String] => Hash
+      def create_datum(config, debug, resume_from, resolver, enrichments)
+        staging = resume_from.nil?
+        enrich = resume_from.nil? or resume_from == 'enrich'
+        shred = resume_from.nil? or [ 'enrich', 'shred' ].include?(resume_from)
+        es = resume_from.nil? or [ 'enrich', 'shred', 'elasticsearch' ].include?(resume_from)
 
         {
           "region" => config[:aws][:emr][:region],
@@ -48,17 +47,14 @@ module Snowplow
             "secretAccessKey" => config[:aws][:secret_access_key]
           },
           "steps" =>
-            get_steps(config, debug, enrich, shred, s3distcp, elasticsearch, archive_raw,
-              resolver, enrichments)
+            get_steps(config, debug, staging, enrich, shred, es, resolver, enrichments)
         }
       end
 
       private
 
-      Contract ConfigHash, Bool, Bool, Bool, Bool, Bool, Bool,
-        String, ArrayOf[String] => ArrayOf[Hash]
-      def get_steps(config, debug, enrich, shred, s3distcp, elasticsearch, archive_raw,
-          resolver, enrichments)
+      Contract ConfigHash, Bool, Bool, Bool, Bool, Bool, String, ArrayOf[String] => ArrayOf[Hash]
+      def get_steps(config, debug, staging, enrich, shred, es, resolver, enrichments)
         steps = []
 
         if debug
@@ -87,13 +83,13 @@ module Snowplow
 
         csbe = config[:aws][:s3][:buckets][:enriched]
         enrich_final_output = enrich ? partition_by_run(csbe[:good], run_id) : csbe[:good]
-        enrich_step_output = s3distcp ? 'hdfs:///local/snowplow/enriched-events/' : enrich_final_output
+        enrich_step_output = 'hdfs:///local/snowplow/enriched-events/'
 
         collector_format = config[:collectors][:format]
 
         if enrich
           etl_tstamp = (run_tstamp.to_f * 1000).to_i.to_s
-          steps += get_enrich_steps(config, legacy, s3_endpoint, collector_format, s3distcp,
+          steps += get_enrich_steps(config, legacy, s3_endpoint, collector_format,
             assets[:enrich], enrich_step_output, enrich_final_output, run_id, etl_tstamp, resolver,
             enrichments)
         end
@@ -103,7 +99,7 @@ module Snowplow
             enrich_step_output, enrich_final_output, run_id, resolver)
         end
 
-        if elasticsearch
+        if es
           steps += get_es_steps(config, enrich, shred, assets[:elasticsearch], run_id)
         end
 
@@ -168,9 +164,9 @@ module Snowplow
         steps
       end
 
-      Contract ConfigHash, Bool, String, Bool, Bool, String,
+      Contract ConfigHash, Bool, String, Bool, String,
         String, String, String, String => ArrayOf[Hash]
-      def get_shred_steps(config, legacy, s3_endpoint, s3distcp, enrich, jar,
+      def get_shred_steps(config, legacy, s3_endpoint, enrich, jar,
           enrich_step_output, enrich_final_output, run_id, resolver)
         steps = []
 
@@ -178,9 +174,9 @@ module Snowplow
 
         csbs = config[:aws][:s3][:buckets][:shredded]
         shred_final_output = partition_by_run(csbs[:good], run_id)
-        shred_step_output = s3distcp ? 'hdfs:///local/snowplow/shredded-events/' : shred_final_output
+        shred_step_output = 'hdfs:///local/snowplow/shredded-events/'
 
-        if s3distcp and !enrich
+        if !enrich
           steps << get_s3distcp_step(legacy, 'S3DistCp: enriched S3 -> HDFS',
             enrich_final_output, enrich_step_output, s3_endpoint, [ '--srcPattern', part_regex ])
         end
@@ -196,17 +192,15 @@ module Snowplow
           [ '--iglu_config', Base64.strict_encode64(resolver) ]
         )
 
-        if s3distcp
-          output_codec = output_codec_from_compression_format(config[:enrich][:output_compression])
-          steps << get_s3distcp_step(legacy, 'S3DistCp: shredded HDFS -> S3', shred_step_output,
-            shred_final_output, s3_endpoint, [ '--srcPattern', part_regex ] + output_codec)
-        end
+        output_codec = output_codec_from_compression_format(config[:enrich][:output_compression])
+        steps << get_s3distcp_step(legacy, 'S3DistCp: shredded HDFS -> S3', shred_step_output,
+          shred_final_output, s3_endpoint, [ '--srcPattern', part_regex ] + output_codec)
         steps
       end
 
-      Contract ConfigHash, Bool, String, String, Bool, String,
+      Contract ConfigHash, Bool, String, String, String,
         String, String, String, String, String, ArrayOf[String] => ArrayOf[Hash]
-      def get_enrich_steps(config, legacy, s3_endpoint, collector_format, s3distcp, jar,
+      def get_enrich_steps(config, legacy, s3_endpoint, collector_format, jar,
           enrich_step_output, enrich_final_output, run_id, etl_tstamp, resolver, enrichments)
         steps = []
 
@@ -242,13 +236,11 @@ module Snowplow
           ]
         )
 
-        if s3distcp
-          output_codec = output_codec_from_compression_format(config[:enrich][:output_compression])
-          steps << get_s3distcp_step(legacy, 'S3DistCp: enriched HDFS -> S3', enrich_step_output,
-            enrich_final_output, s3_endpoint, [ '--srcPattern', '.*part-.*' ] + output_codec)
-          steps << get_s3distcp_step(legacy, 'S3DistCp: enriched HDFS _SUCCESS -> S3',
-            enrich_step_output, enrich_final_output, s3_endpoint, [ '--srcPattern', '.*_SUCCESS' ])
-        end
+        output_codec = output_codec_from_compression_format(config[:enrich][:output_compression])
+        steps << get_s3distcp_step(legacy, 'S3DistCp: enriched HDFS -> S3', enrich_step_output,
+          enrich_final_output, s3_endpoint, [ '--srcPattern', '.*part-.*' ] + output_codec)
+        steps << get_s3distcp_step(legacy, 'S3DistCp: enriched HDFS _SUCCESS -> S3',
+          enrich_step_output, enrich_final_output, s3_endpoint, [ '--srcPattern', '.*_SUCCESS' ])
 
         steps
       end
