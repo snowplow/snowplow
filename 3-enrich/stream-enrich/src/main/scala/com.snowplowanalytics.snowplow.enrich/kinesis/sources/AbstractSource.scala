@@ -22,7 +22,7 @@ package kinesis
 package sources
 
 // Java
-import java.beans.Introspector
+import java.beans.{IntrospectionException, PropertyDescriptor}
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
@@ -174,13 +174,13 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
     }.mkString("\t")
   }
 
-  def getProprertyValue(ee: EnrichedEvent, property: String): String =
-    Introspector
-      .getBeanInfo(ee.getClass)
-      .getPropertyDescriptors
-      .find(_.getName == property)
-      .map(p => String.valueOf(p.getReadMethod.invoke(ee)))
-      .getOrElse(UUID.randomUUID().toString)
+  def getProprertyValue(ee: EnrichedEvent, property: String): String = {
+    try
+      String.valueOf(new PropertyDescriptor(property, ee.getClass).getReadMethod.invoke(ee))
+    catch {
+      case i: IntrospectionException => UUID.randomUUID().toString
+    }
+  }
 
   /**
    * Convert incoming binary Thrift records to lists of enriched events
