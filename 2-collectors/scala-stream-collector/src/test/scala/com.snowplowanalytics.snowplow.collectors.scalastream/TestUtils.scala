@@ -24,6 +24,7 @@ object TestUtils {
     port = 8080,
     p3p = P3PConfig("/w3c/p3p.xml", "NOI DSP COR NID PSA OUR IND COM NAV STA"),
     cookie = CookieConfig(true, "sp", 365.days, None),
+    cookieBounce = CookieBounceConfig(false, "bounce", "new-nuid"),
     sink = "stdout",
     streams = StreamsConfig(
       good = "good",

@@ -22,7 +22,6 @@ import scala.collection.JavaConverters._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
 import org.apache.commons.codec.binary.Base64
-import org.apache.thrift.TSerializer
 import org.slf4j.LoggerFactory
 import scalaz._
 
@@ -83,21 +82,37 @@ class CollectorService(
     pixelExpected: Boolean,
     contentType: Option[ContentType] = None
   ): (HttpResponse, List[Array[Byte]]) = {
-    val (ipAddress, partitionKey) = getIpAndPartitionKey(ip, config.streams.useIpAddressAsPartitionKey)
-    val nuid = getNetworkUserId(request, cookie)
+    val queryParams = Uri.Query(queryString).toMap
+
+    val (ipAddress, partitionKey) = ipAndPartitionKey(ip, config.streams.useIpAddressAsPartitionKey)
+
+    val redirect = path.startsWith("/r/")
+
+    val nuidOpt = networkUserId(request, cookie)
+    val bouncing = queryParams.get(config.cookieBounce.name).isDefined
+    // we bounce if it's enabled and we couldn't retrieve the nuid and we're not already bouncing
+    val bounce = config.cookieBounce.enabled && nuidOpt.isEmpty && !bouncing &&
+      pixelExpected && !redirect
+    val nuid = nuidOpt.getOrElse {
+      if (bouncing) config.cookieBounce.fallbackNetworkUserId
+      else UUID.randomUUID().toString
+    }
+
     val ct = contentType.map(_.value.toLowerCase)
     val event = buildEvent(
       queryString, body, path, userAgent, refererUri, hostname, ipAddress, request, nuid, ct)
-    val sinkResponses = sinkEvent(event, partitionKey)
+    // we don't store events in case we're bouncing
+    val sinkResponses = if (!bounce) sinkEvent(event, partitionKey) else Nil
 
-    val headers = getCookieHeader(config.cookieConfig, nuid) ++ List(
-      RawHeader("P3P", "policyref=\"%s\", CP=\"%s\"".format(config.p3p.policyRef, config.p3p.CP)),
-      getAccessControlAllowOriginHeader(request),
-      `Access-Control-Allow-Credentials`(true)
-    )
+    val headers = bounceLocationHeader(queryParams, request.uri, config.cookieBounce.name, bounce) ++
+      cookieHeader(config.cookieConfig, nuid) ++ List(
+        RawHeader("P3P", "policyref=\"%s\", CP=\"%s\"".format(config.p3p.policyRef, config.p3p.CP)),
+        accessControlAllowOriginHeader(request),
+        `Access-Control-Allow-Credentials`(true)
+      )
 
-    val (httpResponse, badRedirectResponses) =
-      buildHttpResponse(event, partitionKey, queryString, path, headers.toList, pixelExpected)
+    val (httpResponse, badRedirectResponses) = buildHttpResponse(
+      event, partitionKey, queryParams, headers.toList, redirect, pixelExpected, bounce)
     (httpResponse, badRedirectResponses ++ sinkResponses)
   }
 
@@ -109,7 +124,7 @@ class CollectorService(
   override def preflightResponse(request: HttpRequest): HttpResponse =
     HttpResponse()
       .withHeaders(List(
-        getAccessControlAllowOriginHeader(request),
+        accessControlAllowOriginHeader(request),
         `Access-Control-Allow-Credentials`(true),
         `Access-Control-Allow-Headers`("Content-Type")
       ))
@@ -149,7 +164,7 @@ class CollectorService(
     refererUri.foreach(e.refererUri = _)
     e.hostname = hostname
     e.networkUserId = networkUserId
-    e.headers = (getHeaders(request) ++ contentType).asJava
+    e.headers = (headers(request) ++ contentType).asJava
     contentType.foreach(e.contentType = _)
     e
   }
@@ -177,43 +192,47 @@ class CollectorService(
   def buildHttpResponse(
     event: CollectorPayload,
     partitionKey: String,
-    queryString: String,
-    path: String,
+    queryParams: Map[String, String],
     headers: List[HttpHeader],
-    pixelExpected: Boolean
+    redirect: Boolean,
+    pixelExpected: Boolean,
+    bounce: Boolean
   ): (HttpResponse, List[Array[Byte]]) =
-    if (path.startsWith("/r/")) {
-      val (r, l) = buildRedirectHttpResponse(event, partitionKey, queryString)
+    if (redirect) {
+      val (r, l) = buildRedirectHttpResponse(event, partitionKey, queryParams)
       (r.withHeaders(r.headers ++ headers), l)
     } else if (sinks.good.getType == Kinesis && KinesisSink.shuttingDown) {
       logger.warn(s"Kinesis sink shutting down, cannot process request")
       // So that the tracker knows the request failed and can try to resend later
-      (HttpResponse(404, entity = "404 not found"), Nil)
-    } else ((if (pixelExpected) {
-      HttpResponse(entity = HttpEntity(
+      (HttpResponse(StatusCodes.NotFound, entity = "404 not found"), Nil)
+    } else {
+      (buildUsualHttpResponse(pixelExpected, bounce).withHeaders(headers), Nil)
+    }
+
+  /** Builds the appropriate http response when not dealing with click redirects. */
+  def buildUsualHttpResponse(pixelExpected: Boolean, bounce: Boolean): HttpResponse =
+    (pixelExpected, bounce) match {
+      case (true, true)  => HttpResponse(StatusCodes.Found)
+      case (true, false) => HttpResponse(entity = HttpEntity(
         contentType = ContentType(MediaTypes.`image/gif`),
         bytes = CollectorService.pixel))
-    } else {
       // See https://github.com/snowplow/snowplow-javascript-tracker/issues/482
-      HttpResponse(entity = "ok")
-    }).withHeaders(headers), Nil)
+      case _             => HttpResponse(entity = "ok")
+    }
 
   /** Builds the appropriate http response when dealing with click redirects. */
   def buildRedirectHttpResponse(
     event: CollectorPayload,
     partitionKey: String,
-    queryString: String
-  ): (HttpResponse, List[Array[Byte]]) = {
-    val serializer = SplitBatch.ThriftSerializer.get()
-    Uri.Query(queryString).toMap.get("u") match {
-      case Some(target) => (HttpResponse(302).withHeaders(`Location`(target)), Nil)
+    queryParams: Map[String, String]
+  ): (HttpResponse, List[Array[Byte]]) =
+    queryParams.get("u") match {
+      case Some(target) => (HttpResponse(StatusCodes.Found).withHeaders(`Location`(target)), Nil)
       case None =>
-        val serialized = new String(serializer.serialize(event))
-        val badRow = createBadRow(event, "Redirect failed due to lack of u parameter", serializer)
+        val badRow = createBadRow(event, "Redirect failed due to lack of u parameter")
         (HttpResponse(StatusCodes.BadRequest),
           sinks.bad.storeRawEvents(List(badRow), partitionKey))
     }
-  }
 
   /**
    * Builds a cookie header with the network user id as value.
@@ -221,7 +240,7 @@ class CollectorService(
    * @param networkUserId value of the cookie
    * @return the build cookie wrapped in a header
    */
-  def getCookieHeader(
+  def cookieHeader(
     cookieConfig: Option[CookieConfig],
     networkUserId: String
   ): Option[HttpHeader] =
@@ -236,8 +255,22 @@ class CollectorService(
       `Set-Cookie`(responseCookie)
     }
 
+  /** Build a location header redirecting to itself to check if third-party cookies are blocked. */
+  def bounceLocationHeader(
+    queryParams: Map[String, String],
+    uri: Uri,
+    cookieBounceName: String,
+    bounce: Boolean
+  ): Option[HttpHeader] =
+    if (bounce) {
+      val redirectUri = uri.withQuery(Uri.Query(queryParams + (cookieBounceName -> "true")))
+      Some(`Location`(redirectUri))
+    } else {
+      None
+    }
+
   /** Retrieves all headers from the request except Remote-Address and Raw-Requet-URI */
-  def getHeaders(request: HttpRequest): Seq[String] = request.headers.flatMap {
+  def headers(request: HttpRequest): Seq[String] = request.headers.flatMap {
     case _: `Remote-Address` | _: `Raw-Request-URI` => None
     case other => Some(other.toString)
   }
@@ -248,7 +281,7 @@ class CollectorService(
    * @param ipPartitionKey Whether to use the ip as a partition key or a random UUID
    * @return a tuple of ip (unknown if it couldn't be extracted) and partition key
    */
-  def getIpAndPartitionKey(
+  def ipAndPartitionKey(
     remoteAddress: RemoteAddress, ipAsPartitionKey: Boolean
   ): (String, String) =
     remoteAddress.toOption.map(_.getHostAddress) match {
@@ -257,16 +290,14 @@ class CollectorService(
     }
 
   /**
-   * Gets the network user id from the query string or the request cookie. If neither of those are
-   * present, the result is a random UUID.
+   * Gets the network user id from the query string or the request cookie.
    * @param request Http request made
    * @param requestCookie cookie associated to the Http request
    * @return a network user id
    */
-  def getNetworkUserId(request: HttpRequest, requestCookie: Option[HttpCookie]): String =
+  def networkUserId(request: HttpRequest, requestCookie: Option[HttpCookie]): Option[String] =
     request.uri.query().get("nuid")
       .orElse(requestCookie.map(_.value))
-      .getOrElse(UUID.randomUUID.toString)
 
   /**
    * Creates an Access-Control-Allow-Origin header which specifically allows the domain which made
@@ -274,19 +305,18 @@ class CollectorService(
    * @param request Incoming request
    * @return Header allowing only the domain which made the request or everything
    */
-  def getAccessControlAllowOriginHeader(request: HttpRequest): HttpHeader =
-    `Access-Control-Allow-Origin`(request.headers.find(_ match {
+  def accessControlAllowOriginHeader(request: HttpRequest): HttpHeader =
+    `Access-Control-Allow-Origin`(request.headers.find {
       case `Origin`(_) => true
       case _ => false
-    }) match {
+    } match {
       case Some(`Origin`(origin)) => HttpOriginRange.Default(origin)
       case _ => HttpOriginRange.`*`
     })
 
   /** Puts together a bad row ready for sinking */
-  private def createBadRow(
-      event: CollectorPayload, message: String, serializer: TSerializer): Array[Byte] =
-    BadRow(new String(serializer.serialize(event)), NonEmptyList(message))
+  private def createBadRow(event: CollectorPayload, message: String): Array[Byte] =
+    BadRow(new String(SplitBatch.ThriftSerializer.get().serialize(event)), NonEmptyList(message))
       .toCompactJson
       .getBytes("UTF-8")
 }
