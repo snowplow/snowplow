@@ -42,6 +42,18 @@ collector {
     domain = "{{cookieDomain}}"
   }
 
+  # When enabled and the cookie specified above is missing, performs a redirect to itself to check
+  # if third-party cookies are blocked using the specified name. If they are indeed blocked,
+  # fallbackNetworkId is used instead of generating a new random one.
+  cookieBounce {
+    enabled = false
+    # The name of the request parameter which will be used on redirects checking that third-party
+    # cookies work.
+    name = "n3pc"
+    # Network user id to fallback to when third-party cookies are blocked.
+    fallbackNetworkUserId = "00000000-0000-4000-A000-000000000000"
+  }
+
   # Sinks currently supported are:
   # 'kinesis' for writing Thrift-serialized records to a Kinesis stream
   # 'kafka' for writing Thrift-serialized records to kafka
