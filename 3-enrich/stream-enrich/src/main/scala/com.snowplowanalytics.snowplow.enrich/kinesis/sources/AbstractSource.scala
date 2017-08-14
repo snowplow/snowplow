@@ -175,10 +175,15 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
   }
 
   def getProprertyValue(ee: EnrichedEvent, property: String): String = {
-    try
-      String.valueOf(new PropertyDescriptor(property, ee.getClass).getReadMethod.invoke(ee))
-    catch {
-      case i: IntrospectionException => UUID.randomUUID().toString
+    property match {
+      case "event_id" => ee.event_id
+      case "event_fingerprint" => ee.event_fingerprint
+      case "domain_userid" => ee.domain_userid
+      case "network_userid" => ee.network_userid
+      case "user_ipaddress" => ee.user_ipaddress
+      case "domain_sessionid" => ee.domain_sessionid
+      case "user_fingerprint" => ee.user_fingerprint
+      case _ => UUID.randomUUID().toString
     }
   }
 
