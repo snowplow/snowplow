@@ -80,13 +80,8 @@ class KafkaSink(config: KinesisEnrichConfig,
     true // Always return true as our flush does nothing
   }
 
-  /**
-   * Blocking method to send all stored records to Kafka
-   * For Kafka this method doesn't do anything (we have
-   * handed this off to the KafkaProducer).
-   */
-  def flush() {
-  }
+  /** Blocking method to send all buffered records to Kafka. */
+  def flush(): Unit = kafkaProducer.flush()
 
   private def createProducer(config: KinesisEnrichConfig): KafkaProducer[String, String] = {
     val properties = createProperties(config)
