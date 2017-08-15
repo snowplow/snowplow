@@ -142,7 +142,10 @@ case class WeatherEnrichment(apiKey: String, cacheSize: Int, geoPrecision: Int, 
    * @return optional weather stamp
    */
   private def getCachedOrRequest(latitude: Float, longitude: Float, timestamp: Int): Validation[String, Weather] =
-    client.getCachedOrRequest(latitude, longitude, timestamp).validation.fold(_.toString.failure, _.success)
+    client.getCachedOrRequest(latitude, longitude, timestamp) match {
+      case Right(w) => w.success
+      case Left(e)  => e.toString.failure
+    }
 
   /**
    * Add Iglu URI to JSON Object

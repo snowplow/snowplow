@@ -42,13 +42,12 @@ class WeatherEnrichmentSpec extends Specification  { def is =
   s2"""
   This is a specification to test the WeatherEnrichment
   Fail event for null time          $e1
-  Fail event for invalid key        $e5
-  Fail with invalid cache size      $e3
+  Fail event for invalid key        $e4
   Weather enrichment client is lazy $e2
-  Extract weather stamp             $e4
-  Extract humidity                  $e6
-  Extract configuration             $e7
-  Check time stamp transformation   $e8
+  Extract weather stamp             $e3
+  Extract humidity                  $e5
+  Extract configuration             $e6
+  Check time stamp transformation   $e7
   """
 
   lazy val validAppKey = sys.env.get(OwmApiKey).getOrElse(throw new IllegalStateException(s"No ${OwmApiKey} environment variable found, test should have been skipped"))
@@ -74,26 +73,18 @@ class WeatherEnrichmentSpec extends Specification  { def is =
   def e2 = WeatherEnrichment("KEY", 0, 1, "history.openweathermap.org", 5) must not(throwA[IllegalArgumentException])
 
   def e3 = {
-    val enr = WeatherEnrichment("KEY", 0, 1, "history.openweathermap.org", 5)
-    val stamp = enr.getWeatherContext(Option(validEvent.lat), Option(validEvent.lon), Option(validEvent.time))
-    stamp.toEither must beLeft.like {
-      case e => { e must contain("IllegalArgumentException") }
-    }
-  }
-
-  def e4 = {
     val enr = WeatherEnrichment(validAppKey, 5200, 1, "history.openweathermap.org", 10)
     val stamp = enr.getWeatherContext(Option(validEvent.lat), Option(validEvent.lon), Option(validEvent.time))
     stamp.toEither must beRight
   }
 
-  def e5 = {
+  def e4 = {
     val enr = WeatherEnrichment("KEY", 5200, 1, "history.openweathermap.org", 10)
     val stamp = enr.getWeatherContext(Option(validEvent.lat), Option(validEvent.lon), Option(validEvent.time))
     stamp.toEither must beLeft.like { case e => e must contain("AuthorizationError") }
   }
 
-  def e6 = {
+  def e5 = {
     val enr = WeatherEnrichment(validAppKey, 5200, 1, "history.openweathermap.org", 15)
     val stamp = enr.getWeatherContext(Option(validEvent.lat), Option(validEvent.lon), Option(validEvent.time))
     stamp.toEither must beRight.like {
@@ -104,7 +95,7 @@ class WeatherEnrichmentSpec extends Specification  { def is =
     }
   }
 
-  def e7 = {
+  def e6 = {
     val configJson = parse(
       """
         |{
@@ -124,7 +115,7 @@ class WeatherEnrichmentSpec extends Specification  { def is =
     config.toEither must beRight(WeatherEnrichment(apiKey = "{{KEY}}", geoPrecision = 1, cacheSize = 5100, apiHost = "history.openweathermap.org", timeout = 5))
   }
 
-  def e8 = {
+  def e7 = {
     implicit val formats = DefaultFormats
     val enr = WeatherEnrichment(validAppKey, 2, 1, "history.openweathermap.org", 15)
     val stamp = enr.getWeatherContext(Option(validEvent.lat), Option(validEvent.lon), Option(validEvent.time))
