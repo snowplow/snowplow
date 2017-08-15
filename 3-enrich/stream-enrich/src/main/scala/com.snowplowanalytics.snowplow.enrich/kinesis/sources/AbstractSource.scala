@@ -204,14 +204,11 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
       canonicalInput)
     processedEvents.map(validatedMaybeEvent => {
       validatedMaybeEvent match {
-        case Success(co) => (tabSeparateEnrichedEvent(co), if (config.useIpAddressAsPartitionKey) {
-            co.user_ipaddress
-          } else {
+        case Success(co) => (tabSeparateEnrichedEvent(co),
             config.partitionKey match {
               case Some(null) => null
               case Some(p) => getProprertyValue(co, config.partitionKey.get)
               case None => UUID.randomUUID().toString
-            }
         }).success
         case Failure(errors) => {
           val line = new String(Base64.encodeBase64(binaryData), UTF_8)

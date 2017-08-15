@@ -70,7 +70,7 @@ enrich {
       enriched: "{{enrichStreamsOutEnriched}}"
       bad: "{{enrichStreamsOutBad}}"
 
-      # See https://github.com/snowplow/snowplow/wiki/canonical-event-model for possible partition keys
+      # Possible partition keys: event_id, event_fingerprint, domain_userid, network_userid, domain_sessionid, user_fingerprint
       # If "partitionKey" property is empty, the partition key will be null
       partitionKey: "{{partitionKeyName}}"
 
