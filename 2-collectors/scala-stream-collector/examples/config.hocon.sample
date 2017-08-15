@@ -102,6 +102,9 @@ collector {
 
     kafka {
       brokers = "{{kafkaBrokers}}"
+
+      # Number of retries to perform before giving up on sending a record
+      retries = 0
     }
 
     # Incoming events are stored in a buffer before being sent to Kinesis/Kafka.
