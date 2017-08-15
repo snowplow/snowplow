@@ -53,7 +53,7 @@ object Dependencies {
     val json4s           = "3.2.11"
     val igluClient       = "0.5.0"
     val scalaForex       = "0.5.0"
-    val scalaWeather     = "0.2.0"
+    val scalaWeather     = "0.3.0"
     val scalaj           = "2.3.0"
     val gatlingJsonpath  = "0.6.4"
     // Scala (test only)
