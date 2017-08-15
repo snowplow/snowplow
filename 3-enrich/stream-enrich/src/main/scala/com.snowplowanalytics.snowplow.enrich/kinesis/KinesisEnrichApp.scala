@@ -377,5 +377,12 @@ class KinesisEnrichConfig(config: Config) {
   val minBackoff = backoffPolicy.getLong("minBackoff")
   val maxBackoff = backoffPolicy.getLong("maxBackoff")
 
-  val useIpAddressAsPartitionKey = outStreams.hasPath("useIpAddressAsPartitionKey") && outStreams.getBoolean("useIpAddressAsPartitionKey")
+  val partitionKey:Option[String] = if (outStreams.hasPath("partitionKey") && outStreams.getString("partitionKey").isEmpty) {
+    Some(null)
+  } else if (outStreams.hasPath("partitionKey")) {
+    Some(outStreams.getString("partitionKey"))
+  } else {
+    None
+  }
+
 }

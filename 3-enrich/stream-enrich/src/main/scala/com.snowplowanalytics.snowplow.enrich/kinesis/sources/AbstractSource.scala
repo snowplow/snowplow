@@ -22,6 +22,7 @@ package kinesis
 package sources
 
 // Java
+import java.beans.{IntrospectionException, PropertyDescriptor}
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
@@ -173,6 +174,19 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
     }.mkString("\t")
   }
 
+  def getProprertyValue(ee: EnrichedEvent, property: String): String = {
+    property match {
+      case "event_id" => ee.event_id
+      case "event_fingerprint" => ee.event_fingerprint
+      case "domain_userid" => ee.domain_userid
+      case "network_userid" => ee.network_userid
+      case "user_ipaddress" => ee.user_ipaddress
+      case "domain_sessionid" => ee.domain_sessionid
+      case "user_fingerprint" => ee.user_fingerprint
+      case _ => UUID.randomUUID().toString
+    }
+  }
+
   /**
    * Convert incoming binary Thrift records to lists of enriched events
    *
@@ -180,6 +194,7 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
    * @return List containing successful or failed events, each with a
    *         partition key
    */
+
   def enrichEvents(binaryData: Array[Byte]): List[Validation[(String, String), (String, String)]] = {
     val canonicalInput: ValidatedMaybeCollectorPayload = ThriftLoader.toCollectorPayload(binaryData)
     val processedEvents: List[ValidationNel[String, EnrichedEvent]] = EtlPipeline.processEvents(
@@ -189,11 +204,12 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
       canonicalInput)
     processedEvents.map(validatedMaybeEvent => {
       validatedMaybeEvent match {
-        case Success(co) => (tabSeparateEnrichedEvent(co), if (config.useIpAddressAsPartitionKey) {
-            co.user_ipaddress
-          } else {
-            UUID.randomUUID.toString
-          }).success
+        case Success(co) => (tabSeparateEnrichedEvent(co),
+            config.partitionKey match {
+              case Some(null) => null
+              case Some(p) => getProprertyValue(co, config.partitionKey.get)
+              case None => UUID.randomUUID().toString
+        }).success
         case Failure(errors) => {
           val line = new String(Base64.encodeBase64(binaryData), UTF_8)
           (BadRow(line, errors).toCompactJson -> Random.nextInt.toString).fail
