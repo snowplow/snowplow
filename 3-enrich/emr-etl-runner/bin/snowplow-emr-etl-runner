@@ -97,9 +97,6 @@ rescue runner::LockHeldError => e
 rescue runner::NoDataToProcessError => e
   puts "No logs to process: #{e.message}"
   exit 3
-# Special retval to flag previous pipeline is unfinished
-rescue runner::DirectoryNotEmptyError => e
-  exit 4
 # Catch any Snowplow error
 rescue runner::Error => e
   fatal.call(e)

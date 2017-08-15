@@ -336,11 +336,6 @@ module Snowplow
               )
             end
 
-          # Late check whether our enrichment directory is empty. We do an early check too
-          csbe_good_loc = Sluice::Storage::S3::Location.new(csbe[:good])
-          unless Sluice::Storage::S3::is_empty?(s3, csbe_good_loc)
-            raise DirectoryNotEmptyError, "Cannot safely add enrichment step to jobflow, #{csbe_good_loc} is not empty"
-          end
           @jobflow.add_step(enrich_step)
 
           # We need to copy our enriched events from HDFS back to S3
@@ -419,11 +414,6 @@ module Snowplow
               )
             end
 
-          # Late check whether our target directory is empty
-          csbs_good_loc = Sluice::Storage::S3::Location.new(csbs[:good])
-          unless Sluice::Storage::S3::is_empty?(s3, csbs_good_loc)
-            raise DirectoryNotEmptyError, "Cannot safely add shredding step to jobflow, #{csbs_good_loc} is not empty"
-          end
           @jobflow.add_step(shred_step)
 
           # We need to copy our shredded types from HDFS back to S3
