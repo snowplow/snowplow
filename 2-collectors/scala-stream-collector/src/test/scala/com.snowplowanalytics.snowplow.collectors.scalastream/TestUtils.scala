@@ -36,7 +36,7 @@ object TestUtils {
         aws = AWSConfig("cpf", "cpf"),
         backoffPolicy = BackoffPolicyConfig(3000, 60000)
       ),
-      kafka = KafkaConfig("localhost:9092"),
+      kafka = KafkaConfig("localhost:9092", 1),
       buffer = BufferConfig(4000000, 500, 60000)
     )
   )
