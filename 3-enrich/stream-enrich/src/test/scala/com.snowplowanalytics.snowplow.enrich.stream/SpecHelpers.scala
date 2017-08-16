@@ -257,7 +257,7 @@ object SpecHelpers {
               maxBackoff: 600000 # 5 minutes
             }
           }
-          app-name: SnowplowKinesisEnrich-${enrich.streams.in.raw}
+          app-name: SnowplowKinesisEnrich
           initial-position = "TRIM_HORIZON"
           region: "us-east-1"
         }
