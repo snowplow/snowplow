@@ -94,7 +94,7 @@ class KafkaSink(config: KinesisEnrichConfig,
     props.put("bootstrap.servers", config.kafkaBrokers)
     props.put("acks", "all")
     props.put("retries", "0") // TODO yech
-    props.put("batch.size", config.byteLimit.toString)
+    props.put("buffer.memory", config.byteLimit.toString)
     props.put("linger.ms", config.timeLimit.toString)
     props.put("key.serializer",
       "org.apache.kafka.common.serialization.StringSerializer")
