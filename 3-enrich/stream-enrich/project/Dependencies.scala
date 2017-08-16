@@ -34,7 +34,7 @@ object Dependencies {
     val slf4j                = "1.7.5"
     // Scala
     val scopt                = "3.6.0"
-    val scalaz7              = "7.0.0"
+    val scalaz7              = "7.0.9"
     val json4s               = "3.2.11"
     val snowplowRawEvent     = "0.1.0"
     val snowplowCommonEnrich = "0.24.0"
