@@ -1,3 +1,23 @@
+Release 91 Stonehenge (2017-08-17)
+----------------------------------
+EmrEtlRunner: use S3DistCp not Sluice for staging step (#276)
+EmrEtlRunner: add an S3DistCp step for the _SUCCESS file produced by RDB Shredder (#3137)
+EmrEtlRunner: add step to delete raw events from HDFS before shredding (#2545)
+EmrEtlRunner: use S3DistCp to move raw files from S3 to HDFS for all collector formats (#3136)
+EmrEtlRunner: add file- and Consul-based locking mechanism (#3352)
+EmrEtlRunner: move current behavior into a `run` command (#3104)
+EmrEtlRunner: add `lint` command which validates Iglu resolver and enrichments (#1946)
+EmrEtlRunner: add backend for a `generate` command (#3105)
+EmrEtlRunner: add --resume-from option (#3128)
+EmrEtlRunner: remove support for --start and --end flags (#3132)
+EmrEtlRunner: remove support for --process-enrich and --process-shred flags (#3365)
+EmrEtlRunner: handle run= sub-folders if resuming from shred (#2693)
+EmrEtlRunner: add "ongoing run" message on exit with return code 4 (#3129)
+EmrEtlRunner: add "no logs to process" message on exit with return code 3 (#2644)
+EmrEtlRunner: retrieve RDB loader logs only when it failed or the entire run was successful (#3361)
+EmrEtlRunner: bump rspec to 3.5.0 (#3116)
+EmrEtlRunner: bump to 0.27.0 (#3358)
+
 Release 90 Lascaux (2017-07-26)
 -------------------------------
 Common: update CI/CD to push S3 artifacts to all regional Hosted Assets buckets (#3242)
