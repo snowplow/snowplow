@@ -247,10 +247,11 @@ class KinesisSink(provider: AWSCredentialsProvider,
             log.error(s"Retrying all failed records in $backoffTime milliseconds...")
 
             val err = s"Failed to send ${failurePairs.size} events"
-            val putSize: Long = unsentRecords.foldLeft(0)((a,b) => a + b._1.capacity)
+            val putSize: Long = unsentRecords.foldLeft(0L)((a,b) => a + b._1.capacity)
 
             tracker match {
-              case Some(t) => SnowplowTracking.sendFailureEvent(t, "PUT Failure", err, name, "snowplow-stream-enrich", attemptNumber, putSize)
+              case Some(t) => SnowplowTracking.sendFailureEvent(t, "PUT Failure", err, name,
+                "snowplow-stream-enrich", attemptNumber.toLong, putSize)
               case _       => None
             }
 
@@ -264,10 +265,11 @@ class KinesisSink(provider: AWSCredentialsProvider,
             log.error(s"Writing failed.", f)
             log.error(s"  + Retrying in $backoffTime milliseconds...")
 
-            val putSize: Long = unsentRecords.foldLeft(0)((a,b) => a + b._1.capacity)
+            val putSize: Long = unsentRecords.foldLeft(0L)((a,b) => a + b._1.capacity)
 
             tracker match {
-              case Some(t) => SnowplowTracking.sendFailureEvent(t, "PUT Failure", f.toString, name, "snowplow-stream-enrich", attemptNumber, putSize)
+              case Some(t) => SnowplowTracking.sendFailureEvent(t, "PUT Failure", f.toString, name,
+                "snowplow-stream-enrich", attemptNumber.toLong, putSize)
               case _       => None
             }
 
@@ -299,7 +301,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
     badResponses.foldLeft(Map[String, (Long, String)]())((counts, r) => if (counts.contains(r.getErrorCode)) {
       counts + (r.getErrorCode -> (counts(r.getErrorCode)._1 + 1 -> r.getErrorMessage))
     } else {
-      counts + (r.getErrorCode -> (1, r.getErrorMessage))
+      counts + (r.getErrorCode -> ((1, r.getErrorMessage)))
     })
   }
 
@@ -315,5 +317,9 @@ class KinesisSink(provider: AWSCredentialsProvider,
    * @param lastBackoff The previous backoff time
    * @return Minimum of maxBackoff and a random number between minBackoff and three times lastBackoff
    */
-  private def getNextBackoff(lastBackoff: Long): Long = (minBackoff + randomGenerator.nextDouble() * (lastBackoff * 3 - minBackoff)).toLong.min(maxBackoff)
+  private def getNextBackoff(lastBackoff: Long): Long = {
+    val offset: Long = (randomGenerator.nextDouble() * (lastBackoff * 3 - minBackoff)).toLong
+    val sum: Long = minBackoff + offset
+    sum min maxBackoff
+  }
 }
