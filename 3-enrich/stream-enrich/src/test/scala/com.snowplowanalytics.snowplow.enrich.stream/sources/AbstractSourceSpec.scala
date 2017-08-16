@@ -16,22 +16,11 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow.enrich
-package stream
+package com.snowplowanalytics.snowplow.enrich.stream
 package sources
 
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// json4s
-import org.json4s.scalaz.JsonScalaz._
 import org.json4s._
-import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
-
-// Specs2
 import org.specs2.mutable.Specification
 
 class AbstractSourceSpec extends Specification {

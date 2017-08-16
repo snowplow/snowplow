@@ -17,60 +17,33 @@
  * governing permissions and limitations there under.
  */
 package com.snowplowanalytics
-package snowplow.enrich
+package snowplow
+package enrich
 package stream 
 package sources
 
-// Java
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
 
-// Amazon
-import com.amazonaws.auth._
-
-// Apache commons
-import org.apache.commons.codec.binary.Base64
-
-// Scala
 import scala.util.Random
 import scala.util.control.NonFatal
 
-// Scalaz
+import org.apache.commons.codec.binary.Base64
 import scalaz.{Sink => _, _}
 import Scalaz._
-
-// json4s
-import org.json4s.scalaz.JsonScalaz._
 import org.json4s.{ThreadLocal => _, _}
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
-
-// Joda-Time
 import org.joda.time.DateTime
 
-// Iglu
-import iglu.client.Resolver
-import iglu.client.validation.ProcessingMessageMethods._
-
-// Snowplow
-import sinks._
-import common.outputs.{
-  EnrichedEvent,
-  BadRow
-}
-import common.loaders.ThriftLoader
+import common.{EtlPipeline, ValidatedMaybeCollectorPayload}
 import common.enrichments.EnrichmentRegistry
-import common.enrichments.EnrichmentManager
-import common.enrichments.EventEnrichments
-import common.adapters.AdapterRegistry
-
-import common.ValidatedMaybeCollectorPayload
-import common.EtlPipeline
-import common.utils.JsonUtils
-
-// Tracker
-import com.snowplowanalytics.snowplow.scalatracker.Tracker
+import common.loaders.ThriftLoader
+import common.outputs.{EnrichedEvent, BadRow}
+import iglu.client.Resolver
+import scalatracker.Tracker
+import sinks._
 
 object AbstractSource {
 
@@ -135,7 +108,7 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
   /**
    * Never-ending processing loop over source stream.
    */
-  def run
+  def run(): Unit
 
   // Initialize a kinesis provider to use with a Kinesis source or sink.
   protected val kinesisProvider = config.credentialsProvider

@@ -16,14 +16,17 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich
+package com.snowplowanalytics
+package snowplow.enrich
 package stream
 
-// Java
 import java.io.File
 import java.net.URI
 
-// Amazon
+import sys.process._
+import scala.collection.JavaConverters._
+import scala.annotation.tailrec
+
 import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import com.amazonaws.services.dynamodbv2.model.ScanRequest
@@ -32,37 +35,17 @@ import com.amazonaws.services.dynamodbv2.document.DynamoDB
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.amazonaws.services.s3.model.GetObjectRequest
-
-// Logging
+import com.typesafe.config.{Config, ConfigFactory}
+import org.json4s.jackson.JsonMethods._
+import org.json4s.JsonDSL._
 import org.slf4j.LoggerFactory
-
-// Scala
-import sys.process._
-import scala.collection.JavaConverters._
-import scala.annotation.tailrec
-
-// Config
-import com.typesafe.config.{
-  Config,
-  ConfigFactory
-}
-
-// Scalaz
 import scalaz.{Sink => _, _}
 import Scalaz._
 
-// json4s
-import org.json4s.jackson.JsonMethods._
-import org.json4s.JsonDSL._
-
-// Iglu
-import com.snowplowanalytics.iglu.client.Resolver
-
-// Snowplow
+import iglu.client.Resolver
 import common.enrichments.EnrichmentRegistry
 import common.utils.JsonUtils
 import sources._
-import sinks._
 
 /**
  * The main entry point for Stream Enrich.
@@ -70,7 +53,6 @@ import sinks._
 object EnrichApp {
 
   lazy val log = LoggerFactory.getLogger(getClass())
-  import log.{error, debug, info, trace}
 
   val FilepathRegex = "^file:(.+)$".r
   val DynamoDBRegex = "^dynamodb:([^/]*)/([^/]*)/([^/]*)$".r
@@ -96,14 +78,14 @@ object EnrichApp {
         .action((r: String, c: EnrichConfig) => c.copy(resolver = r))
         .validate(_ match {
           case FilepathRegex(_) | DynamoDBRegex(_) => success
-          case _ => failure("Resolver doesn't match accepted uris: $regexMsg")
+          case _ => failure(s"Resolver doesn't match accepted uris: $regexMsg")
         })
       opt[String]("enrichments").optional().valueName("<enrichment directory uri>")
         .text(s"Directory of enrichment configuration JSONs, $regexMsg")
         .action((e: String, c: EnrichConfig) => c.copy(enrichmentsDir = Some(e)))
         .validate(_ match {
           case FilepathRegex(_) | DynamoDBRegex(_) => success
-          case _ => failure("Enrichments directory doesn't match accepted uris: $regexMsg")
+          case _ => failure(s"Enrichments directory doesn't match accepted uris: $regexMsg")
         })
     }
 
@@ -327,7 +309,7 @@ object EnrichApp {
       0
     } catch {
       case e: Exception => {
-        error(s"Error downloading ${uri}: ${e.toString}")
+        log.error(s"Error downloading ${uri}: ${e.toString}")
         1
       }
     }
