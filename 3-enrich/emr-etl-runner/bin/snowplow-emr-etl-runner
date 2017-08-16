@@ -99,6 +99,7 @@ rescue runner::NoDataToProcessError => e
   exit 3
 # Special retval to flag previous pipeline is unfinished
 rescue runner::DirectoryNotEmptyError => e
+  puts "There seems to be an ongoing run of EmrEtlRunner: #{e.message}"
   exit 4
 # Catch any Snowplow error
 rescue runner::Error => e
