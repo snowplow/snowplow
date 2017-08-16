@@ -25,11 +25,12 @@ import java.net.URI
 
 // Amazon
 import com.amazonaws.auth.AWSCredentialsProvider
+import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import com.amazonaws.services.dynamodbv2.model.ScanRequest
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import com.amazonaws.services.dynamodbv2.document.DynamoDB
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient
-import com.amazonaws.services.s3.AmazonS3Client
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder
+import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.amazonaws.services.s3.model.GetObjectRequest
 
 // Logging
@@ -219,8 +220,12 @@ object EnrichApp {
    */
   def lookupDynamoDBConfig(provider: AWSCredentialsProvider,
       region: String, table: String, key: String): String = {
-    val dynamoDBClient = new AmazonDynamoDBClient(provider)
-    dynamoDBClient.setEndpoint(s"https://dynamodb.${region}.amazonaws.com")
+    val dynamoDBClient = AmazonDynamoDBClientBuilder
+      .standard()
+      .withCredentials(provider)
+      .withEndpointConfiguration(
+        new EndpointConfiguration(region, s"https://dynamodb.${region}.amazonaws.com"))
+      .build()
     val dynamoDB = new DynamoDB(dynamoDBClient)
     val item = dynamoDB.getTable(table).getItem("id", key)
     item.getString("json")
@@ -270,8 +275,12 @@ object EnrichApp {
     provider: AWSCredentialsProvider,
     region: String, table: String, partialKey: String
   ): List[String] = {
-    val dynamoDBClient = new AmazonDynamoDBClient(provider)
-    dynamoDBClient.setEndpoint(s"https://dynamodb.${region}.amazonaws.com")
+    val dynamoDBClient = AmazonDynamoDBClientBuilder
+      .standard()
+      .withCredentials(provider)
+      .withEndpointConfiguration(
+        new EndpointConfiguration(region, s"https://dynamodb.${region}.amazonaws.com"))
+      .build()
 
     // Each scan can only return up to 1MB
     // See http://techtraits.com/cloud/nosql/2012/06/27/Amazon-DynamoDB--Understanding-Query-and-Scan-operations/
@@ -303,7 +312,10 @@ object EnrichApp {
    * @return the download result
    */
   def downloadFromS3(provider: AWSCredentialsProvider, uri: URI, outputFile: File): Int = {
-    val s3Client = new AmazonS3Client(provider)
+    val s3Client = AmazonS3ClientBuilder
+      .standard()
+      .withCredentials(provider)
+      .build()
     val bucket = uri.getHost
     val key = uri.getPath match { // Need to remove leading '/'
       case s if s.charAt(0) == '/' => s.substring(1)
