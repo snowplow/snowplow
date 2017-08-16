@@ -41,7 +41,7 @@ object Dependencies {
     val igluClient           = "0.4.0"
     val snowplowTracker      = "0.3.0"
     // Scala (test only)
-    val specs2               = "2.2.3"
+    val specs2               = "2.3.13"
     val scalacheck           = "1.10.0"
   }
 
