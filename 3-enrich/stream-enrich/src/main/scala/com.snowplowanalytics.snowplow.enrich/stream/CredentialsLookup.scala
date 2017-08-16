@@ -41,7 +41,7 @@ object CredentialsLookup {
         "access-key and secret-key must both be set to 'default', or neither"
       )
     } else if (isIam(a) && isIam(s)) {
-      new InstanceProfileCredentialsProvider()
+      InstanceProfileCredentialsProvider.getInstance()
     } else if (isIam(a) || isIam(s)) {
       throw new RuntimeException("access-key and secret-key must both be set to 'iam', or neither")
     } else if (isEnv(a) && isEnv(s)) {

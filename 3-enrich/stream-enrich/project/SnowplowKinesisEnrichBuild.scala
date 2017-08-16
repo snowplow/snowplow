@@ -28,7 +28,9 @@ object SnowplowStreamEnrichBuild extends Build {
     .settings(buildSettings: _*)
     .settings(
       libraryDependencies ++= Seq(
-        Libraries.awsSdk,
+        Libraries.kinesisSdk,
+        Libraries.dynamodbSdk,
+        Libraries.s3Sdk,
         Libraries.kinesisClient,
         Libraries.kafkaClients,
         Libraries.commonsCodec,
