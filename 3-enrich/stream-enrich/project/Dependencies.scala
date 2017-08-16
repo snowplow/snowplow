@@ -37,7 +37,7 @@ object Dependencies {
     val scalaz7              = "7.0.9"
     val json4s               = "3.2.11"
     val snowplowRawEvent     = "0.1.0"
-    val snowplowCommonEnrich = "0.24.0"
+    val snowplowCommonEnrich = "0.26.0"
     val igluClient           = "0.4.0"
     val snowplowTracker      = "0.3.0"
     // Scala (test only)
@@ -63,7 +63,7 @@ object Dependencies {
     val json4sJackson        = "org.json4s"            %% "json4s-jackson"            % V.json4s
     val snowplowRawEvent     = "com.snowplowanalytics" %  "snowplow-thrift-raw-event" % V.snowplowRawEvent
     val igluClient           = "com.snowplowanalytics" %% "iglu-scala-client"         % V.igluClient
-    val snowplowCommonEnrich = "com.snowplowanalytics" %  "snowplow-common-enrich"    % V.snowplowCommonEnrich
+    val snowplowCommonEnrich = "com.snowplowanalytics" %% "snowplow-common-enrich"    % V.snowplowCommonEnrich
     val snowplowTracker      = "com.snowplowanalytics" %% "snowplow-scala-tracker"    % V.snowplowTracker
     // Scala (test only)
     val specs2               = "org.specs2"            %% "specs2"                    % V.specs2         % "test"
