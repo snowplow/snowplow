@@ -25,27 +25,15 @@ import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets.UTF_8
 
 // Amazon
-import com.amazonaws.services.kinesis.model.ResourceNotFoundException
-import com.amazonaws.services.kinesis.model.PutRecordsResultEntry
+import com.amazonaws.services.kinesis.model._
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.auth.AWSCredentialsProvider
-import com.amazonaws.services.kinesis.AmazonKinesisClient
-import com.amazonaws.services.kinesis.AmazonKinesis
-import com.amazonaws.regions._
+import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
+import com.amazonaws.services.kinesis.AmazonKinesisClientBuilder
 
 // Scala
 import scala.util.control.NonFatal
 import scala.collection.JavaConverters._
-
-// Scalazon (for Kinesis interaction)
-import io.github.cloudify.scala.aws.kinesis.Client
-import io.github.cloudify.scala.aws.kinesis.Client.ImplicitExecution._
-import io.github.cloudify.scala.aws.kinesis.Definitions.{
-  Stream,
-  PutResult,
-  Record
-}
-import io.github.cloudify.scala.aws.kinesis.KinesisDsl._
 
 // Config
 import com.typesafe.config.Config
@@ -72,7 +60,6 @@ import com.snowplowanalytics.snowplow.scalatracker.Tracker
 class KinesisSink(provider: AWSCredentialsProvider,
     config: KinesisEnrichConfig, inputType: InputType.InputType, tracker: Option[Tracker]) extends ISink {
   private lazy val log = LoggerFactory.getLogger(getClass())
-  import log.{error, debug, info, trace}
 
   private val name = inputType match {
     case InputType.Good => config.enrichedOutStream
@@ -84,58 +71,34 @@ class KinesisSink(provider: AWSCredentialsProvider,
   private val randomGenerator = new java.util.Random()
 
   // explicitly create a client so we can configure the end point
-  val client = new AmazonKinesisClient(provider)
-  client.setEndpoint(config.streamEndpoint)
-  
-  // Create a Kinesis client for stream interactions.
-  private implicit val kinesis = Client.fromClient(client)
+  val client = AmazonKinesisClientBuilder
+    .standard()
+    .withCredentials(provider)
+    .withEndpointConfiguration(new EndpointConfiguration(config.streamEndpoint, config.streamRegion))
+    .build()
 
-  // The output stream for enriched and bad events.
-  private val stream = loadStream()
+  require(streamExists(name), s"Kinesis stream $name doesn't exist")
 
   /**
    * Check whether a Kinesis stream exists
-   *
    * @param name Name of the stream
-   * @param timeout How long to wait before timing out
    * @return Whether the stream exists
    */
-  def streamExists(name: String, timeout: Int = 60): Boolean = {
-
-    val exists: Boolean = try {
-      val streamDescribeFuture = for {
-        s <- Kinesis.stream(name).describe
-      } yield s
-
-      val description = Await.result(streamDescribeFuture, Duration(timeout, SECONDS))
-      description.isActive
-
+  def streamExists(name: String): Boolean = {
+    val exists = try {
+      val describeStreamResult = client.describeStream(name)
+      describeStreamResult.getStreamDescription.getStreamStatus == "ACTIVE"
     } catch {
       case rnfe: ResourceNotFoundException => false
     }
 
     if (exists) {
-      info(s"Stream $name exists and is active")
+      log.info(s"Stream $name exists and is active")
     } else {
-      error(s"Stream $name doesn't exist or is not active")
+      log.info(s"Stream $name doesn't exist or is not active")
     }
 
     exists
-  }
-
-  /**
-   * Loads a Kinesis stream if it exists
-   *
-   * @return The stream
-   */
-  def loadStream(): Stream = {
-    if (streamExists(name)) {
-      Kinesis.stream(name)
-    } else {
-      error(s"Cannot write because stream $name does not exist or is not active")
-      System.exit(1)
-      throw new RuntimeException("System.exit should never fail")
-    }
   }
 
   val ByteThreshold = config.byteLimit
@@ -160,10 +123,10 @@ class KinesisSink(provider: AWSCredentialsProvider,
      * Finish work on the current batch and create a new one.
      */
     def sealBatch() {
-        completeBatches = currentBatch :: completeBatches
-        eventCount = 0
-        byteCount = 0
-        currentBatch = Nil
+      completeBatches = currentBatch :: completeBatches
+      eventCount = 0
+      byteCount = 0
+      currentBatch = Nil
     }
 
     /**
@@ -180,7 +143,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
 
       if (newBytes >= MaxBytes) {
         val original = new String(event._1.array, UTF_8)
-        error(s"Dropping record with size $newBytes bytes: [$original]")
+        log.error(s"Dropping record with size $newBytes bytes: [$original]")
       } else {
 
         if (byteCount + newBytes >= ByteThreshold) {
@@ -229,7 +192,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
     // Log BadRows
     inputType match {
       case InputType.Good => None
-      case InputType.Bad  => events.foreach(e => debug(s"BadRow: ${e._1}"))
+      case InputType.Bad  => events.foreach(e => log.debug(s"BadRow: ${e._1}"))
     }
 
     if (!EventStorage.currentBatch.isEmpty && System.currentTimeMillis() > nextRequestTime) {
@@ -260,7 +223,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
    */
   def sendBatch(batch: List[(ByteBuffer, String)]) {
     if (!batch.isEmpty) {
-      info(s"Writing ${batch.size} records to Kinesis stream $name")
+      log.info(s"Writing ${batch.size} records to Kinesis stream $name")
       var unsentRecords = batch
       var backoffTime = minBackoff
       var sentBatchSuccessfully = false
@@ -269,19 +232,19 @@ class KinesisSink(provider: AWSCredentialsProvider,
         attemptNumber += 1
 
         val putData = for {
-          p <- stream.multiPut(unsentRecords)
+          p <- multiPut(name, unsentRecords)
         } yield p
 
         try {
-          val results = Await.result(putData, 10.seconds).result.getRecords.asScala.toList
+          val results = Await.result(putData, 10.seconds).getRecords.asScala.toList
           val failurePairs = unsentRecords zip results filter { _._2.getErrorMessage != null }
-          info(s"Successfully wrote ${unsentRecords.size-failurePairs.size} out of ${unsentRecords.size} records")
+          log.info(s"Successfully wrote ${unsentRecords.size-failurePairs.size} out of ${unsentRecords.size} records")
           if (failurePairs.nonEmpty) {
             val (failedRecords, failedResults) = failurePairs.unzip
             unsentRecords = failedRecords
             logErrorsSummary(getErrorsSummary(failedResults))
             backoffTime = getNextBackoff(backoffTime)
-            error(s"Retrying all failed records in $backoffTime milliseconds...")
+            log.error(s"Retrying all failed records in $backoffTime milliseconds...")
 
             val err = s"Failed to send ${failurePairs.size} events"
             val putSize: Long = unsentRecords.foldLeft(0)((a,b) => a + b._1.capacity)
@@ -298,8 +261,8 @@ class KinesisSink(provider: AWSCredentialsProvider,
         } catch {
           case NonFatal(f) => {
             backoffTime = getNextBackoff(backoffTime)
-            error(s"Writing failed.", f)
-            error(s"  + Retrying in $backoffTime milliseconds...")
+            log.error(s"Writing failed.", f)
+            log.error(s"  + Retrying in $backoffTime milliseconds...")
 
             val putSize: Long = unsentRecords.foldLeft(0)((a,b) => a + b._1.capacity)
 
@@ -315,6 +278,23 @@ class KinesisSink(provider: AWSCredentialsProvider,
     }
   }
 
+  private def multiPut(name: String, batch: List[(ByteBuffer, String)]): Future[PutRecordsResult] =
+    Future {
+      val putRecordsRequest = {
+        val prr = new PutRecordsRequest()
+        prr.setStreamName(name)
+        val putRecordsRequestEntryList = batch.map { case (b, s) =>
+          val prre = new PutRecordsRequestEntry()
+          prre.setPartitionKey(s)
+          prre.setData(b)
+          prre
+        }
+        prr.setRecords(putRecordsRequestEntryList.asJava)
+        prr
+      }
+      client.putRecords(putRecordsRequest)
+    }
+
   private[sinks] def getErrorsSummary(badResponses: List[PutRecordsResultEntry]): Map[String, (Long, String)] = {
     badResponses.foldLeft(Map[String, (Long, String)]())((counts, r) => if (counts.contains(r.getErrorCode)) {
       counts + (r.getErrorCode -> (counts(r.getErrorCode)._1 + 1 -> r.getErrorMessage))
@@ -325,7 +305,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
 
   private[sinks] def logErrorsSummary(errorsSummary: Map[String, (Long, String)]): Unit = {
     for ((errorCode, (count, sampleMessage)) <- errorsSummary) {
-      error(s"$count records failed with error code ${errorCode}. Example error message: ${sampleMessage}")
+      log.error(s"$count records failed with error code ${errorCode}. Example error message: ${sampleMessage}")
     }
   }
 

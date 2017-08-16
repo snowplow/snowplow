@@ -18,8 +18,6 @@ object Dependencies {
     // For Snowplow
     "Snowplow Analytics Maven releases repo" at "http://maven.snplow.com/releases/",
     "Snowplow Analytics Maven snapshot repo" at "http://maven.snplow.com/snapshots/",
-    // For Scalazon
-    "BintrayJCenter"                         at "http://jcenter.bintray.com",
     // For uaParser utils
     "user-agent-parser repo"                 at "https://clojars.org/repo/",
     // For user-agent-utils
@@ -36,7 +34,6 @@ object Dependencies {
     val slf4j                = "1.7.5"
     // Scala
     val scopt                = "3.6.0"
-    val scalazon             = "0.11"
     val scalaz7              = "7.0.0"
     val json4s               = "3.2.11"
     val snowplowRawEvent     = "0.1.0"
@@ -61,7 +58,6 @@ object Dependencies {
     val log4jOverSlf4j       = "org.slf4j"             %  "log4j-over-slf4j"          % V.slf4j
     // Scala
     val scopt                = "com.github.scopt"      %% "scopt"                     % V.scopt
-    val scalazon             = "io.github.cloudify"    %% "scalazon"                  % V.scalazon
     val scalaz7              = "org.scalaz"            %% "scalaz-core"               % V.scalaz7
     val json4s               = "org.json4s"            %% "json4s"                    % V.json4s
     val json4sJackson        = "org.json4s"            %% "json4s-jackson"            % V.json4s
