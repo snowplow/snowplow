@@ -16,8 +16,10 @@ lazy val root = project.in(file("."))
     name          :=  "snowplow-stream-enrich",
     version       :=  "0.10.0",
     description   :=  "The Snowplow Enrichment process, implemented as an Amazon Kinesis app",
-    scalaVersion  :=  "2.10.1",
+    scalaVersion  :=  "2.11.11",
     scalacOptions :=  BuildSettings.compilerOptions,
+    scalacOptions in (Compile, console) ~= { _.filterNot(Set("-Ywarn-unused-import")) },
+    scalacOptions in (Test, console)    := (scalacOptions in (Compile, console)).value,
     javacOptions  :=  BuildSettings.javaCompilerOptions,
     resolvers     ++= Dependencies.resolutionRepos,
     shellPrompt   := { _ => "stream-enrich> " }

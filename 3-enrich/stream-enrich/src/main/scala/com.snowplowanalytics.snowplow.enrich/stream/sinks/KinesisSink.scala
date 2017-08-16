@@ -16,43 +16,26 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich
-package stream
+package com.snowplowanalytics.snowplow
+package enrich.stream
 package sinks
 
-// Java
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets.UTF_8
 
-// Amazon
+import scala.collection.JavaConverters._
+import scala.concurrent.{Future, Await}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+import scala.util.control.NonFatal
+
 import com.amazonaws.services.kinesis.model._
-import com.amazonaws.AmazonServiceException
 import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import com.amazonaws.services.kinesis.AmazonKinesisClientBuilder
-
-// Scala
-import scala.util.control.NonFatal
-import scala.collection.JavaConverters._
-
-// Config
-import com.typesafe.config.Config
-
-// Concurrent libraries
-import scala.concurrent.{Future,Await,TimeoutException}
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import scala.util.{Success, Failure}
-
-// Logging
 import org.slf4j.LoggerFactory
 
-// Snowplow
-import com.snowplowanalytics.snowplow.collectors.thrift._
-import common.outputs.EnrichedEvent
-
-// Tracker
-import com.snowplowanalytics.snowplow.scalatracker.Tracker
+import scalatracker.Tracker
 
 /**
  * Kinesis Sink for Scala enrichment
@@ -122,7 +105,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
     /**
      * Finish work on the current batch and create a new one.
      */
-    def sealBatch() {
+    def sealBatch(): Unit = {
       completeBatches = currentBatch :: completeBatches
       eventCount = 0
       byteCount = 0
@@ -138,7 +121,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
      *
      * @param event New event
      */
-    def addEvent(event: (ByteBuffer, String)) {
+    def addEvent(event: (ByteBuffer, String)): Unit = {
       val newBytes = event._1.capacity
 
       if (newBytes >= MaxBytes) {
@@ -164,7 +147,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
     /**
      * Reset everything.
      */
-    def clear() {
+    def clear(): Unit = {
       completeBatches = Nil
       currentBatch = Nil
       eventCount = 0
@@ -207,7 +190,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
    * Blocking method to send all stored records to Kinesis
    * Splits the stored records into smaller batches (by byte size or record number) if necessary
    */
-  def flush() {
+  def flush(): Unit = {
     EventStorage.sealBatch()
     // Send events in the order they were received
     EventStorage.completeBatches.reverse.foreach(b => sendBatch(b.reverse))
@@ -221,7 +204,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
    *
    * @param batch Events to send
    */
-  def sendBatch(batch: List[(ByteBuffer, String)]) {
+  def sendBatch(batch: List[(ByteBuffer, String)]): Unit = {
     if (!batch.isEmpty) {
       log.info(s"Writing ${batch.size} records to Kinesis stream $name")
       var unsentRecords = batch

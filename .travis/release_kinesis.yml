@@ -10,7 +10,7 @@ versions:
 
 binary_paths:
   scala_stream_collector     : "2-collectors/scala-stream-collector/target/scala-2.11/snowplow-stream-collector"
-  stream_enrich              : "3-enrich/stream-enrich/target/scala-2.10/snowplow-stream-enrich"
+  stream_enrich              : "3-enrich/stream-enrich/target/scala-2.11/snowplow-stream-enrich"
 
 sbt_version_cmd : sbt version -Dsbt.log.noformat=true | awk 'END{print}' | sed -r 's/\[info\]\s(.*)/\1/' | xargs echo -n
 

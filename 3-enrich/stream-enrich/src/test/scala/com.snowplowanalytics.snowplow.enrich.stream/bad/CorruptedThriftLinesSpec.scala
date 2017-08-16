@@ -12,21 +12,13 @@
  * implied.  See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow
-package enrich.stream
+package com.snowplowanalytics.snowplow.enrich.stream
 package bad
 
-// Commons Codec
 import org.apache.commons.codec.binary.Base64
-
-// Specs2
+import org.scalacheck.Arbitrary._
 import org.specs2.{Specification, ScalaCheck}
 
-// ScalaCheck
-import org.scalacheck._
-import org.scalacheck.Arbitrary._
-
-// This project
 import SpecHelpers._
 
 class CorruptedThriftLinesSpec extends Specification with ScalaCheck { def is =

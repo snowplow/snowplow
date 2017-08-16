@@ -18,7 +18,6 @@
  */
 package com.snowplowanalytics.snowplow.enrich.stream
 
-// Amazon
 import com.amazonaws.auth._
 
 /**

@@ -18,40 +18,36 @@
  */
 
 package com.snowplowanalytics
-package snowplow.enrich
+package snowplow
+package enrich
 package stream
 package sources
 
-// Scala
-import scala.io
-import scala.collection.JavaConversions._
+import scala.io.Source
 
-// Apache commons
 import org.apache.commons.codec.binary.Base64
 
-// Iglu
 import iglu.client.Resolver
-
-// Snowplow
 import common.enrichments.EnrichmentRegistry
-
-// Tracker
-import com.snowplowanalytics.snowplow.scalatracker.Tracker
+import scalatracker.Tracker
 
 /**
  * Source to decode raw events (in base64)
  * from stdin.
  */
-class StdinSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichmentRegistry: EnrichmentRegistry, tracker: Option[Tracker])
-    extends AbstractSource(config, igluResolver, enrichmentRegistry, tracker) {
+class StdinSource(
+  config: KinesisEnrichConfig,
+  igluResolver: Resolver,
+  enrichmentRegistry: EnrichmentRegistry,
+  tracker: Option[Tracker]
+) extends AbstractSource(config, igluResolver, enrichmentRegistry, tracker) {
 
   /**
    * Never-ending processing loop over source stream.
    */
-  def run = {
-    for (ln <- io.Source.stdin.getLines) {
+  override def run(): Unit =
+    for (ln <- Source.stdin.getLines) {
       val bytes = Base64.decodeBase64(ln)
       enrichAndStoreEvents(List(bytes))
     }
-  }
 }

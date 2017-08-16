@@ -16,20 +16,15 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.stream
+package com.snowplowanalytics.snowplow
+package enrich.stream
 
-// json4s
+import com.typesafe.config.Config
 import org.json4s._
-import org.json4s.jackson.JsonMethods._
 import org.json4s.JsonDSL._
 
-// Config
-import com.typesafe.config.Config
-
-// Tracker
-import com.snowplowanalytics.snowplow.scalatracker.Tracker
-import com.snowplowanalytics.snowplow.scalatracker.SelfDescribingJson
-import com.snowplowanalytics.snowplow.scalatracker.emitters.AsyncEmitter
+import scalatracker.{SelfDescribingJson, Tracker}
+import scalatracker.emitters.AsyncEmitter
 
 /**
  * Functionality for sending Snowplow events for monitoring purposes
@@ -76,7 +71,7 @@ object SnowplowTracking {
     streamName: String,
     appName: String,
     retryCount: Long,
-    putSize: Long) {
+    putSize: Long): Unit = {
 
     tracker.trackUnstructEvent(SelfDescribingJson(
       "iglu:com.snowplowanalytics.monitoring.kinesis/stream_write_failed/jsonschema/1-0-0",
@@ -94,17 +89,17 @@ object SnowplowTracking {
    *
    * @param tracker a Tracker instance
    */
-  def initializeSnowplowTracking(tracker: Tracker) {
+  def initializeSnowplowTracking(tracker: Tracker): Unit = {
     trackApplicationInitialization(tracker)
 
     Runtime.getRuntime.addShutdownHook(new Thread() {
-      override def run() {
+      override def run(): Unit = {
         trackApplicationShutdown(tracker)
       }
     })
 
     val heartbeatThread = new Thread {
-      override def run() {
+      override def run(): Unit = {
         while (true) {
           trackApplicationHeartbeat(tracker, HeartbeatInterval)
           Thread.sleep(HeartbeatInterval)
@@ -120,7 +115,7 @@ object SnowplowTracking {
    *
    * @param tracker a Tracker instance
    */
-  private def trackApplicationInitialization(tracker: Tracker) {
+  private def trackApplicationInitialization(tracker: Tracker): Unit = {
     tracker.trackUnstructEvent(SelfDescribingJson(
       "iglu:com.snowplowanalytics.monitoring.kinesis/app_initialized/jsonschema/1-0-0",
       JObject(Nil)
@@ -132,7 +127,7 @@ object SnowplowTracking {
    *
    * @param tracker a Tracker instance
    */
-  def trackApplicationShutdown(tracker: Tracker) {
+  def trackApplicationShutdown(tracker: Tracker): Unit = {
     tracker.trackUnstructEvent(SelfDescribingJson(
       "iglu:com.snowplowanalytics.monitoring.kinesis/app_shutdown/jsonschema/1-0-0",
       JObject(Nil)
@@ -145,7 +140,7 @@ object SnowplowTracking {
    * @param tracker a Tracker instance
    * @param message The warning message
    */
-  def trackApplicationWarning(tracker: Tracker, message: String) {
+  def trackApplicationWarning(tracker: Tracker, message: String): Unit = {
     tracker.trackUnstructEvent(SelfDescribingJson(
       "iglu:com.snowplowanalytics.monitoring.kinesis/app_warning/jsonschema/1-0-0",
       ("warning" -> message)
@@ -158,7 +153,7 @@ object SnowplowTracking {
    * @param tracker a Tracker instance
    * @param heartbeatInterval Time between heartbeats in milliseconds
    */
-  private def trackApplicationHeartbeat(tracker: Tracker, heartbeatInterval: Long) {
+  private def trackApplicationHeartbeat(tracker: Tracker, heartbeatInterval: Long): Unit = {
     tracker.trackUnstructEvent(SelfDescribingJson(
       "iglu:com.snowplowanalytics.monitoring.kinesis/app_heartbeat/jsonschema/1-0-0",
       "interval" -> heartbeatInterval
