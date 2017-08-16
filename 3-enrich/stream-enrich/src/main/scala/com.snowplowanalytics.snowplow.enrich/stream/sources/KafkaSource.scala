@@ -22,49 +22,42 @@ package enrich
 package stream
 package sources
 
-// Java
 import java.net.InetAddress
-import java.util.{Properties,UUID}
+import java.util.{Properties, UUID}
 
-// Logging
-import org.slf4j.LoggerFactory
-
-// Kafka
-import org.apache.kafka.clients.consumer.KafkaConsumer
-
-// Scala
 import scala.collection.JavaConverters._
 
-// Iglu
+import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.slf4j.LoggerFactory
+
 import iglu.client.Resolver
-
-// Snowplow events and enrichment
 import common.enrichments.EnrichmentRegistry
-
-// Tracker
-import com.snowplowanalytics.snowplow.scalatracker.Tracker
+import scalatracker.Tracker
 
 /**
  * Source to read events from a Kafka topic
  */
-class KafkaSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichmentRegistry: EnrichmentRegistry, tracker: Option[Tracker])
-    extends AbstractSource(config, igluResolver, enrichmentRegistry, tracker) {
+class KafkaSource(
+  config: KinesisEnrichConfig,
+  igluResolver: Resolver,
+  enrichmentRegistry: EnrichmentRegistry,
+  tracker: Option[Tracker]
+) extends AbstractSource(config, igluResolver, enrichmentRegistry, tracker) {
 
   lazy val log = LoggerFactory.getLogger(getClass())
-  import log.{error, debug, info, trace}
 
   /**
    * Never-ending processing loop over source stream.
    */
-  def run {
+  override def run(): Unit = {
     val workerId = InetAddress.getLocalHost().getCanonicalHostName() +
       ":" + UUID.randomUUID()
-    info("Using workerId: " + workerId)
+    log.info("Using workerId: " + workerId)
 
     val consumer = createConsumer(config)
 
-    info(s"Running Kafka consumer group: ${config.appName}.")
-    info(s"Processing raw input Kafka topic: ${config.rawInStream}")
+    log.info(s"Running Kafka consumer group: ${config.appName}.")
+    log.info(s"Processing raw input Kafka topic: ${config.rawInStream}")
 
     consumer.subscribe(List(config.rawInStream).asJava)
     while (true) {

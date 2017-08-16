@@ -12,31 +12,20 @@
  * implied.  See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow
+package com.snowplowanalytics
+package snowplow
 package enrich
 package stream
 
-// Java
 import java.util.regex.Pattern
 
-// Scalaz
+import com.typesafe.config.ConfigFactory
+import org.json4s.jackson.JsonMethods._
+import org.specs2.matcher.{Matcher, Expectable}
 import scalaz._
 import Scalaz._
 
-// Config
-import com.typesafe.config.{ConfigFactory,Config,ConfigException}
-
-// Specs2
-import org.specs2.matcher.{Matcher, Expectable}
-import org.specs2.matcher.Matchers._
-
-// json4s
-import org.json4s.jackson.JsonMethods._
-
-// Iglu
-import com.snowplowanalytics.iglu.client.Resolver
-
-// Snowplow
+import iglu.client.Resolver
 import sources.TestSource
 import common.outputs.EnrichedEvent
 import common.utils.JsonUtils

@@ -17,32 +17,32 @@
  * governing permissions and limitations there under.
  */
 package com.snowplowanalytics
-package snowplow.enrich
+package snowplow
+package enrich
 package stream
 package sources
 
-// Iglu
 import iglu.client.Resolver
-
-// Snowplow
 import common.enrichments.EnrichmentRegistry
-
-// Tracker
-import com.snowplowanalytics.snowplow.scalatracker.Tracker
+import scalatracker.Tracker
 
 /**
  * Source to allow the testing framework to enrich events
  * using the same methods from AbstractSource as the other
  * sources.
  */
-class TestSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichmentRegistry: EnrichmentRegistry, tracker: Option[Tracker])
-    extends AbstractSource(config, igluResolver, enrichmentRegistry, tracker) {
+class TestSource(
+  config: KinesisEnrichConfig,
+  igluResolver: Resolver,
+  enrichmentRegistry: EnrichmentRegistry,
+  tracker: Option[Tracker]
+) extends AbstractSource(config, igluResolver, enrichmentRegistry, tracker) {
 
   /**
    * Never-ending processing loop over source stream.
    * Not supported for TestSource.
    */
-  def run = {
+  override def run(): Unit = {
     throw new RuntimeException("run() should not be called on TestSource")
   }
 }

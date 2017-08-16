@@ -16,24 +16,16 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich
-package stream 
+package com.snowplowanalytics.snowplow
+package enrich.stream
 package sinks
 
-// Java
 import java.util.Properties
 
-// Kafka
-import org.apache.kafka.clients.producer.{
-  KafkaProducer,
-  ProducerRecord
-}
-
-// Logging
+import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.slf4j.LoggerFactory
 
-// Tracker
-import com.snowplowanalytics.snowplow.scalatracker.Tracker
+import scalatracker.Tracker
 
 /**
  * Kafka Sink for Scala enrichment
@@ -42,7 +34,6 @@ class KafkaSink(config: KinesisEnrichConfig,
     inputType: InputType.InputType, tracker: Option[Tracker]) extends ISink {
 
   private lazy val log = LoggerFactory.getLogger(getClass())
-  import log.{error, debug, info, trace}
 
   private val topicName = inputType match {
     case InputType.Good => config.enrichedOutStream
@@ -69,7 +60,7 @@ class KafkaSink(config: KinesisEnrichConfig,
     // Log BadRows
     inputType match {
       case InputType.Good => None
-      case InputType.Bad  => events.foreach(e => debug(s"BadRow: ${e._1}"))
+      case InputType.Bad  => events.foreach(e => log.debug(s"BadRow: ${e._1}"))
     }
 
     for ((value, key) <- events) {

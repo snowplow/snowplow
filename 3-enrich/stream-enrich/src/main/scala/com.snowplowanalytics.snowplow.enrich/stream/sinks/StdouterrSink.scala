@@ -19,9 +19,6 @@
 package com.snowplowanalytics.snowplow.enrich.stream
 package sinks
 
-// Snowplow
-import com.snowplowanalytics.snowplow.collectors.thrift._
-
 /**
  * Stdouterr Sink for Scala enrichment
  */
