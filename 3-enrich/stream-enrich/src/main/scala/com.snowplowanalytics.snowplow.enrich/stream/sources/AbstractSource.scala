@@ -115,7 +115,7 @@ object AbstractSource {
    * @param evt
    * @return size
    */
-  def getSize(evt: String): Long = ByteBuffer.wrap(evt.getBytes(UTF_8)).capacity
+  def getSize(evt: String): Long = ByteBuffer.wrap(evt.getBytes(UTF_8)).capacity.toLong
 }
 
 /**
