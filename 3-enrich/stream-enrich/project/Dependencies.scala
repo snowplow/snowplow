@@ -28,7 +28,7 @@ object Dependencies {
 
   object V {
     // Java
-    val awsSdk               = "1.6.11"
+    val awsSdk               = "1.11.115"
     val kinesisClient        = "1.6.1"
     val kafkaClients         = "0.10.1.0"
     val commonsCodec         = "1.10"
@@ -50,7 +50,9 @@ object Dependencies {
 
   object Libraries {
     // Java
-    val awsSdk               = "com.amazonaws"         %  "aws-java-sdk"              % V.awsSdk
+    val kinesisSdk           = "com.amazonaws"         %  "aws-java-sdk-kinesis"      % V.awsSdk
+    val dynamodbSdk          = "com.amazonaws"         %  "aws-java-sdk-dynamodb"     % V.awsSdk
+    val s3Sdk                = "com.amazonaws"         %  "aws-java-sdk-s3"           % V.awsSdk
     val kinesisClient        = "com.amazonaws"         %  "amazon-kinesis-client"     % V.kinesisClient
     val kafkaClients         = "org.apache.kafka"      %  "kafka-clients"             % V.kafkaClients
     val commonsCodec         = "commons-codec"         %  "commons-codec"             % V.commonsCodec
