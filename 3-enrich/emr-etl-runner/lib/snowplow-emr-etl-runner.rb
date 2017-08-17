@@ -16,18 +16,25 @@
 # Ruby 1.9.2 onwards doesn't add . into $LOAD_PATH by default - use require_relative instead
 require_relative 'snowplow-emr-etl-runner/errors'
 require_relative 'snowplow-emr-etl-runner/contracts'
+require_relative 'snowplow-emr-etl-runner/utils'
 require_relative 'snowplow-emr-etl-runner/monitoring/logging'
 require_relative 'snowplow-emr-etl-runner/monitoring/snowplow'
 require_relative 'snowplow-emr-etl-runner/cli'
-require_relative 'snowplow-emr-etl-runner/s3_tasks'
 require_relative 'snowplow-emr-etl-runner/job_result'
 require_relative 'snowplow-emr-etl-runner/emr_job'
+require_relative 'snowplow-emr-etl-runner/lock/lock'
+require_relative 'snowplow-emr-etl-runner/lock/file_lock'
+require_relative 'snowplow-emr-etl-runner/lock/consul_lock'
 require_relative 'snowplow-emr-etl-runner/runner'
+require_relative 'snowplow-emr-etl-runner/generator'
+require_relative 'snowplow-emr-etl-runner/emr_config_generator'
+require_relative 'snowplow-emr-etl-runner/emr_playbook_generator'
+require_relative 'snowplow-emr-etl-runner/linter'
 
 
 module Snowplow
   module EmrEtlRunner
-    NAME          = "snowplow-emr-etl-runner"
-    VERSION       = "0.26.0"
+    NAME    = "snowplow-emr-etl-runner"
+    VERSION = "0.27.0"
   end
 end

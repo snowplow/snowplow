@@ -38,12 +38,11 @@ module Snowplow
     # The Hash of the CLI arguments.
     ArgsHash = ({
       :debug => Bool,
-      :start => Maybe[String],
-      :end => Maybe[String],
+      :resume_from => Maybe[String],
       :skip => Maybe[ArrayOf[String]],
       :include => Maybe[ArrayOf[String]],
-      :process_enrich_location => Maybe[String],
-      :process_shred_location => Maybe[String]
+      :lock => Maybe[String],
+      :consul => Maybe[String]
       })
 
     # The Hash containing the buckets field from the configuration YAML
@@ -168,7 +167,7 @@ module Snowplow
     })
 
     # The Array (Tuple3) containing the CLI arguments, configuration YAML, and configuration JSONs
-    ArgsConfigEnrichmentsResolverTuple = [ArgsHash, ConfigHash, ArrayOf[String], String, ArrayOf[JsonFileHash]]
+    ArgsConfigEnrichmentsResolverTuple = [String, ArgsHash, Maybe[ConfigHash], ArrayOf[String], String, ArrayOf[JsonFileHash]]
 
     # Storage targets grouped by purpose
     TargetsHash = ({

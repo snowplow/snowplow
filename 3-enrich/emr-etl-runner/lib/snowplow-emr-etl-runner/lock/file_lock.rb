@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2012-2017 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -9,20 +9,37 @@
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
-# Author::    Alex Dean (mailto:support@snowplowanalytics.com)
-# Copyright:: Copyright (c) 2012-2014 Snowplow Analytics Ltd
+# Author::    Ben Fradet (mailto:support@snowplowanalytics.com)
+# Copyright:: Copyright (c) 2012-2017 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
 module Snowplow
   module EmrEtlRunner
-    class JobResult
+    module Lock
+      class FileLock
 
-      attr_reader :successful, :bootstrap_failure, :rdb_loader_failure
+        include Snowplow::EmrEtlRunner::Lock::Lock
 
-      def initialize(successful, bootstrap_failure, rdb_loader_failure)
-        @successful = successful
-        @bootstrap_failure = bootstrap_failure
-        @rdb_loader_failure = rdb_loader_failure
+        attr_accessor :path
+
+        def initialize(path)
+          @path = File.absolute_path(path)
+        end
+
+        def try_lock
+          if File.exist?(@path)
+            raise LockHeldError, "Lock already held at #{@path}"
+          end
+          pid = Process.pid
+          f = File.open(@path, 'w')
+          f.write("#{pid}\n")
+          f.close
+        end
+
+        def unlock
+          File.delete(@path)
+        end
+
       end
     end
   end

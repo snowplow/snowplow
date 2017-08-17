@@ -46,5 +46,19 @@ module Snowplow
     # Requires manual intervention
     class UnexpectedStateError < Error
     end
+
+    # Raised if the linter encountered an issue
+    class LinterError < Error
+      def initialize(message)
+        super(message)
+      end
+    end
+
+    # Raised if the lock is held
+    class LockHeldError < Error
+      def initialize(message)
+        super(message)
+      end
+    end
   end
 end
