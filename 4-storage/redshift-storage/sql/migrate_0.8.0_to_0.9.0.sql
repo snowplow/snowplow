@@ -1,4 +1,4 @@
--- Copyright (c) 2013-2015 Snowplow Analytics Ltd. All rights reserved.
+-- Copyright (c) 2015 Snowplow Analytics Ltd. All rights reserved.
 --
 -- This program is licensed to you under the Apache License Version 2.0,
 -- and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -9,15 +9,16 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.9.0
+-- Version:     Ports version 0.8.0 to version 0.9.0
 -- URL:         -
 --
--- Authors:     Yali Sassoon, Alex Dean, Peter van Wesep, Fred Blundun
--- Copyright:   Copyright (c) 2013-2015 Snowplow Analytics Ltd
+-- Authors:     Andrew Clarke
+-- Copyright:   Copyright (c) 2015 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
--- Create the schema
-CREATE SCHEMA atomic;
+BEGIN TRANSACTION;
+
+ALTER TABLE events RENAME TO events_080;
 
 -- Create events table
 CREATE TABLE atomic.events (
@@ -198,4 +199,7 @@ DISTSTYLE KEY
 DISTKEY (event_id)
 SORTKEY (collector_tstamp);
 
-COMMENT ON TABLE "atomic"."events" IS '0.9.0'
+INSERT INTO atomic.events (select * from atomic.events_080);
+COMMENT ON TABLE "atomic"."events" IS '0.9.0';
+
+END TRANSACTION;
