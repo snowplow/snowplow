@@ -243,7 +243,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
             sentBatchSuccessfully = true
           }
         } catch {
-          case NonFatal(f) => {
+          case NonFatal(f) =>
             backoffTime = getNextBackoff(backoffTime)
             log.error(s"Writing failed.", f)
             log.error(s"  + Retrying in $backoffTime milliseconds...")
@@ -257,7 +257,6 @@ class KinesisSink(provider: AWSCredentialsProvider,
             }
 
             Thread.sleep(backoffTime)
-          }
         }
       }
     }
