@@ -19,10 +19,12 @@
 package com.snowplowanalytics.snowplow.enrich.stream
 package sinks
 
+import model._
+
 /**
  * Stdouterr Sink for Scala enrichment
  */
-class StdouterrSink(inputType: InputType.InputType) extends ISink {
+class StdouterrSink(inputType: InputType) extends ISink {
 
   /**
    * Side-effecting function to store the EnrichedEvent
@@ -37,8 +39,8 @@ class StdouterrSink(inputType: InputType.InputType) extends ISink {
    */
   def storeEnrichedEvents(events: List[(String, String)]): Boolean = {
     inputType match {
-      case InputType.Good => events.foreach(e => println(e._1)) // To stdout
-      case InputType.Bad => events.foreach(e => Console.err.println(e._1)) // To stderr
+      case Good => events.foreach(e => println(e._1)) // To stdout
+      case Bad => events.foreach(e => Console.err.println(e._1)) // To stderr
     }
     !events.isEmpty
   }

@@ -36,6 +36,7 @@ object Dependencies {
     val scopt                = "3.6.0"
     val scalaz7              = "7.0.9"
     val json4s               = "3.2.11"
+    val pureconfig           = "0.8.0"
     val snowplowRawEvent     = "0.1.0"
     val snowplowCommonEnrich = "0.26.0"
     val igluClient           = "0.5.0"
@@ -61,6 +62,7 @@ object Dependencies {
     val scalaz7              = "org.scalaz"            %% "scalaz-core"               % V.scalaz7
     val json4s               = "org.json4s"            %% "json4s"                    % V.json4s
     val json4sJackson        = "org.json4s"            %% "json4s-jackson"            % V.json4s
+    val pureconfig           = "com.github.pureconfig" %% "pureconfig"                % V.pureconfig
     val snowplowRawEvent     = "com.snowplowanalytics" %  "snowplow-thrift-raw-event" % V.snowplowRawEvent
     val igluClient           = "com.snowplowanalytics" %% "iglu-scala-client"         % V.igluClient
     val snowplowCommonEnrich = "com.snowplowanalytics" %% "snowplow-common-enrich"    % V.snowplowCommonEnrich

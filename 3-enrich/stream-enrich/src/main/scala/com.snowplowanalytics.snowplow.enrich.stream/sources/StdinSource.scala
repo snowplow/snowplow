@@ -16,23 +16,28 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
+
 package com.snowplowanalytics
 package snowplow
 package enrich
 package stream
 package sources
 
-import iglu.client.Resolver
+import scala.io.Source
+
+import org.apache.commons.codec.binary.Base64
+
 import common.enrichments.EnrichmentRegistry
+import iglu.client.Resolver
+import model.EnrichConfig
 import scalatracker.Tracker
 
 /**
- * Source to allow the testing framework to enrich events
- * using the same methods from AbstractSource as the other
- * sources.
+ * Source to decode raw events (in base64)
+ * from stdin.
  */
-class TestSource(
-  config: KinesisEnrichConfig,
+class StdinSource(
+  config: EnrichConfig,
   igluResolver: Resolver,
   enrichmentRegistry: EnrichmentRegistry,
   tracker: Option[Tracker]
@@ -40,9 +45,10 @@ class TestSource(
 
   /**
    * Never-ending processing loop over source stream.
-   * Not supported for TestSource.
    */
-  override def run(): Unit = {
-    throw new RuntimeException("run() should not be called on TestSource")
-  }
+  override def run(): Unit =
+    for (ln <- Source.stdin.getLines) {
+      val bytes = Base64.decodeBase64(ln)
+      enrichAndStoreEvents(List(bytes))
+    }
 }

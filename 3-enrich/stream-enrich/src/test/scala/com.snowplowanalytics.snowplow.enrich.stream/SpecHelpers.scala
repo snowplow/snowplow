@@ -19,17 +19,17 @@ package stream
 
 import java.util.regex.Pattern
 
-import com.typesafe.config.ConfigFactory
 import org.json4s.jackson.JsonMethods._
 import org.specs2.matcher.{Matcher, Expectable}
 import scalaz._
 import Scalaz._
 
-import iglu.client.Resolver
-import sources.TestSource
 import common.outputs.EnrichedEvent
 import common.utils.JsonUtils
 import common.enrichments.EnrichmentRegistry
+import iglu.client.Resolver
+import model._
+import sources.TestSource
 
 /**
  * Defines some useful helpers for the specs.
@@ -114,7 +114,6 @@ object SpecHelpers {
      * matches expected, false otherwise
      */
     private def equalsOrMatches(useRegexp: Boolean, actual: String, expected: String): Boolean = {
-
       if (useRegexp) {
         val pattern = Pattern.compile(expected)
         pattern.matcher(actual).matches
@@ -207,61 +206,23 @@ object SpecHelpers {
             |"parameters": {
               |"internalDomains": ["www.subdomain1.snowplowanalytics.com"]
             |}
-          |}  
-        |}              
+          |}
+        |}
       |]
     |}""".stripMargin.replaceAll("[\n\r]","").stripMargin.replaceAll("[\n\r]","")
 
-    val config = """
-      enrich {
-        source = "test"
-        sink = "test"
-
-        aws {
-          access-key: "cpf"
-          secret-key: "cpf"
-        }
-
-        kafka {
-          brokers: "localhost:9092"
-        }
-
-        streams {
-          in {
-            raw: "SnowplowRaw"
-
-            buffer {
-              byte-limit: 4500000 # 4.5MB
-              record-limit: 500 # 500 records
-              time-limit: 60000 # 1 minute
-            }
-          }
-          out {
-            enriched: "SnowplowEnriched"
-            bad: "SnowplowBad" # Not used until #463
-
-            # Minimum and maximum backoff periods
-            backoffPolicy {
-              minBackoff: 3000 # 3 seconds
-              maxBackoff: 600000 # 5 minutes
-            }
-          }
-          app-name: SnowplowKinesisEnrich
-          initial-position = "TRIM_HORIZON"
-          region: "us-east-1"
-        }
-        enrichments {
-          geo_ip {
-            enabled: true # false not yet suported
-            maxmind_file: "/maxmind/GeoLiteCity.dat" # SBT auto-downloads into resource_managed/test
-          }
-          anon_ip {
-            enabled: true
-            anon_octets: 1 # Or 2, 3 or 4. 0 is same as enabled: false
-          }
-        }
-      }
-      """
+    val config = EnrichConfig(
+      source = "kafka", sink = "kafka",
+      aws = AWSConfig("default", "default"),
+      streams = StreamsConfig(
+        InConfig("raw"),
+        OutConfig("enriched", "bad", "partitionkey"),
+        KinesisConfig("region", 10, "TRIM_HORIZON", BackoffPolicyConfig(10, 100)),
+        KafkaConfig("brokers"),
+        BufferConfig(1000L, 100L, 1200L),
+        "appName"
+      ),
+      monitoring = None)
 
     val validatedResolver = for {
       json <- JsonUtils.extractJson("", """{
@@ -300,9 +261,6 @@ object SpecHelpers {
       s => s
     )
 
-    val conf = ConfigFactory.parseString(config)
-    val kec = new KinesisEnrichConfig(conf)
-
-    new TestSource(kec, resolver, enrichmentRegistry, None)
+    new TestSource(config, resolver, enrichmentRegistry, None)
   }
 }

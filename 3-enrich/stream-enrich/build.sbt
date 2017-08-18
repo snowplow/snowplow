@@ -43,6 +43,7 @@ lazy val root = project.in(file("."))
       Dependencies.Libraries.scalaz7,
       Dependencies.Libraries.json4s,
       Dependencies.Libraries.json4sJackson,
+      Dependencies.Libraries.pureconfig,
       Dependencies.Libraries.snowplowRawEvent,
       Dependencies.Libraries.snowplowCommonEnrich,
       Dependencies.Libraries.igluClient,

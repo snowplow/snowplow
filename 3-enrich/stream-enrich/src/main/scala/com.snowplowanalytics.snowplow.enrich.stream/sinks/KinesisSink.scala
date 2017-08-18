@@ -35,32 +35,39 @@ import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import com.amazonaws.services.kinesis.AmazonKinesisClientBuilder
 import org.slf4j.LoggerFactory
 
+import model._
 import scalatracker.Tracker
 
 /**
  * Kinesis Sink for Scala enrichment
  */
-class KinesisSink(provider: AWSCredentialsProvider,
-    config: KinesisEnrichConfig, inputType: InputType.InputType, tracker: Option[Tracker]) extends ISink {
+class KinesisSink(
+  provider: AWSCredentialsProvider,
+  kinesisConfig: KinesisConfig,
+  bufferConfig: BufferConfig,
+  inputType: InputType,
+  streamName: String,
+  tracker: Option[Tracker]
+) extends ISink {
   private lazy val log = LoggerFactory.getLogger(getClass())
 
-  private val name = inputType match {
-    case InputType.Good => config.enrichedOutStream
-    case InputType.Bad => config.badOutStream
-  }
+  /** Kinesis records must not exceed 1MB */
+  private val MaxBytes = 1000000L
 
-  private val maxBackoff = config.maxBackoff
-  private val minBackoff = config.minBackoff
+  private val maxBackoff = kinesisConfig.backoffPolicy.maxBackoff
+  private val minBackoff = kinesisConfig.backoffPolicy.minBackoff
   private val randomGenerator = new java.util.Random()
 
   // explicitly create a client so we can configure the end point
+  private val endpointConfiguration =
+    new EndpointConfiguration(kinesisConfig.streamEndpoint, kinesisConfig.region)
   val client = AmazonKinesisClientBuilder
     .standard()
     .withCredentials(provider)
-    .withEndpointConfiguration(new EndpointConfiguration(config.streamEndpoint, config.streamRegion))
+    .withEndpointConfiguration(endpointConfiguration)
     .build()
 
-  require(streamExists(name), s"Kinesis stream $name doesn't exist")
+  require(streamExists(streamName), s"Kinesis stream $streamName doesn't exist")
 
   /**
    * Check whether a Kinesis stream exists
@@ -84,9 +91,9 @@ class KinesisSink(provider: AWSCredentialsProvider,
     exists
   }
 
-  val ByteThreshold = config.byteLimit
-  val RecordThreshold = config.recordLimit
-  val TimeThreshold = config.timeLimit
+  val ByteThreshold = bufferConfig.byteLimit
+  val RecordThreshold = bufferConfig.recordLimit
+  val TimeThreshold = bufferConfig.timeLimit
   var nextRequestTime = 0L
 
   /**
@@ -174,8 +181,8 @@ class KinesisSink(provider: AWSCredentialsProvider,
 
     // Log BadRows
     inputType match {
-      case InputType.Good => None
-      case InputType.Bad  => events.foreach(e => log.debug(s"BadRow: ${e._1}"))
+      case Good => None
+      case Bad  => events.foreach(e => log.debug(s"BadRow: ${e._1}"))
     }
 
     if (!EventStorage.currentBatch.isEmpty && System.currentTimeMillis() > nextRequestTime) {
@@ -206,7 +213,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
    */
   def sendBatch(batch: List[(ByteBuffer, String)]): Unit = {
     if (!batch.isEmpty) {
-      log.info(s"Writing ${batch.size} records to Kinesis stream $name")
+      log.info(s"Writing ${batch.size} records to Kinesis stream $streamName")
       var unsentRecords = batch
       var backoffTime = minBackoff
       var sentBatchSuccessfully = false
@@ -215,7 +222,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
         attemptNumber += 1
 
         val putData = for {
-          p <- multiPut(name, unsentRecords)
+          p <- multiPut(streamName, unsentRecords)
         } yield p
 
         try {
@@ -233,7 +240,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
             val putSize: Long = unsentRecords.foldLeft(0L)((a,b) => a + b._1.capacity)
 
             tracker match {
-              case Some(t) => SnowplowTracking.sendFailureEvent(t, "PUT Failure", err, name,
+              case Some(t) => SnowplowTracking.sendFailureEvent(t, "PUT Failure", err, streamName,
                 "snowplow-stream-enrich", attemptNumber.toLong, putSize)
               case _       => None
             }
@@ -251,8 +258,8 @@ class KinesisSink(provider: AWSCredentialsProvider,
             val putSize: Long = unsentRecords.foldLeft(0L)((a,b) => a + b._1.capacity)
 
             tracker match {
-              case Some(t) => SnowplowTracking.sendFailureEvent(t, "PUT Failure", f.toString, name,
-                "snowplow-stream-enrich", attemptNumber.toLong, putSize)
+              case Some(t) => SnowplowTracking.sendFailureEvent(t, "PUT Failure", f.toString,
+                streamName, "snowplow-stream-enrich", attemptNumber.toLong, putSize)
               case _       => None
             }
 

@@ -19,91 +19,95 @@ enrich {
   # 'kinesis' for reading Thrift-serialized records from a Kinesis stream
   # 'kafka' for reading Thrift-serialized records from a Kafka topic
   # 'stdin' for reading Base64-encoded Thrift-serialized records from stdin
-  source = "kinesis"
+  source = kinesis
 
   # Sinks currently supported are:
   # 'kinesis' for writing enriched events to one Kinesis stream and invalid events to another.
   # 'kafka' for writing enriched events to one Kafka topic and invalid events to another.
   # 'stdouterr' for writing enriched events to stdout and invalid events to stderr.
-  #    Using "sbt assembly" and "java -jar" is recommended to disable sbt
-  #    logging.
-  sink = "kinesis"
+  #    Using "sbt assembly" and "java -jar" is recommended to disable sbt logging.
+  sink = kinesis
 
   # AWS credentials
-  #
   # If both are set to 'default', use the default AWS credentials provider chain.
-  #
   # If both are set to 'iam', use AWS IAM Roles to provision credentials.
-  #
   # If both are set to 'env', use environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
   aws {
-    access-key: "iam"
-    secret-key: "iam"
-  }
-
-  # Kafka configuration
-  kafka {
-    brokers: "{{enrichKafkaBrokers}}"
+    accessKey = iam
+    secretKey = iam
   }
 
   streams {
-    in: {
-      raw: "{{enrichStreamsInRaw}}"
+    in {
+      # Stream/topic where the raw events to be enriched are located
+      raw = {{streamsInRaw}}
+    }
+
+    out {
+      # Stream/topic where the events that were successfully enriched will end up
+      enriched = {{outEnriched}}
+      # Stream/topic where the event that failed enrichment will be stored
+      bad = {{outBad}}
+
+      # How the output stream/topic will be partitioned.
+      # Possible partition keys are: event_id, event_fingerprint, domain_userid, network_userid,
+      # user_ipaddress, domain_sessionid, user_fingerprint.
+      # Refer to https://github.com/snowplow/snowplow/wiki/canonical-event-model to know what the
+      # possible parittion keys correspond to.
+      # Otherwise, the partition key will be a random UUID.
+      partitionKey = {{partitionKeyName}}
+    }
+
+    kinesis {
+      # Region where the streams are located
+      region = {{region}}
 
       # Maximum number of records to get from Kinesis per call to GetRecords
-      maxRecords: 10000
+      maxRecords = 10000
 
-      # After enrichment, are accumulated in a buffer before being sent to Kinesis.
-      # The buffer is emptied whenever:
-      # - the number of stored records reaches record-limit or
-      # - the combined size of the stored records reaches byte-limit or
-      # - the time in milliseconds since it was last emptied exceeds time-limit when
-      #   a new event enters the buffer
-      buffer: {
-        byte-limit: {{enrichStreamsBufferByteThreshold}}
-        record-limit: {{enrichStreamsBufferRecordThreshold}} # Not supported by Kafka; will be ignored
-        time-limit: {{enrichStreamsBufferTimeThreshold}}
+      # LATEST: most recent data.
+      # TRIM_HORIZON: oldest available data.
+      # Note: This only effects the first run of this application
+      # on a stream.
+      initialPosition = TRIM_HORIZON
+
+      # Minimum and maximum backoff periods, in milliseconds
+      backoffPolicy {
+        minBackoff = {{enrichStreamsOutMinBackoff}}
+        maxBackoff = {{enrichStreamsOutMaxBackoff}}
       }
     }
 
-    out: {
-      enriched: "{{enrichStreamsOutEnriched}}"
-      bad: "{{enrichStreamsOutBad}}"
-
-      # Possible partition keys: event_id, event_fingerprint, domain_userid, network_userid,
-      # user_ipaddress, domain_sessionid, user_fingerprint.
-      # Otherwise or if absent, the partition key will be a random UUID.
-      partitionKey: "{{partitionKeyName}}"
-
-      # Minimum and maximum backoff periods
-      # - Units: Milliseconds
-      backoffPolicy: {
-        minBackoff: {{enrichStreamsOutMinBackoff}}
-        maxBackoff: {{enrichStreamsOutMaxBackoff}}
-      }
+    # Kafka configuration
+    kafka {
+      brokers = "{{kafkaBrokers}}"
     }
 
-    # "app-name" is used for a DynamoDB table to maintain stream state.
-    # "app-name" is used as the Kafka consumer group ID.
-    # You can set it automatically using: "SnowplowKinesisEnrich-$\\{enrich.streams.in.raw\\}"
-    app-name: "{{enrichStreamsAppName}}"
+    # After enrichment, events are accumulated in a buffer before being sent to Kinesis/Kafka.
+    # The buffer is emptied whenever:
+    # - the number of stored records reaches recordLimit or
+    # - the combined size of the stored records reaches byteLimit or
+    # - the time in milliseconds since it was last emptied exceeds timeLimit when
+    #   a new event enters the buffer
+    buffer {
+      byteLimit = {{bufferByteThreshold}}
+      recordLimit = {{bufferRecordThreshold}} # Not supported by Kafka; will be ignored
+      timeLimit = {{bufferTimeThreshold}}
+    }
 
-    # LATEST: most recent data.
-    # TRIM_HORIZON: oldest available data.
-    # Note: This only effects the first run of this application
-    # on a stream.
-    initial-position = "TRIM_HORIZON"
-
-    region: "{{enrichStreamsRegion}}"
+    # Used for a DynamoDB table to maintain stream state.
+    # Used as the Kafka consumer group ID.
+    # You can set it automatically using: "SnowplowEnrich-$\\{enrich.streams.in.raw\\}"
+    appName = "{{appName}}"
   }
 
   # Optional section for tracking endpoints
   monitoring {
     snowplow {
-      collector-uri: "{{collectorUri}}"
-      collector-port: 80
-      app-id: "{{enrichAppName}}"
-      method: "GET"
+      collectorUri = "{{collectorUri}}"
+      collectorPort = 80
+      appId = {{enrichAppName}}
+      method = GET
     }
   }
 }

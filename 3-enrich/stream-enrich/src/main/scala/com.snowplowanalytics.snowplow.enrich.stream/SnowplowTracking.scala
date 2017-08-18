@@ -19,10 +19,10 @@
 package com.snowplowanalytics.snowplow
 package enrich.stream
 
-import com.typesafe.config.Config
 import org.json4s._
 import org.json4s.JsonDSL._
 
+import model.SnowplowMonitoringConfig
 import scalatracker.{SelfDescribingJson, Tracker}
 import scalatracker.emitters.AsyncEmitter
 
@@ -39,14 +39,9 @@ object SnowplowTracking {
    * @param config The "monitoring.snowplow" section of the HOCON
    * @return a new tracker instance
    */
-  def initializeTracker(config: Config): Tracker = {
-    val endpoint = config.getString("collector-uri")
-    val port = config.getInt("collector-port")
-    val appName = config.getString("app-id")
-    // Not yet used
-    val method = config.getString("method")
-    val emitter = AsyncEmitter.createAndStart(endpoint, port)
-    val tracker = new Tracker(List(emitter), generated.Settings.name, appName)
+  def initializeTracker(config: SnowplowMonitoringConfig): Tracker = {
+    val emitter = AsyncEmitter.createAndStart(config.collectorUri, config.collectorPort)
+    val tracker = new Tracker(List(emitter), generated.Settings.name, config.appId)
     tracker.enableEc2Context()
     tracker
   }

@@ -36,8 +36,9 @@ import com.amazonaws.services.kinesis.model.Record
 import org.apache.thrift.TDeserializer
 import org.slf4j.LoggerFactory
 
-import iglu.client.Resolver
 import common.enrichments.EnrichmentRegistry
+import iglu.client.Resolver
+import model.EnrichConfig
 import scalatracker.Tracker
 import sinks._
 
@@ -45,7 +46,7 @@ import sinks._
  * Source to read events from a Kinesis stream
  */
 class KinesisSource(
-  config: KinesisEnrichConfig,
+  config: EnrichConfig,
   igluResolver: Resolver,
   enrichmentRegistry: EnrichmentRegistry,
   tracker: Option[Tracker]
@@ -61,20 +62,20 @@ class KinesisSource(
     log.info("Using workerId: " + workerId)
 
     val kinesisClientLibConfiguration = new KinesisClientLibConfiguration(
-      config.appName,
-      config.rawInStream, 
+      config.streams.appName,
+      config.streams.in.raw, 
       kinesisProvider,
       workerId
     ).withInitialPositionInStream(
-      InitialPositionInStream.valueOf(config.initialPosition)
-    ).withKinesisEndpoint(config.streamEndpoint)
-    .withMaxRecords(config.maxRecords)
-    .withRegionName(config.streamRegion)
+      InitialPositionInStream.valueOf(config.streams.kinesis.initialPosition)
+    ).withKinesisEndpoint(config.streams.kinesis.streamEndpoint)
+    .withMaxRecords(config.streams.kinesis.maxRecords)
+    .withRegionName(config.streams.kinesis.region)
     // If the record list is empty, we still check whether it is time to flush the buffer
     .withCallProcessRecordsEvenForEmptyRecordList(true)
 
-    log.info(s"Running: ${config.appName}.")
-    log.info(s"Processing raw input stream: ${config.rawInStream}")
+    log.info(s"Running: ${config.streams.appName}.")
+    log.info(s"Processing raw input stream: ${config.streams.in.raw}")
 
     val rawEventProcessorFactory = new RawEventProcessorFactory(
       config,
@@ -90,7 +91,7 @@ class KinesisSource(
 
   // Factory needed by the Amazon Kinesis Consumer library to
   // create a processor.
-  class RawEventProcessorFactory(config: KinesisEnrichConfig, sink: ISink)
+  class RawEventProcessorFactory(config: EnrichConfig, sink: ISink)
       extends IRecordProcessorFactory {
     override def createProcessor: IRecordProcessor = {
       new RawEventProcessor(config, sink);
@@ -98,7 +99,7 @@ class KinesisSource(
   }
 
   // Process events from a Kinesis stream.
-  class RawEventProcessor(config: KinesisEnrichConfig, sink: ISink)
+  class RawEventProcessor(config: EnrichConfig, sink: ISink)
       extends IRecordProcessor {
     private val thriftDeserializer = new TDeserializer()
 

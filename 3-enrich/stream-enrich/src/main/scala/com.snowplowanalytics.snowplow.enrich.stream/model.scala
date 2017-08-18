@@ -1,0 +1,95 @@
+/*
+ * Copyright (c) 2013-2016 Snowplow Analytics Ltd.
+ * All rights reserved.
+ *
+ * This program is licensed to you under the Apache License Version 2.0,
+ * and you may not use this file except in compliance with the Apache
+ * License Version 2.0.
+ * You may obtain a copy of the Apache License Version 2.0 at
+ * http://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the Apache License Version 2.0 is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied.
+ *
+ * See the Apache License Version 2.0 for the specific language
+ * governing permissions and limitations there under.
+ */
+package com.snowplowanalytics.snowplow.enrich.stream
+
+object model {
+
+  /** 
+   * The enrichment process takes input SnowplowRawEvent objects from
+   * an input source and outputs enriched objects to a sink,
+   * as defined in the following enumerations.
+   */
+  sealed trait Source
+  case object KafkaSource extends Source
+  case object KinesisSource extends Source
+  case object StdinSource extends Source
+
+  sealed trait Sink
+  case object KafkaSink extends Sink
+  case object KinesisSink extends Sink
+  case object StdouterrSink extends Sink
+
+  /** Whether the sink is for good rows or bad rows */
+  sealed trait InputType
+  case object Good extends InputType
+  case object Bad extends InputType
+
+  // Case classes necessary to the decoding of the configuration
+  final case class AWSConfig(accessKey: String, secretKey: String) {
+    val credentialsProvider = CredentialsLookup.getCredentialsProvider(accessKey, secretKey)
+  }
+  final case class StreamsConfig(
+    in: InConfig,
+    out: OutConfig,
+    kinesis: KinesisConfig,
+    kafka: KafkaConfig,
+    buffer: BufferConfig,
+    appName: String
+  )
+  final case class InConfig(raw: String)
+  final case class OutConfig(enriched: String, bad: String, partitionKey: String)
+  final case class KinesisConfig(
+    region: String,
+    maxRecords: Int,
+    initialPosition: String,
+    backoffPolicy: BackoffPolicyConfig
+  ) {
+    val streamEndpoint = s"https://kinesis.$region.amazonaws.com"
+  }
+  final case class BackoffPolicyConfig(minBackoff: Long, maxBackoff: Long)
+  final case class KafkaConfig(brokers: String)
+  final case class BufferConfig(byteLimit: Long, recordLimit: Long, timeLimit: Long)
+  final case class MonitoringConfig(snowplow: SnowplowMonitoringConfig)
+  final case class SnowplowMonitoringConfig(
+    collectorUri: String,
+    collectorPort: Int,
+    appId: String,
+    method: String
+  )
+  final case class EnrichConfig(
+    source: String,
+    sink: String,
+    aws: AWSConfig,
+    streams: StreamsConfig,
+    monitoring: Option[MonitoringConfig]
+  ) {
+    val sourceType: Source = source.toLowerCase match {
+      case "kinesis" => KinesisSource
+      case "kafka"   => KafkaSource
+      case "stdin"   => StdinSource
+      case o         => throw new IllegalArgumentException(s"Unknown enrich.source: $o")
+    }
+    val sinkType: Sink = sink.toLowerCase match {
+      case "kinesis"   => KinesisSink
+      case "kafka"     => KafkaSink
+      case "stdouterr" => StdouterrSink
+      case o           => throw new IllegalArgumentException(s"Unknown enrich.sink: $o")
+    }
+  }
+}
