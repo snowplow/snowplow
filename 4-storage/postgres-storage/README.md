@@ -40,8 +40,8 @@ limitations under the License.
 [engine-yard]: https://pages.engineyard.com/hosted-database.html
 [hosted-postgres]: http://www.postgresql.org/support/professional_hosting/
 
-[setup]: https://github.com/snowplow/snowplow/wiki/setting-up-postgres
-[techdocs]: https://github.com/snowplow/snowplow/wiki/postgres-storage
+[setup]: https://github.com/snowplow/snowplow/wiki/Setting-up-PostgreSQL
+[techdocs]: https://github.com/snowplow/snowplow/wiki/PostgreSQL-storage
 
 [techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
 [setup-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png
