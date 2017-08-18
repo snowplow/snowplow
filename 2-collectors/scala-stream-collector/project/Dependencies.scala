@@ -31,7 +31,7 @@ object Dependencies {
     val config               = "1.3.1"
     // Scala
     val snowplowCommonEnrich = "0.26.0"
-    val igluClient           = "0.3.2"
+    val igluClient           = "0.5.0"
     val collectorPayload     = "0.0.0"
     val scalaz7              = "7.0.9"
     val akkaHttp             = "10.0.9"
@@ -54,7 +54,7 @@ object Dependencies {
 
     // Scala
     val snowplowCommonEnrich = "com.snowplowanalytics" %% "snowplow-common-enrich" % V.snowplowCommonEnrich
-    val igluClient           = "com.snowplowanalytics" %  "iglu-scala-client"      % V.igluClient
+    val igluClient           = "com.snowplowanalytics" %% "iglu-scala-client"      % V.igluClient
     val collectorPayload     = "com.snowplowanalytics" %  "collector-payload-1"    % V.collectorPayload
     val scalaz7              = "org.scalaz"            %% "scalaz-core"            % V.scalaz7
     val scopt                = "com.github.scopt"      %% "scopt"                  % V.scopt
