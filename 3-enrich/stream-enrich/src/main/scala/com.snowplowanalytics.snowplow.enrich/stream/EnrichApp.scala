@@ -23,9 +23,10 @@ package stream
 import java.io.File
 import java.net.URI
 
-import sys.process._
-import scala.collection.JavaConverters._
 import scala.annotation.tailrec
+import scala.collection.JavaConverters._
+import scala.util.control.NonFatal
+import sys.process._
 
 import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
@@ -286,8 +287,7 @@ object EnrichApp {
   }
 
   /**
-   * Downloads an object from S3 and returns whether
-   * or not it was successful.
+   * Downloads an object from S3 and returns whether or not it was successful.
    * @param provider AWS credentials provider
    * @param uri The URI to reconstruct into a signed S3 URL
    * @param outputFile The file object to write to
@@ -308,10 +308,9 @@ object EnrichApp {
       s3Client.getObject(new GetObjectRequest(bucket, key), outputFile)
       0
     } catch {
-      case e: Exception => {
-        log.error(s"Error downloading ${uri}: ${e.toString}")
+      case NonFatal(e) =>
+        log.error(s"Error downloading $uri: ${e.getMessage}")
         1
-      }
     }
   }
 }

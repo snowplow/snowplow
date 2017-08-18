@@ -18,6 +18,8 @@ package utils
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets.UTF_8
 
+import scala.util.control.NonFatal
+
 import org.apache.thrift.TSerializer
 import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.format.DateTimeFormat
@@ -174,11 +176,10 @@ object SplitBatch {
               }
             }
           } catch {
-            case e: Exception => {
+            case NonFatal(e) =>
               val err = s"Could not parse payload body %s".format(e.getMessage)
               val payload = BadRow.oversizedRow(wholeEventBytes, NonEmptyList(err)).getBytes(UTF_8)
               EventSerializeResult(Nil, List(payload))
-            }
           }
         }
       }
