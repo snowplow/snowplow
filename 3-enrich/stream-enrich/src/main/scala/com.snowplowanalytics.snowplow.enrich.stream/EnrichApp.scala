@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright (c) 2013-2016 Snowplow Analytics Ltd.
  * All rights reserved.
  *
@@ -25,6 +25,8 @@ import java.net.URI
 
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
+import scala.io.Source
+import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
 import sys.process._
 
@@ -36,16 +38,18 @@ import com.amazonaws.services.dynamodbv2.document.DynamoDB
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.amazonaws.services.s3.model.GetObjectRequest
-import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.config.ConfigFactory
 import org.json4s.jackson.JsonMethods._
 import org.json4s.JsonDSL._
 import org.slf4j.LoggerFactory
+import pureconfig._
 import scalaz.{Sink => _, _}
 import Scalaz._
 
-import iglu.client.Resolver
 import common.enrichments.EnrichmentRegistry
 import common.utils.JsonUtils
+import iglu.client.Resolver
+import model._
 import sources._
 
 /**
@@ -59,58 +63,78 @@ object EnrichApp {
   val DynamoDBRegex = "^dynamodb:([^/]*)/([^/]*)/([^/]*)$".r
   val regexMsg = "'file:[filename]' or 'dynamodb:[region/table/key]'"
 
-  case class EnrichConfig(
+  case class FileConfig(
     config: File = new File("."),
     resolver: String = "",
     enrichmentsDir: Option[String] = None
   )
 
   def main(args: Array[String]): Unit = {
-    val parser = new scopt.OptionParser[EnrichConfig](generated.Settings.name) {
+    val parser = new scopt.OptionParser[FileConfig](generated.Settings.name) {
       head(generated.Settings.name, generated.Settings.version)
       opt[File]("config").required().valueName("<filename>")
-        .action((f: File, c: EnrichConfig) => c.copy(config = f))
+        .action((f: File, c: FileConfig) => c.copy(config = f))
         .validate(f =>
           if (f.exists) success
           else failure(s"Configuration file $f does not exist")
         )
       opt[String]("resolver").required().valueName("<resolver uri>")
         .text(s"Iglu resolver file, $regexMsg")
-        .action((r: String, c: EnrichConfig) => c.copy(resolver = r))
+        .action((r: String, c: FileConfig) => c.copy(resolver = r))
         .validate(_ match {
           case FilepathRegex(_) | DynamoDBRegex(_) => success
           case _ => failure(s"Resolver doesn't match accepted uris: $regexMsg")
         })
       opt[String]("enrichments").optional().valueName("<enrichment directory uri>")
         .text(s"Directory of enrichment configuration JSONs, $regexMsg")
-        .action((e: String, c: EnrichConfig) => c.copy(enrichmentsDir = Some(e)))
+        .action((e: String, c: FileConfig) => c.copy(enrichmentsDir = Some(e)))
         .validate(_ match {
           case FilepathRegex(_) | DynamoDBRegex(_) => success
           case _ => failure(s"Enrichments directory doesn't match accepted uris: $regexMsg")
         })
     }
 
-    parser.parse(args, EnrichConfig()) match {
-      case Some(config) => 
-      case None => System.exit(-1)
+    // to rm once 2.12 as well as the right projections
+    def fold[A, B](t: Try[A])(ft: Throwable => B, fa: A => B): B = t match {
+      case Success(a) => fa(a)
+      case Failure(t) => ft(t)
+    }
+    def filterOrElse[L, R](e: Either[L, R])(p: R => Boolean, l: => L): Either[L, R] = e match {
+      case Right(r) if p(r) => Right(r)
+      case Right(_)         => Left(l)
+      case o                => o
+    }
+
+    implicit def hint[T] = ProductHint[T](ConfigFieldMapping(CamelCase, CamelCase))
+    val conf: Either[String, (EnrichConfig, String, Option[String])] = filterOrElse(
+      parser.parse(args, FileConfig())
+        .toRight("Error while parsing command-line arguments")
+        .right.flatMap { fc =>
+          fold(Try(ConfigFactory.parseFile(fc.config).resolve()))(
+            t => Left(t.getMessage), c => Right((c, fc.resolver, fc.enrichmentsDir)))
+        }
+    )(t => t._1.hasPath("enrich"), "No top-level \"enrich\" could be found in the configuration")
+      .flatMap { case (config, resolver, enrichments) =>
+        fold(Try(loadConfigOrThrow[EnrichConfig](config.getConfig("enrich"))))(
+            t => Left(t.getMessage), Right(_))
+          .right.map(ec => (ec, resolver, enrichments))
+      }
+
+    conf match {
+      case Left(e) =>
+        System.err.println(s"configuration error: $e")
+        System.exit(1)
+      case Right((enrichConfig, resolver, enrichments)) => run(enrichConfig, resolver, enrichments)
     }
   }
 
-  def main(ec: EnrichConfig): Unit = {
-    val parsedConfig = ConfigFactory.parseFile(ec.config).resolve()
+  def run(ec: EnrichConfig, resolver: String, enrichmentsDir: Option[String]): Unit = {
+    val provider = ec.aws.provider
 
-    val kinesisEnrichConfig = new KinesisEnrichConfig(parsedConfig)
-    val provider = kinesisEnrichConfig.credentialsProvider
-
-    val tracker = if (parsedConfig.hasPath("enrich.monitoring.snowplow")) {
-      SnowplowTracking.initializeTracker(
-        parsedConfig.getConfig("enrich.monitoring.snowplow")).some
-    } else { 
-      None 
-    }
+    val tracker = ec.monitoring.map(c => SnowplowTracking.initializeTracker(c.snowplow))
 
     implicit val igluResolver: Resolver = (for {
-      parsedResolver <- extractResolver(provider, ec.resolver)
+      parsedResolver <- extractResolver(provider, resolver)
       json <- JsonUtils.extractJson("", parsedResolver)
       resolver <- Resolver.parse(json).leftMap(_.toString)
     } yield resolver) fold (
@@ -119,7 +143,7 @@ object EnrichApp {
     )
 
     val registry: EnrichmentRegistry = (for {
-      enrichmentConfig <- extractEnrichmentConfig(provider, ec.enrichmentsDir)
+      enrichmentConfig <- extractEnrichmentConfig(provider, enrichmentsDir)
       registryConfig <- JsonUtils.extractJson("", enrichmentConfig)
       reg <- EnrichmentRegistry.parse(fromJsonNode(registryConfig), false).leftMap(_.toString)
     } yield reg) fold (
@@ -146,25 +170,22 @@ object EnrichApp {
         val downloadResult: Int = cleanUri.getScheme match {
           case "http" | "https" => (cleanUri.toURL #> targetFile).! // using sys.process
           case "s3"             => downloadFromS3(provider, cleanUri, targetFile)
-          case s => throw new RuntimeException(s"Schema ${s} for file ${cleanUri} not supported")
+          case s => throw new RuntimeException(s"Schema $s for file $cleanUri not supported")
         }
 
         if (downloadResult != 0) {
-          throw new RuntimeException(s"Attempt to download ${cleanUri} to $targetFile failed")
+          throw new RuntimeException(s"Attempt to download $cleanUri to $targetFile failed")
         }
       }
     }
 
-    val source = kinesisEnrichConfig.source match {
-      case Source.Kafka => new KafkaSource(kinesisEnrichConfig, igluResolver, registry, tracker)
-      case Source.Kinesis => new KinesisSource(kinesisEnrichConfig, igluResolver, registry, tracker)
-      case Source.Stdin => new StdinSource(kinesisEnrichConfig, igluResolver, registry, tracker)
+    val source = ec.sourceType match {
+      case KafkaSource => new KafkaSource(ec, igluResolver, registry, tracker)
+      case KinesisSource => new KinesisSource(ec, igluResolver, registry, tracker)
+      case StdinSource => new StdinSource(ec, igluResolver, registry, tracker)
     }
 
-    tracker match {
-      case Some(t) => SnowplowTracking.initializeSnowplowTracking(t)
-      case None    => None
-    }
+    tracker.foreach(SnowplowTracking.initializeSnowplowTracking)
 
     source.run
   }
@@ -182,7 +203,7 @@ object EnrichApp {
     case FilepathRegex(filepath) => {
       val file = new File(filepath)
       if (file.exists) {
-        scala.io.Source.fromFile(file).mkString.success
+        Source.fromFile(file).mkString.success
       } else {
         "Iglu resolver configuration file \"%s\" does not exist".format(filepath).failure
       }
@@ -226,7 +247,7 @@ object EnrichApp {
   ): Validation[String, String] = {
     val jsons: Validation[String, List[String]] = enrichmentArgument.map {
       case FilepathRegex(dir) =>
-        new java.io.File(dir).listFiles
+        new File(dir).listFiles
           .filter(_.getName.endsWith(".json"))
           .map(scala.io.Source.fromFile(_).mkString)
           .toList
@@ -312,73 +333,5 @@ object EnrichApp {
         log.error(s"Error downloading $uri: ${e.getMessage}")
         1
     }
-  }
-}
-
-// Rigidly load the configuration file here to error when
-// the enrichment process starts rather than later.
-class KinesisEnrichConfig(config: Config) {
-  private val enrich = config.resolve.getConfig("enrich")
-
-  val source = enrich.getString("source") match {
-    case "kafka" => Source.Kafka
-    case "kinesis" => Source.Kinesis
-    case "stdin" => Source.Stdin
-    case "test" => Source.Test
-    case _ => throw new RuntimeException("enrich.source unknown.")
-  }
-
-  val sink = enrich.getString("sink") match {
-    case "kafka" => Sink.Kafka
-    case "kinesis" => Sink.Kinesis
-    case "stdouterr" => Sink.Stdouterr
-    case "test" => Sink.Test
-    case _ => throw new RuntimeException("enrich.sink unknown.")
-  }
-
-  private val aws = enrich.getConfig("aws")
-  val accessKey = aws.getString("access-key")
-  val secretKey = aws.getString("secret-key")
-
-  private val kafka = enrich.getConfig("kafka")
-  val kafkaBrokers = kafka.getString("brokers")
-
-  private val streams = enrich.getConfig("streams")
-
-  private val inStreams = streams.getConfig("in")
-  val rawInStream = inStreams.getString("raw")
-
-  private val outStreams = streams.getConfig("out")
-  val enrichedOutStream = outStreams.getString("enriched")
-  val badOutStream = outStreams.getString("bad")
-
-  val appName = streams.getString("app-name")
-
-  val initialPosition = streams.getString("initial-position")
-
-  val streamRegion = streams.getString("region")
-  val streamEndpoint = s"https://kinesis.${streamRegion}.amazonaws.com"
-
-  val maxRecords = if (inStreams.hasPath("maxRecords")) {
-    inStreams.getInt("maxRecords")
-  } else {
-    10000
-  }
-
-  val buffer = inStreams.getConfig("buffer")
-  val byteLimit = buffer.getInt("byte-limit")
-  val recordLimit = buffer.getInt("record-limit")
-  val timeLimit = buffer.getInt("time-limit")
-
-  val credentialsProvider = CredentialsLookup.getCredentialsProvider(accessKey, secretKey)
-
-  val backoffPolicy = outStreams.getConfig("backoffPolicy")
-  val minBackoff = backoffPolicy.getLong("minBackoff")
-  val maxBackoff = backoffPolicy.getLong("maxBackoff")
-
-  val partitionKey = if (outStreams.hasPath("partitionKey")) {
-    Some(outStreams.getString("partitionKey"))
-  } else {
-    None
   }
 }

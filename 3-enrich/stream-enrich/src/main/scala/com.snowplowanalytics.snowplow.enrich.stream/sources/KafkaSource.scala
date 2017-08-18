@@ -30,15 +30,16 @@ import scala.collection.JavaConverters._
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.slf4j.LoggerFactory
 
-import iglu.client.Resolver
 import common.enrichments.EnrichmentRegistry
+import iglu.client.Resolver
+import model.EnrichConfig
 import scalatracker.Tracker
 
 /**
  * Source to read events from a Kafka topic
  */
 class KafkaSource(
-  config: KinesisEnrichConfig,
+  config: EnrichConfig,
   igluResolver: Resolver,
   enrichmentRegistry: EnrichmentRegistry,
   tracker: Option[Tracker]
@@ -56,10 +57,10 @@ class KafkaSource(
 
     val consumer = createConsumer(config)
 
-    log.info(s"Running Kafka consumer group: ${config.appName}.")
-    log.info(s"Processing raw input Kafka topic: ${config.rawInStream}")
+    log.info(s"Running Kafka consumer group: ${config.streams.appName}.")
+    log.info(s"Processing raw input Kafka topic: ${config.streams.in.raw}")
 
-    consumer.subscribe(List(config.rawInStream).asJava)
+    consumer.subscribe(List(config.streams.in.raw).asJava)
     while (true) {
       val recordValues = consumer
         .poll(100)    // Wait 100 ms if data is not available
@@ -71,16 +72,16 @@ class KafkaSource(
     }
   }
 
-  private def createConsumer(config: KinesisEnrichConfig): KafkaConsumer[String, Array[Byte]] = {
+  private def createConsumer(config: EnrichConfig): KafkaConsumer[String, Array[Byte]] = {
     val properties = createProperties(config)
     new KafkaConsumer[String, Array[Byte]](properties)
   }
 
-  private def createProperties(config: KinesisEnrichConfig): Properties = {
+  private def createProperties(config: EnrichConfig): Properties = {
 
     val props = new Properties()
-    props.put("bootstrap.servers", config.kafkaBrokers)
-    props.put("group.id", config.appName)
+    props.put("bootstrap.servers", config.streams.kafka.brokers)
+    props.put("group.id", config.streams.appName)
     props.put("enable.auto.commit", "true")
     props.put("auto.commit.interval.ms", "1000")
     props.put("auto.offset.reset", "earliest")

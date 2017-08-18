@@ -42,10 +42,13 @@ import common.enrichments.EnrichmentRegistry
 import common.loaders.ThriftLoader
 import common.outputs.{EnrichedEvent, BadRow}
 import iglu.client.Resolver
+import model._
 import scalatracker.Tracker
 import sinks._
 
 object AbstractSource {
+  /** Kinesis records must not exceed 1MB */
+  val MaxBytes = 1000000L
 
   /**
    * If a bad row JSON is too big, reduce it's size
@@ -95,12 +98,15 @@ object AbstractSource {
  * Abstract base for the different sources
  * we support.
  */
-abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolver,
-                              enrichmentRegistry: EnrichmentRegistry, 
-                              tracker: Option[Tracker]) {
-  
-  val MaxRecordSize = if (config.sink == Sink.Kinesis) {
-    Some(MaxBytes)
+abstract class AbstractSource(
+  config: EnrichConfig,
+  igluResolver: Resolver,
+  enrichmentRegistry: EnrichmentRegistry,
+  tracker: Option[Tracker]
+) {
+
+  val MaxRecordSize = if (config.sinkType == KinesisSink) {
+    Some(AbstractSource.MaxBytes)
   } else {
     None
   }
@@ -111,12 +117,17 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
   def run(): Unit
 
   // Initialize a kinesis provider to use with a Kinesis source or sink.
-  protected val kinesisProvider = config.credentialsProvider
+  protected val kinesisProvider = config.aws.provider
 
   // Initialize the sink to output enriched events to.
-  protected val sink = getThreadLocalSink(InputType.Good)
+  protected val sink = getThreadLocalSink(Good)
 
-  protected val badSink = getThreadLocalSink(InputType.Bad)
+  protected val badSink = getThreadLocalSink(Bad)
+
+  private def getStreamName(inputType: InputType): String = inputType match {
+    case Good => config.streams.out.enriched
+    case Bad => config.streams.out.bad
+  }
 
   /**
    * We need the sink to be ThreadLocal as otherwise a single copy
@@ -125,12 +136,17 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
    * @param inputType Whether the sink is for good events or bad events
    * @return ThreadLocal sink
    */
-  private def getThreadLocalSink(inputType: InputType.InputType) = new ThreadLocal[Option[ISink]] {
-    override def initialValue = config.sink match {
-      case Sink.Kafka => new KafkaSink(config, inputType, tracker).some
-      case Sink.Kinesis => new KinesisSink(kinesisProvider, config, inputType, tracker).some
-      case Sink.Stdouterr => new StdouterrSink(inputType).some
-      case Sink.Test => None
+  private def getThreadLocalSink(inputType: InputType) = new ThreadLocal[Option[ISink]] {
+    val streamName = getStreamName(inputType)
+    lazy val kafkaConfig = config.streams.kafka
+    lazy val kinesisConfig = config.streams.kinesis
+    val bufferConfig = config.streams.buffer
+    override def initialValue = config.sinkType match {
+      case KafkaSink =>
+        new KafkaSink(kafkaConfig, bufferConfig, inputType, streamName, tracker).some
+      case KinesisSink => new KinesisSink(kinesisProvider, kinesisConfig, bufferConfig, inputType,
+        streamName, tracker).some
+      case StdouterrSink => new StdouterrSink(inputType).some
     }
   }
 
@@ -146,8 +162,8 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
     }.mkString("\t")
   }
 
-  def getProprertyValue(ee: EnrichedEvent, property: Option[String]): String =
-    property.map {
+  def getProprertyValue(ee: EnrichedEvent, property: String): String =
+    property match {
       case "event_id" => ee.event_id
       case "event_fingerprint" => ee.event_fingerprint
       case "domain_userid" => ee.domain_userid
@@ -156,7 +172,7 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
       case "domain_sessionid" => ee.domain_sessionid
       case "user_fingerprint" => ee.user_fingerprint
       case _ => UUID.randomUUID().toString
-    }.getOrElse(UUID.randomUUID().toString)
+    }
 
   /**
    * Convert incoming binary Thrift records to lists of enriched events
@@ -175,7 +191,7 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
     processedEvents.map(validatedMaybeEvent => {
       validatedMaybeEvent match {
         case Success(co) =>
-          (tabSeparateEnrichedEvent(co), getProprertyValue(co, config.partitionKey)).success
+          (tabSeparateEnrichedEvent(co), getProprertyValue(co, config.streams.out.partitionKey)).success
         case Failure(errors) =>
           val line = new String(Base64.encodeBase64(binaryData), UTF_8)
           (BadRow(line, errors).toCompactJson -> Random.nextInt.toString).fail

@@ -1,4 +1,4 @@
-/*
+ /*
  * Copyright (c) 2013-2014 Snowplow Analytics Ltd.
  * All rights reserved.
  *
@@ -16,12 +16,29 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.stream.sinks
+package com.snowplowanalytics
+package snowplow
+package enrich
+package stream
+package sources
+
+import iglu.client.Resolver
+import common.enrichments.EnrichmentRegistry
+import model.EnrichConfig
+import scalatracker.Tracker
 
 /**
- * Whether the sink is for good rows or bad rows
+ * Source to allow the testing framework to enrich events
+ * using the same methods from AbstractSource as the other
+ * sources.
  */
-object InputType extends Enumeration {
-  type InputType = Value
-  val Good, Bad = Value
+class TestSource(
+  config: EnrichConfig,
+  igluResolver: Resolver,
+  enrichmentRegistry: EnrichmentRegistry,
+  tracker: Option[Tracker]
+) extends AbstractSource(config, igluResolver, enrichmentRegistry, tracker) {
+
+  override def run(): Unit =
+    throw new RuntimeException("run() should not be called on TestSource")
 }
