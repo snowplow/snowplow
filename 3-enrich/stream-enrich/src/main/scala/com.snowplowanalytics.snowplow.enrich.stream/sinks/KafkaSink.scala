@@ -25,22 +25,23 @@ import java.util.Properties
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.slf4j.LoggerFactory
 
+import model._
 import scalatracker.Tracker
 
 /**
  * Kafka Sink for Scala enrichment
  */
-class KafkaSink(config: KinesisEnrichConfig,
-    inputType: InputType.InputType, tracker: Option[Tracker]) extends ISink {
+class KafkaSink(
+  kafkaConfig: KafkaConfig,
+  bufferConfig: BufferConfig,
+  inputType: InputType,
+  topicName: String,
+  tracker: Option[Tracker]
+) extends ISink {
 
   private lazy val log = LoggerFactory.getLogger(getClass())
 
-  private val topicName = inputType match {
-    case InputType.Good => config.enrichedOutStream
-    case InputType.Bad => config.badOutStream
-  }
-
-  private val kafkaProducer = createProducer(config)
+  private val kafkaProducer = createProducer(kafkaConfig, bufferConfig)
 
   /**
    * Side-effecting function to store the EnrichedEvent
@@ -59,8 +60,8 @@ class KafkaSink(config: KinesisEnrichConfig,
 
     // Log BadRows
     inputType match {
-      case InputType.Good => None
-      case InputType.Bad  => events.foreach(e => log.debug(s"BadRow: ${e._1}"))
+      case Good => None
+      case Bad  => events.foreach(e => log.debug(s"BadRow: ${e._1}"))
     }
 
     for ((value, key) <- events) {
@@ -74,19 +75,21 @@ class KafkaSink(config: KinesisEnrichConfig,
   /** Blocking method to send all buffered records to Kafka. */
   def flush(): Unit = kafkaProducer.flush()
 
-  private def createProducer(config: KinesisEnrichConfig): KafkaProducer[String, String] = {
-    val properties = createProperties(config)
+  private def createProducer(
+    kafkaConfig: KafkaConfig,
+    bufferConfig: BufferConfig
+  ): KafkaProducer[String, String] = {
+    val properties = createProperties(kafkaConfig, bufferConfig)
     new KafkaProducer[String, String](properties)
   }
 
-  private def createProperties(config: KinesisEnrichConfig): Properties = {
-
+  private def createProperties(kafkaConfig: KafkaConfig, bufferConfig: BufferConfig): Properties = {
     val props = new Properties()
-    props.put("bootstrap.servers", config.kafkaBrokers)
+    props.put("bootstrap.servers", kafkaConfig.brokers)
     props.put("acks", "all")
     props.put("retries", "0") // TODO yech
-    props.put("buffer.memory", config.byteLimit.toString)
-    props.put("linger.ms", config.timeLimit.toString)
+    props.put("buffer.memory", bufferConfig.byteLimit.toString)
+    props.put("linger.ms", bufferConfig.timeLimit.toString)
     props.put("key.serializer",
       "org.apache.kafka.common.serialization.StringSerializer")
     props.put("value.serializer",
