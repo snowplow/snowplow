@@ -152,10 +152,6 @@ module Snowplow
           s[:skip] << "analyze"
         end
 
-        if not steps[:shred]
-          s[:skip] << "shred"
-        end
-
         if inclusions.include?("vacuum")
           s[:include] << "vacuum"
         end
