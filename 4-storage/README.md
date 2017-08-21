@@ -38,9 +38,9 @@
 [s1]: https://github.com/snowplow/snowplow/tree/master/4-storage/hive-storage
 [s2]: https://github.com/snowplow/snowplow/tree/master/4-storage/postgres-storage
 [s3]: https://github.com/snowplow/snowplow/tree/master/4-storage/redshift-storage
-[s4]: https://github.com/snowplow/snowplow/tree/master/4-storage/rdb-loader
+[s4]: https://github.com/snowplow/snowplow-rdb-loader
 [s5]: https://github.com/snowplow/snowplow/tree/master/4-storage/kinesis-elasticsearch-sink
-[s6]: https://github.com/snowplow/snowplow/tree/master/4-storage/rdb-shredder
+[s6]: https://github.com/snowplow/snowplow-rdb-loader
 
 [techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
 [setup-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png
