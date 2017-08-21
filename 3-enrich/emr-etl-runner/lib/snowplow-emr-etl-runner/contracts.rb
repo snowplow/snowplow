@@ -176,11 +176,11 @@ module Snowplow
         :ENRICHED_EVENTS => ArrayOf[Iglu::SelfDescribingJson]
     })
 
-    # archive_enriched can be either run as:
+    # archive_{enriched,shredded} can be either run as:
     # recover - without previous steps, archive latest run_id
     # pipeline - following the enrich and rdb_load, with known run_id
     # skip - don't archive
-    ArchiveEnrichedStep = C::Or['recover', 'pipeline', 'skip']
+    ArchiveStep = C::Or['recover', 'pipeline', 'skip']
 
     RdbLoaderSteps = ({
       :skip => ArrayOf[String],

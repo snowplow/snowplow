@@ -64,12 +64,23 @@ module Snowplow
             not skips.include?('rdb_load')),
           :analyze => ((resume.nil? or [ 'enrich', 'shred', 'elasticsearch', 'archive_raw', 'rdb_load', 'analyze' ].include?(resume)) and
             not skips.include?('analyze')),
-          :archive_enriched => (not skips.include?('archive_enriched'))
+          :archive_enriched => ((resume.nil? or
+            [ 'enrich', 'shred', 'elasticsearch', 'archive_raw', 'rdb_load', 'analyze', 'archive_enriched' ].include?(resume)) and
+            not skips.include?('archive_enriched')),
+          :archive_shredded => (not skips.include?('archive_shredded'))
         }
 
         archive_enriched = if not steps[:archive_enriched]
           'skip'
         elsif steps[:enrich]
+          'pipeline'
+        else
+          'recover'
+        end
+
+        archive_shredded = if not steps[:archive_shredded]
+          'skip'
+        elsif steps[:shred]
           'pipeline'
         else
           'recover'
@@ -87,8 +98,8 @@ module Snowplow
           begin
             tries_left -= 1
             job = EmrJob.new(@args[:debug], steps[:staging], steps[:enrich], steps[:shred], steps[:es],
-              steps[:archive_raw], steps[:rdb_load], archive_enriched, @config, @enrichments_array,
-              @resolver_config, @targets, rdbloader_steps)
+              steps[:archive_raw], steps[:rdb_load], archive_enriched, archive_shredded, @config,
+              @enrichments_array, @resolver_config, @targets, rdbloader_steps)
             job.run(@config)
             break
           rescue BootstrapFailureError => bfe

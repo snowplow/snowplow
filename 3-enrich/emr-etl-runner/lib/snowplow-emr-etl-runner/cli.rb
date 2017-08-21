@@ -32,8 +32,8 @@ module Snowplow
 
       # Supported options
       COLLECTOR_FORMAT_REGEX = /^(?:cloudfront|clj-tomcat|thrift|(?:json\/.+\/.+)|(?:tsv\/.+\/.+)|(?:ndjson\/.+\/.+))$/
-      RESUMABLES = Set.new(%w(enrich shred elasticsearch archive_raw rdb_load analyze archive_enriched))
-      SKIPPABLES = Set.new(%w(staging enrich shred elasticsearch archive_raw rdb_load analyze archive_enriched))
+      RESUMABLES = Set.new(%w(enrich shred elasticsearch archive_raw rdb_load analyze archive_enriched archive_shredded))
+      SKIPPABLES = Set.new(%w(staging enrich shred elasticsearch archive_raw rdb_load analyze archive_enriched archive_shredded))
       INCLUDES = Set.new(%w(vacuum))
 
       # Get our arguments, configuration,
@@ -290,7 +290,7 @@ module Snowplow
 
         unless args[:resume_from].nil?
           unless RESUMABLES.include?(args[:resume_from])
-            raise ConfigError, "Invalid option: resume-from can be #{RESUMABLES.to_a.join(', ')}, not '#{args[:resume_from]}'"
+            raise ConfigError, "Invalid option: resume-from can be #{RESUMABLES.to_a.join(', ')} not '#{args[:resume_from]}'"
           end
         end
 
