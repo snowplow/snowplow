@@ -50,8 +50,8 @@ module Snowplow
       include Snowplow::EmrEtlRunner::Utils
 
       # Initializes our wrapper for the Amazon EMR client.
-      Contract Bool, Bool, Bool, Bool, Bool, Bool, Bool, ArchiveEnrichedStep, ConfigHash, ArrayOf[String], String, TargetsHash, RdbLoaderSteps => EmrJob
-      def initialize(debug, staging, enrich, shred, es, archive_raw, rdb_load, archive_enriched, config, enrichments_array, resolver, targets, rdbloader_steps)
+      Contract Bool, Bool, Bool, Bool, Bool, Bool, Bool, ArchiveStep, ArchiveStep, ConfigHash, ArrayOf[String], String, TargetsHash, RdbLoaderSteps => EmrJob
+      def initialize(debug, staging, enrich, shred, es, archive_raw, rdb_load, archive_enriched, archive_shredded, config, enrichments_array, resolver, targets, rdbloader_steps)
 
         logger.debug "Initializing EMR jobflow"
 
@@ -474,16 +474,22 @@ module Snowplow
         end
 
         if archive_enriched == 'pipeline'
-          archive_enriched_step = get_archive_enriched_step(csbe[:good], csbe[:archive], run_id, s3_endpoint, ": Enriched S3 -> Enriched Archive S3")
+          archive_enriched_step = get_archive_step(csbe[:good], csbe[:archive], run_id, s3_endpoint, ": Enriched S3 -> Enriched Archive S3")
           @jobflow.add_step(archive_enriched_step)
-          archive_shredded_step = get_archive_enriched_step(csbs[:good], csbs[:archive], run_id, s3_endpoint, ": Shredded S3 -> Shredded Archive S3")
-          @jobflow.add_step(archive_shredded_step)
         elsif archive_enriched == 'recover'
           latest_run_id = get_latest_run_id(s3, csbe[:good])
-
-          archive_enriched_step = get_archive_enriched_step(csbe[:good], csbe[:archive], latest_run_id, s3_endpoint, ': Enriched S3 -> S3 Enriched Archive')
+          archive_enriched_step = get_archive_step(csbe[:good], csbe[:archive], latest_run_id, s3_endpoint, ': Enriched S3 -> S3 Enriched Archive')
           @jobflow.add_step(archive_enriched_step)
-          archive_shredded_step = get_archive_enriched_step(csbs[:good], csbs[:archive], latest_run_id, s3_endpoint, ": Shredded S3 -> S3 Shredded Archive")
+        else    # skip
+          nil
+        end
+
+        if archive_shredded == 'pipeline'
+          archive_shredded_step = get_archive_step(csbs[:good], csbs[:archive], run_id, s3_endpoint, ": Shredded S3 -> Shredded Archive S3")
+          @jobflow.add_step(archive_shredded_step)
+        elsif archive_shredded == 'recover'
+          latest_run_id = get_latest_run_id(s3, csbe[:good])
+          archive_shredded_step = get_archive_step(csbs[:good], csbs[:archive], latest_run_id, s3_endpoint, ": Shredded S3 -> S3 Shredded Archive")
           @jobflow.add_step(archive_shredded_step)
         else    # skip
           nil
@@ -718,16 +724,16 @@ module Snowplow
       #
       # Returns a step ready for adding to the Elasticity Jobflow.
       Contract String, String, String, String, String => Elasticity::S3DistCpStep
-      def get_archive_enriched_step(good_path, archive_path, run_id_folder, s3_endpoint, name)
-        archive_enriched_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
-        archive_enriched_step.arguments = [
+      def get_archive_step(good_path, archive_path, run_id_folder, s3_endpoint, name)
+        archive_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
+        archive_step.arguments = [
           "--src"        , partition_by_run(good_path, run_id_folder),
           "--dest"       , partition_by_run(archive_path, run_id_folder),
           "--s3Endpoint" , s3_endpoint,
           "--deleteOnSuccess"
         ]
-        archive_enriched_step.name << name
-        archive_enriched_step
+        archive_step.name << name
+        archive_step
       end
 
 
