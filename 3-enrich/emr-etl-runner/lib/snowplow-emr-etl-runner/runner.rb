@@ -101,6 +101,12 @@ module Snowplow
             else
               raise
             end
+          rescue DirectoryNotEmptyError, NoDataToProcessError => e
+            # unlock on no-op
+            if not lock.nil?
+              lock.unlock
+            end
+            raise e
           end
         end
 
