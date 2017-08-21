@@ -550,7 +550,15 @@ module Snowplow
         status = wait_for()
 
         if status.successful or status.rdb_loader_failure or status.rdb_loader_cancellation
-          output_rdb_loader_logs(config[:aws][:s3][:region], config[:aws][:access_key_id], config[:aws][:secret_access_key])
+          log_level = if status.successful
+            'info'
+          elsif status.rdb_loader_cancellation
+            'warn'
+          else
+            'error'
+          end
+          output_rdb_loader_logs(config[:aws][:s3][:region], config[:aws][:access_key_id],
+            config[:aws][:secret_access_key], log_level)
         end
 
         if status.successful
@@ -579,8 +587,8 @@ module Snowplow
       #
       # Parameters:
       # +region+:: region for logs bucket
-      Contract String, String, String => nil
-      def output_rdb_loader_logs(region, aws_access_key_id, aws_secret_key)
+      Contract String, String, String, String => nil
+      def output_rdb_loader_logs(region, aws_access_key_id, aws_secret_key, log_level)
 
         if @rdb_loader_logs.empty?
           logger.info "No RDB Loader logs"
@@ -597,8 +605,16 @@ module Snowplow
             begin
               log = s3.directories.get(bucket).files.head(key)
               Sluice::Storage::S3::download_file(s3, log, tmp)
-              logger.info l[0]
-              logger.info tmp.read
+              if log_level == 'info'
+                logger.info l[0]
+                logger.info tmp.read
+              elsif log_level == 'warn'
+                logger.warn l[0]
+                logger.warn tmp.read
+              else
+                logger.error l[0]
+                logger.error tmp.read
+              end
             rescue Exception => e
               logger.error "Error while downloading RDB log #{l[1]}"
               logger.error e.message
