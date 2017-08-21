@@ -602,6 +602,9 @@ module Snowplow
             rescue Exception => e
               logger.error "Error while downloading RDB log #{l[1]}"
               logger.error e.message
+            ensure
+              tmp.close
+              tmp.unlink
             end
           end
         end
