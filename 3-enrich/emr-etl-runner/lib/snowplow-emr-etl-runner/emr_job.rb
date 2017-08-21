@@ -549,7 +549,7 @@ module Snowplow
 
         status = wait_for()
 
-        if status.successful or status.rdb_loader_failure
+        if status.successful or status.rdb_loader_failure or status.rdb_loader_cancellation
           output_rdb_loader_logs(config[:aws][:s3][:region], config[:aws][:access_key_id], config[:aws][:secret_access_key])
         end
 
@@ -785,6 +785,7 @@ module Snowplow
         success = false
         bootstrap_failure = false
         rdb_loader_failure = false
+        rdb_loader_cancellation = false
 
         # Loop until we can quit...
         while true do
@@ -799,6 +800,7 @@ module Snowplow
               success = statuses[1] == 0 # True if no failures
               bootstrap_failure = EmrJob.bootstrap_failure?(@jobflow)
               rdb_loader_failure = EmrJob.rdb_loader_failure?(@jobflow.cluster_step_status)
+              rdb_loader_cancellation = EmrJob.rdb_loader_cancellation?(@jobflow.cluster_step_status)
               break
             else
               # Sleep a while before we check again
@@ -835,7 +837,7 @@ module Snowplow
           end
         end
 
-        JobResult.new(success, bootstrap_failure, rdb_loader_failure)
+        JobResult.new(success, bootstrap_failure, rdb_loader_failure, rdb_loader_cancellation)
       end
 
       # Prettified string containing failure details
@@ -935,6 +937,13 @@ module Snowplow
       def self.rdb_loader_failure?(cluster_step_statuses)
         rdb_loader_failure_indicator = /Storage Target/
         cluster_step_statuses.any? { |s| s.state == 'FAILED' && !(s.name =~ rdb_loader_failure_indicator).nil? }
+      end
+
+      # Returns true if the rdb loader step was cancelled
+      Contract ArrayOf[Elasticity::ClusterStepStatus] => Bool
+      def self.rdb_loader_cancellation?(cluster_step_statuses)
+        rdb_loader_failure_indicator = /Storage Target/
+        cluster_step_statuses.any? { |s| s.state == 'CANCELLED' && !(s.name =~ rdb_loader_failure_indicator).nil? }
       end
 
       # Returns true if the jobflow seems to have failed due to a bootstrap failure
