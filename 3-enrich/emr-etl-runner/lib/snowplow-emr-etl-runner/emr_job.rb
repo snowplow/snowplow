@@ -596,12 +596,14 @@ module Snowplow
       Contract String, String, String, String => nil
       def output_rdb_loader_logs(region, aws_access_key_id, aws_secret_key, log_level)
 
-        if @rdb_loader_logs.empty?
+        s3 = Sluice::Storage::S3::new_fog_s3_from(region, aws_access_key_id, aws_secret_key)
+
+        loc = Sluice::Storage::S3::Location.new(@rdb_loader_log_base)
+
+        if @rdb_loader_logs.empty? or Sluice::Storage::S3::is_empty?(s3, loc)
           logger.info "No RDB Loader logs"
         else
           logger.info "RDB Loader logs"
-
-          s3 = Sluice::Storage::S3::new_fog_s3_from(region, aws_access_key_id, aws_secret_key)
 
           @rdb_loader_logs.each do |l|
             tmp = Tempfile.new("rdbloader")
