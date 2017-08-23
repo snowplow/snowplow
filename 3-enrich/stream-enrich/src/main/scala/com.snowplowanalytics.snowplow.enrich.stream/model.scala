@@ -96,7 +96,10 @@ object model {
       }
     require(initialPosition != "AT_TIMESTAMP" || timestamp.isRight, timestamp.left.getOrElse(""))
 
-    val streamEndpoint = s"https://kinesis.$region.amazonaws.com"
+    val streamEndpoint = region match {
+      case cn@"cn-north-1" => s"https://kinesis.$cn.amazonaws.com.cn"
+      case _ => s"https://kinesis.$region.amazonaws.com"
+    }
   }
   final case class BackoffPolicyConfig(minBackoff: Long, maxBackoff: Long)
   final case class KafkaConfig(brokers: String)
