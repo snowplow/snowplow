@@ -18,6 +18,10 @@
  */
 package com.snowplowanalytics.snowplow.enrich.stream
 
+import java.text.SimpleDateFormat
+
+import scala.util.Try
+
 import com.amazonaws.auth._
 import scalaz._
 import Scalaz._
@@ -81,8 +85,17 @@ object model {
     region: String,
     maxRecords: Int,
     initialPosition: String,
+    initialTimestamp: Option[String],
     backoffPolicy: BackoffPolicyConfig
   ) {
+    val timestamp = initialTimestamp
+      .toRight("An initial timestamp needs to be provided when choosing AT_TIMESTAMP")
+      .right.flatMap { s =>
+        val format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+        utils.fold(Try(format.parse(s)))(t => Left(t.getMessage), Right(_))
+      }
+    require(initialPosition != "AT_TIMESTAMP" || timestamp.isRight, timestamp.left.getOrElse(""))
+
     val streamEndpoint = s"https://kinesis.$region.amazonaws.com"
   }
   final case class BackoffPolicyConfig(minBackoff: Long, maxBackoff: Long)

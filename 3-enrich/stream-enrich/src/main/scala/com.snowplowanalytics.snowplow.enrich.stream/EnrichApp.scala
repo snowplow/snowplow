@@ -26,7 +26,7 @@ import java.net.URI
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.io.Source
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 import scala.util.control.NonFatal
 import sys.process._
 
@@ -94,28 +94,17 @@ object EnrichApp {
         })
     }
 
-    // to rm once 2.12 as well as the right projections
-    def fold[A, B](t: Try[A])(ft: Throwable => B, fa: A => B): B = t match {
-      case Success(a) => fa(a)
-      case Failure(t) => ft(t)
-    }
-    def filterOrElse[L, R](e: Either[L, R])(p: R => Boolean, l: => L): Either[L, R] = e match {
-      case Right(r) if p(r) => Right(r)
-      case Right(_)         => Left(l)
-      case o                => o
-    }
-
     implicit def hint[T] = ProductHint[T](ConfigFieldMapping(CamelCase, CamelCase))
-    val conf: Either[String, (EnrichConfig, String, Option[String])] = filterOrElse(
+    val conf: Either[String, (EnrichConfig, String, Option[String])] = utils.filterOrElse(
       parser.parse(args, FileConfig())
         .toRight("Error while parsing command-line arguments")
         .right.flatMap { fc =>
-          fold(Try(ConfigFactory.parseFile(fc.config).resolve()))(
+          utils.fold(Try(ConfigFactory.parseFile(fc.config).resolve()))(
             t => Left(t.getMessage), c => Right((c, fc.resolver, fc.enrichmentsDir)))
         }
     )(t => t._1.hasPath("enrich"), "No top-level \"enrich\" could be found in the configuration")
       .flatMap { case (config, resolver, enrichments) =>
-        fold(Try(loadConfigOrThrow[EnrichConfig](config.getConfig("enrich"))))(
+        utils.fold(Try(loadConfigOrThrow[EnrichConfig](config.getConfig("enrich"))))(
             t => Left(t.getMessage), Right(_))
           .right.map(ec => (ec, resolver, enrichments))
       }

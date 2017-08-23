@@ -217,7 +217,7 @@ object SpecHelpers {
       streams = StreamsConfig(
         InConfig("raw"),
         OutConfig("enriched", "bad", "partitionkey"),
-        KinesisConfig("region", 10, "TRIM_HORIZON", BackoffPolicyConfig(10, 100)),
+        KinesisConfig("region", 10, "TRIM_HORIZON", None, BackoffPolicyConfig(10, 100)),
         KafkaConfig("brokers"),
         BufferConfig(1000L, 100L, 1200L),
         "appName"
