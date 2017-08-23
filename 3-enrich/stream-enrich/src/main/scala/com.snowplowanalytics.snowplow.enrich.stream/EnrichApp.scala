@@ -215,8 +215,7 @@ object EnrichApp {
     val dynamoDBClient = AmazonDynamoDBClientBuilder
       .standard()
       .withCredentials(provider)
-      .withEndpointConfiguration(
-        new EndpointConfiguration(region, s"https://dynamodb.${region}.amazonaws.com"))
+      .withEndpointConfiguration(new EndpointConfiguration(region, getDynamodbEndpoint(region)))
       .build()
     val dynamoDB = new DynamoDB(dynamoDBClient)
     val item = dynamoDB.getTable(table).getItem("id", key)
@@ -270,8 +269,7 @@ object EnrichApp {
     val dynamoDBClient = AmazonDynamoDBClientBuilder
       .standard()
       .withCredentials(provider)
-      .withEndpointConfiguration(
-        new EndpointConfiguration(region, s"https://dynamodb.${region}.amazonaws.com"))
+      .withEndpointConfiguration(new EndpointConfiguration(region, getDynamodbEndpoint(region)))
       .build()
 
     // Each scan can only return up to 1MB
@@ -322,4 +320,10 @@ object EnrichApp {
         1
     }
   }
+
+  private def getDynamodbEndpoint(region: String): String =
+    region match {
+      case cn@"cn-north-1" => s"https://dynamodb.$cn.amazonaws.com.cn"
+      case _ => s"https://dynamodb.$region.amazonaws.com"
+    }
 }
