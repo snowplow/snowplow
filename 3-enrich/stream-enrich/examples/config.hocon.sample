@@ -67,9 +67,15 @@ enrich {
 
       # LATEST: most recent data.
       # TRIM_HORIZON: oldest available data.
-      # Note: This only effects the first run of this application
-      # on a stream.
+      # "AT_TIMESTAMP": Start from the record at or after the specified timestamp
+      # Note: This only effects the first run of this application on a stream.
       initialPosition = TRIM_HORIZON
+
+      # Need to be specified when initial-position is "AT_TIMESTAMP".
+      # Timestamp format need to be in "yyyy-MM-ddTHH:mm:ssZ".
+      # Ex: "2017-05-17T10:00:00Z"
+      # Note: Time need to specified in UTC.
+      initialTimestamp = "{{initialTimestamp}}"
 
       # Minimum and maximum backoff periods, in milliseconds
       backoffPolicy {
