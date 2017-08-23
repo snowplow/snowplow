@@ -61,18 +61,24 @@ class KinesisSource(
     val workerId = InetAddress.getLocalHost().getCanonicalHostName() + ":" + UUID.randomUUID()
     log.info("Using workerId: " + workerId)
 
-    val kinesisClientLibConfiguration = new KinesisClientLibConfiguration(
-      config.streams.appName,
-      config.streams.in.raw, 
-      kinesisProvider,
-      workerId
-    ).withInitialPositionInStream(
-      InitialPositionInStream.valueOf(config.streams.kinesis.initialPosition)
-    ).withKinesisEndpoint(config.streams.kinesis.streamEndpoint)
-    .withMaxRecords(config.streams.kinesis.maxRecords)
-    .withRegionName(config.streams.kinesis.region)
-    // If the record list is empty, we still check whether it is time to flush the buffer
-    .withCallProcessRecordsEvenForEmptyRecordList(true)
+    val kinesisClientLibConfiguration = {
+      val kclc = new KinesisClientLibConfiguration(
+        config.streams.appName,
+        config.streams.in.raw, 
+        kinesisProvider,
+        workerId
+      ).withKinesisEndpoint(config.streams.kinesis.streamEndpoint)
+        .withMaxRecords(config.streams.kinesis.maxRecords)
+        .withRegionName(config.streams.kinesis.region)
+        // If the record list is empty, we still check whether it is time to flush the buffer
+        .withCallProcessRecordsEvenForEmptyRecordList(true)
+
+      val position = InitialPositionInStream.valueOf(config.streams.kinesis.initialPosition)
+      config.streams.kinesis.timestamp.right.toOption
+        .filter(_ => position == InitialPositionInStream.AT_TIMESTAMP)
+        .map(kclc.withTimestampAtInitialPositionInStream(_))
+        .getOrElse(kclc.withInitialPositionInStream(position))
+    }
 
     log.info(s"Running: ${config.streams.appName}.")
     log.info(s"Processing raw input stream: ${config.streams.in.raw}")
