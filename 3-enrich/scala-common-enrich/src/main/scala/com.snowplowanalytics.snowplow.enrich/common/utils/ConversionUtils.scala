@@ -356,16 +356,15 @@ object ConversionUtils {
    * @param encoding Encoding of the URI
    */
   def extractQuerystring(uri: URI, encoding: String): Validation[String, Map[String, String]] =
-    try {
-      URLEncodedUtils.parse(uri, encoding).map(p => (p.getName -> p.getValue)).toMap.success
-    } catch {
-      case NonFatal(e1) => try {
-        Uri.parse(uri.toString).query.params.toMap.success
-      } catch {
-        case NonFatal(e2) =>
-          s"Could not parse uri [$uri]. Apache Httpclient threw exception: [$e1]. Net-a-porter threw exception: [$e2]".fail
+    Try(URLEncodedUtils.parse(uri, encoding).map(p => (p.getName -> p.getValue)))
+      .recoverWith {
+        case NonFatal(_) =>
+          Try(Uri.parse(uri.toString).query.params)
+            .map(l => l.map(t => (t._1, t._2.getOrElse(""))))
+      } match {
+        case util.Success(s) => s.toMap.success
+        case util.Failure(e) => s"Could not parse uri [$uri]. Uri parsing threw exception: [$e].".fail
       }
-    }
 
   /**
    * Extract a Scala Int from
