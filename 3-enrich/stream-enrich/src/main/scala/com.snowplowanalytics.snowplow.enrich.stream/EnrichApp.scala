@@ -45,6 +45,7 @@ import pureconfig._
 import scalaz.{Sink => _, _}
 import Scalaz._
 
+import common.FatalEtlError
 import common.enrichments.EnrichmentRegistry
 import common.utils.JsonUtils
 import iglu.client.Resolver
@@ -65,7 +66,8 @@ object EnrichApp {
   case class FileConfig(
     config: File = new File("."),
     resolver: String = "",
-    enrichmentsDir: Option[String] = None
+    enrichmentsDir: Option[String] = None,
+    forceDownload: Boolean = false
   )
 
   def main(args: Array[String]): Unit = {
@@ -91,36 +93,43 @@ object EnrichApp {
           case FilepathRegex(_) | DynamoDBRegex(_) => success
           case _ => failure(s"Enrichments directory doesn't match accepted uris: $regexMsg")
         })
+      opt[Unit]("force-ip-lookups-download")
+        .text("Invalidate the cached IP lookup files and download them anew")
+        .action((_, c) => c.copy(forceDownload = true))
     }
 
     implicit def hint[T] = ProductHint[T](ConfigFieldMapping(CamelCase, CamelCase))
-    val conf: Either[String, (EnrichConfig, String, Option[String])] = utils.filterOrElse(
+    val conf: Either[String, (EnrichConfig, String, Option[String], Boolean)] = utils.filterOrElse(
       parser.parse(args, FileConfig())
         .toRight("Error while parsing command-line arguments")
         .right.flatMap { fc =>
           utils.fold(Try(ConfigFactory.parseFile(fc.config).resolve()))(
-            t => Left(t.getMessage), c => Right((c, fc.resolver, fc.enrichmentsDir)))
+            t => Left(t.getMessage), c => Right((c, fc.resolver, fc.enrichmentsDir, fc.forceDownload)))
         }
     )(t => t._1.hasPath("enrich"), "No top-level \"enrich\" could be found in the configuration")
-      .flatMap { case (c, r, e) =>
-        fold(Try(loadConfigOrThrow[EnrichConfig](c.getConfig("enrich"))))(
+      .flatMap { case (c, r, e, fd) =>
+        utils.fold(Try(loadConfigOrThrow[EnrichConfig](c.getConfig("enrich"))))(
             t => Left(t.getMessage), Right(_))
-          .right.map(ec => (ec, r, e))
+          .right.map(ec => (ec, r, e, fd))
       }
 
     conf match {
       case Left(e) =>
         System.err.println(s"configuration error: $e")
         System.exit(-1)
-      case Right((ec, r, e)) => main(ec, r, e)
+      case Right((ec, r, e, fd)) => main(ec, r, e, fd)
     }
   }
 
-  def main(ec: EnrichConfig, resolver: String, enrichmentsDir: Option[String]): Unit = {
-    val provider = ec.aws.credentialsProvider
-
+  def main(
+    ec: EnrichConfig,
+    resolver: String,
+    enrichmentsDir: Option[String],
+    forceDownload: Boolean
+  ): Unit = {
     val tracker = ec.monitoring.map(c => SnowplowTracking.initializeTracker(c.snowplow))
 
+    val provider = ec.aws.credentialsProvider
     implicit val igluResolver: Resolver = (for {
       parsedResolver <- extractResolver(provider, resolver)
       json <- JsonUtils.extractJson("", parsedResolver)
@@ -139,33 +148,7 @@ object EnrichApp {
       s => s
     )
 
-    val filesToCache = registry.getIpLookupsEnrichment match {
-      case Some(ipLookups) => ipLookups.dbsToCache
-      case None => Nil
-    }
-
-    for (uriFilePair <- filesToCache) {
-      val targetFile = new File(uriFilePair._2)
-
-      // Ensure uri does not have doubled slashes
-      val cleanUri = new java.net.URI(uriFilePair._1.toString.replaceAll("(?<!(http:|https:|s3:))//", "/"))
-
-      // Download the database file if it doesn't already exist or is empty
-      // See http://stackoverflow.com/questions/10281370/see-if-file-is-empty
-      if (targetFile.length == 0L) {
-
-        // Check URI Protocol and download file
-        val downloadResult: Int = cleanUri.getScheme match {
-          case "http" | "https" => (cleanUri.toURL #> targetFile).! // using sys.process
-          case "s3"             => downloadFromS3(provider, cleanUri, targetFile)
-          case s => throw new RuntimeException(s"Schema $s for file $cleanUri not supported")
-        }
-
-        if (downloadResult != 0) {
-          throw new RuntimeException(s"Attempt to download $cleanUri to $targetFile failed")
-        }
-      }
-    }
+    cacheFiles(registry, forceDownload, provider).fold(fs => throw FatalEtlError(fs), _ => ())
 
     val source = ec.sourceType match {
       case KafkaSource => new KafkaSource(ec, igluResolver, registry, tracker)
@@ -179,6 +162,41 @@ object EnrichApp {
   }
 
   /**
+   * Download the IP lookup files locally.
+   * @param registry Enrichment registry
+   * @param forceDownload CLI flag that invalidates the cached files on each startup
+   * @param provider AWS credentials provider necessary to download files from S3
+   * @return a list of failures
+   */
+  def cacheFiles(
+    registry: EnrichmentRegistry,
+    forceDownload: Boolean,
+    provider: => AWSCredentialsProvider
+  ): ValidationNel[String, List[Int]] =
+    registry.getIpLookupsEnrichment
+      .map(_.dbsToCache)
+      .toList.flatten
+      .map { case (uri, path) =>
+        (new java.net.URI(uri.toString.replaceAll("(?<!(http:|https:|s3:))//", "/")),
+          new File(path))
+      }
+      .filter { case (_, targetFile) => forceDownload || targetFile.length == 0L }
+      .map { case (cleanURI, targetFile) =>
+        val downloadResult = cleanURI.getScheme match {
+          case "http" | "https" => (cleanURI.toURL #> targetFile).!.success
+          case "s3"             => downloadFromS3(provider, cleanURI, targetFile).success
+          case s                => s"Scheme $s for file $cleanURI not supported".failure
+        }
+        downloadResult
+          .flatMap {
+            case i if i != 0 => s"Attempt to download $cleanURI to $targetFile failed".failure
+            case o => o.success
+          }
+          .toValidationNel
+      }
+      .sequenceU
+
+  /**
    * Return a JSON string based on the resolver argument
    * @param provider AWS credentials provider
    * @param resolverArgument location of the resolver
@@ -188,14 +206,13 @@ object EnrichApp {
     provider: AWSCredentialsProvider,
     resolverArgument: String
   ): Validation[String, String] = resolverArgument match {
-    case FilepathRegex(filepath) => {
+    case FilepathRegex(filepath) =>
       val file = new File(filepath)
       if (file.exists) {
         scala.io.Source.fromFile(file).mkString.success
       } else {
         "Iglu resolver configuration file \"%s\" does not exist".format(filepath).failure
       }
-    }
     case DynamoDBRegex(region, table, key) =>
       lookupDynamoDBConfig(provider, region, table, key).success
     case _ => s"Resolver argument [$resolverArgument] must begin with 'file:' or 'dynamodb:'".failure
