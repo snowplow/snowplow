@@ -23,11 +23,13 @@ Stream Enrich has the following command-line interface:
 snowplow-stream-enrich: Version 0.9.0.
 Usage: snowplow-stream-enrich [options]
 
---config <filename>
---resolver <resolver uri>
-                         Iglu resolver file, 'file:[filename]' or 'dynamodb:[region/table/key]'
---enrichments <enrichments directory uri>
-                         Direcotry of enrichment configuration JSONs, 'file:[filename]' or 'dynamodb:[region/table/key]'
+  --config <filename>
+  --resolver <resolver uri>
+                           Iglu resolver file, 'file:[filename]' or 'dynamodb:[region/table/key]'
+  --enrichments <enrichments directory uri>
+                           Directory of enrichment configuration JSONs, 'file:[filename]' or 'dynamodb:[region/table/key]'
+  --force-ip-lookups-download
+                           Invalidate the cached IP lookup files and download them anew
 ```
 
 ## Copyright and license
