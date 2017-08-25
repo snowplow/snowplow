@@ -218,7 +218,7 @@ object SpecHelpers {
         InConfig("raw"),
         OutConfig("enriched", "bad", "partitionkey"),
         KinesisConfig("region", 10, "TRIM_HORIZON", None, BackoffPolicyConfig(10, 100)),
-        KafkaConfig("brokers"),
+        KafkaConfig("brokers", 1),
         BufferConfig(1000L, 100L, 1200L),
         "appName"
       ),
