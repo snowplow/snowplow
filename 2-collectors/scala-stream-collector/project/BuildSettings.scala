@@ -60,12 +60,6 @@ object BuildSettings {
   // sbt-assembly settings for building an executable
   import sbtassembly.AssemblyPlugin.autoImport._
   lazy val sbtAssemblySettings = Seq(
-    // Executable jarfile
-    assemblyOption in assembly :=
-      (assemblyOption in assembly).value.copy(prependShellScript = Some(
-        Seq("#!/usr/bin/env sh", """exec java -jar "$0" "$@"""" + "\n")
-      )),
-    // Name it as an executable
-    assemblyJarName in assembly := { s"${name.value}-${version.value}" }
+    assemblyJarName in assembly := { s"${name.value}-${version.value}.jar" }
   )
 }
