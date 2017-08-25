@@ -87,7 +87,10 @@ package model {
     aws: AWSConfig,
     backoffPolicy: BackoffPolicyConfig
   ) {
-    val endpoint = s"https://kinesis.$region.amazonaws.com"
+    val endpoint = region match {
+      case cn@"cn-north-1" => s"https://kinesis.$cn.amazonaws.com.cn"
+      case _ => s"https://kinesis.$region.amazonaws.com"
+    }
   }
   final case class KafkaConfig(brokers: String, retries: Int)
   final case class BufferConfig(byteLimit: Int, recordLimit: Int, timeLimit: Long)
