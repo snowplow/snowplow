@@ -102,7 +102,7 @@ object model {
     }
   }
   final case class BackoffPolicyConfig(minBackoff: Long, maxBackoff: Long)
-  final case class KafkaConfig(brokers: String)
+  final case class KafkaConfig(brokers: String, retries: Int)
   final case class BufferConfig(byteLimit: Long, recordLimit: Long, timeLimit: Long)
   final case class MonitoringConfig(snowplow: SnowplowMonitoringConfig)
   final case class SnowplowMonitoringConfig(
