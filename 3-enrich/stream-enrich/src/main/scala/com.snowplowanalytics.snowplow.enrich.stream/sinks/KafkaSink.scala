@@ -44,15 +44,9 @@ class KafkaSink(
   private val kafkaProducer = createProducer(kafkaConfig, bufferConfig)
 
   /**
-   * Side-effecting function to store the EnrichedEvent
-   * to the given output stream.
-   *
-   * EnrichedEvent takes the form of a tab-delimited
-   * String until such time as https://github.com/snowplow/snowplow/issues/211
-   * is implemented.
-   *
-   * This method blocks until the request has finished.
-   *
+   * Side-effecting function to store the EnrichedEvent to the given output stream.
+   * EnrichedEvent takes the form of a tab-delimited String until such time as
+   * https://github.com/snowplow/snowplow/issues/211 is implemented.
    * @param events List of events together with their partition keys
    * @return whether to send the stored events to Kafka
    */
@@ -69,7 +63,7 @@ class KafkaSink(
       kafkaProducer.send(pr)
     }
 
-    true // Always return true as our flush does nothing
+    true
   }
 
   /** Blocking method to send all buffered records to Kafka. */
@@ -87,7 +81,7 @@ class KafkaSink(
     val props = new Properties()
     props.put("bootstrap.servers", kafkaConfig.brokers)
     props.put("acks", "all")
-    props.put("retries", "0") // TODO yech
+    props.put("retries", kafkaConfig.retries.toString)
     props.put("buffer.memory", bufferConfig.byteLimit.toString)
     props.put("linger.ms", bufferConfig.timeLimit.toString)
     props.put("key.serializer",
