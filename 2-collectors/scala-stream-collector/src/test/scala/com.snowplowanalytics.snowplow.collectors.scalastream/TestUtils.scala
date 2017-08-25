@@ -14,62 +14,29 @@
  */
 package com.snowplowanalytics.snowplow.collectors.scalastream
 
-import com.typesafe.config.ConfigFactory
+import scala.concurrent.duration._
+
+import model._
 
 object TestUtils {
-   val testConf = ConfigFactory.parseString("""
-    collector {
-      interface = "0.0.0.0"
-      port = 8080
-
-      production = true
-
-      p3p {
-        policyref = "/w3c/p3p.xml"
-        CP = "NOI DSP COR NID PSA OUR IND COM NAV STA"
-      }
-
-      cookie {
-        enabled = true
-        expiration = 365 days
-        name = sp
-        domain = "test-domain.com"
-      }
-
-      sink {
-        enabled = "test"
-
-        kinesis {
-          aws {
-            access-key: "cpf"
-            secret-key: "cpf"
-          }
-          stream {
-            region: "us-east-1"
-            good: "snowplow_collector_example"
-            bad: "snowplow_collector_example"
-          }
-          backoffPolicy {
-            minBackoff: 3000 # 3 seconds
-            maxBackoff: 600000 # 5 minutes
-          }
-        }
-
-        kafka {
-          brokers: "localhost:9092"
-
-          topic {
-            good: "good-topic"
-            bad: "bad-topic"
-          }
-        }
-
-        buffer {
-          byte-limit: 4000000 # 4MB
-          record-limit: 500 # 500 records
-          time-limit: 60000 # 1 minute
-        }
-      }
-    }
-    """)
+  val testConf = CollectorConfig(
+    interface = "0.0.0.0",
+    port = 8080,
+    p3p = P3PConfig("/w3c/p3p.xml", "NOI DSP COR NID PSA OUR IND COM NAV STA"),
+    cookie = CookieConfig(true, "sp", 365.days, None),
+    sink = "stdout",
+    streams = StreamsConfig(
+      good = "good",
+      bad = "bad",
+      useIpAddressAsPartitionKey = false,
+      kinesis = KinesisConfig(
+        region = "us-east-1",
+        threadPoolSize = 12,
+        aws = AWSConfig("cpf", "cpf"),
+        backoffPolicy = BackoffPolicyConfig(3000, 60000)
+      ),
+      kafka = KafkaConfig("localhost:9092"),
+      buffer = BufferConfig(4000000, 500, 60000)
+    )
+  )
 }

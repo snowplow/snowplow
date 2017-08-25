@@ -45,6 +45,7 @@ lazy val root = project.in(file("."))
       Dependencies.Libraries.json4sJackson,
       Dependencies.Libraries.snowplowCommonEnrich,
       Dependencies.Libraries.collectorPayload,
+      Dependencies.Libraries.pureconfig,
       // Scala (test)
       Dependencies.Libraries.akkaHttpTestkit,
       Dependencies.Libraries.specs2

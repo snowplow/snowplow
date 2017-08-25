@@ -38,6 +38,7 @@ object Dependencies {
     val akkaSlf4j            = "2.4.19"
     val scopt                = "3.6.0"
     val json4s               = "3.2.11"
+    val pureconfig           = "0.8.0"
     // Scala (test only)
     val specs2               = "3.9.4"
   }
@@ -60,6 +61,7 @@ object Dependencies {
     val akkaHttp             = "com.typesafe.akka"     %% "akka-http"              % V.akkaHttp
     val akkaSlf4j            = "com.typesafe.akka"     %% "akka-slf4j"             % V.akkaSlf4j
     val json4sJackson        = "org.json4s"            %% "json4s-jackson"         % V.json4s
+    val pureconfig           = "com.github.pureconfig" %% "pureconfig"             % V.pureconfig
 
     // Scala (test only)
     val specs2               = "org.specs2"            %% "specs2-core"            % V.specs2   % "test"

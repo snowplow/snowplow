@@ -78,7 +78,7 @@ object SplitBatch {
         if (headSize + joinSize > maximum) {
           iterbatch(t, currentBatch, currentTotal, acc, h :: failedBigEvents)
         } else if (headSize + currentTotal + joinSize > maximum) {
-          iterbatch(l, Nil, 0,  currentBatch :: acc, failedBigEvents)
+          iterbatch(l, Nil, 0, currentBatch :: acc, failedBigEvents)
         } else {
           iterbatch(t, h :: currentBatch, headSize + currentTotal + joinSize, acc, failedBigEvents)
         }

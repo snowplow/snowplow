@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2015 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
@@ -14,21 +14,17 @@
  */
 package com.snowplowanalytics.snowplow.collectors.scalastream
 
+import scala.concurrent.duration.FiniteDuration
+
 import sinks._
 
 package model {
 
-  /** Whether the sink is for good rows or bad rows */
-  object InputType extends Enumeration {
-    type InputType = Value
-    val Good, Bad = Value
-  }
-
   /** Type of sink */
-  object SinkType extends Enumeration {
-    type Sink = Value
-    val Kinesis, Kafka, Stdout, Test = Value
-  }
+  sealed trait SinkType
+  case object Kinesis extends SinkType
+  case object Kafka extends SinkType
+  case object Stdout extends SinkType
 
   /**
    * Case class for holding both good and
@@ -54,5 +50,54 @@ package model {
    * @param goodBatches List of batches of events
    * @param failedBigEvents List of events that were too large
    */
-  case class SplitBatchResult(goodBatches: List[List[String]], failedBigEvents: List[String])   
+  case class SplitBatchResult(goodBatches: List[List[String]], failedBigEvents: List[String])
+
+  final case class CookieConfig(
+    enabled: Boolean,
+    name: String,
+    expiration: FiniteDuration,
+    domain: Option[String]
+  )
+  final case class P3PConfig(policyRef: String, CP: String)
+  final case class AWSConfig(accessKey: String, secretKey: String)
+  final case class BackoffPolicyConfig(minBackoff: Long, maxBackoff: Long)
+  final case class KinesisConfig(
+    region: String,
+    threadPoolSize: Int,
+    aws: AWSConfig,
+    backoffPolicy: BackoffPolicyConfig
+  ) {
+    val endpoint = s"https://kinesis.$region.amazonaws.com"
+  }
+  final case class KafkaConfig(brokers: String, retries: Int)
+  final case class BufferConfig(byteLimit: Int, recordLimit: Int, timeLimit: Long)
+  final case class StreamsConfig(
+    good: String,
+    bad: String,
+    useIpAddressAsPartitionKey: Boolean,
+    kinesis: KinesisConfig,
+    kafka: KafkaConfig,
+    buffer: BufferConfig
+  )
+  final case class CollectorConfig(
+    interface: String,
+    port: Int,
+    p3p: P3PConfig,
+    cookie: CookieConfig,
+    sink: String,
+    streams: StreamsConfig
+  ) {
+    val cookieConfig = if (cookie.enabled) Some(cookie) else None
+
+    def cookieName = cookieConfig.map(_.name)
+    def cookieDomain = cookieConfig.flatMap(_.domain)
+    def cookieExpiration = cookieConfig.map(_.expiration)
+
+    val sinkType = sink match {
+      case "kinesis" => Kinesis
+      case "kafka"   => Kafka
+      case "stdout"  => Stdout
+      case o         => throw new IllegalArgumentException(s"collector.sink unknown: $o")
+    }
+  }
 }

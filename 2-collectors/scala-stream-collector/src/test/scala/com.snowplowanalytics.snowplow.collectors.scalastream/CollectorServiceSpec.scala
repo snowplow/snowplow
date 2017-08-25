@@ -18,6 +18,7 @@ package collectors.scalastream
 import java.net.InetAddress
 
 import scala.collection.JavaConverters._
+import scala.concurrent.duration._
 
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
@@ -30,7 +31,7 @@ import model._
 
 class CollectorServiceSpec extends Specification {
   val service = new CollectorService(
-    new CollectorConfig(TestUtils.testConf),
+    TestUtils.testConf,
     CollectorSinks(new TestSink, new TestSink)
   )
   val uuidRegex = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}".r
@@ -86,7 +87,7 @@ class CollectorServiceSpec extends Specification {
         e.schema shouldEqual "iglu:com.snowplowanalytics.snowplow/CollectorPayload/thrift/1-0-0"
         e.ipAddress shouldEqual "ip"
         e.encoding shouldEqual "UTF-8"
-        e.collector shouldEqual s"${Settings.shortName}-${Settings.version}-test"
+        e.collector shouldEqual s"${Settings.shortName}-${Settings.version}-stdout"
         e.querystring shouldEqual "q"
         e.body shouldEqual "b"
         e.path shouldEqual "p"
@@ -162,14 +163,14 @@ class CollectorServiceSpec extends Specification {
     "getCookieHeader" in {
       "give back a cookie header with the appropriate configuration" in {
         val nuid = "nuid"
-        val conf = CookieConfig("name", 5000L, Some("domain"))
+        val conf = CookieConfig(true, "name", 5.seconds, Some("domain"))
         val Some(`Set-Cookie`(cookie)) = service.getCookieHeader(Some(conf), nuid)
         cookie.name shouldEqual conf.name
         cookie.value shouldEqual nuid
         cookie.domain shouldEqual conf.domain
         cookie.path shouldEqual Some("/")
         cookie.expires must beSome
-        (cookie.expires.get - DateTime.now.clicks).clicks must beCloseTo(conf.expiration, 1000L)
+        (cookie.expires.get - DateTime.now.clicks).clicks must beCloseTo(conf.expiration.toMillis, 1000L)
       }
       "give back None if no configuration is given" in {
         service.getCookieHeader(None, "nuid") shouldEqual None
