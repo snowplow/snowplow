@@ -22,7 +22,6 @@ import scala.concurrent.duration._
 import scala.util.{Success, Failure}
 
 import com.amazonaws.services.kinesis.model._
-import com.amazonaws.auth._
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import com.amazonaws.services.kinesis.{AmazonKinesis, AmazonKinesisClientBuilder}
 
@@ -39,12 +38,14 @@ object KinesisSink {
    * Create a KinesisSink and schedule a task to flush its EventStorage
    * Exists so that no threads can get a reference to the KinesisSink
    * during its construction
-   *
-   * @param config
-   * @param inputType
    */
-  def createAndInitialize(config: CollectorConfig, inputType: InputType.InputType, executorService: ScheduledExecutorService): KinesisSink = {
-    val ks = new KinesisSink(config, inputType, executorService)
+  def createAndInitialize(
+    kinesisConfig: KinesisConfig,
+    bufferConfig: BufferConfig,
+    streamName: String,
+    executorService: ScheduledExecutorService
+  ): KinesisSink = {
+    val ks = new KinesisSink(kinesisConfig, bufferConfig, streamName, executorService)
     ks.scheduleFlush()
 
     // When the application is shut down, stop accepting incoming requests
@@ -53,8 +54,7 @@ object KinesisSink {
       override def run(): Unit = {
         shuttingDown = true
         ks.EventStorage.flush()
-        ks.executorService.shutdown()
-        ks.executorService.awaitTermination(10000, MILLISECONDS)
+        ks.shutdown()
       }
     })
     ks
@@ -64,20 +64,25 @@ object KinesisSink {
 /**
  * Kinesis Sink for the Scala collector.
  */
-class KinesisSink private (config: CollectorConfig, inputType: InputType.InputType, val executorService: ScheduledExecutorService) extends Sink {
+class KinesisSink private (
+  kinesisConfig: KinesisConfig,
+  bufferConfig: BufferConfig,
+  streamName: String,
+  executorService: ScheduledExecutorService
+) extends Sink {
   // Records must not exceed MaxBytes - 1MB
   val MaxBytes = 1000000L
   val BackoffTime = 3000L
 
-  val ByteThreshold = config.byteLimit
-  val RecordThreshold = config.recordLimit
-  val TimeThreshold = config.timeLimit
+  val ByteThreshold = bufferConfig.byteLimit
+  val RecordThreshold = bufferConfig.recordLimit
+  val TimeThreshold = bufferConfig.timeLimit
 
-  private val maxBackoff = config.maxBackoff
-  private val minBackoff = config.minBackoff
+  private val maxBackoff = kinesisConfig.backoffPolicy.maxBackoff
+  private val minBackoff = kinesisConfig.backoffPolicy.minBackoff
   private val randomGenerator = new java.util.Random()
 
-  log.info("Creating thread pool of size " + config.threadpoolSize)
+  log.info("Creating thread pool of size " + kinesisConfig.threadPoolSize)
 
   implicit lazy val ec = concurrent.ExecutionContext.fromExecutorService(executorService)
 
@@ -106,36 +111,19 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
 
   // Create a Kinesis client for stream interactions.
   private val client = createKinesisClient()
-
-  // The output stream for this sink.
-  private val streamName = inputType match {
-    case InputType.Good => config.streamGoodName
-    case InputType.Bad  => config.streamBadName
-  }
   require(streamExists(streamName), s"Kinesis stream $streamName doesn't exist")
 
   /**
    * Check whether a Kinesis stream exists
    *
    * @param name Name of the stream
-   * @param timeout How long to wait before timing out
    * @return Whether the stream exists
    */
-  private def streamExists(name: String): Boolean = {
-    val exists = try {
-      val describeStreamResult = client.describeStream(name)
-      describeStreamResult.getStreamDescription.getStreamStatus == "ACTIVE"
-    } catch {
-      case rnfe: ResourceNotFoundException => false
-    }
-
-    if (exists) {
-      log.info(s"Stream $name exists and is active")
-    } else {
-      log.info(s"Stream $name doesn't exist or is not active")
-    }
-
-    exists
+  private def streamExists(name: String): Boolean = try {
+    val describeStreamResult = client.describeStream(name)
+    describeStreamResult.getStreamDescription.getStreamStatus == "ACTIVE"
+  } catch {
+    case rnfe: ResourceNotFoundException => false
   }
 
   /**
@@ -145,33 +133,13 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
    *
    * @return the initialized AmazonKinesisClient
    */
-  private def createKinesisClient(): AmazonKinesis = {
-    val accessKey = config.awsAccessKey
-    val secretKey = config.awsSecretKey
-    val provider: AWSCredentialsProvider = if (isDefault(accessKey) && isDefault(secretKey)) {
-      new EnvironmentVariableCredentialsProvider()
-    } else if (isDefault(accessKey) || isDefault(secretKey)) {
-      throw new RuntimeException("access-key and secret-key must both be set to 'env', or neither")
-    } else if (isIam(accessKey) && isIam(secretKey)) {
-      InstanceProfileCredentialsProvider.getInstance()
-    } else if (isIam(accessKey) || isIam(secretKey)) {
-      throw new RuntimeException("access-key and secret-key must both be set to 'iam', or neither of them")
-    } else if (isEnv(accessKey) && isEnv(secretKey)) {
-      new EnvironmentVariableCredentialsProvider()
-    } else if (isEnv(accessKey) || isEnv(secretKey)) {
-      throw new RuntimeException("access-key and secret-key must both be set to 'env', or neither of them")
-    } else {
-      new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey))
-    }
-
-    val client = AmazonKinesisClientBuilder
+  private def createKinesisClient(): AmazonKinesis =
+    AmazonKinesisClientBuilder
       .standard()
-      .withCredentials(provider)
-      .withEndpointConfiguration(new EndpointConfiguration(config.streamEndpoint, config.streamRegion))
+      .withCredentials(kinesisConfig.aws.provider)
+      .withEndpointConfiguration(
+        new EndpointConfiguration(kinesisConfig.endpoint, kinesisConfig.region))
       .build()
-
-    client
-  }
 
   object EventStorage {
     private var storedEvents = List[(ByteBuffer, String)]()
@@ -276,32 +244,10 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
    */
   private def getNextBackoff(lastBackoff: Long): Long = (minBackoff + randomGenerator.nextDouble() * (lastBackoff * 3 - minBackoff)).toLong.min(maxBackoff)
 
-  /**
-   * Is the access/secret key set to the special value "default" i.e. use
-   * the standard provider chain for credentials.
-   *
-   * @param key The key to check
-   * @return true if key is default, false otherwise
-   */
-  private def isDefault(key: String): Boolean = (key == "default")
+  def shutdown(): Unit = {
+    executorService.shutdown()
+    executorService.awaitTermination(10000, MILLISECONDS)
+  }
 
-  /**
-   * Is the access/secret key set to the special value "iam" i.e. use
-   * the IAM role to get credentials.
-   *
-   * @param key The key to check
-   * @return true if key is iam, false otherwise
-   */
-  private def isIam(key: String): Boolean = (key == "iam")
-
-  /**
-   * Is the access/secret key set to the special value "env" i.e. get
-   * the credentials from environment variables
-   *
-   * @param key The key to check
-   * @return true if key is iam, false otherwise
-   */
-  private def isEnv(key: String): Boolean = (key == "env")
-
-  override def getType = SinkType.Kinesis
+  override def getType = Kinesis
 }

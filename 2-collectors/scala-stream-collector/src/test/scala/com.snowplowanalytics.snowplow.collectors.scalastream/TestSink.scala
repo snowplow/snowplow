@@ -20,7 +20,7 @@ package com.snowplowanalytics.snowplow
 package collectors
 package scalastream
 
-import model.SinkType
+import model.Stdout
 import sinks.Sink
 
 // Allow the testing framework to test collection events using the
@@ -32,5 +32,5 @@ class TestSink extends Sink {
 
   def storeRawEvents(events: List[Array[Byte]], key: String) = events
 
-  override def getType = SinkType.Test
+  override def getType = Stdout
 }
