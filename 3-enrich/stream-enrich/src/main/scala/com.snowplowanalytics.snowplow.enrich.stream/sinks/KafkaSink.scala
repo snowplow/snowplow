@@ -22,7 +22,7 @@ package sinks
 
 import java.util.Properties
 
-import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
+import org.apache.kafka.clients.producer._
 import org.slf4j.LoggerFactory
 
 import model._
@@ -59,8 +59,13 @@ class KafkaSink(
     }
 
     for ((value, key) <- events) {
-      val pr = new ProducerRecord(topicName, key, value)
-      kafkaProducer.send(pr)
+      kafkaProducer.send(
+        new ProducerRecord(topicName, key, value),
+        new Callback {
+          override def onCompletion(metadata: RecordMetadata, e: Exception): Unit =
+            if (e != null) log.error(s"Sending event failed: ${e.getMessage}")
+        }
+      )
     }
 
     true
