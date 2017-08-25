@@ -30,7 +30,7 @@ object Dependencies {
     val kinesisClient        = "1.8.1"
     val kafkaClients         = "0.10.1.0"
     val commonsCodec         = "1.10"
-    val config               = "1.0.2"
+    val config               = "1.3.1"
     val slf4j                = "1.7.5"
     // Scala
     val scopt                = "3.6.0"
