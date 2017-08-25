@@ -87,6 +87,9 @@ enrich {
     # Kafka configuration
     kafka {
       brokers = "{{kafkaBrokers}}"
+
+      # Number of retries to perform before giving up on sending a record
+      retries = 0
     }
 
     # After enrichment, events are accumulated in a buffer before being sent to Kinesis/Kafka.
