@@ -41,7 +41,7 @@ packages:
         suffix : ""
         type   : "zip"
         binary_paths:
-          - "{{ binary_paths.scala_stream_collector }}-{{ versions.scala_stream_collector }}"
+          - "{{ binary_paths.scala_stream_collector }}-{{ versions.scala_stream_collector }}.jar"
           - "{{ binary_paths.stream_enrich }}-{{ versions.stream_enrich }}"
 
   - repo     : "{{ repo }}"
@@ -57,7 +57,7 @@ packages:
         suffix : ""
         type   : "zip"
         binary_paths:
-          - "{{ binary_paths.scala_stream_collector }}-{{ versions.scala_stream_collector }}"
+          - "{{ binary_paths.scala_stream_collector }}-{{ versions.scala_stream_collector }}.jar"
 
   - repo     : "{{ repo }}"
     name     : "snowplow-stream-enrich"
