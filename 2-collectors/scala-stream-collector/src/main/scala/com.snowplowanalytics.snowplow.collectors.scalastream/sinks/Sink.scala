@@ -33,5 +33,5 @@ trait Sink {
 
   def storeRawEvents(events: List[Array[Byte]], key: String): List[Array[Byte]]
 
-  def getType: SinkType.Value
+  def getType: SinkType
 }

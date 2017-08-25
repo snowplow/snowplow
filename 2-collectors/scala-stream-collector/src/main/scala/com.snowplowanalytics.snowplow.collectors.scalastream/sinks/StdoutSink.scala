@@ -25,18 +25,18 @@ import org.apache.commons.codec.binary.Base64
 
 import model._
 
-class StdoutSink(inputType: InputType.InputType) extends Sink {
+class StdoutSink(streamName: String) extends Sink {
 
   val MaxBytes = Long.MaxValue
 
   // Print a Base64-encoded event.
   def storeRawEvents(events: List[Array[Byte]], key: String) = {
-    inputType match {
-      case InputType.Good => events foreach { e => println(Base64.encodeBase64String(e)) }
-      case InputType.Bad  => events foreach { e => Console.err.println(Base64.encodeBase64String(e)) }
+    streamName match {
+      case "out" => events foreach { e => println(Base64.encodeBase64String(e)) }
+      case "err" => events foreach { e => Console.err.println(Base64.encodeBase64String(e)) }
     }
     Nil
   }
 
-  override def getType = SinkType.Stdout
+  override def getType = Stdout
 }
