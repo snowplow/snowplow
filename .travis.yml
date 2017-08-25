@@ -33,6 +33,7 @@ env:
   # SONA_PASS
   - secure: l826euZgoTP33un5ND8zbGpBTHjTZ/4c9l1aqCi2mEnoIE40DXFyYEr8mtGX0EJXUEATIY4G9RsdYTj6kdoxiZLNLP01f7bTTCB0773L9/CplQqajfQ4XqfteN80S8uvxVwxYM/1MyGKa6B54k8prlaOh+8Gsk5iwLSGvq7S/Lk=
   matrix:
+  - TEST_DIR=2-collectors/scala-stream-collector
   - TEST_DIR=3-enrich/scala-common-enrich/
   - TEST_DIR=3-enrich/spark-enrich/
   - TEST_DIR=3-enrich/stream-enrich/
