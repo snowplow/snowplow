@@ -27,6 +27,7 @@ package model {
   case object Kinesis extends SinkType
   case object Kafka extends SinkType
   case object Stdout extends SinkType
+  case object Nsq extends SinkType
 
   /**
    * Case class for holding both good and
@@ -98,6 +99,7 @@ package model {
     }
   }
   final case class KafkaConfig(brokers: String, retries: Int)
+  final case class NsqConfig(host: String, port: Int)
   final case class BufferConfig(byteLimit: Int, recordLimit: Int, timeLimit: Long)
   final case class StreamsConfig(
     good: String,
@@ -105,6 +107,7 @@ package model {
     useIpAddressAsPartitionKey: Boolean,
     kinesis: KinesisConfig,
     kafka: KafkaConfig,
+    nsq: NsqConfig,
     buffer: BufferConfig
   )
   final case class CollectorConfig(
@@ -126,6 +129,7 @@ package model {
       case "kinesis" => Kinesis
       case "kafka"   => Kafka
       case "stdout"  => Stdout
+      case "nsq"     => Nsq
       case o         => throw new IllegalArgumentException(s"collector.sink unknown: $o")
     }
   }

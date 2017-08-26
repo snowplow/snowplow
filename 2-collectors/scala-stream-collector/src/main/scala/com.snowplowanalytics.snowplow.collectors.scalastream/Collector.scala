@@ -84,6 +84,9 @@ object Collector {
           (new KafkaSink(kc, bufferConf, goodStream),
             new KafkaSink(kc, bufferConf, badStream))
         case Stdout => (new StdoutSink("out"), new StdoutSink("err"))
+        case Nsq =>
+          val nc = collectorConf.streams.nsq
+          (new NsqSink(nc, goodStream), new NsqSink(nc, badStream))
       }
       CollectorSinks(good, bad)
     }
