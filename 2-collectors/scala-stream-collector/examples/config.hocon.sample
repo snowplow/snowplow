@@ -57,6 +57,7 @@ collector {
   # Sinks currently supported are:
   # 'kinesis' for writing Thrift-serialized records to a Kinesis stream
   # 'kafka' for writing Thrift-serialized records to kafka
+  # 'nsq' for writing Thrift-serialized records to Nsq
   # 'stdout' for writing Base64-encoded Thrift-serialized records to stdout
   #    Recommended settings for 'stdout' so each line printed to stdout
   #    is a serialized record are:
@@ -74,6 +75,7 @@ collector {
     bad = {{bad}}
 
     # Whether to use the incoming event's ip as the partition key for the good stream/topic
+    # Note: Nsq does not make use of partition key.
     useIpAddressAsPartitionKey = false
 
     kinesis {
@@ -107,7 +109,17 @@ collector {
       retries = 0
     }
 
+    # config for NSQ sink
+    nsq {
+      # Host name for NSQ tools
+      host = "{{nsqHost}}"
+
+      # HTTP port for nsqd
+      port = "{{nsqdPort}}"
+    }
+
     # Incoming events are stored in a buffer before being sent to Kinesis/Kafka.
+    # Note: Buffering is not supported by NSQ.
     # The buffer is emptied whenever:
     # - the number of stored records reaches record-limit or
     # - the combined size of the stored records reaches byte-limit or
