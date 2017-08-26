@@ -148,6 +148,7 @@ abstract class AbstractSource(
       case KinesisSink => new KinesisSink(kinesisProvider, kinesisConfig, bufferConfig, inputType,
         streamName, tracker).some
       case StdouterrSink => new StdouterrSink(inputType).some
+      case NsqSink => new NsqSink(nsqConfig, streamName).some
     }
   }
 
