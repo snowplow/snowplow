@@ -158,6 +158,7 @@ object EnrichApp {
       case KafkaSource => new KafkaSource(ec, igluResolver, registry, tracker)
       case KinesisSource => new KinesisSource(ec, igluResolver, registry, tracker)
       case StdinSource => new StdinSource(ec, igluResolver, registry, tracker)
+      case NsqSource => new NsqSource(ec, igluResolver, registry, tracker)
     }
 
     tracker.foreach(SnowplowTracking.initializeSnowplowTracking)

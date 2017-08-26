@@ -32,6 +32,7 @@ object Dependencies {
     val commonsCodec         = "1.10"
     val config               = "1.3.1"
     val slf4j                = "1.7.5"
+    val nsqClient            = "1.1.0"
     // Scala
     val scopt                = "3.6.0"
     val scalaz7              = "7.0.9"
@@ -57,6 +58,7 @@ object Dependencies {
     val config               = "com.typesafe"          %  "config"                    % V.config
     val slf4j                = "org.slf4j"             %  "slf4j-simple"              % V.slf4j
     val log4jOverSlf4j       = "org.slf4j"             %  "log4j-over-slf4j"          % V.slf4j
+    val nsqClient            = "com.snowplowanalytics" %  "nsq-java-client_2.10"      % V.nsqClient
     // Scala
     val scopt                = "com.github.scopt"      %% "scopt"                     % V.scopt
     val scalaz7              = "org.scalaz"            %% "scalaz-core"               % V.scalaz7
