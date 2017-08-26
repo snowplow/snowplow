@@ -18,12 +18,14 @@ enrich {
   # Sources currently supported are:
   # 'kinesis' for reading Thrift-serialized records from a Kinesis stream
   # 'kafka' for reading Thrift-serialized records from a Kafka topic
+  # 'nsq' for reading Thrift-serialized records from a Nsq topic
   # 'stdin' for reading Base64-encoded Thrift-serialized records from stdin
   source = kinesis
 
   # Sinks currently supported are:
   # 'kinesis' for writing enriched events to one Kinesis stream and invalid events to another.
   # 'kafka' for writing enriched events to one Kafka topic and invalid events to another.
+  # 'nsq' for writing enriched events to one Nsq topic and invalid events to another.
   # 'stdouterr' for writing enriched events to stdout and invalid events to stderr.
   #    Using "sbt assembly" and "java -jar" is recommended to disable sbt logging.
   sink = kinesis
@@ -55,6 +57,7 @@ enrich {
       # Refer to https://github.com/snowplow/snowplow/wiki/canonical-event-model to know what the
       # possible parittion keys correspond to.
       # Otherwise, the partition key will be a random UUID.
+      # Note: Nsq does not make use of partition key.
       partitionKey = {{partitionKeyName}}
     }
 
@@ -92,7 +95,28 @@ enrich {
       retries = 0
     }
 
+    # config for nsq
+    nsq {
+      # Channel name for nsq source
+      # If more than one application is reading from the same NSQ topic at the same time,
+      # all of them must have the same channel name
+      rawChannel = "{{nsqSourceChannelName}}"
+
+      # Host name for nsqd
+      host = "{{nsqHost}}"
+
+      # TCP port for nsqd, 4150 by default
+      port = {{nsqdPort}}
+
+      # Host name for lookupd
+      lookupHost = "{{lookupHost}}"
+
+      # HTTP port for nsqlookupd, 4161 by default
+      lookupPort = {{nsqlookupdPort}}
+    }
+
     # After enrichment, events are accumulated in a buffer before being sent to Kinesis/Kafka.
+    # Note: Buffering is not supported by NSQ.
     # The buffer is emptied whenever:
     # - the number of stored records reaches recordLimit or
     # - the combined size of the stored records reaches byteLimit or
