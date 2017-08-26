@@ -38,6 +38,7 @@ lazy val root = project.in(file("."))
       Dependencies.Libraries.config,
       Dependencies.Libraries.slf4j,
       Dependencies.Libraries.log4jOverSlf4j,
+      Dependencies.Libraries.nsqClient,
       // Scala
       Dependencies.Libraries.scopt,
       Dependencies.Libraries.scalaz7,
