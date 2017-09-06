@@ -96,6 +96,26 @@ collector {
       }
     }
 
+    gcpubsub {
+      google-auth-path: "/path/to/credentials/file.json"
+      google-project-id: "projectid-123456"
+
+      topic {
+        good: "good-topic"
+        bad: "bad-topic"
+      }
+
+      # Minimum and maximum backoff periods and retry multiplier
+      retryPolicy: {
+        minBackoff: 100
+        maxBackoff: 400
+        retryDelayMultiplier: 2.0
+        totalTimeOut: 15000
+        initialRpcTimeout: 10000
+        maxRpcTimeout: 1000
+      }
+    }
+
     buffer {
       byte-limit: 4000000 # 4MB
       record-limit: 500 # 500 records

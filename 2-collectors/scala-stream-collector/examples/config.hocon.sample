@@ -53,6 +53,7 @@ collector {
     # Sinks currently supported are:
     # 'kinesis' for writing Thrift-serialized records to a Kinesis stream
     # 'kafka' for writing Thrift-serialized records to kafka
+    # 'gcpubsub' for writing Thrift-serialized records to Google Pub/Sub
     # 'stdout' for writing Base64-encoded Thrift-serialized records to stdout
     #    Recommended settings for 'stdout' so each line printed to stdout
     #    is a serialized record are:
@@ -99,6 +100,27 @@ collector {
       topic {
         good: "{{collectorKafkaTopicGoodName}}"
         bad: "{{collectorKafkaTopicBadName}}"
+      }
+    }
+
+    gcppubsub {
+      # this is the project ID inside of which your collector will be running
+      google-project-id: "{{collectorPubSubProjectId}}"
+
+      # Data will be stored in the following topics (they must have been created ahead-of-time)
+      topic {
+        good: "{{collectorPubSubTopicGoodName}}"
+        bad: "{{collectorPubSubTopicBadName}}"
+      }
+
+      # Minimum and maximum backoff periods and retry multiplier
+      retryPolicy: {
+        minBackoff: {{collectorPubSubMinBackoff}}
+        maxBackoff: {{collectorPubSubMaxBackoff}}
+        retryDelayMultiplier: {{collectorPubSubRetryDelayMultiplier}}
+        totalTimeOut: {{collectorPubSubTotalTimeOut}}
+        initialRpcTimeout: {{collectorInitialRpcTimeout}}
+        maxRpcTimeout: {{collectorMaxRpcTimeout}}
       }
     }
 

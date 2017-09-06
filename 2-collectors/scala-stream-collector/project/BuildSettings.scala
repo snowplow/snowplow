@@ -25,9 +25,9 @@ object BuildSettings {
     organization          :=  "com.snowplowanalytics",
     version               :=  "0.9.0",
     description           :=  "Scala Stream Collector for Snowplow raw events",
-    scalaVersion          :=  "2.10.5",
+    scalaVersion          :=  "2.10.5", // 2.10.5
     scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8",
-                                  "-unchecked", "-feature", "-target:jvm-1.7"),
+                                  "-unchecked", "-feature", "-target:jvm-1.7", "-feature"),
     scalacOptions in Test :=  Seq("-Yrangepos"),
     maxErrors             := 5,
     // http://www.scala-sbt.org/0.13.0/docs/Detailed-Topics/Forking.html
@@ -58,7 +58,17 @@ object BuildSettings {
     // Executable jarfile
     assemblyOption in assembly ~= { _.copy(prependShellScript = Some(defaultShellScript)) },
     // Name it as an executable
-    jarName in assembly := { s"${name.value}-${version.value}" }
+    jarName in assembly := { s"${name.value}-${version.value}" },
+
+    mergeStrategy in assembly <<= (mergeStrategy in assembly) {
+      (old) => {
+        case x if x.endsWith("project.properties") => MergeStrategy.last
+        case x if x.endsWith("io.netty.versions.properties") => MergeStrategy.discard
+        case x if x.contains("guava") => MergeStrategy.first
+        case x => old(x)
+      }
+    }
+
   )
 
   lazy val buildSettings = basicSettings ++ scalifySettings ++ sbtAssemblySettings
