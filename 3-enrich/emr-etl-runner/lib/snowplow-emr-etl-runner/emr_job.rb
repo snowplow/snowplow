@@ -50,8 +50,8 @@ module Snowplow
       include Snowplow::EmrEtlRunner::Utils
 
       # Initializes our wrapper for the Amazon EMR client.
-      Contract Bool, Bool, Bool, Bool, Bool, Bool, Bool, ArchiveEnrichedStep, ConfigHash, ArrayOf[String], String, TargetsHash, RdbLoaderSteps => EmrJob
-      def initialize(debug, staging, enrich, shred, es, archive_raw, rdb_load, archive_enriched, config, enrichments_array, resolver, targets, rdbloader_steps)
+      Contract Bool, Bool, Bool, Bool, Bool, Bool, Bool, ArchiveStep, ArchiveStep, ConfigHash, ArrayOf[String], String, TargetsHash, RdbLoaderSteps => EmrJob
+      def initialize(debug, staging, enrich, shred, es, archive_raw, rdb_load, archive_enriched, archive_shredded, config, enrichments_array, resolver, targets, rdbloader_steps)
 
         logger.debug "Initializing EMR jobflow"
 
@@ -474,16 +474,22 @@ module Snowplow
         end
 
         if archive_enriched == 'pipeline'
-          archive_enriched_step = get_archive_enriched_step(csbe[:good], csbe[:archive], run_id, s3_endpoint, ": Enriched S3 -> Enriched Archive S3")
+          archive_enriched_step = get_archive_step(csbe[:good], csbe[:archive], run_id, s3_endpoint, ": Enriched S3 -> Enriched Archive S3")
           @jobflow.add_step(archive_enriched_step)
-          archive_shredded_step = get_archive_enriched_step(csbs[:good], csbs[:archive], run_id, s3_endpoint, ": Shredded S3 -> Shredded Archive S3")
-          @jobflow.add_step(archive_shredded_step)
         elsif archive_enriched == 'recover'
           latest_run_id = get_latest_run_id(s3, csbe[:good])
-
-          archive_enriched_step = get_archive_enriched_step(csbe[:good], csbe[:archive], latest_run_id, s3_endpoint, ': Enriched S3 -> S3 Enriched Archive')
+          archive_enriched_step = get_archive_step(csbe[:good], csbe[:archive], latest_run_id, s3_endpoint, ': Enriched S3 -> S3 Enriched Archive')
           @jobflow.add_step(archive_enriched_step)
-          archive_shredded_step = get_archive_enriched_step(csbs[:good], csbs[:archive], latest_run_id, s3_endpoint, ": Shredded S3 -> S3 Shredded Archive")
+        else    # skip
+          nil
+        end
+
+        if archive_shredded == 'pipeline'
+          archive_shredded_step = get_archive_step(csbs[:good], csbs[:archive], run_id, s3_endpoint, ": Shredded S3 -> Shredded Archive S3")
+          @jobflow.add_step(archive_shredded_step)
+        elsif archive_shredded == 'recover'
+          latest_run_id = get_latest_run_id(s3, csbe[:good])
+          archive_shredded_step = get_archive_step(csbs[:good], csbs[:archive], latest_run_id, s3_endpoint, ": Shredded S3 -> S3 Shredded Archive")
           @jobflow.add_step(archive_shredded_step)
         else    # skip
           nil
@@ -549,8 +555,16 @@ module Snowplow
 
         status = wait_for()
 
-        if status.successful or status.rdb_loader_failure
-          output_rdb_loader_logs(config[:aws][:s3][:region], config[:aws][:access_key_id], config[:aws][:secret_access_key])
+        if status.successful or status.rdb_loader_failure or status.rdb_loader_cancellation
+          log_level = if status.successful
+            'info'
+          elsif status.rdb_loader_cancellation
+            'warn'
+          else
+            'error'
+          end
+          output_rdb_loader_logs(config[:aws][:s3][:region], config[:aws][:access_key_id],
+            config[:aws][:secret_access_key], log_level)
         end
 
         if status.successful
@@ -579,15 +593,17 @@ module Snowplow
       #
       # Parameters:
       # +region+:: region for logs bucket
-      Contract String, String, String => nil
-      def output_rdb_loader_logs(region, aws_access_key_id, aws_secret_key)
+      Contract String, String, String, String => nil
+      def output_rdb_loader_logs(region, aws_access_key_id, aws_secret_key, log_level)
 
-        if @rdb_loader_logs.empty?
+        s3 = Sluice::Storage::S3::new_fog_s3_from(region, aws_access_key_id, aws_secret_key)
+
+        loc = Sluice::Storage::S3::Location.new(@rdb_loader_log_base)
+
+        if @rdb_loader_logs.empty? or Sluice::Storage::S3::is_empty?(s3, loc)
           logger.info "No RDB Loader logs"
         else
           logger.info "RDB Loader logs"
-
-          s3 = Sluice::Storage::S3::new_fog_s3_from(region, aws_access_key_id, aws_secret_key)
 
           @rdb_loader_logs.each do |l|
             tmp = Tempfile.new("rdbloader")
@@ -597,11 +613,22 @@ module Snowplow
             begin
               log = s3.directories.get(bucket).files.head(key)
               Sluice::Storage::S3::download_file(s3, log, tmp)
-              logger.info l[0]
-              logger.info tmp.read
+              if log_level == 'info'
+                logger.info l[0]
+                logger.info tmp.read
+              elsif log_level == 'warn'
+                logger.warn l[0]
+                logger.warn tmp.read
+              else
+                logger.error l[0]
+                logger.error tmp.read
+              end
             rescue Exception => e
               logger.error "Error while downloading RDB log #{l[1]}"
               logger.error e.message
+            ensure
+              tmp.close
+              tmp.unlink
             end
           end
         end
@@ -699,16 +726,16 @@ module Snowplow
       #
       # Returns a step ready for adding to the Elasticity Jobflow.
       Contract String, String, String, String, String => Elasticity::S3DistCpStep
-      def get_archive_enriched_step(good_path, archive_path, run_id_folder, s3_endpoint, name)
-        archive_enriched_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
-        archive_enriched_step.arguments = [
+      def get_archive_step(good_path, archive_path, run_id_folder, s3_endpoint, name)
+        archive_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
+        archive_step.arguments = [
           "--src"        , partition_by_run(good_path, run_id_folder),
           "--dest"       , partition_by_run(archive_path, run_id_folder),
           "--s3Endpoint" , s3_endpoint,
           "--deleteOnSuccess"
         ]
-        archive_enriched_step.name << name
-        archive_enriched_step
+        archive_step.name << name
+        archive_step
       end
 
 
@@ -782,6 +809,7 @@ module Snowplow
         success = false
         bootstrap_failure = false
         rdb_loader_failure = false
+        rdb_loader_cancellation = false
 
         # Loop until we can quit...
         while true do
@@ -796,6 +824,7 @@ module Snowplow
               success = statuses[1] == 0 # True if no failures
               bootstrap_failure = EmrJob.bootstrap_failure?(@jobflow)
               rdb_loader_failure = EmrJob.rdb_loader_failure?(@jobflow.cluster_step_status)
+              rdb_loader_cancellation = EmrJob.rdb_loader_cancellation?(@jobflow.cluster_step_status)
               break
             else
               # Sleep a while before we check again
@@ -826,10 +855,13 @@ module Snowplow
           rescue IOError => ioe
             logger.warn "Got IOError #{ioe}, waiting 5 minutes before checking jobflow again"
             sleep(300)
+          rescue RestClient::SSLCertificateNotVerified => sce
+            logger.warn "Got RestClient::SSSLCertificateNotVerified #{sce}, waiting 5 minutes before checking jobflow again"
+            sleep(300)
           end
         end
 
-        JobResult.new(success, bootstrap_failure, rdb_loader_failure)
+        JobResult.new(success, bootstrap_failure, rdb_loader_failure, rdb_loader_cancellation)
       end
 
       # Prettified string containing failure details
@@ -929,6 +961,13 @@ module Snowplow
       def self.rdb_loader_failure?(cluster_step_statuses)
         rdb_loader_failure_indicator = /Storage Target/
         cluster_step_statuses.any? { |s| s.state == 'FAILED' && !(s.name =~ rdb_loader_failure_indicator).nil? }
+      end
+
+      # Returns true if the rdb loader step was cancelled
+      Contract ArrayOf[Elasticity::ClusterStepStatus] => Bool
+      def self.rdb_loader_cancellation?(cluster_step_statuses)
+        rdb_loader_failure_indicator = /Storage Target/
+        cluster_step_statuses.any? { |s| s.state == 'CANCELLED' && !(s.name =~ rdb_loader_failure_indicator).nil? }
       end
 
       # Returns true if the jobflow seems to have failed due to a bootstrap failure

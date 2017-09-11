@@ -163,6 +163,11 @@ describe Utils do
       expect(subject.output_codec_from_compression_format('NONE')).to eq([])
     end
 
+    it 'should give back gz if the compression format is GZIP or GZ' do
+      expect(subject.output_codec_from_compression_format('GZIP')).to eq([ '--outputCodec', 'gz' ])
+      expect(subject.output_codec_from_compression_format('GZ')).to eq([ '--outputCodec', 'gz' ])
+    end
+
     it 'should return the proper output codec if the provided one is supported' do
       expect(subject.output_codec_from_compression_format('LZO')).to eq([ '--outputCodec', 'lzo' ])
     end

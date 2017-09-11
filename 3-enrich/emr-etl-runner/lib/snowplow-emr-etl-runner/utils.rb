@@ -168,7 +168,9 @@ module Snowplow
       def output_codec_from_compression_format(compression_format)
         # those are the supported compression codecs
         if not compression_format.nil? and [ 'gzip', 'gz', 'lzo', 'snappy' ].include?(compression_format.downcase)
-          [ '--outputCodec', compression_format.downcase ]
+          downcased = compression_format.downcase
+          format = [ 'gzip', 'gz' ].include?(downcased) ? 'gz' : downcased
+          [ '--outputCodec', format ]
         else
           []
         end

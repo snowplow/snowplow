@@ -17,12 +17,13 @@ module Snowplow
   module EmrEtlRunner
     class JobResult
 
-      attr_reader :successful, :bootstrap_failure, :rdb_loader_failure
+      attr_reader :successful, :bootstrap_failure, :rdb_loader_failure, :rdb_loader_cancellation
 
-      def initialize(successful, bootstrap_failure, rdb_loader_failure)
+      def initialize(successful, bootstrap_failure, rdb_loader_failure, rdb_loader_cancellation)
         @successful = successful
         @bootstrap_failure = bootstrap_failure
         @rdb_loader_failure = rdb_loader_failure
+        @rdb_loader_cancellation = rdb_loader_cancellation
       end
     end
   end

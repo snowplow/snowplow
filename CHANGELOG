@@ -1,3 +1,20 @@
+Release 92 Maiden Castle (2017-09-11)
+-------------------------------------
+EmrEtlRunner: release lock in case of no-op (#3396)
+EmrEtlRunner: treat archive_enriched and archive_shredded as separate steps (#3401)
+EmrEtlRunner: do not pass --skip shred to RDB Loader when skipping RDB Shredder (#3403)
+EmrEtlRunner: if RDB Loader step hangs and is cancelled, logs are not retrieved (#3399)
+EmrEtlRunner: ensure appropriate log level for RDB logs (#3369)
+EmrEtlRunner: unlink downloaded RDB logs (#3363)
+EmrEtlRunner: do not try to download non-existent RDB loader log files (#3405)
+EmrEtlRunner: rescue the intermittent RestClient::SSLCertificateNotVerified error (#2572)
+EmrEtlRunner: pass GZIP compression argument to S3DistCp as "gz" not "gzip" (#3415)
+EmrEtlRunner: update rdb_loader version in config.yml.sample to 0.13.0 (#3418)
+EmrEtlRunner: bump to 0.28.0 (#3404)
+Documentation: fix broken links in storage/postgres's README.md (#3390)
+RDB Shredder: remove (#3398)
+RDB Loader: remove (#3393)
+
 Release 91 Stonehenge (2017-08-17)
 ----------------------------------
 EmrEtlRunner: use S3DistCp not Sluice for staging step (#276)
