@@ -51,7 +51,8 @@ object ScalaCollectorBuild extends Build {
         Libraries.snowplowRawEvent,
         Libraries.collectorPayload,
         Libraries.json4sJackson,
-        Libraries.kafkaClients
+        Libraries.kafkaClients,
+        Libraries.eventHubs
       )
     )
 }
