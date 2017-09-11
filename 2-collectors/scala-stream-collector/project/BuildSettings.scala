@@ -58,7 +58,14 @@ object BuildSettings {
     // Executable jarfile
     assemblyOption in assembly ~= { _.copy(prependShellScript = Some(defaultShellScript)) },
     // Name it as an executable
-    jarName in assembly := { s"${name.value}-${version.value}" }
+    jarName in assembly := { s"${name.value}-${version.value}" },
+    //merge strategy for fixing netty conflict
+    mergeStrategy in assembly <<= (mergeStrategy in assembly) {
+        (old) => {
+            case x if x.endsWith("io.netty.versions.properties") => MergeStrategy.discard
+            case x => old(x)
+        }
+      }
   )
 
   lazy val buildSettings = basicSettings ++ scalifySettings ++ sbtAssemblySettings
