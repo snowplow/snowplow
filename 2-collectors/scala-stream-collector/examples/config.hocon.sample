@@ -105,7 +105,8 @@ collector {
 
     gcppubsub {
       # this is the project ID inside of which your collector will be running
-      google-project-id: "{{collectorPubSubProjectId}}"
+      googleAuthPath: "{{googleAuthPathFile}}"
+      googleProjectId: "{{collectorPubSubProjectId}}"
 
       # Data will be stored in the following topics (they must have been created ahead-of-time)
       topic {

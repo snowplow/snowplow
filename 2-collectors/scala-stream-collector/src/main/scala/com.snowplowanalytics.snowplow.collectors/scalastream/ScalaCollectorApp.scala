@@ -213,7 +213,7 @@ class CollectorConfig(config: Config) {
   val kafkaTopicBadName = kafkaTopic.getString("bad")
 
   private val gcpubsub = sink.getConfig("gcpubsub")
-  val googleProjectId = gcpubsub.getString("google-project-id")
+  val googleProjectId = gcpubsub.getString("googleProjectId")
   private val gcpubsubTopic = gcpubsub.getConfig("topic")
   val pubsubTopicGoodName = gcpubsubTopic.getString("good")
   val pubsubTopicBadName = gcpubsubTopic.getString("bad")

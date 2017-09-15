@@ -97,8 +97,8 @@ collector {
     }
 
     gcpubsub {
-      google-auth-path: "/path/to/credentials/file.json"
-      google-project-id: "projectid-123456"
+      googleAuthPath: "/path/to/credentials/file.json"
+      googleProjectId: "projectid-123456"
 
       topic {
         good: "good-topic"

@@ -27,17 +27,15 @@ import com.google.cloud.pubsub.v1.{Publisher, TopicAdminClient, SubscriptionAdmi
 import com.google.pubsub.v1.{TopicName, Topic, PubsubMessage, ListTopicSubscriptionsRequest}
 import com.google.protobuf.ByteString
 import io.grpc.{Status, StatusRuntimeException}
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutureCallback;
+import com.google.api.core.ApiFutures;
 
 // Batching and Retries
 import com.google.api.gax.retrying.RetrySettings
 import com.google.api.gax.batching.BatchingSettings
 import org.threeten.bp.Duration
 
-// Config
-import com.typesafe.config.Config
-
-// Logging
-import org.slf4j.LoggerFactory
 
 /**
  * PubSub Sink for the Scala collector
@@ -65,16 +63,16 @@ class PubSubSink(config: CollectorConfig, inputType: InputType.InputType) extend
     case InputType.Bad  => config.pubsubTopicBadName
   }
 
-  private val pubSubPublisher = createPublisher
+  val topic = TopicName.create(config.googleProjectId, topicName)
 
-  private def batchingSettings: BatchingSettings =
+  private val batchingSettings: BatchingSettings =
     BatchingSettings.newBuilder()
       .setElementCountThreshold(RecordThreshold)
       .setRequestByteThreshold(ByteThreshold)
       .setDelayThreshold(Duration.ofMillis(TimeThreshold))
       .build
 
-  def retrySettings: RetrySettings = 
+  private val retrySettings: RetrySettings =
     RetrySettings.newBuilder()
       .setMaxRetryDelay(Duration.ofMillis(maxBackoff))
       .setInitialRetryDelay(Duration.ofMillis(minBackoff))
@@ -84,24 +82,20 @@ class PubSubSink(config: CollectorConfig, inputType: InputType.InputType) extend
       .setMaxRpcTimeout(Duration.ofMillis(maxRpcTimeout))
       .build
 
+  private val pubSubPublisher = createPublisher
+
   /**
    * Checks if a given pubsub topic exists
    *
    * @return Boolean
    */
-  private def checkTopicExists(topic: TopicName): Boolean = {
+  private def topicExists(topic: TopicName): Boolean = {
     val topicAdminClient = TopicAdminClient.create()
     try {
       val response = topicAdminClient.getTopic(topic)
       true
     } catch {
-      case e: com.google.api.gax.grpc.GrpcApiException => {
-        if (e.getStatusCode().getCode() == Status.Code.NOT_FOUND) {
-          false
-        } else {
-          false
-        }
-      }
+      case e: com.google.api.gax.grpc.GrpcApiException => false
     }
   }
 
@@ -120,7 +114,7 @@ class PubSubSink(config: CollectorConfig, inputType: InputType.InputType) extend
     val response = topicAdminClient.listTopicSubscriptions(topicSubscriptionsRequest);
 
     val subscriptions = response.iterateAll()
-    if (subscriptions.size > 0) true else false
+    subscriptions.size > 0
   }
 
   /**
@@ -130,15 +124,14 @@ class PubSubSink(config: CollectorConfig, inputType: InputType.InputType) extend
    * @return a PubSub publisher
    */
   private def createPublisher: Publisher = {
-    val topic = TopicName.create(s"${config.googleProjectId}", s"$topicName")
-    val topicExists = checkTopicExists(topic)
-    if (topicExists == false) {
+    val doesTopicExist = topicExists(topic)
+    if (doesTopicExist == false) {
       throw new RuntimeException(s"The pubsub topic $topicName was not found.")
     }
-    // val topicHasSubscriptions = hasSubscriptions(topic)
-    // if (topicHasSubscriptions == false) {
-    //   warn("The topic $topicName has no associated subscriptions")
-    // }
+    val topicHasSubscriptions = hasSubscriptions(topic)
+    if (topicHasSubscriptions == false) {
+      warn(s"The topic $topicName has no associated subscriptions")
+    }
     val publisher = Publisher.defaultBuilder(
         topic
       )
@@ -153,11 +146,10 @@ class PubSubSink(config: CollectorConfig, inputType: InputType.InputType) extend
    * @param event Event to be converted
    * @return PubsubMessage instance
    */
-  private def eventToPubsubMessage(event: Array[Byte]): PubsubMessage = {
+  private def eventToPubsubMessage(event: Array[Byte]): PubsubMessage =
     PubsubMessage.newBuilder
       .setData(ByteString.copyFrom(event))
       .build
-  }
 
   /**
    * Store raw events to the topic
@@ -167,7 +159,19 @@ class PubSubSink(config: CollectorConfig, inputType: InputType.InputType) extend
    */
   override def storeRawEvents(events: List[Array[Byte]], key: String) = {
     debug(s"Writing ${events.size} Thrift records to PubSub topic ${topicName}")
-    events.foreach(event => pubSubPublisher.publish(eventToPubsubMessage(event)))
+    events.foreach {
+      event =>
+        val messageIdFuture = pubSubPublisher.publish(eventToPubsubMessage(event))
+
+        ApiFutures.addCallback(messageIdFuture, new ApiFutureCallback[String]() {
+          override def onSuccess(messageId: String): Unit = {
+            info(s"Published event with messageId: $messageId")
+          }
+          override def onFailure(throwable: Throwable): Unit = {
+            error("Failed to publish", throwable)
+          }
+        })
+      }
     Nil
   }
 
