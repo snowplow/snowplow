@@ -14,13 +14,13 @@ Assuming you already have [SBT 0.13.0][sbt] installed:
     $ git clone git://github.com/snowplow/snowplow.git
     $ cd 3-enrich/stream-enrich
     $ sbt compile
-    
+
 ## Usage
 
 Stream Enrich has the following command-line interface:
 
 ```
-snowplow-stream-enrich: Version 0.9.0.
+snowplow-stream-enrich 0.10.0
 Usage: snowplow-stream-enrich [options]
 
   --config <filename>
