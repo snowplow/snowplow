@@ -16,7 +16,7 @@ lazy val root = project.in(file("."))
   .settings(
     organization  :=  "com.snowplowanalytics",
     name          :=  "snowplow-stream-collector",
-    version       :=  "0.9.0",
+    version       :=  "0.10.0",
     scalaVersion  :=  "2.11.11",
     description   :=  "Scala Stream Collector for Snowplow raw events",
     scalacOptions :=  BuildSettings.compilerOptions,
