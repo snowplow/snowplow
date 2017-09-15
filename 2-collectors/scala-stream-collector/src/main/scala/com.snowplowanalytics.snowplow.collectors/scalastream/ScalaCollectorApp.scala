@@ -95,6 +95,11 @@ object ScalaCollector extends App {
       val bad  = new KafkaSink(collectorConfig, InputType.Bad)
       CollectorSinks(good, bad)
     }
+    case Sink.PubSub => {
+      val good = new PubSubSink(collectorConfig, InputType.Good)
+      val bad  = new PubSubSink(collectorConfig, InputType.Bad)
+      CollectorSinks(good, bad)
+    }
     case Sink.Stdout  => {
       val good = new StdoutSink(InputType.Good)
       val bad = new StdoutSink(InputType.Bad)
@@ -143,7 +148,7 @@ object Helper {
 // store this enumeration.
 object Sink extends Enumeration {
   type Sink = Value
-  val Kinesis, Kafka, Stdout, Test = Value
+  val Kinesis, Kafka, PubSub, Stdout, Test = Value
 }
 
 // How a collector should set cookies
@@ -178,6 +183,7 @@ class CollectorConfig(config: Config) {
   val sinkEnabled = sink.getString("enabled") match {
     case "kinesis" => Sink.Kinesis
     case "kafka" => Sink.Kafka
+    case "gcpubsub" => Sink.PubSub
     case "stdout" => Sink.Stdout
     case "test" => Sink.Test
     case _ => throw new RuntimeException("collector.sink.enabled unknown.")
@@ -205,6 +211,20 @@ class CollectorConfig(config: Config) {
   private val kafkaTopic = kafka.getConfig("topic")
   val kafkaTopicGoodName = kafkaTopic.getString("good")
   val kafkaTopicBadName = kafkaTopic.getString("bad")
+
+  private val gcpubsub = sink.getConfig("gcpubsub")
+  val googleProjectId = gcpubsub.getString("googleProjectId")
+  private val gcpubsubTopic = gcpubsub.getConfig("topic")
+  val pubsubTopicGoodName = gcpubsubTopic.getString("good")
+  val pubsubTopicBadName = gcpubsubTopic.getString("bad")
+  private val retryPolicy = gcpubsub.getConfig("retryPolicy")
+  val pubsubMinBackoff = retryPolicy.getLong("minBackoff")
+  val pubsubMaxBackoff = retryPolicy.getLong("maxBackoff")
+  val retryDelayMultiplier = retryPolicy.getDouble("retryDelayMultiplier")
+
+  val totalTimeOut = retryPolicy.getLong("totalTimeOut")
+  val initialRpcTimeout = retryPolicy.getLong("initialRpcTimeout")
+  val maxRpcTimeout = retryPolicy.getLong("maxRpcTimeout")
 
   private val buffer = sink.getConfig("buffer")
   val byteLimit = buffer.getInt("byte-limit")
