@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 Snowplow Analytics Ltd.
+ * Copyright (c) 2013-2017 Snowplow Analytics Ltd.
  * All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
@@ -24,7 +24,7 @@ import scala.util.Try
 
 object model {
 
-  /** 
+  /**
    * The enrichment process takes input SnowplowRawEvent objects from
    * an input source and outputs enriched objects to a sink,
    * as defined in the following enumerations.
