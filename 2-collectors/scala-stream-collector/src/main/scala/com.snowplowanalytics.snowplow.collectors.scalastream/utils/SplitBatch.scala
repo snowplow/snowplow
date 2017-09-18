@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2017 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -91,8 +91,8 @@ object SplitBatch {
   }
 
   /**
-   * If the CollectorPayload is too big to fit 
-   * in a single record, attempt to split it into 
+   * If the CollectorPayload is too big to fit
+   * in a single record, attempt to split it into
    * multiple records.
    *
    * @param event Incoming CollectorPayload
@@ -119,7 +119,7 @@ object SplitBatch {
           try {
             // Try to parse the body
             val initialBody = parse(body)
-            
+
             // Event was a POST
             val bodyDataArray = initialBody \ "data" match {
               case JNothing => None

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2017 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
  * you may not use this file except in compliance with the Apache License
@@ -106,7 +106,7 @@ class SplitBatchSpec extends Specification {
       actual.bad.size must_== 1
       parse(new String(actual.bad.head)) \ "errors" must_==
         JArray(List(JObject(List(("level" ,JString("error")), ("message", JString("Even without the body, the serialized event is too large"))))))
-    }   
+    }
 
     "Split a CollectorPayload with three large events and four very large events" in {
       val payload = new CollectorPayload()
@@ -126,6 +126,6 @@ class SplitBatchSpec extends Specification {
       val actual = SplitBatch.splitAndSerializePayload(payload, 1000)
       actual.bad.size must_== 4
       actual.good.size must_== 2
-    }    
+    }
   }
 }
