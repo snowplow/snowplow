@@ -1,5 +1,5 @@
-/* 
- * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
+/*
+ * Copyright (c) 2013-2017 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
  * you may not use this file except in compliance with the Apache License
@@ -167,7 +167,7 @@ class TransactionSpec extends Specification {
     "enrich a valid transaction" in {
 
       val rawEvent = Base64.decodeBase64(TransactionSpec.raw)
-      
+
       val enrichedEvent = TestSource.enrichEvents(rawEvent)(0)
       enrichedEvent.isSuccess must beTrue
 

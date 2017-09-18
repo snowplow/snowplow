@@ -1,5 +1,5 @@
  /*
- * Copyright (c) 2015 Snowplow Analytics Ltd.
+ * Copyright (c) 2015-2017 Snowplow Analytics Ltd.
  * All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
@@ -52,7 +52,7 @@ object SnowplowTracking {
    * @param tracker a Tracker instance
    * @param errorType the type of error encountered
    * @param errorMessage the error message
-   * @param streamName the name of the stream in which 
+   * @param streamName the name of the stream in which
    *        the error occurred
    * @param appName the name of the application
    * @param retryCount the amount of times we have tried
