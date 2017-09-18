@@ -1,5 +1,5 @@
  /*
- * Copyright (c) 2013-2016 Snowplow Analytics Ltd.
+ * Copyright (c) 2013-2017 Snowplow Analytics Ltd.
  * All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
@@ -51,7 +51,7 @@ class KinesisSource(
   enrichmentRegistry: EnrichmentRegistry,
   tracker: Option[Tracker]
 ) extends AbstractSource(config, igluResolver, enrichmentRegistry, tracker) {
-  
+
   lazy val log = LoggerFactory.getLogger(getClass())
 
   /**
@@ -64,7 +64,7 @@ class KinesisSource(
     val kinesisClientLibConfiguration = {
       val kclc = new KinesisClientLibConfiguration(
         config.streams.appName,
-        config.streams.in.raw, 
+        config.streams.in.raw,
         kinesisProvider,
         workerId
       ).withKinesisEndpoint(config.streams.kinesis.streamEndpoint)
@@ -115,7 +115,7 @@ class KinesisSource(
     private val BACKOFF_TIME_IN_MILLIS = 3000L
     private val NUM_RETRIES = 10
     private val CHECKPOINT_INTERVAL_MILLIS = 1000L
-      
+
     override def initialize(shardId: String) = {
       log.info("Initializing record processor for shard: " + shardId)
       this.kinesisShardId = shardId

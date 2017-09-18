@@ -1,5 +1,5 @@
-/* 
- * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
+/*
+ * Copyright (c) 2013-2017 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
  * you may not use this file except in compliance with the Apache License
@@ -33,7 +33,7 @@ class InvalidEnrichedEventSpec extends Specification {
     "return None for a valid SnowplowRawEvent which fails enrichment" in {
 
       val rawEvent = Base64.decodeBase64(InvalidEnrichedEventSpec.raw)
-      
+
       val enrichedEvent = TestSource.enrichEvents(rawEvent)(0)
       enrichedEvent.isFailure must beTrue
     }

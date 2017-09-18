@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Snowplow Analytics Ltd.
+ * Copyright (c) 2013-2017 Snowplow Analytics Ltd.
  * All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
@@ -19,7 +19,7 @@
 package com.snowplowanalytics
 package snowplow
 package enrich
-package stream 
+package stream
 package sources
 
 import java.nio.ByteBuffer
