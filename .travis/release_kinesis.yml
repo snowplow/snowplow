@@ -5,8 +5,8 @@ repo     : "snowplow-generic"
 user_org : "snowplow"
 
 versions:
-  scala_stream_collector     : "0.10.0"
-  stream_enrich              : "0.11.0"
+  scala_stream_collector     : "0.10.0-rc1"
+  stream_enrich              : "0.11.0-rc1"
 
 binary_paths:
   scala_stream_collector     : "2-collectors/scala-stream-collector/target/scala-2.11/snowplow-stream-collector"
