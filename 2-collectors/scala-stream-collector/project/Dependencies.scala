@@ -30,7 +30,7 @@ object Dependencies {
     val slf4j                = "1.7.5"
     val config               = "1.3.1"
     // Scala
-    val snowplowCommonEnrich = "0.26.0"
+    val snowplowCommonEnrich = "0.26.0-M1"
     val igluClient           = "0.5.0"
     val collectorPayload     = "0.0.0"
     val scalaz7              = "7.0.9"
