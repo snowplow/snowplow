@@ -1,3 +1,13 @@
+Release 95 Zeugma (2017-xx-xx)
+------------------------------
+Scala Stream Collector: bump to 0.11.0 (closes #3433)
+Scala Stream Collector: update config.hocon.sample to support NSQ (closes #3294)
+Scala Stream Collector: add NSQ sink (closes #2093)
+Stream Enrich: bump to 0.12.0 (closes #3432)
+Stream Enrich: update config.hocon.sample to support NSQ (closes #3339)
+Stream Enrich: add NSQ sink (closes #3337)
+Stream Enrich: add NSQ source (closes #3336)
+
 Release 93 Virunum (2017-10-03)
 -------------------------------
 Scala Stream Collector: bump to 0.10.0 (#3424)
