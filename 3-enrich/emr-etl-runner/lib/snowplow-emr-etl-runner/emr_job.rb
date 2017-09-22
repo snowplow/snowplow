@@ -706,7 +706,14 @@ module Snowplow
       def get_latest_run_id(s3, s3_path)
         uri = URI.parse(s3_path)
         folders = s3.directories.get(uri.host, delimiter: '/', prefix: uri.path[1..-1]).files.common_prefixes
-        run_folders = folders.select { |f| f.include?('run=') }
+        # each is mandatory, otherwise there'll be pagination issues if there are > 1k objects
+        # cf snowplow/snowplow#3434
+        run_folders = []
+        folders.each { |f|
+          if f.include?('run=')
+            run_folders << f
+          end
+        }
         begin
           folder = run_folders[-1].split('/')[-1]
           folder.slice('run='.length, folder.length)
