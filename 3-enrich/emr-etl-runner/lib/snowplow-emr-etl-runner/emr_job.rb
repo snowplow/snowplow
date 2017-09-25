@@ -488,7 +488,7 @@ module Snowplow
           archive_shredded_step = get_archive_step(csbs[:good], csbs[:archive], run_id, s3_endpoint, ": Shredded S3 -> Shredded Archive S3")
           @jobflow.add_step(archive_shredded_step)
         elsif archive_shredded == 'recover'
-          latest_run_id = get_latest_run_id(s3, csbe[:good])
+          latest_run_id = get_latest_run_id(s3, csbs[:good])
           archive_shredded_step = get_archive_step(csbs[:good], csbs[:archive], latest_run_id, s3_endpoint, ": Shredded S3 -> S3 Shredded Archive")
           @jobflow.add_step(archive_shredded_step)
         else    # skip
