@@ -1,3 +1,10 @@
+Release 94 Ellora (2017-09-27)
+------------------------------
+Redshift: update atomic.events to use ZSTD compression (#3435)
+Redshift: added migration script for 0.8.0 to 0.9.0 (#3440)
+Redshift: Update domain_sessionidx column in atomic.events to accept larger values (#1788)
+Scala Common Enrich: bump scala URI to 0.5.0 (#2893)
+
 Release 92 Maiden Castle (2017-09-11)
 -------------------------------------
 EmrEtlRunner: release lock in case of no-op (#3396)
