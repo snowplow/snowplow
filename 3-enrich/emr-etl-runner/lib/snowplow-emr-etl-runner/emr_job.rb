@@ -224,6 +224,11 @@ module Snowplow
         cc_version = get_cc_version(config[:enrich][:versions][:spark_enrich])
         @jobflow.add_bootstrap_action(Elasticity::BootstrapAction.new(bootstrap_script_location, cc_version))
 
+        # Boostrap step removing all $folder$ empty files
+        @jobflow.add_bootstrap_action(Elasticity::BootstrapAction.new(
+          "#{standard_assets_bucket}common/emr/snowplow-aws-s3-rm-0.1.0.sh",
+          csbe[:good], csbe[:bad], csbe[:archive], csbs[:good], csbs[:bad], csbs[:archive]))
+
         # Install and launch HBase
         hbase = config[:aws][:emr][:software][:hbase]
         unless not hbase
