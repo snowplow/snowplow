@@ -43,7 +43,7 @@ CREATE TABLE atomic.events (
 	user_ipaddress varchar(45) encode ZSTD,
 	user_fingerprint varchar(50) encode ZSTD,
 	domain_userid varchar(36) encode ZSTD,
-	domain_sessionidx smallint encode ZSTD,
+	domain_sessionidx int encode ZSTD,
 	network_userid varchar(38) encode ZSTD,
 	-- Location
 	geo_country char(2) encode ZSTD,
