@@ -29,8 +29,9 @@ import scalaz._
 import org.apache.spark.{SparkConf, SparkContext, SparkFiles}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.serializer.KryoSerializer
-import org.apache.spark.sql.{Encoders, SparkSession}
+import org.apache.spark.sql.{Encoders, Row, SaveMode, SparkSession}
 import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.types.{StringType, StructField, StructType}
 
 // Elephant Bird
 import com.twitter.elephantbird.mapreduce.input.MultiInputFormat
@@ -192,9 +193,12 @@ class EnrichJob(@transient val spark: SparkSession, args: Array[String]) extends
           case bytes: Array[Byte] => new String(Base64.encodeBase64(bytes), "UTF-8")
           case other => other.toString
         }
-        errors.map(BadRow(originalLine, _).toCompactJson)
+        errors.map(e => Row(BadRow(originalLine, e).toCompactJson))
       }
-    bad.saveAsTextFile(enrichConfig.badFolder)
+    spark.createDataFrame(bad, StructType(StructField("_", StringType, true) :: Nil))
+      .write
+      .mode(SaveMode.Overwrite)
+      .text(enrichConfig.badFolder)
 
     // Handling of properly-formed rows
     val good = common
@@ -207,6 +211,7 @@ class EnrichJob(@transient val spark: SparkSession, args: Array[String]) extends
       .option("sep", "\t")
       .option("escape", "")
       .option("quote", "")
+      .mode(SaveMode.Overwrite)
       .csv(enrichConfig.outFolder)
   }
 
