@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2017 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
  * you may not use this file except in compliance with the Apache License
@@ -17,69 +17,54 @@ import sbt._
 object Dependencies {
 
   val resolutionRepos = Seq(
-    "Snowplow Analytics Maven repo"          at "http://maven.snplow.com/releases/",
-    "Snowplow Analytics Maven snapshot repo" at "http://maven.snplow.com/snapshots/",
-    "Spray repo"                             at "http://repo.spray.io",
-    "Typesafe repository"                    at "http://repo.typesafe.com/typesafe/releases/",
-    // For Scalazon
-    "BintrayJCenter"                         at "http://jcenter.bintray.com",
-    // For sbt-thrift
-    "bigtoast-github"                        at "http://bigtoast.github.com/repo/"
+    "Snowplow Analytics Maven repo" at "http://maven.snplow.com/releases/",
+    // For uaParser utils
+    "user-agent-parser repo" at "https://clojars.org/repo/"
   )
 
   object V {
     // Java
-    val mimepull         = "1.9.4"
-    val awsSdk           = "1.6.10"
-    val yodaTime         = "2.1"
-    val yodaConvert      = "1.2"
-    val kafka            = "0.10.1.0"
+    val awsSdk               = "1.11.115"
+    val yodaTime             = "2.9.9"
+    val kafka                = "0.10.2.1"
+    val slf4j                = "1.7.5"
+    val config               = "1.3.1"
     // Scala
-    val snowplowCommonEnrich = "0.22.0"
-    val igluClient       = "0.3.2"
-    val scalaz7          = "7.0.0"
-    val snowplowRawEvent = "0.1.0"
-    val collectorPayload = "0.0.0"
-    val spray            = "1.3.3"
-    val akka             = "2.3.9"
-    val logback          = "1.0.13"
-    val commonsCodec     = "1.5"
-    val scalazon         = "0.11"
-    val argot            = "1.0.1"
-    val json4s           = "3.2.11"
+    val snowplowCommonEnrich = "0.26.0"
+    val igluClient           = "0.5.0"
+    val collectorPayload     = "0.0.0"
+    val scalaz7              = "7.0.9"
+    val akkaHttp             = "10.0.9"
+    val akkaSlf4j            = "2.4.19"
+    val scopt                = "3.6.0"
+    val json4s               = "3.2.11"
+    val pureconfig           = "0.8.0"
     // Scala (test only)
-    // Using the newest version of spec (2.3.6) causes
-    // conflicts with `spray` for `com.chuusai.shapeless`
-    val specs2           = "2.2.3"
+    val specs2               = "3.9.4"
   }
 
   object Libraries {
     // Java
-    val mimepull         = "org.jvnet.mimepull"    %  "mimepull"                  % V.mimepull
-    val awsSdk           = "com.amazonaws"         %  "aws-java-sdk"              % V.awsSdk
-    val yodaTime         = "joda-time"             %  "joda-time"                 % V.yodaTime
-    val yodaConvert      = "org.joda"              %  "joda-convert"              % V.yodaConvert
-    val kafkaClients     = "org.apache.kafka"      %  "kafka-clients"             % V.kafka
+    val awsSdk               = "com.amazonaws"         %  "aws-java-sdk-kinesis"   % V.awsSdk
+    val yodaTime             = "joda-time"             %  "joda-time"              % V.yodaTime
+    val kafkaClients         = "org.apache.kafka"      %  "kafka-clients"          % V.kafka
+    val slf4j                = "org.slf4j"             %  "slf4j-simple"           % V.slf4j
+    val log4jOverSlf4j       = "org.slf4j"             %  "log4j-over-slf4j"       % V.slf4j
+    val config               = "com.typesafe"          %  "config"                 % V.config
 
     // Scala
-    // Exclude netaporter to prevent conflicting cross-version suffixes for shapeless
-    val snowplowCommonEnrich = "com.snowplowanalytics" % "snowplow-common-enrich" % V.snowplowCommonEnrich intransitive
-    val igluClient       = "com.snowplowanalytics" %  "iglu-scala-client"         % V.igluClient
-    val scalaz7          = "org.scalaz"            %% "scalaz-core"               % V.scalaz7
-    val snowplowRawEvent = "com.snowplowanalytics" %  "snowplow-thrift-raw-event" % V.snowplowRawEvent
-    val collectorPayload = "com.snowplowanalytics" %  "collector-payload-1"       % V.collectorPayload
-    val argot            = "org.clapper"           %% "argot"                     % V.argot
-    val sprayCan         = "io.spray"              %% "spray-can"                 % V.spray
-    val sprayRouting     = "io.spray"              %% "spray-routing"             % V.spray
-    val akkaActor        = "com.typesafe.akka"     %% "akka-actor"                % V.akka
-    val akkaSlf4j        = "com.typesafe.akka"     %% "akka-slf4j"                % V.akka
-    val logback          = "ch.qos.logback"        %  "logback-classic"           % V.logback
-    val commonsCodec     = "commons-codec"         %  "commons-codec"             % V.commonsCodec
-    val scalazon         = "io.github.cloudify"    %% "scalazon"                  % V.scalazon
-    val json4sJackson    = "org.json4s"            %% "json4s-jackson"            % V.json4s
+    val snowplowCommonEnrich = "com.snowplowanalytics" %% "snowplow-common-enrich" % V.snowplowCommonEnrich
+    val igluClient           = "com.snowplowanalytics" %% "iglu-scala-client"      % V.igluClient
+    val collectorPayload     = "com.snowplowanalytics" %  "collector-payload-1"    % V.collectorPayload
+    val scalaz7              = "org.scalaz"            %% "scalaz-core"            % V.scalaz7
+    val scopt                = "com.github.scopt"      %% "scopt"                  % V.scopt
+    val akkaHttp             = "com.typesafe.akka"     %% "akka-http"              % V.akkaHttp
+    val akkaSlf4j            = "com.typesafe.akka"     %% "akka-slf4j"             % V.akkaSlf4j
+    val json4sJackson        = "org.json4s"            %% "json4s-jackson"         % V.json4s
+    val pureconfig           = "com.github.pureconfig" %% "pureconfig"             % V.pureconfig
 
     // Scala (test only)
-    val specs2           = "org.specs2"            %% "specs2"                    % V.specs2   % "test"
-    val sprayTestkit     = "io.spray"              %% "spray-testkit"             % V.spray    % "test"
+    val specs2               = "org.specs2"            %% "specs2-core"            % V.specs2   % "test"
+    val akkaHttpTestkit      = "com.typesafe.akka"     %% "akka-http-testkit"      % V.akkaHttp % "test"
   }
 }

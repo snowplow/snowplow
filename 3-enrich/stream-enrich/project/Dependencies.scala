@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2017 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -18,8 +18,6 @@ object Dependencies {
     // For Snowplow
     "Snowplow Analytics Maven releases repo" at "http://maven.snplow.com/releases/",
     "Snowplow Analytics Maven snapshot repo" at "http://maven.snplow.com/snapshots/",
-    // For Scalazon
-    "BintrayJCenter"                         at "http://jcenter.bintray.com",
     // For uaParser utils
     "user-agent-parser repo"                 at "https://clojars.org/repo/",
     // For user-agent-utils
@@ -28,59 +26,49 @@ object Dependencies {
 
   object V {
     // Java
-    val logging              = "1.1.3"
-    val httpCore             = "4.3"
-    val httpClient           = "4.3.1"
-    val jacksonCore          = "2.3.0"
+    val awsSdk               = "1.11.115"
+    val kinesisClient        = "1.8.1"
+    val kafkaClients         = "0.10.2.1"
+    val commonsCodec         = "1.10"
+    val config               = "1.3.1"
     val slf4j                = "1.7.5"
-    val awsSdk               = "1.6.11"
-    val kinesisClient        = "1.6.1"
-    val kafkaClients         = "0.10.1.0"
     // Scala
-    val argot                = "1.0.1"
-    val config               = "1.0.2"
-    val scalaUtil            = "0.1.0"
+    val scopt                = "3.6.0"
+    val scalaz7              = "7.0.9"
+    val json4s               = "3.2.11"
+    val pureconfig           = "0.8.0"
     val snowplowRawEvent     = "0.1.0"
-    val snowplowCommonEnrich = "0.24.0"
-    val scalazon             = "0.11"
-    val scalaz7              = "7.0.0"
-    val igluClient           = "0.4.0"
+    val snowplowCommonEnrich = "0.26.0"
+    val igluClient           = "0.5.0"
     val snowplowTracker      = "0.3.0"
     // Scala (test only)
-    // val specs2               = "2.3.6" Conflicts with com.chuusai:shapeless
-    val specs2               = "2.2.3"
-    val scalazSpecs2         = "0.1.2"
-    // Scala (compile only)
-    val commonsLang3         = "3.1"
-    val thrift               = "0.9.0"
+    val specs2               = "2.3.13"
+    val scalacheck           = "1.11.3"
   }
 
   object Libraries {
     // Java
-    val logging              = "commons-logging"            %  "commons-logging"          % V.logging
-    val httpCore             = "org.apache.httpcomponents"  %  "httpcore"                 % V.httpCore
-    val httpClient           = "org.apache.httpcomponents"  %  "httpclient"               % V.httpClient
-    val jacksonCore          = "com.fasterxml.jackson.core" %  "jackson-core"             % V.jacksonCore
-    val slf4j                = "org.slf4j"                  %  "slf4j-simple"             % V.slf4j
-    val log4jOverSlf4j       = "org.slf4j"                  %  "log4j-over-slf4j"         % V.slf4j
-    val awsSdk               = "com.amazonaws"              %  "aws-java-sdk"             % V.awsSdk
-    val kinesisClient        = "com.amazonaws"              %  "amazon-kinesis-client"    % V.kinesisClient
-    val kafkaClients         = "org.apache.kafka"           %  "kafka-clients"            % V.kafkaClients
+    val kinesisSdk           = "com.amazonaws"         %  "aws-java-sdk-kinesis"      % V.awsSdk
+    val dynamodbSdk          = "com.amazonaws"         %  "aws-java-sdk-dynamodb"     % V.awsSdk
+    val s3Sdk                = "com.amazonaws"         %  "aws-java-sdk-s3"           % V.awsSdk
+    val kinesisClient        = "com.amazonaws"         %  "amazon-kinesis-client"     % V.kinesisClient
+    val kafkaClients         = "org.apache.kafka"      %  "kafka-clients"             % V.kafkaClients
+    val commonsCodec         = "commons-codec"         %  "commons-codec"             % V.commonsCodec
+    val config               = "com.typesafe"          %  "config"                    % V.config
+    val slf4j                = "org.slf4j"             %  "slf4j-simple"              % V.slf4j
+    val log4jOverSlf4j       = "org.slf4j"             %  "log4j-over-slf4j"          % V.slf4j
     // Scala
-    val argot                = "org.clapper"                %% "argot"                    % V.argot
-    val config               = "com.typesafe"               %  "config"                   % V.config
-    val scalaUtil            = "com.snowplowanalytics"      %  "scala-util"               % V.scalaUtil
-    val snowplowRawEvent     = "com.snowplowanalytics"      % "snowplow-thrift-raw-event" % V.snowplowRawEvent
-    val snowplowCommonEnrich = "com.snowplowanalytics"      % "snowplow-common-enrich"    % V.snowplowCommonEnrich
-    val scalazon             = "io.github.cloudify"         %% "scalazon"                 % V.scalazon
-    val scalaz7              = "org.scalaz"                 %% "scalaz-core"              % V.scalaz7
-    val igluClient           = "com.snowplowanalytics"      %% "iglu-scala-client"        % V.igluClient
-    val snowplowTracker      = "com.snowplowanalytics"      %% "snowplow-scala-tracker"   % V.snowplowTracker
+    val scopt                = "com.github.scopt"      %% "scopt"                     % V.scopt
+    val scalaz7              = "org.scalaz"            %% "scalaz-core"               % V.scalaz7
+    val json4s               = "org.json4s"            %% "json4s"                    % V.json4s
+    val json4sJackson        = "org.json4s"            %% "json4s-jackson"            % V.json4s
+    val pureconfig           = "com.github.pureconfig" %% "pureconfig"                % V.pureconfig
+    val snowplowRawEvent     = "com.snowplowanalytics" %  "snowplow-thrift-raw-event" % V.snowplowRawEvent
+    val igluClient           = "com.snowplowanalytics" %% "iglu-scala-client"         % V.igluClient
+    val snowplowCommonEnrich = "com.snowplowanalytics" %% "snowplow-common-enrich"    % V.snowplowCommonEnrich
+    val snowplowTracker      = "com.snowplowanalytics" %% "snowplow-scala-tracker"    % V.snowplowTracker
     // Scala (test only)
-    val specs2               = "org.specs2"                 %% "specs2"                   % V.specs2         % "test"
-    val scalazSpecs2         = "org.typelevel"              %% "scalaz-specs2"            % V.scalazSpecs2   % "test"
-    // Scala (compile only)
-    val commonsLang3         = "org.apache.commons"         % "commons-lang3"             % V.commonsLang3   % "compile"
-    val thrift               = "org.apache.thrift"          % "libthrift"                 % V.thrift         % "compile"
+    val specs2               = "org.specs2"            %% "specs2"                    % V.specs2         % "test"
+    val scalacheck           = "org.scalacheck"        %% "scalacheck"                % V.scalacheck     % "test"
   }
 }

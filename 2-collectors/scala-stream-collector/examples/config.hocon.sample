@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2016 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2013-2017 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0, and
 # you may not use this file except in compliance with the Apache License
@@ -23,14 +23,9 @@ collector {
   interface = "0.0.0.0"
   port = {{collectorPort}}
 
-  # Production mode disables additional services helpful for configuring and
-  # initializing the collector, such as a path '/dump' to view all
-  # records stored in the current stream.
-  production = true
-
   # Configure the P3P policy header.
   p3p {
-    policyref = "/w3c/p3p.xml"
+    policyRef = "/w3c/p3p.xml"
     CP = "NOI DSP COR NID PSA OUR IND COM NAV STA"
   }
 
@@ -38,68 +33,78 @@ collector {
   # with the following domain and expiration.
   cookie {
     enabled = true
-    expiration = {{collectorCookieExpiration}} # e.g. "365 days"
+    expiration = {{cookieExpiration}} # e.g. "365 days"
     # Network cookie name
     name = {{collectorCookieName}}
     # The domain is optional and will make the cookie accessible to other
     # applications on the domain. Comment out this line to tie cookies to
     # the collector's full domain
-    domain = "{{collectorCookieDomain}}"
+    domain = "{{cookieDomain}}"
   }
 
-  # The collector has a configurable sink for storing data in
-  # different formats for the enrichment process.
-  sink {
-    # Sinks currently supported are:
-    # 'kinesis' for writing Thrift-serialized records to a Kinesis stream
-    # 'kafka' for writing Thrift-serialized records to kafka
-    # 'stdout' for writing Base64-encoded Thrift-serialized records to stdout
-    #    Recommended settings for 'stdout' so each line printed to stdout
-    #    is a serialized record are:
-    #      1. Setting 'akka.loglevel = OFF' and 'akka.loggers = []'
-    #         to disable all logging.
-    #      2. Using 'sbt assembly' and 'java -jar ...' to disable
-    #         sbt logging.
-    enabled = "kinesis"
+  # When enabled and the cookie specified above is missing, performs a redirect to itself to check
+  # if third-party cookies are blocked using the specified name. If they are indeed blocked,
+  # fallbackNetworkId is used instead of generating a new random one.
+  cookieBounce {
+    enabled = false
+    # The name of the request parameter which will be used on redirects checking that third-party
+    # cookies work.
+    name = "n3pc"
+    # Network user id to fallback to when third-party cookies are blocked.
+    fallbackNetworkUserId = "00000000-0000-4000-A000-000000000000"
+  }
+
+  # Sinks currently supported are:
+  # 'kinesis' for writing Thrift-serialized records to a Kinesis stream
+  # 'kafka' for writing Thrift-serialized records to kafka
+  # 'stdout' for writing Base64-encoded Thrift-serialized records to stdout
+  #    Recommended settings for 'stdout' so each line printed to stdout
+  #    is a serialized record are:
+  #      1. Setting 'akka.loglevel = OFF' and 'akka.loggers = []'
+  #         to disable all logging.
+  #      2. Using 'sbt assembly' and 'java -jar ...' to disable
+  #         sbt logging.
+  sink = kinesis
+
+  streams {
+    # Events which have successfully been collected will be stored in the good stream/topic
+    good = {{good}}
+
+    # Events that are too big (w.r.t Kinesis 1MB limit) will be stored in the bad stream/topic
+    bad = {{bad}}
+
+    # Whether to use the incoming event's ip as the partition key for the good stream/topic
+    useIpAddressAsPartitionKey = false
 
     kinesis {
-      thread-pool-size: 10 # Thread pool size for Kinesis API requests
+      # Region where the streams are located
+      region = {{kinesisRegion}}
+
+      # Thread pool size for Kinesis API requests
+      threadPoolSize = 10
 
       # The following are used to authenticate for the Amazon Kinesis sink.
-      #
       # If both are set to 'default', the default provider chain is used
       # (see http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/auth/DefaultAWSCredentialsProviderChain.html)
-      #
       # If both are set to 'iam', use AWS IAM Roles to provision credentials.
-      #
       # If both are set to 'env', use environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
       aws {
-        access-key: "iam"
-        secret-key: "iam"
-      }
-
-      # Data will be stored in the following stream.
-      stream {
-        region: "{{collectorSinkKinesisStreamRegion}}"
-        good: "{{collectorKinesisStreamGoodName}}"
-        bad: "{{collectorKinesisStreamBadName}}"
+        accessKey = iam
+        secretKey = iam
       }
 
       # Minimum and maximum backoff periods
-      backoffPolicy: {
-        minBackoff: {{collectorSinkKinesisMinBackoffMillis}}
-        maxBackoff: {{collectorSinkKinesisMaxBackoffMillis}}
+      backoffPolicy {
+        minBackoff = {{kinesisMinBackoffMillis}}
+        maxBackoff = {{kinesisMaxBackoffMillis}}
       }
     }
 
     kafka {
-      brokers: "{{collectorKafkaBrokers}}"
+      brokers = "{{kafkaBrokers}}"
 
-      # Data will be stored in the following topics
-      topic {
-        good: "{{collectorKafkaTopicGoodName}}"
-        bad: "{{collectorKafkaTopicBadName}}"
-      }
+      # Number of retries to perform before giving up on sending a record
+      retries = 0
     }
 
     # Incoming events are stored in a buffer before being sent to Kinesis/Kafka.
@@ -108,34 +113,33 @@ collector {
     # - the combined size of the stored records reaches byte-limit or
     # - the time in milliseconds since the buffer was last emptied reaches time-limit
     buffer {
-      byte-limit: {{collectorSinkBufferByteThreshold}}
-      record-limit: {{collectorSinkBufferRecordThreshold}} # Not supported by Kafka; will be ignored
-      time-limit: {{collectorSinkBufferTimeThreshold}}
+      byteLimit = {{bufferByteThreshold}}
+      recordLimit = {{bufferRecordThreshold}} # Not supported by Kafka; will be ignored
+      timeLimit = {{bufferTimeThreshold}}
     }
   }
 }
 
 # Akka has a variety of possible configuration options defined at
-# http://doc.akka.io/docs/akka/2.2.3/general/configuration.html.
+# http://doc.akka.io/docs/akka/current/scala/general/configuration.html
 akka {
   loglevel = DEBUG # 'OFF' for no logging, 'DEBUG' for all logging.
   loggers = ["akka.event.slf4j.Slf4jLogger"]
-}
 
-# spray-can is the server the Stream collector uses and has configurable
-# options defined at
-# https://github.com/spray/spray/blob/master/spray-can/src/main/resources/reference.conf
-spray.can.server {
-  # To obtain the hostname in the collector, the 'remote-address' header
-  # should be set. By default, this is disabled, and enabling it
-  # adds the 'Remote-Address' header to every request automatically.
-  remote-address-header = on
+  # akka-http is the server the Stream collector uses and has configurable options defined at
+  # http://doc.akka.io/docs/akka-http/current/scala/http/configuration.html
+  http.server {
+    # To obtain the hostname in the collector, the 'remote-address' header
+    # should be set. By default, this is disabled, and enabling it
+    # adds the 'Remote-Address' header to every request automatically.
+    remote-address-header = on
 
-  uri-parsing-mode = relaxed
-  raw-request-uri-header = on
+    raw-request-uri-header = on
 
-  # Define the maximum request length (the default is 2048)
-  parsing {
-    max-uri-length = 32768
+    # Define the maximum request length (the default is 2048)
+    parsing {
+      max-uri-length = 32768
+      uri-parsing-mode = relaxed
+    }
   }
 }

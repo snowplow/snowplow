@@ -53,15 +53,14 @@ object Dependencies {
     val json4s           = "3.2.11"
     val igluClient       = "0.5.0"
     val scalaForex       = "0.5.0"
-    val scalaWeather     = "0.2.0"
-    val akka             = "2.3.14"
-    val akkaStreams      = "2.0.2"
+    val scalaWeather     = "0.3.0"
+    val scalaj           = "2.3.0"
     val gatlingJsonpath  = "0.6.4"
+    val scalaUri         = "0.5.0"
     // Scala (test only)
     val specs2           = "2.3.13"
     val scalazSpecs2     = "0.2"
     val scalaCheck       = "1.10.0"
-    val scalaUri         = "0.4.3"
     val scaldingArgs     = "0.13.0"
     val mockito          = "1.10.19"
   }
@@ -93,12 +92,9 @@ object Dependencies {
     val json4sJackson    = "org.json4s"                 %% "json4s-jackson"            % V.json4s
     val json4sScalaz     = "org.json4s"                 %% "json4s-scalaz"             % V.json4s
     val igluClient       = "com.snowplowanalytics"      %%  "iglu-scala-client"        % V.igluClient
-    val scalaUri         = "com.netaporter"             %% "scala-uri"                 % V.scalaUri
+    val scalaUri         = "io.lemonlabs"               %% "scala-uri"                 % V.scalaUri
     val scalaWeather     = "com.snowplowanalytics"      %% "scala-weather"             % V.scalaWeather
-    val akka             = "com.typesafe.akka"          %% "akka-actor"                  % V.akka
-    val akkaStreams      = "com.typesafe.akka"          %% "akka-stream-experimental"    % V.akkaStreams
-    val akkaHttpCore     = "com.typesafe.akka"          %% "akka-http-core-experimental" % V.akkaStreams
-    val akkaHttp         = "com.typesafe.akka"          %% "akka-http-experimental"      % V.akkaStreams
+    val scalaj           = "org.scalaj"                 %% "scalaj-http"               % V.scalaj
     val gatlingJsonpath  = "io.gatling"                 %% "jsonpath"                  % V.gatlingJsonpath
     // Scala (test only)
     val specs2           = "org.specs2"                 %% "specs2"                    % V.specs2         % "test"

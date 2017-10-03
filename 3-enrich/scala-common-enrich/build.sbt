@@ -16,7 +16,7 @@
 lazy val root = project.in(file("."))
   .settings(
     name        := "snowplow-common-enrich",
-    version     := "0.25.0",
+    version     := "0.26.0",
     description := "Common functionality for enriching raw Snowplow events"
   )
   .settings(BuildSettings.buildSettings)
@@ -50,9 +50,7 @@ lazy val root = project.in(file("."))
       Dependencies.Libraries.scalaUri,
       Dependencies.Libraries.scalaForex,
       Dependencies.Libraries.scalaWeather,
-      Dependencies.Libraries.akka,
-      Dependencies.Libraries.akkaHttp,
-      Dependencies.Libraries.akkaHttpCore,
+      Dependencies.Libraries.scalaj,
       Dependencies.Libraries.gatlingJsonpath,
       // Scala (test only)
       Dependencies.Libraries.specs2,

@@ -14,29 +14,27 @@ Assuming you already have [SBT 0.13.0][sbt] installed:
     $ git clone git://github.com/snowplow/snowplow.git
     $ cd 3-enrich/stream-enrich
     $ sbt compile
-    
+
 ## Usage
 
 Stream Enrich has the following command-line interface:
 
 ```
-snowplow-stream-enrich: Version 0.2.0. Copyright (c) 2013, Snowplow Analytics
-Ltd.
+snowplow-stream-enrich 0.10.0
+Usage: snowplow-stream-enrich [options]
 
-Usage: snowplow-stream-enrich [OPTIONS]
-
-OPTIONS
---config filename
-                        Configuration file.
---enrichments 'file:[filename]' or 'dynamodb:[region/table/partialKey]'
-                        Directory of enrichment configuration JSONs.
---resolver 'file:[filename]' or 'dynamodb:[region/table/partialKey]'
-                        Iglu resolver.
+  --config <filename>
+  --resolver <resolver uri>
+                           Iglu resolver file, 'file:[filename]' or 'dynamodb:[region/table/key]'
+  --enrichments <enrichments directory uri>
+                           Directory of enrichment configuration JSONs, 'file:[filename]' or 'dynamodb:[region/table/key]'
+  --force-ip-lookups-download
+                           Invalidate the cached IP lookup files and download them anew
 ```
 
 ## Copyright and license
 
-Copyright 2014 Snowplow Analytics Ltd.
+Copyright 2013-2017 Snowplow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0][license] (the "License");
 you may not use this software except in compliance with the License.

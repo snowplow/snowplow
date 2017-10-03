@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2017 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
  * you may not use this file except in compliance with the Apache License
@@ -13,237 +13,277 @@
  * governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow
-package collectors
-package scalastream
+package collectors.scalastream
 
-// Scala
-import scala.collection.mutable.MutableList
+import java.net.InetAddress
 
-// Akka
-import akka.actor.{ActorSystem, Props}
+import scala.collection.JavaConverters._
+import scala.concurrent.duration._
 
-// Specs2 and Spray testing
-import org.specs2.matcher.AnyMatchers
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.headers._
+import org.apache.thrift.{TSerializer, TDeserializer}
 import org.specs2.mutable.Specification
-import org.specs2.specification.{Scope,Fragments}
-import spray.testkit.Specs2RouteTest
 
-// Spray
-import spray.http.{DateTime,HttpHeader,HttpRequest,HttpCookie,RemoteAddress}
-import spray.http.HttpHeaders.{
-  Cookie,
-  `Set-Cookie`,
-  `Remote-Address`,
-  `Raw-Request-URI`
-}
-
-// Config
-import com.typesafe.config.{ConfigFactory,Config,ConfigException}
-
-// Thrift
-import org.apache.thrift.TDeserializer
-
-// Snowplow
-import sinks._
 import CollectorPayload.thrift.model1.CollectorPayload
+import generated.Settings
+import model._
 
-class CollectorServiceSpec extends Specification with Specs2RouteTest with
-     AnyMatchers {
-   val testConf: Config = ConfigFactory.parseString("""
-collector {
-  interface = "0.0.0.0"
-  port = 8080
+class CollectorServiceSpec extends Specification {
+  val service = new CollectorService(
+    TestUtils.testConf,
+    CollectorSinks(new TestSink, new TestSink)
+  )
+  val bouncingService = new CollectorService(
+    TestUtils.testConf.copy(cookieBounce = TestUtils.testConf.cookieBounce.copy(enabled = true)),
+    CollectorSinks(new TestSink, new TestSink)
+  )
+  val uuidRegex = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}".r
+  val event = new CollectorPayload(
+    "iglu-schema", "ip", System.currentTimeMillis, "UTF-8", "collector")
+  val hs = List(`Raw-Request-URI`("uri"))
+  val serializer = new TSerializer()
+  val deserializer = new TDeserializer()
 
-  production = true
-
-  p3p {
-    policyref = "/w3c/p3p.xml"
-    CP = "NOI DSP COR NID PSA OUR IND COM NAV STA"
-  }
-
-  cookie {
-    enabled = true
-    expiration = 365 days
-    name = sp
-    domain = "test-domain.com"
-  }
-
-  sink {
-    enabled = "test"
-
-    kinesis {
-      aws {
-        access-key: "cpf"
-        secret-key: "cpf"
+  "The collector service" should {
+    "cookie" in {
+      "attach p3p headers" in {
+        val (r, l) = service.cookie(Some("nuid=12"), Some("b"), "p", None, None, None, "h",
+          RemoteAddress.Unknown, HttpRequest(), false)
+        r.headers must have size 4
+        r.headers must contain(RawHeader("P3P", "policyref=\"%s\", CP=\"%s\""
+            .format("/w3c/p3p.xml", "NOI DSP COR NID PSA OUR IND COM NAV STA")))
+        r.headers must contain(`Access-Control-Allow-Origin`(HttpOriginRange.`*`))
+        r.headers must contain(`Access-Control-Allow-Credentials`(true))
+        l must have size 1
       }
-      stream {
-        region: "us-east-1"
-        good: "snowplow_collector_example"
-        bad: "snowplow_collector_example"
+      "not store stuff if bouncing and provide a location header" in {
+        val (r, l) = bouncingService.cookie(
+          None, Some("b"), "p", None, None, None, "h", RemoteAddress.Unknown, HttpRequest(), true)
+        r.headers must have size 5
+        r.headers must contain(`Location`("/?bounce=true"))
+        l must have size 0
       }
-      backoffPolicy {
-        minBackoff: 3000 # 3 seconds
-        maxBackoff: 600000 # 5 minutes
+      "store stuff if having already bounced with the fallback nuid" in {
+        val (r, l) = bouncingService.cookie(Some("bounce=true"), Some("b"), "p", None, None, None,
+          "h", RemoteAddress.Unknown, HttpRequest(), true)
+        r.headers must have size 4
+        l must have size 1
+        val newEvent = new CollectorPayload(
+          "iglu-schema", "ip", System.currentTimeMillis, "UTF-8", "collector")
+        deserializer.deserialize(newEvent, l.head)
+        newEvent.networkUserId shouldEqual "new-nuid"
+      }
+    }
+
+    "preflightResponse" in {
+      "return a response appropriate to cors preflight options requests" in {
+        service.preflightResponse(HttpRequest()) shouldEqual HttpResponse()
+          .withHeaders(List(
+            `Access-Control-Allow-Origin`(HttpOriginRange.`*`),
+            `Access-Control-Allow-Credentials`(true),
+            `Access-Control-Allow-Headers`("Content-Type")
+          ))
       }
     }
 
-    kafka {
-      brokers: "localhost:9092"
-
-      topic {
-        good: "good-topic"
-        bad: "bad-topic"
+    "flashCrossDomainPolicy" in {
+      "return the cross domain policy" in {
+        service.flashCrossDomainPolicy shouldEqual HttpResponse(
+          entity = HttpEntity(
+            contentType = ContentType(MediaTypes.`text/xml`, HttpCharsets.`ISO-8859-1`),
+            string = "<?xml version=\"1.0\"?>\n<cross-domain-policy>\n  <allow-access-from domain=\"*\" secure=\"false\" />\n</cross-domain-policy>"
+          )
+        )
       }
     }
 
-    buffer {
-      byte-limit: 4000000 # 4MB
-      record-limit: 500 # 500 records
-      time-limit: 60000 # 1 minute
-    }
-  }
-}
-""")
-  val collectorConfig = new CollectorConfig(testConf)
-  val sink = new TestSink
-  val sinks = CollectorSinks(sink, sink)
-  val responseHandler = new ResponseHandler(collectorConfig, sinks)
-  val collectorService = new CollectorService(collectorConfig, responseHandler, system)
-  val thriftDeserializer = new TDeserializer
-
-  // By default, spray will always add Remote-Address to every request
-  // when running with the `spray.can.server.remote-address-header`
-  // option. However, the testing does not read this option and a
-  // remote address always needs to be set.
-  def CollectorGet(uri: String, cookie: Option[`HttpCookie`] = None,
-      remoteAddr: String = "127.0.0.1") = {
-    val headers: MutableList[HttpHeader] =
-      MutableList(`Remote-Address`(remoteAddr),`Raw-Request-URI`(uri))
-    cookie.foreach(headers += `Cookie`(_))
-    Get(uri).withHeaders(headers.toList)
-  }
-
-  "Snowplow's Scala collector" should {
-    "return an invisible pixel" in {
-      CollectorGet("/i") ~> collectorService.collectorRoute ~> check {
-        responseAs[Array[Byte]] === ResponseHandler.pixel
+    "buildEvent" in {
+      "fill the correct values" in {
+        val l = `Location`("l")
+        val ct = Some("image/gif")
+        val r = HttpRequest().withHeaders(l :: hs)
+        val e = service
+          .buildEvent(Some("q"), Some("b"), "p", Some("ua"), Some("ref"), "h", "ip", r, "nuid", ct)
+        e.schema shouldEqual "iglu:com.snowplowanalytics.snowplow/CollectorPayload/thrift/1-0-0"
+        e.ipAddress shouldEqual "ip"
+        e.encoding shouldEqual "UTF-8"
+        e.collector shouldEqual s"${Settings.shortName}-${Settings.version}-stdout"
+        e.querystring shouldEqual "q"
+        e.body shouldEqual "b"
+        e.path shouldEqual "p"
+        e.userAgent shouldEqual "ua"
+        e.refererUri shouldEqual "ref"
+        e.hostname shouldEqual "h"
+        e.networkUserId shouldEqual "nuid"
+        e.headers shouldEqual (List(l) ++ ct).map(_.toString).asJava
+        e.contentType shouldEqual ct.get
+      }
+      "have a null queryString if it's None" in {
+        val l = `Location`("l")
+        val ct = Some("image/gif")
+        val r = HttpRequest().withHeaders(l :: hs)
+        val e = service
+          .buildEvent(None, Some("b"), "p", Some("ua"), Some("ref"), "h", "ip", r, "nuid", ct)
+        e.schema shouldEqual "iglu:com.snowplowanalytics.snowplow/CollectorPayload/thrift/1-0-0"
+        e.ipAddress shouldEqual "ip"
+        e.encoding shouldEqual "UTF-8"
+        e.collector shouldEqual s"${Settings.shortName}-${Settings.version}-stdout"
+        e.querystring shouldEqual null
+        e.body shouldEqual "b"
+        e.path shouldEqual "p"
+        e.userAgent shouldEqual "ua"
+        e.refererUri shouldEqual "ref"
+        e.hostname shouldEqual "h"
+        e.networkUserId shouldEqual "nuid"
+        e.headers shouldEqual (List(l) ++ ct).map(_.toString).asJava
+        e.contentType shouldEqual ct.get
       }
     }
-    "return a cookie expiring at the correct time" in {
-      CollectorGet("/i") ~> collectorService.collectorRoute ~> check {
-        headers must not be empty
 
-        val httpCookies: List[HttpCookie] = headers.collect {
-          case `Set-Cookie`(hc) => hc
-        }
-        httpCookies must not be empty
-
-        // Assume we only return a single cookie.
-        // If the collector is modified to return multiple cookies,
-        // this will need to be changed.
-        val httpCookie = httpCookies(0)
-
-        httpCookie.name must beEqualTo(collectorConfig.cookieName.get)
-        httpCookie.name must beEqualTo("sp")
-        httpCookie.path must beSome("/")
-        httpCookie.domain must beSome
-        httpCookie.domain.get must be(collectorConfig.cookieDomain.get)
-        httpCookie.expires must beSome
-
-        httpCookie.content.matches("""[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}""")
-        val expiration = httpCookie.expires.get
-        val offset = expiration.clicks - collectorConfig.cookieExpiration.get - DateTime.now.clicks
-        offset.asInstanceOf[Int] must beCloseTo(0, 2000) // 1000 ms window.
+    "sinkEvent" in {
+      "send back the produced events" in {
+        val l = service.sinkEvent(event, "key")
+        l must have size 1
+        l.head.zip(serializer.serialize(event)).forall { case (a, b) => a mustEqual b }
       }
     }
-    "return a cookie containing nuid query parameter" in {
-      CollectorGet("/i?nuid=UUID_Test_New") ~> collectorService.collectorRoute ~> check {
-        headers must not be empty
 
-        val httpCookies: List[HttpCookie] = headers.collect {
-          case `Set-Cookie`(hc) => hc
-        }
-        httpCookies must not be empty
-
-        // Assume we only return a single cookie.
-        // If the collector is modified to return multiple cookies,
-        // this will need to be changed.
-        val httpCookie = httpCookies(0)
-
-        httpCookie.name must beEqualTo(collectorConfig.cookieName.get)
-        httpCookie.name must beEqualTo("sp")
-        httpCookie.path must beSome("/")
-        httpCookie.domain must beSome
-        httpCookie.domain.get must be(collectorConfig.cookieDomain.get)
-        httpCookie.expires must beSome
-        httpCookie.content must beEqualTo("UUID_Test_New")
-        val expiration = httpCookie.expires.get
-        val offset = expiration.clicks - collectorConfig.cookieExpiration.get - DateTime.now.clicks
-        offset.asInstanceOf[Int] must beCloseTo(0, 3600000) // 1 hour window.
+    "buildHttpResponse" in {
+      "rely on buildRedirectHttpResponse if redirect is true" in {
+        val (res, Nil) = service.buildHttpResponse(event, "k", Map("u" -> "12"), hs, true, true, false)
+        res shouldEqual HttpResponse(302)
+          .withHeaders(`Location`("12") :: hs)
+      }
+      "send back a gif if pixelExpected is true" in {
+        val (res, Nil) = service.buildHttpResponse(event, "k", Map.empty, hs, false, true, false)
+        res shouldEqual HttpResponse(200)
+          .withHeaders(hs)
+          .withEntity(HttpEntity(contentType = ContentType(MediaTypes.`image/gif`),
+            bytes = CollectorService.pixel))
+      }
+      "send back a found if pixelExpected and bounce is true" in {
+        val (res, Nil) = service.buildHttpResponse(event, "k", Map.empty, hs, false, true, true)
+        res shouldEqual HttpResponse(302)
+          .withHeaders(hs)
+      }
+      "send back ok otherwise" in {
+        val (res, Nil) = service.buildHttpResponse(event, "k", Map.empty, hs, false, false, false)
+        res shouldEqual HttpResponse(200, entity = "ok")
+          .withHeaders(hs)
       }
     }
-    "return the same cookie as passed in" in {
-      CollectorGet("/i", Some(HttpCookie(collectorConfig.cookieName.get, "UUID_Test"))) ~>
-          collectorService.collectorRoute ~> check {
-        val httpCookies: List[HttpCookie] = headers.collect {
-          case `Set-Cookie`(hc) => hc
-        }
-        // Assume we only return a single cookie.
-        // If the collector is modified to return multiple cookies,
-        // this will need to be changed.
-        val httpCookie = httpCookies(0)
 
-        httpCookie.content must beEqualTo("UUID_Test")
+    "buildUsualHttpResponse" in {
+      "send back a found if pixelExpected and bounce is true" in {
+        service.buildUsualHttpResponse(true, true) shouldEqual HttpResponse(302)
+      }
+      "send back a gif if pixelExpected is true" in {
+        service.buildUsualHttpResponse(true, false) shouldEqual HttpResponse(200)
+          .withEntity(HttpEntity(contentType = ContentType(MediaTypes.`image/gif`),
+            bytes = CollectorService.pixel))
+      }
+      "send back ok otherwise" in {
+        service.buildUsualHttpResponse(false, true) shouldEqual HttpResponse(200, entity = "ok")
       }
     }
-    "override cookie with nuid parameter" in {
-      CollectorGet("/i?nuid=UUID_Test_New", Some(HttpCookie("sp", "UUID_Test"))) ~>
-          collectorService.collectorRoute ~> check {
-        val httpCookies: List[HttpCookie] = headers.collect {
-          case `Set-Cookie`(hc) => hc
-        }
-        // Assume we only return a single cookie.
-        // If the collector is modified to return multiple cookies,
-        // this will need to be changed.
-        val httpCookie = httpCookies(0)
 
-        httpCookie.content must beEqualTo("UUID_Test_New")
+    "buildRedirectHttpResponse" in {
+      "give back a 302 if redirecting and there is a u query param" in {
+        val (res, Nil) = service.buildRedirectHttpResponse(event, "k", Map("u" -> "12"))
+        res shouldEqual HttpResponse(302).withHeaders(`Location`("12"))
+      }
+      /* scalaz incompat
+      "give back a 400 if redirecting and there are no u query params" in {
+        val (res, _) = service.buildRedirectHttpResponse(event, "k", Map.empty)
+        res shouldEqual HttpResponse(400)
+      }*/
+    }
+
+    "cookieHeader" in {
+      "give back a cookie header with the appropriate configuration" in {
+        val nuid = "nuid"
+        val conf = CookieConfig(true, "name", 5.seconds, Some("domain"))
+        val Some(`Set-Cookie`(cookie)) = service.cookieHeader(Some(conf), nuid)
+        cookie.name shouldEqual conf.name
+        cookie.value shouldEqual nuid
+        cookie.domain shouldEqual conf.domain
+        cookie.path shouldEqual Some("/")
+        cookie.expires must beSome
+        (cookie.expires.get - DateTime.now.clicks).clicks must beCloseTo(conf.expiration.toMillis, 1000L)
+      }
+      "give back None if no configuration is given" in {
+        service.cookieHeader(None, "nuid") shouldEqual None
       }
     }
-    "return a P3P header" in {
-      CollectorGet("/i") ~> collectorService.collectorRoute ~> check {
-        val p3pHeaders = headers.filter {
-          h => h.name.equals("P3P")
-        }
-        p3pHeaders.size must beEqualTo(1)
-        val p3pHeader = p3pHeaders(0)
 
-        val policyRef = collectorConfig.p3pPolicyRef
-        val CP = collectorConfig.p3pCP
-        p3pHeader.value must beEqualTo(
-          "policyref=\"%s\", CP=\"%s\"".format(policyRef, CP))
+    "bounceLocationHeader" in {
+      "build a location header if bounce is true" in {
+        val header = service.bounceLocationHeader(Map("a" -> "b"), Uri("st"), "bounce", true)
+        header shouldEqual Some(`Location`("st?a=b&bounce=true"))
+      }
+      "give back none otherwise" in {
+        val header = service.bounceLocationHeader(Map("a" -> "b"), Uri("st"), "bounce", false)
+        header shouldEqual None
       }
     }
-    "store the expected event as a serialized Thrift object in the enabled sink" in {
-      val payloadData = "param1=val1&param2=val2"
-      val storedRecordBytes = responseHandler.cookie(payloadData, null, None,
-        None, "localhost", RemoteAddress("127.0.0.1"), new HttpRequest(), None, "/i", true)._2
 
-      val storedEvent = new CollectorPayload
-      this.synchronized {
-        thriftDeserializer.deserialize(storedEvent, storedRecordBytes.head)
+    "headers" in {
+      "filter out the non Remote-Address and Raw-Request-URI headers" in {
+        val request = HttpRequest()
+          .withHeaders(List(
+            `Location`("a"),
+            `Remote-Address`(RemoteAddress.Unknown),
+            `Raw-Request-URI`("uri")
+          ))
+        service.headers(request) shouldEqual List(`Location`("a").toString)
       }
-
-      storedEvent.timestamp must beCloseTo(DateTime.now.clicks, 60000)
-      storedEvent.encoding must beEqualTo("UTF-8")
-      storedEvent.ipAddress must beEqualTo("127.0.0.1")
-      storedEvent.collector must beEqualTo("ssc-0.9.0-test")
-      storedEvent.path must beEqualTo("/i")
-      storedEvent.querystring must beEqualTo(payloadData)
     }
-    "report itself as healthy" in {
-      CollectorGet("/health") ~> collectorService.collectorRoute ~> check {
-        response.status must beEqualTo(spray.http.StatusCodes.OK)
+
+    "ipAndPartitionkey" in {
+      "give back the ip and partition key as ip if remote address is defined" in {
+        val address = RemoteAddress(InetAddress.getByName("localhost"))
+        service.ipAndPartitionKey(address, true) shouldEqual(("127.0.0.1", "127.0.0.1"))
+      }
+      "give back the ip and a uuid as partition key if ipAsPartitionKey is false" in {
+        val address = RemoteAddress(InetAddress.getByName("localhost"))
+        val (ip, pkey) = service.ipAndPartitionKey(address, false)
+        ip shouldEqual "127.0.0.1"
+        pkey must beMatching(uuidRegex)
+      }
+      "give back unknown as ip and a random uuid as partition key if the address isn't known" in {
+        val (ip, pkey) = service.ipAndPartitionKey(RemoteAddress.Unknown, true)
+        ip shouldEqual "unknown"
+        pkey must beMatching(uuidRegex)
+      }
+    }
+
+    "netwokUserId" in {
+      "give back the nuid query param if present" in {
+        service.networkUserId(
+          HttpRequest().withUri(Uri().withRawQueryString("nuid=12")),
+          Some(HttpCookie("nuid", "13"))
+        ) shouldEqual Some("12")
+      }
+      "give back the request cookie if there no nuid query param" in {
+        service.networkUserId(HttpRequest(), Some(HttpCookie("nuid", "13"))) shouldEqual Some("13")
+      }
+      "give back none otherwise" in {
+        service.networkUserId(HttpRequest(), None) shouldEqual None
+      }
+    }
+
+    "accessControlAllowOriginHeader" in {
+      "give a restricted ACAO header if there is an Origin header in the request" in {
+        val origin = HttpOrigin("http", Host("origin"))
+        val request = HttpRequest().withHeaders(`Origin`(origin))
+        service.accessControlAllowOriginHeader(request) shouldEqual
+          `Access-Control-Allow-Origin`(HttpOriginRange.Default(List(origin)))
+      }
+      "give an open ACAO header if there are no Origin headers in the request" in {
+        val request = HttpRequest()
+        service.accessControlAllowOriginHeader(request) shouldEqual
+          `Access-Control-Allow-Origin`(HttpOriginRange.`*`)
       }
     }
   }
