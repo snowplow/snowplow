@@ -14,7 +14,7 @@ lazy val root = project.in(file("."))
   .settings(
     organization  :=  "com.snowplowanalytics",
     name          :=  "snowplow-stream-enrich",
-    version       :=  "0.11.0",
+    version       :=  "0.12.0-rc1",
     description   :=  "The Snowplow Enrichment process, implemented as an Amazon Kinesis app",
     scalaVersion  :=  "2.11.11",
     scalacOptions :=  BuildSettings.compilerOptions,
@@ -38,6 +38,7 @@ lazy val root = project.in(file("."))
       Dependencies.Libraries.config,
       Dependencies.Libraries.slf4j,
       Dependencies.Libraries.log4jOverSlf4j,
+      Dependencies.Libraries.nsqClient,
       // Scala
       Dependencies.Libraries.scopt,
       Dependencies.Libraries.scalaz7,

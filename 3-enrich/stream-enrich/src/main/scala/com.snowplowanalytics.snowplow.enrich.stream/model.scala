@@ -37,11 +37,13 @@ object model {
   case object KafkaSource extends Source
   case object KinesisSource extends Source
   case object StdinSource extends Source
+  case object NsqSource extends Source
 
   sealed trait Sink
   case object KafkaSink extends Sink
   case object KinesisSink extends Sink
   case object StdouterrSink extends Sink
+  case object NsqSink extends Sink
 
   /** Whether the sink is for good rows or bad rows */
   sealed trait InputType
@@ -76,6 +78,7 @@ object model {
     out: OutConfig,
     kinesis: KinesisConfig,
     kafka: KafkaConfig,
+    nsq: NsqConfig,
     buffer: BufferConfig,
     appName: String
   )
@@ -103,6 +106,12 @@ object model {
   }
   final case class BackoffPolicyConfig(minBackoff: Long, maxBackoff: Long)
   final case class KafkaConfig(brokers: String, retries: Int)
+  final case class NsqConfig(
+    rawChannel: String,
+    host: String,
+    port: Int,
+    lookupPort: Int
+  )
   final case class BufferConfig(byteLimit: Long, recordLimit: Long, timeLimit: Long)
   final case class MonitoringConfig(snowplow: SnowplowMonitoringConfig)
   final case class SnowplowMonitoringConfig(
@@ -122,12 +131,14 @@ object model {
       case "kinesis" => KinesisSource
       case "kafka"   => KafkaSource
       case "stdin"   => StdinSource
+      case "nsq"     => NsqSource
       case o         => throw new IllegalArgumentException(s"Unknown enrich.source: $o")
     }
     val sinkType: Sink = sink.toLowerCase match {
       case "kinesis"   => KinesisSink
       case "kafka"     => KafkaSink
       case "stdouterr" => StdouterrSink
+      case "nsq"       => NsqSink
       case o           => throw new IllegalArgumentException(s"Unknown enrich.sink: $o")
     }
   }

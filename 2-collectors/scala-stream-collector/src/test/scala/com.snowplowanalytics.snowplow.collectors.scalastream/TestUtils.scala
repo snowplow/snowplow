@@ -37,6 +37,7 @@ object TestUtils {
         backoffPolicy = BackoffPolicyConfig(3000, 60000)
       ),
       kafka = KafkaConfig("localhost:9092", 1),
+      nsq = NsqConfig("localhost", 4160),
       buffer = BufferConfig(4000000, 500, 60000)
     )
   )

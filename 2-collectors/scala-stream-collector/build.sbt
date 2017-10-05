@@ -16,7 +16,7 @@ lazy val root = project.in(file("."))
   .settings(
     organization  :=  "com.snowplowanalytics",
     name          :=  "snowplow-stream-collector",
-    version       :=  "0.10.0",
+    version       :=  "0.11.0-rc1",
     scalaVersion  :=  "2.11.11",
     description   :=  "Scala Stream Collector for Snowplow raw events",
     scalacOptions :=  BuildSettings.compilerOptions,
@@ -37,6 +37,7 @@ lazy val root = project.in(file("."))
       Dependencies.Libraries.slf4j,
       Dependencies.Libraries.log4jOverSlf4j,
       Dependencies.Libraries.config,
+      Dependencies.Libraries.nsqClient,
       // Scala
       Dependencies.Libraries.scopt,
       Dependencies.Libraries.scalaz7,
