@@ -1,3 +1,8 @@
+Release 94 Hill of Tara (2017-10-10)
+------------------------------------
+Stream Enrich: bump to 0.11.1 (#3454)
+Stream Enrich: keep sending records when the Kinesis stream is resharding (#3452)
+
 Release 93 Virunum (2017-10-03)
 -------------------------------
 Scala Stream Collector: bump to 0.10.0 (#3424)
