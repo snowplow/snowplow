@@ -1,3 +1,8 @@
+Release 94 XX (2017-10-xx)
+--------------------------
+Stream Enrich: bump to 0.12.0 (#3454)
+Stream Enrich: keep sending records when the Kinesis stream is resharding (#3452)
+
 Release 93 Virunum (2017-10-03)
 -------------------------------
 Scala Stream Collector: bump to 0.10.0 (#3424)
