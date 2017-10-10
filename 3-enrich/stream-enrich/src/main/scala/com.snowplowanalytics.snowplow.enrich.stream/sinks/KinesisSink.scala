@@ -67,28 +67,23 @@ class KinesisSink(
     .withEndpointConfiguration(endpointConfiguration)
     .build()
 
-  require(streamExists(streamName), s"Kinesis stream $streamName doesn't exist")
+  if (!streamExists(streamName)) {
+    // needed to get out of thread local in the kcl, illegal argument exceptions are swallowed
+    throw new RuntimeException(s"Kinesis stream $streamName doesn't exist or is neither" +
+      " active nor updating (deleted or creating)")
+  }
 
   /**
    * Check whether a Kinesis stream exists
    * @param name Name of the stream
    * @return Whether the stream exists
    */
-  def streamExists(name: String): Boolean = {
-    val exists = try {
-      val describeStreamResult = client.describeStream(name)
-      describeStreamResult.getStreamDescription.getStreamStatus == "ACTIVE"
-    } catch {
-      case rnfe: ResourceNotFoundException => false
-    }
-
-    if (exists) {
-      log.info(s"Stream $name exists and is active")
-    } else {
-      log.info(s"Stream $name doesn't exist or is not active")
-    }
-
-    exists
+  def streamExists(name: String): Boolean = try {
+    val describeStreamResult = client.describeStream(name)
+    val status = describeStreamResult.getStreamDescription.getStreamStatus
+    status == "ACTIVE" || status == "UPDATING"
+  } catch {
+    case rnfe: ResourceNotFoundException => false
   }
 
   val ByteThreshold = bufferConfig.byteLimit
