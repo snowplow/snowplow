@@ -32,6 +32,8 @@ AS (
 
     FROM {{.input_schema}}.com_snowplowanalytics_snowplow_web_page_1
 
+    WHERE root_tstamp > '1970-01-01'
+
     GROUP BY 1,2
 
   )
