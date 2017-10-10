@@ -68,7 +68,7 @@
                     "Content-Type"   "image/gif"
                     "Content-Length"  pixel-length)
      :cookies cookies
-     :body    (ByteArrayInputStream. pixel)})   
+     :body    (ByteArrayInputStream. pixel)})
 
 (defn- send-cookie-200
   "Respond with a 200,
@@ -76,7 +76,12 @@
   [cookies headers]
     {:status  200
      :headers headers
-     :cookies cookies})   
+     :cookies cookies})
+
+(defn- replace-id
+  "Replace placeholder with value"
+  [url id]
+    (clojure.string/replace url "${SP_UUID}" id))
 
 (defn- send-redirect
   "If our params map contains `u`, 302 redirect to that URI,
@@ -100,7 +105,12 @@
         cookies (if (= duration 0)
                   {}
                   {cookie-name (set-cookie id duration domain)})
-        headers {"P3P" p3p-header}]
+        headers {"P3P" p3p-header}
+        {url "u"} params
+        params (if (nil? url)
+                 params
+                 (assoc params "u" (replace-id url id)))
+        ]
     (if (= vendor "r")
       (send-redirect cookies headers params)
       (if pixel

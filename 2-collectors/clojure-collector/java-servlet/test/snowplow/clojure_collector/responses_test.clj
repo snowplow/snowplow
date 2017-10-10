@@ -19,3 +19,14 @@
 
 ; TODO: add tests along similar lines to:
 ; http://mmcgrana.github.com/2010/07/develop-deploy-clojure-web-applications.html
+(deftest test-uuid-replace
+  (let [cookies {"sp" {:value "123456"}}
+        duration 0
+        domain ""
+        p3pheader ""
+        pixel false
+        vendor "r"
+        params {"u" "http://localhost/?uid=${SP_UUID}"}
+        response (send-cookie-pixel-or-200-or-redirect cookies duration domain p3pheader pixel vendor params)]
+    (is (= 302 (:status response)))
+    (is (= "http://localhost/?uid=123456" (get-in response [:headers "Location"])))))
