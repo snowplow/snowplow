@@ -128,6 +128,11 @@ module Snowplow
 
         # staging
         if staging
+          csbr_processing_loc = Sluice::Storage::S3::Location.new(csbr[:processing])
+          unless Sluice::Storage::S3::is_empty?(s3, csbr_processing_loc)
+            raise DirectoryNotEmptyError, "Cannot safely add staging step to jobflow, #{csbr_processing_loc} is not empty"
+          end
+
           src_pattern = collector_format == 'clj-tomcat' ? '.*localhost\_access\_log.*\.txt.*' : '.+'
           src_pattern_regex = Regexp.new src_pattern
           non_empty_locs = csbr[:in].select { |l|
