@@ -1,5 +1,5 @@
 {
-    "schema": "iglu:com.snowplowanalytics.snowplow.storage/redshift_config/jsonschema/2-0-0",
+    "schema": "iglu:com.snowplowanalytics.snowplow.storage/redshift_config/jsonschema/2-1-0",
     "data": {
         "name": "AWS Redshift enriched events storage",
         "host": "ADD HERE",
@@ -12,6 +12,7 @@
         "schema": "atomic",
         "maxError": 1,
         "compRows": 20000,
+        "sshTunnel": null,
         "purpose": "ENRICHED_EVENTS"
     }
 }
