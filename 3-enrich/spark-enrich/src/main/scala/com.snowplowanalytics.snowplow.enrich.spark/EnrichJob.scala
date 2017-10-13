@@ -71,7 +71,8 @@ object EnrichJob extends SparkJob {
     classOf[scala.collection.immutable.Map$EmptyMap$],
     classOf[scala.collection.immutable.Set$EmptySet$],
     classOf[scala.collection.mutable.WrappedArray$ofRef],
-    classOf[org.apache.spark.internal.io.FileCommitProtocol$TaskCommitMessage]
+    classOf[org.apache.spark.internal.io.FileCommitProtocol$TaskCommitMessage],
+    classOf[org.apache.spark.sql.execution.datasources.FileFormatWriter$WriteTaskResult]
   )
   override def sparkConfig(): SparkConf = new SparkConf()
     .setAppName(getClass().getSimpleName())
