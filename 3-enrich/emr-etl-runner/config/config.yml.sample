@@ -25,7 +25,7 @@ aws:
         errors: ADD HERE     # Leave blank unless :continue_on_unexpected_error: set to true below
         archive: ADD HERE    # Where to archive shredded events to, e.g. s3://my-archive-bucket/shredded
   emr:
-    ami_version: 5.5.0
+    ami_version: 5.9.0
     region: ADD HERE        # Always set this
     jobflow_role: EMR_EC2_DefaultRole # Created using $ aws emr create-default-roles
     service_role: EMR_DefaultRole     # Created using $ aws emr create-default-roles
