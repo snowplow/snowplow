@@ -16,7 +16,11 @@ Whilst it is possible to query the events directly, it is often more convenient 
 
 ### Web model
 
-The web model is a starting point for Snowplow users to get up and running with the Snowplow web data. We expect that each Snowplow user will want to extend and customize the data model with their own unique business logic.
+The web model is a starting point for Snowplow users to get up and running with the Snowplow web
+data. We expect that each Snowplow user will want to extend and customize the data model with their
+own unique business logic.
+
+The code is located at https://github.com/snowplow/web-data-model.
 
 ### Mobile model
 
