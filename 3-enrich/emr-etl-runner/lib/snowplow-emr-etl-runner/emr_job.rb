@@ -231,7 +231,7 @@ module Snowplow
 
         # Boostrap step removing all $folder$ empty files
         @jobflow.add_bootstrap_action(Elasticity::BootstrapAction.new(
-          "#{standard_assets_bucket}common/emr/snowplow-aws-s3-rm-0.1.0-rc1.sh",
+          "#{standard_assets_bucket}common/emr/snowplow-aws-s3-rm-0.1.0-rc2.sh",
           csbe[:good], csbe[:bad], csbe[:archive], csbs[:good], csbs[:bad], csbs[:archive]))
 
         # Install and launch HBase
