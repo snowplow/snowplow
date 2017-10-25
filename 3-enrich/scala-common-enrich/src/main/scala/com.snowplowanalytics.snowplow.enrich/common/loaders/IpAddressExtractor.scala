@@ -22,6 +22,7 @@ import scala.annotation.tailrec
 object IpAddressExtractor {
 
   private val IpExtractionXForwardedForRegex = """^x-forwarded-for: \"?\[?((?:[0-9a-f]|\.|\:+)+).*\]?\"?""".r
+  private val IpExtractionForwardedRegex     = """^forwarded: for=\"?\[?((?:[0-9a-f]|\.|\:+)+).*\]?\"?""".r
 
   /**
    * If a request has been forwarded, extract the original client IP address;
@@ -34,10 +35,12 @@ object IpAddressExtractor {
   @tailrec
   def extractIpAddress(headers: List[String], lastIp: String): String =
     headers match {
-      case h :: t => h.toLowerCase match {
-        case IpExtractionXForwardedForRegex(originalIpAddress) => originalIpAddress
-        case _ => extractIpAddress(t, lastIp)
-      }
+      case h :: t =>
+        h.toLowerCase match {
+          case IpExtractionXForwardedForRegex(originalIpAddress) => originalIpAddress
+          case IpExtractionForwardedRegex(originalIpAddress)     => originalIpAddress
+          case _                                                 => extractIpAddress(t, lastIp)
+        }
       case Nil => lastIp
     }
 }
