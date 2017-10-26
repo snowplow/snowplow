@@ -5,7 +5,7 @@ how best to do so.
 
 ## Support request?
 
-If you are having trouble setting up or running Snowplow, then the best place to get help is on the [SnowPlow Google Group](https://groups.google.com/forum/#!forum/snowplow-user) (aka `snowplow-user`).
+If you are having trouble setting up or running Snowplow, then the best place to get help is on the [Snowplow Discourse](https://discourse.snowplowanalytics.com/).
 
 Posting your problem there ensures more people will see it and you should get support faster than creating a new issue on GitHub. Please do create a new issue on GitHub if you think you've found a bug though! 
 
