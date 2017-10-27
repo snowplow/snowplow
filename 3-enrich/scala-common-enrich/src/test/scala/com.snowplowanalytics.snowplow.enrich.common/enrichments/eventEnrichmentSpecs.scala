@@ -20,6 +20,7 @@ import org.specs2.scalaz.ValidationMatchers
 
 // Joda
 import org.joda.time.DateTime
+import org.joda.time.DateTimeZone
 
 // Scalaz
 import scalaz._
@@ -59,7 +60,7 @@ class ExtractEventTypeSpec extends Specification with DataTables with Validation
       (_, input, expected) => EventEnrichments.extractEventType(FieldName, input) must beFailing(expected)
     }
 
-  val SeventiesTstamp = Some(new DateTime(0))
+  val SeventiesTstamp = Some(new DateTime(0, DateTimeZone.UTC))
   val BCTstamp = SeventiesTstamp.map(_.minusYears(2000))
 
   def e3 =
