@@ -90,7 +90,13 @@ object ConversionUtils {
     UriComponents(
       scheme   = uri.getScheme,
       host     = uri.getHost,
-      port     = if (port == -1) 80 else port,
+      port     = if (port == -1 && uri.getScheme == "https") {
+                  443
+                 } else if (port == -1) {
+                  80
+                 } else {
+                  port
+                 },
       path     = path,
       query    = query,
       fragment = fragment
