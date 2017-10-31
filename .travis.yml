@@ -62,11 +62,17 @@ deploy:
       tags: true
       condition: '"$(.travis/is_release_tag.sh scala_common_enrich $TRAVIS_TAG)" == "" && $? == 0 && $TEST_DIR = 3-enrich/scala-common-enrich/'
   - provider: script
-    script: ./.travis/deploy.sh kinesis $TRAVIS_TAG
+    script: ./.travis/deploy.sh scala_stream_collector $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
-      condition: '"$(.travis/is_release_tag.sh kinesis $TRAVIS_TAG)" == "" && $? == 0 && $TEST_DIR = 3-enrich/scala-common-enrich/'
+      condition: '"$(.travis/is_release_tag.sh scala_stream_collector $TRAVIS_TAG)" == "" && $? == 0 && $TEST_DIR = 3-enrich/scala-common-enrich/'
+  - provider: script
+    script: ./.travis/deploy.sh stream_enrich $TRAVIS_TAG
+    skip_cleanup: true
+    on:
+      tags: true
+      condition: '"$(.travis/is_release_tag.sh stream_enrich $TRAVIS_TAG)" == "" && $? == 0 && $TEST_DIR = 3-enrich/scala-common-enrich/'
   - provider: script
     script: ./.travis/deploy.sh spark_enrich $TRAVIS_TAG
     skip_cleanup: true
