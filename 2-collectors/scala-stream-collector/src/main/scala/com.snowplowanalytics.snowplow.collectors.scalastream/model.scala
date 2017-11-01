@@ -22,13 +22,6 @@ import sinks._
 
 package model {
 
-  /** Type of sink */
-  sealed trait SinkType
-  case object Kinesis extends SinkType
-  case object Kafka extends SinkType
-  case object Stdout extends SinkType
-  case object Nsq extends SinkType
-
   /**
    * Case class for holding both good and
    * bad sinks for the Stream Collector.
@@ -87,27 +80,27 @@ package model {
     private def isEnv(key: String): Boolean = key == "env"
   }
   final case class BackoffPolicyConfig(minBackoff: Long, maxBackoff: Long)
-  final case class KinesisConfig(
+  sealed trait SinkConfig
+  final case class Kinesis(
     region: String,
     threadPoolSize: Int,
     aws: AWSConfig,
     backoffPolicy: BackoffPolicyConfig
-  ) {
+  ) extends SinkConfig {
     val endpoint = region match {
       case cn@"cn-north-1" => s"https://kinesis.$cn.amazonaws.com.cn"
       case _ => s"https://kinesis.$region.amazonaws.com"
     }
   }
-  final case class KafkaConfig(brokers: String, retries: Int)
-  final case class NsqConfig(host: String, port: Int)
+  final case class Kafka(brokers: String, retries: Int) extends SinkConfig
+  final case class Nsq(host: String, port: Int) extends SinkConfig
+  case object StdoutConfig extends SinkConfig
   final case class BufferConfig(byteLimit: Int, recordLimit: Int, timeLimit: Long)
   final case class StreamsConfig(
     good: String,
     bad: String,
     useIpAddressAsPartitionKey: Boolean,
-    kinesis: KinesisConfig,
-    kafka: KafkaConfig,
-    nsq: NsqConfig,
+    sink: SinkConfig,
     buffer: BufferConfig
   )
   final case class CollectorConfig(
@@ -116,7 +109,6 @@ package model {
     p3p: P3PConfig,
     cookie: CookieConfig,
     cookieBounce: CookieBounceConfig,
-    sink: String,
     streams: StreamsConfig
   ) {
     val cookieConfig = if (cookie.enabled) Some(cookie) else None
@@ -124,13 +116,5 @@ package model {
     def cookieName = cookieConfig.map(_.name)
     def cookieDomain = cookieConfig.flatMap(_.domain)
     def cookieExpiration = cookieConfig.map(_.expiration)
-
-    val sinkType = sink match {
-      case "kinesis" => Kinesis
-      case "kafka"   => Kafka
-      case "stdout"  => Stdout
-      case "nsq"     => Nsq
-      case o         => throw new IllegalArgumentException(s"collector.sink unknown: $o")
-    }
   }
 }

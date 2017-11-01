@@ -54,19 +54,6 @@ collector {
     fallbackNetworkUserId = "00000000-0000-4000-A000-000000000000"
   }
 
-  # Sinks currently supported are:
-  # 'kinesis' for writing Thrift-serialized records to a Kinesis stream
-  # 'kafka' for writing Thrift-serialized records to kafka
-  # 'nsq' for writing Thrift-serialized records to Nsq
-  # 'stdout' for writing Base64-encoded Thrift-serialized records to stdout
-  #    Recommended settings for 'stdout' so each line printed to stdout
-  #    is a serialized record are:
-  #      1. Setting 'akka.loglevel = OFF' and 'akka.loggers = []'
-  #         to disable all logging.
-  #      2. Using 'sbt assembly' and 'java -jar ...' to disable
-  #         sbt logging.
-  sink = kinesis
-
   streams {
     # Events which have successfully been collected will be stored in the good stream/topic
     good = {{good}}
@@ -78,7 +65,12 @@ collector {
     # Note: Nsq does not make use of partition key.
     useIpAddressAsPartitionKey = false
 
-    kinesis {
+    # Enable the chosen sink by uncommenting the appropriate configuration
+    sink {
+      # Choose between kinesis, kafka, nsq, or stdout
+      # To use stdout comment everything
+      enabled = kinesis
+
       # Region where the streams are located
       region = {{kinesisRegion}}
 
@@ -100,22 +92,17 @@ collector {
         minBackoff = {{kinesisMinBackoffMillis}}
         maxBackoff = {{kinesisMaxBackoffMillis}}
       }
-    }
 
-    kafka {
-      brokers = "{{kafkaBrokers}}"
+      # Or Kafka
+      #brokers = "{{kafkaBrokers}}"
+      ## Number of retries to perform before giving up on sending a record
+      #retries = 0
 
-      # Number of retries to perform before giving up on sending a record
-      retries = 0
-    }
-
-    # config for NSQ sink
-    nsq {
-      # Host name for NSQ tools
-      host = "{{nsqHost}}"
-
-      # HTTP port for nsqd, 4150 by default
-      port = {{nsqdPort}}
+      # Or NSQ
+      ## Host name for NSQ tools
+      #host = "{{nsqHost}}"
+      ## HTTP port for nsqd, 4150 by default
+      #port = {{nsqdPort}}
     }
 
     # Incoming events are stored in a buffer before being sent to Kinesis/Kafka.
