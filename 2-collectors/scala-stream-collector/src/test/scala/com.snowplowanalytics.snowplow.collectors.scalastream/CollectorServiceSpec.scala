@@ -108,7 +108,7 @@ class CollectorServiceSpec extends Specification {
         e.schema shouldEqual "iglu:com.snowplowanalytics.snowplow/CollectorPayload/thrift/1-0-0"
         e.ipAddress shouldEqual "ip"
         e.encoding shouldEqual "UTF-8"
-        e.collector shouldEqual s"${Settings.shortName}-${Settings.version}-stdout"
+        e.collector shouldEqual s"${Settings.shortName}-${Settings.version}-kinesis"
         e.querystring shouldEqual "q"
         e.body shouldEqual "b"
         e.path shouldEqual "p"
@@ -128,7 +128,7 @@ class CollectorServiceSpec extends Specification {
         e.schema shouldEqual "iglu:com.snowplowanalytics.snowplow/CollectorPayload/thrift/1-0-0"
         e.ipAddress shouldEqual "ip"
         e.encoding shouldEqual "UTF-8"
-        e.collector shouldEqual s"${Settings.shortName}-${Settings.version}-stdout"
+        e.collector shouldEqual s"${Settings.shortName}-${Settings.version}-kinesis"
         e.querystring shouldEqual null
         e.body shouldEqual "b"
         e.path shouldEqual "p"
@@ -150,25 +150,30 @@ class CollectorServiceSpec extends Specification {
     }
 
     "buildHttpResponse" in {
+      val conf = TestUtils.testConf.streams.sink
       "rely on buildRedirectHttpResponse if redirect is true" in {
-        val (res, Nil) = service.buildHttpResponse(event, "k", Map("u" -> "12"), hs, true, true, false)
+        val (res, Nil) =
+          service.buildHttpResponse(event, "k", Map("u" -> "12"), hs, true, true, false, conf)
         res shouldEqual HttpResponse(302)
           .withHeaders(`Location`("12") :: hs)
       }
       "send back a gif if pixelExpected is true" in {
-        val (res, Nil) = service.buildHttpResponse(event, "k", Map.empty, hs, false, true, false)
+        val (res, Nil) =
+          service.buildHttpResponse(event, "k", Map.empty, hs, false, true, false, conf)
         res shouldEqual HttpResponse(200)
           .withHeaders(hs)
           .withEntity(HttpEntity(contentType = ContentType(MediaTypes.`image/gif`),
             bytes = CollectorService.pixel))
       }
       "send back a found if pixelExpected and bounce is true" in {
-        val (res, Nil) = service.buildHttpResponse(event, "k", Map.empty, hs, false, true, true)
+        val (res, Nil) =
+          service.buildHttpResponse(event, "k", Map.empty, hs, false, true, true, conf)
         res shouldEqual HttpResponse(302)
           .withHeaders(hs)
       }
       "send back ok otherwise" in {
-        val (res, Nil) = service.buildHttpResponse(event, "k", Map.empty, hs, false, false, false)
+        val (res, Nil) =
+          service.buildHttpResponse(event, "k", Map.empty, hs, false, false, false, conf)
         res shouldEqual HttpResponse(200, entity = "ok")
           .withHeaders(hs)
       }

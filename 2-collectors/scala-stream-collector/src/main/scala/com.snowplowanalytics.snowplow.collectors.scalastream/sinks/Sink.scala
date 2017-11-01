@@ -21,8 +21,6 @@ package sinks
 
 import org.slf4j.LoggerFactory
 
-import model.SinkType
-
 // Define an interface for all sinks to use to store events.
 trait Sink {
 
@@ -32,6 +30,4 @@ trait Sink {
   lazy val log = LoggerFactory.getLogger(getClass())
 
   def storeRawEvents(events: List[Array[Byte]], key: String): List[Array[Byte]]
-
-  def getType: SinkType
 }
