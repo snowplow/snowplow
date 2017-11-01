@@ -121,7 +121,8 @@ class KinesisSink private (
    */
   private def streamExists(name: String): Boolean = try {
     val describeStreamResult = client.describeStream(name)
-    describeStreamResult.getStreamDescription.getStreamStatus == "ACTIVE"
+    val status = describeStreamResult.getStreamDescription.getStreamStatus
+    status == "ACTIVE" || status == "UPDATING"
   } catch {
     case rnfe: ResourceNotFoundException => false
   }
