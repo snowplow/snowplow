@@ -58,6 +58,7 @@ object Collector {
     }
 
     implicit def hint[T] = ProductHint[T](ConfigFieldMapping(CamelCase, CamelCase))
+    implicit val sinkConfigHint = new FieldCoproductHint[SinkConfig]("enabled")
     val collectorConfig = loadConfigOrThrow[CollectorConfig](conf.getConfig("collector"))
     run(collectorConfig, conf)
   }
@@ -73,20 +74,15 @@ object Collector {
 
     val bufferConf = collectorConf.streams.buffer
     val sinks = {
-      val (good, bad) = collectorConf.sinkType match {
-        case Kinesis =>
-          val es = new ScheduledThreadPoolExecutor(collectorConf.streams.kinesis.threadPoolSize)
-          val kc = collectorConf.streams.kinesis
+      val (good, bad) = collectorConf.streams.sink match {
+        case kc: KinesisConfig =>
+          val es = new ScheduledThreadPoolExecutor(kc.threadPoolSize)
           (KinesisSink.createAndInitialize(kc, bufferConf, goodStream, es),
             KinesisSink.createAndInitialize(kc, bufferConf, badStream, es))
-        case Kafka =>
-          val kc = collectorConf.streams.kafka
-          (new KafkaSink(kc, bufferConf, goodStream),
-            new KafkaSink(kc, bufferConf, badStream))
-        case Stdout => (new StdoutSink("out"), new StdoutSink("err"))
-        case Nsq =>
-          val nc = collectorConf.streams.nsq
-          (new NsqSink(nc, goodStream), new NsqSink(nc, badStream))
+        case kc: KafkaConfig =>
+          (new KafkaSink(kc, bufferConf, goodStream), new KafkaSink(kc, bufferConf, badStream))
+        case nc: NsqConfig => (new NsqSink(nc, goodStream), new NsqSink(nc, badStream))
+        case StdoutConfig => (new StdoutSink("out"), new StdoutSink("err"))
       }
       CollectorSinks(good, bad)
     }

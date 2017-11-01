@@ -55,6 +55,4 @@ class NsqSink(
     producer.produceMulti(topicName, events.asJava)
     Nil
   }
-
-  override def getType = Nsq
 }

@@ -77,6 +77,4 @@ class KafkaSink(
     }
     Nil
   }
-
-  override def getType = Kafka
 }
