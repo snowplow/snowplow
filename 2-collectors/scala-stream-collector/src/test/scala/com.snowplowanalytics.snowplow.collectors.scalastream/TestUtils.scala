@@ -30,14 +30,12 @@ object TestUtils {
       good = "good",
       bad = "bad",
       useIpAddressAsPartitionKey = false,
-      kinesis = KinesisConfig(
+      sink = KinesisConfig(
         region = "us-east-1",
         threadPoolSize = 12,
         aws = AWSConfig("cpf", "cpf"),
         backoffPolicy = BackoffPolicyConfig(3000, 60000)
       ),
-      kafka = KafkaConfig("localhost:9092", 1),
-      nsq = NsqConfig("localhost", 4160),
       buffer = BufferConfig(4000000, 500, 60000)
     )
   )

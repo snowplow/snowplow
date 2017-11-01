@@ -116,7 +116,7 @@ class CollectorService(
       )
 
     val (httpResponse, badRedirectResponses) = buildHttpResponse(
-      event, partitionKey, queryParams, headers.toList, redirect, pixelExpected, bounce)
+      event, partitionKey, queryParams, headers.toList, redirect, pixelExpected, bounce, config.streams.sink)
     (httpResponse, badRedirectResponses ++ sinkResponses)
   }
 
@@ -178,8 +178,8 @@ class CollectorService(
     event: CollectorPayload,
     partitionKey: String
   ): List[Array[Byte]] =
-    sinks.good.getType match {
-      case Kinesis if KinesisSink.shuttingDown =>
+    config.streams.sink match {
+      case _: KinesisConfig if KinesisSink.shuttingDown =>
         logger.warn(s"Kinesis sink shutting down, cannot send event $event")
         List.empty
       case _ =>
@@ -200,17 +200,21 @@ class CollectorService(
     headers: List[HttpHeader],
     redirect: Boolean,
     pixelExpected: Boolean,
-    bounce: Boolean
+    bounce: Boolean,
+    sinkConfig: SinkConfig
   ): (HttpResponse, List[Array[Byte]]) =
     if (redirect) {
       val (r, l) = buildRedirectHttpResponse(event, partitionKey, queryParams)
       (r.withHeaders(r.headers ++ headers), l)
-    } else if (sinks.good.getType == Kinesis && KinesisSink.shuttingDown) {
-      logger.warn(s"Kinesis sink shutting down, cannot process request")
-      // So that the tracker knows the request failed and can try to resend later
-      (HttpResponse(StatusCodes.NotFound, entity = "404 not found"), Nil)
     } else {
-      (buildUsualHttpResponse(pixelExpected, bounce).withHeaders(headers), Nil)
+      sinkConfig match {
+        case _: KinesisConfig if KinesisSink.shuttingDown =>
+          logger.warn(s"Kinesis sink shutting down, cannot process request")
+          // So that the tracker knows the request failed and can try to resend later
+          (HttpResponse(StatusCodes.NotFound, entity = "404 not found"), Nil)
+        case _ =>
+          (buildUsualHttpResponse(pixelExpected, bounce).withHeaders(headers), Nil)
+      }
     }
 
   /** Builds the appropriate http response when not dealing with click redirects. */

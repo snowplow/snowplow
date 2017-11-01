@@ -249,6 +249,4 @@ class KinesisSink private (
     executorService.shutdown()
     executorService.awaitTermination(10000, MILLISECONDS)
   }
-
-  override def getType = Kinesis
 }
