@@ -37,7 +37,7 @@ import model._
   * @param topicName Nsq topic name
   */
 class NsqSink(
-  nsqConfig: NsqConfig,
+  nsqConfig: Nsq,
   topicName: String
 ) extends Sink {
 
@@ -55,6 +55,4 @@ class NsqSink(
     producer.produceMulti(topicName, events.asJava)
     Nil
   }
-
-  override def getType = Nsq
 }
