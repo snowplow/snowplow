@@ -121,7 +121,8 @@ class CollectorService(
       )
 
     val (httpResponse, badRedirectResponses) = buildHttpResponse(
-      event, partitionKey, queryParams, headers.toList, redirect, pixelExpected, bounce, config.streams.sink)
+      event, partitionKey, queryParams, headers.toList, redirect, pixelExpected, bounce,
+      config.streams.sink, config.redirectMacro)
     (httpResponse, badRedirectResponses ++ sinkResponses)
   }
 
@@ -206,10 +207,11 @@ class CollectorService(
     redirect: Boolean,
     pixelExpected: Boolean,
     bounce: Boolean,
-    sinkConfig: SinkConfig
+    sinkConfig: SinkConfig,
+    redirectMacroConfig: RedirectMacroConfig
   ): (HttpResponse, List[Array[Byte]]) =
     if (redirect) {
-      val (r, l) = buildRedirectHttpResponse(event, partitionKey, queryParams)
+      val (r, l) = buildRedirectHttpResponse(event, partitionKey, queryParams, redirectMacroConfig)
       (r.withHeaders(r.headers ++ headers), l)
     } else {
       sinkConfig match {
@@ -237,10 +239,17 @@ class CollectorService(
   def buildRedirectHttpResponse(
     event: CollectorPayload,
     partitionKey: String,
-    queryParams: Map[String, String]
+    queryParams: Map[String, String],
+    redirectMacroConfig: RedirectMacroConfig
   ): (HttpResponse, List[Array[Byte]]) =
     queryParams.get("u") match {
-      case Some(target) => (HttpResponse(StatusCodes.Found).withHeaders(`Location`(target)), Nil)
+      case Some(target) =>
+        val canReplace = redirectMacroConfig.enabled && event.isSetNetworkUserId
+        val token = redirectMacroConfig.placeholder.getOrElse("${SP_NUID}")
+        val replacedTarget =
+          if (canReplace) target.replaceAllLiterally(token, event.networkUserId)
+          else target
+        (HttpResponse(StatusCodes.Found).withHeaders(`Location`(replacedTarget)), Nil)
       case None =>
         val badRow = createBadRow(event, "Redirect failed due to lack of u parameter")
         (HttpResponse(StatusCodes.BadRequest),
