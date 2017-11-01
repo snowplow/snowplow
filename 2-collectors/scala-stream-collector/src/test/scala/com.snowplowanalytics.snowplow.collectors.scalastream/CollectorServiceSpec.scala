@@ -291,5 +291,13 @@ class CollectorServiceSpec extends Specification {
           `Access-Control-Allow-Origin`(HttpOriginRange.`*`)
       }
     }
+
+    "cookieRedirectMacro" in {
+      "the collector should support a cookie replacement macro on redirect" in {
+        event.networkUserId = "1234"
+        val (res, Nil) = service.buildRedirectHttpResponse(event, "k", Map("u" -> "http://localhost/?uid=${SP_UUID}"))
+        res shouldEqual HttpResponse(302).withHeaders(`Location`("http://localhost/?uid=1234"))
+      }
+    }
   }
 }

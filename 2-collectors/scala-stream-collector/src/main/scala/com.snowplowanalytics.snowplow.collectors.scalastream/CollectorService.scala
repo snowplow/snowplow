@@ -235,7 +235,9 @@ class CollectorService(
     queryParams: Map[String, String]
   ): (HttpResponse, List[Array[Byte]]) =
     queryParams.get("u") match {
-      case Some(target) => (HttpResponse(StatusCodes.Found).withHeaders(`Location`(target)), Nil)
+      case Some(target) =>
+        val replacedTarget = if (event.isSetNetworkUserId) target.replaceAllLiterally("${SP_UUID}", event.networkUserId) else target
+        (HttpResponse(StatusCodes.Found).withHeaders(`Location`(replacedTarget)), Nil)
       case None =>
         val badRow = createBadRow(event, "Redirect failed due to lack of u parameter")
         (HttpResponse(StatusCodes.BadRequest),
