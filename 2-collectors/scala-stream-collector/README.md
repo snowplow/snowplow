@@ -6,7 +6,7 @@ The Scala Stream Collector is an event collector for [Snowplow][snowplow], writt
 It sets a third-party cookie, allowing user tracking across domains.
 
 The Scala Stream Collector is designed to be easy to setup and store [Thrift][thrift] Snowplow
-events to [Amazon Kinesis][kinesis], and is built on top of [akka-http][akka-http].
+events to [Amazon Kinesis][kinesis] and [NSQ][nsq], and is built on top of [akka-http][akka-http].
 
 ## Find out more
 
@@ -33,6 +33,7 @@ limitations under the License.
 [thrift]: http://thrift.apache.org
 [kinesis]: http://aws.amazon.com/kinesis
 [akka-http]: http://doc.akka.io/docs/akka-http/current/scala/http/introduction.html
+[nsq]: http://nsq.io/
 
 [techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
 [setup-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png

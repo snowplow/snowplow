@@ -3,7 +3,7 @@
 ## Introduction
 
 Stream Enrich processes raw [Snowplow][snowplow] events from an input
-[Amazon Kinesis][kinesis] stream and stores enriched events
+[Amazon Kinesis][kinesis] stream and [NSQ][nsq], stores enriched events
 into output Kinesis streams.
 Events are enriched using the [scala-common-enrich][common-enrich] library.
 
@@ -49,6 +49,7 @@ limitations under the License.
 [snowplow]: http://snowplowanalytics.com
 [common-enrich]: https://github.com/snowplow/snowplow/tree/master/3-enrich/scala-common-enrich
 [sbt]: http://typesafe.artifactoryonline.com/typesafe/ivy-releases/org.scala-sbt/sbt-launch/0.13.0/sbt-launch.jar
+[nsq]: http://nsq.io/
 
 [configuring-enrichments]: https://github.com/snowplow/snowplow/wiki/5-Configuring-enrichments
 [iglu-client-configuration]: https://github.com/snowplow/iglu/wiki/Iglu-client-configuration
