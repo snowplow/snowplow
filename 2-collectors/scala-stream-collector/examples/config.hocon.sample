@@ -54,6 +54,15 @@ collector {
     fallbackNetworkUserId = "00000000-0000-4000-A000-000000000000"
   }
 
+  # When enabled, the redirect url passed via the `u` query parameter is scanned for a placeholder token.
+  # All instances of that token are replaced withe the network ID. If the placeholder isn't specified, the
+  # default value is `${SP_UUID}`.
+  redirectMacro {
+    enabled = false
+    # You can provide a custom placeholder token (defaults to ${SP_UUID})
+    placeholder = "[TOKEN]"
+  }
+
   streams {
     # Events which have successfully been collected will be stored in the good stream/topic
     good = {{good}}

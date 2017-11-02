@@ -203,6 +203,29 @@ class CollectorServiceSpec extends Specification {
         val (res, _) = service.buildRedirectHttpResponse(event, "k", Map.empty)
         res shouldEqual HttpResponse(400)
       }*/
+      "the redirect url should not support a cookie replacement macro on redirect if not enabled" in {
+        event.networkUserId = "1234"
+        val (res, Nil) = service.buildRedirectHttpResponse(event, "k", Map("u" -> "http://localhost/?uid=${SP_UUID}"))
+        res shouldEqual HttpResponse(302).withHeaders(`Location`("http://localhost/?uid=${SP_UUID}"))
+      }
+      "the redirect url should support a cookie replacement macro on redirect if enabled" in {
+        val redirectService = new CollectorService(
+          TestUtils.testConf.copy(redirectMacro = TestUtils.testConf.redirectMacro.copy(enabled = true)),
+          CollectorSinks(new TestSink, new TestSink)
+        )
+        event.networkUserId = "1234"
+        val (res, Nil) = redirectService.buildRedirectHttpResponse(event, "k", Map("u" -> "http://localhost/?uid=${SP_UUID}"))
+        res shouldEqual HttpResponse(302).withHeaders(`Location`("http://localhost/?uid=1234"))
+      }
+      "the redirect url should allow for custom token placeholders" in {
+        val redirectService = new CollectorService(
+          TestUtils.testConf.copy(redirectMacro = TestUtils.testConf.redirectMacro.copy(enabled = true, Option.apply("[TOKEN]"))),
+          CollectorSinks(new TestSink, new TestSink)
+        )
+        event.networkUserId = "1234"
+        val (res, Nil) = redirectService.buildRedirectHttpResponse(event, "k", Map("u" -> "http://localhost/?uid=[TOKEN]"))
+        res shouldEqual HttpResponse(302).withHeaders(`Location`("http://localhost/?uid=1234"))
+      }
     }
 
     "cookieHeader" in {
@@ -289,14 +312,6 @@ class CollectorServiceSpec extends Specification {
         val request = HttpRequest()
         service.accessControlAllowOriginHeader(request) shouldEqual
           `Access-Control-Allow-Origin`(HttpOriginRange.`*`)
-      }
-    }
-
-    "cookieRedirectMacro" in {
-      "the collector should support a cookie replacement macro on redirect" in {
-        event.networkUserId = "1234"
-        val (res, Nil) = service.buildRedirectHttpResponse(event, "k", Map("u" -> "http://localhost/?uid=${SP_UUID}"))
-        res shouldEqual HttpResponse(302).withHeaders(`Location`("http://localhost/?uid=1234"))
       }
     }
   }

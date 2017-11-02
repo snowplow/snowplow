@@ -236,7 +236,9 @@ class CollectorService(
   ): (HttpResponse, List[Array[Byte]]) =
     queryParams.get("u") match {
       case Some(target) =>
-        val replacedTarget = if (event.isSetNetworkUserId) target.replaceAllLiterally("${SP_UUID}", event.networkUserId) else target
+        val canReplace = config.redirectMacro.enabled && event.isSetNetworkUserId
+        val token = config.redirectMacro.placeholder.getOrElse("${SP_UUID}")
+        val replacedTarget = if (canReplace) target.replaceAllLiterally(token, event.networkUserId) else target
         (HttpResponse(StatusCodes.Found).withHeaders(`Location`(replacedTarget)), Nil)
       case None =>
         val badRow = createBadRow(event, "Redirect failed due to lack of u parameter")
