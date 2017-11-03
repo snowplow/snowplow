@@ -1,10 +1,10 @@
 # referer-parser Java/Scala library
 
-This is the Java and Scala implementation of [referer-parser] [referer-parser], the library for extracting attribution data from referer _(sic)_ URLs.
+This is the Java and Scala implementation of [referer-parser][referer-parser], the library for extracting attribution data from referer _(sic)_ URLs.
 
-The implementation uses the shared 'database' of known referers found in [`referers.yml`] [referers-yml].
+The implementation uses the shared 'database' of known referers found in [`referers.yml`][referers-yml].
 
-The Scala implementation is a core component of [Snowplow] [snowplow], the open-source web-scale analytics platform powered by Hadoop, Hive and Redshift.
+The Scala implementation is a core component of [Snowplow][snowplow], the open-source web-scale analytics platform powered by Hadoop, Hive and Redshift.
 
 ## Java
 
@@ -133,7 +133,7 @@ val refererParser = "com.snowplowanalytics" %% "referer-parser" % "0.3.0"
 
 The referer-parser Java/Scala library is copyright 2012-2015 Snowplow Analytics Ltd.
 
-Licensed under the [Apache License, Version 2.0] [license] (the "License");
+Licensed under the [Apache License, Version 2.0][license] (the "License");
 you may not use this software except in compliance with the License.
 
 Unless required by applicable law or agreed to in writing, software
