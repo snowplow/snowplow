@@ -17,18 +17,13 @@
 
 source ~/.rvm/scripts/rvm
 
-rvm install jruby-9.1.6.0
 rvm use --default jruby-9.1.6.0
-gem install bundler
+
+bundler --version
+
 bundle install
 echo 'Running RSpec'
 rspec
 echo 'Runing Rake'
-
-# see snowplow/snowplow#3493
-if [ "$CI" = "true" ]; then
-  wget https://raw.githubusercontent.com/bundler/bundler/v1.16.0/bundler.gemspec \
-    -O /home/travis/.rvm/rubies/jruby-9.1.6.0/lib/ruby/gems/shared/gems/bundler-1.16.0/bundler.gemspec
-fi
-
 rake
+exit 1
