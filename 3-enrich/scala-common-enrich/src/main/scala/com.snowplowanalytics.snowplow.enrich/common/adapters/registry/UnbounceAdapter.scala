@@ -20,11 +20,9 @@ package registry
 // Java
 import java.net.URI
 import org.apache.http.client.utils.URLEncodedUtils
-import org.apache.http.NameValuePair
 
 // Scala
-import scala.util.Try
-import scala.util.matching.Regex
+import scala.util.{Try, Success => TS, Failure => TF}
 import scala.collection.JavaConversions._
 
 // Scalaz
@@ -38,7 +36,6 @@ import com.fasterxml.jackson.core.JsonParseException
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
-import org.json4s.scalaz.JsonScalaz._
 
 // Iglu
 import iglu.client.{
@@ -89,107 +86,53 @@ object UnbounceAdapter extends Adapter {
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = {
     (payload.body, payload.contentType) match {
-      case (None, _)                          => s"Request body is empty: no ${VendorName} events to process".failNel
-      case (_, None)                          => s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failNel
-      case (_, Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failNel
+      case (None, _)                          => s"Request body is empty: no ${VendorName} events to process".failureNel
+      case (_, None)                          => s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failureNel
+      case (_, Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failureNel
       case (Some(body),_)                     =>
-        if (body.isEmpty) s"${VendorName} event body is empty: nothing to process".failNel
+        if (body.isEmpty) s"${VendorName} event body is empty: nothing to process".failureNel
         else {
           val qsParams = toMap(payload.querystring)
-          try {
-            val bodyMap = toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), "UTF-8").toList)
-            payloadBodyToContext(bodyMap) match {
-              case Success(validatedBodyMap) => {
-                val json = compact(render(validatedBodyMap))
-                val event = parse(json)
-                lookupSchema(Some("form_post"), VendorName, ContextSchema) match {
-                  case Failure(msg)  => msg.fail
-                  case Success(schema) =>
-                    NonEmptyList(RawEvent(
+          Try { toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), "UTF-8").toList) } match {
+            case TF(e) => s"${VendorName} incorrect event string : [${JU.stripInstanceEtc(e.getMessage).orNull}]".failureNel
+            case TS(bodyMap) => payloadBodyToEvent(bodyMap).flatMap {
+              case event => {
+                lookupSchema(Some("form_post"), VendorName, ContextSchema).flatMap {
+                  case schema: String => toUnstructEventParams(TrackerVersion, qsParams, schema, event, "srv") match {
+                    case unstructEventParams => NonEmptyList(RawEvent(
                       api          = payload.api,
-                      parameters   = toUnstructEventParams(TrackerVersion, qsParams, schema,
-                        ("data.json", parse(bodyMap.get("data.json").get)) ::
-                        event
-                          .filterField({case (name: String, _) => !(name == "data.xml" || name == "data.json")}),
-                          "srv"),
+                      parameters   = unstructEventParams,
                       contentType  = payload.contentType,
                       source       = payload.source,
                       context      = payload.context
                     )).success
-              }}
-              case Failure(str) => str.failNel
-            }
-          } catch {
-            case e: JsonParseException => {
-              val exception = JU.stripInstanceEtc(e.toString).orNull
-              s"${VendorName} event string failed to parse into JSON: [${exception}]".failNel
-            }
-            case e: Exception => {
-              val exception = JU.stripInstanceEtc(e.toString).orNull
-              s"${VendorName} incorrect event string : [${exception}]".failNel
+                  }
+                }
+              }
             }
           }
         }
-    }
+      }
   }
 
-  /**
-   * Fabricates a Snowplow unstructured event from
-   * the supplied parameters. Note that to be a
-   * valid Snowplow unstructured event, the event
-   * must contain e, p and tv parameters, so we
-   * make sure to set those.
-   *
-   * @param tracker The name and version of this
-   *        tracker
-   * @param qsParams The query-string parameters
-   *        we will nest into the unstructured event
-   * @param schema The schema key which defines this
-   *        unstructured event as a String
-   * @param eventJson The event which we will nest
-   *        into the unstructured event
-   * @param contextJson The context which we will nest
-   *        into the unstructured event
-   * @param platform The default platform to assign
-   *        the event to
-   * @return the raw-event parameters for a valid
-   *         Snowplow unstructured event
-   */
-  private def toUnstructEventParams(tracker: String, qsParams: RawEventParameters, schema: String,
-    eventJson: JObject, contextJson: JObject, platform: String): RawEventParameters = {
-
-    val eventDataJson = compact {
-      toUnstructEvent(
-        ("schema" -> schema) ~
-        ("data"   -> eventJson)
-      )
-    }
-
-    val contextDataJson = compact {
-      toContexts(
-        ("schema" -> ContextSchema) ~
-        ("data"   -> contextJson)
-      )
-    }
-
-    Map(
-      "tv"    -> tracker,
-      "e"     -> "ue",
-      "p"     -> qsParams.getOrElse("p", platform),
-      "ue_pr" -> eventDataJson) ++
-    qsParams.filterKeys(AcceptedQueryParameters)
-  }
-
-  private def payloadBodyToContext(bodyMap: Map[String, String]): Validation[String, Map[String, String]] = {
+  private def payloadBodyToEvent(bodyMap: Map[String, String]): Validated[JValue] = {
     (bodyMap.get("page_id"), bodyMap.get("page_name"),
      bodyMap.get("variant"), bodyMap.get("page_url"), bodyMap.get("data.json")) match {
-      case (None, _, _, _, _) => s"${VendorName} context data missing 'page_id'".fail
-      case (_, None, _, _, _) => s"${VendorName} context data missing 'page_name'".fail
-      case (_, _, None, _, _) => s"${VendorName} context data missing 'variant'".fail
-      case (_, _, _, None, _) => s"${VendorName} context data missing 'page_url'".fail
-      case (_, _, _, _, None) => s"${VendorName} event data does not have 'data.json' as a key".fail
-      case (_, _, _, _, Some(data_json)) if data_json.isEmpty => s"${VendorName} event data is empty: nothing to process".fail
-      case (Some(page_id), Some(page_name), Some(variant), Some(page_url), Some(data_json)) => bodyMap.success
+      case (None, _, _, _, _) => s"${VendorName} context data missing 'page_id'".failureNel
+      case (_, None, _, _, _) => s"${VendorName} context data missing 'page_name'".failureNel
+      case (_, _, None, _, _) => s"${VendorName} context data missing 'variant'".failureNel
+      case (_, _, _, None, _) => s"${VendorName} context data missing 'page_url'".failureNel
+      case (_, _, _, _, None) => s"${VendorName} event data does not have 'data.json' as a key".failureNel
+      case (_, _, _, _, Some(dataJson)) if dataJson.isEmpty => s"${VendorName} event data is empty: nothing to process".failureNel
+      case (Some(pageId), Some(pageName), Some(variant), Some(pageUrl), Some(dataJson)) => {
+        try {
+          val event = parse(compact(render(bodyMap - "data.json")))
+          camelize(("data.json", parse(dataJson)) :: event.filterField({ case (name: String, _) => name != "data.xml" })).success
+        }
+        catch {
+            case e: JsonParseException => s"${VendorName} event string failed to parse into JSON: [${JU.stripInstanceEtc(e.getMessage).orNull}]".failureNel
+          }
+        }
+      }
     }
-  }
 }
