@@ -40,6 +40,7 @@ import registry.{
   PingdomAdapter,
   UrbanAirshipAdapter,
   SendgridAdapter,
+  StatusGatorAdapter,
   StatusGatorAdapter
 }
 
