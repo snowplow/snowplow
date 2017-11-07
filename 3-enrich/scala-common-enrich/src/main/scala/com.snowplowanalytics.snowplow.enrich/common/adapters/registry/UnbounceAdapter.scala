@@ -23,6 +23,7 @@ import org.apache.http.client.utils.URLEncodedUtils
 import org.apache.http.NameValuePair
 
 // Scala
+import scala.util.Try
 import scala.util.matching.Regex
 import scala.collection.JavaConversions._
 
@@ -68,7 +69,9 @@ object UnbounceAdapter extends Adapter {
   private val AcceptedQueryParameters = Set("nuid", "aid", "cv", "eid", "ttm", "url")
 
   // Schema for Unbounce event context
-  private val ContextSchema = SchemaKey("com.unbounce", "event_context", "jsonschema", "1-0-0").toSchemaUri
+  private val ContextSchema = Map( 
+    "event_context" -> SchemaKey("com.unbounce", "event_context", "jsonschema", "1-0-0").toSchemaUri
+  )
 
   /**
    * Converts a CollectorPayload instance into raw events.
@@ -85,43 +88,42 @@ object UnbounceAdapter extends Adapter {
    *         Success, or a NEL of Failure Strings
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = {
-    val params = toMap(payload.querystring)
-    (params.get("schema"), payload.body, payload.contentType) match {
-      case (Some(schemaUri), None, _) => s"Request body is empty: no ${VendorName} events to process".failNel
-      case (_, Some(body), None) => s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failNel
-      case (_, _, Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failNel
-      case (Some(schemaUri), Some(body), Some(ct)) => {
+    (payload.body, payload.contentType) match { 
+      case (None, _)                          => s"Request body is empty: no ${VendorName} events to process".failNel
+      case (_, None)                          => s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failNel
+      case (_, Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failNel
+      case (Some(body),_)                     =>
         if (body.isEmpty) {
           s"${VendorName} event body is empty: nothing to process".failNel
         } else {
+          val qsParams = toMap(payload.querystring)
           try {
             val bodyMap = toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), "UTF-8").toList)
-            (payloadBodyToEvent(bodyMap), payloadBodyToContext(bodyMap)) match {
-              case (Failure(err), _) => err.failNel
-              case (_, Failure(err)) => err.failNel
-              case (Success(event), Success(context)) => {
-                SchemaKey.parse(schemaUri) match {
-                  case Failure(procMsg) => procMsg.getMessage.failNel
-                  case Success(_) => {
-                    NonEmptyList(RawEvent(
-                      api         = payload.api,
-                      parameters  = toUnstructEventParams(TrackerVersion, params, schemaUri, event, context, "srv"),
-                      contentType = payload.contentType,
-                      source      = payload.source,
-                      context     = payload.context
-                    )).success
-                  }
-                }
-              }
+            val json = compact(render(bodyMap))
+            val event = parse(json)
+            lookupSchema(Some("event_context"), VendorName, ContextSchema) match {
+              case Failure(str)  => str.fail
+              case Success(schema) => 
+                NonEmptyList(RawEvent(
+                  api          = payload.api,
+                  parameters   = toUnstructEventParams(TrackerVersion, qsParams, schema, event.replace(List("data.json"), parse(bodyMap.get("data.json").get)), "srv"),
+                  contentType  = payload.contentType,
+                  source       = payload.source,
+                  context      = payload.context
+                )).success
             }
-          } catch { 
+
+          } catch {
+            case e: JsonParseException => {
+              val exception = JU.stripInstanceEtc(e.toString).orNull
+              s"${VendorName} event string failed to parse into JSON: [${exception}]".failNel
+            }
             case e: Exception => {
               val exception = JU.stripInstanceEtc(e.toString).orNull
-              s"${VendorName} could not parse body: [${exception}]".failNel
+              s"${VendorName} incorrect event string : [${exception}]".failNel
             }
           }
         }
-      }
     }
   }
 
@@ -173,35 +175,6 @@ object UnbounceAdapter extends Adapter {
     qsParams.filterKeys(AcceptedQueryParameters)
   }
 
-  /**
-   * Converts a querystring payload into an event
-   * @param bodyMap The converted map from the querystring
-   */
-  private def payloadBodyToEvent(bodyMap: Map[String, String]): Validation[String, JObject] = {
-    bodyMap.get("data.json") match {
-      case None       => s"${VendorName} event data does not have 'data.json' as a key".fail
-      case Some("")   => s"${VendorName} event data is empty: nothing to process".fail
-      case Some(json) => {
-        try {
-          val eventDataJson = json.replaceAll("\\[|\\]","")
-          val event = parse(eventDataJson)
-          event match {
-            case obj: JObject => obj.success
-            case _            => s"${VendorName} event wrong type: [%s]".format(event.getClass).fail
-          }
-        } catch {
-          case e: JsonParseException => {
-              val exception = JU.stripInstanceEtc(e.toString).orNull
-              s"${VendorName} event string failed to parse into JSON: [${exception}]".fail
-          }
-          case e: Exception => {
-            val exception = JU.stripInstanceEtc(e.toString).orNull
-            s"${VendorName} incorrect event string : [${exception}]".fail
-          }
-        } 
-      }
-    }
-  }
 
   /**
    * Converts a querystring payload into a context
@@ -214,13 +187,11 @@ object UnbounceAdapter extends Adapter {
       case (_, None, _, _) => s"${VendorName} context data missing 'page_name'".fail
       case (_, _, None, _) => s"${VendorName} context data missing 'variant'".fail
       case (_, _, _, None) => s"${VendorName} context data missing 'page_url'".fail
-      case (Some(page_id), Some(page_name), Some(variant), Some(page_url)) => {
-        val context: JObject = ("page_id" -> page_id) ~ 
+      case (Some(page_id), Some(page_name), Some(variant), Some(page_url)) => 
+                              (("page_id" -> page_id) ~ 
                                ("page_name" -> page_name) ~ 
                                ("variant" -> variant) ~ 
-                               ("page_url" -> page_url)
-        context.success
-      }
+                               ("page_url" -> page_url)).success
     }
   }
 }
