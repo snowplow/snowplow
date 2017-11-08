@@ -10,39 +10,29 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich
-package hadoop
+package com.snowplowanalytics.snowplow.enrich.spark
 package good
 
-// Scala
-import scala.collection.mutable.Buffer
 
 // Specs2
 import org.specs2.mutable.Specification
 
-// Scalding
-import com.twitter.scalding._
+import scala.util.{Failure, Success, Try}
 
-// Cascading
-import cascading.tuple.TupleEntry
+//json4s 
+import org.json4s._
+import org.json4s.jackson.JsonMethods._
 
-// This project
-import JobSpecHelpers._
-
-/**
- * Holds the input and expected data
- * for the test.
- */
 object CljTomcatOlarkEventSpec {
-
+  import EnrichJobSpec._
   val lines = Lines(
-    "2014-10-09  16:28:31    -   13  255.255.255.255   POST    255.255.255.255   /com.olark/v1   404 -  -    aid=email&cv=clj-0.6.0-tom-0.0.4&nuid=-   -   -   -   application%2Fx-www-form-urlencoded   bWFuZHJpbGxfZXZlbnRzPSU1QiUwQSUyMCUyMCUyMCUyMCU3QiUwQSUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMmV2ZW50JTIyJTNBJTIwJTIyc2VuZCUyMiUyQyUwQSUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMm1zZyUyMiUzQSUyMCU3QiUwQSUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMnRzJTIyJTNBJTIwMTM2NTEwOTk5OSUyQyUwQSUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMnN1YmplY3QlMjIlM0ElMjAlMjJUaGlzJTIwYW4lMjBleGFtcGxlJTIwd2ViaG9vayUyMG1lc3NhZ2UlMjIlMkMlMEElMjAlMjAlMjAlMjAlMjAlMjAlMjAlMjAlMjAlMjAlMjAlMjAlMjJlbWFpbCUyMiUzQSUyMCUyMmV4YW1wbGUud2ViaG9vayU0MG1hbmRyaWxsYXBwLmNvbSUyMiUyQyUwQSUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMnNlbmRlciUyMiUzQSUyMCUyMmV4YW1wbGUuc2VuZGVyJTQwbWFuZHJpbGxhcHAuY29tJTIyJTJDJTBBJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIydGFncyUyMiUzQSUyMCU1QiUwQSUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMndlYmhvb2stZXhhbXBsZSUyMiUwQSUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCU1RCUyQyUwQSUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMm9wZW5zJTIyJTNBJTIwJTVCJTVEJTJDJTBBJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIyY2xpY2tzJTIyJTNBJTIwJTVCJTVEJTJDJTBBJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIyc3RhdGUlMjIlM0ElMjAlMjJzZW50JTIyJTJDJTBBJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIybWV0YWRhdGElMjIlM0ElMjAlN0IlMEElMjAlMjAlMjAlMjAlMjAlMjAlMjAlMjAlMjAlMjAlMjAlMjAlMjAlMjAlMjAlMjAlMjJ1c2VyX2lkJTIyJTNBJTIwMTExJTBBJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTdEJTJDJTBBJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIyX2lkJTIyJTNBJTIwJTIyZXhhbXBsZWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWElMjIlMkMlMEElMjAlMjAlMjAlMjAlMjAlMjAlMjAlMjAlMjAlMjAlMjAlMjAlMjJfdmVyc2lvbiUyMiUzQSUyMCUyMmV4YW1wbGVhYWFhYWFhYWFhYWFhYWElMjIlMEElMjAlMjAlMjAlMjAlMjAlMjAlMjAlMjAlN0QlMkMlMEElMjAlMjAlMjAlMjAlMjAlMjAlMjAlMjAlMjJfaWQlMjIlM0ElMjAlMjJleGFtcGxlYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYSUyMiUyQyUwQSUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMnRzJTIyJTNBJTIwMTQxNTY5MjAzNSUwQSUyMCUyMCUyMCUyMCU3RCUwQSU1RA=="
+    "2014-10-09  16:28:31    -   13  255.255.255.255   POST    255.255.255.255   /com.olark/v1   404 -  -    aid=email&cv=clj-0.6.0-tom-0.0.4&nuid=-   -   -   -   application%2Fx-www-form-urlencoded   ZGF0YT0lN0IlMjJraW5kJTIyJTNBKyUyMkNvbnZlcnNhdGlvbiUyMiUyQyslMjJ0YWdzJTIyJTNBKyU1QiUyMnRlc3RfZXhhbXBsZSUyMiU1RCUyQyslMjJpdGVtcyUyMiUzQSslNUIlN0IlMjJib2R5JTIyJTNBKyUyMkhpK2Zyb20rYW4rb3BlcmF0b3IlMjIlMkMrJTIydGltZXN0YW1wJTIyJTNBKyUyMjE0NzM3NzQ4MTkuMjYzMDgzJTIyJTJDKyUyMmtpbmQlMjIlM0ErJTIyTWVzc2FnZVRvVmlzaXRvciUyMiUyQyslMjJuaWNrbmFtZSUyMiUzQSslMjJPbGFyaytvcGVyYXRvciUyMiUyQyslMjJvcGVyYXRvcklkJTIyJTNBKyUyMjY0NzU2MyUyMiU3RCUyQyslN0IlMjJib2R5JTIyJTNBKyUyMkhpK2Zyb20rYSt2aXNpdG9yJTIyJTJDKyUyMnRpbWVzdGFtcCUyMiUzQSslMjIxNDczNzc0ODIxLjQxMTE1NCUyMiUyQyslMjJraW5kJTIyJTNBKyUyMk1lc3NhZ2VUb09wZXJhdG9yJTIyJTJDKyUyMm5pY2tuYW1lJTIyJTNBKyUyMlJldHVybmluZytWaXNpdG9yKyU3QytVU0ErJTI4U2FuK0ZyYW5jaXNjbyUyQytDQSUyOSslMjM3NjE3JTIyJTJDKyUyMnZpc2l0b3Jfbmlja25hbWUlMjIlM0ErJTIyT2xhcmsrVmlzaXRvciUyMiU3RCU1RCUyQyslMjJvcGVyYXRvcnMlMjIlM0ErJTdCJTIyNjQ3NTYzJTIyJTNBKyU3QiUyMnVzZXJuYW1lJTIyJTNBKyUyMnlhbGklMjIlMkMrJTIyZW1haWxBZGRyZXNzJTIyJTNBKyUyMnlhbGklNDBzbm93cGxvd2FuYWx5dGljcy5jb20lMjIlMkMrJTIya2luZCUyMiUzQSslMjJPcGVyYXRvciUyMiUyQyslMjJuaWNrbmFtZSUyMiUzQSslMjJZYWxpJTIyJTJDKyUyMmlkJTIyJTNBKyUyMjY0NzU2MyUyMiU3RCU3RCUyQyslMjJ2aXNpdG9yJTIyJTNBKyU3QiUyMmNpdHklMjIlM0ErJTIyU2FuK0ZyYW5jaXNjbyUyMiUyQyslMjJraW5kJTIyJTNBKyUyMlZpc2l0b3IlMjIlMkMrJTIyb3JnYW5pemF0aW9uJTIyJTNBKyUyMlZpc2l0b3IrT3JnYW5pemF0aW9uJTIyJTJDKyUyMmNvbnZlcnNhdGlvbkJlZ2luUGFnZSUyMiUzQSslMjJodHRwJTNBJTJGJTJGd3d3Lm9sYXJrLmNvbSUyMiUyQyslMjJjb3VudHJ5Q29kZSUyMiUzQSslMjJVUyUyMiUyQyslMjJyZWZlcnJlciUyMiUzQSslMjJodHRwJTNBJTJGJTJGd3d3Lm9sYXJrLmNvbSUyMiUyQyslMjJpcCUyMiUzQSslMjIxMjcuMC4wLjElMjIlMkMrJTIycmVnaW9uJTIyJTNBKyUyMkNBJTIyJTJDKyUyMmNoYXRfZmVlZGJhY2slMjIlM0ErJTdCJTIyb3ZlcmFsbF9jaGF0JTIyJTNBKzQlMkMrJTIycmVzcG9uc2l2ZW5lc3MlMjIlM0ErNSUyQyslMjJmcmllbmRsaW5lc3MlMjIlM0ErNSUyQyslMjJrbm93bGVkZ2UlMjIlM0ErNCU3RCUyQyslMjJvcGVyYXRpbmdTeXN0ZW0lMjIlM0ErJTIyV2luZG93cyUyMiUyQyslMjJlbWFpbEFkZHJlc3MlMjIlM0ErJTIyc3VwcG9ydCUyQmludGVncmF0aW9udGVzdCU0MG9sYXJrLmNvbSUyMiUyQyslMjJjb3VudHJ5JTIyJTNBKyUyMlVuaXRlZCtTdGF0ZXMlMjIlMkMrJTIycGhvbmVOdW1iZXIlMjIlM0ErJTIyNTU1NTU1NTU1NSUyMiUyQyslMjJmdWxsTmFtZSUyMiUzQSslMjJPbGFyayUyMiUyQyslMjJpZCUyMiUzQSslMjJOT1RBUkVBTFZJU0lUT1JJRFM1TEdsNlFVcksyT2FQUCUyMiUyQyslMjJicm93c2VyJTIyJTNBKyUyMkludGVybmV0K0V4cGxvcmVyKzExJTIyJTdEJTJDKyUyMmlkJTIyJTNBKyUyMk5PVEFSRUFMVFJBTlNDUklQVDVMR2NiVlRhM2hLQlJCJTIyJTJDKyUyMm1hbnVhbGx5U3VibWl0dGVkJTIyJTNBK2ZhbHNlJTdE"
     )
 
   val expected = List(
     "email",
     "srv",
-    EtlTimestamp,
+    etlTimestamp,
     "2014-10-09 16:28:31.000",
     null,
     "unstruct",
@@ -51,7 +41,7 @@ object CljTomcatOlarkEventSpec {
     null, // No tracker namespace
     "com.olark-v1",
     "clj-0.6.0-tom-0.0.4",
-    EtlVersion,
+    etlVersion,
     null, // No user_id set
     "255.255.x.x",
     null,
@@ -98,7 +88,7 @@ object CljTomcatOlarkEventSpec {
     null, //
     null, //
     null, //
-    """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.olark/transcript/jsonschema/1-0-0","data":{"kind":"Conversation","tags":["olark","customer"],"items":[{"body":"Hi there. Need any help?","timestamp":"1307116657.1","kind":"MessageToVisitor","nickname":"John","operatorId":"1234"},{"body":"Yes, please help me with billing.","timestamp":"1307116661.25","kind":"MessageToOperator","nickname":"Bob"}],"operators":{"1234":{"username":"jdoe","emailAddress":"john@example.com","kind":"Operator","nickname":"John","id":"1234"} },"groups":[{"kind":"Group","name":"My Sales Group","id":"0123456789abcdef"}],"visitor":{"ip":"123.4.56.78","city":"Palo Alto","kind":"Visitor","conversationBeginPage":"http://www.example.com/path","countryCode":"US","country":"United State","region":"CA","chat_feedback":{"overall_chat":5,"responsiveness":5,"friendliness":5,"knowledge":5,"comments":"Very helpful, thanks"},"operatingSystem":"Windows","emailAddress":"bob@example.com","organization":"Widgets Inc.","phoneNumber":"(555) 555-5555","fullName":"Bob Doe","customFields":{"favoriteColor":"blue","myInternalCustomerId":"12341234"},"id":"9QRF9YWM5XW3ZSU7P9CGWRU89944341","browser":"Chrome 12.1"},"id":"EV695BI2930A6XMO32886MPT899443414"}}}""",
+    """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.olark/transcript/jsonschema/1-0-0","data":{"kind":"Conversation","tags":["test_example"],"items":[{"body":"Hi from an operator","timestamp":"1473774819.263083","kind":"MessageToVisitor","nickname":"Olark operator","operatorId":"647563"},{"body":"Hi from a visitor","timestamp":"1473774821.411154","kind":"MessageToOperator","nickname":"Returning Visitor | USA (San Francisco, CA) #7617","visitor_nickname":"Olark Visitor"}],"operators":{"647563":{"username":"yali","emailAddress":"yali@snowplowanalytics.com","kind":"Operator","nickname":"Yali","id":"647563"}},"visitor":{"city":"San Francisco","kind":"Visitor","organization":"Visitor Organization","conversationBeginPage":"http://www.olark.com","countryCode":"US","referrer":"http://www.olark.com","ip":"127.0.0.1","region":"CA","chat_feedback":{"overall_chat":4,"responsiveness":5,"friendliness":5,"knowledge":4},"operatingSystem":"Windows","emailAddress":"support+integrationtest@olark.com","country":"United States","phoneNumber":"5555555555","fullName":"Olark","id":"NOTAREALVISITORIDS5LGl6QUrK2OaPP","browser":"Internet Explorer 11"},"id":"NOTAREALTRANSCRIPT5LGcbVTa3hKBRB","manuallySubmitted":false}}}""",
     null, // Transaction fields empty
     null, //
     null, //
@@ -151,37 +141,27 @@ object CljTomcatOlarkEventSpec {
     )
 }
 
-/**
- * Integration test for the EtlJob:
- *
- * For details:
- * https://forums.aws.amazon.com/thread.jspa?threadID=134017&tstart=0#
- */
-class CljTomcatOlarkEventSpec extends Specification {
+class CljTomcatOlarkEventSpec extends Specification with EnrichJobSpec {
+  import EnrichJobSpec._
+  override def appName = "clj-tomcat-olark-event"
+  sequential
+  "A job which processes a Clojure-Tomcat file containing a Olark POST raw event representing 1 valid completed call" should {
+    
+    runEnrichJob(CljTomcatOlarkEventSpec.lines, "clj-tomcat", "2", true, List("geo"))
+    "correctly output 1 completed call" in {
+      val Some(goods) = readPartFile(dirs.output)
+      goods.size must_== 1
+      val actual = goods.head.split("\t").map(s => if (s.isEmpty()) null else s)
+      for (idx <- CljTomcatOlarkEventSpec.expected.indices) {
+        Try(parse(CljTomcatOlarkEventSpec.expected(idx))) match {
+          case Success(parsedJSON) => parse(actual(idx)) must beEqualTo(parsedJSON)
+          case Failure(msg) => actual(idx) must BeFieldEqualTo(CljTomcatOlarkEventSpec.expected(idx), idx)
+        }
+      }
+    }
 
-  "A job which processes a Clojure-Tomcat file containing an Olark POST raw event representing 1 valid completed call" should {
-    EtlJobSpec("clj-tomcat", "2", true, List("geo")).
-      source(MultipleTextLineFiles("inputFolder"), CljTomcatOlarkEventSpec.lines).
-      sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
-        "correctly output 1 completed call" in {
-          buf.size must_== 1
-          val actual = buf.head
-          for (idx <- CljTomcatOlarkEventSpec.expected.indices) {
-            actual.getString(idx) must beFieldEqualTo(CljTomcatOlarkEventSpec.expected(idx), withIndex = idx)
-          }
-        }
-      }.
-      sink[TupleEntry](Tsv("exceptionsFolder")){ trap =>
-        "not trap any exceptions" in {
-          trap must beEmpty
-        }
-      }.
-      sink[String](Tsv("badFolder")){ error =>
-        "not write any bad rows" in {
-          error must beEmpty
-        }
-      }.
-      run.
-      finish
+    "not write any bad rows" in {
+      dirs.badRows must beEmptyDir
+    }
   }
 }
