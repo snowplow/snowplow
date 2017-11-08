@@ -87,8 +87,8 @@ object EnrichJobSpec {
 
     def apply[S <: String](actual: Expectable[S]) = {
       result((unmatcheable && expected == null) || actual.value == expected,
-        "%s: %s".format(field, if (unmatcheable) "is unmatcheable" else "%s equals %s".format(actual.description, expected)),
-        "%s: %s does not equal %s".format(field, actual.description, expected),
+        "%s (index: %s): %s ".format(field, index, if (unmatcheable) "is unmatcheable" else "%s equals %s".format(actual.description, expected)),
+        "%s (index: %s): %s does not equal %s".format(field, index,  actual.description, expected),
         actual)
     }
 
