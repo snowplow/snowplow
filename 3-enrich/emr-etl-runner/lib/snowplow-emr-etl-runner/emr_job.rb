@@ -128,6 +128,11 @@ module Snowplow
 
         # staging
         if staging
+          csbr_processing_loc = Sluice::Storage::S3::Location.new(csbr[:processing])
+          unless Sluice::Storage::S3::is_empty?(s3, csbr_processing_loc)
+            raise DirectoryNotEmptyError, "Cannot safely add staging step to jobflow, #{csbr_processing_loc} is not empty"
+          end
+
           src_pattern = collector_format == 'clj-tomcat' ? '.*localhost\_access\_log.*\.txt.*' : '.+'
           src_pattern_regex = Regexp.new src_pattern
           non_empty_locs = csbr[:in].select { |l|
@@ -488,7 +493,7 @@ module Snowplow
           archive_shredded_step = get_archive_step(csbs[:good], csbs[:archive], run_id, s3_endpoint, ": Shredded S3 -> Shredded Archive S3")
           @jobflow.add_step(archive_shredded_step)
         elsif archive_shredded == 'recover'
-          latest_run_id = get_latest_run_id(s3, csbe[:good])
+          latest_run_id = get_latest_run_id(s3, csbs[:good])
           archive_shredded_step = get_archive_step(csbs[:good], csbs[:archive], latest_run_id, s3_endpoint, ": Shredded S3 -> S3 Shredded Archive")
           @jobflow.add_step(archive_shredded_step)
         else    # skip
@@ -706,7 +711,14 @@ module Snowplow
       def get_latest_run_id(s3, s3_path)
         uri = URI.parse(s3_path)
         folders = s3.directories.get(uri.host, delimiter: '/', prefix: uri.path[1..-1]).files.common_prefixes
-        run_folders = folders.select { |f| f.include?('run=') }
+        # each is mandatory, otherwise there'll be pagination issues if there are > 1k objects
+        # cf snowplow/snowplow#3434
+        run_folders = []
+        folders.each { |f|
+          if f.include?('run=')
+            run_folders << f
+          end
+        }
         begin
           folder = run_folders[-1].split('/')[-1]
           folder.slice('run='.length, folder.length)

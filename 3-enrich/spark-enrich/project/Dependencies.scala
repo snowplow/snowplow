@@ -31,10 +31,10 @@ object Dependencies {
     val hadoopLZO        = "0.4.20"
     val elephantBird     = "4.14"
     // Scala
-    val spark            = "2.1.0"
+    val spark            = "2.2.0"
     val scalaz7          = "7.0.9"
     val scopt            = "3.5.0"
-    val commonEnrich     = "0.25.0"
+    val commonEnrich     = "0.27.0"
     val igluClient       = "0.5.0"
     // Scala (test only)
     val specs2           = "2.3.13"
