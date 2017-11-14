@@ -32,9 +32,15 @@ module Snowplow
         Iglu::SchemaKey.parse_key("iglu:com.snowplowanalytics.dataflowrunner/ClusterConfig/avro/#{version}")
       end
 
+      Contract String => Bool
+      def is_legacy?(ami_version)
+        (not (/^[1-3]\..*/ =~ ami_version).nil?)
+      end
+
       Contract ConfigHash, Bool, Maybe[String], String, ArrayOf[String] => Hash
       def create_datum(config, debug=false, resume_from=nil, resolver='', enrichments=[])
-        legacy = (not (config[:aws][:emr][:ami_version] =~ /^[1-3]\..*/).nil?)
+        ami_version = config[:aws][:emr][:ami_version]
+        legacy = is_legacy? (ami_version)
         region = config[:aws][:emr][:region]
 
         {
@@ -73,7 +79,7 @@ module Snowplow
           "bootstrapActionConfigs" => get_bootstrap_actions(
             config[:aws][:emr][:bootstrap],
             config[:collectors][:format],
-            legacy,
+            ami_version,
             region,
             config[:enrich][:versions][:spark_enrich]
           ),
@@ -140,24 +146,31 @@ module Snowplow
         end
       end
 
-      Contract ArrayOf[Hash], String, Bool, String, String => ArrayOf[Hash]
-      def get_bootstrap_actions(actions, collector_format, legacy, region, enrich_version)
+      Contract ArrayOf[Hash], String, String, String, String => ArrayOf[Hash]
+      def get_bootstrap_actions(actions, collector_format, ami_version, region, enrich_version)
         bs_actions = []
         bs_actions += actions
-        if collector_format == 'thrift' && legacy
-          bs_actions += [
-            get_action("Hadoop bootstrap action (buffer size)",
-              "s3n://elasticmapreduce/bootstrap-actions/configure-hadoop",
-              [ "-c", "io.file.buffer.size=65536" ]
-            ),
-            get_action("Hadoop bootstrap action (user cp first)",
-              "s3n://elasticmapreduce/bootstrap-actions/configure-hadoop",
-              [ "-m", "mapreduce.user.classpath.first=true" ]
-            )
-          ]
+        match_data = /^(\d+)\..*/.match(ami_version)
+        if match_data.nil?
+          return bs_actions
         else
+          case match_data[1]
+          when "1".."3"
+            if collector_format == 'thrift'
+              bs_actions += [
+                get_action('Hadoop bootstrap action (buffer size)',
+                           's3n://elasticmapreduce/bootstrap-actions/configure-hadoop',
+                           ['-c', 'io.file.buffer.size=65536']),
+                get_action('Hadoop bootstrap action (user cp first)',
+                           's3n://elasticmapreduce/bootstrap-actions/configure-hadoop',
+                           ['-m', 'mapreduce.user.classpath.first=true'])
+              ]
+            end
+            bs_actions << get_ami_action(ami_version, region, enrich_version)
+          when "4"
+            bs_actions << get_ami_action(ami_version, region, enrich_version)
+          end
         end
-        bs_actions << get_ami_action(legacy, region, enrich_version)
         bs_actions
       end
 
@@ -173,8 +186,9 @@ module Snowplow
           "s3://#{region}.elasticmapreduce/bootstrap-actions/setup-hbase")
       end
 
-      Contract Bool, String, String => Hash
-      def get_ami_action(legacy, region, enrich_version)
+      Contract String, String, String => Hash
+      def get_ami_action(ami_version, region, enrich_version)
+        legacy = is_legacy?(ami_version)
         standard_assets_bucket =
           get_hosted_assets_bucket(STANDARD_HOSTED_ASSETS, STANDARD_HOSTED_ASSETS, region)
         bootstrap_script_location = if legacy

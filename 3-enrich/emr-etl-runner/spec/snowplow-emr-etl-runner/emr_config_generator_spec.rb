@@ -188,7 +188,7 @@ describe EmrConfigGenerator do
 
   describe '#get_ami_action' do
     it 'should give back a 0.1.0 script if legacy' do
-      expect(subject.send(:get_ami_action, true, 'eu-west-1', '1.8.0')).to eq({
+      expect(subject.send(:get_ami_action, "3.0.1", 'eu-west-1', '1.8.0')).to eq({
         "name" => "Bootstrap action (ami bootstrap script)",
         "scriptBootstrapAction" => {
           "path" => "s3://snowplow-hosted-assets/common/emr/snowplow-ami3-bootstrap-0.1.0.sh",
@@ -198,7 +198,7 @@ describe EmrConfigGenerator do
     end
 
     it 'should give back a 0.2.0 script if not legacy' do
-      expect(subject.send(:get_ami_action, false, 'eu-west-1', '1.9.0')).to eq({
+      expect(subject.send(:get_ami_action,  "4.0.1", 'eu-west-1', '1.9.0')).to eq({
         "name" => "Bootstrap action (ami bootstrap script)",
         "scriptBootstrapAction" => {
           "path" => "s3://snowplow-hosted-assets/common/emr/snowplow-ami4-bootstrap-0.2.0.sh",
@@ -233,7 +233,7 @@ describe EmrConfigGenerator do
   describe '#get_bootstrap_actions' do
     it 'should build a list of actions starting with no actions (thrift + legacy)' do
       expect(subject.send(:get_bootstrap_actions,
-        [], 'thrift', true, 'eu-west-1', '1.8.0')).to eq([
+        [], 'thrift', "3.0.25", 'eu-west-1', '1.8.0')).to eq([
           {
             "name" => "Hadoop bootstrap action (buffer size)",
             "scriptBootstrapAction" => {
@@ -262,7 +262,7 @@ describe EmrConfigGenerator do
       expect(subject.send(:get_bootstrap_actions, [
         { "name" => "something", "scriptBootstrapAction" => { "path" => "path", "args" => [] } },
         { "name" => "another thing", "scriptBootstrapAction" => { "path" => "another path", "args" => [] } },
-      ], 'not-thrift', false, 'eu-west-1', '1.9.0')).to eq([
+      ], 'not-thrift', "4.25.26", 'eu-west-1', '1.9.0')).to eq([
         { "name" => "something", "scriptBootstrapAction" => { "path" => "path", "args" => [] } },
         { "name" => "another thing", "scriptBootstrapAction" => { "path" => "another path", "args" => [] } },
         {

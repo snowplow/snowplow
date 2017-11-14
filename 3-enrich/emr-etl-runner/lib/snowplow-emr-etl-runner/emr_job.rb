@@ -227,7 +227,9 @@ module Snowplow
           "#{standard_assets_bucket}common/emr/snowplow-ami4-bootstrap-0.2.0.sh"
         end
         cc_version = get_cc_version(config[:enrich][:versions][:spark_enrich])
-        @jobflow.add_bootstrap_action(Elasticity::BootstrapAction.new(bootstrap_script_location, cc_version))
+        if config[:aws][:emr][:ami_version].start_with?('4.') or @legacy
+          @jobflow.add_bootstrap_action(Elasticity::BootstrapAction.new(bootstrap_script_location, cc_version))
+        end
 
         # Install and launch HBase
         hbase = config[:aws][:emr][:software][:hbase]
