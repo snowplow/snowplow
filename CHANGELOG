@@ -1,3 +1,20 @@
+Release 97 Knossos (2017-11-15)
+-------------------------------
+Common: rename AWS deployment credentials in .travis.yml (close #3115)
+Spark Enrich: improve error message in test to show index line (#3494)
+Scala Common Enrich: Default port to 443 if scheme is https (#3483)
+Scala Common Enrich: tolerate content type for GET requests sent to Clojure Collector (#2743)
+Scala Common Enrich: add adapter to pre-process Unbounce webhooks (#2615)
+Scala Hadoop Enrich: add test for Unbounce Adapter (#2745)
+Scala Hadoop Enrich: add test for StatusGator Adapter (#2722)
+Scala Common Enrich: add adapter to pre-process Statusgator webhooks (#2169)
+Scala Hadoop Enrich: add test for Mailgun Adapter (#2763)
+Scala Common Enrich: add adapter to pre-process Mailgun webhooks (#2734)
+Scala Hadoop Enrich: add test for Olark Adapter (#2792)
+Scala Common Enrich: add Adapter to pre-process Olark events (#1014)
+Scala Common Enrich: make enrichments.ExtractEventTypeSpec timezone-safe (#3481)
+Scala Common Enrich: bump user-agent-utils to 1.20 (#2930)
+
 Release 95 Ellora (2017-11-13)
 ------------------------------
 Redshift: add migration script for 0.8.0 to 0.9.0 (#3440)
