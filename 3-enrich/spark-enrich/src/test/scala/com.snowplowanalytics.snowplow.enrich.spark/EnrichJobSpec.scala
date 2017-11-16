@@ -17,6 +17,7 @@ package spark
 
 // Java
 import java.io.{BufferedWriter, File, FileWriter, IOException}
+import com.hadoop.compression.lzo.GPLNativeCodeLoader
 
 // Scala
 import scala.collection.JavaConverters._
@@ -73,6 +74,10 @@ object EnrichJobSpec {
     .getDeclaredFields
     .map(_.getName)
   private val unmatchableFields = List("event_id")
+  /**
+   * Is lzo available?
+   */
+  def isLzoSupported: Boolean = GPLNativeCodeLoader.isNativeCodeLoaded()
 
   /**
    * A Specs2 matcher to check if a CanonicalOutput field is correctly set.

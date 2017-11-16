@@ -156,23 +156,24 @@ class SnowplowRawEventLzoSpec extends Specification with EnrichJobSpec {
   override def appName = "snowplow-raw-event-lzo"
   sequential
   "A job which processes a RawThrift file containing 1 valid page view" should {
-    val f = write("input", SnowplowRawEventLzoSpec.snowplowRawEvent)
-    runEnrichJob(f.toString(), "thrift", "1", true, List("geo"), false, false, false, false)
+    if (!isLzoSupported) "native-lzo not supported" in skipped
+    else {
+      val f = write("input", SnowplowRawEventLzoSpec.snowplowRawEvent)
+      runEnrichJob(f.toString(), "thrift", "1", true, List("geo"), false, false, false, false)
 
-    "correctly output 1 page view" in {
-      val Some(goods) = readPartFile(dirs.output)
-      goods.size must_== 1
-      val actual = goods.head.split("\t").map(s => if (s.isEmpty()) null else s)
-      for (idx <- SnowplowRawEventLzoSpec.expected.indices) {
-        actual(idx) must BeFieldEqualTo(SnowplowRawEventLzoSpec.expected(idx), idx)
+      "correctly output 1 page view" in {
+        val Some(goods) = readPartFile(dirs.output)
+        goods.size must_== 1
+        val actual = goods.head.split("\t").map(s => if (s.isEmpty()) null else s)
+        for (idx <- SnowplowRawEventLzoSpec.expected.indices) {
+          actual(idx) must BeFieldEqualTo(SnowplowRawEventLzoSpec.expected(idx), idx)
+        }
+      }
+
+      "not write any bad rows" in {
+        dirs.badRows must beEmptyDir
       }
     }
-
-    "not write any bad rows" in {
-      dirs.badRows must beEmptyDir
-    }
-
-    deleteRecursively(f)
   }
 
   def write(tag: String, event: SnowplowRawEvent): File = {
