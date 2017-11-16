@@ -164,21 +164,25 @@ class CollectorPayload1LzoSpec extends Specification with EnrichJobSpec {
   override def appName = "collector-payload1-lzo"
   sequential
   "A job which processes a RawThrift file containing 1 valid page view" should {
-    val f = write("input", CollectorPayload1LzoSpec.collectorPayload)
-    runEnrichJob(f.toString(), "thrift", "1", true, List("geo"), false, false, false, false)
 
-    "correctly output 1 page view" in {
-      val Some(goods) = readPartFile(dirs.output)
-      goods.size must_== 1
-      val actual = goods.head.split("\t").map(s => if (s.isEmpty()) null else s)
-      for (idx <- CollectorPayload1LzoSpec.expected.indices) {
-        actual(idx) must BeFieldEqualTo(CollectorPayload1LzoSpec.expected(idx), idx)
+      if (!isLzoSupported) "native-lzo not supported" in skipped
+      else {
+        val f = write("input", CollectorPayload1LzoSpec.collectorPayload)
+        runEnrichJob(f.toString(), "thrift", "1", true, List("geo"), false, false, false, false)
+
+        "correctly output 1 page view" in {
+          val Some(goods) = readPartFile(dirs.output)
+          goods.size must_== 1
+          val actual = goods.head.split("\t").map(s => if (s.isEmpty()) null else s)
+          for (idx <- CollectorPayload1LzoSpec.expected.indices) {
+            actual(idx) must BeFieldEqualTo(CollectorPayload1LzoSpec.expected(idx), idx)
+          }
+        }
+
+        "not write any bad rows" in {
+          dirs.badRows must beEmptyDir
+        }
       }
-    }
-
-    "not write any bad rows" in {
-      dirs.badRows must beEmptyDir
-    }
   }
 
   def write(tag: String, payload: CollectorPayload): File = {
