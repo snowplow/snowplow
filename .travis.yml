@@ -10,6 +10,7 @@ before_script:
   - psql -U postgres -d sql_enrichment_test -c "GRANT ALL ON enrichment_test TO enricher;"
 script:
   - python integration-tests/api-lookup-test.py &
+  - cd 3-enrich/scala-common-enrich && sbt publishLocal && cd ../..
   - cd $TEST_DIR && sbt test && cd ../..
 env:
   global:
