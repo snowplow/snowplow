@@ -224,12 +224,36 @@ class CollectorServiceSpec extends Specification {
 
     "bounceLocationHeader" in {
       "build a location header if bounce is true" in {
-        val header = service.bounceLocationHeader(Map("a" -> "b"), Uri("st"), "bounce", true)
+        val header = service.bounceLocationHeader(
+          Map("a" -> "b"),
+          HttpRequest().withUri(Uri("st")),
+          CookieBounceConfig(true, "bounce", "", None),
+          true)
         header shouldEqual Some(`Location`("st?a=b&bounce=true"))
       }
       "give back none otherwise" in {
-        val header = service.bounceLocationHeader(Map("a" -> "b"), Uri("st"), "bounce", false)
+        val header = service.bounceLocationHeader(
+          Map("a" -> "b"),
+          HttpRequest().withUri(Uri("st")),
+          CookieBounceConfig(false, "bounce", "", None),
+          false)
         header shouldEqual None
+      }
+      "use forwarded protocol header if present and enabled" in {
+        val header = service.bounceLocationHeader(
+          Map("a" -> "b"),
+          HttpRequest().withUri(Uri("http://st")).addHeader(RawHeader("X-Forwarded-Proto", "https")),
+          CookieBounceConfig(true, "bounce", "", Some("X-Forwarded-Proto")),
+          true)
+        header shouldEqual Some(`Location`("https://st?a=b&bounce=true"))
+      }
+      "allow missing forwarded protocol header if forward header is enabled but absent" in {
+        val header = service.bounceLocationHeader(
+          Map("a" -> "b"),
+          HttpRequest().withUri(Uri("http://st")),
+          CookieBounceConfig(true, "bounce", "", Some("X-Forwarded-Proto")),
+          true)
+        header shouldEqual Some(`Location`("http://st?a=b&bounce=true"))
       }
     }
 
