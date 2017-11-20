@@ -52,6 +52,10 @@ collector {
     name = "n3pc"
     # Network user id to fallback to when third-party cookies are blocked.
     fallbackNetworkUserId = "00000000-0000-4000-A000-000000000000"
+    # Optionally, specify the name of the  header containing the originating protocol for use in the bounce redirect
+    # location. Use this if behind a load balancer that performs SSL termination. The value of this header must
+    # be http or https. Example, if behind an AWS Classic ELB.
+    forwardedProtocolHeader: "X-Forwarded-Proto"
   }
 
   streams {

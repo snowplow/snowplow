@@ -108,12 +108,16 @@ class CollectorService(
     // we don't store events in case we're bouncing
     val sinkResponses = if (!bounce) sinkEvent(event, partitionKey) else Nil
 
-    val headers = bounceLocationHeader(queryParams, request.uri, config.cookieBounce.name, bounce) ++
+    val headers = bounceLocationHeader(
+      queryParams,
+      request,
+      config.cookieBounce,
+      bounce) ++
       cookieHeader(config.cookieConfig, nuid) ++ List(
-        RawHeader("P3P", "policyref=\"%s\", CP=\"%s\"".format(config.p3p.policyRef, config.p3p.CP)),
-        accessControlAllowOriginHeader(request),
-        `Access-Control-Allow-Credentials`(true)
-      )
+      RawHeader("P3P", "policyref=\"%s\", CP=\"%s\"".format(config.p3p.policyRef, config.p3p.CP)),
+      accessControlAllowOriginHeader(request),
+      `Access-Control-Allow-Credentials`(true)
+    )
 
     val (httpResponse, badRedirectResponses) = buildHttpResponse(
       event, partitionKey, queryParams, headers.toList, redirect, pixelExpected, bounce, config.streams.sink)
@@ -265,14 +269,32 @@ class CollectorService(
 
   /** Build a location header redirecting to itself to check if third-party cookies are blocked. */
   def bounceLocationHeader(
-    queryParams: Map[String, String],
-    uri: Uri,
-    cookieBounceName: String,
+    queryParams: Map[String,String],
+    request: HttpRequest,
+    bounceConfig: CookieBounceConfig,
     bounce: Boolean
   ): Option[HttpHeader] =
     if (bounce) {
-      val redirectUri = uri.withQuery(Uri.Query(queryParams + (cookieBounceName -> "true")))
-      Some(`Location`(redirectUri))
+      val redirectUri = request.uri.withQuery(Uri.Query(queryParams + (bounceConfig.name -> "true")))
+
+      val redirectUriWithForwardedScheme = bounceConfig.forwardedProtocolHeader.flatMap { headerName =>
+        request.headers.find(
+          { _.lowercaseName() == headerName.toLowerCase() }
+        ).flatMap(
+          { header =>
+            val headerValue = header.value.toLowerCase()
+            // only support http[s]
+            if (Set("http", "https").contains(headerValue)) {
+              Some(redirectUri.withScheme(headerValue))
+            } else {
+              logger.warn("Header {} contains invalid protocol value {}.", Array(headerName, headerValue))
+              None
+            }
+          }
+        )
+      }.getOrElse(redirectUri)
+
+      Some(`Location`(redirectUriWithForwardedScheme))
     } else {
       None
     }
