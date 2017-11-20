@@ -108,8 +108,13 @@ class CollectorService(
     // we don't store events in case we're bouncing
     val sinkResponses = if (!bounce) sinkEvent(event, partitionKey) else Nil
 
-    val headers = bounceLocationHeader(queryParams, request.uri, config.cookieBounce.name, bounce) ++
-      cookieHeader(config.cookieConfig, nuid) ++ List(
+    val headers = bounceLocationHeader(
+      queryParams,
+      request,
+      config.cookieBounce,
+      bounce) ++
+      cookieHeader(config.cookieConfig, nuid) ++
+      List(
         RawHeader("P3P", "policyref=\"%s\", CP=\"%s\"".format(config.p3p.policyRef, config.p3p.CP)),
         accessControlAllowOriginHeader(request),
         `Access-Control-Allow-Credentials`(true)
@@ -266,12 +271,29 @@ class CollectorService(
   /** Build a location header redirecting to itself to check if third-party cookies are blocked. */
   def bounceLocationHeader(
     queryParams: Map[String, String],
-    uri: Uri,
-    cookieBounceName: String,
+    request: HttpRequest,
+    bounceConfig: CookieBounceConfig,
     bounce: Boolean
   ): Option[HttpHeader] =
     if (bounce) {
-      val redirectUri = uri.withQuery(Uri.Query(queryParams + (cookieBounceName -> "true")))
+      val forwardedScheme = for {
+        headerName <- bounceConfig.forwardedProtocolHeader
+        headerValue <- request.headers
+          .find(_.lowercaseName == headerName.toLowerCase)
+          .map(_.value().toLowerCase())
+        scheme <-
+          if (Set("http", "https").contains(headerValue)) {
+            Some(headerValue)
+          } else {
+            logger.warn(s"Header $headerName contains invalid protocol value $headerValue.")
+            None
+          }
+      } yield scheme
+
+      val redirectUri = request.uri
+        .withQuery(Uri.Query(queryParams + (bounceConfig.name -> "true")))
+        .withScheme(forwardedScheme.getOrElse(request.uri.scheme))
+
       Some(`Location`(redirectUri))
     } else {
       None
