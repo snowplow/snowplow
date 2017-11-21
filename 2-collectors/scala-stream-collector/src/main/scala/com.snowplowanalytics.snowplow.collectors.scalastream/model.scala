@@ -52,10 +52,10 @@ package model {
     domain: Option[String]
   )
   final case class CookieBounceConfig(
-   enabled: Boolean,
-   name: String,
-   fallbackNetworkUserId: String,
-   forwardedProtocolHeader: Option[String]
+    enabled: Boolean,
+    name: String,
+    fallbackNetworkUserId: String,
+    forwardedProtocolHeader: Option[String]
   )
   final case class P3PConfig(policyRef: String, CP: String)
   final case class AWSConfig(accessKey: String, secretKey: String) {

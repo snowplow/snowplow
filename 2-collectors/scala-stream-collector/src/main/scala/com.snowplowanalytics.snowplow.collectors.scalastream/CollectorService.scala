@@ -114,10 +114,10 @@ class CollectorService(
       config.cookieBounce,
       bounce) ++
       cookieHeader(config.cookieConfig, nuid) ++ List(
-      RawHeader("P3P", "policyref=\"%s\", CP=\"%s\"".format(config.p3p.policyRef, config.p3p.CP)),
-      accessControlAllowOriginHeader(request),
-      `Access-Control-Allow-Credentials`(true)
-    )
+        RawHeader("P3P", "policyref=\"%s\", CP=\"%s\"".format(config.p3p.policyRef, config.p3p.CP)),
+        accessControlAllowOriginHeader(request),
+        `Access-Control-Allow-Credentials`(true)
+      )
 
     val (httpResponse, badRedirectResponses) = buildHttpResponse(
       event, partitionKey, queryParams, headers.toList, redirect, pixelExpected, bounce, config.streams.sink)
@@ -269,35 +269,32 @@ class CollectorService(
 
   /** Build a location header redirecting to itself to check if third-party cookies are blocked. */
   def bounceLocationHeader(
-    queryParams: Map[String,String],
+    queryParams: Map[String, String],
     request: HttpRequest,
     bounceConfig: CookieBounceConfig,
     bounce: Boolean
   ): Option[HttpHeader] =
     if (bounce) {
-      val redirectUri = request.uri.withQuery(Uri.Query(queryParams + (bounceConfig.name -> "true")))
-
-      val redirectUriWithForwardedScheme = bounceConfig.forwardedProtocolHeader.flatMap { headerName =>
-        request.headers.find(
-          { _.lowercaseName() == headerName.toLowerCase() }
-        ).flatMap(
-          { header =>
-            val headerValue = header.value.toLowerCase()
-            // only support http[s]
-            if (Set("http", "https").contains(headerValue)) {
-              Some(redirectUri.withScheme(headerValue))
-            } else {
-              logger.warn("Header {} contains invalid protocol value {}.", Array(headerName, headerValue))
-              None
-            }
+      val forwardedScheme = for {
+        headerName <- bounceConfig.forwardedProtocolHeader
+        headerValue <- request.headers.find(_.lowercaseName == headerName.toLowerCase).map(_.value().toLowerCase())
+        scheme <-
+          if (Set("http", "https").contains(headerValue)) {
+            Some(headerValue)
+          } else {
+            logger.warn(s"Header $headerName contains invalid protocol value $headerValue.")
+            None
           }
-        )
-      }.getOrElse(redirectUri)
+        } yield scheme
 
-      Some(`Location`(redirectUriWithForwardedScheme))
-    } else {
-      None
-    }
+        val redirectUri = request.uri
+          .withQuery(Uri.Query(queryParams + (bounceConfig.name -> "true")))
+          .withScheme(forwardedScheme.getOrElse(request.uri.scheme))
+
+        Some(`Location`(redirectUri))
+      } else {
+        None
+      }
 
   /** Retrieves all headers from the request except Remote-Address and Raw-Requet-URI */
   def headers(request: HttpRequest): Seq[String] = request.headers.flatMap {
