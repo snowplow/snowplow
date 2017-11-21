@@ -39,7 +39,7 @@ object SpecHelpers {
   /**
    * The Stream Enrich being used
    */
-  val EnrichVersion = "kinesis-0.11.1-common-0.26.0"
+  val EnrichVersion = "kinesis-0.12.0-common-0.26.0"
 
   val TimestampRegex = "[0-9\\s-:.]+"
 
@@ -219,6 +219,7 @@ object SpecHelpers {
         OutConfig("enriched", "bad", "partitionkey"),
         KinesisConfig("region", 10, "TRIM_HORIZON", None, BackoffPolicyConfig(10, 100)),
         KafkaConfig("brokers", 1),
+        NsqConfig("channel", "localhost", 4160, "localhost", 4161),
         BufferConfig(1000L, 100L, 1200L),
         "appName"
       ),

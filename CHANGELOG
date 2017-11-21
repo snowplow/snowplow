@@ -1,3 +1,16 @@
+Release 96 Zeugma (2017-11-21)
+------------------------------
+Scala Stream Collector: bump to 0.11.0 (#3433)
+Scala Stream Collector: update config.hocon.sample to support NSQ (#3294)
+Scala Stream Collector: add NSQ sink (#2093)
+Scala Stream Collector: make Kinesis, Kafka and NSQ config a coproduct (#3449)
+Scala Stream Collector: keep sending records when the Kinesis stream is resharding (#3453)
+Stream Enrich: bump to 0.12.0 (#3432)
+Stream Enrich: update config.hocon.sample to support NSQ (#3339)
+Stream Enrich: add NSQ sink (#3337)
+Stream Enrich: add NSQ source (#3336)
+Common: decorrelate CI/CD for Scala Stream Collector and Stream Enrich (#3441)
+
 Release 95 Ellora (2017-11-13)
 ------------------------------
 Redshift: add migration script for 0.8.0 to 0.9.0 (#3440)

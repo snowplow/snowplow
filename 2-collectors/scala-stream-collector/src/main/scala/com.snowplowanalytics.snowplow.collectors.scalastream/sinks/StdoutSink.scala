@@ -23,8 +23,6 @@ package sinks
 
 import org.apache.commons.codec.binary.Base64
 
-import model._
-
 class StdoutSink(streamName: String) extends Sink {
 
   val MaxBytes = Long.MaxValue
@@ -37,6 +35,4 @@ class StdoutSink(streamName: String) extends Sink {
     }
     Nil
   }
-
-  override def getType = Stdout
 }

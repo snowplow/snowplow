@@ -40,7 +40,7 @@ object KinesisSink {
    * during its construction
    */
   def createAndInitialize(
-    kinesisConfig: KinesisConfig,
+    kinesisConfig: Kinesis,
     bufferConfig: BufferConfig,
     streamName: String,
     executorService: ScheduledExecutorService
@@ -65,7 +65,7 @@ object KinesisSink {
  * Kinesis Sink for the Scala collector.
  */
 class KinesisSink private (
-  kinesisConfig: KinesisConfig,
+  kinesisConfig: Kinesis,
   bufferConfig: BufferConfig,
   streamName: String,
   executorService: ScheduledExecutorService
@@ -121,7 +121,8 @@ class KinesisSink private (
    */
   private def streamExists(name: String): Boolean = try {
     val describeStreamResult = client.describeStream(name)
-    describeStreamResult.getStreamDescription.getStreamStatus == "ACTIVE"
+    val status = describeStreamResult.getStreamDescription.getStreamStatus
+    status == "ACTIVE" || status == "UPDATING"
   } catch {
     case rnfe: ResourceNotFoundException => false
   }
@@ -248,6 +249,4 @@ class KinesisSink private (
     executorService.shutdown()
     executorService.awaitTermination(10000, MILLISECONDS)
   }
-
-  override def getType = Kinesis
 }

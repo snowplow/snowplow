@@ -24,7 +24,7 @@ import model._
  * Kafka Sink for the Scala collector
  */
 class KafkaSink(
-  kafkaConfig: KafkaConfig,
+  kafkaConfig: Kafka,
   bufferConfig: BufferConfig,
   topicName: String
 ) extends Sink {
@@ -77,6 +77,4 @@ class KafkaSink(
     }
     Nil
   }
-
-  override def getType = Kafka
 }

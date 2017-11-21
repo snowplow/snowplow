@@ -140,6 +140,7 @@ abstract class AbstractSource(
     val streamName = getStreamName(inputType)
     lazy val kafkaConfig = config.streams.kafka
     lazy val kinesisConfig = config.streams.kinesis
+    lazy val nsqConfig = config.streams.nsq
     val bufferConfig = config.streams.buffer
     override def initialValue = config.sinkType match {
       case KafkaSink =>
@@ -147,6 +148,7 @@ abstract class AbstractSource(
       case KinesisSink => new KinesisSink(kinesisProvider, kinesisConfig, bufferConfig, inputType,
         streamName, tracker).some
       case StdouterrSink => new StdouterrSink(inputType).some
+      case NsqSink => new NsqSink(nsqConfig, streamName).some
     }
   }
 
