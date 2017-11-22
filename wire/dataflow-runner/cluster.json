@@ -22,10 +22,10 @@
       },
       "instances": {
         "master": {
-          "type": "m1.medium"
+          "type": "m4.large"
         },
         "core": {
-          "type": "m4.medium",
+          "type": "m4.large",
           "count": 1
         },
         "task": {
