@@ -1,0 +1,40 @@
+{
+  "schema": "iglu:com.snowplowanalytics.dataflow-runner/Cluster/avro/1-0-0",
+  "data": {
+    "name": "Hackathon: Snowplow Wire persistent cluster",
+    "logUri": "s3://cross-batch-test/main/logs/",
+    "region": "us-east-1",
+    "credentials": {
+      "accessKeyId": "env",
+      "secretAccessKey": "env"
+    },
+    "roles": {
+      "jobflow": "EMR_EC2_DefaultRole",
+      "service": "EMR_DefaultRole"
+    },
+    "ec2": {
+      "amiVersion": "5.9.0",
+      "keyName": "anton-engineering",
+      "location": {
+        "vpc": {
+          "subnetId": null
+        }
+      },
+      "instances": {
+        "master": {
+          "type": "m1.medium"
+        },
+        "core": {
+          "type": "m4.medium",
+          "count": 1
+        },
+        "task": {
+          "type": "m1.medium",
+          "count": 0,
+          "bid": "0.015"
+        }
+      }
+    },
+    "bootstrapActionConfigs": [ ]
+  }
+}
