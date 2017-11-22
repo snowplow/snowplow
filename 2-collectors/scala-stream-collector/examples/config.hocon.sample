@@ -55,7 +55,7 @@ collector {
     # Optionally, specify the name of the  header containing the originating protocol for use in the bounce redirect
     # location. Use this if behind a load balancer that performs SSL termination. The value of this header must
     # be http or https. Example, if behind an AWS Classic ELB.
-    forwardedProtocolHeader: "X-Forwarded-Proto"
+    forwardedProtocolHeader = "X-Forwarded-Proto"
   }
 
   streams {
