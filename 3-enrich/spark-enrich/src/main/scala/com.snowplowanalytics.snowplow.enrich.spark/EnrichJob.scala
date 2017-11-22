@@ -172,8 +172,16 @@ class EnrichJob(@transient val spark: SparkSession, args: Array[String]) extends
 
     // Install MaxMind file(s) if we have them
     for ((uri, _) <- enrichConfig.filesToCache) { sc.addFile(uri.toString) }
+
     val fileNamesToCache = enrichConfig.filesToCache
       .map { case (uri, sl) => (extractFilenameFromURI(uri), sl) }
+
+    enrichConfig.collector match {
+      case None => ()
+      case Some(col) =>
+        val wireClient = Wire.getClients(Wire.extractUnsafe(col))
+        wireClient.sendStarted()
+    }
 
     val input = getInputRDD(enrichConfig.inFormat, enrichConfig.inFolder)
       .map { e =>

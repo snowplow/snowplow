@@ -1,0 +1,91 @@
+{
+  "schema": "iglu:com.snowplowanalytics.dataflowrunner/PlaybookConfig/avro/1-0-1",
+  "data": {
+    "region": "us-east-1",
+    "credentials": {
+      "accessKeyId": "env",
+      "secretAccessKey": "env"
+    },
+    "steps": [
+
+
+
+
+      {
+        "type": "CUSTOM_JAR",
+        "name": "S3DistCp Step: Enriched events -> staging S3",
+        "actionOnFailure": "CANCEL_AND_WAIT",
+        "jar": "/usr/share/aws/emr/s3-dist-cp/lib/s3-dist-cp.jar",
+        "arguments": [
+          "--src","s3n://cross-batch-test/wire/main/",
+          "--dest","s3n://cross-batch-test/wire/main/enriched/good/run={{"{{timeWithFormat .epochTime \"2006-01-02-15-04-05\"}}"}}/",
+          "--s3Endpoint","s3.amazonaws.com",
+          "--deleteOnSuccess"
+        ]
+      },
+
+
+      {
+        "type": "CUSTOM_JAR",
+        "name": "RDB Shredder: shred enriched events for Redshift",
+        "actionOnFailure": "CANCEL_AND_WAIT",
+        "jar": "s3://cross-batch-test/4-storage/rdb-shredder/snowplow-rdb-shredder-0.14.0-rc1.jar",
+        "arguments": [
+          "com.snowplowanalytics.snowplow.enrich.hadoop.ShredJob",
+          "--hdfs",
+          "--iglu_config",
+          "{{"{{base64File \"../../iglu_resolver.json\"}}"}}",
+          "--input_folder","s3n://cross-batch-test/wire/enriched/good/run={{"{{timeWithFormat .epochTime \"2006-01-02-15-04-05\"}}"}}/",
+          "--output_folder","s3n://cross-batch-test/wire/shredded/good/run={{"{{timeWithFormat .epochTime \"2006-01-02-15-04-05\"}}"}}/",
+          "--bad_rows_folder","s3n://cross-batch-test//shredded/bad/run={{"{{timeWithFormat .epochTime \"2006-01-02-15-04-05\"}}"}}/"
+        ]
+      },
+
+      {
+        "type": "CUSTOM_JAR",
+        "name": "Load Redshift Storage Target",
+        "actionOnFailure": "CANCEL_AND_WAIT",
+        "jar": "s3://snowplow-hosted-assets-us-east-1/4-storage/rdb-loader/snowplow-rdb-loader-0.14.0.jar",
+        "arguments": [
+          "--config",
+          "{{"{{base64File \"../../config-safe.yml\"}}"}}",
+          "--resolver",
+          "{{"{{base64File \"../../iglu_resolver.json\"}}"}}",
+          "--logkey",
+          "s3n://cross-batch-test/wire/logs/rdb-loader/{{"{{timeWithFormat .epochTime \"2006-01-02-15-04-05\"}}"}}/cf659180-b3bc-4d3f-a300-48f0a2766f3c",
+          "--target",
+          "{{"{{base64File \"../../targets/enriched_redshift.json\"}}"}}"
+        ]
+      },
+
+
+      {
+        "type": "CUSTOM_JAR",
+        "name": "S3DistCp Step: Enriched S3 -> Enriched Archive S3",
+        "actionOnFailure": "CANCEL_AND_WAIT",
+        "jar": "/usr/share/aws/emr/s3-dist-cp/lib/s3-dist-cp.jar",
+        "arguments": [
+          "--src","s3n://cross-batch-test/wire/enriched/good/",
+          "--dest","s3://cross-batch-/main/enriched/good/",
+          "--s3Endpoint","s3.amazonaws.com",
+          "--deleteOnSuccess"
+        ]
+      },
+
+
+      {
+        "type": "CUSTOM_JAR",
+        "name": "S3DistCp Step: Shredded S3 -> Shredded Archive S3",
+        "actionOnFailure": "CANCEL_AND_WAIT",
+        "jar": "/usr/share/aws/emr/s3-dist-cp/lib/s3-dist-cp.jar",
+        "arguments": [
+          "--src","s3n://cross-batch-test/wire/shredded/good/",
+          "--dest","s3://cross-batch-test/wire/archive/shredded/good/",
+          "--s3Endpoint","s3.amazonaws.com",
+          "--deleteOnSuccess"
+        ]
+      }
+    ],
+    "tags": [ ]
+  }
+}

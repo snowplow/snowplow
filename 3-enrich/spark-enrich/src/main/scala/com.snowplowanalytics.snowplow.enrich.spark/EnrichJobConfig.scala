@@ -33,6 +33,7 @@ import scopt._
 import common.ValidatedNelMessage
 import common.enrichments.EnrichmentRegistry
 import common.loaders.Loader
+
 import iglu.client.validation.ProcessingMessageMethods._
 
 sealed trait EnrichJobConfig {
@@ -43,6 +44,8 @@ sealed trait EnrichJobConfig {
   def enrichments: String
   def igluConfig: String
   def local: Boolean
+
+  def collector: Option[String]
 }
 
 private case class RawEnrichJobConfig(
@@ -53,7 +56,8 @@ private case class RawEnrichJobConfig(
   override val enrichments: String = "",
   override val igluConfig: String = "",
   override val local: Boolean = false,
-  etlTstamp: Long = 0L
+  etlTstamp: Long = 0L,
+  override val collector: Option[String] = None
 ) extends EnrichJobConfig
 
 /**
@@ -76,7 +80,8 @@ case class ParsedEnrichJobConfig(
   override val igluConfig: String,
   override val local: Boolean,
   etlTstamp: DateTime,
-  filesToCache: List[(URI, String)]
+  filesToCache: List[(URI, String)],
+  override val collector: Option[String]
 ) extends EnrichJobConfig
 
 object EnrichJobConfig {
@@ -106,6 +111,10 @@ object EnrichJobConfig {
     opt[Unit]("local").hidden()
       .action((_, c) => c.copy(local = true))
       .text("Whether to build a local enrichment registry")
+    opt[String]("collector").valueName("host:port")
+      .action((x, c) => c.copy(collector = Some(x)))
+      .text("Collector host and port")
+
     help("help").text("Prints this usage text")
   }
 
@@ -120,9 +129,12 @@ object EnrichJobConfig {
       .flatMap(RegistrySingleton.getEnrichmentRegistry(c.enrichments, c.local)(_))
     val loader = Loader.getLoader(c.inFormat)
       .fold(_.toProcessingMessage.failureNel, _.successNel)
-    (resolver |@| registry |@| loader) { (_, reg, _) =>
+    val collector = c.collector.map(Wire.extractCollector).sequenceU
+
+
+    (resolver |@| registry |@| loader |@| collector) { (_, reg, _, col) =>
         ParsedEnrichJobConfig(c.inFolder, c.inFormat, c.outFolder, c.badFolder,
-          c.enrichments, c.igluConfig, c.local, new DateTime(c.etlTstamp), filesToCache(reg))
+          c.enrichments, c.igluConfig, c.local, new DateTime(c.etlTstamp), filesToCache(reg), col.map(_.asString))
     }
   }
 
