@@ -286,7 +286,7 @@ class CollectorService(
   /**
    * Gets the IP from a RemoteAddress. If ipAsPartitionKey is false, a UUID will be generated.
    * @param remoteAddress Address extracted from an HTTP request
-   * @param ipPartitionKey Whether to use the ip as a partition key or a random UUID
+   * @param ipAsPartitionKey Whether to use the ip as a partition key or a random UUID
    * @return a tuple of ip (unknown if it couldn't be extracted) and partition key
    */
   def ipAndPartitionKey(
