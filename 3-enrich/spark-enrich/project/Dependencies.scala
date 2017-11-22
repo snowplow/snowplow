@@ -38,6 +38,7 @@ object Dependencies {
     val scopt            = "3.5.0"
     val commonEnrich     = "0.27.0"
     val igluClient       = "0.5.0"
+    val tracker          = "0.4.0"
     // Scala (test only)
     val specs2           = "2.3.13"
     // Thrift (test only)
@@ -51,6 +52,7 @@ object Dependencies {
     val elephantBird     = "com.twitter.elephantbird"  %  "elephant-bird-core"           % V.elephantBird
     val cloudWatchSdk    = "com.amazonaws"             % "aws-java-sdk-cloudwatch"       % V.awsSdk
     val emrSdk           = "com.amazonaws"             % "aws-java-sdk-emr"              % V.awsSdk
+
     // Scala
     val sparkCore        = "org.apache.spark"          %% "spark-core"                   % V.spark        % "provided"
     val sparkSQL         = "org.apache.spark"          %% "spark-sql"                    % V.spark        % "provided"
@@ -58,6 +60,7 @@ object Dependencies {
     val scopt            = "com.github.scopt"          %% "scopt"                        % V.scopt
     val commonEnrich     = "com.snowplowanalytics"     %% "snowplow-common-enrich"       % V.commonEnrich
     val igluClient       = "com.snowplowanalytics"     %% "iglu-scala-client"            % V.igluClient
+    val tracker          = "com.snowplowanalytics"     %% "snowplow-scala-tracker"       % V.tracker
     // Thrift
     val snowplowRawEvent = "com.snowplowanalytics"     % "snowplow-thrift-raw-event"     % V.snowplowRawEvent
     val collectorPayload = "com.snowplowanalytics"     % "collector-payload-1"           % V.collectorPayload

@@ -34,6 +34,7 @@ lazy val root = project.in(file("."))
       Dependencies.Libraries.scopt,
       Dependencies.Libraries.commonEnrich,
       Dependencies.Libraries.igluClient,
+      Dependencies.Libraries.tracker,
       // Scala (test only)
       Dependencies.Libraries.specs2,
       // Thrift (test only)
