@@ -1,9 +1,10 @@
 object Wire {
   case class EnrichJobStarted(
     jobflowId: String,
-    enrichVersion: String,
     taskId: String,
     runId: String,
-    rawSizes: List[Int]
+    enrichVersion: String,
+    rawSizes: List[Long],
+    enrichments: List[String]   // Iglu URI
   )
 }
