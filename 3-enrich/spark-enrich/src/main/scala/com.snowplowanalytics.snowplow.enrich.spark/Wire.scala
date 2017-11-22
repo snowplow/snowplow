@@ -1,4 +1,14 @@
+package com.snowplowanalytics.snowplow.enrich.spark
+
 object Wire {
+
+  case class Point(timestamp: Int, x: Long)
+
+  case class Performance(
+    memoryAllocated: List[Point],
+    memoryAvailable: List[Point]
+  )
+
   case class EnrichJobStarted(
     jobflowId: String,
     taskId: String,
@@ -21,6 +31,6 @@ object Wire {
     goodCount: Option[Long],
     badCount: Option[Long],
 
-    performance: Any
+    performance: Option[Performance]
   )
 }
