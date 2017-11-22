@@ -26,6 +26,7 @@ lazy val root = project.in(file("."))
       Dependencies.Libraries.hadoopLZO,
       Dependencies.Libraries.elephantBird,
       Dependencies.Libraries.cloudWatchSdk,
+      Dependencies.Libraries.emrSdk,
       // Scala
       Dependencies.Libraries.sparkCore,
       Dependencies.Libraries.sparkSQL,
