@@ -46,6 +46,7 @@ sealed trait EnrichJobConfig {
   def local: Boolean
 
   def collector: Option[String]
+  def jobName: Option[String]
 }
 
 private case class RawEnrichJobConfig(
@@ -57,7 +58,8 @@ private case class RawEnrichJobConfig(
   override val igluConfig: String = "",
   override val local: Boolean = false,
   etlTstamp: Long = 0L,
-  override val collector: Option[String] = None
+  override val collector: Option[String] = None,
+  override val jobName: Option[String] = None
 ) extends EnrichJobConfig
 
 /**
@@ -81,7 +83,8 @@ case class ParsedEnrichJobConfig(
   override val local: Boolean,
   etlTstamp: DateTime,
   filesToCache: List[(URI, String)],
-  override val collector: Option[String]
+  override val collector: Option[String],
+  override val jobName: Option[String]
 ) extends EnrichJobConfig
 
 object EnrichJobConfig {
@@ -114,6 +117,9 @@ object EnrichJobConfig {
     opt[String]("collector").valueName("host:port")
       .action((x, c) => c.copy(collector = Some(x)))
       .text("Collector host and port")
+    opt[String]("jobName").valueName("name")
+      .action((x, c) => c.copy(jobName = Some(x)))
+      .text("EMR Jobflow name")
 
     help("help").text("Prints this usage text")
   }
@@ -131,10 +137,9 @@ object EnrichJobConfig {
       .fold(_.toProcessingMessage.failureNel, _.successNel)
     val collector = c.collector.map(Wire.extractCollector).sequenceU
 
-
     (resolver |@| registry |@| loader |@| collector) { (_, reg, _, col) =>
         ParsedEnrichJobConfig(c.inFolder, c.inFormat, c.outFolder, c.badFolder,
-          c.enrichments, c.igluConfig, c.local, new DateTime(c.etlTstamp), filesToCache(reg), col.map(_.asString))
+          c.enrichments, c.igluConfig, c.local, new DateTime(c.etlTstamp), filesToCache(reg), col.map(_.asString), c.jobName)
     }
   }
 

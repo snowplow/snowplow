@@ -69,6 +69,7 @@ object BuildSettings {
   import sbtassembly.AssemblyPlugin.autoImport._
   lazy val sbtAssemblySettings = Seq(
     // Slightly cleaner jar name
+    test in assembly := {},
     assemblyJarName in assembly := { name.value + "-" + version.value + ".jar" },
     assemblyMergeStrategy in assembly := {
       case x if x.startsWith("META-INF") => MergeStrategy.discard

@@ -179,8 +179,9 @@ class EnrichJob(@transient val spark: SparkSession, args: Array[String]) extends
     enrichConfig.collector match {
       case None => ()
       case Some(col) =>
-        val wireClient = Wire.getClients(Wire.extractUnsafe(col))
-        wireClient.sendStarted()
+        println(s"WIRE: SENDING to $col")
+        val wireClient = Wire.getClients(Wire.extractUnsafe(col), enrichConfig.jobName.get)   // TODO: match
+        wireClient.sendStarted(enrichConfig.badFolder)
     }
 
     val input = getInputRDD(enrichConfig.inFormat, enrichConfig.inFolder)
