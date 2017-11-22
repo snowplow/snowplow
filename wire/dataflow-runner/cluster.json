@@ -17,7 +17,7 @@
       "keyName": "anton-engineering",
       "location": {
         "vpc": {
-          "subnetId": null
+          "subnetId": "subnet-40cb7037"
         }
       },
       "instances": {
