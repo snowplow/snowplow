@@ -30,6 +30,8 @@ object Dependencies {
     // Java
     val hadoopLZO        = "0.4.20"
     val elephantBird     = "4.14"
+    val awsSdk           = "1.11.233"
+
     // Scala
     val spark            = "2.2.0"
     val scalaz7          = "7.0.9"
@@ -47,6 +49,8 @@ object Dependencies {
     // Java
     val hadoopLZO        = "com.hadoop.gplcompression" %  "hadoop-lzo"                   % V.hadoopLZO
     val elephantBird     = "com.twitter.elephantbird"  %  "elephant-bird-core"           % V.elephantBird
+    val cloudWatchSdk    = "com.amazonaws"             % "aws-java-sdk-cloudwatch"       % V.awsSdk
+    val emrSdk           = "com.amazonaws"             % "aws-java-sdk-emr"              % V.awsSdk
     // Scala
     val sparkCore        = "org.apache.spark"          %% "spark-core"                   % V.spark        % "provided"
     val sparkSQL         = "org.apache.spark"          %% "spark-sql"                    % V.spark        % "provided"
