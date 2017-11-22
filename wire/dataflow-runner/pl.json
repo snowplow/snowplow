@@ -1,0 +1,18 @@
+
+      {
+        "type": "CUSTOM_JAR",
+        "name": "Spark enrich",
+        "actionOnFailure": "CANCEL_AND_WAIT",
+        "jar": "s3://cross-batch-test/3-enrich/spark-enrich/snowplow-spark-enrich-1.11.0-rc1.jar",
+        "arguments": [
+          "com.snowplowanalytics.snowplow.enrich.spark",
+          "--hdfs",
+          "--iglu_config",
+          "{{.resolver}}",
+          "--input_folder","s3n://cross-batch-test/wire/enriched/good/run={{"{{timeWithFormat .epochTime \"2006-01-02-15-04-05\"}}"}}/",
+          "--output_folder","s3n://cross-batch-test/wire/shredded/good/run={{"{{timeWithFormat .epochTime \"2006-01-02-15-04-05\"}}"}}/",
+          "--bad_rows_folder","s3n://cross-batch-test//shredded/bad/run={{"{{timeWithFormat .epochTime \"2006-01-02-15-04-05\"}}"}}/"
+        ]
+      }
+
+
