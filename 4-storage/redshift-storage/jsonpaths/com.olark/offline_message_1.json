@@ -1,0 +1,33 @@
+{
+    "jsonpaths": [
+        "$.schema.vendor",
+        "$.schema.name",
+        "$.schema.format",
+        "$.schema.version",
+        "$.hierarchy.rootId",
+        "$.hierarchy.rootTstamp",
+        "$.hierarchy.refRoot",
+        "$.hierarchy.refTree",
+        "$.hierarchy.refParent",
+        "$.data.data.groups",
+        "$.data.data.id",
+        "$.data.data.items",
+        "$.data.data.kind",
+        "$.data.data.visitor.browser",
+        "$.data.data.visitor.city",
+        "$.data.data.visitor.country",
+        "$.data.data.visitor.countryCode",
+        "$.data.data.visitor.customFields.favoriteColor",
+        "$.data.data.visitor.customFields.myInternalCustomerId",
+        "$.data.data.visitor.emailAddress",
+        "$.data.data.visitor.fullName",
+        "$.data.data.visitor.id",
+        "$.data.data.visitor.ip",
+        "$.data.data.visitor.kind",
+        "$.data.data.visitor.operatingSystem",
+        "$.data.data.visitor.organization",
+        "$.data.data.visitor.phoneNumber",
+        "$.data.data.visitor.region",
+        "$.data.schema"
+    ]
+}
