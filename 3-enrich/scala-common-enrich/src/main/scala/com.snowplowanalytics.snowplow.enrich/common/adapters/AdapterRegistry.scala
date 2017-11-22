@@ -10,7 +10,7 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics 
+package com.snowplowanalytics
 package snowplow
 package enrich
 package common
@@ -34,6 +34,7 @@ import registry.{
   CallrailAdapter,
   MailchimpAdapter,
   MandrillAdapter,
+  MixpanelAdapter,
   PagerdutyAdapter,
   PingdomAdapter,
   UrbanAirshipAdapter,
@@ -53,6 +54,7 @@ object AdapterRegistry {
     val Callrail   = "com.callrail"
     val Mailchimp  = "com.mailchimp"
     val Mandrill   = "com.mandrill"
+    val Mixpanel   = "com.mixpanel"
     val Pagerduty  = "com.pagerduty"
     val Pingdom    = "com.pingdom"
     val Cloudfront = "com.amazon.aws.cloudfront"
@@ -81,6 +83,7 @@ object AdapterRegistry {
     case (Vendor.Callrail,     "v1")  => CallrailAdapter.toRawEvents(payload)
     case (Vendor.Mailchimp,    "v1")  => MailchimpAdapter.toRawEvents(payload)
     case (Vendor.Mandrill,     "v1")  => MandrillAdapter.toRawEvents(payload)
+    case (Vendor.Mixpanel,     "v1")  => MixpanelAdapter.toRawEvents(payload)
     case (Vendor.Pagerduty,    "v1")  => PagerdutyAdapter.toRawEvents(payload)
     case (Vendor.Pingdom,      "v1")  => PingdomAdapter.toRawEvents(payload)
     case (Vendor.Cloudfront,   "wd_access_log") => CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(payload)
