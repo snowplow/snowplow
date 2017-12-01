@@ -300,9 +300,12 @@ module Snowplow
           ].select { |el|
             is_cloudfront_log(collector_format) || is_ua_ndjson(collector_format)
           }
+          # uncompress events that are gzipped since this format is unsplittable and causes issues
+          # downstream in the spark enrich job snowplow/snowplow#3525
+          if collector_format == "clj-tomcat" then
+            compact_to_hdfs_step.arguments << "--outputCodec" << "none"
+          end
           compact_to_hdfs_step.name << ": Raw S3 -> Raw HDFS"
-
-          # Add to our jobflow
           @jobflow.add_step(compact_to_hdfs_step)
 
           # 2. Enrichment
