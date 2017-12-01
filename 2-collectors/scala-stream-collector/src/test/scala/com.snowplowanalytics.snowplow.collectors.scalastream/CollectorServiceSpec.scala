@@ -205,8 +205,8 @@ class CollectorServiceSpec extends Specification {
       }*/
       "the redirect url should not support a cookie replacement macro on redirect if not enabled" in {
         event.networkUserId = "1234"
-        val (res, Nil) = service.buildRedirectHttpResponse(event, "k", Map("u" -> "http://localhost/?uid=${SP_UUID}"))
-        res shouldEqual HttpResponse(302).withHeaders(`Location`("http://localhost/?uid=${SP_UUID}"))
+        val (res, Nil) = service.buildRedirectHttpResponse(event, "k", Map("u" -> "http://localhost/?uid=${SP_NUID}"))
+        res shouldEqual HttpResponse(302).withHeaders(`Location`("http://localhost/?uid=${SP_NUID}"))
       }
       "the redirect url should support a cookie replacement macro on redirect if enabled" in {
         val redirectService = new CollectorService(
@@ -214,7 +214,7 @@ class CollectorServiceSpec extends Specification {
           CollectorSinks(new TestSink, new TestSink)
         )
         event.networkUserId = "1234"
-        val (res, Nil) = redirectService.buildRedirectHttpResponse(event, "k", Map("u" -> "http://localhost/?uid=${SP_UUID}"))
+        val (res, Nil) = redirectService.buildRedirectHttpResponse(event, "k", Map("u" -> "http://localhost/?uid=${SP_NUID}"))
         res shouldEqual HttpResponse(302).withHeaders(`Location`("http://localhost/?uid=1234"))
       }
       "the redirect url should allow for custom token placeholders" in {

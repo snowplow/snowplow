@@ -237,7 +237,7 @@ class CollectorService(
     queryParams.get("u") match {
       case Some(target) =>
         val canReplace = config.redirectMacro.enabled && event.isSetNetworkUserId
-        val token = config.redirectMacro.placeholder.getOrElse("${SP_UUID}")
+        val token = config.redirectMacro.placeholder.getOrElse("${SP_NUID}")
         val replacedTarget = if (canReplace) target.replaceAllLiterally(token, event.networkUserId) else target
         (HttpResponse(StatusCodes.Found).withHeaders(`Location`(replacedTarget)), Nil)
       case None =>
