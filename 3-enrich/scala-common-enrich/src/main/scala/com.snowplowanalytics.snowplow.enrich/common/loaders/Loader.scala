@@ -33,7 +33,7 @@ import Scalaz._
  */
 object Loader {
 
-  private val TsvRegex = "^tsv/(.*)$".r
+  private val TsvRegex    = "^tsv/(.*)$".r
   private val NdjsonRegex = "^ndjson/(.*)$".r
 
   /**
@@ -63,11 +63,11 @@ object Loader {
  * abstract base class.
  */
 abstract class Loader[T] {
-  
+
   import CollectorPayload._
 
   /**
-   * Converts the source string into a 
+   * Converts the source string into a
    * CanonicalInput.
    *
    * TODO: need to change this to
@@ -85,7 +85,7 @@ abstract class Loader[T] {
    * Converts a querystring String
    * into a non-empty list of NameValuePairs.
    *
-   * Returns a non-empty list of 
+   * Returns a non-empty list of
    * NameValuePairs on Success, or a Failure
    * String.
    *

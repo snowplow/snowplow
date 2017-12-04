@@ -32,10 +32,7 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods
 
 // Iglu
-import iglu.client.{
-  SchemaCriterion,
-  SchemaKey
-}
+import iglu.client.{SchemaCriterion, SchemaKey}
 import iglu.client.validation.ProcessingMessageMethods._
 
 // This project
@@ -56,15 +53,14 @@ object EventFingerprintEnrichmentConfig extends ParseableEnrichment {
    *        Must be a supported SchemaKey for this enrichment
    * @return a configured EventFingerprintEnrichment instance
    */
-  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[EventFingerprintEnrichment] = {
-    isParseable(config, schemaKey).flatMap( conf => {
+  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[EventFingerprintEnrichment] =
+    isParseable(config, schemaKey).flatMap(conf => {
       (for {
         excludedParameters <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "excludeParameters")
         algorithmName      <- ScalazJson4sUtils.extract[String](config, "parameters", "hashAlgorithm")
         algorithm          <- getAlgorithm(algorithmName)
       } yield EventFingerprintEnrichment(algorithm, excludedParameters)).toValidationNel
     })
-  }
 
   /**
    * Look up the fingerprinting algorithm by name
@@ -102,14 +98,15 @@ case class EventFingerprintEnrichment(algorithm: String => String, excludedParam
    * @return Event fingerprint
    */
   def getEventFingerprint(parameterMap: Map[String, String]): String = {
-     val builder = new StringBuilder
-     parameterMap.toList.sortWith(_._1 < _._1).foreach {
-      case (key, value) => if (! excludedParameters.contains(key)) {
-        builder.append(key)
-        builder.append(EventFingerprintEnrichment.UnitSeparator)
-        builder.append(value)
-        builder.append(EventFingerprintEnrichment.UnitSeparator)
-      }
+    val builder = new StringBuilder
+    parameterMap.toList.sortWith(_._1 < _._1).foreach {
+      case (key, value) =>
+        if (!excludedParameters.contains(key)) {
+          builder.append(key)
+          builder.append(EventFingerprintEnrichment.UnitSeparator)
+          builder.append(value)
+          builder.append(EventFingerprintEnrichment.UnitSeparator)
+        }
     }
     algorithm(builder.toString)
   }

@@ -20,7 +20,6 @@ package registry
 // Maven Artifact
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion
 
-
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -29,40 +28,36 @@ import Scalaz._
 import org.json4s.JValue
 
 // Iglu
-import iglu.client.{
-  SchemaCriterion,
-  SchemaKey
-}
+import iglu.client.{SchemaCriterion, SchemaKey}
 import iglu.client.validation.ProcessingMessageMethods._
 
 // This project
 import utils.ScalazJson4sUtils
 
 /**
-* Companion object. Lets us create a AnonIpEnrichment
-* from a JValue.
-*/
+ * Companion object. Lets us create a AnonIpEnrichment
+ * from a JValue.
+ */
 object AnonIpEnrichment extends ParseableEnrichment {
 
   val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "anon_ip", "jsonschema", 1, 0)
 
   /**
    * Creates an AnonIpEnrichment instance from a JValue.
-   * 
+   *
    * @param config The anon_ip enrichment JSON
    * @param schemaKey The SchemaKey provided for the enrichment
-   *        Must be a supported SchemaKey for this enrichment   
+   *        Must be a supported SchemaKey for this enrichment
    * @return a configured AnonIpEnrichment instance
    */
-  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[AnonIpEnrichment] = {
-    isParseable(config, schemaKey).flatMap( conf => {
+  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[AnonIpEnrichment] =
+    isParseable(config, schemaKey).flatMap(conf => {
       (for {
         param  <- ScalazJson4sUtils.extract[Int](config, "parameters", "anonOctets")
         octets <- AnonOctets.fromInt(param)
-        enrich =  AnonIpEnrichment(octets)
+        enrich = AnonIpEnrichment(octets)
       } yield enrich).toValidationNel
     })
-  }
 
 }
 
@@ -72,7 +67,7 @@ object AnonIpEnrichment extends ParseableEnrichment {
 object AnonOctets extends Enumeration {
 
   type AnonOctets = Value
-  
+
   val One   = Value(1, "1")
   val Two   = Value(2, "2")
   val Three = Value(3, "3")
@@ -91,13 +86,12 @@ object AnonOctets extends Enumeration {
    *        octets to anonymize
    * @return a Validation-boxed AnonOctets
    */
-  def fromInt(anonOctets: Int): ValidatedMessage[AnonOctets] = {
+  def fromInt(anonOctets: Int): ValidatedMessage[AnonOctets] =
     try {
       AnonOctets(anonOctets).success
     } catch {
       case nse: NoSuchElementException => "IP address octets to anonymize must be 1, 2, 3 or 4".toProcessingMessage.fail
     }
-  }
 }
 
 /**
@@ -107,7 +101,7 @@ object AnonOctets extends Enumeration {
  */
 case class AnonIpEnrichment(
   octets: AnonOctets.AnonOctets
-  ) extends Enrichment {
+) extends Enrichment {
 
   /**
    * Anonymize the supplied IP address.
@@ -131,9 +125,14 @@ case class AnonIpEnrichment(
    */
   import AnonOctets._
   def anonymizeIp(ip: String): String =
-    Option(ip).map(_.split("\\.").zipWithIndex.map{
-      case (q, i) => {
-        if (octets.id >= All.id - i) "x" else q
-      }
-    }.mkString(".")).orNull
+    Option(ip)
+      .map(
+        _.split("\\.").zipWithIndex
+          .map {
+            case (q, i) => {
+              if (octets.id >= All.id - i) "x" else q
+            }
+          }
+          .mkString("."))
+      .orNull
 }
