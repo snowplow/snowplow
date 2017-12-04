@@ -52,12 +52,13 @@ object Tp1Adapter extends Adapter {
     if (params.isEmpty) {
       "Querystring is empty: no raw event to process".failNel
     } else {
-      NonEmptyList(RawEvent(
-        api          = payload.api,
-        parameters   = params,
-        contentType  = payload.contentType,
-        source       = payload.source,
-        context      = payload.context
+      NonEmptyList(
+        RawEvent(
+          api         = payload.api,
+          parameters  = params,
+          contentType = payload.contentType,
+          source      = payload.source,
+          context     = payload.context
         )).success
     }
   }

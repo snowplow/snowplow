@@ -30,7 +30,7 @@ import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods.fromJsonNode
 
 // Iglu
-import com.snowplowanalytics.iglu.client.{ SchemaKey, SchemaCriterion }
+import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
 
 // This project
 import outputs.EnrichedEvent
@@ -41,7 +41,8 @@ import utils.ScalazJson4sUtils
  */
 object SqlQueryEnrichmentConfig extends ParseableEnrichment {
 
-  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow.enrichments", "sql_query_enrichment_config", "jsonschema", 1, 0, 0)
+  val supportedSchema =
+    SchemaCriterion("com.snowplowanalytics.snowplow.enrichments", "sql_query_enrichment_config", "jsonschema", 1, 0, 0)
 
   /**
    * Creates an SqlQueryEnrichment instance from a JValue.
@@ -51,8 +52,8 @@ object SqlQueryEnrichmentConfig extends ParseableEnrichment {
    *        Must be a supported SchemaKey for this enrichment
    * @return a configured SqlQueryEnrichment instance
    */
-  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[SqlQueryEnrichment] = {
-    isParseable(config, schemaKey).flatMap( conf => {
+  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[SqlQueryEnrichment] =
+    isParseable(config, schemaKey).flatMap(conf => {
       (for {
         inputs <- ScalazJson4sUtils.extract[List[Input]](config, "parameters", "inputs")
         db     <- ScalazJson4sUtils.extract[Db](config, "parameters", "database")
@@ -61,15 +62,10 @@ object SqlQueryEnrichmentConfig extends ParseableEnrichment {
         cache  <- ScalazJson4sUtils.extract[Cache](config, "parameters", "cache")
       } yield SqlQueryEnrichment(inputs, db, query, output, cache)).toValidationNel
     })
-  }
 }
 
-case class SqlQueryEnrichment(
-  inputs: List[Input],
-  db: Db,
-  query: Query,
-  output: Output,
-  cache: Cache) extends Enrichment {
+case class SqlQueryEnrichment(inputs: List[Input], db: Db, query: Query, output: Output, cache: Cache)
+    extends Enrichment {
 
   import SqlQueryEnrichment._
 
@@ -92,12 +88,13 @@ case class SqlQueryEnrichment(
   ): ValidationNel[String, List[JObject]] = {
 
     val jsonCustomContexts = transformRawPairs(customContexts)
-    val jsonUnstructEvent = transformRawPairs(unstructEvent).headOption
+    val jsonUnstructEvent  = transformRawPairs(unstructEvent).headOption
 
-    val placeholderMap: Validated[Input.PlaceholderMap] = Input
-      .buildPlaceholderMap(inputs, event, derivedContexts, jsonCustomContexts, jsonUnstructEvent)
-      .flatMap(allPlaceholdersFilled)
-      .leftMap(_.map(_.toString))
+    val placeholderMap: Validated[Input.PlaceholderMap] =
+      Input
+        .buildPlaceholderMap(inputs, event, derivedContexts, jsonCustomContexts, jsonUnstructEvent)
+        .flatMap(allPlaceholdersFilled)
+        .leftMap(_.map(_.toString))
 
     placeholderMap match {
       case Success(Some(intMap)) => get(intMap).leftMap(_.toString).validation.toValidationNel
@@ -121,7 +118,6 @@ case class SqlQueryEnrichment(
         cache.put(intMap, result)
         result
     }
-
 
   /**
    * Perform SQL query and convert result to JSON object
@@ -149,7 +145,7 @@ case class SqlQueryEnrichment(
     getPlaceholderCount.map { placeholderCount =>
       placeholderMap match {
         case Some(intMap) if intMap.keys.size == placeholderCount => Some(intMap)
-        case _ => None
+        case _                                                    => None
       }
     }
 
@@ -191,12 +187,13 @@ object SqlQueryEnrichment {
    * @return list of regular JObjects
    */
   def transformRawPairs(pairs: JsonSchemaPairs): List[JObject] =
-    pairs.flatMap { case (schema, node) =>
-      val uri = schema.toSchemaUri
-      val data = fromJsonNode(node)
-      data \ "data" match {
-        case JNothing => Nil
-        case json => (("schema" -> uri) ~ ("data" -> json): JObject) :: Nil
-      }
+    pairs.flatMap {
+      case (schema, node) =>
+        val uri  = schema.toSchemaUri
+        val data = fromJsonNode(node)
+        data \ "data" match {
+          case JNothing => Nil
+          case json     => (("schema" -> uri) ~ ("data" -> json): JObject) :: Nil
+        }
     }
 }

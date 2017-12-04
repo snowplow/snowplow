@@ -59,7 +59,7 @@ case class Input(placeholder: Int, pojo: Option[PojoInput], json: Option[JsonInp
   // but it won't give user meaningful error message
   val validatedJsonPath = json.map(_.jsonPath).map(compileQuery) match {
     case Some(compiledQuery) => compiledQuery
-    case None => "No JSON Input with JSONPath was given".failure
+    case None                => "No JSON Input with JSONPath was given".failure
   }
 
   /**
@@ -70,16 +70,19 @@ case class Input(placeholder: Int, pojo: Option[PojoInput], json: Option[JsonInp
    *         to be set on [[PreparedStatement]]
    */
   def getFromEvent(event: EnrichedEvent): ValidationNel[Throwable, (Int, Option[ExtractedValue])] = pojo match {
-    case Some(pojoInput) => getFieldType(pojoInput.field) match {
-      case Some(placeholderType) => try {
-        val anyRef = event.getClass.getMethod(pojoInput.field).invoke(event)
-        val option = Option(anyRef.asInstanceOf[placeholderType.PlaceholderType])
-        (placeholder, option.map(placeholderType.Value.apply)).successNel
-      } catch {
-        case NonFatal(e) => InvalidInput("SQL Query Enrichment: Extracting from POJO failed: " + e.toString).failureNel
+    case Some(pojoInput) =>
+      getFieldType(pojoInput.field) match {
+        case Some(placeholderType) =>
+          try {
+            val anyRef = event.getClass.getMethod(pojoInput.field).invoke(event)
+            val option = Option(anyRef.asInstanceOf[placeholderType.PlaceholderType])
+            (placeholder, option.map(placeholderType.Value.apply)).successNel
+          } catch {
+            case NonFatal(e) =>
+              InvalidInput("SQL Query Enrichment: Extracting from POJO failed: " + e.toString).failureNel
+          }
+        case None => InvalidInput("SQL Query Enrichment: Wrong POJO input field was specified").failureNel
       }
-      case None => InvalidInput("SQL Query Enrichment: Wrong POJO input field was specified").failureNel
-    }
 
     case None => (placeholder, none).successNel
   }
@@ -93,11 +96,13 @@ case class Input(placeholder: Int, pojo: Option[PojoInput], json: Option[JsonInp
    * @return validated pair of placeholder's postition and extracted value ready
    *         to be setted on [[PreparedStatement]]
    */
-  def getFromJson(derived: List[JObject], custom: List[JObject], unstruct: Option[JObject]): ValidationNel[Throwable, (Int, Option[ExtractedValue])] =
+  def getFromJson(derived: List[JObject],
+                  custom: List[JObject],
+                  unstruct: Option[JObject]): ValidationNel[Throwable, (Int, Option[ExtractedValue])] =
     json match {
-      case Some(jsonInput) => jsonInput.extract(derived, custom, unstruct)
-                                       .map(json => (placeholder, json.flatMap(extractFromJson)))
-      case None            => (placeholder, none).successNel
+      case Some(jsonInput) =>
+        jsonInput.extract(derived, custom, unstruct).map(json => (placeholder, json.flatMap(extractFromJson)))
+      case None => (placeholder, none).successNel
     }
 }
 
@@ -128,18 +133,22 @@ case class JsonInput(field: String, schemaCriterion: String, jsonPath: String) {
    *         failure means fatal error which should abort enrichment
    *         none means not-found value
    */
-  def extract(derived: List[JObject], custom: List[JObject], unstruct: Option[JObject]): ValidationNel[Throwable, Option[JValue]] = {
+  def extract(derived: List[JObject],
+              custom: List[JObject],
+              unstruct: Option[JObject]): ValidationNel[Throwable, Option[JValue]] = {
     val validatedJson = field match {
       case "derived_contexts" => getBySchemaCriterion(derived, schemaCriterion).successNel
       case "contexts"         => getBySchemaCriterion(custom, schemaCriterion).successNel
       case "unstruct_event"   => getBySchemaCriterion(unstruct.toList, schemaCriterion).successNel
-      case other => InvalidInput(s"SQL Query Enrichment: wrong field [$other] passed to Input.getFromJson. " +
-                                  "Should be one of: derived_contexts, contexts, unstruct_event").failureNel
+      case other =>
+        InvalidInput(
+          s"SQL Query Enrichment: wrong field [$other] passed to Input.getFromJson. " +
+            "Should be one of: derived_contexts, contexts, unstruct_event").failureNel
     }
 
     val validatedJsonPath: Validation[Throwable, JsonPath] = compileQuery(jsonPath) match {
       case Success(compiledQuery) => compiledQuery.success
-      case Failure(error) => new Exception(error).failure
+      case Failure(error)         => new Exception(error).failure
     }
 
     (validatedJsonPath.toValidationNel |@| validatedJson) { (jsonPath, validJson) =>
@@ -156,14 +165,14 @@ case class JsonInput(field: String, schemaCriterion: String, jsonPath: String) {
  */
 object Input {
 
-  private val criterionRegex = "^(iglu:[a-zA-Z0-9-_.]+/[a-zA-Z0-9-_]+/[a-zA-Z0-9-_]+/)([1-9][0-9]*|\\*)-((?:0|[1-9][0-9]*)|\\*)-((?:0|[1-9][0-9]*)|\\*)$".r
+  private val criterionRegex =
+    "^(iglu:[a-zA-Z0-9-_.]+/[a-zA-Z0-9-_]+/[a-zA-Z0-9-_]+/)([1-9][0-9]*|\\*)-((?:0|[1-9][0-9]*)|\\*)-((?:0|[1-9][0-9]*)|\\*)$".r
 
   /**
    * Map all properties inside [[EnrichedEvent]] to textual representations of their types
    * It is dynamically configured *once*, when job has started
    */
-  val eventTypeMap = classOf[EnrichedEvent]
-    .getDeclaredFields
+  val eventTypeMap = classOf[EnrichedEvent].getDeclaredFields
     .map(_.toString.split(' ').toList)
     .collect { case List(_, propertyType, name) => (name.split('.').last, propertyType) }
     .toMap
@@ -177,12 +186,11 @@ object Input {
     "java.lang.Integer" -> IntPlaceholder,
     "java.lang.Byte"    -> BytePlaceholder,
     "java.lang.Float"   -> FloatPlaceholder,
-
     // Just in case
-    "String"            -> StringPlaceholder,
-    "scala.Int"         -> IntPlaceholder,
-    "scala.Double"      -> DoublePlaceholder,
-    "scala.Boolean"     -> BooleanPlaceholder
+    "String"        -> StringPlaceholder,
+    "scala.Int"     -> IntPlaceholder,
+    "scala.Double"  -> DoublePlaceholder,
+    "scala.Boolean" -> BooleanPlaceholder
   )
 
   /**
@@ -208,17 +216,16 @@ object Input {
    * @param schemaCriterion part of URI
    * @return first (optional) self-desc JSON matched `schemaCriterion`
    */
-  def getBySchemaCriterion(contexts: List[JObject], schemaCriterion: String): Option[JValue] = {
+  def getBySchemaCriterion(contexts: List[JObject], schemaCriterion: String): Option[JValue] =
     criterionMatch(schemaCriterion).flatMap { criterion =>
       val matched = contexts.filter { context =>
         context.obj.exists {
           case ("schema", JString(schema)) => schema.startsWith(criterion)
-          case _ => false
+          case _                           => false
         }
       }
       matched.map(_ \ "data").headOption
     }
-  }
 
   /**
    * Transform Schema Criterion to plain string without asterisks
@@ -226,15 +233,14 @@ object Input {
    * @param schemaCriterion schema criterion of format "iglu:vendor/name/schematype/1-*-*"
    * @return schema criterion of format iglu:vendor/name/schematype/1-
    */
-  private def criterionMatch(schemaCriterion: String): Option[String] = {
+  private def criterionMatch(schemaCriterion: String): Option[String] =
     schemaCriterion match {
-      case criterionRegex(schema, "*", _, _) => s"$schema".some
-      case criterionRegex(schema, m, "*", _) => s"$schema$m-".some
+      case criterionRegex(schema, "*", _, _)   => s"$schema".some
+      case criterionRegex(schema, m, "*", _)   => s"$schema$m-".some
       case criterionRegex(schema, m, rev, "*") => s"$schema$m-$rev-".some
       case criterionRegex(schema, m, rev, add) => s"$schema$m-$rev-$add".some
-      case _ => None
+      case _                                   => None
     }
-  }
 
   /**
    * Build [[IntMap]] with all sequental input values
@@ -249,26 +255,24 @@ object Input {
    * @return IntMap if all input values were extracted without error,
    *         non-empty list of errors otherwise
    */
-  def buildPlaceholderMap(
-    inputs: List[Input],
-    event: EnrichedEvent,
-    derivedContexts: List[JObject],
-    customContexts: List[JObject],
-    unstructEvent: Option[JObject]): ValidationNel[Throwable, PlaceholderMap] = {
+  def buildPlaceholderMap(inputs: List[Input],
+                          event: EnrichedEvent,
+                          derivedContexts: List[JObject],
+                          customContexts: List[JObject],
+                          unstructEvent: Option[JObject]): ValidationNel[Throwable, PlaceholderMap] = {
 
     val eventInputs = inputs.map(_.getFromEvent(event))
-    val jsonInputs = inputs.map(_.getFromJson(derivedContexts, customContexts, unstructEvent))
+    val jsonInputs  = inputs.map(_.getFromJson(derivedContexts, customContexts, unstructEvent))
 
-    val pairs = (eventInputs ++ jsonInputs)
-      .sequenceU
+    val pairs = (eventInputs ++ jsonInputs).sequenceU
       .asInstanceOf[ValidationNel[Throwable, List[(Int, Option[ExtractedValue])]]]
       .map(_.collect { case (position, Some(value)) => (position, value) })
 
     // Fail if some indexes are missing
     pairs.map(list => IntMap(list: _*)) match {
       case Success(map) if isConsistent(map) => Some(map).successNel
-      case Success(map) => None.success
-      case Failure(err) => err.failure
+      case Success(map)                      => None.success
+      case Failure(err)                      => err.failure
     }
   }
 
@@ -281,8 +285,9 @@ object Input {
    */
   def isConsistent[V](intMap: IntMap[V]): Boolean = {
     val sortedKeys = intMap.keys.toList.sorted
-    val (_, result) = sortedKeys.foldLeft((0, true)) { case ((prev, accum), cur) =>
-      (cur, prev.succ == cur && accum)
+    val (_, result) = sortedKeys.foldLeft((0, true)) {
+      case ((prev, accum), cur) =>
+        (cur, prev.succ == cur && accum)
     }
     result && sortedKeys.headOption.map(_ == 1).getOrElse(true)
   }
@@ -304,12 +309,12 @@ object Input {
    *         or None if it is object, array, null or JNothing
    */
   def extractFromJson(json: JValue): Option[ExtractedValue] = json match {
-    case JString(s) => Some(StringPlaceholder.Value(s))
-    case JBool(b)   => Some(BooleanPlaceholder.Value(b))
-    case JInt(int)  if int <= Int.MaxValue && int >= Int.MinValue => Some(IntPlaceholder.Value(int.toInt))
-    case JInt(long) => Some(LongPlaceholder.Value(long.toLong))
-    case JDouble(d) => Some(DoublePlaceholder.Value(d))
-    case _          => None // Objects, Arrays and nulls are invalid ("not-found") values
+    case JString(s)                                              => Some(StringPlaceholder.Value(s))
+    case JBool(b)                                                => Some(BooleanPlaceholder.Value(b))
+    case JInt(int) if int <= Int.MaxValue && int >= Int.MinValue => Some(IntPlaceholder.Value(int.toInt))
+    case JInt(long)                                              => Some(LongPlaceholder.Value(long.toLong))
+    case JDouble(d)                                              => Some(DoublePlaceholder.Value(d))
+    case _                                                       => None // Objects, Arrays and nulls are invalid ("not-found") values
     // In API Request Enrichment null is valid value
   }
 

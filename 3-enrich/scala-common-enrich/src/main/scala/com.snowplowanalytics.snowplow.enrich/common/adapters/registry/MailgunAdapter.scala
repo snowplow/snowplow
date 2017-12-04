@@ -39,10 +39,7 @@ import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
 // Iglu
-import iglu.client.{
-  SchemaKey,
-  Resolver
-}
+import iglu.client.{Resolver, SchemaKey}
 
 // This project
 import loaders.CollectorPayload
@@ -62,11 +59,11 @@ object MailgunAdapter extends Adapter {
   private val TrackerVersion = "com.mailgun-v1"
 
   // Expected content type for a request body
-  private val ContentTypes = List("application/x-www-form-urlencoded", "multipart/form-data")
+  private val ContentTypes    = List("application/x-www-form-urlencoded", "multipart/form-data")
   private val ContentTypesStr = ContentTypes.mkString(" or ")
 
   // Schemas for reverse-engineering a Snowplow unstructured event
-  private val EventSchemaMap = Map (
+  private val EventSchemaMap = Map(
     "bounced"      -> SchemaKey("com.mailgun", "message_bounced", "jsonschema", "1-0-0").toSchemaUri,
     "clicked"      -> SchemaKey("com.mailgun", "message_clicked", "jsonschema", "1-0-0").toSchemaUri,
     "complained"   -> SchemaKey("com.mailgun", "message_complained", "jsonschema", "1-0-0").toSchemaUri,
@@ -90,65 +87,89 @@ object MailgunAdapter extends Adapter {
    * @return a Validation boxing either a NEL of RawEvents on
    *         Success, or a NEL of Failure Strings
    */
-def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = {
+  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
     (payload.body, payload.contentType) match {
-      case (None, _)                                                => s"Request body is empty: no ${VendorName} events to process".failureNel
-      case (_, None)                                                => s"Request body provided but content type empty, expected ${ContentTypesStr} for ${VendorName}".failureNel
-      case (_, Some(ct)) if !ContentTypes.exists(ct.startsWith(_))  => s"Content type of ${ct} provided, expected ${ContentTypesStr} for ${VendorName}".failureNel
-      case (Some(body), _) if (body.isEmpty)                        => s"${VendorName} event body is empty: nothing to process".failureNel
-      case (Some(body), Some(ct))                                   => {
+      case (None, _) => s"Request body is empty: no ${VendorName} events to process".failureNel
+      case (_, None) =>
+        s"Request body provided but content type empty, expected ${ContentTypesStr} for ${VendorName}".failureNel
+      case (_, Some(ct)) if !ContentTypes.exists(ct.startsWith(_)) =>
+        s"Content type of ${ct} provided, expected ${ContentTypesStr} for ${VendorName}".failureNel
+      case (Some(body), _) if (body.isEmpty) => s"${VendorName} event body is empty: nothing to process".failureNel
+      case (Some(body), Some(ct)) => {
         val params = toMap(payload.querystring)
         Try {
           getBoundary(ct)
             .map(parseMultipartForm(body, _))
             .getOrElse(toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), "UTF-8").toList))
         } match {
-          case TF(e) =>s"${VendorName}Adapter could not parse body: [${JU.stripInstanceEtc(e.getMessage).orNull}]".failureNel
-          case TS(bodyMap) => bodyMap.get("event").map {
-           case eventType => for {
-             schemaUri <- lookupSchema(eventType.some, VendorName, EventSchemaMap)
-             event <-  payloadBodyToEvent(bodyMap)
-             mEvent <- mutateMailgunEvent(event)
-           } yield NonEmptyList(RawEvent(
-               api = payload.api,
-               parameters = toUnstructEventParams(TrackerVersion, params, schemaUri, cleanupJsonEventValues(
-                 mEvent,
-                 ("event", eventType).some, "timestamp"), "srv"),
-               contentType = payload.contentType,
-               source = payload.source,
-               context = payload.context))
-          }.getOrElse(s"No ${VendorName} event parameter provided: cannot determine event type".failureNel)
+          case TF(e) =>
+            s"${VendorName}Adapter could not parse body: [${JU.stripInstanceEtc(e.getMessage).orNull}]".failureNel
+          case TS(bodyMap) =>
+            bodyMap
+              .get("event")
+              .map {
+                case eventType =>
+                  for {
+                    schemaUri <- lookupSchema(eventType.some, VendorName, EventSchemaMap)
+                    event     <- payloadBodyToEvent(bodyMap)
+                    mEvent    <- mutateMailgunEvent(event)
+                  } yield
+                    NonEmptyList(
+                      RawEvent(
+                        api = payload.api,
+                        parameters =
+                          toUnstructEventParams(TrackerVersion,
+                                                params,
+                                                schemaUri,
+                                                cleanupJsonEventValues(mEvent, ("event", eventType).some, "timestamp"),
+                                                "srv"),
+                        contentType = payload.contentType,
+                        source      = payload.source,
+                        context     = payload.context
+                      ))
+              }
+              .getOrElse(s"No ${VendorName} event parameter provided: cannot determine event type".failureNel)
         }
       }
     }
-  }
- /**
-  * Adds, removes and converts input fields to output fields
-  *
-  * @param json parsed event fields as a JValue
-  * @return The mutated event.
-  */
+
+  /**
+   * Adds, removes and converts input fields to output fields
+   *
+   * @param json parsed event fields as a JValue
+   * @return The mutated event.
+   */
   private def mutateMailgunEvent(json: JValue): Validated[JValue] = {
     val jsonCamelCase: JValue = camelize(json)
-    val dropFields: JObject = jsonCamelCase.filterField({case (name: String, _) => !(name == "bodyPlain" || name == "attachmentCount")})
-    Try {(jsonCamelCase \ "attachmentCount").extractOpt[String].map(ac =>  ("attachmentCount" -> JInt(ac.toInt)) ~ dropFields).getOrElse(dropFields)} match {
+    val dropFields: JObject = jsonCamelCase.filterField({
+      case (name: String, _) => !(name == "bodyPlain" || name == "attachmentCount")
+    })
+    Try {
+      (jsonCamelCase \ "attachmentCount")
+        .extractOpt[String]
+        .map(ac => ("attachmentCount" -> JInt(ac.toInt)) ~ dropFields)
+        .getOrElse(dropFields)
+    } match {
       case TS(jvalue) => jvalue.successNel
-      case TF(e) => s"${VendorName} event string has unexpected number format: [${JU.stripInstanceEtc(e.getMessage).orNull}]".failureNel
+      case TF(e) =>
+        s"${VendorName} event string has unexpected number format: [${JU.stripInstanceEtc(e.getMessage).orNull}]".failureNel
     }
   }
 
   private val boundaryRegex = """multipart/form-data.*?boundary=(?:")?([\S ]{0,69})(?: )*(?:")?$""".r
- /**
-  * Returns the boundary parameter for a message of media type multipart/form-data
-  * (https://www.ietf.org/rfc/rfc2616.txt and https://www.ietf.org/rfc/rfc2046.txt)
-  *
-  * @param contentType Header field of the form "multipart/form-data; boundary=353d603f-eede-4b49-97ac-724fbc54ea3c"
-  * @return boundary Option[String]
-  */
-   private def getBoundary(contentType: String): Option[String] = contentType match {
+
+  /**
+   * Returns the boundary parameter for a message of media type multipart/form-data
+   * (https://www.ietf.org/rfc/rfc2616.txt and https://www.ietf.org/rfc/rfc2046.txt)
+   *
+   * @param contentType Header field of the form "multipart/form-data; boundary=353d603f-eede-4b49-97ac-724fbc54ea3c"
+   * @return boundary Option[String]
+   */
+  private def getBoundary(contentType: String): Option[String] = contentType match {
     case boundaryRegex(boundaryString) => Some(boundaryString)
-    case _ => None
+    case _                             => None
   }
+
   /**
    * Rudimentary parsing the form fields of a multipart/form-data into a Map[String, String]
    * other fields will be discarded (see https://www.ietf.org/rfc/rfc1867.txt and https://www.ietf.org/rfc/rfc2046.txt).
@@ -162,13 +183,14 @@ def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): Validat
    * @param boundary String that separates the body parts
    * @return a map of the form fields and their values (other fields are dropped)
    */
-  private val formDataRegex = """(?sm).*Content-Disposition:\s*form-data\s*;[ \S\t]*?name="([^"]+)"[ \S\t]*$.*?(?<=^[ \t\S]*$)^\s*(.*?)(?:\s*)\z""".r
+  private val formDataRegex =
+    """(?sm).*Content-Disposition:\s*form-data\s*;[ \S\t]*?name="([^"]+)"[ \S\t]*$.*?(?<=^[ \t\S]*$)^\s*(.*?)(?:\s*)\z""".r
   private def parseMultipartForm(body: String, boundary: String): Map[String, String] =
     body
       .split(s"--$boundary")
       .flatMap({
-        case formDataRegex(k,v) => Some((k,v))
-        case _ => None
+        case formDataRegex(k, v) => Some((k, v))
+        case _                   => None
       })
       .toMap
 
@@ -176,14 +198,14 @@ def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): Validat
    * Converts a querystring payload into an event
    * @param bodyMap The converted map from the querystring
    */
-  private def payloadBodyToEvent(bodyMap: Map[String, String]): Validated[JObject] = {
+  private def payloadBodyToEvent(bodyMap: Map[String, String]): Validated[JObject] =
     (bodyMap.get("timestamp"), bodyMap.get("token"), bodyMap.get("signature")) match {
       case (None, _, _) => s"${VendorName} event data missing 'timestamp'".failureNel
       case (_, None, _) => s"${VendorName} event data missing 'token'".failureNel
       case (_, _, None) => s"${VendorName} event data missing 'signature'".failureNel
       case (Some(timestamp), Some(token), Some(signature)) => {
         try {
-          val json = compact(render(bodyMap))
+          val json  = compact(render(bodyMap))
           val event = parse(json)
           event match {
             case obj: JObject => obj.success
@@ -197,5 +219,4 @@ def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): Validat
         }
       }
     }
-  }
 }

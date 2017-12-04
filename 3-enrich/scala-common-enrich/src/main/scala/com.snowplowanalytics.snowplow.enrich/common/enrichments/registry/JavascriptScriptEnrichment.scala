@@ -38,26 +38,20 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods
 
 // Iglu
-import iglu.client.{
-  SchemaCriterion,
-  SchemaKey
-}
+import iglu.client.{SchemaCriterion, SchemaKey}
 import iglu.client.validation.ProcessingMessageMethods._
 
 // This project
 import outputs.EnrichedEvent
-import utils.{
-  ScalazJson4sUtils,
-  ConversionUtils,
-  JsonUtils => JU
-}
+import utils.{ScalazJson4sUtils, ConversionUtils, JsonUtils => JU}
 
 /**
  * Lets us create a JavascriptScriptEnrichment from a JValue.
  */
 object JavascriptScriptEnrichmentConfig extends ParseableEnrichment {
 
-  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "javascript_script_config", "jsonschema", 1, 0)
+  val supportedSchema =
+    SchemaCriterion("com.snowplowanalytics.snowplow", "javascript_script_config", "jsonschema", 1, 0)
 
   /**
    * Creates a JavascriptScriptEnrichment instance from a JValue.
@@ -67,16 +61,15 @@ object JavascriptScriptEnrichmentConfig extends ParseableEnrichment {
    *        Must be a supported SchemaKey for this enrichment
    * @return a configured JavascriptScriptEnrichment instance
    */
-  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[JavascriptScriptEnrichment] = {
-    isParseable(config, schemaKey).flatMap( conf => {
+  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[JavascriptScriptEnrichment] =
+    isParseable(config, schemaKey).flatMap(conf => {
       (for {
         encoded  <- ScalazJson4sUtils.extract[String](config, "parameters", "script")
         raw      <- ConversionUtils.decodeBase64Url("script", encoded).toProcessingMessage // TODO: shouldn't be URL-safe
         compiled <- JavascriptScriptEnrichment.compile(raw).toProcessingMessage
-        enrich    = JavascriptScriptEnrichment(compiled)
+        enrich = JavascriptScriptEnrichment(compiled)
       } yield enrich).toValidationNel
     })
-  }
 
 }
 
@@ -87,8 +80,8 @@ object JavascriptScriptEnrichment {
 
   object Variables {
     private val prefix = "$snowplow31337" // To avoid collisions
-    val In  = s"${prefix}In"
-    val Out = s"${prefix}Out"
+    val In             = s"${prefix}In"
+    val Out            = s"${prefix}Out"
   }
 
   /**
@@ -139,7 +132,7 @@ object JavascriptScriptEnrichment {
   implicit val formats = DefaultFormats
   private[registry] def process(script: Script, event: EnrichedEvent): Validation[String, List[JObject]] = {
 
-    val cx = Context.enter()
+    val cx    = Context.enter()
     val scope = cx.initStandardObjects
 
     try {
@@ -161,7 +154,7 @@ object JavascriptScriptEnrichment {
         try {
           JsonMethods.parse(obj.asInstanceOf[String]) match {
             case JArray(elements) => failFastCast(List[JObject](), elements).success
-            case _ => s"JavaScript script must return an Array; got [${obj}]".fail
+            case _                => s"JavaScript script must return an Array; got [${obj}]".fail
           }
         } catch {
           case NonFatal(nf) =>
@@ -194,7 +187,7 @@ object JavascriptScriptEnrichment {
  */
 case class JavascriptScriptEnrichment(
   script: Script
-  ) extends Enrichment {
+) extends Enrichment {
 
   /**
    * Run the process function as stored in the CompiledScript

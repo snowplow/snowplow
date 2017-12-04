@@ -21,7 +21,7 @@ import scalaz._
 import Scalaz._
 
 // java
-import java.sql.{ ResultSetMetaData, ResultSet }
+import java.sql.{ResultSet, ResultSetMetaData}
 
 // Json4s
 import org.json4s._
@@ -49,7 +49,8 @@ case class Output(json: JsonOutput, expectedRows: String) {
     case "AT_MOST_ONE"   => AtMostOne
     case "AT_LEAST_ONE"  => AtLeastOne
     case "AT_LEAST_ZERO" => AtLeastZero
-    case other => throw new MappingException(s"SQL Query Enrichment: [$other] is unknown value for expectedRows property")
+    case other =>
+      throw new MappingException(s"SQL Query Enrichment: [$other] is unknown value for expectedRows property")
   }
 
   /**
@@ -85,10 +86,10 @@ case class Output(json: JsonOutput, expectedRows: String) {
    * @return validated list of described JSONs
    */
   def envelope(jsons: List[JObject]): ThrowableXor[List[JObject]] = (describeMode, expectedRowsMode) match {
-    case (AllRows,  AtLeastOne)   => AtLeastOne .collect(jsons).map(rows => describe(JArray(rows))).map(List(_))
-    case (AllRows,  AtLeastZero)  => AtLeastZero.collect(jsons).map(rows => describe(JArray(rows))).map(List(_))
-    case (AllRows,  single)       => single     .collect(jsons).map(_.headOption.map(describe).toList)
-    case (EveryRow, any)          => any        .collect(jsons).map(_.map(describe))
+    case (AllRows, AtLeastOne)  => AtLeastOne.collect(jsons).map(rows => describe(JArray(rows))).map(List(_))
+    case (AllRows, AtLeastZero) => AtLeastZero.collect(jsons).map(rows => describe(JArray(rows))).map(List(_))
+    case (AllRows, single)      => single.collect(jsons).map(_.headOption.map(describe).toList)
+    case (EveryRow, any)        => any.collect(jsons).map(_.map(describe))
   }
 
   /**
@@ -140,6 +141,7 @@ object Output {
    * ADT specifying what amount of rows are expecting from DB
    */
   sealed trait ExpectedRowsMode {
+
     /**
      * Validate some amount of rows against predefined expectation
      *
@@ -232,10 +234,10 @@ case class JsonOutput(schema: String, describes: String, propertyNames: String) 
    */
   def transform(resultSet: ResultSet): ThrowableXor[JObject] = {
     val fields = for {
-      rsMeta   <- getMetaData(resultSet)                 .liftM[ListT]
+      rsMeta   <- getMetaData(resultSet).liftM[ListT]
       idx      <- ListT[ThrowableXor, Int](getColumnCount(rsMeta).map((x: Int) => (1 to x).toList))
-      colLabel <- getColumnLabel(idx, rsMeta)            .liftM[ListT]
-      colType  <- getColumnType(idx, rsMeta)             .liftM[ListT]
+      colLabel <- getColumnLabel(idx, rsMeta).liftM[ListT]
+      colType  <- getColumnType(idx, rsMeta).liftM[ListT]
       value    <- getColumnValue(colType, idx, resultSet).liftM[ListT]
     } yield propertyNameMode.transform(colLabel) -> value
 
@@ -303,12 +305,12 @@ object JsonOutput {
    */
   val resultsetGetters: Map[String, Object => JValue] = Map(
     "java.lang.Integer" -> ((obj: Object) => JInt(obj.asInstanceOf[Int])),
-    "java.lang.Long" -> ((obj: Object) => JInt(obj.asInstanceOf[Long])),
+    "java.lang.Long"    -> ((obj: Object) => JInt(obj.asInstanceOf[Long])),
     "java.lang.Boolean" -> ((obj: Object) => JBool(obj.asInstanceOf[Boolean])),
-    "java.lang.Double" -> ((obj: Object) => JDouble(obj.asInstanceOf[Double])),
-    "java.lang.Float" -> ((obj: Object) => JDouble(obj.asInstanceOf[Float].toDouble)),
-    "java.lang.String" -> ((obj: Object) => JString(obj.asInstanceOf[String])),
-    "java.sql.Date" -> ((obj: Object) => JString(new DateTime(obj.asInstanceOf[java.sql.Date]).toString))
+    "java.lang.Double"  -> ((obj: Object) => JDouble(obj.asInstanceOf[Double])),
+    "java.lang.Float"   -> ((obj: Object) => JDouble(obj.asInstanceOf[Float].toDouble)),
+    "java.lang.String"  -> ((obj: Object) => JString(obj.asInstanceOf[String])),
+    "java.sql.Date"     -> ((obj: Object) => JString(new DateTime(obj.asInstanceOf[java.sql.Date]).toString))
   )
 
   /**
@@ -362,7 +364,7 @@ object JsonOutput {
   def getValue(anyRef: AnyRef, datatype: String): JValue =
     if (anyRef == null) JNull
     else {
-      val converter = resultsetGetters getOrElse(datatype, parseObject)
+      val converter = resultsetGetters getOrElse (datatype, parseObject)
       converter(anyRef)
     }
 
@@ -377,7 +379,7 @@ object JsonOutput {
     val string = obj.toString
     parseOpt(string) match {
       case Some(json) => json
-      case None => JString(string)
+      case None       => JString(string)
     }
   }
 }

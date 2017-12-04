@@ -31,12 +31,10 @@ import scalaz._
 import Scalaz._
 
 // Iglu
-import iglu.client.{SchemaKey, SchemaCriterion}
+import iglu.client.{SchemaCriterion, SchemaKey}
 
 // Snowplow
-import com.snowplowanalytics.snowplow.CollectorPayload.thrift.model1.{
-  CollectorPayload => CollectorPayload1
-}
+import com.snowplowanalytics.snowplow.CollectorPayload.thrift.model1.{CollectorPayload => CollectorPayload1}
 import com.snowplowanalytics.snowplow.SchemaSniffer.thrift.model1.SchemaSniffer
 import com.snowplowanalytics.snowplow.collectors.thrift.SnowplowRawEvent
 
@@ -44,7 +42,7 @@ import com.snowplowanalytics.snowplow.collectors.thrift.SnowplowRawEvent
  * Loader for Thrift SnowplowRawEvent objects.
  */
 object ThriftLoader extends Loader[Array[Byte]] {
-  
+
   private val thriftDeserializer = new TDeserializer
 
   private val ExpectedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "CollectorPayload", "thrift", 1, 0)
@@ -60,8 +58,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
    * @return either a set of validation errors or an Option-boxed
    *         CanonicalInput object, wrapped in a Scalaz ValidatioNel.
    */
-  def toCollectorPayload(line: Array[Byte]): ValidatedMaybeCollectorPayload = {
-
+  def toCollectorPayload(line: Array[Byte]): ValidatedMaybeCollectorPayload =
     try {
 
       var schema = new SchemaSniffer
@@ -79,10 +76,10 @@ object ThriftLoader extends Loader[Array[Byte]] {
         for {
           as <- actualSchema
           res <- if (ExpectedSchema.matches(as)) {
-              convertSchema1(line)
-            } else {
-              s"Verifying record as $ExpectedSchema failed: found $as".failNel
-            }
+            convertSchema1(line)
+          } else {
+            s"Verifying record as $ExpectedSchema failed: found $as".failNel
+          }
         } yield res
 
       } else {
@@ -93,7 +90,6 @@ object ThriftLoader extends Loader[Array[Byte]] {
       case e: Throwable =>
         s"Error deserializing raw event: ${e.getMessage}".failNel[Option[CollectorPayload]]
     }
-  }
 
   /**
    * Converts the source string into a ValidatedMaybeCollectorPayload.
@@ -121,23 +117,23 @@ object ThriftLoader extends Loader[Array[Byte]] {
       collectorPayload.encoding
     )
 
-    val hostname = Option(collectorPayload.hostname)
-    val userAgent = Option(collectorPayload.userAgent)
-    val refererUri = Option(collectorPayload.refererUri)
+    val hostname      = Option(collectorPayload.hostname)
+    val userAgent     = Option(collectorPayload.userAgent)
+    val refererUri    = Option(collectorPayload.refererUri)
     val networkUserId = Option(collectorPayload.networkUserId)
 
-    val headers = Option(collectorPayload.headers)
-      .map(_.toList).getOrElse(Nil)
+    val headers = Option(collectorPayload.headers).map(_.toList).getOrElse(Nil)
 
     val ip = IpAddressExtractor.extractIpAddress(headers, collectorPayload.ipAddress).some // Required
 
     val api = Option(collectorPayload.path) match {
-      case None => "Request does not contain a path".fail
+      case None    => "Request does not contain a path".fail
       case Some(p) => CollectorApi.parse(p)
     }
 
     (querystring.toValidationNel |@|
-      api.toValidationNel) { (q: List[NameValuePair], a: CollectorApi) => CollectorPayload(
+      api.toValidationNel) { (q: List[NameValuePair], a: CollectorApi) =>
+      CollectorPayload(
         q,
         collectorPayload.collector,
         collectorPayload.encoding,
@@ -151,7 +147,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
         a,
         Option(collectorPayload.contentType),
         Option(collectorPayload.body)
-        ).some
+      ).some
     }
   }
 
@@ -182,13 +178,12 @@ object ThriftLoader extends Loader[Array[Byte]] {
       snowplowRawEvent.encoding
     )
 
-    val hostname = Option(snowplowRawEvent.hostname)
-    val userAgent = Option(snowplowRawEvent.userAgent)
-    val refererUri = Option(snowplowRawEvent.refererUri)
+    val hostname      = Option(snowplowRawEvent.hostname)
+    val userAgent     = Option(snowplowRawEvent.userAgent)
+    val refererUri    = Option(snowplowRawEvent.refererUri)
     val networkUserId = Option(snowplowRawEvent.networkUserId)
 
-    val headers = Option(snowplowRawEvent.headers)
-      .map(_.toList).getOrElse(Nil)
+    val headers = Option(snowplowRawEvent.headers).map(_.toList).getOrElse(Nil)
 
     val ip = IpAddressExtractor.extractIpAddress(headers, snowplowRawEvent.ipAddress).some // Required
 
@@ -207,7 +202,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
           networkUserId,
           CollectorApi.SnowplowTp1, // No way of storing API vendor/version in Thrift yet, assume Snowplow TP1
           None, // No way of storing content type in Thrift yet
-          None  // No way of storing request body in Thrift yet
+          None // No way of storing request body in Thrift yet
         )
       )
     }

@@ -18,7 +18,7 @@ package adapters
 package registry
 
 // Iglu
-import iglu.client.Resolver
+import iglu.client.{Resolver, SchemaKey}
 
 // Scala
 import scala.util.control.NonFatal
@@ -35,10 +35,7 @@ import org.json4s._
 import org.json4s.JsonDSL._
 
 // This project
-import loaders.{
-  CollectorPayload,
-  CollectorContext
-}
+import loaders.{CollectorContext, CollectorPayload}
 import utils.ConversionUtils
 
 /**
@@ -95,67 +92,79 @@ object CloudfrontAccessLogAdapter {
         case Some(p) => {
           val fields = p.split("\t", -1)
           val schemaVersion = fields.size match {
-            case 12 => "1-0-0".successNel  // Before 12 Sep 2012
-            case 15 => "1-0-1".successNel  // 12 Sep 2012
-            case 18 => "1-0-2".successNel  // 21 Oct 2013
-            case 19 => "1-0-3".successNel  // 29 Apr 2014
-            case 23 => "1-0-4".successNel  // 01 Jul 2015
-            case 24 => "1-0-5".successNel  // 29 Sep 2016
-            case n => s"Access log TSV line contained $n fields, expected 12, 15, 18, 19, 23 or 24".failNel
+            case 12 => "1-0-0".successNel // Before 12 Sep 2012
+            case 15 => "1-0-1".successNel // 12 Sep 2012
+            case 18 => "1-0-2".successNel // 21 Oct 2013
+            case 19 => "1-0-3".successNel // 29 Apr 2014
+            case 23 => "1-0-4".successNel // 01 Jul 2015
+            case 24 => "1-0-5".successNel // 29 Sep 2016
+            case n  => s"Access log TSV line contained $n fields, expected 12, 15, 18, 19, 23 or 24".failNel
           }
           schemaVersion.flatMap { v =>
-
             // Combine the first two fields into a timestamp
             val schemaCompatibleFields = "%sT%sZ".format(fields(0), fields(1)) :: fields.toList.tail.tail
 
             // Attempt to build the json, accumulating errors from unparseable fields
-            def buildJson(errors: List[String], fields: List[(String, String)], json: JObject): (List[String], JObject) =
+            def buildJson(errors: List[String],
+                          fields: List[(String, String)],
+                          json: JObject): (List[String], JObject) =
               fields match {
                 case Nil => (errors, json)
-                case head :: tail => head match {
+                case head :: tail =>
+                  head match {
 
-                  case (name, "") => buildJson(errors, tail, json ~ ((name, null)))
-                  case ("timeTaken", field) => try {
+                    case (name, "") => buildJson(errors, tail, json ~ ((name, null)))
+                    case ("timeTaken", field) =>
+                      try {
                         buildJson(errors, tail, json ~ (("timeTaken", field.toDouble)))
                       } catch {
-                        case e: NumberFormatException => buildJson("Field [timeTaken]: cannot convert [%s] to Double".format(field) :: errors, tail, json)
-                    }
-                  case (name, field) if name == "csBytes" || name == "scBytes" => try {
+                        case e: NumberFormatException =>
+                          buildJson("Field [timeTaken]: cannot convert [%s] to Double".format(field) :: errors,
+                                    tail,
+                                    json)
+                      }
+                    case (name, field) if name == "csBytes" || name == "scBytes" =>
+                      try {
                         buildJson(errors, tail, json ~ ((name, field.toInt)))
                       } catch {
-                        case e: NumberFormatException => buildJson("Field [%s]: cannot convert [%s] to Int".format(name, field) :: errors, tail, json)
+                        case e: NumberFormatException =>
+                          buildJson("Field [%s]: cannot convert [%s] to Int".format(name, field) :: errors, tail, json)
                       }
-                  case (name, field) if name == "csReferer" || name == "csUserAgent" => ConversionUtils.doubleDecode(name, field).fold(
-                    e => buildJson(e :: errors, tail, json),
-                    s => buildJson(errors, tail, json ~ ((name, s)))
-                    )
-                  case ("csUriQuery", field) => buildJson(errors, tail, json ~ (("csUriQuery", ConversionUtils.singleEncodePcts(field))))
-                  case (name, field) => buildJson(errors, tail, json ~ ((name, field)))
-                }
+                    case (name, field) if name == "csReferer" || name == "csUserAgent" =>
+                      ConversionUtils
+                        .doubleDecode(name, field)
+                        .fold(
+                          e => buildJson(e :: errors, tail, json),
+                          s => buildJson(errors, tail, json ~ ((name, s)))
+                        )
+                    case ("csUriQuery", field) =>
+                      buildJson(errors, tail, json ~ (("csUriQuery", ConversionUtils.singleEncodePcts(field))))
+                    case (name, field) => buildJson(errors, tail, json ~ ((name, field)))
+                  }
               }
 
             val (errors, ueJson) = buildJson(Nil, FieldNames zip schemaCompatibleFields, JObject())
 
             val failures = errors match {
-              case Nil => None.successNel
+              case Nil    => None.successNel
               case h :: t => (NonEmptyList(h) :::> t).fail // list to nonemptylist
             }
 
             val validatedTstamp = toTimestamp(fields(0), fields(1)).map(Some(_)).toValidationNel
 
-            (validatedTstamp |@| failures) {(tstamp, e) =>
+            (validatedTstamp |@| failures) { (tstamp, e) =>
               val ip = schemaCompatibleFields(3) match {
-                case "" => None
+                case ""       => None
                 case nonempty => nonempty.some
               }
 
               val qsParams: Map[String, String] = schemaCompatibleFields(8) match {
-                case "" => Map()
+                case ""  => Map()
                 case url => Map("url" -> url)
               }
 
               val userAgent = schemaCompatibleFields(9) match {
-                case "" => None
+                case ""       => None
                 case nonempty => ConversionUtils.singleEncodePcts(nonempty).some
               }
 
@@ -166,13 +175,14 @@ object CloudfrontAccessLogAdapter {
                 ueJson,
                 "srv"
               )
-              NonEmptyList(RawEvent(
-                api          = payload.api,
-                parameters   = parameters,
-                contentType  = payload.contentType,
-                source       = payload.source,
-                context      = CollectorContext(tstamp, ip, userAgent, None, Nil, None)
-              ))
+              NonEmptyList(
+                RawEvent(
+                  api         = payload.api,
+                  parameters  = parameters,
+                  contentType = payload.contentType,
+                  source      = payload.source,
+                  context     = CollectorContext(tstamp, ip, userAgent, None, Nil, None)
+                ))
             }
           }
         }
@@ -191,10 +201,14 @@ object CloudfrontAccessLogAdapter {
      */
     def toTimestamp(date: String, time: String): Validation[String, DateTime] =
       try {
-        DateTime.parse("%sT%s+00:00".format(date, time)).success // Construct a UTC ISO date from CloudFront date and time
+        DateTime
+          .parse("%sT%s+00:00".format(date, time))
+          .success // Construct a UTC ISO date from CloudFront date and time
       } catch {
         case NonFatal(e) =>
-          "Unexpected exception converting Cloudfront web distribution access log date [%s] and time [%s] to timestamp: [%s]".format(date, time, e.getMessage).fail
+          "Unexpected exception converting Cloudfront web distribution access log date [%s] and time [%s] to timestamp: [%s]"
+            .format(date, time, e.getMessage)
+            .fail
       }
   }
 }

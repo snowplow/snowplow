@@ -25,7 +25,8 @@ import Scalaz._
 /**
  * Tests EventFingerprintEnrichment
  */
-class EventFingerprintEnrichmentSpec extends Specification with ValidationMatchers { def is = s2"""
+class EventFingerprintEnrichmentSpec extends Specification with ValidationMatchers {
+  def is = s2"""
   This is a specification to test the EventFingerprintEnrichment
   getEventFingerprint should combine fields into a hash                       $e1
   getEventFingerprint should not depend on the order of fields                $e2
@@ -33,7 +34,8 @@ class EventFingerprintEnrichmentSpec extends Specification with ValidationMatche
   getEventFingerprint should return different values even when fields overlap $e4
   """
 
-  val standardConfig = EventFingerprintEnrichment(EventFingerprintEnrichmentConfig.getAlgorithm("MD5").toOption.get, List("stm", "eid"))
+  val standardConfig =
+    EventFingerprintEnrichment(EventFingerprintEnrichmentConfig.getAlgorithm("MD5").toOption.get, List("stm", "eid"))
 
   def e1 = {
     val config = EventFingerprintEnrichment(
@@ -41,44 +43,45 @@ class EventFingerprintEnrichmentSpec extends Specification with ValidationMatche
       List("stm")
     )
 
-    config.getEventFingerprint(Map(
-      "stm" -> "1000000000000",
-      "e" -> "se",
-      "se_ac" -> "buy"
+    config.getEventFingerprint(
+      Map(
+        "stm"   -> "1000000000000",
+        "e"     -> "se",
+        "se_ac" -> "buy"
       )) must_== "15"
   }
 
   def e2 = {
 
     val initialVersion = Map(
-      "e" -> "se",
+      "e"     -> "se",
       "se_ac" -> "action",
       "se_ca" -> "category",
       "se_pr" -> "property"
-      )
+    )
 
     val permutedVersion = Map(
       "se_ca" -> "category",
       "se_ac" -> "action",
       "se_pr" -> "property",
-      "e" -> "se"
-      )
+      "e"     -> "se"
+    )
 
     standardConfig.getEventFingerprint(permutedVersion) must_== standardConfig.getEventFingerprint(initialVersion)
   }
 
   def e3 = {
     val initialVersion = Map(
-      "stm" -> "1000000000000",
-      "eid" -> "123e4567-e89b-12d3-a456-426655440000",
-      "e" -> "se",
+      "stm"   -> "1000000000000",
+      "eid"   -> "123e4567-e89b-12d3-a456-426655440000",
+      "e"     -> "se",
       "se_ac" -> "buy"
-      )
+    )
     val delayedVersion = Map(
-      "stm" -> "9999999999999",
-      "e" -> "se",
+      "stm"   -> "9999999999999",
+      "e"     -> "se",
       "se_ac" -> "buy"
-      )
+    )
 
     standardConfig.getEventFingerprint(delayedVersion) must_== standardConfig.getEventFingerprint(initialVersion)
   }
@@ -86,9 +89,8 @@ class EventFingerprintEnrichmentSpec extends Specification with ValidationMatche
   def e4 = {
     val initialVersion = Map(
       "prefix" -> "suffix"
-      )
-    val overlappingVersion = Map(
-      "prefi" -> "xsuffix")
+    )
+    val overlappingVersion = Map("prefi" -> "xsuffix")
 
     standardConfig.getEventFingerprint(initialVersion) should not be standardConfig.getEventFingerprint(initialVersion)
   }

@@ -57,8 +57,9 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
 
   def commonSetup(enrichmentMap: EnrichmentMap): List[ValidatedEnrichedEvent] = {
     val registry = EnrichmentRegistry(enrichmentMap)
-    val context  = CollectorContext(Some(DateTime.parse("2017-07-14T03:39:39.000+00:00")), Some("127.0.0.1"), None, None, Nil, None)
-    val source   = CollectorSource("clj-tomcat", "UTF-8", None)
+    val context =
+      CollectorContext(Some(DateTime.parse("2017-07-14T03:39:39.000+00:00")), Some("127.0.0.1"), None, None, Nil, None)
+    val source = CollectorSource("clj-tomcat", "UTF-8", None)
     val collectorPayload = CollectorPayload(
       CollectorApi("com.snowplowanalytics.snowplow", "tp2"),
       toNameValuePairs(
@@ -236,7 +237,8 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
           (((contextJ \ "data")(1) \ "data" \ "data" \ "emailAddress").extract[String] must_== "jim@acme.com") and
           (((contextJ \ "data")(1) \ "data" \ "data" \ "emailAddress2")
             .extract[String] must_== "405ac8384fa984f787f9486daf34d84d98f20c4d6a12e2cc4ed89be3bcb06ad6") and
-          (((contextJ \ "data")(1) \ "data" \ "schema").extract[String] must_== "iglu:com.acme/email_sent/jsonschema/1-0-0") and
+          (((contextJ \ "data")(1) \ "data" \ "schema")
+            .extract[String] must_== "iglu:com.acme/email_sent/jsonschema/1-0-0") and
           (((unstructEventJ \ "data") \ "data" \ "ip")
             .extract[String] must_== "b5814ada7bb3abb2ed7f8713433a60ed3b3780f7d98a95c936cc62abb16f316f") and
           (((unstructEventJ \ "data") \ "data" \ "myVar2").extract[String] must_== "awesome")
