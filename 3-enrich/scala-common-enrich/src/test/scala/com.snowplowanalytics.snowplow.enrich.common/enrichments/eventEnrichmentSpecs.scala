@@ -64,11 +64,12 @@ class ExtractEventTypeSpec extends Specification with DataTables with Validation
   val BCTstamp = SeventiesTstamp.map(_.minusYears(2000))
 
   def e3 =
+// format: off
     "SPEC NAME"          || "INPUT VAL"     | "EXPECTED OUTPUT"                                                                                    |
     "None"               !! None            ! "No collector_tstamp set".fail                                                                       |
     "Negative timestamp" !! BCTstamp        ! "Collector timestamp -0030-01-01 00:00:00.000 is negative and will fail the Redshift load".fail |
     "Valid timestamp"    !! SeventiesTstamp ! "1970-01-01 00:00:00.000".success                                                                    |> {
-
+// format: on
       (_, input, expected) => EventEnrichments.formatCollectorTstamp(input) must_== (expected)
     }
 }
