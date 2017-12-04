@@ -22,6 +22,10 @@ import Keys._
 import bintray.BintrayPlugin._
 import bintray.BintrayKeys._
 
+// Scalafmt plugin
+import com.lucidchart.sbt.scalafmt.ScalafmtPlugin._
+import com.lucidchart.sbt.scalafmt.ScalafmtCorePlugin.autoImport._
+
 object BuildSettings {
 
   // Basic settings for our app
@@ -92,5 +96,11 @@ object BuildSettings {
           <organizationUrl>http://snowplowanalytics.com</organizationUrl>
         </developer>
       </developers>)
+  )
+
+  lazy val formatting = Seq(
+    scalafmtConfig    := file(".scalafmt.conf"),
+    scalafmtOnCompile := true,
+    scalafmtVersion   := "1.3.0"
   )
 }
