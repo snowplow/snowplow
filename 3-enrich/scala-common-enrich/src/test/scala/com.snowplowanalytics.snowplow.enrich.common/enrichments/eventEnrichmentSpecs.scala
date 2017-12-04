@@ -66,12 +66,13 @@ class ExtractEventTypeSpec extends Specification with DataTables with Validation
   val FarAwayTstamp = SeventiesTstamp.map(_.plusYears(10000))
 
   def e3 =
+// format: off
     "SPEC NAME"          || "INPUT VAL"     | "EXPECTED OUTPUT"                                                                                     |
     "None"               !! None            ! "No collector_tstamp set".fail                                                                        |
     "Negative timestamp" !! BCTstamp        ! "Collector timestamp [-63113904000000] formatted as [-0030-01-01 00:00:00.000] which isn't Redshift-compatible".fail |
     ">10k timestamp"     !! FarAwayTstamp   ! "Collector timestamp [315569520000000] formatted as [11970-01-01 00:00:00.000] which isn't Redshift-compatible".fail |
     "Valid timestamp"    !! SeventiesTstamp ! "1970-01-01 00:00:00.000".success                                                                     |> {
-
+// format: on
       (_, input, expected) => EventEnrichments.formatCollectorTstamp(input) must_== (expected)
     }
 
