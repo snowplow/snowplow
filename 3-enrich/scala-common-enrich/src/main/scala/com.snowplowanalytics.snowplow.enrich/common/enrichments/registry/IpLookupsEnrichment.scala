@@ -34,33 +34,27 @@ import Scalaz._
 import org.json4s.JValue
 
 // Iglu
-import iglu.client.{
-  SchemaCriterion,
-  SchemaKey
-}
+import iglu.client.{SchemaCriterion, SchemaKey}
 import iglu.client.validation.ProcessingMessageMethods._
 
 // Scala MaxMind GeoIP
-import maxmind.iplookups.{
-  IpLookups,
-  IpLookupResult
-}
+import maxmind.iplookups.{IpLookupResult, IpLookups}
 
 // This project
 import common.utils.ConversionUtils
 import utils.ScalazJson4sUtils
 
 /**
-* Companion object. Lets us create an IpLookupsEnrichment
-* instance from a JValue.
-*/
+ * Companion object. Lets us create an IpLookupsEnrichment
+ * instance from a JValue.
+ */
 object IpLookupsEnrichment extends ParseableEnrichment {
 
   val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "ip_lookups", "jsonschema", 1, 0)
 
   /**
    * Creates an IpLookupsEnrichment instance from a JValue.
-   * 
+   *
    * @param config The ip_lookups enrichment JSON
    * @param schemaKey The SchemaKey provided for the enrichment
    *        Must be a supported SchemaKey for this enrichment
@@ -68,13 +62,13 @@ object IpLookupsEnrichment extends ParseableEnrichment {
    *        Enabled for tests
    * @return a configured IpLookupsEnrichment instance
    */
-  def parse(config: JValue, schemaKey: SchemaKey, localMode: Boolean): ValidatedNelMessage[IpLookupsEnrichment] = {
-
-    isParseable(config, schemaKey).flatMap( conf => {
+  def parse(config: JValue, schemaKey: SchemaKey, localMode: Boolean): ValidatedNelMessage[IpLookupsEnrichment] =
+    isParseable(config, schemaKey).flatMap(conf => {
       def db(name: String) = getArgumentFromName(conf, name).sequenceU
-      (db("geo") |@| db("isp") |@| db("organization") |@| db("domain") |@| db("netspeed")) { IpLookupsEnrichment(_,_,_,_,_,localMode) }
+      (db("geo") |@| db("isp") |@| db("organization") |@| db("domain") |@| db("netspeed")) {
+        IpLookupsEnrichment(_, _, _, _, _, localMode)
+      }
     })
-  }
 
   /**
    * Creates the (URI, String) tuple arguments
@@ -87,8 +81,7 @@ object IpLookupsEnrichment extends ParseableEnrichment {
    *         Some(Failure) if its URI is invalid,
    *         Some(Success) if it is found
    */
-  private def getArgumentFromName(conf: JValue, name: String): Option[ValidatedNelMessage[(String, URI, String)]] = {
-
+  private def getArgumentFromName(conf: JValue, name: String): Option[ValidatedNelMessage[(String, URI, String)]] =
     if (ScalazJson4sUtils.fieldExists(conf, "parameters", name)) {
       val uri = ScalazJson4sUtils.extract[String](conf, "parameters", name, "uri")
       val db  = ScalazJson4sUtils.extract[String](conf, "parameters", name, "database")
@@ -101,7 +94,6 @@ object IpLookupsEnrichment extends ParseableEnrichment {
       }.flatMap(x => x).some
 
     } else None
-  }
 
   /**
    * Convert the Maxmind file from a
@@ -114,10 +106,13 @@ object IpLookupsEnrichment extends ParseableEnrichment {
    * @return a Validation-boxed URI
    */
   private def getMaxmindUri(uri: String, database: String): ValidatedMessage[URI] =
-    ConversionUtils.stringToUri(uri + "/" + database).flatMap(_ match {
-      case Some(u) => u.success
-      case None => "URI to MaxMind file must be provided".fail
-      }).toProcessingMessage
+    ConversionUtils
+      .stringToUri(uri + "/" + database)
+      .flatMap(_ match {
+        case Some(u) => u.success
+        case None    => "URI to MaxMind file must be provided".fail
+      })
+      .toProcessingMessage
 }
 
 /**
@@ -137,7 +132,7 @@ object IpLookupsEnrichment extends ParseableEnrichment {
  * @param netspeedTuple (Full URI to the netspeed
  *        lookup MaxMind data file, database name)
  * @param localMode Whether to use the local
- *        MaxMind data file. Enabled for tests. 
+ *        MaxMind data file. Enabled for tests.
  */
 case class IpLookupsEnrichment(
   geoTuple: Option[(String, URI, String)],
@@ -146,20 +141,21 @@ case class IpLookupsEnrichment(
   domainTuple: Option[(String, URI, String)],
   netspeedTuple: Option[(String, URI, String)],
   localMode: Boolean
-  ) extends Enrichment {
+) extends Enrichment {
 
   private type FinalPath = String
-  private type DbEntry = Option[(Option[URI], FinalPath)]
+  private type DbEntry   = Option[(Option[URI], FinalPath)]
 
   // Construct a Tuple5 of all the IP Lookup databases
   private val dbs: Tuple5[DbEntry, DbEntry, DbEntry, DbEntry, DbEntry] = {
 
-    def db(dbPath: Option[(String, URI, String)]): DbEntry = dbPath.map { case (name, uri, file) =>
-      if (localMode) {
-        (None, getClass.getResource(file).toURI.getPath)
-      } else {
-        (Some(uri), "./ip_" + name)
-      }
+    def db(dbPath: Option[(String, URI, String)]): DbEntry = dbPath.map {
+      case (name, uri, file) =>
+        if (localMode) {
+          (None, getClass.getResource(file).toURI.getPath)
+        } else {
+          (Some(uri), "./ip_" + name)
+        }
     }
 
     (db(geoTuple), db(ispTuple), db(orgTuple), db(domainTuple), db(netspeedTuple))
@@ -200,12 +196,10 @@ case class IpLookupsEnrichment(
    *         boxed in a Scalaz Validation
    */
   // TODO: can we move the IpGeo to an implicit?
-  def extractIpInformation(ip: String): Validation[String, IpLookupResult] = {
-
+  def extractIpInformation(ip: String): Validation[String, IpLookupResult] =
     try {
       ipLookups.performLookups(ip).success
     } catch {
       case NonFatal(e) => "Could not extract geo-location from IP address [%s]: [%s]".format(ip, e).fail
     }
-  }
 }

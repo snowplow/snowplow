@@ -33,8 +33,10 @@ import Scalaz._
 class SchemaEnrichmentTest extends Specification with DataTables with ValidationMatchers {
 
   implicit val resolver = SpecHelpers.IgluResolver
-  val signupFormSubmitted = """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.snowplowanalytics.snowplow-website/signup_form_submitted/jsonschema/1-0-0","data":{"name":"Χαριτίνη NEW Unicode test","email":"alex+test@snowplowanalytics.com","company":"SP","eventsPerMonth":"< 1 million","serviceType":"unsure"}}}"""
-  val invalidPayload = """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.snowplowanalytics.snowplow-website/signup_form_submitted/jsonschema/1-0-0","data":{"serviceType":"unsure"}}}"""
+  val signupFormSubmitted =
+    """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.snowplowanalytics.snowplow-website/signup_form_submitted/jsonschema/1-0-0","data":{"name":"Χαριτίνη NEW Unicode test","email":"alex+test@snowplowanalytics.com","company":"SP","eventsPerMonth":"< 1 million","serviceType":"unsure"}}}"""
+  val invalidPayload =
+    """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.snowplowanalytics.snowplow-website/signup_form_submitted/jsonschema/1-0-0","data":{"serviceType":"unsure"}}}"""
 
   def is = s2"""
     Extracting SchemaKeys from valid events should work $e1
@@ -42,30 +44,50 @@ class SchemaEnrichmentTest extends Specification with DataTables with Validation
   """
 
   def e1 =
-      "SPEC NAME"              || "EVENT"                            | "EXPECTED SCHEMA"          |
-      "page view"              !! event("page_view")                 ! SchemaKey("com.snowplowanalytics.snowplow", "page_view", "jsonschema", "1-0-0")             |
-      "ping ping"              !! event("page_ping")                 ! SchemaKey("com.snowplowanalytics.snowplow", "page_ping", "jsonschema", "1-0-0")             |
-      "transaction"            !! event("transaction")               ! SchemaKey("com.snowplowanalytics.snowplow", "transaction", "jsonschema", "1-0-0")          |
-      "transaction item"       !! event("transaction_item")          ! SchemaKey("com.snowplowanalytics.snowplow", "transaction_item", "jsonschema", "1-0-0")      |
-      "struct event"           !! event("struct")                    ! SchemaKey("com.google.analytics", "event", "jsonschema", "1-0-0")               |
-      "invalid unstruct event" !! unstructEvent(invalidPayload)      ! SchemaKey("com.snowplowanalytics.snowplow-website", "signup_form_submitted", "jsonschema", "1-0-0")  |
-      "unstruct event"         !! unstructEvent(signupFormSubmitted) ! SchemaKey("com.snowplowanalytics.snowplow-website", "signup_form_submitted", "jsonschema", "1-0-0")  |> {
-      (_, event, expected) => {
+    "SPEC NAME"   || "EVENT" | "EXPECTED SCHEMA" |
+      "page view" !! event("page_view") ! SchemaKey("com.snowplowanalytics.snowplow",
+                                                    "page_view",
+                                                    "jsonschema",
+                                                    "1-0-0") |
+      "ping ping" !! event("page_ping") ! SchemaKey("com.snowplowanalytics.snowplow",
+                                                    "page_ping",
+                                                    "jsonschema",
+                                                    "1-0-0") |
+      "transaction" !! event("transaction") ! SchemaKey("com.snowplowanalytics.snowplow",
+                                                        "transaction",
+                                                        "jsonschema",
+                                                        "1-0-0") |
+      "transaction item" !! event("transaction_item") ! SchemaKey("com.snowplowanalytics.snowplow",
+                                                                  "transaction_item",
+                                                                  "jsonschema",
+                                                                  "1-0-0") |
+      "struct event"                                                       !! event("struct") ! SchemaKey("com.google.analytics", "event", "jsonschema", "1-0-0") |
+      "invalid unstruct event"                                             !! unstructEvent(invalidPayload) ! SchemaKey("com.snowplowanalytics.snowplow-website",
+                                                                            "signup_form_submitted",
+                                                                            "jsonschema",
+                                                                            "1-0-0") |
+      "unstruct event" !! unstructEvent(signupFormSubmitted) ! SchemaKey("com.snowplowanalytics.snowplow-website",
+                                                                         "signup_form_submitted",
+                                                                         "jsonschema",
+                                                                         "1-0-0") |> { (_, event, expected) =>
+      {
         val schema = SchemaEnrichment.extractSchema(event)
         schema must beSuccessful(expected)
       }
     }
 
-  val nonSchemedPayload = """{"name":"Χαριτίνη NEW Unicode test","email":"alex+test@snowplowanalytics.com","company":"SP","eventsPerMonth":"< 1 million","serviceType":"unsure"}"""
-  val invalidKeyPayload = """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.snowplowanalytics.snowplow-website/signup_form_submitted/jsonschema","data":{"name":"Χαριτίνη NEW Unicode test","email":"alex+test@snowplowanalytics.com","company":"SP","eventsPerMonth":"< 1 million","serviceType":"unsure"}}}"""
+  val nonSchemedPayload =
+    """{"name":"Χαριτίνη NEW Unicode test","email":"alex+test@snowplowanalytics.com","company":"SP","eventsPerMonth":"< 1 million","serviceType":"unsure"}"""
+  val invalidKeyPayload =
+    """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.snowplowanalytics.snowplow-website/signup_form_submitted/jsonschema","data":{"name":"Χαριτίνη NEW Unicode test","email":"alex+test@snowplowanalytics.com","company":"SP","eventsPerMonth":"< 1 million","serviceType":"unsure"}}}"""
 
   def e2 =
-    "SPEC NAME"           || "EVENT"                          |
-      "unknown event"     !! event("unknown")                 |
-      "missing event"     !! event(null)                      |
-      "not schemed"       !! unstructEvent(nonSchemedPayload) |
-      "invalid key"       !! unstructEvent(invalidKeyPayload) |> {
-      (_, event) => {
+    "SPEC NAME"       || "EVENT" |
+      "unknown event" !! event("unknown") |
+      "missing event" !! event(null) |
+      "not schemed"   !! unstructEvent(nonSchemedPayload) |
+      "invalid key"   !! unstructEvent(invalidKeyPayload) |> { (_, event) =>
+      {
         val schema = SchemaEnrichment.extractSchema(event)
         schema must beFailing
       }

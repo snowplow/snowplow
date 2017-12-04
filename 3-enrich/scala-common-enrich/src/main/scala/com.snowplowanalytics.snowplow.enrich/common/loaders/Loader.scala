@@ -33,7 +33,7 @@ import Scalaz._
  */
 object Loader {
 
-  private val TsvRegex = "^tsv/(.*)$".r
+  private val TsvRegex    = "^tsv/(.*)$".r
   private val NdjsonRegex = "^ndjson/(.*)$".r
 
   /**
@@ -63,11 +63,11 @@ object Loader {
  * abstract base class.
  */
 abstract class Loader[T] {
-  
+
   import CollectorPayload._
 
   /**
-   * Converts the source string into a 
+   * Converts the source string into a
    * CanonicalInput.
    *
    * TODO: need to change this to
@@ -85,7 +85,7 @@ abstract class Loader[T] {
    * Converts a querystring String
    * into a non-empty list of NameValuePairs.
    *
-   * Returns a non-empty list of 
+   * Returns a non-empty list of
    * NameValuePairs on Success, or a Failure
    * String.
    *
@@ -105,7 +105,9 @@ abstract class Loader[T] {
         URLEncodedUtils.parse(URI.create("http://localhost/?" + q), enc).toList.success
       } catch {
         case NonFatal(e) =>
-          "Exception extracting name-value pairs from querystring [%s] with encoding [%s]: [%s]".format(q, enc, e.getMessage).fail
+          "Exception extracting name-value pairs from querystring [%s] with encoding [%s]: [%s]"
+            .format(q, enc, e.getMessage)
+            .fail
       }
     }
     case None => Nil.success

@@ -35,10 +35,7 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods._
 
 // Iglu
-import iglu.client.{
-  SchemaKey,
-  Resolver
-}
+import iglu.client.{Resolver, SchemaKey}
 
 // This project
 import loaders.CollectorPayload
@@ -62,7 +59,7 @@ object PingdomAdapter extends Adapter {
   private val PingdomValueRegex = """\(u'(.+)',\)""".r
 
   // Schemas for reverse-engineering a Snowplow unstructured event
-  private val EventSchemaMap = Map (
+  private val EventSchemaMap = Map(
     "assign"          -> SchemaKey("com.pingdom", "incident_assign", "jsonschema", "1-0-0").toSchemaUri,
     "notify_user"     -> SchemaKey("com.pingdom", "incident_notify_user", "jsonschema", "1-0-0").toSchemaUri,
     "notify_of_close" -> SchemaKey("com.pingdom", "incident_notify_of_close", "jsonschema", "1-0-0").toSchemaUri
@@ -84,14 +81,15 @@ object PingdomAdapter extends Adapter {
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
     (payload.querystring) match {
       case (Nil) => s"${VendorName} payload querystring is empty: nothing to process".failNel
-      case (qs)  => {
+      case (qs) => {
 
         reformatMapParams(qs) match {
           case Failure(f) => f.fail
           case Success(s) => {
 
             s.get("message") match {
-              case None => s"${VendorName} payload querystring does not have 'message' as a key: no event to process".failNel
+              case None =>
+                s"${VendorName} payload querystring does not have 'message' as a key: no event to process".failNel
               case Some(event) => {
 
                 for {
@@ -102,14 +100,15 @@ object PingdomAdapter extends Adapter {
                   }
                 } yield {
                   val formattedEvent = reformatParameters(parsedEvent)
-                  val qsParams = s - "message"
-                  NonEmptyList(RawEvent(
-                    api          = payload.api,
-                    parameters   = toUnstructEventParams(TrackerVersion, qsParams, schema, formattedEvent, "srv"),
-                    contentType  = payload.contentType,
-                    source       = payload.source,
-                    context      = payload.context
-                  ))
+                  val qsParams       = s - "message"
+                  NonEmptyList(
+                    RawEvent(
+                      api         = payload.api,
+                      parameters  = toUnstructEventParams(TrackerVersion, qsParams, schema, formattedEvent, "srv"),
+                      contentType = payload.contentType,
+                      source      = payload.source,
+                      context     = payload.context
+                    ))
                 }
               }
             }
@@ -134,11 +133,12 @@ object PingdomAdapter extends Adapter {
    *         passing the regex extraction or return a NonEmptyList of Failures
    *         if any could not pass the regex.
    */
-  private[registry] def reformatMapParams(params: List[NameValuePair]): Validated[Map[String,String]] = {
-    val formatted = params.map {
-      value => {
+  private[registry] def reformatMapParams(params: List[NameValuePair]): Validated[Map[String, String]] = {
+    val formatted = params.map { value =>
+      {
         (value.getName, value.getValue) match {
-          case (k, PingdomValueRegex(v)) => s"${VendorName} name-value pair [$k -> $v]: Passed regex - Collector is not catching unicode wrappers anymore".failNel
+          case (k, PingdomValueRegex(v)) =>
+            s"${VendorName} name-value pair [$k -> $v]: Passed regex - Collector is not catching unicode wrappers anymore".failNel
           case (k, v) => (k -> v).successNel
         }
       }
@@ -155,9 +155,10 @@ object PingdomAdapter extends Adapter {
       } yield f
 
     (successes, failures) match {
-      case (s :: ss,     Nil) => (s :: ss).toMap.successNel // No Failures collected.
-      case (_,       f :: fs) => NonEmptyList(f, fs: _*).fail // Some Failures, return only those.
-      case (Nil,         Nil) => "Empty parameters list was passed - should never happen: empty querystring is not being caught".failNel
+      case (s :: ss, Nil) => (s :: ss).toMap.successNel   // No Failures collected.
+      case (_, f :: fs)   => NonEmptyList(f, fs: _*).fail // Some Failures, return only those.
+      case (Nil, Nil) =>
+        "Empty parameters list was passed - should never happen: empty querystring is not being caught".failNel
     }
   }
 

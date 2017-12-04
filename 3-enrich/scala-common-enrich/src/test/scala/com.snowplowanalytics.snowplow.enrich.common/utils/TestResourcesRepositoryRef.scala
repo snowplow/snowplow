@@ -17,7 +17,7 @@ import scalaz.Scalaz._
 
 //Snowplow
 import com.snowplowanalytics.iglu.client.repositories.{RepositoryRef, RepositoryRefConfig}
-import com.snowplowanalytics.iglu.client.{SchemaKey,                  Validated, utils, validation}
+import com.snowplowanalytics.iglu.client.{SchemaKey, Validated, utils, validation}
 
 // Iglu
 import iglu.client.utils.{ValidationExceptions => VE}
@@ -62,7 +62,8 @@ case class TestResourcesRepositoryRef(override val config: RepositoryRefConfig, 
       case ioe: IOException =>
         None.success // Schema not found
       case NonFatal(e) =>
-        s"Unknown problem reading and parsing ${schemaPath} in ${descriptor} Iglu repository ${config.name}: ${VE.getThrowableMessage(e)}".failure.toProcessingMessage
+        s"Unknown problem reading and parsing ${schemaPath} in ${descriptor} Iglu repository ${config.name}: ${VE
+          .getThrowableMessage(e)}".failure.toProcessingMessage
     }
   }
 }

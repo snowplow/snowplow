@@ -18,7 +18,7 @@ package registry
 import java.net.URI
 
 // Specs2, Scalaz-Specs2 & ScalaCheck
-import org.specs2.{Specification, ScalaCheck}
+import org.specs2.{ScalaCheck, Specification}
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
 import org.scalacheck._
@@ -29,12 +29,10 @@ import scalaz._
 import Scalaz._
 
 // Scala MaxMind GeoIP
-import com.snowplowanalytics.maxmind.iplookups.{
-  IpLookups,
-  IpLocation
-}
+import com.snowplowanalytics.maxmind.iplookups.{IpLocation, IpLookups}
 
-class IpLookupsEnrichmentSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is = s2"""
+class IpLookupsEnrichmentSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck {
+  def is = s2"""
   This is a specification to test the IpLookupsEnrichment
   extractIpInformation should not return failure for any valid or invalid IP address                $e1
   extractIpInformation should correctly extract location data from IP addresses where possible      $e2
@@ -44,41 +42,55 @@ class IpLookupsEnrichmentSpec extends Specification with DataTables with Validat
   """
 
   // When testing, localMode is set to true, so the URIs are ignored and the databases are loaded from test/resources
-  val config = IpLookupsEnrichment(Some(("geo", new URI("/ignored-in-local-mode/"), "GeoIPCity.dat")), Some(("isp", new URI("/ignored-in-local-mode/"), "GeoIPISP.dat")), None, None, None, true)
+  val config = IpLookupsEnrichment(Some(("geo", new URI("/ignored-in-local-mode/"), "GeoIPCity.dat")),
+                                   Some(("isp", new URI("/ignored-in-local-mode/"), "GeoIPISP.dat")),
+                                   None,
+                                   None,
+                                   None,
+                                   true)
 
   // Impossible to make extractIpInformation throw a validation error
   def e1 =
-    check { (ipAddress: String) => config.extractIpInformation(ipAddress) must beSuccessful }
+    check { (ipAddress: String) =>
+      config.extractIpInformation(ipAddress) must beSuccessful
+    }
 
   def e2 =
-    "SPEC NAME"             || "IP ADDRESS"    | "EXPECTED LOCATION" |
-    "blank IP address"      !! ""              ! None                |
-    "null IP address"       !! null            ! None                |
-    "invalid IP address #1" !! "localhost"     ! None                |
-    "invalid IP address #2" !! "hello"         ! None                |
-    "valid IP address"      !! "70.46.123.145" ! Some(IpLocation(    // Taken from scala-maxmind-geoip. See that test suite for other valid IP addresses
-                                                 countryCode = "US",
-                                                 countryName = "United States",
-                                                 region = Some("FL"),
-                                                 city = Some("Delray Beach"),
-                                                 latitude = 26.461502F,
-                                                 longitude = -80.0728F,
-                                                 timezone = Some("America/New_York"),
-                                                 postalCode = None,
-                                                 dmaCode = Some(548),
-                                                 areaCode = Some(561),
-                                                 metroCode = Some(548),
-                                                 regionName = Some("Florida")
-                                               ))                  |> {
-      (_, ipAddress, expected) =>
-        config.extractIpInformation(ipAddress).map(_._1) must beSuccessful(expected)
+    "SPEC NAME"               || "IP ADDRESS" | "EXPECTED LOCATION" |
+      "blank IP address"      !! "" ! None |
+      "null IP address"       !! null ! None |
+      "invalid IP address #1" !! "localhost" ! None |
+      "invalid IP address #2" !! "hello" ! None |
+      "valid IP address"      !! "70.46.123.145" ! Some(
+        IpLocation( // Taken from scala-maxmind-geoip. See that test suite for other valid IP addresses
+          countryCode = "US",
+          countryName = "United States",
+          region      = Some("FL"),
+          city        = Some("Delray Beach"),
+          latitude    = 26.461502F,
+          longitude   = -80.0728F,
+          timezone    = Some("America/New_York"),
+          postalCode  = None,
+          dmaCode     = Some(548),
+          areaCode    = Some(561),
+          metroCode   = Some(548),
+          regionName  = Some("Florida")
+        )) |> { (_, ipAddress, expected) =>
+      config.extractIpInformation(ipAddress).map(_._1) must beSuccessful(expected)
     }
 
   def e3 = config.extractIpInformation("70.46.123.145").map(_._2) must beSuccessful(Some("FDN Communications"))
 
   def e4 = config.dbsToCache must_== Nil
 
-  val configRemote = IpLookupsEnrichment(Some(("geo", new URI("http://public-website.com/files/GeoLiteCity.dat"), "GeoLiteCity.dat")), Some(("isp", new URI("s3://private-bucket/files/GeoIPISP.dat"), "GeoIPISP.dat")), None, None, None, false)
+  val configRemote = IpLookupsEnrichment(
+    Some(("geo", new URI("http://public-website.com/files/GeoLiteCity.dat"), "GeoLiteCity.dat")),
+    Some(("isp", new URI("s3://private-bucket/files/GeoIPISP.dat"), "GeoIPISP.dat")),
+    None,
+    None,
+    None,
+    false
+  )
 
   def e5 = configRemote.dbsToCache must_== List(
     (new URI("http://public-website.com/files/GeoLiteCity.dat"), "./ip_geo"),
