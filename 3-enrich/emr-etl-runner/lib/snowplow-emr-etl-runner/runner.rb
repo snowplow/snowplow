@@ -62,10 +62,12 @@ module Snowplow
             not skips.include?('archive_raw')),
           :rdb_load => ((resume.nil? or [ 'enrich', 'shred', 'elasticsearch', 'archive_raw', 'rdb_load' ].include?(resume)) and
             not skips.include?('rdb_load')),
-          :analyze => ((resume.nil? or [ 'enrich', 'shred', 'elasticsearch', 'archive_raw', 'rdb_load', 'analyze' ].include?(resume)) and
+          :consistency_check => ((resume.nil? or [ 'enrich', 'shred', 'elasticsearch', 'archive_raw', 'rdb_load', 'consistency_check' ].include?(resume)) and
+            not skips.include?('consistency_check')),
+          :analyze => ((resume.nil? or [ 'enrich', 'shred', 'elasticsearch', 'archive_raw', 'rdb_load', 'consistency_check', 'analyze' ].include?(resume)) and
             not skips.include?('analyze')),
           :archive_enriched => ((resume.nil? or
-            [ 'enrich', 'shred', 'elasticsearch', 'archive_raw', 'rdb_load', 'analyze', 'archive_enriched' ].include?(resume)) and
+            [ 'enrich', 'shred', 'elasticsearch', 'archive_raw', 'rdb_load', 'consistency_check', 'analyze', 'archive_enriched' ].include?(resume)) and
             not skips.include?('archive_enriched')),
           :archive_shredded => (not skips.include?('archive_shredded'))
         }
@@ -161,6 +163,10 @@ module Snowplow
 
         if not steps[:analyze]
           s[:skip] << "analyze"
+        end
+
+        if not steps[:consistency_check]
+          s[:skip] << "consistency_check"
         end
 
         if inclusions.include?("vacuum")
