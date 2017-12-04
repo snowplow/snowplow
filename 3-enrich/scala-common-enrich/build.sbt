@@ -12,13 +12,17 @@
  * implied.  See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-
-lazy val root = project.in(file("."))
+// =======================================================
+// scalafmt: {align.tokens = [":="]}
+// =======================================================
+lazy val root = project
+  .in(file("."))
   .settings(
     name        := "snowplow-common-enrich",
     version     := "0.30.0",
     description := "Common functionality for enriching raw Snowplow events"
   )
+  .settings(BuildSettings.formatting)
   .settings(BuildSettings.buildSettings)
   .settings(BuildSettings.publishSettings)
   .settings(
