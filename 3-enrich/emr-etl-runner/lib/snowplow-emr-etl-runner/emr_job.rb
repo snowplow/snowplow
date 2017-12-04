@@ -656,6 +656,7 @@ module Snowplow
       # +jar+:: s3 object with RDB Loader jar
       Contract ConfigHash, ArrayOf[Iglu::SelfDescribingJson], String, String, RdbLoaderSteps => ArrayOf[Elasticity::CustomJarStep]
       def get_rdb_loader_steps(config, targets, resolver, jar, rdbloader_steps)
+
         # Remove credentials from config
         clean_config = deep_copy(config)
         clean_config[:aws][:access_key_id] = ""
@@ -665,18 +666,6 @@ module Snowplow
           :config      => Base64.strict_encode64(recursive_stringify_keys(clean_config).to_yaml),
           :resolver    => build_iglu_config_json(resolver)
         }
-
-        unless rdbloader_steps[:skip].empty?
-          default_arguments.merge({
-            :skip => rdbloader_steps[:skip].join(",")
-          })
-        end
-
-        unless rdbloader_steps[:include].empty?
-          default_arguments.merge({
-            :include => rdbloader_steps[:skip].join(",")
-          })
-        end
 
         targets.map { |target|
           name = target.data[:name]
