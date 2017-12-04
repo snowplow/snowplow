@@ -31,10 +31,7 @@ import Scalaz._
 import org.json4s.JValue
 
 // Iglu
-import iglu.client.{
-  SchemaCriterion,
-  SchemaKey
-}
+import iglu.client.{SchemaCriterion, SchemaKey}
 import iglu.client.validation.ProcessingMessageMethods._
 
 // Snowplow referer-parser
@@ -63,14 +60,13 @@ object RefererParserEnrichment extends ParseableEnrichment {
    *        Must be a supported SchemaKey for this enrichment
    * @return a configured RefererParserEnrichment instance
    */
-  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[RefererParserEnrichment] = {
-    isParseable(config, schemaKey).flatMap( conf => {
+  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[RefererParserEnrichment] =
+    isParseable(config, schemaKey).flatMap(conf => {
       (for {
-        param  <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "internalDomains")
-        enrich =  RefererParserEnrichment(param)
+        param <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "internalDomains")
+        enrich = RefererParserEnrichment(param)
       } yield enrich).toValidationNel
     })
-  }
 
 }
 
@@ -81,7 +77,7 @@ object RefererParserEnrichment extends ParseableEnrichment {
  */
 case class RefererParserEnrichment(
   domains: List[String]
-  ) extends Enrichment {
+) extends Enrichment {
 
   /**
    * A Scalaz Lens to update the term within
@@ -103,10 +99,9 @@ case class RefererParserEnrichment(
    * @return a Tuple3 containing referer medium,
    *         source and term, all Strings
    */
-  def extractRefererDetails(uri: URI, pageHost: String): Option[Referer] = {
+  def extractRefererDetails(uri: URI, pageHost: String): Option[Referer] =
     for {
       r <- RefererParser.parse(uri, pageHost, domains)
       t = r.term.flatMap(t => CU.fixTabsNewlines(t))
     } yield termLens.set(r, t)
-  }
 }

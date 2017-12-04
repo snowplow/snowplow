@@ -29,11 +29,7 @@ import org.json4s._
 import org.json4s.JsonDSL._
 
 // Iglu
-import iglu.client.{ 
-  SchemaCriterion,
-  SchemaKey
-}
-
+import iglu.client.{SchemaCriterion, SchemaKey}
 // HttpClient
 import org.apache.http.message.BasicHeaderValueParser
 
@@ -51,14 +47,13 @@ object CookieExtractorEnrichmentConfig extends ParseableEnrichment {
    *        Must be a supported SchemaKey for this enrichment
    * @return a configured CookieExtractorEnrichment instance
    */
-  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[CookieExtractorEnrichment] = {
-    isParseable(config, schemaKey).flatMap( conf => {
+  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[CookieExtractorEnrichment] =
+    isParseable(config, schemaKey).flatMap(conf => {
       (for {
-        cookieNames  <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "cookies")
-        enrich =  CookieExtractorEnrichment(cookieNames)
+        cookieNames <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "cookies")
+        enrich = CookieExtractorEnrichment(cookieNames)
       } yield enrich).toValidationNel
     })
-  }
 }
 
 /**
@@ -68,8 +63,7 @@ object CookieExtractorEnrichmentConfig extends ParseableEnrichment {
  */
 case class CookieExtractorEnrichment(
   cookieNames: List[String]
-
-  ) extends Enrichment {
+) extends Enrichment {
 
   def extract(headers: List[String]): List[JsonAST.JObject] = {
     // rfc6265 - sections 4.2.1 and 4.2.2
@@ -77,10 +71,11 @@ case class CookieExtractorEnrichment(
     val cookies = headers.flatMap { header =>
       header.split(":", 2) match {
         case Array("Cookie", value) =>
-          val nameValuePairs = BasicHeaderValueParser.
-            parseParameters(value, BasicHeaderValueParser.INSTANCE)
+          val nameValuePairs = BasicHeaderValueParser.parseParameters(value, BasicHeaderValueParser.INSTANCE)
 
-          val filtered = nameValuePairs.filter { nvp => cookieNames.contains(nvp.getName) }
+          val filtered = nameValuePairs.filter { nvp =>
+            cookieNames.contains(nvp.getName)
+          }
 
           Some(filtered)
         case _ => None
@@ -88,12 +83,10 @@ case class CookieExtractorEnrichment(
     }.flatten
 
     cookies.map { cookie =>
-      ( ("schema" -> "iglu:org.ietf/http_cookie/jsonschema/1-0-0") ~
+      (("schema" -> "iglu:org.ietf/http_cookie/jsonschema/1-0-0") ~
         ("data" ->
-          ("name" -> cookie.getName) ~
-          ("value" -> cookie.getValue)
-        )
-      )
+          ("name"    -> cookie.getName) ~
+            ("value" -> cookie.getValue)))
     }
   }
 }
