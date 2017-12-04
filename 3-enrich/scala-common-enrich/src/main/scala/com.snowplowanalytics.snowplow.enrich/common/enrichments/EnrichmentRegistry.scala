@@ -27,46 +27,36 @@ import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
 // Iglu
-import iglu.client.{
-  SchemaKey,
-  SchemaCriterion,
-  Resolver
-}
+import iglu.client.{Resolver, SchemaCriterion, SchemaKey}
 import iglu.client.validation.ValidatableJsonMethods._
 import iglu.client.validation.ProcessingMessageMethods._
 
 // This project
 import registry.{
-  Enrichment,
   AnonIpEnrichment,
-  IpLookupsEnrichment,
-  RefererParserEnrichment,
   CampaignAttributionEnrichment,
-  UserAgentUtilsEnrichment,
-  UaParserEnrichment,
-  CurrencyConversionEnrichment,
-  JavascriptScriptEnrichment,
-  EventFingerprintEnrichment,
   CookieExtractorEnrichment,
-  HttpHeaderExtractorEnrichment,
-  WeatherEnrichment,
-  UserAgentUtilsEnrichmentConfig,
-  UaParserEnrichmentConfig,
-  CurrencyConversionEnrichmentConfig,
-  JavascriptScriptEnrichmentConfig,
-  EventFingerprintEnrichmentConfig,
   CookieExtractorEnrichmentConfig,
+  CurrencyConversionEnrichment,
+  CurrencyConversionEnrichmentConfig,
+  Enrichment,
+  EventFingerprintEnrichment,
+  EventFingerprintEnrichmentConfig,
+  HttpHeaderExtractorEnrichment,
   HttpHeaderExtractorEnrichmentConfig,
+  IpLookupsEnrichment,
+  JavascriptScriptEnrichment,
+  JavascriptScriptEnrichmentConfig,
+  RefererParserEnrichment,
+  UaParserEnrichment,
+  UaParserEnrichmentConfig,
+  UserAgentUtilsEnrichment,
+  UserAgentUtilsEnrichmentConfig,
+  WeatherEnrichment,
   WeatherEnrichmentConfig
 }
-import registry.apirequest.{
-  ApiRequestEnrichment,
-  ApiRequestEnrichmentConfig
-}
-import registry.sqlquery.{
-  SqlQueryEnrichment,
-  SqlQueryEnrichmentConfig
-}
+import registry.apirequest.{ApiRequestEnrichment, ApiRequestEnrichmentConfig}
+import registry.sqlquery.{SqlQueryEnrichment,     SqlQueryEnrichmentConfig}
 
 import utils.ScalazJson4sUtils
 
@@ -92,32 +82,33 @@ object EnrichmentRegistry {
    * @todo remove all the JsonNode round-tripping when
    *       we have ValidatableJValue
    */
-  def parse(node: JValue, localMode: Boolean)(implicit resolver: Resolver): ValidatedNelMessage[EnrichmentRegistry] =  {
+  def parse(node: JValue, localMode: Boolean)(implicit resolver: Resolver): ValidatedNelMessage[EnrichmentRegistry] = {
 
     // Check schema, validate against schema, convert to List[JValue]
     val enrichments: ValidatedNelMessage[List[JValue]] = for {
-        d <- asJsonNode(node).verifySchemaAndValidate(EnrichmentConfigSchemaCriterion, true)
-      } yield (fromJsonNode(d) match {
+      d <- asJsonNode(node).verifySchemaAndValidate(EnrichmentConfigSchemaCriterion, true)
+    } yield
+      (fromJsonNode(d) match {
         case JArray(x) => x
-        case _ => throw new Exception("Enrichments JSON not an array - the enrichments JSON schema should prevent this happening")
+        case _         => throw new Exception("Enrichments JSON not an array - the enrichments JSON schema should prevent this happening")
       })
 
     // Check each enrichment validates against its own schema
     val configs: ValidatedNelMessage[EnrichmentMap] = (for {
-        jsons <- enrichments
-      } yield for {    
-        json  <- jsons
-      } yield for {
-        pair  <- asJsonNode(json).validateAndIdentifySchema(dataOnly = true)
-        conf  <- buildEnrichmentConfig(pair._1, fromJsonNode(pair._2), localMode)
-      } yield conf)
+      jsons <- enrichments
+    } yield
+      for {
+        json <- jsons
+      } yield
+        for {
+          pair <- asJsonNode(json).validateAndIdentifySchema(dataOnly = true)
+          conf <- buildEnrichmentConfig(pair._1, fromJsonNode(pair._2), localMode)
+        } yield conf)
       .flatMap(_.sequenceU) // Swap nested List[scalaz.Validation[...]
       .map(_.flatten.toMap) // Eliminate our Option boxing (drop Nones)
 
     // Build an EnrichmentRegistry from the Map
-    configs.bimap(
-      e => NonEmptyList(e.toString.toProcessingMessage),
-      s => EnrichmentRegistry(s))
+    configs.bimap(e => NonEmptyList(e.toString.toProcessingMessage), s => EnrichmentRegistry(s))
   }
 
   /**
@@ -131,7 +122,9 @@ object EnrichmentRegistry {
    * @return ValidatedNelMessage boxing Option boxing Tuple2 containing
    *         the Enrichment object and the schemaKey
    */
-  private def buildEnrichmentConfig(schemaKey: SchemaKey, enrichmentConfig: JValue, localMode: Boolean): ValidatedNelMessage[Option[Tuple2[String, Enrichment]]] = {
+  private def buildEnrichmentConfig(schemaKey: SchemaKey,
+                                    enrichmentConfig: JValue,
+                                    localMode: Boolean): ValidatedNelMessage[Option[Tuple2[String, Enrichment]]] = {
 
     val enabled = ScalazJson4sUtils.extract[Boolean](enrichmentConfig, "enabled").toValidationNel
 
@@ -139,7 +132,7 @@ object EnrichmentRegistry {
       case Success(false) => None.success.toValidationNel // Enrichment is disabled
       case e => {
         val name = ScalazJson4sUtils.extract[String](enrichmentConfig, "name").toValidationNel
-        name.flatMap( nm => {
+        name.flatMap(nm => {
 
           if (nm == "ip_lookups") {
             IpLookupsEnrichment.parse(enrichmentConfig, schemaKey, localMode).map((nm, _).some)
@@ -302,11 +295,11 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
     getEnrichment[WeatherEnrichment]("weather_enrichment_config")
 
   /**
-    * Returns an Option boxing the ApiRequestEnrichment
-    * config value if present, or None if not
-    *
-    * @return Option boxing the ApiRequestEnrichment instance
-    */
+   * Returns an Option boxing the ApiRequestEnrichment
+   * config value if present, or None if not
+   *
+   * @return Option boxing the ApiRequestEnrichment instance
+   */
   def getApiRequestEnrichment: Option[ApiRequestEnrichment] =
     getEnrichment[ApiRequestEnrichment]("api_request_enrichment_config")
 
@@ -339,6 +332,6 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    * @param a The object to cast to type A
    * @return a, converted to type A
    */
-  private def cast[A <: AnyRef : Manifest](a : Any) : A =
+  private def cast[A <: AnyRef: Manifest](a: Any): A =
     manifest.runtimeClass.cast(a).asInstanceOf[A]
 }

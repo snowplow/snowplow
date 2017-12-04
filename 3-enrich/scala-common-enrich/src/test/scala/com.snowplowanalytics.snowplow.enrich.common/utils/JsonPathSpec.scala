@@ -20,7 +20,8 @@ import org.specs2.scalaz.ValidationMatchers
 import org.json4s._
 import org.json4s.jackson.parseJson
 
-class JsonPathSpec extends Specification with ValidationMatchers { def is = s2"""
+class JsonPathSpec extends Specification with ValidationMatchers {
+  def is = s2"""
   This is a specification to test the JSONPath utils
   Test JSONPath query                     $e1
   Test query of non-exist value           $e2
@@ -65,7 +66,6 @@ class JsonPathSpec extends Specification with ValidationMatchers { def is = s2""
       |  }
       |}
     """.stripMargin)
-
 
   def e1 =
     JsonPath.query("$.store.book[1].price", someJson) must beSuccessful(List(JDouble(12.99)))

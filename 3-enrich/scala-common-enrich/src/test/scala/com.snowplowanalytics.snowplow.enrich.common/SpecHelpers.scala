@@ -36,7 +36,7 @@ object SpecHelpers {
 
   // Standard Iglu configuration
   private val igluConfig =
-     """|{
+    """|{
           |"schema": "iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-0",
           |"data": {
             |"cacheSize": 500,
@@ -53,7 +53,7 @@ object SpecHelpers {
               |}
             |]
           |}
-        |}""".stripMargin.replaceAll("[\n\r]","")
+        |}""".stripMargin.replaceAll("[\n\r]", "")
 
   /**
    * Builds an Iglu resolver from
@@ -72,13 +72,13 @@ object SpecHelpers {
    *
    * @param pair The Tuple2[String, String] name-value
    * pair to convert
-   * @return the basic name value pair 
+   * @return the basic name value pair
    */
   private def toNvPair(pair: NvPair): BasicNameValuePair =
     new BasicNameValuePair(pair._1, pair._2)
 
   /**
-   * Converts the supplied NvPairs into a 
+   * Converts the supplied NvPairs into a
    * a NameValueNel.
    *
    * @param head The first NvPair to convert
