@@ -23,37 +23,39 @@ import outputs.EnrichedEvent
 // Specs2
 import org.specs2.Specification
 
-class ShredderSpec extends Specification { def is = s2"""
+class ShredderSpec extends Specification {
+  def is = s2"""
   This is a specification to test the Shredder functionality
   makePartialHierarchy should initialize a partial TypeHierarchy                   $e1
   shred should extract the JSONs from an unstructured event with multiple contexts $e2
   """
 
-  val EventId = "f81d4fae-7dec-11d0-a765-00a0c91e6bf6"
+  val EventId            = "f81d4fae-7dec-11d0-a765-00a0c91e6bf6"
   val CollectorTimestamp = "2014-04-29 09:00:54.000"
 
   implicit val resolver = SpecHelpers.IgluResolver
 
   def e1 =
     Shredder.makePartialHierarchy(EventId, CollectorTimestamp) must_==
-      TypeHierarchy(
-        rootId =      EventId,
-        rootTstamp =  CollectorTimestamp,
-        refRoot =    "events",
-        refTree =     List("events"),
-        refParent =  "events")
+      TypeHierarchy(rootId     = EventId,
+                    rootTstamp = CollectorTimestamp,
+                    refRoot    = "events",
+                    refTree    = List("events"),
+                    refParent  = "events")
 
   def e2 = {
     val event = {
       val e = new EnrichedEvent()
-      e.event_id = EventId
+      e.event_id         = EventId
       e.collector_tstamp = CollectorTimestamp
-      e.unstruct_event = """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.snowplowanalytics.snowplow/link_click/jsonschema/1-0-0","data":{"targetUrl":"http://snowplowanalytics.com/blog/page2","elementClasses":["next"]}}}"""
-      e.contexts = """{"schema":"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0","data":[{"schema":"iglu:org.schema/WebPage/jsonschema/1-0-0","data":{"datePublished":"2014-07-23T00:00:00Z","author":"Jonathan Almeida","inLanguage":"en-US","genre":"blog","breadcrumb":["blog","releases"],"keywords":["snowplow","analytics","java","jvm","tracker"]}},{"schema":"iglu:org.schema/WebPage/jsonschema/1-0-0","data":{"datePublished":"2014-07-23T00:00:00Z","author":"Jonathan Almeida","inLanguage":"en-US","genre":"blog","breadcrumb":["blog","releases"],"keywords":["snowplow","analytics","java","jvm","tracker"]}}]}"""
+      e.unstruct_event =
+        """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.snowplowanalytics.snowplow/link_click/jsonschema/1-0-0","data":{"targetUrl":"http://snowplowanalytics.com/blog/page2","elementClasses":["next"]}}}"""
+      e.contexts =
+        """{"schema":"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0","data":[{"schema":"iglu:org.schema/WebPage/jsonschema/1-0-0","data":{"datePublished":"2014-07-23T00:00:00Z","author":"Jonathan Almeida","inLanguage":"en-US","genre":"blog","breadcrumb":["blog","releases"],"keywords":["snowplow","analytics","java","jvm","tracker"]}},{"schema":"iglu:org.schema/WebPage/jsonschema/1-0-0","data":{"datePublished":"2014-07-23T00:00:00Z","author":"Jonathan Almeida","inLanguage":"en-US","genre":"blog","breadcrumb":["blog","releases"],"keywords":["snowplow","analytics","java","jvm","tracker"]}}]}"""
       e
     }
 
     // TODO: check actual contents (have already confirmed in REPL)
-    Shredder.shred(event).toOption.get must have size(3)
+    Shredder.shred(event).toOption.get must have size (3)
   }
 }

@@ -23,27 +23,38 @@ import org.specs2.scalaz.ValidationMatchers
 // Iglu
 import com.snowplowanalytics.iglu.client.SchemaKey
 
-class ApiRequestEnrichmentSpec extends Specification with ValidationMatchers { def is = s2"""
+class ApiRequestEnrichmentSpec extends Specification with ValidationMatchers {
+  def is = s2"""
   This is a specification to test the ApiRequestEnrichment configuration
   Extract correct configuration                                $e1
   Skip incorrect input (none of json or pojo) in configuration $e2
   Skip incorrect input (both json and pojo) in configuration   $e3
   """"
 
-  val SCHEMA_KEY = SchemaKey("com.snowplowanalytics.snowplow.enrichments", "api_request_enrichment_config", "jsonschema", "1-0-0")
+  val SCHEMA_KEY =
+    SchemaKey("com.snowplowanalytics.snowplow.enrichments", "api_request_enrichment_config", "jsonschema", "1-0-0")
 
   def e1 = {
     val inputs = List(
       Input("user", pojo = Some(PojoInput("user_id")), json = None),
-      Input("user", pojo = None, json = Some(JsonInput("contexts", "iglu:com.snowplowanalytics.snowplow/client_session/jsonschema/1-*-*", "$.userId"))),
+      Input(
+        "user",
+        pojo = None,
+        json = Some(
+          JsonInput("contexts", "iglu:com.snowplowanalytics.snowplow/client_session/jsonschema/1-*-*", "$.userId"))),
       Input("client", pojo = Some(PojoInput("app_id")), json = None)
     )
-    val api = HttpApi("GET", "http://api.acme.com/users/{{client}}/{{user}}?format=json", 1000, Authentication(Some(HttpBasic(Some("xxx"), None))))
+    val api =
+      HttpApi("GET",
+              "http://api.acme.com/users/{{client}}/{{user}}?format=json",
+              1000,
+              Authentication(Some(HttpBasic(Some("xxx"), None))))
     val output = Output("iglu:com.acme/user/jsonschema/1-0-0", Some(JsonOutput("$.record")))
-    val cache = Cache(3000, 60)
+    val cache  = Cache(3000, 60)
     val config = ApiRequestEnrichment(inputs, api, List(output), cache)
 
-    val configuration = parseJson("""|{
+    val configuration = parseJson(
+      """|{
       |    "vendor": "com.snowplowanalytics.snowplow.enrichments",
       |    "name": "api_request_enrichment_config",
       |    "enabled": true,
@@ -151,7 +162,8 @@ class ApiRequestEnrichmentSpec extends Specification with ValidationMatchers { d
   }
 
   def e3 = {
-    val configuration = parseJson("""|{
+    val configuration = parseJson(
+      """|{
       |    "vendor": "com.snowplowanalytics.snowplow.enrichments",
       |    "name": "api_request_enrichment_config",
       |    "enabled": true,

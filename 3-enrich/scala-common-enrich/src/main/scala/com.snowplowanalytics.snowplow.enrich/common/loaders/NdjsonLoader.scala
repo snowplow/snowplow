@@ -13,6 +13,7 @@
 package com.snowplowanalytics.snowplow.enrich.common.loaders
 
 import com.snowplowanalytics.snowplow.enrich.common.ValidatedMaybeCollectorPayload
+import org.joda.time.{DateTime, DateTimeZone}
 
 // Scalaz
 import scalaz._
@@ -25,10 +26,9 @@ import org.json4s.jackson.JsonMethods._
 // Java
 import com.fasterxml.jackson.core.JsonParseException
 
-
 case class NdjsonLoader(adapter: String) extends Loader[String] {
 
-  private val CollectorName = "ndjson"
+  private val CollectorName     = "ndjson"
   private val CollectorEncoding = "UTF-8"
 
   /**
@@ -40,8 +40,7 @@ case class NdjsonLoader(adapter: String) extends Loader[String] {
    *         boxed, or None if no input was
    *         extractable.
    */
-  override def toCollectorPayload(line: String): ValidatedMaybeCollectorPayload = {
-
+  override def toCollectorPayload(line: String): ValidatedMaybeCollectorPayload =
     try {
 
       if (line.replaceAll("\r?\n", "").isEmpty) {
@@ -50,28 +49,30 @@ case class NdjsonLoader(adapter: String) extends Loader[String] {
         "Too many lines! Expected single line".failNel
       } else {
         parse(line)
-        CollectorApi.parse(adapter).map(
-          CollectorPayload(
-            Nil,
-            CollectorName,
-            CollectorEncoding,
-            None,
-            None,
-            None,
-            None,
-            None,
-            Nil,
-            None,
-            _,
-            None,
-            Some(line)
-          ).some
-        ).toValidationNel
+        CollectorApi
+          .parse(adapter)
+          .map(
+            CollectorPayload(
+              Nil,
+              CollectorName,
+              CollectorEncoding,
+              None,
+              None,
+              None,
+              None,
+              None,
+              Nil,
+              None,
+              _,
+              None,
+              Some(line)
+            ).some
+          )
+          .toValidationNel
       }
 
     } catch {
       case e: JsonParseException => "Unparsable JSON".failNel
     }
-  }
 
 }

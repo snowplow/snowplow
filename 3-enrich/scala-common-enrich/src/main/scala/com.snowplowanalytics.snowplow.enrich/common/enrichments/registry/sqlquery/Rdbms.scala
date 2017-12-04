@@ -54,8 +54,9 @@ trait Rdbms {
   def getConnection: ThrowableXor[Connection] = lastConnection match {
     case \/-(c) if !c.isClosed => c.right
     case _ =>
-      try { lastConnection = DriverManager.getConnection(connectionString).right }
-      catch { case e: SQLException => lastConnection = e.left }
+      try { lastConnection = DriverManager.getConnection(connectionString).right } catch {
+        case e: SQLException => lastConnection = e.left
+      }
       lastConnection
   }
 
@@ -94,9 +95,11 @@ case class PostgresqlDb(
   database: String
 ) extends Rdbms {
 
-  val driver: Class[_] = Class.forName("org.postgresql.Driver")  // Load class
+  val driver: Class[_] = Class.forName("org.postgresql.Driver") // Load class
 
-  val connectionString = s"jdbc:postgresql://$host:$port/$database?user=$username&password=$password" ++ (if (sslMode) "&ssl=true&sslfactory=org.postgresql.ssl.NonValidatingFactory" else "")
+  val connectionString = s"jdbc:postgresql://$host:$port/$database?user=$username&password=$password" ++ (if (sslMode)
+                                                                                                            "&ssl=true&sslfactory=org.postgresql.ssl.NonValidatingFactory"
+                                                                                                          else "")
 }
 
 /**
@@ -111,7 +114,9 @@ case class MysqlDb(
   database: String
 ) extends Rdbms {
 
-  val driver: Class[_] = Class.forName("com.mysql.jdbc.Driver")  // Load class
+  val driver: Class[_] = Class.forName("com.mysql.jdbc.Driver") // Load class
 
-  val connectionString = s"jdbc:mysql://$host:$port/$database?user=$username&password=$password" ++ (if (sslMode) "&useSsl=true&verifyServerCertificate=false" else "")
+  val connectionString = s"jdbc:mysql://$host:$port/$database?user=$username&password=$password" ++ (if (sslMode)
+                                                                                                       "&useSsl=true&verifyServerCertificate=false"
+                                                                                                     else "")
 }

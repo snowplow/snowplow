@@ -21,7 +21,8 @@ import org.specs2.Specification
 import org.specs2.scalaz.ValidationMatchers
 import org.specs2.mock.Mockito
 
-class HttpApiSpec extends Specification with ValidationMatchers with Mockito { def is = s2"""
+class HttpApiSpec extends Specification with ValidationMatchers with Mockito {
+  def is = s2"""
   This is a specification to test the HTTP API of API Request Enrichment
   Fail to build request string without all keys $e1
   Build request string from template context    $e2
@@ -29,20 +30,21 @@ class HttpApiSpec extends Specification with ValidationMatchers with Mockito { d
   """
 
   def e1 = {
-    val httpApi = HttpApi("GET", "http://api.acme.com/{{user}}/{{ time}}/", anyInt, Authentication(None))
+    val httpApi         = HttpApi("GET", "http://api.acme.com/{{user}}/{{ time}}/", anyInt, Authentication(None))
     val templateContext = Map("user" -> "admin")
-    val request = httpApi.buildUrl(templateContext)
+    val request         = httpApi.buildUrl(templateContext)
     request must beNone
   }
 
   def e2 = {
-    val httpApi = HttpApi(anyString,
-      "http://thishostdoesntexist31337:8123/{{  user }}/foo/{{ time}}/{{user}}",
-      anyInt,
-      Authentication(None))
+    val httpApi =
+      HttpApi(anyString,
+              "http://thishostdoesntexist31337:8123/{{  user }}/foo/{{ time}}/{{user}}",
+              anyInt,
+              Authentication(None))
 
     val templateContext = Map("user" -> "admin", "time" -> "November 2015")
-    val request = httpApi.buildUrl(templateContext)
+    val request         = httpApi.buildUrl(templateContext)
     request must beSome("http://thishostdoesntexist31337:8123/admin/foo/November+2015/admin")
   }
 
@@ -50,11 +52,11 @@ class HttpApiSpec extends Specification with ValidationMatchers with Mockito { d
   def e3 = {
     val enrichment = ApiRequestEnrichment(
       Nil,
-      HttpApi("GET", "http://thishostdoesntexist31337:8123/endpoint",1000, Authentication(None)),
+      HttpApi("GET", "http://thishostdoesntexist31337:8123/endpoint", 1000, Authentication(None)),
       List(Output("", Some(JsonOutput("")))),
-      Cache(1,1))
+      Cache(1, 1))
 
-    val event = new outputs.EnrichedEvent
+    val event   = new outputs.EnrichedEvent
     val request = enrichment.lookup(event, Nil, Nil, Nil)
     request must beFailing
   }

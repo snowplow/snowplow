@@ -22,10 +22,7 @@ package snowplow
 import com.fasterxml.jackson.databind.JsonNode
 
 // Iglu
-import iglu.client.{
-  Resolver,
-  SchemaKey
-}
+import iglu.client.{Resolver, SchemaCriterion, SchemaKey}
 import iglu.client.validation.ValidatableJsonMethods._
 
 // Scalaz
@@ -39,7 +36,7 @@ import org.json4s.jackson.JsonMethods._
 
 // This project
 import loaders.CollectorPayload
-import utils.{JsonUtils => JU}
+import utils.{JsonUtils       => JU}
 import utils.{ConversionUtils => CU}
 
 /**
@@ -86,9 +83,8 @@ object RedirectAdapter extends Adapter {
       "Querystring is empty: cannot be a valid URI redirect".failNel
     } else {
       originalParams.get("u") match {
-        case None    => "Querystring does not contain u parameter: not a valid URI redirect".failNel
+        case None => "Querystring does not contain u parameter: not a valid URI redirect".failNel
         case Some(u) =>
-
           val json = buildUriRedirect(u)
           val newParams =
             if (originalParams.contains("e")) {
@@ -97,29 +93,28 @@ object RedirectAdapter extends Adapter {
               (originalParams.get("cx"), originalParams.get("co")) match {
                 case (None, None)                 => newCo
                 case (None, Some(co)) if co == "" => newCo
-                case (None, Some(co))             => addToExistingCo(json, co)
-                                                       .map(str => Map("co" -> str))
-                case (Some(cx), _)                => addToExistingCx(json, cx)
-                                                       .map(str => Map("cx" -> str))
+                case (None, Some(co))             => addToExistingCo(json, co).map(str => Map("co" -> str))
+                case (Some(cx), _)                => addToExistingCx(json, cx).map(str => Map("cx" -> str))
               }
             } else {
-              // Add URI redirect as an unstructured event 
+              // Add URI redirect as an unstructured event
               Map("e" -> "ue", "ue_pr" -> compact(toUnstructEvent(json))).successNel
             }
 
           val fixedParams = Map(
             "tv" -> TrackerVersion,
             "p"  -> originalParams.getOrElse("p", TrackerPlatform) // Required field
-            )
+          )
 
           for {
             np <- newParams
-            ev = NonEmptyList(RawEvent(
-              api          = payload.api,
-              parameters   = (originalParams - "u") ++ np ++ fixedParams,
-              contentType  = payload.contentType,
-              source       = payload.source,
-              context      = payload.context
+            ev = NonEmptyList(
+              RawEvent(
+                api         = payload.api,
+                parameters  = (originalParams - "u") ++ np ++ fixedParams,
+                contentType = payload.contentType,
+                source      = payload.source,
+                context     = payload.context
               ))
           } yield ev
       }
@@ -136,9 +131,9 @@ object RedirectAdapter extends Adapter {
    */
   private def buildUriRedirect(uri: String): JValue =
     ("schema" -> SchemaUris.UriRedirect) ~
-    ("data" -> (
-      ("uri" -> uri)
-    ))
+      ("data" -> (
+        ("uri" -> uri)
+      ))
 
   /**
    * Adds a context to an existing non-Base64-encoded
@@ -157,9 +152,9 @@ object RedirectAdapter extends Adapter {
    */
   private def addToExistingCo(newContext: JValue, existing: String): Validated[String] =
     for {
-      node   <- JU.extractJson("co|cx", existing).toValidationNel: Validated[JsonNode]
-      jvalue  = fromJsonNode(node)
-      merged  = jvalue merge render("data" -> List(newContext))
+      node <- JU.extractJson("co|cx", existing).toValidationNel: Validated[JsonNode]
+      jvalue = fromJsonNode(node)
+      merged = jvalue merge render("data" -> List(newContext))
     } yield compact(merged)
 
   /**
@@ -181,7 +176,7 @@ object RedirectAdapter extends Adapter {
     for {
       decoded <- CU.decodeBase64Url("cx", existing).toValidationNel: Validated[String]
       added   <- addToExistingCo(newContext, decoded)
-      recoded  = CU.encodeBase64Url(added)
+      recoded = CU.encodeBase64Url(added)
     } yield recoded
 
 }

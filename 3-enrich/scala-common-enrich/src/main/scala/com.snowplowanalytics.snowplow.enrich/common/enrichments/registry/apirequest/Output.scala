@@ -24,19 +24,18 @@ import Scalaz._
 import scala.util.control.NonFatal
 
 // Json4s
-import org.json4s.{ JValue, JNothing, JObject }
+import org.json4s.{JNothing, JObject, JValue}
 import org.json4s.JsonDSL._
-import org.json4s.jackson.{ compactJson, parseJson }
+import org.json4s.jackson.{compactJson, parseJson}
 
 // This project
-import utils.JsonPath.{ query, wrapArray }
+import utils.JsonPath.{query, wrapArray}
 
 /**
  * Base trait for API output format
  * Primary intention of these classes is to perform transformation
  * of API raw output to self-describing JSON instance
  */
-
 case class Output(schema: String, json: Option[JsonOutput]) {
 
   /**
@@ -48,7 +47,7 @@ case class Output(schema: String, json: Option[JsonOutput]) {
    */
   def parse(apiResponse: String): Validation[Throwable, JValue] = json match {
     case Some(jsonOutput) => jsonOutput.parse(apiResponse)
-    case output => new InvalidStateException(s"Error: Unknown output [$output]").failure  // Cannot happen now
+    case output           => new InvalidStateException(s"Error: Unknown output [$output]").failure // Cannot happen now
   }
 
   /**
@@ -59,7 +58,7 @@ case class Output(schema: String, json: Option[JsonOutput]) {
    */
   def extract(value: JValue): Validation[Throwable, JValue] = json match {
     case Some(jsonOutput) => jsonOutput.extract(value)
-    case output => new InvalidStateException(s"Error: Unknown output [$output]").failure  // Cannot happen now
+    case output           => new InvalidStateException(s"Error: Unknown output [$output]").failure // Cannot happen now
   }
 
   /**
@@ -104,12 +103,11 @@ sealed trait ApiOutput[A] {
    * @param response API response assumed to be JSON
    * @return validated extracted value
    */
-  def get(response: String): Validation[Throwable, JValue] = {
+  def get(response: String): Validation[Throwable, JValue] =
     for {
       validated <- parse(response)
-      result <- extract(validated)
+      result    <- extract(validated)
     } yield result
-  }
 }
 
 /**
@@ -127,12 +125,12 @@ case class JsonOutput(jsonPath: String) extends ApiOutput[JValue] {
    * @param json JSON value to look in
    * @return validated found JSON, with absent value treated like failure
    */
-  def extract(json: JValue): Validation[Throwable, JValue] = {
+  def extract(json: JValue): Validation[Throwable, JValue] =
     query(path, json).map(wrapArray) match {
-      case Success(JNothing) => ValueNotFoundException(s"Error: no values were found by JSON Path [$jsonPath] in [${compactJson(json)}]").failure
+      case Success(JNothing) =>
+        ValueNotFoundException(s"Error: no values were found by JSON Path [$jsonPath] in [${compactJson(json)}]").failure
       case other => other.leftMap(JsonPathException.apply)
     }
-  }
 
   def parse(response: String): Validation[Throwable, JValue] =
     try {

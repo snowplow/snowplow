@@ -22,7 +22,12 @@ import scalaz.Scalaz._
 import scalaz._
 
 // Snowplow
-import com.snowplowanalytics.snowplow.enrich.common.loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import com.snowplowanalytics.snowplow.enrich.common.loaders.{
+  CollectorApi,
+  CollectorContext,
+  CollectorPayload,
+  CollectorSource
+}
 
 // Specs2
 import org.specs2.mutable.Specification
@@ -37,9 +42,14 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
   implicit val resolver = SpecHelpers.IgluResolver
 
   object Shared {
-    val api = CollectorApi("com.sendgrid", "v3")
+    val api       = CollectorApi("com.sendgrid", "v3")
     val cljSource = CollectorSource("clj-tomcat", "UTF-8", None)
-    val context = CollectorContext(DateTime.parse("2013-08-29T00:18:48.000+00:00").some, "37.157.33.123".some, None, None, Nil, None)
+    val context = CollectorContext(DateTime.parse("2013-08-29T00:18:48.000+00:00").some,
+                                   "37.157.33.123".some,
+                                   None,
+                                   None,
+                                   Nil,
+                                   None)
   }
 
   val ContentType = "application/json"
@@ -172,7 +182,8 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
 
   "toRawEvents" should {
 
-    val payload = CollectorPayload(Shared.api, Nil, ContentType.some, samplePostPayload.some, Shared.cljSource, Shared.context)
+    val payload =
+      CollectorPayload(Shared.api, Nil, ContentType.some, samplePostPayload.some, Shared.cljSource, Shared.context)
     val actual = SendgridAdapter.toRawEvents(payload)
 
     "return the correct number of events" in {
@@ -185,7 +196,7 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
     "have the correct api endpoint for each element" in {
       actual must beSuccessful
       val items = actual.toList.head.toList
-      val siz = items.count(itm => itm.api == Shared.api)
+      val siz   = items.count(itm => itm.api == Shared.api)
 
       siz must beEqualTo(items.size)
     }
@@ -193,7 +204,7 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
     "have the correct content type for each element" in {
       actual must beSuccessful
       val items = actual.toList.head.toList
-      val siz = items.count(itm => itm.contentType.get == ContentType)
+      val siz   = items.count(itm => itm.contentType.get == ContentType)
 
       siz must beEqualTo(items.toList.size)
     }
@@ -201,7 +212,7 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
     "have the correct source for each element" in {
       actual must beSuccessful
       val items = actual.toList.head.toList
-      val siz = items.count(itm => itm.source == Shared.cljSource)
+      val siz   = items.count(itm => itm.source == Shared.cljSource)
 
       siz must beEqualTo(items.toList.size)
     }
@@ -209,31 +220,44 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
     "have the correct context for each element" in {
       actual must beSuccessful
       val items = actual.toList.head.toList
-      val siz = items.count(itm => itm.context == Shared.context)
+      val siz   = items.count(itm => itm.context == Shared.context)
 
       siz must beEqualTo(items.toList.size)
     }
 
     "reject empty bodies" in {
       val invalidpayload = CollectorPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
-      val toBeRejected = SendgridAdapter.toRawEvents(invalidpayload)
+      val toBeRejected   = SendgridAdapter.toRawEvents(invalidpayload)
 
       toBeRejected must beFailing
     }
 
     "reject empty content type" in {
-      val invalidpayload = CollectorPayload(Shared.api, Nil, None, samplePostPayload.some, Shared.cljSource, Shared.context)
+      val invalidpayload =
+        CollectorPayload(Shared.api, Nil, None, samplePostPayload.some, Shared.cljSource, Shared.context)
       val toBeRejected = SendgridAdapter.toRawEvents(invalidpayload)
       toBeRejected must beFailing
     }
 
     "reject unexpected content type" in {
-      val invalidpayload = CollectorPayload(Shared.api, Nil, "invalidtype/invalid".some, samplePostPayload.some, Shared.cljSource, Shared.context)
+      val invalidpayload =
+        CollectorPayload(Shared.api,
+                         Nil,
+                         "invalidtype/invalid".some,
+                         samplePostPayload.some,
+                         Shared.cljSource,
+                         Shared.context)
       SendgridAdapter.toRawEvents(invalidpayload) must beFailing
     }
 
     "accept content types with explicit charsets" in {
-      val payload = CollectorPayload(Shared.api, Nil, "application/json; charset=utf-8".some, samplePostPayload.some, Shared.cljSource, Shared.context)
+      val payload =
+        CollectorPayload(Shared.api,
+                         Nil,
+                         "application/json; charset=utf-8".some,
+                         samplePostPayload.some,
+                         Shared.cljSource,
+                         Shared.context)
       val res = SendgridAdapter.toRawEvents(payload)
       res must beSuccessful
     }
@@ -254,19 +278,31 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
                 }
             ]"""
 
-      val invalidpayload = CollectorPayload(Shared.api, Nil, ContentType.some, invalidEventTypeJson.some, Shared.cljSource, Shared.context)
+      val invalidpayload =
+        CollectorPayload(Shared.api, Nil, ContentType.some, invalidEventTypeJson.some, Shared.cljSource, Shared.context)
 
       SendgridAdapter.toRawEvents(invalidpayload) must beFailing
     }
 
     "reject invalid/unparsable json" in {
       val unparsableJson = """[ """
-      SendgridAdapter.toRawEvents(CollectorPayload(Shared.api, Nil, ContentType.some, unparsableJson.some, Shared.cljSource, Shared.context)) must beFailing
+      SendgridAdapter.toRawEvents(CollectorPayload(Shared.api,
+                                                   Nil,
+                                                   ContentType.some,
+                                                   unparsableJson.some,
+                                                   Shared.cljSource,
+                                                   Shared.context)) must beFailing
     }
 
     "reject valid json in incorrect format" in {
       val incorrectlyFormattedJson = """[ ]"""
-      SendgridAdapter.toRawEvents(CollectorPayload(Shared.api, Nil, ContentType.some, incorrectlyFormattedJson.some, Shared.cljSource, Shared.context)) must beFailing
+      SendgridAdapter.toRawEvents(
+        CollectorPayload(Shared.api,
+                         Nil,
+                         ContentType.some,
+                         incorrectlyFormattedJson.some,
+                         Shared.cljSource,
+                         Shared.context)) must beFailing
     }
 
     "reject a payload with a some valid, some invalid events" in {
@@ -292,9 +328,11 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
           }
       ]"""
 
-      val payload = CollectorPayload(Shared.api, Nil, ContentType.some, missingEventType.some, Shared.cljSource, Shared.context)
+      val payload =
+        CollectorPayload(Shared.api, Nil, ContentType.some, missingEventType.some, Shared.cljSource, Shared.context)
       val actual = SendgridAdapter.toRawEvents(payload)
-      actual must beFailing(NonEmptyList("Sendgrid event at index [1] failed: type parameter not provided - cannot determine event type"))
+      actual must beFailing(
+        NonEmptyList("Sendgrid event at index [1] failed: type parameter not provided - cannot determine event type"))
     }
 
     "return correct json for sample event, including stripping out event keypair and fixing timestamp" in {
@@ -313,12 +351,12 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
           }
       ]"""
 
-      val payload = CollectorPayload(Shared.api, Nil, ContentType.some, inputJson.some, Shared.cljSource, Shared.context)
+      val payload =
+        CollectorPayload(Shared.api, Nil, ContentType.some, inputJson.some, Shared.cljSource, Shared.context)
 
       val expectedJson =
         compact(
-          parse(
-            """{
+          parse("""{
               "schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
               "data":{
                 "schema":"iglu:com.sendgrid/processed/jsonschema/1-0-0",
@@ -338,16 +376,18 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
       val actual = SendgridAdapter.toRawEvents(payload)
       actual must beSuccessful(
         NonEmptyList(
-          RawEvent(Shared.api,
+          RawEvent(
+            Shared.api,
             Map(
-              "tv" -> "com.sendgrid-v3",
-              "e" -> "ue",
-              "p" -> "srv",
+              "tv"    -> "com.sendgrid-v3",
+              "e"     -> "ue",
+              "p"     -> "srv",
               "ue_pr" -> expectedJson // NB this includes removing the "event" keypair as redundant
             ),
             ContentType.some,
             Shared.cljSource,
-            Shared.context)
+            Shared.context
+          )
         )
       )
     }

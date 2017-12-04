@@ -35,9 +35,11 @@ import Input.ExtractedValue
 case class Db(postgresql: Option[PostgresqlDb] = None, mysql: Option[MysqlDb] = None) {
   private val realDb: Rdbms = (postgresql, mysql) match {
     case (Some(_), Some(_)) =>
-      throw new MappingException("SQL Query Enrichment Configuration: db must represent either postgresql OR mysql. Both present")
+      throw new MappingException(
+        "SQL Query Enrichment Configuration: db must represent either postgresql OR mysql. Both present")
     case (None, None) =>
-      throw new MappingException("SQL Query Enrichment Configuration: db must represent either postgresql OR mysql. None present")
+      throw new MappingException(
+        "SQL Query Enrichment Configuration: db must represent either postgresql OR mysql. None present")
     case _ =>
       List(postgresql, mysql).flatten.head
   }
@@ -53,8 +55,9 @@ case class Db(postgresql: Option[PostgresqlDb] = None, mysql: Option[MysqlDb] = 
    */
   def createStatement(sql: String, placeholderMap: IntMap[ExtractedValue]): ThrowableXor[PreparedStatement] =
     realDb.createEmptyStatement(sql).map { preparedStatement =>
-      placeholderMap.foreach { case (index, value) =>
-        value.set(preparedStatement, index)
+      placeholderMap.foreach {
+        case (index, value) =>
+          value.set(preparedStatement, index)
       }
       preparedStatement
     }

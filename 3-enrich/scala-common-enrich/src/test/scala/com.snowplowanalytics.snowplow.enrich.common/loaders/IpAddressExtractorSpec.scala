@@ -24,19 +24,23 @@ class IpAddressExtractorSpec extends Specification with DataTables with Validati
   "extractIpAddress" should {
     "correctly extract an X-FORWARDED-FOR header" in {
 
-      "SPEC NAME"                                           || "HEADERS"                                                                                                | "EXP. RESULT"   |
-      "No headers"                                          !! Nil                                                                                                      ! Default         |
-      "No X-FORWARDED-FOR header"                           !! List("Accept-Charset: utf-8", "Connection: keep-alive")                                                  ! Default         |
-      "Unparseable X-FORWARDED-FOR header"                  !! List("X-Forwarded-For: localhost")                                                                       ! Default         |
-      "Good X-FORWARDED-FOR header"                         !! List("Accept-Charset: utf-8", "X-Forwarded-For: 129.78.138.66, 129.78.64.103", "Connection: keep-alive") ! "129.78.138.66" |
-      "Good incorrectly capitalized X-FORWARDED-FOR header" !! List("Accept-Charset: utf-8", "x-FoRwaRdeD-FOr: 129.78.138.66, 129.78.64.103", "Connection: keep-alive") ! "129.78.138.66" |> {
+      "SPEC NAME"                            || "HEADERS"                                               | "EXP. RESULT" |
+        "No headers"                         !! Nil                                                     ! Default |
+        "No X-FORWARDED-FOR header"          !! List("Accept-Charset: utf-8", "Connection: keep-alive") ! Default |
+        "Unparseable X-FORWARDED-FOR header" !! List("X-Forwarded-For: localhost")                      ! Default |
+        "Good X-FORWARDED-FOR header" !! List("Accept-Charset: utf-8",
+                                              "X-Forwarded-For: 129.78.138.66, 129.78.64.103",
+                                              "Connection: keep-alive") ! "129.78.138.66" |
+        "Good incorrectly capitalized X-FORWARDED-FOR header" !! List("Accept-Charset: utf-8",
+                                                                      "x-FoRwaRdeD-FOr: 129.78.138.66, 129.78.64.103",
+                                                                      "Connection: keep-alive") ! "129.78.138.66" |> {
 
-        (_, headers, expected) => {
-          IpAddressExtractor.extractIpAddress(headers, Default) must_== expected
-        }
+        (_, headers, expected) =>
+          {
+            IpAddressExtractor.extractIpAddress(headers, Default) must_== expected
+          }
       }
 
     }
   }
 }
-
