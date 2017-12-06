@@ -121,8 +121,7 @@ object MandrillAdapter extends Adapter {
                   
                   val formattedEvent = cleanupJsonEventValues(event,
                                                              eventOpt match { case Some(x) => ("event", x).some case None => None },
-                                                             "ts",
-                                                             _ * 1000
+                                                             "ts"
                                                              )
                   val qsParams = toMap(payload.querystring)
                   RawEvent(
