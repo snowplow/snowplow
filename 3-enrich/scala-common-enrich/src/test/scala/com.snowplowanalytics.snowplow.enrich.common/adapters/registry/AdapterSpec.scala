@@ -146,7 +146,7 @@ class AdapterSpec extends Specification with DataTables with ValidationMatchers 
       "Change nested values"            !! """{"ts":1415709559,"nested":{"ts":1415700000}}"""   ! JObject(List(("ts",JString("2014-11-11T12:39:19.000Z")),("nested",JObject(List(("ts",JString("2014-11-11T10:00:00.000Z"))))))) |
       "Change nested string values"     !! """{"ts":1415709559,"nested":{"ts":"1415700000"}}""" ! JObject(List(("ts",JString("2014-11-11T12:39:19.000Z")),("nested",JObject(List(("ts",JString("2014-11-11T10:00:00.000Z"))))))) |
       "JStrings should also be changed" !! """{"ts":"1415709559"}"""                            ! JObject(List(("ts",JString("2014-11-11T12:39:19.000Z"))))                                                                                    |> {
-      (_, json, expected) => BaseAdapter.cleanupJsonEventValues(parse(json), None, "ts", _ * 1000) mustEqual expected
+      (_, json, expected) => BaseAdapter.cleanupJsonEventValues(parse(json), None, "ts") mustEqual expected
     }
 
   def e10 =
@@ -155,7 +155,7 @@ class AdapterSpec extends Specification with DataTables with ValidationMatchers 
       "Not remove existing values"        !! """{"abc":1415709559, "an_event":"type", "cba":"type"}"""   ! JObject(List(("abc",JInt(1415709559)),("cba",JString("type"))))                                                          |
       "Works with ts value subs"          !! """{"ts":1415709559, "an_event":"type", "abc":"type"}"""    ! JObject(List(("ts",JString("2014-11-11T12:39:19.000Z")),("abc",JString("type"))))                                        |
       "Removes nested values"             !! """{"abc":"abc","nested":{"an_event":"type"}}"""            ! JObject(List(("abc", JString("abc")),("nested", JObject(List()))))                                                                |> {
-      (_, json, expected) => BaseAdapter.cleanupJsonEventValues(parse(json), ("an_event", "type").some, "ts", _ * 1000) mustEqual expected
+      (_, json, expected) => BaseAdapter.cleanupJsonEventValues(parse(json), ("an_event", "type").some, "ts") mustEqual expected
   }
 
 }
