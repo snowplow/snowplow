@@ -387,5 +387,24 @@ trait Adapter {
         s"Event failed to parse into JSON: [${exception}]".failNel
       }
     }
+  private[registry] val snakeCaseOrDashTokenCapturingRegex = "[_-](\\w)".r
+  /**
+   * Converts dash or unersocre separted strings to camelCase.
+   *
+   * @param snakeOrDash string like "X-Mailgun-Sid" or "x_mailgun_sid"
+   * @return string like "xMailgunSid"
+   */
+  private[registry] def camelCase(snakeOrDash: String) =
+    snakeCaseOrDashTokenCapturingRegex.replaceAllIn(Character.toLowerCase(snakeOrDash.charAt(0)) + snakeOrDash.substring(1), m => m.group(1).capitalize)
 
+ /**
+  * Converts input field case to camel case recursively
+  *
+  * @param json parsed event fields as a JValue
+  * @return The mutated event.
+  */
+  private[registry] def camelize(json: JValue): JValue = json.mapField {
+      case (fieldName, JObject(jo)) => (camelCase(fieldName), camelize(jo))
+      case (fieldName, jv) => (camelCase(fieldName), jv)
+    }
 }
