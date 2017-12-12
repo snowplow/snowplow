@@ -21,6 +21,8 @@ package registry
 import java.net.URI
 import java.lang.{Byte => JByte}
 
+import com.snowplowanalytics.iglu.client.SchemaCriterion
+
 // Apache Commons Codec
 import org.apache.commons.codec.binary.Base64
 
@@ -76,7 +78,7 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
           },
           "isp": {
             "database": "GeoIPISP.dat",
-            "uri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind"            
+            "uri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind"
           }
         }
       }""")
@@ -105,7 +107,7 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
         "enabled": true,
         "parameters": {
           "internalDomains": [
-            "www.subdomain1.snowplowanalytics.com", 
+            "www.subdomain1.snowplowanalytics.com",
             "www.subdomain2.snowplowanalytics.com"
           ]
         }
@@ -284,6 +286,67 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
 
       val result = CookieExtractorEnrichmentConfig.parse(cookieExtractorEnrichmentJson, schemaKey)
       result must beSuccessful(CookieExtractorEnrichment(List("foo", "bar")))
+    }
+  }
+
+  "Parsing a valid pii_enrichment_config enrichment JSON" should {
+    "successfully construct a PiiPsedonymizerEnrichment case object" in {
+      val piiPseudonymizerEnrichmentJson = parse("""{
+          |  "enabled": true,
+          |  "parameters": {
+          |    "pii": [
+          |      {
+          |        "pojo": {
+          |          "field": "user_id"
+          |        }
+          |      },
+          |      {
+          |        "json": {
+          |          "jsonPath": "$.emailAddress",
+          |          "schemaCriterion": "iglu:com.acme/email_sent/jsonschema/1-*-*",
+          |          "field": "contexts"
+          |        }
+          |      }
+          |    ],
+          |    "strategy": {
+          |      "pseudonymize": {
+          |        "hashFunction": "SHA-256"
+          |      }
+          |    }
+          |  }
+          |}""".stripMargin)
+
+      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow.enrichments", "pii_enrichment_config", "jsonscehma", "1-0-0")
+
+      val result = PiiPseudonymizerEnrichment.parse(piiPseudonymizerEnrichmentJson, schemaKey)
+      val expected = PiiPseudonymizerEnrichment(
+        fieldList = List(
+          PiiPojo(strategy  = PiiStrategyPseudonymize(hashFunction = java.security.MessageDigest.getInstance("SHA-256")),
+                  fieldName = "user_id"),
+          PiiJson(
+            strategy        = PiiStrategyPseudonymize(hashFunction = java.security.MessageDigest.getInstance("SHA-256")),
+            fieldName       = "contexts",
+            schemaCriterion = SchemaCriterion.parse("iglu:com.acme/email_sent/jsonschema/1-*-*").toOption.get,
+            jsonPath        = "$.emailAddress"
+          )
+        )
+      )
+      result must beSuccessful.like {
+        case piiRes: PiiPseudonymizerEnrichment => {
+          (piiRes.fieldList.size must_== 2) and
+            (piiRes.fieldList(0) must haveClass[PiiPojo]) and
+            (piiRes.fieldList(0).asInstanceOf[PiiPojo].strategy must haveClass[PiiStrategyPseudonymize]) and
+            (piiRes.fieldList(0).asInstanceOf[PiiPojo].strategy.asInstanceOf[PiiStrategyPseudonymize].hashFunction.toString must contain(
+              "SHA-256")) and
+            (piiRes.fieldList(0).asInstanceOf[PiiPojo].fieldName must_== "user_id") and
+            (piiRes.fieldList(1).asInstanceOf[PiiJson].strategy must haveClass[PiiStrategyPseudonymize]) and
+            (piiRes.fieldList(1).asInstanceOf[PiiJson].fieldName must_== "contexts") and
+            (piiRes.fieldList(1).asInstanceOf[PiiJson].schemaCriterion.toString must_== "iglu:com.acme/email_sent/jsonschema/1-*-*") and
+            (piiRes.fieldList(1).asInstanceOf[PiiJson].jsonPath must_== "$.emailAddress") and
+            (piiRes.fieldList(1).asInstanceOf[PiiJson].strategy.asInstanceOf[PiiStrategyPseudonymize].hashFunction.toString must contain(
+              "SHA-256"))
+        }
+      }
     }
   }
 }

@@ -29,10 +29,7 @@ import org.json4s._
 import org.json4s.JsonDSL._
 
 // Iglu
-import iglu.client.{ 
-  SchemaCriterion,
-  SchemaKey
-}
+import iglu.client.{SchemaCriterion, SchemaKey}
 // HttpClient
 import org.apache.http.message.BasicHeaderValueParser
 
