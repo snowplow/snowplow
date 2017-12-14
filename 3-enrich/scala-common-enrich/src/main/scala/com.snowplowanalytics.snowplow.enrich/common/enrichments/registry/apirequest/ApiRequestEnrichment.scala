@@ -66,8 +66,6 @@ case class ApiRequestEnrichment(inputs: List[Input], api: HttpApi, outputs: List
 
   import ApiRequestEnrichment._
 
-  val version = new DefaultArtifactVersion("0.1.0")
-
   /**
    * Primary function of the enrichment
    * Failure means HTTP failure, failed unexpected JSON-value, etc

@@ -127,8 +127,6 @@ case class CampaignAttributionEnrichment(
   clickIdParameters:  List[(String, String)]
   ) extends Enrichment {
 
-  val version = new DefaultArtifactVersion("0.2.0")
-
   /**
    * Find the first string in parameterList which is a key of
    * sourceMap and return the value of that key in sourceMap.
