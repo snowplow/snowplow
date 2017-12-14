@@ -63,8 +63,6 @@ object UaParserEnrichmentConfig extends ParseableEnrichment {
 */
 case object UaParserEnrichment extends Enrichment {
 
-  val version = new DefaultArtifactVersion("0.1.0")
-
   val uaParser = new Parser()
 
   /*

@@ -68,8 +68,6 @@ case class HttpHeaderExtractorEnrichment(
 
   case class Header(name: String, value: String)
 
-  val version = new DefaultArtifactVersion("0.1.0")
-
   def extract(headers: List[String]): List[JsonAST.JObject] = {
     val httpHeaders = headers.flatMap { header =>
       header.split(":", 2) match {
