@@ -40,9 +40,7 @@ import utils.ScalazJson4sUtils
 /**
  * Trait inherited by every enrichment config case class
  */
-trait Enrichment {
-  val version: DefaultArtifactVersion
-}
+trait Enrichment
 
 /**
  * Trait to hold helpers relating to enrichment config

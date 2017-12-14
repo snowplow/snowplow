@@ -77,8 +77,6 @@ case class ClientAttributes(
 
 case object UserAgentUtilsEnrichment extends Enrichment {
 
-  val version = new DefaultArtifactVersion("0.1.0")
-
   /**
   * Extracts the client attributes
   * from a useragent string, using
