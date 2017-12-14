@@ -29,7 +29,7 @@ import org.json4s._
 import org.json4s.JsonDSL._
 
 // Iglu
-import iglu.client.{ 
+import iglu.client.{
   SchemaCriterion,
   SchemaKey
 }

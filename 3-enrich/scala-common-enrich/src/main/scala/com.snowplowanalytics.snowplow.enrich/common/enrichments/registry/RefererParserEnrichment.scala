@@ -57,10 +57,10 @@ object RefererParserEnrichment extends ParseableEnrichment {
 
   /**
    * Creates a RefererParserEnrichment instance from a JValue.
-   * 
+   *
    * @param config The referer_parser enrichment JSON
    * @param schemaKey The SchemaKey provided for the enrichment
-   *        Must be a supported SchemaKey for this enrichment   
+   *        Must be a supported SchemaKey for this enrichment
    * @return a configured RefererParserEnrichment instance
    */
   def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[RefererParserEnrichment] = {

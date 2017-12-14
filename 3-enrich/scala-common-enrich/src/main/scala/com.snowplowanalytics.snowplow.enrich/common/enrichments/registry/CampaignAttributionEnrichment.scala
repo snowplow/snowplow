@@ -59,10 +59,10 @@ object CampaignAttributionEnrichment extends ParseableEnrichment {
 
   /**
    * Creates a CampaignAttributionEnrichment instance from a JValue.
-   * 
+   *
    * @param config The referer_parser enrichment JSON
    * @param schemaKey The SchemaKey provided for the enrichment
-   *        Must be a supported SchemaKey for this enrichment   
+   *        Must be a supported SchemaKey for this enrichment
    * @return a configured CampaignAttributionEnrichment instance
    */
   def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[CampaignAttributionEnrichment] = {

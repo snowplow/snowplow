@@ -48,10 +48,10 @@ object AnonIpEnrichment extends ParseableEnrichment {
 
   /**
    * Creates an AnonIpEnrichment instance from a JValue.
-   * 
+   *
    * @param config The anon_ip enrichment JSON
    * @param schemaKey The SchemaKey provided for the enrichment
-   *        Must be a supported SchemaKey for this enrichment   
+   *        Must be a supported SchemaKey for this enrichment
    * @return a configured AnonIpEnrichment instance
    */
   def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[AnonIpEnrichment] = {
@@ -72,7 +72,7 @@ object AnonIpEnrichment extends ParseableEnrichment {
 object AnonOctets extends Enumeration {
 
   type AnonOctets = Value
-  
+
   val One   = Value(1, "1")
   val Two   = Value(2, "2")
   val Three = Value(3, "3")

@@ -60,7 +60,7 @@ object IpLookupsEnrichment extends ParseableEnrichment {
 
   /**
    * Creates an IpLookupsEnrichment instance from a JValue.
-   * 
+   *
    * @param config The ip_lookups enrichment JSON
    * @param schemaKey The SchemaKey provided for the enrichment
    *        Must be a supported SchemaKey for this enrichment
