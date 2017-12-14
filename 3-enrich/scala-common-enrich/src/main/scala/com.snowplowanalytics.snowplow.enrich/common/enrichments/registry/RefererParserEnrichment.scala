@@ -83,8 +83,6 @@ case class RefererParserEnrichment(
   domains: List[String]
   ) extends Enrichment {
 
-  val version = new DefaultArtifactVersion("0.1.0")
-
   /**
    * A Scalaz Lens to update the term within
    * a Referer object.
