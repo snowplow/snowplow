@@ -196,8 +196,6 @@ case class JavascriptScriptEnrichment(
   script: Script
   ) extends Enrichment {
 
-  val version = new DefaultArtifactVersion("0.1.0")
-
   /**
    * Run the process function as stored in the CompiledScript
    * against the supplied EnrichedEvent.
