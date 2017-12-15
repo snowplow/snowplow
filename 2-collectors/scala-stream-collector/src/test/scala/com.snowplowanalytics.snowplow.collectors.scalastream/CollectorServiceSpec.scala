@@ -156,7 +156,7 @@ class CollectorServiceSpec extends Specification {
         val (res, Nil) = service.buildHttpResponse(
           event, "k", Map("u" -> "12"), hs, true, true, false, sinkConf, redirConf)
         res shouldEqual HttpResponse(302)
-          .withHeaders(`Location`("12") :: hs)
+          .withHeaders(`RawHeader`("Location", "12") :: hs)
       }
       "send back a gif if pixelExpected is true" in {
         val (res, Nil) = service.buildHttpResponse(
@@ -198,7 +198,7 @@ class CollectorServiceSpec extends Specification {
       val redirConf = TestUtils.testConf.redirectMacro
       "give back a 302 if redirecting and there is a u query param" in {
         val (res, Nil) = service.buildRedirectHttpResponse(event, "k", Map("u" -> "12"), redirConf)
-        res shouldEqual HttpResponse(302).withHeaders(`Location`("12"))
+        res shouldEqual HttpResponse(302).withHeaders(`RawHeader`("Location", "12"))
       }
       /* scalaz incompat
       "give back a 400 if redirecting and there are no u query params" in {
@@ -210,20 +210,24 @@ class CollectorServiceSpec extends Specification {
         val (res, Nil) = service.buildRedirectHttpResponse(
           event, "k", Map("u" -> "http://localhost/?uid=${SP_NUID}"), redirConf)
         res shouldEqual HttpResponse(302)
-          .withHeaders(`Location`("http://localhost/?uid=${SP_NUID}"))
+          .withHeaders(`RawHeader`("Location", "http://localhost/?uid=${SP_NUID}"))
       }
       "the redirect url should support a cookie replacement macro on redirect if enabled" in {
         event.networkUserId = "1234"
         val (res, Nil) = service.buildRedirectHttpResponse(
           event, "k", Map("u" -> "http://localhost/?uid=${SP_NUID}"), redirConf.copy(enabled = true))
-        res shouldEqual HttpResponse(302).withHeaders(`Location`("http://localhost/?uid=1234"))
+        res shouldEqual HttpResponse(302).withHeaders(`RawHeader`("Location", "http://localhost/?uid=1234"))
       }
       "the redirect url should allow for custom token placeholders" in {
         event.networkUserId = "1234"
         val (res, Nil) = service.buildRedirectHttpResponse(
           event, "k", Map("u" -> "http://localhost/?uid=[TOKEN]"),
           redirConf.copy(enabled = true, Some("[TOKEN]")))
-        res shouldEqual HttpResponse(302).withHeaders(`Location`("http://localhost/?uid=1234"))
+        res shouldEqual HttpResponse(302).withHeaders(`RawHeader`("Location", "http://localhost/?uid=1234"))
+      }
+      "the redirect url should allow for double encoding for return redirects" in {
+        val (res, Nil) = service.buildRedirectHttpResponse(event, "k", Map("u" -> "a%3Db"), redirConf)
+        res shouldEqual HttpResponse(302).withHeaders(`RawHeader`("Location", "a%3Db"))
       }
     }
 
