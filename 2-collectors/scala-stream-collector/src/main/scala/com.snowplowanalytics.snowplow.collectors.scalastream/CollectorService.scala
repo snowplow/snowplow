@@ -259,7 +259,7 @@ class CollectorService(
         val replacedTarget =
           if (canReplace) target.replaceAllLiterally(token, event.networkUserId)
           else target
-        (HttpResponse(StatusCodes.Found).withHeaders(`Location`(replacedTarget)), Nil)
+        (HttpResponse(StatusCodes.Found).withHeaders(`RawHeader`("Location", replacedTarget)), Nil)
       case None =>
         val badRow = createBadRow(event, "Redirect failed due to lack of u parameter")
         (HttpResponse(StatusCodes.BadRequest),
