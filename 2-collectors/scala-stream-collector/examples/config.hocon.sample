@@ -80,8 +80,9 @@ collector {
 
     # Enable the chosen sink by uncommenting the appropriate configuration
     sink {
-      # Choose between kinesis, kafka, nsq, or stdout
-      # To use stdout comment everything
+      # Choose between kinesis, kafka, nsq, or stdout.
+      # To use stdout, comment or remove everything in the "collector.streams.sink" section except
+      # "enabled" which should be set to "stdout".
       enabled = kinesis
 
       # Region where the streams are located
