@@ -9,8 +9,8 @@ local:
 # Required: deployment targets
 targets:
   - type              : "awss3"
-    access_key_id     : <%= ENV['AWS_ACCESS_KEY'] %>
-    secret_access_key : <%= ENV['AWS_SECRET_KEY'] %>
+    access_key_id     : <%= ENV['AWS_DEPLOY_ACCESS_KEY_ID'] %>
+    secret_access_key : <%= ENV['AWS_DEPLOY_SECRET_ACCESS_KEY'] %>
 
 # Required: packages to be deployed
 packages:

@@ -17,6 +17,7 @@ package spark
 
 // Java
 import java.io.{BufferedWriter, File, FileWriter, IOException}
+import com.hadoop.compression.lzo.GPLNativeCodeLoader
 
 // Scala
 import scala.collection.JavaConverters._
@@ -65,7 +66,7 @@ object EnrichJobSpec {
     def deleteAll(): Unit = List(badRows, output).foreach(deleteRecursively)
   }
 
-  val etlVersion = "spark-1.10.0-common-0.27.0"
+  val etlVersion = s"spark-${generated.ProjectSettings.version}-common-${generated.ProjectSettings.commonEnrichVersion}"
 
   val etlTimestamp = "2001-09-09 01:46:40.000"
 
@@ -73,6 +74,10 @@ object EnrichJobSpec {
     .getDeclaredFields
     .map(_.getName)
   private val unmatchableFields = List("event_id")
+  /**
+   * Is lzo available?
+   */
+  def isLzoSupported: Boolean = GPLNativeCodeLoader.isNativeCodeLoaded()
 
   /**
    * A Specs2 matcher to check if a CanonicalOutput field is correctly set.
@@ -87,8 +92,8 @@ object EnrichJobSpec {
 
     def apply[S <: String](actual: Expectable[S]) = {
       result((unmatcheable && expected == null) || actual.value == expected,
-        "%s: %s".format(field, if (unmatcheable) "is unmatcheable" else "%s equals %s".format(actual.description, expected)),
-        "%s: %s does not equal %s".format(field, actual.description, expected),
+        "%s (index: %s): %s ".format(field, index, if (unmatcheable) "is unmatcheable" else "%s equals %s".format(actual.description, expected)),
+        "%s (index: %s): %s does not equal %s".format(field, index,  actual.description, expected),
         actual)
     }
 

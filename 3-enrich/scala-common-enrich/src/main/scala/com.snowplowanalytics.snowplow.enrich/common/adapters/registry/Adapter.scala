@@ -81,16 +81,13 @@ trait Adapter {
    *        the event JSON
    * @param tsFieldKey the key name of the timestamp field
    *                   which will be transformed
-   * @param toSeconds function which converts the numeric
-   *                  value of the key into a seconds past
-   *                  epoch format (e.g. x * 1000 for ms)
    * @return the updated JSON with valid date-time
    *         values in the tsFieldKey fields
    */
-  private[registry] def cleanupJsonEventValues(json: JValue, eventOpt: Option[(String,String)], tsFieldKey: String, toSeconds: Long => Long): JValue = {
+  private[registry] def cleanupJsonEventValues(json: JValue, eventOpt: Option[(String,String)], tsFieldKey: String): JValue = {
 
-    def toStringField(value: Long): JString = {
-      val dt: DateTime = new DateTime(toSeconds(value))
+    def toStringField(seconds: Long): JString = {
+      val dt: DateTime = new DateTime(seconds * 1000)
       JString(JsonSchemaDateTimeFormat.print(dt))
     }
 
@@ -390,5 +387,24 @@ trait Adapter {
         s"Event failed to parse into JSON: [${exception}]".failNel
       }
     }
+  private[registry] val snakeCaseOrDashTokenCapturingRegex = "[_-](\\w)".r
+  /**
+   * Converts dash or unersocre separted strings to camelCase.
+   *
+   * @param snakeOrDash string like "X-Mailgun-Sid" or "x_mailgun_sid"
+   * @return string like "xMailgunSid"
+   */
+  private[registry] def camelCase(snakeOrDash: String) =
+    snakeCaseOrDashTokenCapturingRegex.replaceAllIn(Character.toLowerCase(snakeOrDash.charAt(0)) + snakeOrDash.substring(1), m => m.group(1).capitalize)
 
+ /**
+  * Converts input field case to camel case recursively
+  *
+  * @param json parsed event fields as a JValue
+  * @return The mutated event.
+  */
+  private[registry] def camelize(json: JValue): JValue = json.mapField {
+      case (fieldName, JObject(jo)) => (camelCase(fieldName), camelize(jo))
+      case (fieldName, jv) => (camelCase(fieldName), jv)
+    }
 }
