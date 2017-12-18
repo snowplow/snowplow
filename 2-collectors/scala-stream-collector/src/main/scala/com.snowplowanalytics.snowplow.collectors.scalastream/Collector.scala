@@ -82,7 +82,7 @@ object Collector {
         case kc: Kafka =>
           (new KafkaSink(kc, bufferConf, goodStream), new KafkaSink(kc, bufferConf, badStream))
         case nc: Nsq => (new NsqSink(nc, goodStream), new NsqSink(nc, badStream))
-        case StdoutConfig => (new StdoutSink("out"), new StdoutSink("err"))
+        case Stdout => (new StdoutSink("out"), new StdoutSink("err"))
       }
       CollectorSinks(good, bad)
     }
