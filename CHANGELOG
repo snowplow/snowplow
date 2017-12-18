@@ -1,4 +1,4 @@
-Release 97 Knossos (2017-12-13)
+Release 97 Knossos (2017-12-18)
 -------------------------------
 Common: reenable publishLocal in travis for spark enrich tests to pass (#3516)
 Common: rename AWS deployment credentials in .travis.yml (close #3115)
