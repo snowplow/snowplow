@@ -139,13 +139,23 @@ class CollectorService(
         `Access-Control-Allow-Headers`("Content-Type")
       ))
 
+  override def flashCrossDomainPolicy: HttpResponse =
+    flashCrossDomainPolicy(config.crossDomain)
+
   /** Creates a response with a cross domain policiy file */
-  override def flashCrossDomainPolicy: HttpResponse = HttpResponse(
-    entity = HttpEntity(
-      contentType = ContentType(MediaTypes.`text/xml`, HttpCharsets.`ISO-8859-1`),
-      string = "<?xml version=\"1.0\"?>\n<cross-domain-policy>\n  <allow-access-from domain=\"*\" secure=\"false\" />\n</cross-domain-policy>"
-    )
-  )
+  def flashCrossDomainPolicy(crossDomainConfig: Option[CrossDomainConfig]): HttpResponse =
+    crossDomainConfig match {
+      case Some(c) =>
+        HttpResponse(
+          entity = HttpEntity(
+            contentType = ContentType(MediaTypes.`text/xml`, HttpCharsets.`ISO-8859-1`),
+            string = s"""<?xml version=\"1.0\"?>\n<cross-domain-policy>
+                        |  <allow-access-from domain=\"${c.domain}\" secure=\"${c.secure}\" />
+                        |</cross-domain-policy>""".stripMargin
+          )
+        )
+      case None => HttpResponse(404, entity = "404 not found")
+    }
 
   /** Builds a raw event from an Http request. */
   def buildEvent(

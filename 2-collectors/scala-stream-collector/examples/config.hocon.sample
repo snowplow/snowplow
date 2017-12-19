@@ -18,8 +18,7 @@
 
 # 'collector' contains configuration options for the main Scala collector.
 collector {
-  # The collector runs as a web service specified on the following
-  # interface and port.
+  # The collector runs as a web service specified on the following interface and port.
   interface = "0.0.0.0"
   port = {{collectorPort}}
 
@@ -27,6 +26,16 @@ collector {
   p3p {
     policyRef = "/w3c/p3p.xml"
     CP = "NOI DSP COR NID PSA OUR IND COM NAV STA"
+  }
+
+  # Optional cross domain policy configuration.
+  # To disable, remove the "crossDomain" configuration and the collector will respond with a 404 to
+  # the /crossdomain.xml route.
+  crossDomain {
+    # Domain that is granted access, *.acme.com will match http://acme.com and http://sub.acme.com
+    domain = "*"
+    # Whether to only grant access to HTTPS or both HTTPS and HTTP sources
+    secure = true
   }
 
   # The collector returns a cookie to clients for user identification
