@@ -56,6 +56,10 @@ package model {
     name: String,
     fallbackNetworkUserId: String
   )
+  final case class RedirectMacroConfig(
+    enabled: Boolean,
+    placeholder: Option[String]
+  )
   final case class P3PConfig(policyRef: String, CP: String)
   final case class AWSConfig(accessKey: String, secretKey: String) {
     val provider = ((accessKey, secretKey) match {
@@ -109,6 +113,7 @@ package model {
     p3p: P3PConfig,
     cookie: CookieConfig,
     cookieBounce: CookieBounceConfig,
+    redirectMacro: RedirectMacroConfig,
     streams: StreamsConfig
   ) {
     val cookieConfig = if (cookie.enabled) Some(cookie) else None
