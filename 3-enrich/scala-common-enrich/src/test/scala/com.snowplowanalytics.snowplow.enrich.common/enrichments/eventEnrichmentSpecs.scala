@@ -31,6 +31,7 @@ class ExtractEventTypeSpec extends Specification with DataTables with Validation
   extractEventType should return the event name for any valid event code         $e1
   extractEventType should return a validation failure for any invalid event code $e2
   formatCollectorTstamp should validate collector timestamps                     $e3
+  extractTimestamp should validate timestamps                                    $e4
   """
 
   val FieldName = "e"
@@ -62,14 +63,23 @@ class ExtractEventTypeSpec extends Specification with DataTables with Validation
 
   val SeventiesTstamp = Some(new DateTime(0, DateTimeZone.UTC))
   val BCTstamp = SeventiesTstamp.map(_.minusYears(2000))
+  val FarAwayTstamp = SeventiesTstamp.map(_.plusYears(10000))
 
   def e3 =
-    "SPEC NAME"          || "INPUT VAL"     | "EXPECTED OUTPUT"                                                                                    |
-    "None"               !! None            ! "No collector_tstamp set".fail                                                                       |
-    "Negative timestamp" !! BCTstamp        ! "Collector timestamp -0030-01-01 00:00:00.000 is negative and will fail the Redshift load".fail |
-    "Valid timestamp"    !! SeventiesTstamp ! "1970-01-01 00:00:00.000".success                                                                    |> {
+    "SPEC NAME"          || "INPUT VAL"     | "EXPECTED OUTPUT"                                                                                     |
+    "None"               !! None            ! "No collector_tstamp set".fail                                                                        |
+    "Negative timestamp" !! BCTstamp        ! "Collector timestamp [-63113904000000] formatted as [-0030-01-01 00:00:00.000] which isn't Redshift-compatible".fail |
+    ">10k timestamp"     !! FarAwayTstamp   ! "Collector timestamp [315569520000000] formatted as [11970-01-01 00:00:00.000] which isn't Redshift-compatible".fail |
+    "Valid timestamp"    !! SeventiesTstamp ! "1970-01-01 00:00:00.000".success                                                                     |> {
 
       (_, input, expected) => EventEnrichments.formatCollectorTstamp(input) must_== (expected)
+    }
+
+  def e4 =
+    "SPEC NAME"          || "INPUT VAL"           | "EXPECTED OUTPUT"                                                    |
+    "Not a long"         !! ("f", "v")            ! "Field [f]: [v] is not in the expected format (ms since epoch)".fail |
+    "Valid timestamp"    !! ("f", "1")            ! "1970-01-01 00:00:00.001".success                                    |> {
+      (_, input, expected) => EventEnrichments.extractTimestamp(input._1, input._2) must_== (expected)
     }
 }
 

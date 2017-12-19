@@ -69,14 +69,13 @@ object EventEnrichments {
   def formatCollectorTstamp(collectorTstamp: Option[DateTime]): Validation[String, String] = {
     collectorTstamp match {
       case None => "No collector_tstamp set".fail
-      case Some(t) => {
+      case Some(t) =>
         val formattedTimestamp = toTimestamp(t)
-        if (formattedTimestamp.startsWith("-")) {
-          s"Collector timestamp $formattedTimestamp is negative and will fail the Redshift load".fail
+        if (formattedTimestamp.startsWith("-") || t.getYear > 9999 || t.getYear < 0) {
+          s"Collector timestamp [${t.getMillis}] formatted as [$formattedTimestamp] which isn't Redshift-compatible".fail
         } else {
           formattedTimestamp.success
         }
-      }
     }
   }
 
@@ -105,7 +104,7 @@ object EventEnrichments {
       case Some(ttm) => Some(ttm).success
       case None => try {
         ((dvceSentTstamp, dvceCreatedTstamp, collectorTstamp) match {
-          case (Some(dst), Some(dct), Some(ct)) => {
+          case (Some(dst), Some(dct), Some(ct)) =>
             val startTstamp = fromTimestamp(dct)
             val endTstamp = fromTimestamp(dst)
             if (startTstamp.isBefore(endTstamp)) {
@@ -113,7 +112,6 @@ object EventEnrichments {
             } else {
               ct.some
             }
-          }
           case _ => collectorTstamp
         }).success
       } catch {
@@ -176,7 +174,7 @@ object EventEnrichments {
     }
 
   /**
-   * Returns a unique event ID. The event ID is 
+   * Returns a unique event ID. The event ID is
    * generated as a type 4 UUID, then converted
    * to a String.
    *
