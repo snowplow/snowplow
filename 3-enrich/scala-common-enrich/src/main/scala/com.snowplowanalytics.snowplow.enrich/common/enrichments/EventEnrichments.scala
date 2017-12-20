@@ -138,7 +138,7 @@ object EventEnrichments {
     try {
       val dt = new DateTime(tstamp.toLong)
       val timestampString = toTimestamp(dt)
-      if (timestampString.startsWith("-")) {
+      if (timestampString.startsWith("-") || dt.getYear > 9999 || dt.getYear < 0) {
         s"Field [$field]: [$tstamp] is formatted as [$timestampString] which isn't Redshift-compatible".fail
       } else {
         timestampString.success
