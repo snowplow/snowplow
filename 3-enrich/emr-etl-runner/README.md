@@ -6,10 +6,29 @@ Snowplow::EmrEtlRunner is a Ruby application (built with [Bundler][bundler]) to 
 
 ## Find out more
 
-| Technical Docs              | Setup Guide           | Roadmap & Contributing               |         
+| Technical Docs              | Setup Guide           | Roadmap & Contributing               |
 |-----------------------------|-----------------------|--------------------------------------|
 | ![i1][techdocs-image]      | ![i2][setup-image]   | ![i3][roadmap-image]                |
 | [Technical Docs][techdocs] | [Setup Guide][setup] | _coming soon_                        |
+
+## Build
+
+(Substitute as necessary if you want to build again)
+```
+docker build -f Dockerfile.build -t knservis/emr-etl-runner-build:r97-knossos .
+docker push knservis/emr-etl-runner-build
+docker run -v "$PWD:/world" knservis/emr-etl-runner-build:r97-knossos cp deploy/snowplow-emr-etl-runner /world/deploy/snowplow-emr-etl-runner
+docker build -t knservis/emr-etl-runner:r97-knossos .
+docker push knservis/emr-etl-runner:r97-knossos
+```
+
+## Run
+
+In the directory where you have config.yml and resolver.json (if needed)
+
+```
+docker run -v "$PWD:/world" knservis/emr-etl-runner:r97-knossos java -jar snowplow-emr-etl-runner run -c /world/config2.yaml -r /world/resolver.json
+```
 
 ## Credits and thanks
 
