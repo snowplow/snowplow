@@ -1,0 +1,12 @@
+FROM jruby:9-alpine
+MAINTAINER Konstantinos Servis <knservis@gmail.com>
+
+ENV SNOWPLOW_VERSION r97-knossos
+
+RUN apk add --update alpine-sdk
+RUN gem uninstall -i /opt/jruby/lib/ruby/gems/shared bundler
+RUN gem install bundler -v 1.15.4
+WORKDIR /app
+ADD . /app
+RUN bundle install --with=development
+RUN /bin/sh ./build.sh
