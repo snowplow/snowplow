@@ -152,9 +152,9 @@ describe Cli do
     it 'should reject bogus skip' do
       a[:skip] = [ 'lunch' ]
       expect { Cli.validate_and_coalesce(a, c) }.to raise_exception(ConfigError,
-        "Invalid option: skip can be staging, enrich, shred, elasticsearch, archive_raw, rdb_load, analyze, archive_enriched, archive_shredded not 'lunch'")
+        "Invalid option: skip can be staging, enrich, shred, elasticsearch, archive_raw, rdb_load, consistency_check, analyze, archive_enriched, archive_shredded not 'lunch'")
 
-      %w(enrich shred elasticsearch archive_raw).each do |from|
+      %w(staging enrich shred elasticsearch archive_raw rdb_load consistency_check analyze archive_enriched archive_shredded).each do |from|
         a[:skip] = [ from ]
         Cli.validate_and_coalesce(a, c)
       end
