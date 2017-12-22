@@ -39,7 +39,7 @@ object Dependencies {
     val json4s               = "3.2.11"
     val pureconfig           = "0.8.0"
     val snowplowRawEvent     = "0.1.0"
-    val snowplowCommonEnrich = "0.26.0"
+    val snowplowCommonEnrich = "0.29.0"
     val igluClient           = "0.5.0"
     val snowplowTracker      = "0.3.0"
     // Scala (test only)
