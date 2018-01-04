@@ -12,7 +12,8 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and
  * limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich
+package com.snowplowanalytics.snowplow
+package enrich
 package spark
 
 // Java
@@ -41,6 +42,9 @@ import Scalaz._
 import org.specs2.execute.{AsResult, ResultExecution}
 import org.specs2.matcher.{Expectable, Matcher}
 import org.specs2.matcher.Matchers._
+
+// Snowplow
+import CollectorPayload.thrift.model1.CollectorPayload
 
 object EnrichJobSpec {
   /** Case class representing the input lines written in a file. */
@@ -603,6 +607,35 @@ trait EnrichJobSpec extends SparkSpec {
 
     val job = EnrichJob(spark, config)
     job.run()
+  }
+
+  /**
+   * Write a LZO file with a random name.
+   * @param tag an identifier who will become part of the file name
+   * @param payload the content of the file
+   * @return the created file which was written to
+   */
+  def writeLzo(tag: String, payload: CollectorPayload): File = {
+    import com.twitter.elephantbird.mapreduce.io.ThriftWritable
+    import com.twitter.elephantbird.mapreduce.output.LzoThriftBlockOutputFormat
+    import org.apache.hadoop.io.LongWritable
+    val f = new File(System.getProperty("java.io.tmpdir"),
+      s"snowplow-enrich-job-${tag}-${scala.util.Random.nextInt(Int.MaxValue)}")
+    val rdd = spark.sparkContext.parallelize(Seq(payload))
+      .map { e =>
+        val writable = ThriftWritable.newInstance(classOf[CollectorPayload])
+        writable.set(e)
+        (new LongWritable(1L), writable)
+      }
+    LzoThriftBlockOutputFormat.setClassConf(classOf[CollectorPayload], hadoopConfig)
+    rdd.saveAsNewAPIHadoopFile(
+      f.toString(),
+      classOf[org.apache.hadoop.io.LongWritable],
+      classOf[ThriftWritable[CollectorPayload]],
+      classOf[LzoThriftBlockOutputFormat[ThriftWritable[CollectorPayload]]],
+      hadoopConfig
+    )
+    f
   }
 
   override def afterAll(): Unit = {
