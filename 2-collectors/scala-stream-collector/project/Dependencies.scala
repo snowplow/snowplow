@@ -29,7 +29,7 @@ object Dependencies {
     val kafka                = "0.10.2.1"
     val slf4j                = "1.7.5"
     val config               = "1.3.1"
-    val nsqClient            = "1.1.0"
+    val nsqClient            = "1.2.0"
     // Scala
     val snowplowCommonEnrich = "0.26.0"
     val igluClient           = "0.5.0"
@@ -52,7 +52,7 @@ object Dependencies {
     val slf4j                = "org.slf4j"             %  "slf4j-simple"           % V.slf4j
     val log4jOverSlf4j       = "org.slf4j"             %  "log4j-over-slf4j"       % V.slf4j
     val config               = "com.typesafe"          %  "config"                 % V.config
-    val nsqClient            = "com.snowplowanalytics" %  "nsq-java-client_2.10"   % V.nsqClient
+    val nsqClient            = "com.snowplowanalytics" %  "nsq-java-client"        % V.nsqClient
 
     // Scala
     val snowplowCommonEnrich = "com.snowplowanalytics" %% "snowplow-common-enrich" % V.snowplowCommonEnrich

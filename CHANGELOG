@@ -1,3 +1,23 @@
+Release 98 Argentomagus (2018-01-05)
+------------------------------------
+Scala Stream Collector: bump to 0.12.0 (#3548)
+Scala Stream Collector: make Flash access domains and secure configurable (#2915)
+Scala Stream Collector: add URL redirect replacement macro (#3491)
+Scala Stream Collector: allow use of the originating scheme during cookie bounce (#3512)
+Scala Stream Collector: replace Location header with RawHeader to preserve double encoding (#3546)
+Scala Stream Collector: bump nsq-java-client to 1.2.0 (#3519)
+Scala Stream Collector: document the stdout sink better (#3515)
+Scala Stream Collector: fix stdout sink configuration (#3550)
+Scala Stream Collector: fix scaladoc for 'ipAndPartitionKey' (#3513)
+Stream Enrich: bump to 0.13.0 (#3549)
+Stream Enrich: bump scala-common-enrich to 0.29.0 (#3553)
+Stream Enrich: bump nsq-java-client to 1.2.0 (#3520)
+Scala Common Enrich: bump to 0.29.0 (#3552)
+Scala Common Enrich: add validation of tracker-sent timestamps (#336)
+Scala Common Enrich: add validation of collector_tstamp (#3416)
+Redshift: update version of atomic.events to 0.9.0 (#3517)
+Common: trigger the publishing of Stream Enrich when it is under test (#3557)
+
 Release 97 Knossos (2017-12-18)
 -------------------------------
 Common: reenable publishLocal in travis for spark enrich tests to pass (#3516)
