@@ -57,10 +57,10 @@ object RefererParserEnrichment extends ParseableEnrichment {
 
   /**
    * Creates a RefererParserEnrichment instance from a JValue.
-   * 
+   *
    * @param config The referer_parser enrichment JSON
    * @param schemaKey The SchemaKey provided for the enrichment
-   *        Must be a supported SchemaKey for this enrichment   
+   *        Must be a supported SchemaKey for this enrichment
    * @return a configured RefererParserEnrichment instance
    */
   def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[RefererParserEnrichment] = {
@@ -82,8 +82,6 @@ object RefererParserEnrichment extends ParseableEnrichment {
 case class RefererParserEnrichment(
   domains: List[String]
   ) extends Enrichment {
-
-  val version = new DefaultArtifactVersion("0.1.0")
 
   /**
    * A Scalaz Lens to update the term within

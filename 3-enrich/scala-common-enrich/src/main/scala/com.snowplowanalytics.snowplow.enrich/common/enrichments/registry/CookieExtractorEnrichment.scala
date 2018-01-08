@@ -29,7 +29,7 @@ import org.json4s._
 import org.json4s.JsonDSL._
 
 // Iglu
-import iglu.client.{ 
+import iglu.client.{
   SchemaCriterion,
   SchemaKey
 }
@@ -69,8 +69,6 @@ object CookieExtractorEnrichmentConfig extends ParseableEnrichment {
 case class CookieExtractorEnrichment(
   cookieNames: List[String]
   ) extends Enrichment {
-
-  val version = new DefaultArtifactVersion("0.1.0")
 
   def extract(headers: List[String]): List[JsonAST.JObject] = {
     // rfc6265 - sections 4.2.1 and 4.2.2

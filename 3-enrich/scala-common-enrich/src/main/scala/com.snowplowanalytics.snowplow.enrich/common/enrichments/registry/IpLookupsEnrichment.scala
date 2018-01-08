@@ -60,7 +60,7 @@ object IpLookupsEnrichment extends ParseableEnrichment {
 
   /**
    * Creates an IpLookupsEnrichment instance from a JValue.
-   * 
+   *
    * @param config The ip_lookups enrichment JSON
    * @param schemaKey The SchemaKey provided for the enrichment
    *        Must be a supported SchemaKey for this enrichment
@@ -147,8 +147,6 @@ case class IpLookupsEnrichment(
   netspeedTuple: Option[(String, URI, String)],
   localMode: Boolean
   ) extends Enrichment {
-
-  val version = new DefaultArtifactVersion("0.1.0")
 
   private type FinalPath = String
   private type DbEntry = Option[(Option[URI], FinalPath)]
