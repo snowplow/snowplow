@@ -40,11 +40,11 @@ CREATE TABLE atomic.events (
 	v_etl varchar(100) encode ZSTD not null,
 	-- User and visit
 	user_id varchar(255) encode ZSTD,
-	user_ipaddress varchar(45) encode ZSTD,
-	user_fingerprint varchar(50) encode ZSTD,
-	domain_userid varchar(36) encode ZSTD,
+	user_ipaddress varchar(128) encode ZSTD,
+	user_fingerprint varchar(128) encode ZSTD,
+	domain_userid varchar(128) encode ZSTD,
 	domain_sessionidx int encode ZSTD,
-	network_userid varchar(38) encode ZSTD,
+	network_userid varchar(128) encode ZSTD,
 	-- Location
 	geo_country char(2) encode ZSTD,
 	geo_region char(2) encode ZSTD,
@@ -55,8 +55,8 @@ CREATE TABLE atomic.events (
 	geo_region_name varchar(100) encode ZSTD,
 	-- IP lookups
 	ip_isp varchar(100) encode ZSTD,
-	ip_organization varchar(100) encode ZSTD,
-	ip_domain varchar(100) encode ZSTD,
+	ip_organization varchar(128) encode ZSTD,
+	ip_domain varchar(128) encode ZSTD,
 	ip_netspeed varchar(100) encode ZSTD,
 	-- Page
 	page_url varchar(4096) encode ZSTD,
@@ -172,11 +172,11 @@ CREATE TABLE atomic.events (
 	dvce_sent_tstamp timestamp encode ZSTD,
 
 	-- Referer
-	refr_domain_userid varchar(36) encode ZSTD,
+	refr_domain_userid varchar(128) encode ZSTD,
 	refr_dvce_tstamp timestamp encode ZSTD,
 
 	-- Session ID
-	domain_sessionid char(36) encode ZSTD,
+	domain_sessionid char(128) encode ZSTD,
 
 	-- Derived timestamp
 	derived_tstamp timestamp encode ZSTD,
@@ -199,4 +199,4 @@ DISTSTYLE KEY
 DISTKEY (event_id)
 SORTKEY (collector_tstamp);
 
-COMMENT ON TABLE "atomic"."events" IS '0.10.0'
+COMMENT ON TABLE "atomic"."events" IS '0.10.0';
