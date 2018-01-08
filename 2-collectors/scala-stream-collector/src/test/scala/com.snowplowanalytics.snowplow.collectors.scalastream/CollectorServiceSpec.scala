@@ -88,13 +88,16 @@ class CollectorServiceSpec extends Specification {
     }
 
     "flashCrossDomainPolicy" in {
-      "return the cross domain policy" in {
-        service.flashCrossDomainPolicy shouldEqual HttpResponse(
+      "return the cross domain policy with the specified config" in {
+        service.flashCrossDomainPolicy(Some(CrossDomainConfig("*", false))) shouldEqual HttpResponse(
           entity = HttpEntity(
             contentType = ContentType(MediaTypes.`text/xml`, HttpCharsets.`ISO-8859-1`),
             string = "<?xml version=\"1.0\"?>\n<cross-domain-policy>\n  <allow-access-from domain=\"*\" secure=\"false\" />\n</cross-domain-policy>"
           )
         )
+      }
+      "return 404 if the specified config is absent" in {
+        service.flashCrossDomainPolicy(None) shouldEqual HttpResponse(404, entity = "404 not found")
       }
     }
 
@@ -150,30 +153,31 @@ class CollectorServiceSpec extends Specification {
     }
 
     "buildHttpResponse" in {
-      val conf = TestUtils.testConf.streams.sink
+      val sinkConf = TestUtils.testConf.streams.sink
+      val redirConf = TestUtils.testConf.redirectMacro
       "rely on buildRedirectHttpResponse if redirect is true" in {
-        val (res, Nil) =
-          service.buildHttpResponse(event, "k", Map("u" -> "12"), hs, true, true, false, conf)
+        val (res, Nil) = service.buildHttpResponse(
+          event, "k", Map("u" -> "12"), hs, true, true, false, sinkConf, redirConf)
         res shouldEqual HttpResponse(302)
-          .withHeaders(`Location`("12") :: hs)
+          .withHeaders(`RawHeader`("Location", "12") :: hs)
       }
       "send back a gif if pixelExpected is true" in {
-        val (res, Nil) =
-          service.buildHttpResponse(event, "k", Map.empty, hs, false, true, false, conf)
+        val (res, Nil) = service.buildHttpResponse(
+          event, "k", Map.empty, hs, false, true, false, sinkConf, redirConf)
         res shouldEqual HttpResponse(200)
           .withHeaders(hs)
           .withEntity(HttpEntity(contentType = ContentType(MediaTypes.`image/gif`),
             bytes = CollectorService.pixel))
       }
       "send back a found if pixelExpected and bounce is true" in {
-        val (res, Nil) =
-          service.buildHttpResponse(event, "k", Map.empty, hs, false, true, true, conf)
+        val (res, Nil) = service.buildHttpResponse(
+          event, "k", Map.empty, hs, false, true, true, sinkConf, redirConf)
         res shouldEqual HttpResponse(302)
           .withHeaders(hs)
       }
       "send back ok otherwise" in {
-        val (res, Nil) =
-          service.buildHttpResponse(event, "k", Map.empty, hs, false, false, false, conf)
+        val (res, Nil) = service.buildHttpResponse(
+          event, "k", Map.empty, hs, false, false, false, sinkConf, redirConf)
         res shouldEqual HttpResponse(200, entity = "ok")
           .withHeaders(hs)
       }
@@ -194,15 +198,40 @@ class CollectorServiceSpec extends Specification {
     }
 
     "buildRedirectHttpResponse" in {
+      val redirConf = TestUtils.testConf.redirectMacro
       "give back a 302 if redirecting and there is a u query param" in {
-        val (res, Nil) = service.buildRedirectHttpResponse(event, "k", Map("u" -> "12"))
-        res shouldEqual HttpResponse(302).withHeaders(`Location`("12"))
+        val (res, Nil) = service.buildRedirectHttpResponse(event, "k", Map("u" -> "12"), redirConf)
+        res shouldEqual HttpResponse(302).withHeaders(`RawHeader`("Location", "12"))
       }
       /* scalaz incompat
       "give back a 400 if redirecting and there are no u query params" in {
-        val (res, _) = service.buildRedirectHttpResponse(event, "k", Map.empty)
+        val (res, _) = service.buildRedirectHttpResponse(event, "k", Map.empty, redirConf)
         res shouldEqual HttpResponse(400)
       }*/
+      "the redirect url should ignore a cookie replacement macro on redirect if not enabled" in {
+        event.networkUserId = "1234"
+        val (res, Nil) = service.buildRedirectHttpResponse(
+          event, "k", Map("u" -> "http://localhost/?uid=${SP_NUID}"), redirConf)
+        res shouldEqual HttpResponse(302)
+          .withHeaders(`RawHeader`("Location", "http://localhost/?uid=${SP_NUID}"))
+      }
+      "the redirect url should support a cookie replacement macro on redirect if enabled" in {
+        event.networkUserId = "1234"
+        val (res, Nil) = service.buildRedirectHttpResponse(
+          event, "k", Map("u" -> "http://localhost/?uid=${SP_NUID}"), redirConf.copy(enabled = true))
+        res shouldEqual HttpResponse(302).withHeaders(`RawHeader`("Location", "http://localhost/?uid=1234"))
+      }
+      "the redirect url should allow for custom token placeholders" in {
+        event.networkUserId = "1234"
+        val (res, Nil) = service.buildRedirectHttpResponse(
+          event, "k", Map("u" -> "http://localhost/?uid=[TOKEN]"),
+          redirConf.copy(enabled = true, Some("[TOKEN]")))
+        res shouldEqual HttpResponse(302).withHeaders(`RawHeader`("Location", "http://localhost/?uid=1234"))
+      }
+      "the redirect url should allow for double encoding for return redirects" in {
+        val (res, Nil) = service.buildRedirectHttpResponse(event, "k", Map("u" -> "a%3Db"), redirConf)
+        res shouldEqual HttpResponse(302).withHeaders(`RawHeader`("Location", "a%3Db"))
+      }
     }
 
     "cookieHeader" in {
@@ -224,12 +253,36 @@ class CollectorServiceSpec extends Specification {
 
     "bounceLocationHeader" in {
       "build a location header if bounce is true" in {
-        val header = service.bounceLocationHeader(Map("a" -> "b"), Uri("st"), "bounce", true)
+        val header = service.bounceLocationHeader(
+          Map("a" -> "b"),
+          HttpRequest().withUri(Uri("st")),
+          CookieBounceConfig(true, "bounce", "", None),
+          true)
         header shouldEqual Some(`Location`("st?a=b&bounce=true"))
       }
       "give back none otherwise" in {
-        val header = service.bounceLocationHeader(Map("a" -> "b"), Uri("st"), "bounce", false)
+        val header = service.bounceLocationHeader(
+          Map("a" -> "b"),
+          HttpRequest().withUri(Uri("st")),
+          CookieBounceConfig(false, "bounce", "", None),
+          false)
         header shouldEqual None
+      }
+      "use forwarded protocol header if present and enabled" in {
+        val header = service.bounceLocationHeader(
+          Map("a" -> "b"),
+          HttpRequest().withUri(Uri("http://st")).addHeader(RawHeader("X-Forwarded-Proto", "https")),
+          CookieBounceConfig(true, "bounce", "", Some("X-Forwarded-Proto")),
+          true)
+        header shouldEqual Some(`Location`("https://st?a=b&bounce=true"))
+      }
+      "allow missing forwarded protocol header if forward header is enabled but absent" in {
+        val header = service.bounceLocationHeader(
+          Map("a" -> "b"),
+          HttpRequest().withUri(Uri("http://st")),
+          CookieBounceConfig(true, "bounce", "", Some("X-Forwarded-Proto")),
+          true)
+        header shouldEqual Some(`Location`("http://st?a=b&bounce=true"))
       }
     }
 

@@ -27,16 +27,19 @@ class CorruptedThriftLinesSpec extends Specification with EnrichJobSpec {
   override def appName = "corrupted-thrift-lines"
   sequential
   "A job which processes a corrupted input line" should {
-    runEnrichJob(getClass().getResource("CorruptedThriftLinesSpec.line.lzo").toString(), "thrift",
-      "1", false, List("geo"), false, false, false, false)
+    if (!isLzoSupported) "native-lzo not supported" in skipped
+    else {
+      runEnrichJob(getClass().getResource("CorruptedThriftLinesSpec.line.lzo").toString(), "thrift",
+        "1", false, List("geo"), false, false, false, false)
 
-    "write a bad row JSON containing the input line and all errors" in {
-      val Some(bads) = readPartFile(dirs.badRows)
-      removeTstamp(bads.head) must_== CorruptedThriftLinesSpec.expected
-    }
+      "write a bad row JSON containing the input line and all errors" in {
+        val Some(bads) = readPartFile(dirs.badRows)
+        removeTstamp(bads.head) must_== CorruptedThriftLinesSpec.expected
+      }
 
-    "not write any events" in {
-      dirs.output must beEmptyDir
+      "not write any events" in {
+        dirs.output must beEmptyDir
+      }
     }
   }
 }

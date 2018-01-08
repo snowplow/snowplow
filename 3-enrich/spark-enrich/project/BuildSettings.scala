@@ -57,8 +57,9 @@ object BuildSettings {
         |  val name = "%s"
         |  val organization = "%s"
         |  val scalaVersion = "%s"
+        |  val commonEnrichVersion = "%s"
         |}
-        |""".stripMargin.format(version.value, name.value, organization.value, scalaVersion.value))
+        |""".stripMargin.format(version.value, name.value, organization.value, scalaVersion.value, Dependencies.V.commonEnrich))
       Seq(file)
     }.taskValue
   )

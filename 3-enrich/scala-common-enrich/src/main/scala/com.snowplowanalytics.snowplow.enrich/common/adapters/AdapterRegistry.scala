@@ -33,11 +33,15 @@ import registry.{
   IgluAdapter,
   CallrailAdapter,
   MailchimpAdapter,
+  MailgunAdapter,
   MandrillAdapter,
+  OlarkAdapter,
   PagerdutyAdapter,
   PingdomAdapter,
   UrbanAirshipAdapter,
-  SendgridAdapter
+  SendgridAdapter,
+  StatusGatorAdapter,
+  UnbounceAdapter
 }
 
 /**
@@ -47,17 +51,21 @@ import registry.{
 object AdapterRegistry {
 
   private object Vendor {
-    val Snowplow   = "com.snowplowanalytics.snowplow"
-    val Redirect   = "r"
-    val Iglu       = "com.snowplowanalytics.iglu"
-    val Callrail   = "com.callrail"
-    val Mailchimp  = "com.mailchimp"
-    val Mandrill   = "com.mandrill"
-    val Pagerduty  = "com.pagerduty"
-    val Pingdom    = "com.pingdom"
-    val Cloudfront = "com.amazon.aws.cloudfront"
+    val Snowplow     = "com.snowplowanalytics.snowplow"
+    val Redirect     = "r"
+    val Iglu         = "com.snowplowanalytics.iglu"
+    val Callrail     = "com.callrail"
+    val Mailchimp    = "com.mailchimp"
+    val Mailgun      = "com.mailgun"
+    val Mandrill     = "com.mandrill"
+    val Olark        = "com.olark"
+    val Pagerduty    = "com.pagerduty"
+    val Pingdom      = "com.pingdom"
+    val Cloudfront   = "com.amazon.aws.cloudfront"
     val UrbanAirship = "com.urbanairship.connect"
-    val Sendgrid   = "com.sendgrid"
+    val Sendgrid     = "com.sendgrid"
+    val StatusGator  = "com.statusgator"
+    val Unbounce     = "com.unbounce"
   }
 
   /**
@@ -80,12 +88,16 @@ object AdapterRegistry {
     case (Vendor.Iglu,         "v1")  => IgluAdapter.toRawEvents(payload)
     case (Vendor.Callrail,     "v1")  => CallrailAdapter.toRawEvents(payload)
     case (Vendor.Mailchimp,    "v1")  => MailchimpAdapter.toRawEvents(payload)
+    case (Vendor.Olark,        "v1")  => OlarkAdapter.toRawEvents(payload)
+    case (Vendor.Mailgun,      "v1")  => MailgunAdapter.toRawEvents(payload)
     case (Vendor.Mandrill,     "v1")  => MandrillAdapter.toRawEvents(payload)
     case (Vendor.Pagerduty,    "v1")  => PagerdutyAdapter.toRawEvents(payload)
     case (Vendor.Pingdom,      "v1")  => PingdomAdapter.toRawEvents(payload)
     case (Vendor.Cloudfront,   "wd_access_log") => CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(payload)
     case (Vendor.UrbanAirship, "v1")  => UrbanAirshipAdapter.toRawEvents(payload)
     case (Vendor.Sendgrid,     "v3")  => SendgridAdapter.toRawEvents(payload)
+    case (Vendor.StatusGator,  "v1")  => StatusGatorAdapter.toRawEvents(payload)
+    case (Vendor.Unbounce,     "v1")  => UnbounceAdapter.toRawEvents(payload)
     case _ => s"Payload with vendor ${payload.api.vendor} and version ${payload.api.version} not supported by this version of Scala Common Enrich".failNel
   }
 
