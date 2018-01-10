@@ -108,15 +108,21 @@ class CollectorService(
     // we don't store events in case we're bouncing
     val sinkResponses = if (!bounce) sinkEvent(event, partitionKey) else Nil
 
-    val headers = bounceLocationHeader(queryParams, request.uri, config.cookieBounce.name, bounce) ++
-      cookieHeader(config.cookieConfig, nuid) ++ List(
+    val headers = bounceLocationHeader(
+      queryParams,
+      request,
+      config.cookieBounce,
+      bounce) ++
+      cookieHeader(config.cookieConfig, nuid) ++
+      List(
         RawHeader("P3P", "policyref=\"%s\", CP=\"%s\"".format(config.p3p.policyRef, config.p3p.CP)),
         accessControlAllowOriginHeader(request),
         `Access-Control-Allow-Credentials`(true)
       )
 
     val (httpResponse, badRedirectResponses) = buildHttpResponse(
-      event, partitionKey, queryParams, headers.toList, redirect, pixelExpected, bounce, config.streams.sink)
+      event, partitionKey, queryParams, headers.toList, redirect, pixelExpected, bounce,
+      config.streams.sink, config.redirectMacro)
     (httpResponse, badRedirectResponses ++ sinkResponses)
   }
 
@@ -133,13 +139,23 @@ class CollectorService(
         `Access-Control-Allow-Headers`("Content-Type")
       ))
 
+  override def flashCrossDomainPolicy: HttpResponse =
+    flashCrossDomainPolicy(config.crossDomain)
+
   /** Creates a response with a cross domain policiy file */
-  override def flashCrossDomainPolicy: HttpResponse = HttpResponse(
-    entity = HttpEntity(
-      contentType = ContentType(MediaTypes.`text/xml`, HttpCharsets.`ISO-8859-1`),
-      string = "<?xml version=\"1.0\"?>\n<cross-domain-policy>\n  <allow-access-from domain=\"*\" secure=\"false\" />\n</cross-domain-policy>"
-    )
-  )
+  def flashCrossDomainPolicy(crossDomainConfig: Option[CrossDomainConfig]): HttpResponse =
+    crossDomainConfig match {
+      case Some(c) =>
+        HttpResponse(
+          entity = HttpEntity(
+            contentType = ContentType(MediaTypes.`text/xml`, HttpCharsets.`ISO-8859-1`),
+            string = s"""<?xml version=\"1.0\"?>\n<cross-domain-policy>
+                        |  <allow-access-from domain=\"${c.domain}\" secure=\"${c.secure}\" />
+                        |</cross-domain-policy>""".stripMargin
+          )
+        )
+      case None => HttpResponse(404, entity = "404 not found")
+    }
 
   /** Builds a raw event from an Http request. */
   def buildEvent(
@@ -201,10 +217,11 @@ class CollectorService(
     redirect: Boolean,
     pixelExpected: Boolean,
     bounce: Boolean,
-    sinkConfig: SinkConfig
+    sinkConfig: SinkConfig,
+    redirectMacroConfig: RedirectMacroConfig
   ): (HttpResponse, List[Array[Byte]]) =
     if (redirect) {
-      val (r, l) = buildRedirectHttpResponse(event, partitionKey, queryParams)
+      val (r, l) = buildRedirectHttpResponse(event, partitionKey, queryParams, redirectMacroConfig)
       (r.withHeaders(r.headers ++ headers), l)
     } else {
       sinkConfig match {
@@ -232,10 +249,17 @@ class CollectorService(
   def buildRedirectHttpResponse(
     event: CollectorPayload,
     partitionKey: String,
-    queryParams: Map[String, String]
+    queryParams: Map[String, String],
+    redirectMacroConfig: RedirectMacroConfig
   ): (HttpResponse, List[Array[Byte]]) =
     queryParams.get("u") match {
-      case Some(target) => (HttpResponse(StatusCodes.Found).withHeaders(`Location`(target)), Nil)
+      case Some(target) =>
+        val canReplace = redirectMacroConfig.enabled && event.isSetNetworkUserId
+        val token = redirectMacroConfig.placeholder.getOrElse("${SP_NUID}")
+        val replacedTarget =
+          if (canReplace) target.replaceAllLiterally(token, event.networkUserId)
+          else target
+        (HttpResponse(StatusCodes.Found).withHeaders(`RawHeader`("Location", replacedTarget)), Nil)
       case None =>
         val badRow = createBadRow(event, "Redirect failed due to lack of u parameter")
         (HttpResponse(StatusCodes.BadRequest),
@@ -266,12 +290,29 @@ class CollectorService(
   /** Build a location header redirecting to itself to check if third-party cookies are blocked. */
   def bounceLocationHeader(
     queryParams: Map[String, String],
-    uri: Uri,
-    cookieBounceName: String,
+    request: HttpRequest,
+    bounceConfig: CookieBounceConfig,
     bounce: Boolean
   ): Option[HttpHeader] =
     if (bounce) {
-      val redirectUri = uri.withQuery(Uri.Query(queryParams + (cookieBounceName -> "true")))
+      val forwardedScheme = for {
+        headerName <- bounceConfig.forwardedProtocolHeader
+        headerValue <- request.headers
+          .find(_.lowercaseName == headerName.toLowerCase)
+          .map(_.value().toLowerCase())
+        scheme <-
+          if (Set("http", "https").contains(headerValue)) {
+            Some(headerValue)
+          } else {
+            logger.warn(s"Header $headerName contains invalid protocol value $headerValue.")
+            None
+          }
+      } yield scheme
+
+      val redirectUri = request.uri
+        .withQuery(Uri.Query(queryParams + (bounceConfig.name -> "true")))
+        .withScheme(forwardedScheme.getOrElse(request.uri.scheme))
+
       Some(`Location`(redirectUri))
     } else {
       None
@@ -286,7 +327,7 @@ class CollectorService(
   /**
    * Gets the IP from a RemoteAddress. If ipAsPartitionKey is false, a UUID will be generated.
    * @param remoteAddress Address extracted from an HTTP request
-   * @param ipPartitionKey Whether to use the ip as a partition key or a random UUID
+   * @param ipAsPartitionKey Whether to use the ip as a partition key or a random UUID
    * @return a tuple of ip (unknown if it couldn't be extracted) and partition key
    */
   def ipAndPartitionKey(

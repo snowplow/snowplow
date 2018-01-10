@@ -19,7 +19,7 @@ lazy val root = project
   .in(file("."))
   .settings(
     name              := "snowplow-common-enrich",
-    version           := "0.28.0",
+    version           := "0.29.0",
     description       := "Common functionality for enriching raw Snowplow events",
     scalafmtConfig    := file(".scalafmt.conf"),
     scalafmtOnCompile := true,

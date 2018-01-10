@@ -54,9 +54,15 @@ package model {
   final case class CookieBounceConfig(
     enabled: Boolean,
     name: String,
-    fallbackNetworkUserId: String
+    fallbackNetworkUserId: String,
+    forwardedProtocolHeader: Option[String]
+  )
+  final case class RedirectMacroConfig(
+    enabled: Boolean,
+    placeholder: Option[String]
   )
   final case class P3PConfig(policyRef: String, CP: String)
+  final case class CrossDomainConfig(domain: String, secure: Boolean)
   final case class AWSConfig(accessKey: String, secretKey: String) {
     val provider = ((accessKey, secretKey) match {
       case (a, s) if isDefault(a) && isDefault(s) =>
@@ -94,7 +100,7 @@ package model {
   }
   final case class Kafka(brokers: String, retries: Int) extends SinkConfig
   final case class Nsq(host: String, port: Int) extends SinkConfig
-  case object StdoutConfig extends SinkConfig
+  case object Stdout extends SinkConfig
   final case class BufferConfig(byteLimit: Int, recordLimit: Int, timeLimit: Long)
   final case class StreamsConfig(
     good: String,
@@ -107,8 +113,10 @@ package model {
     interface: String,
     port: Int,
     p3p: P3PConfig,
+    crossDomain: Option[CrossDomainConfig],
     cookie: CookieConfig,
     cookieBounce: CookieBounceConfig,
+    redirectMacro: RedirectMacroConfig,
     streams: StreamsConfig
   ) {
     val cookieConfig = if (cookie.enabled) Some(cookie) else None

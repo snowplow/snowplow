@@ -81,7 +81,7 @@ deploy:
     skip_cleanup: true
     on:
       tags: true
-      condition: '"$(.travis/is_release_tag.sh stream_enrich $TRAVIS_TAG)" == "" && $? == 0 && $TEST_DIR = 3-enrich/scala-common-enrich/'
+      condition: '"$(.travis/is_release_tag.sh stream_enrich $TRAVIS_TAG)" == "" && $? == 0 && $TEST_DIR = 3-enrich/stream-enrich/'
   - provider: script
     script: ./.travis/deploy.sh spark_enrich $TRAVIS_TAG
     skip_cleanup: true

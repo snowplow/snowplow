@@ -33,6 +33,8 @@ import org.specs2.mutable.Specification
 import model.SplitBatchResult
 
 class SplitBatchSpec extends Specification {
+  // disabled because of incompatibility between scalaz 7.0.9 (used in the code) and the one
+  // pulled in by akka-http-testkit (7.2.12)
   args(skipAll = true)
   val splitBatch = SplitBatch
 

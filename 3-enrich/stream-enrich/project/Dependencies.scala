@@ -32,14 +32,14 @@ object Dependencies {
     val commonsCodec         = "1.10"
     val config               = "1.3.1"
     val slf4j                = "1.7.5"
-    val nsqClient            = "1.1.0"
+    val nsqClient            = "1.2.0"
     // Scala
     val scopt                = "3.6.0"
     val scalaz7              = "7.0.9"
     val json4s               = "3.2.11"
     val pureconfig           = "0.8.0"
     val snowplowRawEvent     = "0.1.0"
-    val snowplowCommonEnrich = "0.26.0"
+    val snowplowCommonEnrich = "0.29.0"
     val igluClient           = "0.5.0"
     val snowplowTracker      = "0.3.0"
     // Scala (test only)
@@ -58,7 +58,7 @@ object Dependencies {
     val config               = "com.typesafe"          %  "config"                    % V.config
     val slf4j                = "org.slf4j"             %  "slf4j-simple"              % V.slf4j
     val log4jOverSlf4j       = "org.slf4j"             %  "log4j-over-slf4j"          % V.slf4j
-    val nsqClient            = "com.snowplowanalytics" %  "nsq-java-client_2.10"      % V.nsqClient
+    val nsqClient            = "com.snowplowanalytics" %  "nsq-java-client"           % V.nsqClient
     // Scala
     val scopt                = "com.github.scopt"      %% "scopt"                     % V.scopt
     val scalaz7              = "org.scalaz"            %% "scalaz-core"               % V.scalaz7
