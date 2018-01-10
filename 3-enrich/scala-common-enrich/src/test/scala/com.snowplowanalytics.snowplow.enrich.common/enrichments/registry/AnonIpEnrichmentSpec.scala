@@ -26,17 +26,17 @@ class AnonIpEnrichmentSpec extends Specification with DataTables {
   def is = s2"Anonymizing 0-4 octets across a variety of IP addresses should work $e1"
 
   def e1 =
-    "SPEC NAME"              || "IP ADDRESS"      | "ANONYMIZE OCTETS"   | "EXPECTED OUTPUT"   |
-    "valid, anonymize 1"     !! "0.23.0.20"       ! AnonOctets(1)        ! "0.23.0.x"          |
-    "valid, anonymize 2"     !! "168.192.102.4"   ! AnonOctets(2)        ! "168.192.x.x"       |
-    "valid, anonymize 3"     !! "54.242.102.43"   ! AnonOctets(3)        ! "54.x.x.x"          |
-    "valid, anonymize 4"     !! "94.15.213.171"   ! AnonOctets(4)        ! "x.x.x.x"           |
-    "invalid, anonymize 1"   !! "777.2"           ! AnonOctets(1)        ! "777.2"             |
-    "invalid, anonymize 2"   !! "777.2.23"        ! AnonOctets(4)        ! "x.x.x"             |
-    "invalid, anonymize 3"   !! "999.123.777.2"   ! AnonOctets(3)        ! "999.x.x.x"         |
-    "invalid, anonymize 4"   !! "hello;goodbye"   ! AnonOctets(3)        ! "hello;goodbye"     |
-    "empty, anonymize 2"     !! null              ! AnonOctets(2)        ! null                |
-    "empty, anonymize 4"     !! ""                ! AnonOctets(4)        ! "x"                 |> {
-      (_, ip, octets, expected) => AnonIpEnrichment(octets).anonymizeIp(ip) must_== expected
+    "SPEC NAME"              || "IP ADDRESS"    | "ANONYMIZE OCTETS" | "EXPECTED OUTPUT" |
+      "valid, anonymize 1"   !! "0.23.0.20"     ! AnonOctets(1)      ! "0.23.0.x" |
+      "valid, anonymize 2"   !! "168.192.102.4" ! AnonOctets(2)      ! "168.192.x.x" |
+      "valid, anonymize 3"   !! "54.242.102.43" ! AnonOctets(3)      ! "54.x.x.x" |
+      "valid, anonymize 4"   !! "94.15.213.171" ! AnonOctets(4)      ! "x.x.x.x" |
+      "invalid, anonymize 1" !! "777.2"         ! AnonOctets(1)      ! "777.2" |
+      "invalid, anonymize 2" !! "777.2.23"      ! AnonOctets(4)      ! "x.x.x" |
+      "invalid, anonymize 3" !! "999.123.777.2" ! AnonOctets(3)      ! "999.x.x.x" |
+      "invalid, anonymize 4" !! "hello;goodbye" ! AnonOctets(3)      ! "hello;goodbye" |
+      "empty, anonymize 2"   !! null            ! AnonOctets(2)      ! null |
+      "empty, anonymize 4"   !! ""              ! AnonOctets(4)      ! "x" |> { (_, ip, octets, expected) =>
+      AnonIpEnrichment(octets).anonymizeIp(ip) must_== expected
     }
 }

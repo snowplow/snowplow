@@ -15,7 +15,7 @@ package enrichments.registry.sqlquery
 
 sealed trait SqlQueryEnrichmentError extends Throwable {
   val message: String
-  override def toString = message
+  override def toString   = message
   override def getMessage = message
 }
 
@@ -30,4 +30,3 @@ case class InvalidConfiguration(message: String) extends SqlQueryEnrichmentError
 case class InvalidDbResponse(message: String) extends SqlQueryEnrichmentError
 
 case class InvalidInput(message: String) extends SqlQueryEnrichmentError
-

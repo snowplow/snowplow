@@ -32,7 +32,7 @@ import Scalaz._
  * Enrichments relate to browser resolution
  */
 object ClientEnrichments {
-  
+
   /**
    * The Tracker Protocol's pattern
    * for a screen resolution - for
@@ -66,6 +66,6 @@ object ClientEnrichments {
           case NonFatal(e) => "Field [%s]: view dimensions [%s] exceed Integer's max range".format(field, res).fail
         }
       case _ => "Field [%s]: [%s] does not contain valid view dimensions".format(field, res).fail
-    }
+  }
 
 }

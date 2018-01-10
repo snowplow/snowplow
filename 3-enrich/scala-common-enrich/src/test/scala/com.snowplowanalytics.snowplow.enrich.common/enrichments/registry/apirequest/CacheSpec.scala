@@ -27,7 +27,8 @@ import org.specs2.Specification
 import org.specs2.scalaz.ValidationMatchers
 import org.specs2.mock.Mockito
 
-class CacheSpec extends Specification with ValidationMatchers with Mockito { def is = s2"""
+class CacheSpec extends Specification with ValidationMatchers with Mockito {
+  def is = s2"""
   This is a specification to test the API Request enrichment cache
   Update on identical URLs $e1
   Preserve ttl of cache    $e2
@@ -40,14 +41,14 @@ class CacheSpec extends Specification with ValidationMatchers with Mockito { def
     cache.put("http://api.acme.com/url", JInt(52).success)
     cache.get("http://api.acme.com/url") must beSome.like {
       case v => v must beSuccessful(JInt(52))
-    } and(cache.actualLoad must beEqualTo(1))
+    } and (cache.actualLoad must beEqualTo(1))
   }
 
   def e2 = {
     val cache = Cache(3, 2)
     cache.put("http://api.acme.com/url", JInt(42).success)
     Thread.sleep(3000)
-    cache.get("http://api.acme.com/url") must beNone and(cache.actualLoad must beEqualTo(0))
+    cache.get("http://api.acme.com/url") must beNone and (cache.actualLoad must beEqualTo(0))
   }
 
   def e3 = {
@@ -55,6 +56,6 @@ class CacheSpec extends Specification with ValidationMatchers with Mockito { def
     cache.put("http://api.acme.com/url1", JInt(32).success)
     cache.put("http://api.acme.com/url2", JInt(42).success)
     cache.put("http://api.acme.com/url3", JInt(52).success)
-    cache.get("http://api.acme.com/url1") must beNone and(cache.actualLoad must beEqualTo(2))
+    cache.get("http://api.acme.com/url1") must beNone and (cache.actualLoad must beEqualTo(2))
   }
 }

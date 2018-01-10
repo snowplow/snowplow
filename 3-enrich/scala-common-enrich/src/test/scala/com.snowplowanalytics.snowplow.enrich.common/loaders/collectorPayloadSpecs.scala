@@ -32,14 +32,13 @@ class CollectorApiSpec extends Specification with DataTables with ValidationMatc
   "isIceRequest" should {
     "correctly identify valid Snowplow GET requests" in {
 
-      "SPEC NAME"  || "PATH"           | "EXP. RESULT" |
-      "Valid #1"   !! "/i"             ! true          |
-      "Valid #2"   !! "/ice.png"       ! true          |
-      "Valid #3"   !! "/i?foo=1&bar=2" ! true          |
-      "Invalid #1" !! "/blah/i"        ! false         |
-      "Invalid #2" !! "i"              ! false         |> {
-
-        (_, path, expected) => {
+      "SPEC NAME"    || "PATH"           | "EXP. RESULT" |
+        "Valid #1"   !! "/i"             ! true |
+        "Valid #2"   !! "/ice.png"       ! true |
+        "Valid #3"   !! "/i?foo=1&bar=2" ! true |
+        "Invalid #1" !! "/blah/i"        ! false |
+        "Invalid #2" !! "i"              ! false |> { (_, path, expected) =>
+        {
           CollectorApi.isIceRequest(path) must_== expected
         }
       }

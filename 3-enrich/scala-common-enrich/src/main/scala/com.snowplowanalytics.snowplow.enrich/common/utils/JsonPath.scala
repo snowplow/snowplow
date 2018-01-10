@@ -21,7 +21,7 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods.mapper
 
 // Gatling JsonPath
-import io.gatling.jsonpath.{ JsonPath => GatlingJsonPath }
+import io.gatling.jsonpath.{JsonPath => GatlingJsonPath}
 
 /**
  * Wrapper for `io.gatling.jsonpath` for `json4s` and `scalaz`
@@ -37,12 +37,11 @@ object JsonPath {
    * @param json JSON value, possibly JNothing
    * @return successful POJO on any JSON except JNothing
    */
-  def convertToJValue(json: JValue): Validation[String, Object] = {
+  def convertToJValue(json: JValue): Validation[String, Object] =
     json match {
       case JNothing => "JSONPath error: Nothing was given".failure
       case other    => json4sMapper.convertValue(other, classOf[Object]).success
     }
-  }
 
   /**
    * Pimp-up JsonPath class to work with JValue
@@ -51,12 +50,11 @@ object JsonPath {
    * @param jsonPath precompiled with [[compileQuery]] JsonPath object
    */
   implicit class Json4sExtractor(jsonPath: GatlingJsonPath) {
-    def json4sQuery(json: JValue): List[JValue] = {
+    def json4sQuery(json: JValue): List[JValue] =
       convertToJValue(json) match {
         case Success(pojo) => jsonPath.query(pojo).map(anyToJValue).toList
-        case Failure(_) => Nil
+        case Failure(_)    => Nil
       }
-    }
   }
 
   /**
@@ -64,14 +62,13 @@ object JsonPath {
    * It always return List, even for single match
    * Unlike `jValue.json4sQuery(stringPath)` it gives error if JNothing was given
    */
-  def query(jsonPath: String, json: JValue): Validation[String, List[JValue]] = {
+  def query(jsonPath: String, json: JValue): Validation[String, List[JValue]] =
     convertToJValue(json).flatMap { pojo =>
       GatlingJsonPath.query(jsonPath, pojo) match {
         case Right(iterator) => iterator.map(anyToJValue).toList.success
         case Left(error)     => error.reason.fail
       }
     }
-  }
 
   /**
    * Precompile JsonPath query
@@ -80,10 +77,7 @@ object JsonPath {
    * @return valid [[JsonPath]] object either error message
    */
   def compileQuery(query: String): Validation[String, GatlingJsonPath] =
-    GatlingJsonPath.compile(query)
-      .leftMap(_.reason)
-      .disjunction
-      .validation
+    GatlingJsonPath.compile(query).leftMap(_.reason).disjunction.validation
 
   /**
    * Wrap list of values into JSON array if several values present
@@ -93,9 +87,9 @@ object JsonPath {
    * @return array if there's >1 values in list
    */
   def wrapArray(values: List[JValue]): JValue = values match {
-    case Nil => JNothing
+    case Nil        => JNothing
     case one :: Nil => one
-    case many => JArray(many)
+    case many       => JArray(many)
   }
 
   /**

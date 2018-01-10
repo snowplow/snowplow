@@ -24,7 +24,8 @@ import org.specs2.scalaz.ValidationMatchers
 import scalaz._
 import Scalaz._
 
-class ParseCrossDomainSpec extends Specification with DataTables with ValidationMatchers { def is = s2"""
+class ParseCrossDomainSpec extends Specification with DataTables with ValidationMatchers {
+  def is = s2"""
   This is a specification to test the parseCrossDomain function
   parseCrossDomain should return None when the querystring contains no _sp parameter           $e1
   parseCrossDomain should return a failure when the _sp timestamp is unparseable               $e2

@@ -13,7 +13,6 @@
 package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 package apirequest
 
-
 case class ValueNotFoundException(message: String) extends Throwable {
   override def toString = s"Value not found $message"
 }
