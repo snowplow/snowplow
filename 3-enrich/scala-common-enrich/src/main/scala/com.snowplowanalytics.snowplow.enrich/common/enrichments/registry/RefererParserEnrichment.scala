@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2014-2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -57,10 +57,10 @@ object RefererParserEnrichment extends ParseableEnrichment {
 
   /**
    * Creates a RefererParserEnrichment instance from a JValue.
-   * 
+   *
    * @param config The referer_parser enrichment JSON
    * @param schemaKey The SchemaKey provided for the enrichment
-   *        Must be a supported SchemaKey for this enrichment   
+   *        Must be a supported SchemaKey for this enrichment
    * @return a configured RefererParserEnrichment instance
    */
   def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[RefererParserEnrichment] = {
@@ -94,7 +94,7 @@ case class RefererParserEnrichment(
   /**
    * Extract details about the referer (sic).
    *
-   * Uses the referer-parser library. 
+   * Uses the referer-parser library.
    *
    * @param uri The referer URI to extract
    *            referer details from

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2014-2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -83,11 +83,11 @@ object MandrillAdapter extends Adapter {
   /**
    * Converts a CollectorPayload instance into raw events.
    *
-   * A Mandrill Tracking payload contains many events in 
+   * A Mandrill Tracking payload contains many events in
    * the body of the payload, stored within a HTTP encoded
    * string.
-   * We expect the event parameter of these events to be 
-   * 1 of 9 options otherwise we have an unsupported event 
+   * We expect the event parameter of these events to be
+   * 1 of 9 options otherwise we have an unsupported event
    * type.
    *
    * @param payload The CollectorPayload containing one or more
@@ -109,8 +109,8 @@ object MandrillAdapter extends Adapter {
           case Success(list) => {
 
             // Create our list of Validated RawEvents
-            val rawEventsList: List[Validated[RawEvent]] = 
-              for { 
+            val rawEventsList: List[Validated[RawEvent]] =
+              for {
                 (event, index) <- list.zipWithIndex
               } yield {
 
@@ -118,7 +118,7 @@ object MandrillAdapter extends Adapter {
                 for {
                   schema <- lookupSchema(eventOpt, VendorName, index, EventSchemaMap)
                 } yield {
-                  
+
                   val formattedEvent = cleanupJsonEventValues(event,
                                                              eventOpt match { case Some(x) => ("event", x).some case None => None },
                                                              "ts"
@@ -133,27 +133,27 @@ object MandrillAdapter extends Adapter {
                   )
                 }
               }
-            
+
             // Processes the List for Failures and Successes and returns ValidatedRawEvents
             rawEventsListProcessor(rawEventsList)
           }
         }
       }
     }
-  
+
   /**
-   * Returns a list of events from the payload 
+   * Returns a list of events from the payload
    * body of a Mandrill Event.  Each event will
    * be formatted as an individual JSON of type
    * JValue.
-   * 
+   *
    * NOTE:
    * The payload.body string must adhere to UTF-8
    * encoding standards.
    *
-   * @param rawEventString The encoded string 
+   * @param rawEventString The encoded string
    *        from the Mandrill payload body
-   * @return a list of single events formatted as 
+   * @return a list of single events formatted as
    *         json4s JValue JSONs or a Failure String
    */
   private[registry] def payloadBodyToEvents(rawEventString: String): Validation[String,List[JValue]] = {
