@@ -103,8 +103,6 @@ case class AnonIpEnrichment(
   octets: AnonOctets.AnonOctets
 ) extends Enrichment {
 
-  val version = new DefaultArtifactVersion("0.1.0")
-
   /**
    * Anonymize the supplied IP address.
    *

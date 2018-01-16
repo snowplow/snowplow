@@ -91,8 +91,6 @@ object EventFingerprintEnrichment {
  */
 case class EventFingerprintEnrichment(algorithm: String => String, excludedParameters: List[String]) extends Enrichment {
 
-  val version = new DefaultArtifactVersion("0.1.0")
-
   /**
    * Calculate an event fingerprint using all querystring fields except the excludedParameters
    *

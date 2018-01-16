@@ -67,8 +67,6 @@ case class SqlQueryEnrichment(inputs: List[Input], db: Db, query: Query, output:
 
   import SqlQueryEnrichment._
 
-  val version = new DefaultArtifactVersion("0.1.0")
-
   /**
    * Primary function of the enrichment
    * Failure means connection failure, failed unexpected JSON-value, etc

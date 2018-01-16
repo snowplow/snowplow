@@ -93,8 +93,6 @@ object CurrencyConversionEnrichmentConfig extends ParseableEnrichment {
  */
 case class CurrencyConversionEnrichment(accountType: AccountType, apiKey: String, baseCurrency: String, rateAt: String) extends Enrichment {
 
-  val version = new DefaultArtifactVersion("0.1.0")
-
   val fx = Forex(ForexConfig(), OerClientConfig(apiKey, accountType))
 
   /**
