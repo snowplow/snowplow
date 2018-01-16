@@ -58,9 +58,9 @@ object BadRow {
    */
   def oversizedRow(size: Long, errors: NonEmptyList[String], tstamp: Long = System.currentTimeMillis()): String =
     compact(
-      ("size" -> size) ~
-      ("errors" -> errors.toList.map(e => fromJsonNode(e.toProcessingMessage.asJson))) ~
-      ("failure_tstamp" -> tstamp)
+      ("size"             -> size) ~
+        ("errors"         -> errors.toList.map(e => fromJsonNode(e.toProcessingMessage.asJson))) ~
+        ("failure_tstamp" -> tstamp)
     )
 }
 
@@ -75,7 +75,7 @@ case class BadRow(
   val line: String,
   val errors: ProcessingMessageNel,
   val tstamp: Long = System.currentTimeMillis()
-  ) {
+) {
 
   // An ISO valid timestamp formatter
   private val TstampFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(DateTimeZone.UTC)
@@ -87,9 +87,9 @@ case class BadRow(
    * @return the TypeHierarchy as a json4s JValue
    */
   def toJValue: JValue =
-    ("line"           -> line) ~
-    ("errors"         -> errors.toList.map(e => fromJsonNode(e.asJson))) ~
-    ("failure_tstamp" -> this.getTimestamp(tstamp))
+    ("line"             -> line) ~
+      ("errors"         -> errors.toList.map(e => fromJsonNode(e.asJson))) ~
+      ("failure_tstamp" -> this.getTimestamp(tstamp))
 
   /**
    * Converts our BadRow into a single JSON encapsulating

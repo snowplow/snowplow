@@ -35,10 +35,7 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods._
 
 // Iglu
-import iglu.client.{
-  SchemaKey,
-  Resolver
-}
+import iglu.client.{Resolver, SchemaKey}
 
 // This project
 import loaders.CollectorPayload
@@ -57,14 +54,14 @@ object PingdomAdapter extends Adapter {
   // Tracker version for an Pingdom Tracking webhook
   private val TrackerVersion = "com.pingdom-v1"
 
-  // Regex for extracting data from querystring values which we 
+  // Regex for extracting data from querystring values which we
   // believe are incorrectly handled Python unicode strings.
   private val PingdomValueRegex = """\(u'(.+)',\)""".r
 
   // Schemas for reverse-engineering a Snowplow unstructured event
-  private val EventSchemaMap = Map (
-    "assign"          -> SchemaKey("com.pingdom", "incident_assign", "jsonschema", "1-0-0").toSchemaUri,
-    "notify_user"     -> SchemaKey("com.pingdom", "incident_notify_user", "jsonschema", "1-0-0").toSchemaUri,
+  private val EventSchemaMap = Map(
+    "assign"          -> SchemaKey("com.pingdom", "incident_assign",          "jsonschema", "1-0-0").toSchemaUri,
+    "notify_user"     -> SchemaKey("com.pingdom", "incident_notify_user",     "jsonschema", "1-0-0").toSchemaUri,
     "notify_of_close" -> SchemaKey("com.pingdom", "incident_notify_of_close", "jsonschema", "1-0-0").toSchemaUri
   )
 
@@ -81,10 +78,10 @@ object PingdomAdapter extends Adapter {
    * @return a Validation boxing either a NEL of RawEvents on
    *         Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = 
+  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
     (payload.querystring) match {
       case (Nil) => s"${VendorName} payload querystring is empty: nothing to process".failNel
-      case (qs)  => {
+      case (qs) => {
 
         reformatMapParams(qs) match {
           case Failure(f) => f.fail
@@ -102,14 +99,15 @@ object PingdomAdapter extends Adapter {
                   }
                 } yield {
                   val formattedEvent = reformatParameters(parsedEvent)
-                  val qsParams = s - "message"
-                  NonEmptyList(RawEvent(
-                    api          = payload.api,
-                    parameters   = toUnstructEventParams(TrackerVersion, qsParams, schema, formattedEvent, "srv"),
-                    contentType  = payload.contentType,
-                    source       = payload.source,
-                    context      = payload.context
-                  ))
+                  val qsParams       = s - "message"
+                  NonEmptyList(
+                    RawEvent(
+                      api         = payload.api,
+                      parameters  = toUnstructEventParams(TrackerVersion, qsParams, schema, formattedEvent, "srv"),
+                      contentType = payload.contentType,
+                      source      = payload.source,
+                      context     = payload.context
+                    ))
                 }
               }
             }
@@ -128,45 +126,46 @@ object PingdomAdapter extends Adapter {
    * the Collector; however if this is not the case we will not be able
    * to process values.
    *
-   * @param params A list of name-value pairs from the querystring of 
+   * @param params A list of name-value pairs from the querystring of
    *        the Pingdom payload
-   * @return a Map of name-value pairs which has been validated as all 
-   *         passing the regex extraction or return a NonEmptyList of Failures 
+   * @return a Map of name-value pairs which has been validated as all
+   *         passing the regex extraction or return a NonEmptyList of Failures
    *         if any could not pass the regex.
    */
-  private[registry] def reformatMapParams(params: List[NameValuePair]): Validated[Map[String,String]] = {
-    val formatted = params.map { 
-      value => {
+  private[registry] def reformatMapParams(params: List[NameValuePair]): Validated[Map[String, String]] = {
+    val formatted = params.map { value =>
+      {
         (value.getName, value.getValue) match {
-          case (k, PingdomValueRegex(v)) => s"${VendorName} name-value pair [$k -> $v]: Passed regex - Collector is not catching unicode wrappers anymore".failNel
+          case (k, PingdomValueRegex(v)) =>
+            s"${VendorName} name-value pair [$k -> $v]: Passed regex - Collector is not catching unicode wrappers anymore".failNel
           case (k, v) => (k -> v).successNel
         }
       }
     }
 
-    val successes: List[(String, String)] = 
+    val successes: List[(String, String)] =
       for {
-        Success(s) <- formatted 
+        Success(s) <- formatted
       } yield s
 
-    val failures: List[String] = 
+    val failures: List[String] =
       for {
-        Failure(NonEmptyList(f)) <- formatted 
+        Failure(NonEmptyList(f)) <- formatted
       } yield f
 
     (successes, failures) match {
-      case (s :: ss,     Nil) => (s :: ss).toMap.successNel // No Failures collected.
+      case (s :: ss, Nil)     => (s :: ss).toMap.successNel // No Failures collected.
       case (_,       f :: fs) => NonEmptyList(f, fs: _*).fail // Some Failures, return only those.
-      case (Nil,         Nil) => "Empty parameters list was passed - should never happen: empty querystring is not being caught".failNel
+      case (Nil,     Nil)     => "Empty parameters list was passed - should never happen: empty querystring is not being caught".failNel
     }
   }
 
   /**
    * Attempts to parse a json string into a JValue
    * example: {"p":"app"} becomes JObject(List((p,JString(app))))
-   * 
+   *
    * @param jsonStr The string we want to parse into a JValue
-   * @return a Validated JValue or a NonEmptyList Failure 
+   * @return a Validated JValue or a NonEmptyList Failure
    *         containing a JsonParseException
    */
   private[registry] def parseJson(jsonStr: String): Validated[JValue] =
@@ -176,11 +175,11 @@ object PingdomAdapter extends Adapter {
       case e: JsonParseException => {
         val exception = JU.stripInstanceEtc(e.toString).orNull
         s"${VendorName} event failed to parse into JSON: [${exception}]".failNel
-      } 
+      }
     }
 
   /**
-   * Returns an updated Pingdom Event JSON where 
+   * Returns an updated Pingdom Event JSON where
    * the "action" field has been removed
    *
    * @param json The event JSON which we need to

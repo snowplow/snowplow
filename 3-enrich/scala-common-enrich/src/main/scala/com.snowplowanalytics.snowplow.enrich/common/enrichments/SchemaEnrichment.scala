@@ -35,11 +35,11 @@ import Scalaz._
 object SchemaEnrichment {
 
   private object Schemas {
-    val pageViewSchema        = SchemaKey("com.snowplowanalytics.snowplow", "page_view", "jsonschema", "1-0-0").success
-    val pagePingSchema        = SchemaKey("com.snowplowanalytics.snowplow", "page_ping", "jsonschema", "1-0-0").success
-    val transactionSchema     = SchemaKey("com.snowplowanalytics.snowplow", "transaction", "jsonschema", "1-0-0").success
+    val pageViewSchema        = SchemaKey("com.snowplowanalytics.snowplow", "page_view",        "jsonschema", "1-0-0").success
+    val pagePingSchema        = SchemaKey("com.snowplowanalytics.snowplow", "page_ping",        "jsonschema", "1-0-0").success
+    val transactionSchema     = SchemaKey("com.snowplowanalytics.snowplow", "transaction",      "jsonschema", "1-0-0").success
     val transactionItemSchema = SchemaKey("com.snowplowanalytics.snowplow", "transaction_item", "jsonschema", "1-0-0").success
-    val structSchema          = SchemaKey("com.google.analytics", "event", "jsonschema", "1-0-0").success
+    val structSchema          = SchemaKey("com.google.analytics",           "event",            "jsonschema", "1-0-0").success
   }
 
   def extractSchema(event: EnrichedEvent)(implicit resolver: Resolver): Validation[String, SchemaKey] = event.event match {
@@ -52,14 +52,13 @@ object SchemaEnrichment {
     case eventType          => "Unrecognized event [%s]".format(eventType).fail
   }
 
-  private def extractUnstructSchema(event: EnrichedEvent)(implicit resolver: Resolver): Validation[String, SchemaKey] = {
+  private def extractUnstructSchema(event: EnrichedEvent)(implicit resolver: Resolver): Validation[String, SchemaKey] =
     Shredder.extractUnstructEvent(event) match {
       case Some(Success(List(json))) =>
         parseSchemaKey(Option(json.get("schema")))
       case _ =>
         "Unstructured event couldn't be extracted".fail
     }
-  }
 
   private def parseSchemaKey(node: Option[JsonNode]): Validation[String, SchemaKey] = node match {
     case Some(textNode: TextNode) =>

@@ -24,13 +24,14 @@ import Scalaz._
 import scalaj.http._
 
 object HttpClient {
+
   /**
    * Blocking method to get body of HTTP response
    *
    * @param request assembled request object
    * @return validated body of HTTP request
    */
-  def getBody(request: HttpRequest): Validation[Throwable, String] = {
+  def getBody(request: HttpRequest): Validation[Throwable, String] =
     try {
       val res = request.asString
       if (res.isSuccess) res.body.success
@@ -38,7 +39,6 @@ object HttpClient {
     } catch {
       case NonFatal(e) => e.failure
     }
-  }
 
   /**
    * Build HTTP request object

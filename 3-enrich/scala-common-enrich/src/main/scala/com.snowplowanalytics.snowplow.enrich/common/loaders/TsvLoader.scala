@@ -30,27 +30,29 @@ case class TsvLoader(adapter: String) extends Loader[String] {
    *         CanonicalInput object, wrapped in a Scalaz ValidationNel.
    */
   def toCollectorPayload(line: String): ValidatedMaybeCollectorPayload =
-
     // Throw away the first two lines of Cloudfront web distribution access logs
     if (line.startsWith("#Version:") || line.startsWith("#Fields:")) {
       None.success
     } else {
-      CollectorApi.parse(adapter).map(
-        CollectorPayload(
-          Nil,
-          "tsv",
-          "UTF-8",
-          None,
-          None,
-          None,
-          None,
-          None,
-          Nil,
-          None,
-          _,
-          None,
-          Some(line)
-        ).some
-      ).toValidationNel
+      CollectorApi
+        .parse(adapter)
+        .map(
+          CollectorPayload(
+            Nil,
+            "tsv",
+            "UTF-8",
+            None,
+            None,
+            None,
+            None,
+            None,
+            Nil,
+            None,
+            _,
+            None,
+            Some(line)
+          ).some
+        )
+        .toValidationNel
     }
 }

@@ -40,7 +40,7 @@ object TypeHierarchy {
 }
 
 /**
- * Expresses the hierarchy of types for this type. 
+ * Expresses the hierarchy of types for this type.
  */
 case class TypeHierarchy(
   val rootId: String,
@@ -48,7 +48,7 @@ case class TypeHierarchy(
   val refRoot: String,
   val refTree: List[String],
   val refParent: String
-  ) {
+) {
 
   /**
    * Converts a TypeHierarchy into a JSON containing
@@ -66,11 +66,11 @@ case class TypeHierarchy(
    * @return the TypeHierarchy as a json4s JValue
    */
   def toJValue: JValue =
-    ("rootId"     -> rootId) ~
-    ("rootTstamp" -> rootTstamp) ~
-    ("refRoot"    -> refRoot) ~
-    ("refTree"    -> refTree) ~
-    ("refParent"  -> refParent)
+    ("rootId"       -> rootId) ~
+      ("rootTstamp" -> rootTstamp) ~
+      ("refRoot"    -> refRoot) ~
+      ("refTree"    -> refTree) ~
+      ("refParent"  -> refParent)
 
   /**
    * Completes a partial TypeHierarchy with
@@ -82,8 +82,7 @@ case class TypeHierarchy(
    *        to append onto existing refTree
    * @return the completed TypeHierarchy
    */
-  def complete(
-    refTree: List[String]): TypeHierarchy =
+  def complete(refTree: List[String]): TypeHierarchy =
     partialHierarchyLens.set(this, refTree)
 
   /**
@@ -96,8 +95,8 @@ case class TypeHierarchy(
       ph.copy(
         refTree   = full,
         refParent = secondTail(full)
-      )}, _.refTree
-    )
+      )
+    }, _.refTree)
 
   /**
    * Get the last-but-one element ("tail-tail")

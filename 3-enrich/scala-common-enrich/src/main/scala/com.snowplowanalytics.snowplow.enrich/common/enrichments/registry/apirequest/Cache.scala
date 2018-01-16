@@ -44,7 +44,7 @@ case class Cache(size: Int, ttl: Int) {
    * @param url HTTP URL
    * @return validated JSON as it was returned from API server
    */
-  def get(url: String): Option[Validation[Throwable, JValue]] = {
+  def get(url: String): Option[Validation[Throwable, JValue]] =
     cache.get(url) match {
       case Some((value, created)) if ttl == 0 => Some(value)
       case Some((value, created)) => {
@@ -57,7 +57,6 @@ case class Cache(size: Int, ttl: Int) {
       }
       case _ => None
     }
-  }
 
   /**
    * Put a value into cache with current timestamp

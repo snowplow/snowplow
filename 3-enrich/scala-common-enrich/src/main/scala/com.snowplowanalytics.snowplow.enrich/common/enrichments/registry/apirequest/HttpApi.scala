@@ -39,12 +39,12 @@ case class HttpApi(method: String, uri: String, timeout: Int, authentication: Au
 
   private val authUser = for {
     httpBasic <- authentication.httpBasic
-    user <- httpBasic.username
+    user      <- httpBasic.username
   } yield user
 
   private val authPassword = for {
     httpBasic <- authentication.httpBasic
-    password <- httpBasic.password
+    password  <- httpBasic.password
   } yield password
 
   /**
@@ -70,7 +70,7 @@ case class HttpApi(method: String, uri: String, timeout: Int, authentication: Au
    */
   private[apirequest] def buildUrl(context: Map[String, String]): Option[String] = {
     val encodedContext = context.map { case (k, v) => (k, URLEncoder.encode(v, "UTF-8")) }
-    val url = encodedContext.toList.foldLeft(uri)(replace)
+    val url            = encodedContext.toList.foldLeft(uri)(replace)
     everythingMatched(url).option(url)
   }
 }

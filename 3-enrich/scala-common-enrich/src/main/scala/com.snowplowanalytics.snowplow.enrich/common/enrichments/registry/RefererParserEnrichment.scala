@@ -31,10 +31,7 @@ import Scalaz._
 import org.json4s.JValue
 
 // Iglu
-import iglu.client.{
-  SchemaCriterion,
-  SchemaKey
-}
+import iglu.client.{SchemaCriterion, SchemaKey}
 import iglu.client.validation.ProcessingMessageMethods._
 
 // Snowplow referer-parser
@@ -57,20 +54,19 @@ object RefererParserEnrichment extends ParseableEnrichment {
 
   /**
    * Creates a RefererParserEnrichment instance from a JValue.
-   * 
+   *
    * @param config The referer_parser enrichment JSON
    * @param schemaKey The SchemaKey provided for the enrichment
-   *        Must be a supported SchemaKey for this enrichment   
+   *        Must be a supported SchemaKey for this enrichment
    * @return a configured RefererParserEnrichment instance
    */
-  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[RefererParserEnrichment] = {
-    isParseable(config, schemaKey).flatMap( conf => {
+  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[RefererParserEnrichment] =
+    isParseable(config, schemaKey).flatMap(conf => {
       (for {
-        param  <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "internalDomains")
-        enrich =  RefererParserEnrichment(param)
+        param <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "internalDomains")
+        enrich = RefererParserEnrichment(param)
       } yield enrich).toValidationNel
     })
-  }
 
 }
 
@@ -81,7 +77,7 @@ object RefererParserEnrichment extends ParseableEnrichment {
  */
 case class RefererParserEnrichment(
   domains: List[String]
-  ) extends Enrichment {
+) extends Enrichment {
 
   val version = new DefaultArtifactVersion("0.1.0")
 
@@ -94,7 +90,7 @@ case class RefererParserEnrichment(
   /**
    * Extract details about the referer (sic).
    *
-   * Uses the referer-parser library. 
+   * Uses the referer-parser library.
    *
    * @param uri The referer URI to extract
    *            referer details from
@@ -105,10 +101,9 @@ case class RefererParserEnrichment(
    * @return a Tuple3 containing referer medium,
    *         source and term, all Strings
    */
-  def extractRefererDetails(uri: URI, pageHost: String): Option[Referer] = {
+  def extractRefererDetails(uri: URI, pageHost: String): Option[Referer] =
     for {
       r <- RefererParser.parse(uri, pageHost, domains)
       t = r.term.flatMap(t => CU.fixTabsNewlines(t))
     } yield termLens.set(r, t)
-  }
 }
