@@ -244,4 +244,7 @@ class EnrichedEvent extends Serializable {
 
   // True timestamp
   @BeanProperty var true_tstamp: String = _
+
+  // Fields modified form PII enrichemnt (JSON String)
+  @BeanProperty var pii: String = _
 }
