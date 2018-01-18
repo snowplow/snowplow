@@ -1,3 +1,12 @@
+Release 100 Epidaurus (2018-0x-xx)
+---------------------------------
+Redshift: widen se_label to 4,096 to support URLs etc (#196)
+Redshift: widen sensitive columns in atomic.events to support pseudonymization (#3528)
+Scala Common Enrich: add PII Enrichment (#3472)
+Scala Common Enrich: apply automated code formatting (#3532)
+Scala Common Enrich: remove unused version member in Enrichment trait (close #3541)
+Scala Common Enrich: use automated code formatting (#3496)
+
 Release 99 Carnac (2018-01-25)
 ------------------------------
 Scala Common Enrich: bump to 0.30.0 (#3562)
