@@ -1,0 +1,21 @@
+{
+  "$schema": "http://iglucentral.com/schemas/com.snowplowanalytics.self-desc/schema/jsonschema/1-0-0#",
+  "description": "Schema for acme stuff",
+  "self": {
+    "vendor": "com.acme",
+    "name": "email_sent",
+    "format": "jsonschema",
+    "version": "1-1-0"
+  },
+  "type": "object",
+  "properties": {
+    "emailAddress": {
+      "type": "string"
+    },
+    "emailAddress2": {
+      "type": "string"
+    }
+  },
+  "required": ["emailAddress", "emailAddress2"],
+  "additionalProperties": false
+}
