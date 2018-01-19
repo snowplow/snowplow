@@ -46,6 +46,7 @@ object Dependencies {
     val uaParser         = "1.3.0"
     val postgresDriver   = "9.4.1208.jre7"
     val mysqlConnector   = "5.1.39"
+    val jaywayJsonpath   = "2.4.0"
     // Scala
     val scalaz7          = "7.0.9"
     val snowplowRawEvent = "0.1.0"
@@ -83,6 +84,7 @@ object Dependencies {
     val uaParser         = "org.clojars.timewarrior"    %  "ua-parser"                 % V.uaParser
     val postgresDriver   = "org.postgresql"             %  "postgresql"                % V.postgresDriver
     val mysqlConnector   = "mysql"                      %  "mysql-connector-java"      % V.mysqlConnector
+    val jaywayJsonpath   = "com.jayway.jsonpath"        %  "json-path"                 % V.jaywayJsonpath
 
     // Scala
     val scalaForex       = "com.snowplowanalytics"      %% "scala-forex"               % V.scalaForex

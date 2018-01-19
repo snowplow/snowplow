@@ -527,6 +527,11 @@ object EnrichmentManager {
       event.derived_contexts = ME.formatDerivedContexts(derived_contexts)
     }
 
+    val piiTransform = registry.getPiiPseudonymizerEnrichment match {
+      case Some(enrichment) => enrichment.transformer(event).success
+      case None             => Nil.success
+    }
+
     // Collect our errors on Failure, or return our event on Success
     // Broken into two parts due to 12 argument limit on |@|
     val first =
@@ -557,7 +562,10 @@ object EnrichmentManager {
         weatherContext.toValidationNel) { (_, _, _, _, _, _, _, _, _, _, _, _) =>
         ()
       }
-    (first |@| second) { (_, _) =>
+    //This needs to happen last
+    val last = piiTransform
+
+    (first |@| second |@| last) { (_, _, _) =>
       event
     }
   }
