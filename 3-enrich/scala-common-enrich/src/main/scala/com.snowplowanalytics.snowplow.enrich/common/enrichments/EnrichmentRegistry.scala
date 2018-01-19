@@ -47,6 +47,7 @@ import registry.{
   IpLookupsEnrichment,
   JavascriptScriptEnrichment,
   JavascriptScriptEnrichmentConfig,
+  PiiPseudonymizerEnrichment,
   RefererParserEnrichment,
   UaParserEnrichment,
   UaParserEnrichmentConfig,
@@ -311,6 +312,15 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    */
   def getSqlQueryEnrichment: Option[SqlQueryEnrichment] =
     getEnrichment[SqlQueryEnrichment]("sql_query_enrichment_config")
+
+  /**
+   * Returns an Option boxing the PiiPseudonymizerEnrichment
+   * config value if present, or None if not
+   *
+   * @return Option boxing the PiiPseudonymizerEnrichment instance
+   */
+  def getPiiPseudonymizerEnrichment: Option[PiiPseudonymizerEnrichment] =
+    getEnrichment[PiiPseudonymizerEnrichment]("pii_enrichment_config")
 
   /**
    * Returns an Option boxing an Enrichment
