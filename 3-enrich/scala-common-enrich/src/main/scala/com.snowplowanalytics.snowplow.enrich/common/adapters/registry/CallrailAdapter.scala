@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2014-2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -17,9 +17,6 @@ package common
 package adapters
 package registry
 
-// Java
-import java.math.{BigInteger => JBigInteger}
-
 // Iglu
 import iglu.client.{
   SchemaKey,
@@ -33,11 +30,6 @@ import Scalaz._
 // Joda-Time
 import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormat
-
-// json4s
-import org.json4s._
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
 
 // This project
 import loaders.CollectorPayload
@@ -93,7 +85,7 @@ object CallrailAdapter extends Adapter {
         contentType  = payload.contentType,
         source       = payload.source,
         context      = payload.context
-        )).success
+      )).success
     }
   }
 }

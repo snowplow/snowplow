@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -222,17 +222,25 @@ trait Adapter {
     ("data"   -> eventJson)
 
   /**
-   * Creates a Snowplow custom contexts entity by
-   * nesting the provided JValue in a self-describing
+   * Creates a Snowplow custom contexts entity by nesting the provided JValue in a self-describing
    * envelope for the custom contexts.
    *
-   * @param eventJson The event which we will nest
-   *        into the unstructured event
-   * @return the self-describing unstructured event
+   * @param contextJson The context which will be nested into the custom contexts envelope
+   * @return the self-describing custom contexts
    */
-  protected[registry] def toContexts(contextJson: JValue): JValue =
+  protected[registry] def toContext(contextJson: JValue): JValue =
+    toContexts(List(contextJson))
+
+  /**
+   * Creates a Snowplow custom contexts entity by nesting the provided JValues in a self-describing
+   * envelope for the custom contexts.
+   *
+   * @param contextJsons The contexts which will be nested into the custom contexts envelope
+   * @return the self-describing custom contexts
+   */
+  protected[registry] def toContexts(contextJsons: List[JValue]): JValue =
     ("schema" -> Contexts) ~
-    ("data"   -> List(contextJson))
+    ("data"   -> contextJsons)
 
   /**
    * Fabricates a Snowplow unstructured event from

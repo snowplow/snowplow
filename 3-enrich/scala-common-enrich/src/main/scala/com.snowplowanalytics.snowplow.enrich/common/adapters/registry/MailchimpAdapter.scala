@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2014-2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -22,11 +22,8 @@ import java.net.URI
 import org.apache.http.client.utils.URLEncodedUtils
 
 // Joda-Time
-import org.joda.time.{DateTime, DateTimeZone}
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
-
-// Jackson
-import com.fasterxml.jackson.databind.JsonNode
+import org.joda.time.DateTimeZone
+import org.joda.time.format.DateTimeFormat
 
 // Scala
 import scala.collection.JavaConversions._
@@ -65,7 +62,7 @@ object MailchimpAdapter extends Adapter {
   // Expected content type for a request body
   private val ContentType = "application/x-www-form-urlencoded"
 
-  // Tracker version for an Mailchimp Tracking webhook
+  // Tracker version for a Mailchimp Tracking webhook
   private val TrackerVersion = "com.mailchimp-v1"
 
   // Schemas for reverse-engineering a Snowplow unstructured event

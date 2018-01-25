@@ -62,7 +62,7 @@ Check out the **[Talk to us][talk-to-us]** page on our wiki.
 
 ## Copyright and license
 
-Snowplow is copyright 2012-2017 Snowplow Analytics Ltd.
+Snowplow is copyright 2012-2018 Snowplow Analytics Ltd.
 
 Licensed under the **[Apache License, Version 2.0][license]** (the "License");
 you may not use this software except in compliance with the License.
@@ -76,7 +76,7 @@ limitations under the License.
 [travis-image]: https://travis-ci.org/snowplow/snowplow.png?branch=master
 [travis]: http://travis-ci.org/snowplow/snowplow
 
-[release-image]: https://img.shields.io/badge/release-98_Argentomagus-orange.svg?style=flat
+[release-image]: https://img.shields.io/badge/release-99_Carnac-orange.svg?style=flat
 [releases]: https://github.com/snowplow/snowplow/releases
 
 [license-image]: http://img.shields.io/badge/license-Apache--2-blue.svg?style=flat

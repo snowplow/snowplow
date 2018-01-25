@@ -1,3 +1,16 @@
+Release 99 Carnac (2018-01-25)
+------------------------------
+Scala Common Enrich: bump to 0.30.0 (#3562)
+Scala Common Enrich: add adapter for Google Analytics (#3560)
+Scala Common Enrich: extend copyright notice to 2018 (#3574)
+Spark Enrich: bump to 1.12.0 (#3565)
+Spark Enrich: bump scala-common-enrich to 0.30.0 (#3563)
+Spark Enrich: add tests for the Google Analytics adapter (#3561)
+Spark Enrich: extend copyright notice to 2018 (#3573)
+Spark Enrich: change Twitter repository url to https (#3593)
+EmrEtlRunner: update spark_enrich version in config.yml.sample to 1.12.0 (#3566)
+Common: extend copyright notice to 2018 in READMEs (#3575)
+
 Release 98 Argentomagus (2018-01-05)
 ------------------------------------
 Scala Stream Collector: bump to 0.12.0 (#3548)

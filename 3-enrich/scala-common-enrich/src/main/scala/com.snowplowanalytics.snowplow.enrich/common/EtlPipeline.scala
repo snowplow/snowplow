@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -35,10 +35,7 @@ import scalaz._
 import Scalaz._
 
 // This project
-import adapters.{
-  RawEvent,
-  AdapterRegistry
-}
+import adapters.AdapterRegistry
 import enrichments.{
   EnrichmentRegistry,
   EnrichmentManager

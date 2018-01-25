@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -13,9 +13,6 @@
 package com.snowplowanalytics
 package snowplow.enrich.common
 package loaders
-
-// Apache Commons
-import org.apache.commons.lang3.StringUtils
 
 // Apache URLEncodedUtils
 import org.apache.http.NameValuePair

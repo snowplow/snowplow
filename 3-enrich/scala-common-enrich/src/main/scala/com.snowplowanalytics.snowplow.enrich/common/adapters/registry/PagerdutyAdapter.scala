@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2014-2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -72,7 +72,7 @@ object PagerdutyAdapter extends Adapter {
     "incident.escalate"      -> Incident,
     "incident.delegate"      -> Incident
   )
-  
+
  /**
    * Converts a CollectorPayload instance into raw events.
    * A PagerDuty Tracking payload can contain many events in one.
@@ -86,7 +86,7 @@ object PagerdutyAdapter extends Adapter {
    * @return a Validation boxing either a NEL of RawEvents on
    *         Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = 
+  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
     (payload.body, payload.contentType) match {
       case (None, _)                          => s"Request body is empty: no ${VendorName} events to process".failNel
       case (_, None)                          => s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failNel
@@ -98,8 +98,8 @@ object PagerdutyAdapter extends Adapter {
           case Success(list) => {
 
             // Create our list of Validated RawEvents
-            val rawEventsList: List[Validated[RawEvent]] = 
-              for { 
+            val rawEventsList: List[Validated[RawEvent]] =
+              for {
                 (event, index) <- list.zipWithIndex
               } yield {
 
@@ -128,13 +128,13 @@ object PagerdutyAdapter extends Adapter {
     }
 
   /**
-   * Returns a list of JValue events from the 
+   * Returns a list of JValue events from the
    * PagerDuty payload
    *
    * @param body The payload body from the PagerDuty
    *        event
    * @return either a Successful List of JValue JSONs
-   *         or a Failure String 
+   *         or a Failure String
    */
   private[registry] def payloadBodyToEvents(body: String): Validation[String,List[JValue]] =
     try {
@@ -159,20 +159,20 @@ object PagerdutyAdapter extends Adapter {
    * e.g. "2014-11-12T18:53:47 00:00" ->
    *      "2014-11-12T18:53:47+00:00"
    *
-   * @param dt The date-time we need to 
+   * @param dt The date-time we need to
    *        potentially reformat
-   * @return the date-time which is now 
+   * @return the date-time which is now
    *         correctly formatted
    */
   private[registry] def formatDatetime(dt: String): String =
     dt.replaceAll(" 00:00$", "+00:00")
 
   /**
-   * Returns an updated event JSON where 
+   * Returns an updated event JSON where
    * all of the fields with a null string
-   * have been changed to a null value, 
+   * have been changed to a null value,
    * all event types have been trimmed and
-   * all timestamps have been correctly 
+   * all timestamps have been correctly
    * formatted.
    *
    * e.g. "event" -> "null"

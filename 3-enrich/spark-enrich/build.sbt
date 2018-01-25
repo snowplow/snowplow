@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -15,7 +15,7 @@
 lazy val root = project.in(file("."))
   .settings(
     name        := "snowplow-spark-enrich",
-    version     := "1.11.0",
+    version     := "1.12.0",
     description := "The Snowplow Spark Enrichment process"
   )
   .settings(BuildSettings.buildSettings)

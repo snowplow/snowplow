@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -12,9 +12,6 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common
 package adapters
-
-// Joda-Time
-import org.joda.time.DateTime
 
 // This project
 import loaders.{
@@ -37,4 +34,4 @@ final case class RawEvent(
   contentType: Option[String], // Not yet used but should be logged
   source:      CollectorSource,
   context:     CollectorContext
-  )
+)
