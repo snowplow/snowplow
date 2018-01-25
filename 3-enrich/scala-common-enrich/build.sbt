@@ -13,13 +13,17 @@
  * governing permissions and limitations there under.
  */
 
+lazy val testScalastyle = taskKey[Unit]("testScalastyle")
+
 lazy val root = project.in(file("."))
   .settings(
     name        := "snowplow-common-enrich",
     version     := "0.29.0",
     description := "Common functionality for enriching raw Snowplow events",
     scapegoatVersion := "1.1.0",
-    (test in Test) := ((test in Test) dependsOn scapegoat).value
+    (test in Test) := ((test in Test) dependsOn scapegoat).value,
+    testScalastyle := scalastyle.in(Test).toTask("").value,
+    (test in Test) := ((test in Test) dependsOn testScalastyle).value
   )
   .settings(BuildSettings.buildSettings)
   .settings(BuildSettings.publishSettings)
