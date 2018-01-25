@@ -23,7 +23,7 @@ object Dependencies {
     // For user-agent-utils
     "Clojars Maven Repo" at "http://clojars.org/repo",
     // For hadoop-lzo
-    "Twitter" at "http://maven.twttr.com/"
+    "Twitter" at "https://maven.twttr.com/"
   )
 
   object V {
