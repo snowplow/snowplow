@@ -106,6 +106,8 @@ abstract class AbstractSource(
   tracker: Option[Tracker]
 ) {
 
+  val outputAsJson = true
+
   val MaxRecordSize = if (config.sinkType == KinesisSink) {
     Some(AbstractSource.MaxBytes)
   } else {
@@ -191,12 +193,11 @@ abstract class AbstractSource(
       s"kinesis-${generated.Settings.version}",
       new DateTime(System.currentTimeMillis),
       canonicalInput)
-    val outAsJson = true
     processedEvents.map(validatedMaybeEvent => {
       validatedMaybeEvent match {
         case Success(co) =>
           var out = tabSeparateEnrichedEvent(co)
-          if (outAsJson) {
+          if (outputAsJson) {
             out = EventTransformer.transform(out).toString
           }
           (out, getProprertyValue(co, config.streams.out.partitionKey)).success

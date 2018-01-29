@@ -39,6 +39,8 @@ class TestSource(
   tracker: Option[Tracker]
 ) extends AbstractSource(config, igluResolver, enrichmentRegistry, tracker) {
 
+  override val outputAsJson = false
+
   override def run(): Unit =
     throw new RuntimeException("run() should not be called on TestSource")
 }

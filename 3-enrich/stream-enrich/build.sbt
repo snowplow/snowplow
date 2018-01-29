@@ -14,7 +14,7 @@ lazy val root = project.in(file("."))
   .settings(
     organization  :=  "com.snowplowanalytics",  // TODO: need to update in my fork?
     name          :=  "snowplow-stream-enrich",
-    version       :=  "0.13.0",  // TODO: need to update in my fork?
+    version       :=  "0.13.0-fork",
     description   :=  "The Snowplow Enrichment process, implemented as an Amazon Kinesis app",
     scalaVersion  :=  "2.11.11",
     scalacOptions :=  BuildSettings.compilerOptions,
