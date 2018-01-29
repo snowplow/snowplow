@@ -45,6 +45,7 @@ import iglu.client.Resolver
 import model._
 import scalatracker.Tracker
 import sinks._
+import com.snowplowanalytics.snowplow.analytics.scalasdk.json.EventTransformer
 
 object AbstractSource {
   /** Kinesis records must not exceed 1MB */
@@ -190,10 +191,15 @@ abstract class AbstractSource(
       s"kinesis-${generated.Settings.version}",
       new DateTime(System.currentTimeMillis),
       canonicalInput)
+    val outAsJson = true
     processedEvents.map(validatedMaybeEvent => {
       validatedMaybeEvent match {
         case Success(co) =>
-          (tabSeparateEnrichedEvent(co), getProprertyValue(co, config.streams.out.partitionKey)).success
+          var out = tabSeparateEnrichedEvent(co)
+          if (outAsJson) {
+            out = EventTransformer.transform(out).toString
+          }
+          (out, getProprertyValue(co, config.streams.out.partitionKey)).success
         case Failure(errors) =>
           val line = new String(Base64.encodeBase64(binaryData), UTF_8)
           (BadRow(line, errors).toCompactJson -> Random.nextInt.toString).fail
