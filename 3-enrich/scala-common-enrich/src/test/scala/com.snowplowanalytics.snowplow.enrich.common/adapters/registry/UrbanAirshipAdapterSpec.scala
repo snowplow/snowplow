@@ -28,16 +28,15 @@ import org.specs2.scalaz.ValidationMatchers
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 
-
 class UrbanAirshipAdapterSpec extends Specification with ValidationMatchers {
 
   implicit val resolver = SpecHelpers.IgluResolver
-  implicit val formats = DefaultFormats
+  implicit val formats  = DefaultFormats
 
   object Shared {
-    val api = CollectorApi("com.urbanairship.connect", "v1")
-    val cljSource = CollectorSource("clj-tomcat", "UTF-8", None)
-    val context = CollectorContext(None, "37.157.33.123".some, None, None, Nil, None)  // NB the collector timestamp is set to None!
+    val api       = CollectorApi("com.urbanairship.connect", "v1")
+    val cljSource = CollectorSource("clj-tomcat",            "UTF-8", None)
+    val context   = CollectorContext(None,                   "37.157.33.123".some, None, None, Nil, None) // NB the collector timestamp is set to None!
   }
 
   "toRawEvents" should {
@@ -75,7 +74,7 @@ class UrbanAirshipAdapterSpec extends Specification with ValidationMatchers {
                          |""".stripMargin
 
     val payload = CollectorPayload(Shared.api, Nil, None, validPayload.some, Shared.cljSource, Shared.context)
-    val actual = UrbanAirshipAdapter.toRawEvents(payload)
+    val actual  = UrbanAirshipAdapter.toRawEvents(payload)
 
     val expectedUnstructEventJson = """|{
                                |  "schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
@@ -111,7 +110,7 @@ class UrbanAirshipAdapterSpec extends Specification with ValidationMatchers {
       val correctType = (parse(validPayload) \ "type").extract[String]
       correctType must be equalTo ("CLOSE")
 
-      val items = actual.toList.head.toList
+      val items      = actual.toList.head.toList
       val sentSchema = (parse(items.head.parameters("ue_pr")) \ "data") \ "schema"
       sentSchema.extract[String] must beEqualTo("""iglu:com.urbanairship.connect/CLOSE/jsonschema/1-0-0""")
     }
@@ -133,7 +132,7 @@ class UrbanAirshipAdapterSpec extends Specification with ValidationMatchers {
 
     "reject content types" in {
       val payload = CollectorPayload(Shared.api, Nil, "a/type".some, validPayload.some, Shared.cljSource, Shared.context)
-      val res = UrbanAirshipAdapter.toRawEvents(payload)
+      val res     = UrbanAirshipAdapter.toRawEvents(payload)
 
       res must beFailing(NonEmptyList("Content type of a/type provided, expected None for UrbanAirship"))
     }
@@ -145,7 +144,7 @@ class UrbanAirshipAdapterSpec extends Specification with ValidationMatchers {
 
     "have the correct collector source" in {
       val source = actual.getOrElse(throw new IllegalStateException).head.source
-      source must beEqualTo (Shared.cljSource)
+      source must beEqualTo(Shared.cljSource)
     }
 
     "have the correct context, including setting the correct collector timestamp" in {

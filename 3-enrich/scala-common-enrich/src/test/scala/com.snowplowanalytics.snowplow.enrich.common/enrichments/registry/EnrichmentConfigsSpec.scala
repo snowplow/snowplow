@@ -83,9 +83,14 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
 
       val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "ip_lookups", "jsonschema", "1-0-0")
 
-      val expected = IpLookupsEnrichment(Some("geo", new URI("http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoIPCity.dat"), "GeoIPCity.dat"),
-                                         Some("isp", new URI("http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoIPISP.dat"), "GeoIPISP.dat"),
-                                         None, None, None, true)
+      val expected = IpLookupsEnrichment(
+        Some("geo", new URI("http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoIPCity.dat"), "GeoIPCity.dat"),
+        Some("isp", new URI("http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoIPISP.dat"),  "GeoIPISP.dat"),
+        None,
+        None,
+        None,
+        true
+      )
 
       val result = IpLookupsEnrichment.parse(ipToGeoJson, schemaKey, true)
       result must beSuccessful(expected)
@@ -113,7 +118,7 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
       val result = RefererParserEnrichment.parse(refererParserJson, schemaKey)
       result must beSuccessful(expected)
 
-    }      
+    }
   }
 
   "Parsing a valid campaign_attribution enrichment JSON" should {
@@ -146,9 +151,9 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
         List(),
         List("utm _ campaign", "CID", "legacy-campaign!?-`@#$%^&*()=\\][}{/.,<>~|"),
         List(
-          "gclid" -> "Override",
-          "msclkid" -> "Microsoft",
-          "dclid" -> "DoubleClick",
+          "gclid"      -> "Override",
+          "msclkid"    -> "Microsoft",
+          "dclid"      -> "DoubleClick",
           "customclid" -> "Custom"
         )
       )
@@ -156,13 +161,13 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
       val result = CampaignAttributionEnrichment.parse(campaignAttributionEnrichmentJson, schemaKey)
       result must beSuccessful(expected)
 
-    }      
+    }
   }
 
   "Parsing a valid user_agent_utils_config enrichment JSON" should {
     "successfully construct a UserAgentUtilsEnrichment case object" in {
 
-      val  userAgentUtilsEnrichmentJson = parse("""{
+      val userAgentUtilsEnrichmentJson = parse("""{
         "enabled": true,
         "parameters": {
         }
@@ -176,10 +181,10 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
     }
   }
 
-    "Parsing a valid ua_parser_config enrichment JSON" should {
+  "Parsing a valid ua_parser_config enrichment JSON" should {
     "successfully construct a UaParserEnrichment case object" in {
 
-      val  uaParserEnrichmentJson = parse("""{
+      val uaParserEnrichmentJson = parse("""{
         "enabled": true,
         "parameters": {
         }
@@ -196,7 +201,7 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
   "Parsing a valid currency_convert_config enrichment JSON" should {
     "successfully construct a CurrencyConversionEnrichment case object" in {
 
-      val  currencyConversionEnrichmentJson = parse("""{
+      val currencyConversionEnrichmentJson = parse("""{
         "enabled": true,
         "parameters": {
           "accountType": "DEVELOPER",
@@ -243,7 +248,6 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
     }
   }
 
-
   "Parsing a valid event_fingerprint_config enrichment JSON" should {
     "successfully construct a EventFingerprintEnrichmentConfig case class" in {
 
@@ -266,11 +270,10 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
     }
   }
 
-
   "Parsing a valid cookie_extractor_config enrichment JSON" should {
     "successfully construct a CookieExtractorEnrichment case object" in {
 
-      val  cookieExtractorEnrichmentJson = parse("""{
+      val cookieExtractorEnrichmentJson = parse("""{
         "enabled": true,
         "parameters": {
           "cookies": ["foo", "bar"]

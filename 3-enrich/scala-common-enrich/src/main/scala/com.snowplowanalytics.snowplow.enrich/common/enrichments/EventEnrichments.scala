@@ -29,7 +29,7 @@ import org.joda.time.format.DateTimeFormat
 
 // This project
 import utils.{ConversionUtils => CU}
-import utils.{JsonUtils => JU}
+import utils.{JsonUtils       => JU}
 
 /**
  * Holds the enrichments related to events.
@@ -51,13 +51,13 @@ object EventEnrichments {
    */
   def toTimestamp(datetime: DateTime): String = TstampFormat.print(datetime)
 
-   /**
-    * Converts a Redshift-compatible timestamp String
-    * back into a Joda DateTime.
-    *
-    * @param timestamp The timestamp String to convert
-    * @return the Joda DateTime
-    */
+  /**
+   * Converts a Redshift-compatible timestamp String
+   * back into a Joda DateTime.
+   *
+   * @param timestamp The timestamp String to convert
+   * @return the Joda DateTime
+   */
   def fromTimestamp(timestamp: String): DateTime = TstampFormat.parseDateTime(timestamp)
 
   /**
@@ -66,7 +66,7 @@ object EventEnrichments {
    * @param Optional collectorTstamp
    * @return Validation boxing the result of making the timestamp Redshift-compatible
    */
-  def formatCollectorTstamp(collectorTstamp: Option[DateTime]): Validation[String, String] = {
+  def formatCollectorTstamp(collectorTstamp: Option[DateTime]): Validation[String, String] =
     collectorTstamp match {
       case None => "No collector_tstamp set".fail
       case Some(t) =>
@@ -77,7 +77,6 @@ object EventEnrichments {
           formattedTimestamp.success
         }
     }
-  }
 
   /**
    * Calculate the derived timestamp
@@ -100,13 +99,14 @@ object EventEnrichments {
     dvceCreatedTstamp: Option[String],
     collectorTstamp: Option[String],
     trueTstamp: Option[String]
-    ): Validation[String, Option[String]] = trueTstamp match {
-      case Some(ttm) => Some(ttm).success
-      case None => try {
+  ): Validation[String, Option[String]] = trueTstamp match {
+    case Some(ttm) => Some(ttm).success
+    case None =>
+      try {
         ((dvceSentTstamp, dvceCreatedTstamp, collectorTstamp) match {
           case (Some(dst), Some(dct), Some(ct)) =>
             val startTstamp = fromTimestamp(dct)
-            val endTstamp = fromTimestamp(dst)
+            val endTstamp   = fromTimestamp(dst)
             if (startTstamp.isBefore(endTstamp)) {
               toTimestamp(fromTimestamp(ct).minus(new Period(startTstamp, endTstamp))).some
             } else {
@@ -117,7 +117,7 @@ object EventEnrichments {
       } catch {
         case NonFatal(e) => s"Exception calculating derived timestamp: [$e]".fail
       }
-    }
+  }
 
   /**
    * Extracts the timestamp from the
@@ -136,7 +136,7 @@ object EventEnrichments {
    */
   val extractTimestamp: (String, String) => ValidatedString = (field, tstamp) =>
     try {
-      val dt = new DateTime(tstamp.toLong)
+      val dt              = new DateTime(tstamp.toLong)
       val timestampString = toTimestamp(dt)
       if (timestampString.startsWith("-") || dt.getYear > 9999 || dt.getYear < 0) {
         s"Field [$field]: [$tstamp] is formatted as [$timestampString] which isn't Redshift-compatible".fail
@@ -146,7 +146,7 @@ object EventEnrichments {
     } catch {
       case nfe: NumberFormatException =>
         "Field [%s]: [%s] is not in the expected format (ms since epoch)".format(field, tstamp).fail
-    }
+  }
 
   /**
    * Turns an event code into a valid event type,
@@ -163,15 +163,15 @@ object EventEnrichments {
   val extractEventType: (String, String) => ValidatedString = (field, code) =>
     code match {
       case "se" => "struct".success
-      case "ev" => "struct".success        // Leave in for legacy.
+      case "ev" => "struct".success // Leave in for legacy.
       case "ue" => "unstruct".success
       case "ad" => "ad_impression".success // Leave in for legacy.
       case "tr" => "transaction".success
       case "ti" => "transaction_item".success
       case "pv" => "page_view".success
       case "pp" => "page_ping".success
-      case  ec  => "Field [%s]: [%s] is not a recognised event code".format(field, ec).fail
-    }
+      case ec   => "Field [%s]: [%s] is not a recognised event code".format(field, ec).fail
+  }
 
   /**
    * Returns a unique event ID. The event ID is

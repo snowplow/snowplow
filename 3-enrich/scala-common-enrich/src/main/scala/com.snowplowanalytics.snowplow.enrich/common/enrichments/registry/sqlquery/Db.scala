@@ -53,8 +53,9 @@ case class Db(postgresql: Option[PostgresqlDb] = None, mysql: Option[MysqlDb] = 
    */
   def createStatement(sql: String, placeholderMap: IntMap[ExtractedValue]): ThrowableXor[PreparedStatement] =
     realDb.createEmptyStatement(sql).map { preparedStatement =>
-      placeholderMap.foreach { case (index, value) =>
-        value.set(preparedStatement, index)
+      placeholderMap.foreach {
+        case (index, value) =>
+          value.set(preparedStatement, index)
       }
       preparedStatement
     }

@@ -39,10 +39,7 @@ import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
 // Iglu
-import iglu.client.{
-  SchemaKey,
-  Resolver
-}
+import iglu.client.{Resolver, SchemaKey}
 
 // This project
 import loaders.CollectorPayload
@@ -82,9 +79,9 @@ object StatusGatorAdapter extends Adapter {
    *         Success, or a NEL of Failure Strings
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = (payload.body, payload.contentType) match {
-    case (None, _) => s"Request body is empty: no ${VendorName} events to process".failureNel
-    case (_, None) => s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failureNel
-    case (_, Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failureNel
+    case (None,       _) => s"Request body is empty: no ${VendorName} events to process".failureNel
+    case (_,          None) => s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failureNel
+    case (_,          Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failureNel
     case (Some(body), _) if (body.isEmpty) => s"${VendorName} event body is empty: nothing to process".failureNel
     case (Some(body), _) => {
       val qsParams = toMap(payload.querystring)
@@ -92,19 +89,22 @@ object StatusGatorAdapter extends Adapter {
         toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), "UTF-8").toList)
       } match {
         case TF(e) => s"${VendorName} incorrect event string : [${JU.stripInstanceEtc(e.getMessage).orNull}]".failureNel
-        case TS(bodyMap) => try {
-          val a: Map[String, String] = bodyMap
-          val event = parse(compact(render(a)))
-          NonEmptyList(RawEvent(
-            api = payload.api,
-            parameters = toUnstructEventParams(TrackerVersion, qsParams, EventSchema, camelize(event), "srv"),
-            contentType = payload.contentType,
-            source = payload.source,
-            context = payload.context
-          )).success
-        } catch {
-          case e: JsonParseException => s"${VendorName} event string failed to parse into JSON: [${JU.stripInstanceEtc(e.getMessage).orNull}]".failureNel
-        }
+        case TS(bodyMap) =>
+          try {
+            val a: Map[String, String] = bodyMap
+            val event = parse(compact(render(a)))
+            NonEmptyList(
+              RawEvent(
+                api         = payload.api,
+                parameters  = toUnstructEventParams(TrackerVersion, qsParams, EventSchema, camelize(event), "srv"),
+                contentType = payload.contentType,
+                source      = payload.source,
+                context     = payload.context
+              )).success
+          } catch {
+            case e: JsonParseException =>
+              s"${VendorName} event string failed to parse into JSON: [${JU.stripInstanceEtc(e.getMessage).orNull}]".failureNel
+          }
       }
     }
   }
