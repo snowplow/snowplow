@@ -106,7 +106,7 @@ abstract class AbstractSource(
   tracker: Option[Tracker]
 ) {
 
-  val outputAsJson = true
+  val outputAsJson = true  // TODO: Make configurable.
 
   val MaxRecordSize = if (config.sinkType == KinesisSink) {
     Some(AbstractSource.MaxBytes)
@@ -198,7 +198,7 @@ abstract class AbstractSource(
         case Success(co) =>
           var out = tabSeparateEnrichedEvent(co)
           if (outputAsJson) {
-            out = EventTransformer.transform(out).toString
+            out = EventTransformer.transform(out).merge.toString  // Success implied. TODO: Support failures?
           }
           (out, getProprertyValue(co, config.streams.out.partitionKey)).success
         case Failure(errors) =>
