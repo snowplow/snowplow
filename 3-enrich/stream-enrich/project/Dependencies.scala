@@ -42,6 +42,7 @@ object Dependencies {
     val snowplowCommonEnrich = "0.29.0"
     val igluClient           = "0.5.0"
     val snowplowTracker      = "0.3.0"
+    val snowplowAnalyticsSDK = "0.2.0"
     // Scala (test only)
     val specs2               = "2.3.13"
     val scalacheck           = "1.11.3"
@@ -69,6 +70,7 @@ object Dependencies {
     val igluClient           = "com.snowplowanalytics" %% "iglu-scala-client"         % V.igluClient
     val snowplowCommonEnrich = "com.snowplowanalytics" %% "snowplow-common-enrich"    % V.snowplowCommonEnrich
     val snowplowTracker      = "com.snowplowanalytics" %% "snowplow-scala-tracker"    % V.snowplowTracker
+    val snowplowAnalyticsSDK = "com.snowplowanalytics" %% "snowplow-scala-analytics-sdk"    % V.snowplowAnalyticsSDK
     // Scala (test only)
     val specs2               = "org.specs2"            %% "specs2"                    % V.specs2         % "test"
     val scalacheck           = "org.scalacheck"        %% "scalacheck"                % V.scalacheck     % "test"

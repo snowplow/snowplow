@@ -12,9 +12,9 @@
  */
 lazy val root = project.in(file("."))
   .settings(
-    organization  :=  "com.snowplowanalytics",
+    organization  :=  "com.snowplowanalytics",  // TODO: need to update in my fork?
     name          :=  "snowplow-stream-enrich",
-    version       :=  "0.13.0",
+    version       :=  "0.13.0-fork",
     description   :=  "The Snowplow Enrichment process, implemented as an Amazon Kinesis app",
     scalaVersion  :=  "2.11.11",
     scalacOptions :=  BuildSettings.compilerOptions,
@@ -49,6 +49,7 @@ lazy val root = project.in(file("."))
       Dependencies.Libraries.snowplowCommonEnrich,
       Dependencies.Libraries.igluClient,
       Dependencies.Libraries.snowplowTracker,
+      Dependencies.Libraries.snowplowAnalyticsSDK,
       // Test
       Dependencies.Libraries.specs2,
       Dependencies.Libraries.scalacheck
