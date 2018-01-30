@@ -47,8 +47,9 @@ object BuildSettings {
         |  val organization = "%s"
         |  val version = "%s"
         |  val name = "%s"
+        |  val commonEnrichVersion = "%s"
         |}
-        |""".stripMargin.format(organization.value, version.value, name.value))
+        |""".stripMargin.format(organization.value, version.value, name.value, Dependencies.V.snowplowCommonEnrich))
       Seq(file)
     }.taskValue
   )
