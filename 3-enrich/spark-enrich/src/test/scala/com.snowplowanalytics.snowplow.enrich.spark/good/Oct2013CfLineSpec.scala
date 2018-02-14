@@ -37,7 +37,7 @@ object Oct2013CfLineSpec {
     "cloudfront",
     etlVersion,
     null, // No user_id set
-    "255.255.255.255",
+    "d6a4eed80594f0806043581292d64483ebc5d34f",
     "1202972880",
     "81aa96d6d6ee6ad4",
     "1",
