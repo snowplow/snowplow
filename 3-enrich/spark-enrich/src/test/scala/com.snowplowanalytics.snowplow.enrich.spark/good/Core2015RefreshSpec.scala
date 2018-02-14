@@ -37,7 +37,7 @@ object Core2015RefreshSpec {
     "cloudfront",
     etlVersion,
     null, // No user_id set
-    "70.46.123.145",
+    "4426c7c5f72300299dbce3a6d652fdcbc6c651d1",
     "1202972880",
     "81aa96d6d6ee6ad4",
     "1",

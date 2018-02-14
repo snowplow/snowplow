@@ -36,7 +36,7 @@ object TransactionCfLineSpec {
     "clj-0.3.0-tom-0.0.2",
     etlVersion,
     null, // No user_id set
-    "x.x.x.x",
+    "34250af8b96709e9a86b40e18e4f9e9d1778d1bb",
     null, // Not set (legacy input line)
     "a279872d76480afb",
     "1",

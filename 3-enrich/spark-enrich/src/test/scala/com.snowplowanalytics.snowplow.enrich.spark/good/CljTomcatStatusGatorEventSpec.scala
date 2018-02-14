@@ -41,7 +41,7 @@ object CljTomcatStatusGatorEventSpec {
     "clj-1.1.0-tom-0.2.0",
     etlVersion,
     null, // No user_id set
-    "54.205.x.x",
+    "6b73a5f2c804a383420c5d16f2285a7b829635a6",
     null,
     null,
     null,
