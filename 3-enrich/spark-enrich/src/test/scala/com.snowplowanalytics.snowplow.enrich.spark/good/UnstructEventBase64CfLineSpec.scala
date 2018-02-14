@@ -36,7 +36,7 @@ object UnstructEventBase64CfLineSpec {
     "cloudfront",
     etlVersion,
     null, // No user_id set
-    "216.160.83.56",
+    "2bb78eff3fc1f7004b982646187c6db0cb8931da",
     "2876815413",
     "9795bd0203804cd1",
     "43",

@@ -36,7 +36,7 @@ object CljTomcatTp1SingleEventSpec {
     "clj-0.5.0-tom-0.0.4",
     etlVersion,
     null, // No user_id set
-    "255.255.x.x",
+    "be18f489dea04e8fa1f220815b9c0114a0a6aa21",
     "812263905",
     "d159c05f2aa8e1b9",
     "1",

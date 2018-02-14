@@ -43,7 +43,7 @@ object CljTomcatOlarkEventSpec {
     "clj-0.6.0-tom-0.0.4",
     etlVersion,
     null, // No user_id set
-    "255.255.x.x",
+    "be18f489dea04e8fa1f220815b9c0114a0a6aa21",
     null,
     null,
     null,

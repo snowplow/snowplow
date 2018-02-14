@@ -36,7 +36,7 @@ object StructEventCfLineSpec {
     "cloudfront",
     etlVersion,
     null, // No user_id set
-    "216.160.x.x", // Anonymization and geo both work using &ip=
+    "67ffafd207ef93b3f6ab5f8d5a6a53dc58d73d76", // Anonymization and geo both work using &ip=
     "2876815413",
     "9795bd0203804cd1",
     "43",

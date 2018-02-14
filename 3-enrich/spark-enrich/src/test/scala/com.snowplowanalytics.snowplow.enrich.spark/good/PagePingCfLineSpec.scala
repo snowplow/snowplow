@@ -36,7 +36,7 @@ object PagePingCfLineSpec {
     "cloudfront",
     etlVersion,
     null, // No user_id set
-    "255.255.255.255",
+    "d6a4eed80594f0806043581292d64483ebc5d34f",
     "1640945579",
     "132e226e3359a9cd",
     "1",

@@ -37,7 +37,7 @@ object DerivedTstampSpec {
     "cloudfront",
     etlVersion,
     null, // No user_id set
-    "216.160.83.56",
+    "2bb78eff3fc1f7004b982646187c6db0cb8931da",
     "1202972880",
     "81aa96d6d6ee6ad4",
     "1",
