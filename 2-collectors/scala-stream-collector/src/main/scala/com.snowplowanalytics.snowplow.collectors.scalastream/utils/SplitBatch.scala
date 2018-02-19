@@ -10,7 +10,8 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow
+package com.snowplowanalytics
+package snowplow
 package collectors
 package scalastream
 package utils
@@ -27,6 +28,7 @@ import scalaz._
 
 import CollectorPayload.thrift.model1.CollectorPayload
 import enrich.common.outputs.BadRow
+import iglu.client.validation.ProcessingMessageMethods._
 import model._
 
 /**
@@ -74,8 +76,7 @@ object SplitBatch {
         case Nil => SplitBatchResult(acc, failedBigEvents)
         case nonemptyBatch => SplitBatchResult(nonemptyBatch :: acc, failedBigEvents)
       }
-
-      case h :: t => {
+      case h :: t =>
         val headSize = ByteBuffer.wrap(h.getBytes(UTF_8)).capacity
         if (headSize + joinSize > maximum) {
           iterbatch(t, currentBatch, currentTotal, acc, h :: failedBigEvents)
@@ -84,7 +85,6 @@ object SplitBatch {
         } else {
           iterbatch(t, h :: currentBatch, headSize + currentTotal + joinSize, acc, failedBigEvents)
         }
-      }
     }
 
     iterbatch(input, Nil, 0, Nil, Nil)
@@ -109,13 +109,12 @@ object SplitBatch {
       EventSerializeResult(List(everythingSerialized), Nil)
     } else {
       event.getBody match {
-        case null => {
+        case null =>
           // Event was a GET
-          val err = "Cannot split record with null body"
-          val payload = BadRow.oversizedRow(wholeEventBytes, NonEmptyList(err)).getBytes(UTF_8)
+          val err = "cannot split record with null body"
+          val payload = oversizedPayload(event, wholeEventBytes, maxBytes, err)
           EventSerializeResult(Nil, List(payload))
-        }
-        case body => {
+        case body =>
           try {
             // Try to parse the body
             val initialBody = parse(body)
@@ -126,64 +125,76 @@ object SplitBatch {
               case data => Some(data)
             }
 
-            val initialBodyDataBytes = ByteBuffer.wrap(compact(bodyDataArray).getBytes(UTF_8)).capacity
+            val initialBodyDataBytes =
+              ByteBuffer.wrap(compact(bodyDataArray).getBytes(UTF_8)).capacity
 
             // If the event minus the data array is too big, splitting is hopeless
             if (wholeEventBytes - initialBodyDataBytes >= maxBytes) {
-              val err = "Even without the body, the serialized event is too large"
-              val payload = BadRow.oversizedRow(wholeEventBytes, NonEmptyList(err)).getBytes(UTF_8)
+              val err = "event without \"data\" field is still too big"
+              val payload = oversizedPayload(event, wholeEventBytes, maxBytes, err)
               EventSerializeResult(Nil, List(payload))
             } else {
 
               val bodySchema = initialBody \ "schema"
 
               // The body array converted to a list of events
-              val individualEvents: Option[List[String]] = for {
-                d <- bodyDataArray
-              } yield d.children.map(x => compact(x))
+              val individualEvents: Option[List[String]] =
+                bodyDataArray.map(b => b.children.map(compact))
 
               val batchedIndividualEvents = individualEvents.map(
                 split(_, maxBytes - wholeEventBytes + initialBodyDataBytes))
 
               batchedIndividualEvents match {
-
-                case None => {
-                  val err = "Bad record with no data field"
-                  val payload = BadRow.oversizedRow(wholeEventBytes, NonEmptyList(err)).getBytes(UTF_8)
+                case None =>
+                  val err = "record has no data field"
+                  val payload = oversizedPayload(event, wholeEventBytes, maxBytes, err)
                   EventSerializeResult(Nil, List(payload))
-                }
-
-                case Some(batches) => {
-
+                case Some(batches) =>
                   // Copy all data from the original payload into the smaller payloads
-                  val goodList = batches.goodBatches.map(batch => {
+                  val goodList = batches.goodBatches.map { batch =>
                     val payload = event.deepCopy()
                     val data = batch.map(evt => parse(evt))
                     val body = getGoodRow(bodySchema, data)
                     payload.setBody(body)
                     serializer.serialize(payload)
-                  })
+                  }
 
-                  val badList = batches.failedBigEvents.map(event => {
-                    val size = ByteBuffer.wrap(event.getBytes(UTF_8)).capacity.toLong
-                    val err = "Failed event with body still being too large"
-                    BadRow.oversizedRow(size, NonEmptyList(err)).getBytes(UTF_8)
-                  })
+                  val badList = batches.failedBigEvents.map { e =>
+                    val size = ByteBuffer.wrap(e.getBytes(UTF_8)).capacity.toLong
+                    val err = "one of the split event is still too large"
+                    oversizedPayload(event, size, maxBytes, err)
+                  }
 
                   // Return Good and Bad Lists
                   EventSerializeResult(goodList, badList)
-                }
               }
             }
           } catch {
             case NonFatal(e) =>
-              val err = s"Could not parse payload body %s".format(e.getMessage)
-              val payload = BadRow.oversizedRow(wholeEventBytes, NonEmptyList(err)).getBytes(UTF_8)
+              val err = s"could not parse payload body ${e.getMessage}"
+              val payload = oversizedPayload(event, wholeEventBytes, maxBytes, err)
               EventSerializeResult(Nil, List(payload))
           }
-        }
       }
     }
+  }
+
+  /**
+   * Creates a bad row while maintaining a truncation of the original payload to ease debugging.
+   * Keeps a tenth of the original payload.
+   * @param event original payload
+   * @param size size of the oversized payload
+   * @param maxSize maximum size allowed
+   * @param errorMessage additional context for the fact that the payload is too big
+   * @return the created bad rows as json
+   */
+  private def oversizedPayload(
+      event: CollectorPayload, size: Long, maxSize: Long, errorMessage: String): Array[Byte] = {
+    val err = s"Oversized payload, size: $size, max size: $maxSize, reason: $errorMessage"
+      .toProcessingMessage
+    BadRow(event.toString.take((maxSize / 10L).intValue), NonEmptyList(err))
+      .toCompactJson
+      .getBytes(UTF_8)
   }
 
   /**

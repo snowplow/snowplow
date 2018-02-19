@@ -70,9 +70,9 @@ class SplitBatchSpec extends Specification {
   "SplitBatch.splitAndSerializePayload" should {
     "Serialize an empty CollectorPayload" in {
       val actual = SplitBatch.splitAndSerializePayload(new CollectorPayload(), 100)
-      val target = new CollectorPayload
+      val target = new CollectorPayload()
       new TDeserializer().deserialize(target, actual.good.head)
-      target must_== new CollectorPayload
+      target must_== new CollectorPayload()
     }
 
     "Reject an oversized GET CollectorPayload" in {
@@ -80,9 +80,9 @@ class SplitBatchSpec extends Specification {
       payload.setQuerystring("x" * 1000)
       val actual = SplitBatch.splitAndSerializePayload(payload, 100)
       val errorJson = parse(new String(actual.bad.head))
-      errorJson \ "size" must_== JInt(1019)
       errorJson \ "errors" must_==
-        JArray(List(JObject(List(("level", JString("error")), ("message", JString("Cannot split record with null body"))))))
+        JArray(List(JObject(List(("level", JString("error")),
+          ("message", JString("Oversized payload, size: 1019, max size: 100, reason: cannot split record with null body"))))))
       actual.good must_== Nil
     }
 
@@ -91,7 +91,9 @@ class SplitBatchSpec extends Specification {
       payload.setBody("s" * 1000)
       val actual = SplitBatch.splitAndSerializePayload(payload, 100)
       val errorJson = parse(new String(actual.bad.head))
-      errorJson \ "size" must_== JInt(1019)
+      errorJson \ "errors" must_==
+        JArray(List(JObject(List(("level", JString("error")),
+          ("message", JString("Oversized payload, size: 1019, max size: 100, reason: could not parse payload body"))))))
     }
 
     "Reject an oversized POST CollectorPayload which would be oversized even without its body" in {
@@ -107,7 +109,8 @@ class SplitBatchSpec extends Specification {
       val actual = SplitBatch.splitAndSerializePayload(payload, 1000)
       actual.bad.size must_== 1
       parse(new String(actual.bad.head)) \ "errors" must_==
-        JArray(List(JObject(List(("level" ,JString("error")), ("message", JString("Even without the body, the serialized event is too large"))))))
+        JArray(List(JObject(List(("level" ,JString("error")),
+          ("message", JString("Oversized payload, size: 1019, max size: 1000, reason: event without \"data\" field is still too big"))))))
     }
 
     "Split a CollectorPayload with three large events and four very large events" in {
