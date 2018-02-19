@@ -112,9 +112,20 @@ collector {
 
       # Minimum and maximum backoff periods
       backoffPolicy {
-        minBackoff = {{kinesisMinBackoffMillis}}
-        maxBackoff = {{kinesisMaxBackoffMillis}}
+        minBackoff = {{minBackoffMillis}}
+        maxBackoff = {{maxBackoffMillis}}
+        totalBackoff = {{totalBackoffMillis}}
+        multiplier = {{backoffMultiplier}}
       }
+
+      # Or Pubsub
+      #googleProjectId = ID
+      #backoffPolicy {
+      #  minBackoff = {{minBackoffMillis}}
+      #  maxBackoff = {{maxBackoffMillis}}
+      #  totalBackoff = {{totalBackoffMillis}}
+      #  multiplier = {{backoffMultiplier}}
+      #}
 
       # Or Kafka
       #brokers = "{{kafkaBrokers}}"
