@@ -23,7 +23,7 @@ object TestUtils {
     interface = "0.0.0.0",
     port = 8080,
     p3p = P3PConfig("/w3c/p3p.xml", "NOI DSP COR NID PSA OUR IND COM NAV STA"),
-    Some(CrossDomainConfig("*", secure = false)),
+    CrossDomainConfig(enabled = true, "*", secure = false),
     cookie = CookieConfig(true, "sp", 365.days, None),
     cookieBounce = CookieBounceConfig(false, "bounce", "new-nuid", None),
     redirectMacro = RedirectMacroConfig(false, None),

@@ -28,10 +28,11 @@ collector {
     CP = "NOI DSP COR NID PSA OUR IND COM NAV STA"
   }
 
-  # Optional cross domain policy configuration.
-  # To disable, remove the "crossDomain" configuration and the collector will respond with a 404 to
-  # the /crossdomain.xml route.
+  # Cross domain policy configuration.
+  # If "enabled" is set to "false", the collector will respond with a 404 to the /crossdomain.xml
+  # route.
   crossDomain {
+    enabled = false
     # Domain that is granted access, *.acme.com will match http://acme.com and http://sub.acme.com
     domain = "*"
     # Whether to only grant access to HTTPS or both HTTPS and HTTP sources

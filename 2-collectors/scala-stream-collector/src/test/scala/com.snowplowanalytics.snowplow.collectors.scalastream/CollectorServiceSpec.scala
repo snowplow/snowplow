@@ -89,7 +89,7 @@ class CollectorServiceSpec extends Specification {
 
     "flashCrossDomainPolicy" in {
       "return the cross domain policy with the specified config" in {
-        service.flashCrossDomainPolicy(Some(CrossDomainConfig("*", false))) shouldEqual HttpResponse(
+        service.flashCrossDomainPolicy(CrossDomainConfig(true, "*", false)) shouldEqual HttpResponse(
           entity = HttpEntity(
             contentType = ContentType(MediaTypes.`text/xml`, HttpCharsets.`ISO-8859-1`),
             string = "<?xml version=\"1.0\"?>\n<cross-domain-policy>\n  <allow-access-from domain=\"*\" secure=\"false\" />\n</cross-domain-policy>"
@@ -97,7 +97,8 @@ class CollectorServiceSpec extends Specification {
         )
       }
       "return 404 if the specified config is absent" in {
-        service.flashCrossDomainPolicy(None) shouldEqual HttpResponse(404, entity = "404 not found")
+        service.flashCrossDomainPolicy(CrossDomainConfig(false, "*", false)) shouldEqual
+          HttpResponse(404, entity = "404 not found")
       }
     }
 

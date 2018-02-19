@@ -62,7 +62,7 @@ package model {
     placeholder: Option[String]
   )
   final case class P3PConfig(policyRef: String, CP: String)
-  final case class CrossDomainConfig(domain: String, secure: Boolean)
+  final case class CrossDomainConfig(enabled: Boolean, domain: String, secure: Boolean)
   final case class AWSConfig(accessKey: String, secretKey: String) {
     val provider = ((accessKey, secretKey) match {
       case (a, s) if isDefault(a) && isDefault(s) =>
@@ -122,7 +122,7 @@ package model {
     interface: String,
     port: Int,
     p3p: P3PConfig,
-    crossDomain: Option[CrossDomainConfig],
+    crossDomain: CrossDomainConfig,
     cookie: CookieConfig,
     cookieBounce: CookieBounceConfig,
     redirectMacro: RedirectMacroConfig,
