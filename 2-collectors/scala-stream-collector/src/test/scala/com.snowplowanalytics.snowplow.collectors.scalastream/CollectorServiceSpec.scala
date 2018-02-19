@@ -212,25 +212,28 @@ class CollectorServiceSpec extends Specification {
       "the redirect url should ignore a cookie replacement macro on redirect if not enabled" in {
         event.networkUserId = "1234"
         val (res, Nil) = service.buildRedirectHttpResponse(
-          event, "k", Map("u" -> "http://localhost/?uid=${SP_NUID}"), redirConf)
+          event, "k", Map("u" -> s"http://localhost/?uid=$${SP_NUID}"), redirConf)
         res shouldEqual HttpResponse(302)
-          .withHeaders(`RawHeader`("Location", "http://localhost/?uid=${SP_NUID}"))
+          .withHeaders(`RawHeader`("Location", s"http://localhost/?uid=$${SP_NUID}"))
       }
       "the redirect url should support a cookie replacement macro on redirect if enabled" in {
         event.networkUserId = "1234"
-        val (res, Nil) = service.buildRedirectHttpResponse(
-          event, "k", Map("u" -> "http://localhost/?uid=${SP_NUID}"), redirConf.copy(enabled = true))
-        res shouldEqual HttpResponse(302).withHeaders(`RawHeader`("Location", "http://localhost/?uid=1234"))
+        val (res, Nil) = service.buildRedirectHttpResponse(event, "k",
+          Map("u" -> s"http://localhost/?uid=$${SP_NUID}"), redirConf.copy(enabled = true))
+        res shouldEqual HttpResponse(302)
+          .withHeaders(`RawHeader`("Location", "http://localhost/?uid=1234"))
       }
       "the redirect url should allow for custom token placeholders" in {
         event.networkUserId = "1234"
         val (res, Nil) = service.buildRedirectHttpResponse(
           event, "k", Map("u" -> "http://localhost/?uid=[TOKEN]"),
           redirConf.copy(enabled = true, Some("[TOKEN]")))
-        res shouldEqual HttpResponse(302).withHeaders(`RawHeader`("Location", "http://localhost/?uid=1234"))
+        res shouldEqual HttpResponse(302)
+          .withHeaders(`RawHeader`("Location", "http://localhost/?uid=1234"))
       }
       "the redirect url should allow for double encoding for return redirects" in {
-        val (res, Nil) = service.buildRedirectHttpResponse(event, "k", Map("u" -> "a%3Db"), redirConf)
+        val (res, Nil) =
+          service.buildRedirectHttpResponse(event, "k", Map("u" -> "a%3Db"), redirConf)
         res shouldEqual HttpResponse(302).withHeaders(`RawHeader`("Location", "a%3Db"))
       }
     }

@@ -253,7 +253,7 @@ class CollectorService(
     queryParams.get("u") match {
       case Some(target) =>
         val canReplace = redirectMacroConfig.enabled && event.isSetNetworkUserId
-        val token = redirectMacroConfig.placeholder.getOrElse("${SP_NUID}")
+        val token = redirectMacroConfig.placeholder.getOrElse(s"$${SP_NUID}")
         val replacedTarget =
           if (canReplace) target.replaceAllLiterally(token, event.networkUserId)
           else target
