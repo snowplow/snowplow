@@ -17,7 +17,6 @@ package collectors
 package scalastream
 
 import java.io.File
-import java.util.concurrent.ScheduledThreadPoolExecutor
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
@@ -27,13 +26,13 @@ import org.slf4j.LoggerFactory
 import pureconfig._
 
 import model._
-import sinks._
 
 // Main entry point of the Scala collector.
-object Collector {
+trait Collector {
+
   lazy val log = LoggerFactory.getLogger(getClass())
 
-  def main(args: Array[String]): Unit = {
+  def parseConfig(args: Array[String]): (CollectorConfig, Config) = {
     case class FileConfig(config: File = new File("."))
     val parser = new scopt.OptionParser[FileConfig](generated.Settings.name) {
       head(generated.Settings.name, generated.Settings.version)
@@ -59,45 +58,25 @@ object Collector {
 
     implicit def hint[T] = ProductHint[T](ConfigFieldMapping(CamelCase, CamelCase))
     implicit val sinkConfigHint = new FieldCoproductHint[SinkConfig]("enabled")
-    val collectorConfig = loadConfigOrThrow[CollectorConfig](conf.getConfig("collector"))
-    run(collectorConfig, conf)
+    (loadConfigOrThrow[CollectorConfig](conf.getConfig("collector")), conf)
   }
 
-  def run(collectorConf: CollectorConfig, conf: Config): Unit = {
+  def run(collectorConf: CollectorConfig, akkaConf: Config, sinks: CollectorSinks): Unit = {
 
-    implicit val system = ActorSystem.create("scala-stream-collector", conf)
+    implicit val system = ActorSystem.create("scala-stream-collector", akkaConf)
     implicit val materializer = ActorMaterializer()
     implicit val executionContext = system.dispatcher
-
-    val goodStream = collectorConf.streams.good
-    val badStream = collectorConf.streams.bad
-
-    val bufferConf = collectorConf.streams.buffer
-    val sinks = {
-      val (good, bad) = collectorConf.streams.sink match {
-        case kc: Kinesis =>
-          val es = new ScheduledThreadPoolExecutor(kc.threadPoolSize)
-          (KinesisSink.createAndInitialize(kc, bufferConf, goodStream, es),
-            KinesisSink.createAndInitialize(kc, bufferConf, badStream, es))
-        case pc: PubSub =>
-          (new PubSubSink(pc, bufferConf, goodStream), new PubSubSink(pc, bufferConf, badStream))
-        case kc: Kafka =>
-          (new KafkaSink(kc, bufferConf, goodStream), new KafkaSink(kc, bufferConf, badStream))
-        case nc: Nsq => (new NsqSink(nc, goodStream), new NsqSink(nc, badStream))
-        case Stdout => (new StdoutSink("out"), new StdoutSink("err"))
-      }
-      CollectorSinks(good, bad)
-    }
 
     val route = new CollectorRoute {
       override def collectorService = new CollectorService(collectorConf, sinks)
     }
 
-    Http().bindAndHandle(route.collectorRoute, collectorConf.interface, collectorConf.port).map { binding =>
-      log.info(s"REST interface bound to ${binding.localAddress}")
-    } recover { case ex =>
-      log.error("REST interface could not be bound to " +
-        s"${collectorConf.interface}:${collectorConf.port}", ex.getMessage)
-    }
+    Http().bindAndHandle(route.collectorRoute, collectorConf.interface, collectorConf.port)
+      .map { binding =>
+        log.info(s"REST interface bound to ${binding.localAddress}")
+      } recover { case ex =>
+        log.error("REST interface could not be bound to " +
+          s"${collectorConf.interface}:${collectorConf.port}", ex.getMessage)
+      }
   }
 }

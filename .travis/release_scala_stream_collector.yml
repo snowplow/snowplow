@@ -23,10 +23,28 @@ packages :
     version : <%= FUNC['sbt_version(2-collectors/scala-stream-collector/)'] %>
     build_version : <%= ENV['TRAVIS_BUILD_RELEASE_TAG'] %>
     build_commands :
-      - cd 2-collectors/scala-stream-collector/ && sbt assembly && cd ../..
+      - cd 2-collectors/scala-stream-collector/ && sbt "project kinesis" assembly && cd ../..
+      - cd 2-collectors/scala-stream-collector/ && sbt "project pubsub" assembly && cd ../..
+      - cd 2-collectors/scala-stream-collector/ && sbt "project kafka" assembly && cd ../..
+      - cd 2-collectors/scala-stream-collector/ && sbt "project nsq" assembly && cd ../..
     artifacts :
       - type : "zip"
-        prefix : "snowplow_scala_stream_collector_"
+        prefix : "snowplow_scala_stream_collector_kinesis"
         suffix : ""
         binary_paths :
-          - "2-collectors/scala-stream-collector/target/scala-2.11/snowplow-stream-collector-{{ packages.0.build_version }}.jar"
+          - "2-collectors/scala-stream-collector/kinesis/target/scala-2.11/snowplow-stream-collector-kinesis-{{ packages.0.build_version }}.jar"
+      - type : "zip"
+        prefix : "snowplow_scala_stream_collector_pubsub"
+        suffix : ""
+        binary_paths :
+          - "2-collectors/scala-stream-collector/pubsub/target/scala-2.11/snowplow-stream-collector-pubsub-{{ packages.0.build_version }}.jar"
+      - type : "zip"
+        prefix : "snowplow_scala_stream_collector_kafka"
+        suffix : ""
+        binary_paths :
+          - "2-collectors/scala-stream-collector/kafka/target/scala-2.11/snowplow-stream-collector-kafka-{{ packages.0.build_version }}.jar"
+      - type : "zip"
+        prefix : "snowplow_scala_stream_collector_nsq"
+        suffix : ""
+        binary_paths :
+          - "2-collectors/scala-stream-collector/nsq/target/scala-2.11/snowplow-stream-collector-nsq-{{ packages.0.build_version }}.jar"
