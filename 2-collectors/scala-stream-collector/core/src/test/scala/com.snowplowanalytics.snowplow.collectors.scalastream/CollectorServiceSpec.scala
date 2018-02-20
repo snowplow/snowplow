@@ -26,7 +26,7 @@ import org.apache.thrift.{TSerializer, TDeserializer}
 import org.specs2.mutable.Specification
 
 import CollectorPayload.thrift.model1.CollectorPayload
-import generated.Settings
+import generated.BuildInfo
 import model._
 
 class CollectorServiceSpec extends Specification {
@@ -112,7 +112,7 @@ class CollectorServiceSpec extends Specification {
         e.schema shouldEqual "iglu:com.snowplowanalytics.snowplow/CollectorPayload/thrift/1-0-0"
         e.ipAddress shouldEqual "ip"
         e.encoding shouldEqual "UTF-8"
-        e.collector shouldEqual s"${Settings.shortName}-${Settings.version}-kinesis"
+        e.collector shouldEqual s"${BuildInfo.shortName}-${BuildInfo.version}-kinesis"
         e.querystring shouldEqual "q"
         e.body shouldEqual "b"
         e.path shouldEqual "p"
@@ -132,7 +132,7 @@ class CollectorServiceSpec extends Specification {
         e.schema shouldEqual "iglu:com.snowplowanalytics.snowplow/CollectorPayload/thrift/1-0-0"
         e.ipAddress shouldEqual "ip"
         e.encoding shouldEqual "UTF-8"
-        e.collector shouldEqual s"${Settings.shortName}-${Settings.version}-kinesis"
+        e.collector shouldEqual s"${BuildInfo.shortName}-${BuildInfo.version}-kinesis"
         e.querystring shouldEqual null
         e.body shouldEqual "b"
         e.path shouldEqual "p"

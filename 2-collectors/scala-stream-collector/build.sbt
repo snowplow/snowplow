@@ -57,8 +57,12 @@ lazy val root = project.in(file("."))
 lazy val core = project
   .settings(moduleName := "snowplow-stream-collector-core")
   .settings(buildSettings)
-  .settings(BuildSettings.scalifySettings)
   .settings(libraryDependencies ++= commonDependencies)
+  .enablePlugins(BuildInfoPlugin)
+  .settings(
+    buildInfoKeys := Seq[BuildInfoKey](organization, name, version, "shortName" -> "ssc"),
+    buildInfoPackage := "com.snowplowanalytics.snowplow.collectors.scalastream.generated"
+  )
 
 lazy val kinesis = project
   .settings(moduleName := "snowplow-stream-collector-kinesis")

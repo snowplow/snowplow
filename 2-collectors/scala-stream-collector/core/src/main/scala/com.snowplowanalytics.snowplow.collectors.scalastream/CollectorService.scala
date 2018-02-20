@@ -27,7 +27,7 @@ import scalaz._
 
 import CollectorPayload.thrift.model1.CollectorPayload
 import enrich.common.outputs.BadRow
-import generated.Settings
+import generated.BuildInfo
 import model._
 import utils.SplitBatch
 
@@ -67,7 +67,7 @@ class CollectorService(
 
   private val logger = LoggerFactory.getLogger(getClass)
 
-  private val collector = s"${Settings.shortName}-${Settings.version}-" +
+  private val collector = s"${BuildInfo.shortName}-${BuildInfo.version}-" +
     config.streams.sink.getClass.getSimpleName.toLowerCase
 
   override val cookieName = config.cookieName
