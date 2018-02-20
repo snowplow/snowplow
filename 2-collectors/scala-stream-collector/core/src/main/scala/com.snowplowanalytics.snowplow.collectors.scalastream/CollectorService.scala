@@ -29,7 +29,6 @@ import CollectorPayload.thrift.model1.CollectorPayload
 import enrich.common.outputs.BadRow
 import generated.Settings
 import model._
-import sinks.KinesisSink
 import utils.SplitBatch
 
 /**
@@ -191,20 +190,15 @@ class CollectorService(
   def sinkEvent(
     event: CollectorPayload,
     partitionKey: String
-  ): List[Array[Byte]] =
-    config.streams.sink match {
-      case _: Kinesis if KinesisSink.shuttingDown =>
-        logger.warn(s"Kinesis sink shutting down, cannot send event $event")
-        List.empty
-      case _ =>
-        // Split events into Good and Bad
-        val eventSplit = SplitBatch.splitAndSerializePayload(event, sinks.good.MaxBytes)
-        // Send events to respective sinks
-        val sinkResponseGood = sinks.good.storeRawEvents(eventSplit.good, partitionKey)
-        val sinkResponseBad  = sinks.bad.storeRawEvents(eventSplit.bad, partitionKey)
-        // Sink Responses for Test Sink
-        sinkResponseGood ++ sinkResponseBad
-    }
+  ): List[Array[Byte]] = {
+    // Split events into Good and Bad
+    val eventSplit = SplitBatch.splitAndSerializePayload(event, sinks.good.MaxBytes)
+    // Send events to respective sinks
+    val sinkResponseGood = sinks.good.storeRawEvents(eventSplit.good, partitionKey)
+    val sinkResponseBad  = sinks.bad.storeRawEvents(eventSplit.bad, partitionKey)
+    // Sink Responses for Test Sink
+    sinkResponseGood ++ sinkResponseBad
+  }
 
   /** Builds the final http response from  */
   def buildHttpResponse(
@@ -222,14 +216,7 @@ class CollectorService(
       val (r, l) = buildRedirectHttpResponse(event, partitionKey, queryParams, redirectMacroConfig)
       (r.withHeaders(r.headers ++ headers), l)
     } else {
-      sinkConfig match {
-        case _: Kinesis if KinesisSink.shuttingDown =>
-          logger.warn(s"Kinesis sink shutting down, cannot process request")
-          // So that the tracker knows the request failed and can try to resend later
-          (HttpResponse(StatusCodes.NotFound, entity = "404 not found"), Nil)
-        case _ =>
-          (buildUsualHttpResponse(pixelExpected, bounce).withHeaders(headers), Nil)
-      }
+      (buildUsualHttpResponse(pixelExpected, bounce).withHeaders(headers), Nil)
     }
 
   /** Builds the appropriate http response when not dealing with click redirects. */

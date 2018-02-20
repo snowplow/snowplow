@@ -21,15 +21,16 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.{Success, Failure}
 
+import com.amazonaws.auth._
 import com.amazonaws.services.kinesis.model._
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import com.amazonaws.services.kinesis.{AmazonKinesis, AmazonKinesisClientBuilder}
+import scalaz._
+import Scalaz._
 
 import model._
 
-/**
- * KinesisSink companion object with factory method
- */
+/** KinesisSink companion object with factory method */
 object KinesisSink {
 
   @volatile var shuttingDown = false
@@ -38,26 +39,93 @@ object KinesisSink {
    * Create a KinesisSink and schedule a task to flush its EventStorage
    * Exists so that no threads can get a reference to the KinesisSink
    * during its construction
+   * TODO: rm scalaz \/ once 2.12
    */
   def createAndInitialize(
     kinesisConfig: Kinesis,
     bufferConfig: BufferConfig,
     streamName: String,
     executorService: ScheduledExecutorService
-  ): KinesisSink = {
-    val ks = new KinesisSink(kinesisConfig, bufferConfig, streamName, executorService)
-    ks.scheduleFlush()
+  ): \/[Throwable, KinesisSink] = {
+    val client = for {
+      provider <- getProvider(kinesisConfig.aws)
+      client = createKinesisClient(provider, kinesisConfig.endpoint, kinesisConfig.region)
+      exists <-
+        if (streamExists(client, streamName)) true.right
+        else new IllegalArgumentException(s"Kinesis stream $streamName doesn't exist").left
+    } yield client
 
-    // When the application is shut down, stop accepting incoming requests
-    // and send all stored events
-    Runtime.getRuntime.addShutdownHook(new Thread {
-      override def run(): Unit = {
-        shuttingDown = true
-        ks.EventStorage.flush()
-        ks.shutdown()
-      }
-    })
-    ks
+    client.map { c =>
+      val ks = new KinesisSink(c, kinesisConfig, bufferConfig, streamName, executorService)
+      ks.scheduleFlush()
+
+      // When the application is shut down, stop accepting incoming requests
+      // and send all stored events
+      Runtime.getRuntime.addShutdownHook(new Thread {
+        override def run(): Unit = {
+          shuttingDown = true
+          ks.EventStorage.flush()
+          ks.shutdown()
+        }
+      })
+      ks
+    }
+  }
+
+  /** Create an aws credentials provider through env variables and iam. */
+  private def getProvider(awsConfig: AWSConfig): \/[Throwable, AWSCredentialsProvider] = {
+    def isDefault(key: String): Boolean = key == "default"
+    def isIam(key: String): Boolean = key == "iam"
+    def isEnv(key: String): Boolean = key == "env"
+
+    ((awsConfig.accessKey, awsConfig.secretKey) match {
+      case (a, s) if isDefault(a) && isDefault(s) =>
+        new DefaultAWSCredentialsProviderChain().right
+      case (a, s) if isDefault(a) || isDefault(s) =>
+        "accessKey and secretKey must both be set to 'default' or neither".left
+      case (a, s) if isIam(a) && isIam(s) =>
+        InstanceProfileCredentialsProvider.getInstance().right
+      case (a, s) if isIam(a) && isIam(s) =>
+        "accessKey and secretKey must both be set to 'iam' or neither".left
+      case (a, s) if isEnv(a) && isEnv(s) =>
+        new EnvironmentVariableCredentialsProvider().right
+      case (a, s) if isEnv(a) || isEnv(s) =>
+        "accessKey and secretKey must both be set to 'env' or neither".left
+      case _ => new AWSStaticCredentialsProvider(
+        new BasicAWSCredentials(awsConfig.accessKey, awsConfig.secretKey)).right
+    }).leftMap(new IllegalArgumentException(_))
+  }
+
+  /**
+   * Creates a new Kinesis client.
+   * @param provider aws credentials provider
+   * @param endpoint kinesis endpoint where the stream resides
+   * @param region aws region where the stream resides
+   * @return the initialized AmazonKinesisClient
+   */
+  private def createKinesisClient(
+    provider: AWSCredentialsProvider,
+    endpoint: String,
+    region: String
+  ): AmazonKinesis =
+    AmazonKinesisClientBuilder
+      .standard()
+      .withCredentials(provider)
+      .withEndpointConfiguration(new EndpointConfiguration(endpoint, region))
+      .build()
+
+  /**
+   * Check whether a Kinesis stream exists
+   *
+   * @param name Name of the stream
+   * @return Whether the stream exists
+   */
+  private def streamExists(client: AmazonKinesis, name: String): Boolean = try {
+    val describeStreamResult = client.describeStream(name)
+    val status = describeStreamResult.getStreamDescription.getStreamStatus
+    status == "ACTIVE" || status == "UPDATING"
+  } catch {
+    case rnfe: ResourceNotFoundException => false
   }
 }
 
@@ -65,6 +133,7 @@ object KinesisSink {
  * Kinesis Sink for the Scala collector.
  */
 class KinesisSink private (
+  client: AmazonKinesis,
   kinesisConfig: Kinesis,
   bufferConfig: BufferConfig,
   streamName: String,
@@ -108,39 +177,6 @@ class KinesisSink private (
       }
     }, interval, MILLISECONDS)
   }
-
-  // Create a Kinesis client for stream interactions.
-  private val client = createKinesisClient()
-  require(streamExists(streamName), s"Kinesis stream $streamName doesn't exist")
-
-  /**
-   * Check whether a Kinesis stream exists
-   *
-   * @param name Name of the stream
-   * @return Whether the stream exists
-   */
-  private def streamExists(name: String): Boolean = try {
-    val describeStreamResult = client.describeStream(name)
-    val status = describeStreamResult.getStreamDescription.getStreamStatus
-    status == "ACTIVE" || status == "UPDATING"
-  } catch {
-    case rnfe: ResourceNotFoundException => false
-  }
-
-  /**
-   * Creates a new Kinesis client from provided AWS access key and secret
-   * key. If both are set to "cpf", then authenticate using the classpath
-   * properties file.
-   *
-   * @return the initialized AmazonKinesisClient
-   */
-  private def createKinesisClient(): AmazonKinesis =
-    AmazonKinesisClientBuilder
-      .standard()
-      .withCredentials(kinesisConfig.aws.provider)
-      .withEndpointConfiguration(
-        new EndpointConfiguration(kinesisConfig.endpoint, kinesisConfig.region))
-      .build()
 
   object EventStorage {
     private var storedEvents = List[(ByteBuffer, String)]()

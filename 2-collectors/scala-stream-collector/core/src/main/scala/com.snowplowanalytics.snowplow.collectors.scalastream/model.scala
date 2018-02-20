@@ -16,9 +16,7 @@ package com.snowplowanalytics.snowplow.collectors.scalastream
 
 import scala.concurrent.duration.FiniteDuration
 
-import com.amazonaws.auth._
-
-import sinks._
+import sinks.Sink
 
 package model {
 
@@ -63,49 +61,29 @@ package model {
   )
   final case class P3PConfig(policyRef: String, CP: String)
   final case class CrossDomainConfig(enabled: Boolean, domain: String, secure: Boolean)
-  final case class AWSConfig(accessKey: String, secretKey: String) {
-    val provider = ((accessKey, secretKey) match {
-      case (a, s) if isDefault(a) && isDefault(s) =>
-        Right(new DefaultAWSCredentialsProviderChain())
-      case (a, s) if isDefault(a) || isDefault(s) =>
-        Left("accessKey and secretKey must both be set to 'default' or neither")
-      case (a, s) if isIam(a) && isIam(s) =>
-        Right(InstanceProfileCredentialsProvider.getInstance())
-      case (a, s) if isIam(a) && isIam(s) =>
-        Left("accessKey and secretKey must both be set to 'iam' or neither")
-      case (a, s) if isEnv(a) && isEnv(s) =>
-        Right(new EnvironmentVariableCredentialsProvider())
-      case (a, s) if isEnv(a) || isEnv(s) =>
-        Left("accessKey and secretKey must both be set to 'env' or neither")
-      case _ =>
-        Right(new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey)))
-    }).fold(s => throw new IllegalArgumentException(s), identity)
-
-    private def isDefault(key: String): Boolean = key == "default"
-    private def isIam(key: String): Boolean = key == "iam"
-    private def isEnv(key: String): Boolean = key == "env"
-  }
-  final case class BackoffPolicyConfig(
+  final case class KinesisBackoffPolicyConfig(minBackoff: Long, maxBackoff: Long)
+  final case class GooglePubSubBackoffPolicyConfig(
     minBackoff: Long,
     maxBackoff: Long,
     totalBackoff: Long,
     multiplier: Double
   )
   sealed trait SinkConfig
+  final case class AWSConfig(accessKey: String, secretKey: String)
   final case class Kinesis(
     region: String,
     threadPoolSize: Int,
     aws: AWSConfig,
-    backoffPolicy: BackoffPolicyConfig
+    backoffPolicy: KinesisBackoffPolicyConfig
   ) extends SinkConfig {
     val endpoint = region match {
       case cn@"cn-north-1" => s"https://kinesis.$cn.amazonaws.com.cn"
       case _ => s"https://kinesis.$region.amazonaws.com"
     }
   }
-  final case class PubSub(
+  final case class GooglePubSub(
     googleProjectId: String,
-    backoffPolicy: BackoffPolicyConfig
+    backoffPolicy: GooglePubSubBackoffPolicyConfig
   ) extends SinkConfig
   final case class Kafka(brokers: String, retries: Int) extends SinkConfig
   final case class Nsq(host: String, port: Int) extends SinkConfig
