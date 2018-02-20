@@ -35,7 +35,7 @@ object TestUtils {
         region = "us-east-1",
         threadPoolSize = 12,
         aws = AWSConfig("cpf", "cpf"),
-        backoffPolicy = BackoffPolicyConfig(3000L, 60000L, 100000L, 1.25d)
+        backoffPolicy = KinesisBackoffPolicyConfig(3000L, 60000L)
       ),
       buffer = BufferConfig(4000000, 500, 60000)
     )
