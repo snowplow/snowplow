@@ -34,8 +34,8 @@ trait Collector {
 
   def parseConfig(args: Array[String]): (CollectorConfig, Config) = {
     case class FileConfig(config: File = new File("."))
-    val parser = new scopt.OptionParser[FileConfig](generated.Settings.name) {
-      head(generated.Settings.name, generated.Settings.version)
+    val parser = new scopt.OptionParser[FileConfig](generated.BuildInfo.name) {
+      head(generated.BuildInfo.name, generated.BuildInfo.version)
       help("help")
       version("version")
       opt[File]("config").required().valueName("<filename>")
