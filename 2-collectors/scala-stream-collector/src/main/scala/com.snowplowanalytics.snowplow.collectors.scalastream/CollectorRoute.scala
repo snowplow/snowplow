@@ -45,7 +45,7 @@ trait CollectorRoute {
             post {
               extractContentType { ct =>
                 entity(as[String]) { body =>
-                  val (r,l) = collectorService.cookie(qs, Some(body),
+                  val (r, _) = collectorService.cookie(qs, Some(body),
                       path, cookie, userAgent, refererURI, host, ip, request, false, Some(ct))
 
                   incrementRequests(r._1)
@@ -54,7 +54,7 @@ trait CollectorRoute {
               }
             } ~
             get {
-              val (r,l) = collectorService.cookie(
+              val (r, _) = collectorService.cookie(
                 qs, None, path, cookie, userAgent, refererURI, host, ip, request, true)
 
               incrementRequests(r._1)
