@@ -46,13 +46,13 @@ import utils.ConversionUtils._
 object GoogleAnalyticsAdapter extends Adapter {
 
   // for failure messages
-  private val VendorName = "GoogleAnalytics"
-  private val GaVendor = "com.google.analytics"
-  private val Vendor = s"$GaVendor.measurement-protocol"
+  private val VendorName      = "GoogleAnalytics"
+  private val GaVendor        = "com.google.analytics"
+  private val Vendor          = s"$GaVendor.measurement-protocol"
   private val ProtocolVersion = "v1"
-  private val Protocol = s"$Vendor-$ProtocolVersion"
-  private val Format = "jsonschema"
-  private val SchemaVersion = "1-0-0"
+  private val Protocol        = s"$Vendor-$ProtocolVersion"
+  private val Format          = "jsonschema"
+  private val SchemaVersion   = "1-0-0"
 
   private val PageViewHitType = "pageview"
 
@@ -88,7 +88,7 @@ object GoogleAnalyticsAdapter extends Adapter {
       case IntType(i)     => JInt(i)
       case DoubleType(f)  => JDouble(f)
       case BooleanType(b) => JBool(b)
-    }
+  }
 
   // translations between string and the needed types in the measurement protocol Iglu schemas
   private val idTranslation: (String => KVTranslation) = (fieldName: String) =>
@@ -114,7 +114,7 @@ object GoogleAnalyticsAdapter extends Adapter {
       )
     ),
     "screenview" -> MPData(SchemaKey(Vendor, "screen_view", Format, SchemaVersion),
-      Map("cd" -> idTranslation("screenName"))),
+                           Map("cd" -> idTranslation("screenName"))),
     "event" -> MPData(
       SchemaKey(Vendor, "event", Format, SchemaVersion),
       Map(
@@ -187,11 +187,14 @@ object GoogleAnalyticsAdapter extends Adapter {
     // pageview can be a context too
     val ct = unstructEventData(PageViewHitType) :: List(
       MPData(SchemaKey(GaVendor, "undocumented", Format, SchemaVersion),
-        List("a", "jid", "gjid").map(e => e -> idTranslation(e)).toMap),
-      MPData(SchemaKey(GaVendor, "private", Format, SchemaVersion),
+             List("a", "jid", "gjid").map(e => e -> idTranslation(e)).toMap),
+      MPData(
+        SchemaKey(GaVendor, "private", Format, SchemaVersion),
         (List("_v", "_u", "_gid").map(e => e -> idTranslation(e.tail)) ++
-          List("_s", "_r").map(e => e -> intTranslation(e.tail))).toMap),
-      MPData(SchemaKey(Vendor, "general", Format, SchemaVersion),
+          List("_s", "_r").map(e        => e -> intTranslation(e.tail))).toMap
+      ),
+      MPData(
+        SchemaKey(Vendor, "general", Format, SchemaVersion),
         Map(
           "v"   -> idTranslation("protocolVersion"),
           "tid" -> idTranslation("trackingId"),
@@ -202,8 +205,9 @@ object GoogleAnalyticsAdapter extends Adapter {
         )
       ),
       MPData(SchemaKey(Vendor, "user", Format, SchemaVersion),
-        Map("cid" -> idTranslation("clientId"), "uid" -> idTranslation("userId"))),
-      MPData(SchemaKey(Vendor, "session", Format, SchemaVersion),
+             Map("cid" -> idTranslation("clientId"), "uid" -> idTranslation("userId"))),
+      MPData(
+        SchemaKey(Vendor, "session", Format, SchemaVersion),
         Map(
           "sc"    -> idTranslation("sessionControl"),
           "uip"   -> idTranslation("ipOverride"),
@@ -211,7 +215,8 @@ object GoogleAnalyticsAdapter extends Adapter {
           "geoid" -> idTranslation("geographicalOverride")
         )
       ),
-      MPData(SchemaKey(Vendor, "traffic_source", Format, SchemaVersion),
+      MPData(
+        SchemaKey(Vendor, "traffic_source", Format, SchemaVersion),
         Map(
           "dr"    -> idTranslation("documentReferrer"),
           "cn"    -> idTranslation("campaignName"),
@@ -224,7 +229,8 @@ object GoogleAnalyticsAdapter extends Adapter {
           "dclid" -> idTranslation("googleDisplayAdsId")
         )
       ),
-      MPData(SchemaKey(Vendor, "system_info", Format, SchemaVersion),
+      MPData(
+        SchemaKey(Vendor, "system_info", Format, SchemaVersion),
         Map(
           "sr" -> idTranslation("screenResolution"),
           "vp" -> idTranslation("viewportSize"),
@@ -235,9 +241,9 @@ object GoogleAnalyticsAdapter extends Adapter {
           "fl" -> idTranslation("flashVersion")
         )
       ),
-      MPData(SchemaKey(Vendor, "link", Format, SchemaVersion),
-        Map("linkid" -> idTranslation("id"))),
-      MPData(SchemaKey(Vendor, "app", Format, SchemaVersion),
+      MPData(SchemaKey(Vendor, "link", Format, SchemaVersion), Map("linkid" -> idTranslation("id"))),
+      MPData(
+        SchemaKey(Vendor, "app", Format, SchemaVersion),
         Map(
           "an"   -> idTranslation("name"),
           "aid"  -> idTranslation("id"),
@@ -245,7 +251,8 @@ object GoogleAnalyticsAdapter extends Adapter {
           "aiid" -> idTranslation("installerId")
         )
       ),
-      MPData(SchemaKey(Vendor, "product_action", Format, SchemaVersion),
+      MPData(
+        SchemaKey(Vendor, "product_action", Format, SchemaVersion),
         Map(
           "pa"  -> idTranslation("productAction"),
           "pal" -> idTranslation("productActionList"),
@@ -254,11 +261,11 @@ object GoogleAnalyticsAdapter extends Adapter {
         )
       ),
       MPData(SchemaKey(Vendor, "content_experiment", Format, SchemaVersion),
-        Map("xid" -> idTranslation("id"), "xvar" -> idTranslation("variant"))),
+             Map("xid" -> idTranslation("id"), "xvar" -> idTranslation("variant"))),
       MPData(SchemaKey(Vendor, "hit", Format, SchemaVersion),
-        Map("t" -> idTranslation("type"), "ni" -> booleanTranslation("nonInteractionHit"))),
+             Map("t" -> idTranslation("type"), "ni" -> booleanTranslation("nonInteractionHit"))),
       MPData(SchemaKey(Vendor, "promotion_action", Format, SchemaVersion),
-        Map("promoa" -> idTranslation("promotionAction")))
+             Map("promoa" -> idTranslation("promotionAction")))
     )
     ct.map(d => d.schemaKey -> d.translationTable).toMap
   }
@@ -271,7 +278,8 @@ object GoogleAnalyticsAdapter extends Adapter {
   private val valueInFieldNameIndicator = "IF"
   // composite context mappings
   private val compositeContextData: List[MPData] = List(
-    MPData(SchemaKey(Vendor, "product", Format, SchemaVersion),
+    MPData(
+      SchemaKey(Vendor, "product", Format, SchemaVersion),
       Map(
         s"${valueInFieldNameIndicator}pr" -> intTranslation("index"),
         "prid"                            -> idTranslation("sku"),
@@ -286,27 +294,31 @@ object GoogleAnalyticsAdapter extends Adapter {
         "cu"                              -> idTranslation("currencyCode")
       )
     ),
-    MPData(SchemaKey(Vendor, "product_custom_dimension", Format, SchemaVersion),
+    MPData(
+      SchemaKey(Vendor, "product_custom_dimension", Format, SchemaVersion),
       Map(
         s"${valueInFieldNameIndicator}prcd" -> intTranslation("productIndex"),
         s"${valueInFieldNameIndicator}cd"   -> intTranslation("dimensionIndex"),
         "prcd"                              -> idTranslation("value")
       )
     ),
-    MPData(SchemaKey(Vendor, "product_custom_metric", Format, SchemaVersion),
+    MPData(
+      SchemaKey(Vendor, "product_custom_metric", Format, SchemaVersion),
       Map(
         s"${valueInFieldNameIndicator}prcm" -> intTranslation("productIndex"),
         s"${valueInFieldNameIndicator}cm"   -> intTranslation("metricIndex"),
         "prcm"                              -> intTranslation("value")
       )
     ),
-    MPData(SchemaKey(Vendor, "product_impression_list", Format, SchemaVersion),
+    MPData(
+      SchemaKey(Vendor, "product_impression_list", Format, SchemaVersion),
       Map(
         s"${valueInFieldNameIndicator}il" -> intTranslation("index"),
         "ilnm"                            -> idTranslation("name")
       )
     ),
-    MPData(SchemaKey(Vendor, "product_impression", Format, SchemaVersion),
+    MPData(
+      SchemaKey(Vendor, "product_impression", Format, SchemaVersion),
       Map(
         s"${valueInFieldNameIndicator}ilpi" -> intTranslation("listIndex"),
         s"${valueInFieldNameIndicator}pi"   -> intTranslation("productIndex"),
@@ -320,7 +332,8 @@ object GoogleAnalyticsAdapter extends Adapter {
         "cu"                                -> idTranslation("currencyCode")
       )
     ),
-    MPData(SchemaKey(Vendor, "product_impression_custom_dimension", Format, SchemaVersion),
+    MPData(
+      SchemaKey(Vendor, "product_impression_custom_dimension", Format, SchemaVersion),
       Map(
         s"${valueInFieldNameIndicator}ilpicd" -> intTranslation("listIndex"),
         s"${valueInFieldNameIndicator}picd"   -> intTranslation("productIndex"),
@@ -328,7 +341,8 @@ object GoogleAnalyticsAdapter extends Adapter {
         "ilpicd"                              -> idTranslation("value")
       )
     ),
-    MPData(SchemaKey(Vendor, "product_impression_custom_metric", Format, SchemaVersion),
+    MPData(
+      SchemaKey(Vendor, "product_impression_custom_metric", Format, SchemaVersion),
       Map(
         s"${valueInFieldNameIndicator}ilpicm" -> intTranslation("listIndex"),
         s"${valueInFieldNameIndicator}picm"   -> intTranslation("productIndex"),
@@ -336,7 +350,8 @@ object GoogleAnalyticsAdapter extends Adapter {
         "ilpicm"                              -> intTranslation("value")
       )
     ),
-    MPData(SchemaKey(Vendor, "promotion", Format, SchemaVersion),
+    MPData(
+      SchemaKey(Vendor, "promotion", Format, SchemaVersion),
       Map(
         s"${valueInFieldNameIndicator}promo" -> intTranslation("index"),
         "promoid"                            -> idTranslation("id"),
@@ -345,24 +360,25 @@ object GoogleAnalyticsAdapter extends Adapter {
         "promops"                            -> idTranslation("position")
       )
     ),
-    MPData(SchemaKey(Vendor, "custom_dimension", Format, SchemaVersion),
+    MPData(
+      SchemaKey(Vendor, "custom_dimension", Format, SchemaVersion),
       Map(
         s"${valueInFieldNameIndicator}cd" -> intTranslation("index"),
         "cd"                              -> idTranslation("value")
       )
     ),
-    MPData(SchemaKey(Vendor, "custom_metric", Format, SchemaVersion),
+    MPData(
+      SchemaKey(Vendor, "custom_metric", Format, SchemaVersion),
       Map(
         s"${valueInFieldNameIndicator}cm" -> intTranslation("index"),
         "cm"                              -> doubleTranslation("value")
       )
     ),
     MPData(SchemaKey(Vendor, "content_group", Format, SchemaVersion),
-      Map(
-        s"${valueInFieldNameIndicator}cg" -> intTranslation("index"),
-        "cg"                              -> idTranslation("value")
-      )
-    )
+           Map(
+             s"${valueInFieldNameIndicator}cg" -> intTranslation("index"),
+             "cg"                              -> idTranslation("value")
+           ))
   )
 
   // mechanism used to filter out composite contexts that might have been built unnecessarily
@@ -378,27 +394,28 @@ object GoogleAnalyticsAdapter extends Adapter {
     }.toMap
 
   // direct mappings between the measurement protocol and the snowplow tracker protocol
-  private val directMappings: (String => Map[String, String]) = (hitType: String) => Map(
-    "uip" -> "ip",
-    "dr"  -> "refr",
-    "de"  -> "cs",
-    "sd"  -> "cd",
-    "ul"  -> "lang",
-    "je"  -> "f_java",
-    "dl"  -> "url",
-    "dt"  -> "page",
-    "ti"  -> (if (hitType == "transaction") "tr_id" else "ti_id"),
-    "ta"  -> "tr_af",
-    "tr"  -> "tr_tt",
-    "ts"  -> "tr_sh",
-    "tt"  -> "tr_tx",
-    "in"  -> "ti_nm",
-    "ip"  -> "ti_pr",
-    "iq"  -> "ti_qu",
-    "ic"  -> "ti_sk",
-    "iv"  -> "ti_ca",
-    "cu"  -> (if (hitType == "transaction") "tr_cu" else "ti_cu"),
-    "ua"  -> "ua"
+  private val directMappings: (String => Map[String, String]) = (hitType: String) =>
+    Map(
+      "uip" -> "ip",
+      "dr"  -> "refr",
+      "de"  -> "cs",
+      "sd"  -> "cd",
+      "ul"  -> "lang",
+      "je"  -> "f_java",
+      "dl"  -> "url",
+      "dt"  -> "page",
+      "ti"  -> (if (hitType == "transaction") "tr_id" else "ti_id"),
+      "ta"  -> "tr_af",
+      "tr"  -> "tr_tt",
+      "ts"  -> "tr_sh",
+      "tt"  -> "tr_tx",
+      "in"  -> "ti_nm",
+      "ip"  -> "ti_pr",
+      "iq"  -> "ti_qu",
+      "ic"  -> "ti_sk",
+      "iv"  -> "ti_ca",
+      "cu"  -> (if (hitType == "transaction") "tr_cu" else "ti_cu"),
+      "ua"  -> "ua"
   )
 
   /**
@@ -411,11 +428,11 @@ object GoogleAnalyticsAdapter extends Adapter {
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
     (for {
-      body <- payload.body
+      body      <- payload.body
       rawEvents <- body.lines.map(parsePayload(_, payload)).toList.toNel
     } yield rawEvents) match {
       case Some(rawEvents) => rawEvents.sequenceU
-      case None => s"Request body is empty: no $VendorName events to process".failNel
+      case None            => s"Request body is empty: no $VendorName events to process".failNel
     }
 
   /**
@@ -427,25 +444,29 @@ object GoogleAnalyticsAdapter extends Adapter {
   private def parsePayload(bodyPart: String, payload: CollectorPayload): ValidationNel[String, RawEvent] = {
     val params = toMap(URLEncodedUtils.parse(URI.create(s"http://localhost/?$bodyPart"), "UTF-8").toList)
     params.get("t") match {
-      case None => s"No $VendorName t parameter provided: cannot determine hit type".failNel
+      case None          => s"No $VendorName t parameter provided: cannot determine hit type".failNel
       case Some(hitType) =>
         // direct mappings
         val mappings = translatePayload(params, directMappings(hitType))
-        val translationTable = unstructEventData.get(hitType).map(_.translationTable)
+        val translationTable = unstructEventData
+          .get(hitType)
+          .map(_.translationTable)
           .toSuccess(s"No matching $VendorName hit type for hit type $hitType".wrapNel)
-        val schemaVal = lookupSchema(
-          hitType.some, VendorName, unstructEventData.mapValues(_.schemaKey.toSchemaUri))
+        val schemaVal      = lookupSchema(hitType.some, VendorName, unstructEventData.mapValues(_.schemaKey.toSchemaUri))
         val simpleContexts = buildContexts(params, contextData, fieldToSchemaMap)
-        val compositeContexts = buildCompositeContexts(params, compositeContextData,
-          nrCompFieldsPerSchema, valueInFieldNameIndicator).validation.toValidationNel
+        val compositeContexts =
+          buildCompositeContexts(params, compositeContextData, nrCompFieldsPerSchema, valueInFieldNameIndicator).validation
+            .toValidationNel
 
         (translationTable |@| schemaVal |@| simpleContexts |@| compositeContexts) {
           (trTable, schema, contexts, compContexts) =>
             val contextJsons = (contexts.toList ++ compContexts)
               .collect {
                 // an unnecessary pageview context might have been built so we need to remove it
-                case (s, d) if hitType != PageViewHitType ||
-                  s != unstructEventData(PageViewHitType).schemaKey => buildJson(s.toSchemaUri, d)
+                case (s, d)
+                    if hitType != PageViewHitType ||
+                      s != unstructEventData(PageViewHitType).schemaKey =>
+                  buildJson(s.toSchemaUri, d)
               }
             val contextParam =
               if (contextJsons.isEmpty) Map.empty
@@ -455,8 +476,8 @@ object GoogleAnalyticsAdapter extends Adapter {
               .map { e =>
                 val unstructEvent = compact(toUnstructEvent(buildJson(schema, e)))
                 RawEvent(
-                  api         = payload.api,
-                  parameters  = contextParam ++ mappings ++
+                  api = payload.api,
+                  parameters = contextParam ++ mappings ++
                     Map("e" -> "ue", "ue_pr" -> unstructEvent, "tv" -> Protocol, "p" -> "srv"),
                   contentType = payload.contentType,
                   source      = payload.source,
@@ -477,15 +498,18 @@ object GoogleAnalyticsAdapter extends Adapter {
     originalParams: Map[String, String],
     translationTable: Map[String, KVTranslation]
   ): ValidationNel[String, Map[String, FieldType]] =
-    originalParams.foldLeft(Map.empty[String, ValidationNel[String, FieldType]]) {
-      case (m, (fieldName, value)) =>
-        translationTable
-          .get(fieldName)
-          .map { case KVTranslation(newName, translation) =>
-            m + (newName -> translation(value).toValidationNel)
-          }
-          .getOrElse(m)
-    }.sequenceU
+    originalParams
+      .foldLeft(Map.empty[String, ValidationNel[String, FieldType]]) {
+        case (m, (fieldName, value)) =>
+          translationTable
+            .get(fieldName)
+            .map {
+              case KVTranslation(newName, translation) =>
+                m + (newName -> translation(value).toValidationNel)
+            }
+            .getOrElse(m)
+      }
+      .sequenceU
 
   /**
    * Translates a payload according to a translation table.
@@ -518,19 +542,22 @@ object GoogleAnalyticsAdapter extends Adapter {
     referenceTable: Map[SchemaKey, Map[String, KVTranslation]],
     fieldToSchemaMap: Map[String, SchemaKey]
   ): ValidationNel[String, Map[SchemaKey, Map[String, FieldType]]] =
-    originalParams.foldLeft(Map.empty[SchemaKey, Map[String, ValidationNel[String, FieldType]]]) {
-      case (m, (fieldName, value)) =>
-        fieldToSchemaMap.get(fieldName).map { schema =>
-          // this is safe when fieldToSchemaMap is built from referenceTable
-          val KVTranslation(newName, translation) = referenceTable(schema)(fieldName)
-          val trTable = m.getOrElse(schema, Map.empty) +
-            (newName -> translation(value).toValidationNel)
-          m + (schema -> trTable)
-        }
-        .getOrElse(m)
-    }
-    .map { case (k, v) => (k -> v.sequenceU) }
-    .sequenceU
+    originalParams
+      .foldLeft(Map.empty[SchemaKey, Map[String, ValidationNel[String, FieldType]]]) {
+        case (m, (fieldName, value)) =>
+          fieldToSchemaMap
+            .get(fieldName)
+            .map { schema =>
+              // this is safe when fieldToSchemaMap is built from referenceTable
+              val KVTranslation(newName, translation) = referenceTable(schema)(fieldName)
+              val trTable = m.getOrElse(schema, Map.empty) +
+                (newName -> translation(value).toValidationNel)
+              m + (schema -> trTable)
+            }
+            .getOrElse(m)
+      }
+      .map { case (k, v) => (k -> v.sequenceU) }
+      .sequenceU
 
   /**
    * Builds the contexts containing composite fields in quadratic time
@@ -552,19 +579,16 @@ object GoogleAnalyticsAdapter extends Adapter {
   ): \/[String, List[(SchemaKey, Map[String, FieldType])]] =
     for {
       // composite params have digits in their key or are cu
-      composite  <- originalParams
+      composite <- originalParams
         .filterKeys(k => k.exists(_.isDigit) || k == "cu")
         .right
-      brokenDown <- composite
-        .toList
-        .map {
-          case (k, v) if k == "cu" => Map(k -> v).right
-          case (k, v) => breakDownCompField(k, v, indicator)
-        }
-        .sequenceU
-      grouped     = brokenDown.flatten.groupBy(_._1).mapValues(_.map(_._2))
-      translated <-
-        grouped.foldLeft(Map.empty[SchemaKey, Map[String, \/[String, Seq[FieldType]]]]) {
+      brokenDown <- composite.toList.map {
+        case (k, v) if k == "cu" => Map(k -> v).right
+        case (k, v)              => breakDownCompField(k, v, indicator)
+      }.sequenceU
+      grouped = brokenDown.flatten.groupBy(_._1).mapValues(_.map(_._2))
+      translated <- grouped
+        .foldLeft(Map.empty[SchemaKey, Map[String, \/[String, Seq[FieldType]]]]) {
           case (m, (fieldName, values)) =>
             val additions = referenceTable
               .filter(_.translationTable.contains(fieldName))
@@ -574,21 +598,22 @@ object GoogleAnalyticsAdapter extends Adapter {
                 val trTable = m.getOrElse(d.schemaKey, Map.empty) +
                   (newName -> values.map(v => translation(v).disjunction).sequenceU)
                 d.schemaKey -> trTable
-              }.toMap
+              }
+              .toMap
             m ++ additions
         }
         .map { case (k, v) => (k -> v.sequenceU) }
         .sequenceU
-      transposed  = translated.mapValues { m =>
+      transposed = translated.mapValues { m =>
         val values = transpose(m.values.map(_.toList).toList)
         values.map(m.keys zip _).map(_.toMap)
       }
       // we need to filter out composite contexts which might have been built unnecessarily
       // eg due to ${indicator}pr being in 3 different schemas
-      filtered    = transposed
+      filtered = transposed
         .map { case (k, vs) => k -> vs.filter(_.size > nrCompFieldsPerSchema(k)) }
         .filter(_._2.nonEmpty)
-      flattened   = filtered.toList.flatMap { case (k, vs) => vs.map(k -> _) }
+      flattened = filtered.toList.flatMap { case (k, vs) => vs.map(k -> _) }
     } yield flattened
 
   /**
@@ -608,10 +633,11 @@ object GoogleAnalyticsAdapter extends Adapter {
     fieldName: String,
     value: String,
     indicator: String
-  ): \/[String, Map[String, String]] = for {
-    brokenDown <- breakDownCompField(fieldName)
-    (strs, ints) = brokenDown
-    m <- if (strs.length == ints.length) {
+  ): \/[String, Map[String, String]] =
+    for {
+      brokenDown <- breakDownCompField(fieldName)
+      (strs, ints) = brokenDown
+      m <- if (strs.length == ints.length) {
         (strs.scanRight("")(_ + _).init.map(indicator + _) zip ints).toMap.right
       } else if (strs.length == ints.length + 1) {
         (strs.init.scanRight("")(_ + _).init.map(indicator + _) zip ints).toMap.right
@@ -619,32 +645,34 @@ object GoogleAnalyticsAdapter extends Adapter {
         // can't happen without changing breakDownCompField(fieldName)
         s"Cannot parse field name $fieldName, unexpected number of values inside".left
       }
-    r = m + (strs.reduce(_ + _) -> value)
-  } yield r
+      r = m + (strs.reduce(_ + _) -> value)
+    } yield r
 
   private val compositeFieldRegex =
     ("(" + List("pr", "promo", "il", "cd", "cm", "cg").mkString("|") + ")" +
       """(\d+)([a-zA-Z]*)(\d*)([a-zA-Z]*)(\d*)$""").r
+
   /**
    * Breaks down measurement protocol composite fields in a pair of list of strings.
    * e.g. abc12def45 becomes (List("abc", "def"), List("12", "45"))
    * @param fieldName raw composite field name
    * @return the break down of the field or a failure if it couldn't be parsed
    */
-  private[registry] def breakDownCompField(
-      fieldName: String): \/[String, (List[String], List[String])] = fieldName match {
-    case compositeFieldRegex(grps@_*) => splitEvenOdd(grps.toList.filter(_.nonEmpty)).right
-    case s if s.isEmpty => "Cannot parse empty composite field name".left
-    case _ => (s"Cannot parse field name $fieldName, " +
-      s"it doesn't conform to the expected composite field regex: $compositeFieldRegex").left
-  }
+  private[registry] def breakDownCompField(fieldName: String): \/[String, (List[String], List[String])] =
+    fieldName match {
+      case compositeFieldRegex(grps @ _*) => splitEvenOdd(grps.toList.filter(_.nonEmpty)).right
+      case s if s.isEmpty                 => "Cannot parse empty composite field name".left
+      case _ =>
+        (s"Cannot parse field name $fieldName, " +
+          s"it doesn't conform to the expected composite field regex: $compositeFieldRegex").left
+    }
 
   /** Splits a list in two based on the oddness or evenness of their indices */
   private def splitEvenOdd[T](list: List[T]): (List[T], List[T]) = {
     def go(l: List[T], even: List[T], odd: List[T]): (List[T], List[T], List[T]) = l match {
       case h1 :: h2 :: t => go(t, h1 :: even, h2 :: odd)
-      case h :: Nil => (Nil, h :: even, odd)
-      case Nil => (Nil, even, odd)
+      case h :: Nil      => (Nil, h :: even, odd)
+      case Nil           => (Nil, even, odd)
     }
     val res = go(list, Nil, Nil)
     (res._2.reverse, res._3.reverse)
@@ -653,7 +681,7 @@ object GoogleAnalyticsAdapter extends Adapter {
   /** Transposes a list of lists, does not need to be rectangular unlike the stdlib's version. */
   private def transpose[T](l: List[List[T]]): List[List[T]] =
     l.flatMap(_.headOption) match {
-      case Nil => Nil
+      case Nil  => Nil
       case head => head :: transpose(l.collect { case _ :: tail => tail })
     }
 

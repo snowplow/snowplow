@@ -22,20 +22,16 @@ import scalaz._
 import Scalaz._
 
 // Snowplow
-import loaders.{
-  CollectorApi,
-  CollectorSource,
-  CollectorContext,
-  CollectorPayload
-}
+import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
 import SpecHelpers._
 
 // Specs2
-import org.specs2.{Specification, ScalaCheck}
+import org.specs2.{ScalaCheck, Specification}
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
 
-class CallrailAdapterSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is = s2"""
+class CallrailAdapterSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck {
+  def is = s2"""
   This is a specification to test the CallrailAdapter functionality
   toRawEvents should return a NEL containing one RawEvent if the querystring is correctly populated $e1
   toRawEvents should return a Validation Failure if there are no parameters on the querystring      $e2
@@ -44,9 +40,14 @@ class CallrailAdapterSpec extends Specification with DataTables with ValidationM
   implicit val resolver = SpecHelpers.IgluResolver
 
   object Shared {
-    val api = CollectorApi("com.callrail", "v1")
+    val api    = CollectorApi("com.callrail", "v1")
     val source = CollectorSource("clj-tomcat", "UTF-8", None)
-    val context = CollectorContext(DateTime.parse("2013-08-29T00:18:48.000+00:00").some, "37.157.33.123".some, None, None, Nil, None)
+    val context = CollectorContext(DateTime.parse("2013-08-29T00:18:48.000+00:00").some,
+                                   "37.157.33.123".some,
+                                   None,
+                                   None,
+                                   Nil,
+                                   None)
   }
 
   object Expected {
@@ -99,7 +100,7 @@ class CallrailAdapterSpec extends Specification with DataTables with ValidationM
       "nuid"           -> "-"
     )
     val payload = CollectorPayload(Shared.api, params, None, None, Shared.source, Shared.context)
-    val actual = CallrailAdapter.toRawEvents(payload)
+    val actual  = CallrailAdapter.toRawEvents(payload)
 
     val expectedJson =
       """|{
@@ -146,13 +147,19 @@ class CallrailAdapterSpec extends Specification with DataTables with ValidationM
             |}
           |}""".stripMargin.replaceAll("[\n\r]", "")
 
-    actual must beSuccessful(NonEmptyList(RawEvent(Shared.api, Expected.static ++ Map("ue_pr" -> expectedJson, "nuid" -> "-"), None, Shared.source, Shared.context)))
+    actual must beSuccessful(
+      NonEmptyList(
+        RawEvent(Shared.api,
+                 Expected.static ++ Map("ue_pr" -> expectedJson, "nuid" -> "-"),
+                 None,
+                 Shared.source,
+                 Shared.context)))
   }
 
   def e2 = {
-    val params = toNameValuePairs()
+    val params  = toNameValuePairs()
     val payload = CollectorPayload(Shared.api, params, None, None, Shared.source, Shared.context)
-    val actual = CallrailAdapter.toRawEvents(payload)
+    val actual  = CallrailAdapter.toRawEvents(payload)
 
     actual must beFailing(NonEmptyList("Querystring is empty: no CallRail event to process"))
   }

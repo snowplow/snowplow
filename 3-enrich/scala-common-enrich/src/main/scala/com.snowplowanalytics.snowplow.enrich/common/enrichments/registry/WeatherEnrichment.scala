@@ -20,7 +20,7 @@ package enrichments.registry
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion
 
 // Java
-import java.lang.{ Float => JFloat }
+import java.lang.{Float => JFloat}
 
 // Scala
 import scala.util.control.NonFatal
@@ -30,10 +30,10 @@ import scalaz._
 import Scalaz._
 
 // Joda time
-import org.joda.time.{ DateTime, DateTimeZone }
+import org.joda.time.{DateTime, DateTimeZone}
 
 // json4s
-import org.json4s.{ JValue, JObject, DefaultFormats }
+import org.json4s.{DefaultFormats, JObject, JValue}
 import org.json4s.Extraction
 import org.json4s.JsonDSL._
 
@@ -56,22 +56,23 @@ import enrichments.EventEnrichments
  */
 object WeatherEnrichmentConfig extends ParseableEnrichment {
 
-  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow.enrichments", "weather_enrichment_config", "jsonschema", 1, 0)
+  val supportedSchema =
+    SchemaCriterion("com.snowplowanalytics.snowplow.enrichments", "weather_enrichment_config", "jsonschema", 1, 0)
 
-  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[WeatherEnrichment] = {
-    isParseable(config, schemaKey).flatMap { conf => {
-      (for {
-        apiKey       <- ScalazJson4sUtils.extract[String](config, "parameters", "apiKey")
-        cacheSize    <- ScalazJson4sUtils.extract[Int](config, "parameters", "cacheSize")
-        geoPrecision <- ScalazJson4sUtils.extract[Int](config, "parameters", "geoPrecision")
-        apiHost      <- ScalazJson4sUtils.extract[String](config, "parameters", "apiHost")
-        timeout      <- ScalazJson4sUtils.extract[Int](config, "parameters", "timeout")
-        enrich       =  WeatherEnrichment(apiKey, cacheSize, geoPrecision, apiHost, timeout)
-      } yield enrich).toValidationNel
-    }}
-  }
+  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[WeatherEnrichment] =
+    isParseable(config, schemaKey).flatMap { conf =>
+      {
+        (for {
+          apiKey       <- ScalazJson4sUtils.extract[String](config, "parameters", "apiKey")
+          cacheSize    <- ScalazJson4sUtils.extract[Int](config, "parameters", "cacheSize")
+          geoPrecision <- ScalazJson4sUtils.extract[Int](config, "parameters", "geoPrecision")
+          apiHost      <- ScalazJson4sUtils.extract[String](config, "parameters", "apiHost")
+          timeout      <- ScalazJson4sUtils.extract[Int](config, "parameters", "timeout")
+          enrich = WeatherEnrichment(apiKey, cacheSize, geoPrecision, apiHost, timeout)
+        } yield enrich).toValidationNel
+      }
+    }
 }
-
 
 /**
  * Contains weather enrichments based on geo coordinates and time
@@ -83,7 +84,8 @@ object WeatherEnrichmentConfig extends ParseableEnrichment {
  * @param apiHost address of weather provider's API host
  * @param timeout timeout in seconds to fetch weather from server
  */
-case class WeatherEnrichment(apiKey: String, cacheSize: Int, geoPrecision: Int, apiHost: String, timeout: Int) extends Enrichment {
+case class WeatherEnrichment(apiKey: String, cacheSize: Int, geoPrecision: Int, apiHost: String, timeout: Int)
+    extends Enrichment {
 
   private lazy val client = OwmCacheClient(apiKey, cacheSize, geoPrecision, apiHost, timeout)
 
@@ -103,7 +105,9 @@ case class WeatherEnrichment(apiKey: String, cacheSize: Int, geoPrecision: Int, 
    */
   // It accepts Java Float (JFloat) instead of Scala's because it will throw NullPointerException
   // on conversion step if `EnrichedEvent` has nulls as geo_latitude or geo_longitude
-  def getWeatherContext(latitude: Option[JFloat], longitude: Option[JFloat], time: Option[DateTime]): Validation[String, JObject] =
+  def getWeatherContext(latitude: Option[JFloat],
+                        longitude: Option[JFloat],
+                        time: Option[DateTime]): Validation[String, JObject] =
     try {
       getWeather(latitude, longitude, time).map(addSchema)
     } catch {
@@ -118,14 +122,16 @@ case class WeatherEnrichment(apiKey: String, cacheSize: Int, geoPrecision: Int, 
    * @param time enriched event optional time
    * @return weather stamp as JSON object
    */
-  private def getWeather(latitude: Option[JFloat], longitude: Option[JFloat], time: Option[DateTime]): Validation[String, JObject] =
+  private def getWeather(latitude: Option[JFloat],
+                         longitude: Option[JFloat],
+                         time: Option[DateTime]): Validation[String, JObject] =
     (latitude, longitude, time) match {
       case (Some(lat), Some(lon), Some(t)) =>
         getCachedOrRequest(lat, lon, (t.getMillis / 1000).toInt).flatMap { weatherStamp =>
           val transformedWeather = transformWeather(weatherStamp)
           Extraction.decompose(transformedWeather) match {
             case obj: JObject => obj.success
-            case _ => s"Couldn't transform weather object $transformedWeather into JSON".fail // Shouldn't ever happen
+            case _            => s"Couldn't transform weather object $transformedWeather into JSON".fail // Shouldn't ever happen
           }
         }
       case _ => s"One of required event fields missing. latitude: $latitude, longitude: $longitude, tstamp: $time".fail
@@ -172,11 +178,10 @@ case class WeatherEnrichment(apiKey: String, cacheSize: Int, geoPrecision: Int, 
  * Copy of `com.snowplowanalytics.weather.providers.openweather.Responses.Weather` intended to
  * execute typesafe (as opposed to JSON) transformation
  */
-private[enrichments] case class TransformedWeather(
-    main: MainInfo,
-    wind: Wind,
-    clouds: Clouds,
-    rain: Option[Rain],
-    snow: Option[Snow],
-    weather: List[WeatherCondition],
-    dt: String)
+private[enrichments] case class TransformedWeather(main: MainInfo,
+                                                   wind: Wind,
+                                                   clouds: Clouds,
+                                                   rain: Option[Rain],
+                                                   snow: Option[Snow],
+                                                   weather: List[WeatherCondition],
+                                                   dt: String)

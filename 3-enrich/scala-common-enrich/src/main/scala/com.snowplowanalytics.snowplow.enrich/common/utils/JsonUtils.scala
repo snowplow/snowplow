@@ -1,15 +1,15 @@
 /*
-* Copyright (c) 2014-2018 Snowplow Analytics Ltd. All rights reserved.
-*
-* This program is licensed to you under the Apache License Version 2.0,
-* and you may not use this file except in compliance with the Apache License Version 2.0.
-* You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
-*
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the Apache License Version 2.0 is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
-*/
+ * Copyright (c) 2014-2018 Snowplow Analytics Ltd. All rights reserved.
+ *
+ * This program is licensed to you under the Apache License Version 2.0,
+ * and you may not use this file except in compliance with the Apache License Version 2.0.
+ * You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the Apache License Version 2.0 is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
+ */
 package com.snowplowanalytics.snowplow.enrich.common
 package utils
 
@@ -18,10 +18,7 @@ import java.math.{BigInteger => JBigInteger}
 import java.net.URLEncoder
 
 // Jackson
-import com.fasterxml.jackson.databind.{
-  ObjectMapper,
-  JsonNode
-}
+import com.fasterxml.jackson.databind.{JsonNode, ObjectMapper}
 
 // Joda-Time
 import org.joda.time.{DateTime, DateTimeZone}
@@ -50,7 +47,8 @@ object JsonUtils {
   private lazy val Mapper = new ObjectMapper
 
   // Defines the maximalist JSON Schema-compatible date-time format
-  private val JsonSchemaDateTimeFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(DateTimeZone.UTC)
+  private val JsonSchemaDateTimeFormat =
+    DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(DateTimeZone.UTC)
 
   /**
    * Validates a String as correct JSON.
@@ -90,9 +88,9 @@ object JsonUtils {
    *         original String
    */
   private[utils] def booleanToJValue(str: String): JValue = str match {
-    case "true" => JBool(true)
+    case "true"  => JBool(true)
     case "false" => JBool(false)
-    case _ => JString(str)
+    case _       => JString(str)
   }
 
   /**
@@ -156,16 +154,18 @@ object JsonUtils {
    * @return a JField, containing the original key and the
    *         processed String, now as a JValue
    */
-  def toJField(key: String, value: String, bools: List[String], ints: List[String],
-    dateTimes: DateTimeFields): JField = {
+  def toJField(key: String,
+               value: String,
+               bools: List[String],
+               ints: List[String],
+               dateTimes: DateTimeFields): JField = {
 
     val v = (value, dateTimes) match {
-      case ("", _)                  => JNull
-      case _ if bools.contains(key) => booleanToJValue(value)
-      case _ if ints.contains(key)  => integerToJValue(value)
-      case (_, Some((nel, fmt)))
-        if nel.toList.contains(key) => JString(toJsonSchemaDateTime(value, fmt))
-      case _                        => JString(value)
+      case ("", _)                                           => JNull
+      case _ if bools.contains(key)                          => booleanToJValue(value)
+      case _ if ints.contains(key)                           => integerToJValue(value)
+      case (_, Some((nel, fmt))) if nel.toList.contains(key) => JString(toJsonSchemaDateTime(value, fmt))
+      case _                                                 => JString(value)
     }
     (key, v)
   }
@@ -181,8 +181,7 @@ object JsonUtils {
    *         String or the reformatted JSON String
    */
   private[utils] def validateAndReformatJson(field: String, str: String): Validation[String, String] =
-    extractJson(field, str)
-      .map(j => compact(fromJsonNode(j)))
+    extractJson(field, str).map(j => compact(fromJsonNode(j)))
 
   /**
    * Converts a JSON string into a Validation[String, JsonNode]
@@ -196,7 +195,8 @@ object JsonUtils {
     try {
       Mapper.readTree(instance).success
     } catch {
-      case e: Throwable => s"Field [$field]: invalid JSON [$instance] with parsing error: ${stripInstanceEtc(e.getMessage).orNull}".fail
+      case e: Throwable =>
+        s"Field [$field]: invalid JSON [$instance] with parsing error: ${stripInstanceEtc(e.getMessage).orNull}".fail
     }
 
   /**
@@ -228,12 +228,11 @@ object JsonUtils {
    *         instance information etc removed. Option-boxed
    *         because the message can be null
    */
-  def stripInstanceEtc(message: String): Option[String] = {
+  def stripInstanceEtc(message: String): Option[String] =
     for (m <- Option(message)) yield {
       m.replaceAll("@[0-9a-z]+;", "@xxxxxx;")
-       .replaceAll("\\t", "    ")
-       .replaceAll("\\p{Cntrl}", "") // Any other control character
-       .trim
+        .replaceAll("\\t", "    ")
+        .replaceAll("\\p{Cntrl}", "") // Any other control character
+        .trim
     }
-  }
 }

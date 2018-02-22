@@ -282,7 +282,8 @@ case class PiiPseudonymizerEnrichment(fieldList: List[PiiField]) extends Enrichm
  * @param fieldMutator the field mutator where the strategy will be applied
  */
 final case class PiiScalar(strategy: PiiStrategy, fieldMutator: PiiConstants.Mutator) extends PiiField {
-  override def applyStrategy(fieldValue: String): String = if (fieldValue != null) strategy.scramble(fieldValue) else null
+  override def applyStrategy(fieldValue: String): String =
+    if (fieldValue != null) strategy.scramble(fieldValue) else null
 }
 
 /**
@@ -295,7 +296,10 @@ final case class PiiScalar(strategy: PiiStrategy, fieldMutator: PiiConstants.Mut
  * @param schemaCriterion the schema for which the strategy will be applied
  * @param jsonPath the path where the strategy will be applied
  */
-final case class PiiJson(strategy: PiiStrategy, fieldMutator: PiiConstants.Mutator, schemaCriterion: SchemaCriterion, jsonPath: String)
+final case class PiiJson(strategy: PiiStrategy,
+                         fieldMutator: PiiConstants.Mutator,
+                         schemaCriterion: SchemaCriterion,
+                         jsonPath: String)
     extends PiiField {
   implicit val json4sFormats = DefaultFormats
 
@@ -326,7 +330,8 @@ final case class PiiJson(strategy: PiiStrategy, fieldMutator: PiiConstants.Mutat
       parsedSchemaMatches <- SchemaKey.parse(schema.extract[String]).map(schemaCriterion.matches).toOption
       data                <- fieldsObj.get("data")
       if parsedSchemaMatches
-    } yield JObject(fieldsObj.updated("schema", schema).updated("data", jsonPathReplace(data)).toList)).getOrElse(JObject(context))
+    } yield JObject(fieldsObj.updated("schema", schema).updated("data", jsonPathReplace(data)).toList))
+      .getOrElse(JObject(context))
   }
 
   // Configuration for JsonPath

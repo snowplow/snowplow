@@ -57,34 +57,34 @@ object CloudfrontLoader extends Loader[String] {
   // Define the regular expression for extracting the fields
   // Adapted from Amazon's own cloudfront-loganalyzer.tgz
   private val CfRegex = {
-    val w = "[\\s]+"   // Whitespace regex
+    val w  = "[\\s]+" // Whitespace regex
     val ow = "(?:" + w // Optional whitespace begins
-    
+
     // Our regex follows
-    (   "([\\S]+)"  +   // Date          / date
-    w + "([\\S]+)"  +   // Time          / time
-    w + "([\\S]+)"  +   // EdgeLocation  / x-edge-location
-    w + "([\\S]+)"  +   // BytesSent     / sc-bytes
-    w + "([\\S]+)"  +   // IPAddress     / c-ip
-    w + "([\\S]+)"  +   // Operation     / cs-method
-    w + "([\\S]+)"  +   // Domain        / cs(Host)
-    w + "([\\S]+)"  +   // Object        / cs-uri-stem
-    w + "([\\S]+)"  +   // HttpStatus    / sc-status
-    w + "([\\S]+)"  +   // Referer       / cs(Referer)
-    w + "([\\S]+)"  +   // UserAgent     / cs(User Agent)
-    w + "([\\S]+)"  +   // Querystring   / cs-uri-query
-    ow + "[\\S]*"   +   // CookieHeader  / cs(Cookie)         added 12 Sep 2012 // TODO: why the *?
-    w +  "[\\S]+"   +   // ResultType    / x-edge-result-type added 12 Sep 2012
-    w +  "[\\S]+)?" +   // X-Amz-Cf-Id   / x-edge-request-id  added 12 Sep 2012
-    ow + "[\\S]+"   +   // XHostHeader   / x-host-header      added 21 Oct 2013
-    w +  "[\\S]+"   +   // CsProtocol    / cs-protocol        added 21 Oct 2013
-    w +  "[\\S]+)?" +   // CsBytes       / cs-bytes           added 21 Oct 2013
-    ow + "[\\S]+"   +   // TimeTaken     / time-taken         added 29 Apr 2014
-    w +      ".*)?").r  // Anything added in the future by Amazon  
+    ("([\\S]+)" + // Date          / date
+      w         + "([\\S]+)" + // Time          / time
+      w         + "([\\S]+)" + // EdgeLocation  / x-edge-location
+      w         + "([\\S]+)" + // BytesSent     / sc-bytes
+      w         + "([\\S]+)" + // IPAddress     / c-ip
+      w         + "([\\S]+)" + // Operation     / cs-method
+      w         + "([\\S]+)" + // Domain        / cs(Host)
+      w         + "([\\S]+)" + // Object        / cs-uri-stem
+      w         + "([\\S]+)" + // HttpStatus    / sc-status
+      w         + "([\\S]+)" + // Referer       / cs(Referer)
+      w         + "([\\S]+)" + // UserAgent     / cs(User Agent)
+      w         + "([\\S]+)" + // Querystring   / cs-uri-query
+      ow        + "[\\S]*" + // CookieHeader  / cs(Cookie)         added 12 Sep 2012 // TODO: why the *?
+      w         + "[\\S]+" + // ResultType    / x-edge-result-type added 12 Sep 2012
+      w         + "[\\S]+)?" + // X-Amz-Cf-Id   / x-edge-request-id  added 12 Sep 2012
+      ow        + "[\\S]+" + // XHostHeader   / x-host-header      added 21 Oct 2013
+      w         + "[\\S]+" + // CsProtocol    / cs-protocol        added 21 Oct 2013
+      w         + "[\\S]+)?" + // CsBytes       / cs-bytes           added 21 Oct 2013
+      ow        + "[\\S]+" + // TimeTaken     / time-taken         added 29 Apr 2014
+      w         + ".*)?").r // Anything added in the future by Amazon
   }
 
   /**
-   * Converts the source string into a 
+   * Converts the source string into a
    * ValidatedMaybeCollectorPayload.
    *
    * @param line A line of data to convert
@@ -94,28 +94,17 @@ object CloudfrontLoader extends Loader[String] {
    *         in a Scalaz ValidatioNel.
    */
   def toCollectorPayload(line: String): ValidatedMaybeCollectorPayload = line match {
-    
+
     // 1. Header row
     case h if (h.startsWith("#Version:") || h.startsWith("#Fields:")) =>
       None.success
-    
+
     // 2. Not a GET request
     case CfRegex(_, _, _, _, _, op, _, _, _, _, _, _) if op.toUpperCase != "GET" =>
       s"Only GET operations supported for CloudFront Collector, not ${op.toUpperCase}".failNel[Option[CollectorPayload]]
 
     // 4. Row matches CloudFront format
-    case CfRegex(date,
-                 time,
-                 _,
-                 _,
-                 ip,
-                 _,
-                 _,
-                 objct,
-                 _,
-                 rfr,
-                 ua,
-                 qs) => {
+    case CfRegex(date, time, _, _, ip, _, _, objct, _, rfr, ua, qs) => {
 
       // Validations, and let's strip double-encodings
       val timestamp = toTimestamp(date, time)
@@ -125,9 +114,9 @@ object CloudfrontLoader extends Loader[String] {
       }
 
       // No validation (yet) on the below
-      val userAgent  = singleEncodePcts(ua)
-      val refr = singleEncodePcts(rfr)
-      val referer = toOption(refr) map toCleanUri
+      val userAgent = singleEncodePcts(ua)
+      val refr      = singleEncodePcts(rfr)
+      val referer   = toOption(refr) map toCleanUri
 
       val api = CollectorApi.parse(objct)
 
@@ -141,11 +130,11 @@ object CloudfrontLoader extends Loader[String] {
           toOption(ip),
           toOption(userAgent),
           referer,
-          Nil,  // No headers for CloudFront
+          Nil, // No headers for CloudFront
           None, // No collector-set user ID for CloudFront
-          a,    // API vendor/version
+          a, // API vendor/version
           None, // No content type
-          None  // No request body
+          None // No request body
         ).some
       }
     }
@@ -169,7 +158,9 @@ object CloudfrontLoader extends Loader[String] {
       DateTime.parse("%sT%s+00:00".format(date, time)).success // Construct a UTC ISO date from CloudFront date and time
     } catch {
       case NonFatal(e) =>
-        "Unexpected exception converting date [%s] and time [%s] to timestamp: [%s]".format(date, time, e.getMessage).fail
+        "Unexpected exception converting date [%s] and time [%s] to timestamp: [%s]"
+          .format(date, time, e.getMessage)
+          .fail
     }
 
   /**
@@ -183,13 +174,13 @@ object CloudfrontLoader extends Loader[String] {
   def toOption(field: String): Option[String] = Option(field) match {
     case Some("-") => None
     case Some("")  => None
-    case s => s // Leaves any other Some(x) or None as-is
+    case s         => s // Leaves any other Some(x) or None as-is
   }
 
   /**
    * 'Cleans' a string to make it parsable by
    * URLDecoder.decode.
-   * 
+   *
    * The '%' character seems to be appended to the
    * end of some URLs in the CloudFront logs, causing
    * Exceptions when using URLDecoder.decode. Perhaps
@@ -198,6 +189,6 @@ object CloudfrontLoader extends Loader[String] {
    * @param s The String to clean
    * @return the cleaned string
    */
-  private[loaders] def toCleanUri(uri: String): String = 
+  private[loaders] def toCleanUri(uri: String): String =
     StringUtils.removeEnd(uri, "%")
 }
