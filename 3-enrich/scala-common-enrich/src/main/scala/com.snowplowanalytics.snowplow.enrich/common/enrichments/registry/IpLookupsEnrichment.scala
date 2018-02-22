@@ -148,8 +148,6 @@ case class IpLookupsEnrichment(
   localMode: Boolean
   ) extends Enrichment {
 
-  val version = new DefaultArtifactVersion("0.1.0")
-
   private type FinalPath = String
   private type DbEntry = Option[(Option[URI], FinalPath)]
 
