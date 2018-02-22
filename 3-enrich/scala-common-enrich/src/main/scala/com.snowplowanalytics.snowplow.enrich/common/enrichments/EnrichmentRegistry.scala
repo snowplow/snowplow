@@ -37,26 +37,27 @@ import iglu.client.validation.ProcessingMessageMethods._
 
 // This project
 import registry.{
-  Enrichment,
   AnonIpEnrichment,
-  IpLookupsEnrichment,
-  RefererParserEnrichment,
   CampaignAttributionEnrichment,
-  UserAgentUtilsEnrichment,
-  UaParserEnrichment,
-  CurrencyConversionEnrichment,
-  JavascriptScriptEnrichment,
-  EventFingerprintEnrichment,
   CookieExtractorEnrichment,
-  HttpHeaderExtractorEnrichment,
-  WeatherEnrichment,
-  UserAgentUtilsEnrichmentConfig,
-  UaParserEnrichmentConfig,
-  CurrencyConversionEnrichmentConfig,
-  JavascriptScriptEnrichmentConfig,
-  EventFingerprintEnrichmentConfig,
   CookieExtractorEnrichmentConfig,
+  CurrencyConversionEnrichment,
+  CurrencyConversionEnrichmentConfig,
+  Enrichment,
+  EventFingerprintEnrichment,
+  EventFingerprintEnrichmentConfig,
+  HttpHeaderExtractorEnrichment,
   HttpHeaderExtractorEnrichmentConfig,
+  IpLookupsEnrichment,
+  JavascriptScriptEnrichment,
+  JavascriptScriptEnrichmentConfig,
+  PiiPseudonymizerEnrichment,
+  RefererParserEnrichment,
+  UaParserEnrichment,
+  UaParserEnrichmentConfig,
+  UserAgentUtilsEnrichment,
+  UserAgentUtilsEnrichmentConfig,
+  WeatherEnrichment,
   WeatherEnrichmentConfig
 }
 import registry.apirequest.{
@@ -169,6 +170,8 @@ object EnrichmentRegistry {
             ApiRequestEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "sql_query_enrichment_config") {
             SqlQueryEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+          } else if (nm == "pii_enrichment_config") {
+            PiiPseudonymizerEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else {
             None.success // Enrichment is not recognized yet
           }
@@ -318,6 +321,15 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    */
   def getSqlQueryEnrichment: Option[SqlQueryEnrichment] =
     getEnrichment[SqlQueryEnrichment]("sql_query_enrichment_config")
+
+  /**
+   * Returns an Option boxing the PiiPseudonymizerEnrichment
+   * config value if present, or None if not
+   *
+   * @return Option boxing the PiiPseudonymizerEnrichment instance
+   */
+  def getPiiPseudonymizerEnrichment: Option[PiiPseudonymizerEnrichment] =
+    getEnrichment[PiiPseudonymizerEnrichment]("pii_enrichment_config")
 
   /**
    * Returns an Option boxing an Enrichment
