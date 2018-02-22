@@ -35,8 +35,8 @@ import org.json4s.jackson.parseJson
 import outputs.EnrichedEvent
 import Input._
 
-
-class InputSpec extends Specification with ValidationMatchers { def is = s2"""
+class InputSpec extends Specification with ValidationMatchers {
+  def is = s2"""
   This is a specification to test the Inputs and placeholder-map building of SQL Query Enrichment
   Create template context from POJO inputs                 $e1
   Create template context from JSON inputs                 $e8
@@ -52,10 +52,24 @@ class InputSpec extends Specification with ValidationMatchers { def is = s2"""
   """
 
   object ContextCase {
-    val ccInput = Input(1, pojo = None, json = JsonInput("contexts", "iglu:org.ietf/http_cookie/jsonschema/1-*-*", "$.value").some)
-    val derInput = Input(2, pojo = None, json = JsonInput("derived_contexts", "iglu:org.openweathermap/weather/jsonschema/1-0-*", "$.main.humidity").some)
-    val unstructInput = Input(3, pojo = None, json = JsonInput("unstruct_event", "iglu:com.snowplowanalytics.monitoring.batch/jobflow_step_status/jsonschema/1-0-0", "$.state").some)
-    val overrideHumidityInput = Input(2, pojo = None, json = JsonInput("contexts", "iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-1-*", "$.latitude").some)
+    val ccInput =
+      Input(1, pojo = None, json = JsonInput("contexts", "iglu:org.ietf/http_cookie/jsonschema/1-*-*", "$.value").some)
+    val derInput = Input(
+      2,
+      pojo = None,
+      json = JsonInput("derived_contexts", "iglu:org.openweathermap/weather/jsonschema/1-0-*", "$.main.humidity").some)
+    val unstructInput =
+      Input(3,
+            pojo = None,
+            json = JsonInput("unstruct_event",
+                             "iglu:com.snowplowanalytics.monitoring.batch/jobflow_step_status/jsonschema/1-0-0",
+                             "$.state").some)
+    val overrideHumidityInput = Input(
+      2,
+      pojo = None,
+      json = JsonInput("contexts",
+                       "iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-1-*",
+                       "$.latitude").some)
 
     val derivedContext1 = parseJson(
       """
@@ -84,16 +98,14 @@ class InputSpec extends Specification with ValidationMatchers { def is = s2"""
        |}
       """.stripMargin).asInstanceOf[JObject]
 
-    val cookieContext = parseJson(
-      """
+    val cookieContext = parseJson("""
        |{
        |  "schema": "iglu:org.ietf/http_cookie/jsonschema/1-0-0",
        |  "data": {"name": "someCookieAgain", "value": null}
        |}
      """.stripMargin).asInstanceOf[JObject]
 
-    val cookieContextWithoutNull = parseJson(
-      """
+    val cookieContextWithoutNull = parseJson("""
         |{
         |  "schema": "iglu:org.ietf/http_cookie/jsonschema/1-0-0",
         |  "data": {"name": "someCookieAgain", "value": "someValue"}
@@ -120,12 +132,13 @@ class InputSpec extends Specification with ValidationMatchers { def is = s2"""
   def e1 = {
     val input1 = Input(1, pojo = PojoInput("user_id").some, json = None)
     val input2 = Input(2, pojo = PojoInput("true_tstamp").some, json = None)
-    val event = new EnrichedEvent
+    val event  = new EnrichedEvent
     event.setUser_id("chuwy")
     event.setTrue_tstamp("20")
 
     val placeholderMap = Input.buildPlaceholderMap(List(input1, input2), event, Nil, Nil, None)
-    placeholderMap must beSuccessful(Some(IntMap(1 -> StringPlaceholder.Value("chuwy"), 2 -> StringPlaceholder.Value("20"))))
+    placeholderMap must beSuccessful(
+      Some(IntMap(1 -> StringPlaceholder.Value("chuwy"), 2 -> StringPlaceholder.Value("20"))))
   }
 
   def e2 = {
@@ -135,8 +148,9 @@ class InputSpec extends Specification with ValidationMatchers { def is = s2"""
       List(ccInput, derInput, unstructInput, overrideHumidityInput),
       event,
       derivedContexts = List(derivedContext1),
-      customContexts = List(cookieContext, overriderContext),
-      unstructEvent = Some(unstructEvent))
+      customContexts  = List(cookieContext, overriderContext),
+      unstructEvent   = Some(unstructEvent)
+    )
     placeholderMap must beSuccessful(None)
   }
 
@@ -147,21 +161,26 @@ class InputSpec extends Specification with ValidationMatchers { def is = s2"""
       List(ccInput, derInput, unstructInput, overrideHumidityInput),
       event,
       derivedContexts = List(derivedContext1),
-      customContexts = List(cookieContextWithoutNull, overriderContext),
-      unstructEvent = Some(unstructEvent))
+      customContexts  = List(cookieContextWithoutNull, overriderContext),
+      unstructEvent   = Some(unstructEvent)
+    )
 
     placeholderMap must beSuccessful(
       Some(
-        IntMap(
-          1 -> StringPlaceholder.Value("someValue"),
-          2 -> DoublePlaceholder.Value(43.1),
-          3 -> StringPlaceholder.Value("COMPLETED"))
+        IntMap(1 -> StringPlaceholder.Value("someValue"),
+               2 -> DoublePlaceholder.Value(43.1),
+               3 -> StringPlaceholder.Value("COMPLETED"))
       )
     )
   }
 
   def e3 = {
-    val jsonLatitudeInput = Input(1, pojo = None, json = JsonInput("contexts", "iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-1-*", "$.latitude").some)
+    val jsonLatitudeInput = Input(
+      1,
+      pojo = None,
+      json = JsonInput("contexts",
+                       "iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-1-*",
+                       "$.latitude").some)
     val pojoLatitudeInput = Input(1, pojo = PojoInput("geo_latitude").some, json = None)
     val jsonLatitudeContext = parseJson(
       """
@@ -174,34 +193,42 @@ class InputSpec extends Specification with ValidationMatchers { def is = s2"""
     event.setGeo_latitude(42.0f)
 
     // In API Enrichment this colliding wrong
-    val templateContext = Input.buildPlaceholderMap(
-      List(jsonLatitudeInput, pojoLatitudeInput),
-      event,
-      derivedContexts = Nil,
-      customContexts = List(jsonLatitudeContext),
-      unstructEvent = None)
+    val templateContext = Input.buildPlaceholderMap(List(jsonLatitudeInput, pojoLatitudeInput),
+                                                    event,
+                                                    derivedContexts = Nil,
+                                                    customContexts  = List(jsonLatitudeContext),
+                                                    unstructEvent   = None)
     templateContext must beSuccessful(Some(IntMap(1 -> DoublePlaceholder.Value(43.1))))
   }
 
   def e4 = {
-    val invalidJsonPathInput  = Input(1, pojo = None, json = JsonInput("contexts", "iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-1-*", "*.invalidJsonPath").some)
-    val invalidJsonFieldInput = Input(1, pojo = None, json = JsonInput("invalid_field", "iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-1-*", "$.validJsonPath").some)
+    val invalidJsonPathInput = Input(
+      1,
+      pojo = None,
+      json = JsonInput("contexts",
+                       "iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-1-*",
+                       "*.invalidJsonPath").some)
+    val invalidJsonFieldInput = Input(
+      1,
+      pojo = None,
+      json = JsonInput("invalid_field",
+                       "iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-1-*",
+                       "$.validJsonPath").some)
     val pojoInput = Input(1, pojo = PojoInput("app_id").some, json = None)
 
-    val templateContext = Input.buildPlaceholderMap(
-      List(invalidJsonPathInput, pojoInput, invalidJsonFieldInput),
-      null,
-      derivedContexts = Nil,
-      customContexts = List(JObject(Nil)),
-      unstructEvent = None)
+    val templateContext = Input.buildPlaceholderMap(List(invalidJsonPathInput, pojoInput, invalidJsonFieldInput),
+                                                    null,
+                                                    derivedContexts = Nil,
+                                                    customContexts  = List(JObject(Nil)),
+                                                    unstructEvent   = None)
     templateContext must beFailing.like {
       case errors => errors.toList must have length 3
     }
   }
 
   def e5 = {
-    val event = new EnrichedEvent
-    val pojoInput = Input(1, pojo = PojoInput("app_id").some, json = None)
+    val event           = new EnrichedEvent
+    val pojoInput       = Input(1, pojo = PojoInput("app_id").some, json = None)
     val templateContext = pojoInput.getFromEvent(event)
     templateContext must beSuccessful.like {
       case map => map must beEqualTo((1, None))
@@ -209,19 +236,20 @@ class InputSpec extends Specification with ValidationMatchers { def is = s2"""
   }
 
   def e6 = {
-    val event = new EnrichedEvent
-    val pojoInput = Input(1, pojo = PojoInput("unknown_property").some, json = None)
+    val event           = new EnrichedEvent
+    val pojoInput       = Input(1, pojo = PojoInput("unknown_property").some, json = None)
     val templateContext = pojoInput.getFromEvent(event)
     templateContext must beFailing
   }
 
   def e9 = {
-    val event = new EnrichedEvent
+    val event          = new EnrichedEvent
     val placeholderMap = Input.buildPlaceholderMap(List(), event, Nil, Nil, None)
     placeholderMap must beSuccessful.like {
-      case opt => opt must beSome.like {
-        case map => map must beEqualTo(IntMap.empty[Input.PlaceholderMap])
-      }
+      case opt =>
+        opt must beSome.like {
+          case map => map must beEqualTo(IntMap.empty[Input.PlaceholderMap])
+        }
     }
   }
 
@@ -231,9 +259,8 @@ class InputSpec extends Specification with ValidationMatchers { def is = s2"""
    * unknown type to [[EnrichedEvent]] at the same time not adding
    * corresponding [[StatementPlaceholder]]
    */
-  def e10 = {
+  def e10 =
     eventTypeMap.values.toSet.diff(typeHandlersMap.keySet) must beEmpty
-  }
 
   def e7 = {
     val jsonObject = Input.extractFromJson(parseJson("""{"foo": "bar"} """))
@@ -257,15 +284,15 @@ class InputSpec extends Specification with ValidationMatchers { def is = s2"""
 
     val appid = Input(3, Some(PojoInput("app_id")), None).getFromEvent(event) must beSuccessful.like {
       case (3, Some(StringPlaceholder.Value("enrichment-test"))) => ok
-      case _ => ko
+      case _                                                     => ko
     }
     val viewwidth = Input(1, Some(PojoInput("br_viewwidth")), None).getFromEvent(event) must beSuccessful.like {
       case (1, Some(IntPlaceholder.Value(800))) => ok
-      case _ => ko
+      case _                                    => ko
     }
-    val longitude =  Input(1, Some(PojoInput("geo_longitude")), None).getFromEvent(event) must beSuccessful.like {
+    val longitude = Input(1, Some(PojoInput("geo_longitude")), None).getFromEvent(event) must beSuccessful.like {
       case (1, Some(FloatPlaceholder.Value(32.3f))) => ok
-      case _ => ko
+      case _                                        => ko
     }
 
     appid.and(viewwidth).and(longitude)

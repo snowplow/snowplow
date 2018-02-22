@@ -1,5 +1,5 @@
- /**Copyright (c) 2012-2018 Snowplow Analytics Ltd. All rights reserved.
- *
+/**Copyright (c) 2012-2018 Snowplow Analytics Ltd. All rights reserved.
+| *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
  * You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
@@ -9,7 +9,6 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 package registry
@@ -28,7 +27,8 @@ import org.json4s.JValue
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
-class CookieExtractorEnrichmentSpec extends Specification with ValidationMatchers { def is = s2"""
+class CookieExtractorEnrichmentSpec extends Specification with ValidationMatchers {
+  def is = s2"""
   This is a specification to test the CookieExtractorEnrichment
   returns an empty list when no cookie header                $e1
   returns an empty list when no cookie matches configuration $e2
@@ -48,12 +48,7 @@ class CookieExtractorEnrichmentSpec extends Specification with ValidationMatcher
   }
 
   def e3 = {
-    val cookies = List(
-      "ck1",
-      "=cv2",
-      "ck3=",
-      "ck4=cv4",
-      "ck5=\"cv5\"")
+    val cookies    = List("ck1", "=cv2", "ck3=", "ck4=cv4", "ck5=\"cv5\"")
     val cookieKeys = List("ck1", "", "ck3", "ck4", "ck5")
 
     val expected = List(

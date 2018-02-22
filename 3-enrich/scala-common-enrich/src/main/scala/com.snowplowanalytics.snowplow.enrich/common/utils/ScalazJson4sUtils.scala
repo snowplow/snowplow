@@ -21,12 +21,7 @@ import scalaz._
 import Scalaz._
 
 // json4s
-import org.json4s.{
-  DefaultFormats,
-  JValue,
-  JNothing,
-  MappingException
-}
+import org.json4s.{DefaultFormats, JNothing, JValue, MappingException}
 import org.json4s.JsonDSL._
 
 // Iglu
@@ -49,17 +44,21 @@ object ScalazJson4sUtils {
    *         success or an error String on failure
    */
   def extract[A: Manifest](config: JValue, head: String, tail: String*): ValidatedMessage[A] = {
-    
+
     val path = head +: tail
 
-    // This check is necessary because attempting to follow 
+    // This check is necessary because attempting to follow
     // an invalid path yields a JNothing, which would be
     // interpreted as an empty list if type A is List[String]
     if (fieldExists(config, head, tail: _*)) {
       try {
         path.foldLeft(config)(_ \ _).extract[A].success
       } catch {
-        case me: MappingException => s"Could not extract %s as %s from supplied JSON".format(path.mkString("."), manifest[A]).toProcessingMessage.fail
+        case me: MappingException =>
+          s"Could not extract %s as %s from supplied JSON"
+            .format(path.mkString("."), manifest[A])
+            .toProcessingMessage
+            .fail
       }
     } else s"JSON path %s not found".format(path.mkString(".")).toProcessingMessage.fail
   }
@@ -74,9 +73,9 @@ object ScalazJson4sUtils {
    *        JSON path
    * @return Whether the path is valid
    */
-  def fieldExists(config: JValue, head: String, tail: String*): Boolean = 
+  def fieldExists(config: JValue, head: String, tail: String*): Boolean =
     (head +: tail).foldLeft(config)(_ \ _) match {
       case JNothing => false
-      case s => true
+      case s        => true
     }
 }

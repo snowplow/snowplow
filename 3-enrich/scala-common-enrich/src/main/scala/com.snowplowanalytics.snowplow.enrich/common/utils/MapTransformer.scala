@@ -62,7 +62,7 @@ import Scalaz._
 object MapTransformer {
 
   // Clarificatory aliases
-  type Key = String
+  type Key   = String
   type Value = String
   type Field = String
 
@@ -92,7 +92,7 @@ object MapTransformer {
    */
   def generate[T <: AnyRef](sourceMap: SourceMap, transformMap: TransformMap)(implicit m: Manifest[T]): Validated[T] = {
     val newInst = m.runtimeClass.newInstance()
-    val result = _transform(newInst, sourceMap, transformMap, getSetters(m.runtimeClass))
+    val result  = _transform(newInst, sourceMap, transformMap, getSetters(m.runtimeClass))
     result.flatMap(s => newInst.asInstanceOf[T].success) // On success, replace the field count with the new instance
   }
 
@@ -103,7 +103,7 @@ object MapTransformer {
    * @param obj Any Object
    * @return the new Transformable class, with manifest attached
    */
-  implicit def makeTransformable[T <: AnyRef](obj: T)(implicit m : Manifest[T]) = new TransformableClass[T](obj)
+  implicit def makeTransformable[T <: AnyRef](obj: T)(implicit m: Manifest[T]) = new TransformableClass[T](obj)
 
   /**
    * A pimped object, now transformable by
@@ -150,45 +150,49 @@ object MapTransformer {
    *         of error Strings, or the count of
    *         updated fields
    */
-  private def _transform[T](obj: T, sourceMap: SourceMap, transformMap: TransformMap, setters: SettersMap): ValidationNel[String, Int] = {
+  private def _transform[T](obj: T,
+                            sourceMap: SourceMap,
+                            transformMap: TransformMap,
+                            setters: SettersMap): ValidationNel[String, Int] = {
 
-    val results: List[Validation[String, Int]] = sourceMap.map { case (key, in) =>
-      if (transformMap.contains(key)) {
-        val (func, field) = transformMap(key)
-        val out = func(key, in)
+    val results: List[Validation[String, Int]] = sourceMap.map {
+      case (key, in) =>
+        if (transformMap.contains(key)) {
+          val (func, field) = transformMap(key)
+          val out           = func(key, in)
 
-        out match {
-          case Success(s) =>
-            field match {
-              case f: String =>
-                val result = s.asInstanceOf[AnyRef]
-                setters(f).invoke(obj, result)
-                1.success[String] // +1 to the count of fields successfully set
-              case Tuple2(f1: String, f2: String) =>
-                val result = s.asInstanceOf[Tuple2[AnyRef, AnyRef]]
-                setters(f1).invoke(obj, result._1)
-                setters(f2).invoke(obj, result._2)
-                2.success[String] // +2 to the count of fields successfully set
-              case Tuple3(f1: String, f2: String, f3: String) =>
-                val result = s.asInstanceOf[Tuple3[AnyRef, AnyRef, AnyRef]]
-                setters(f1).invoke(obj, result._1)
-                setters(f2).invoke(obj, result._2)
-                setters(f3).invoke(obj, result._3)
-                3.success[String] // +3 to the count of fields successfully set
-              case Tuple4(f1: String, f2: String, f3: String, f4: String) =>
-                val result = s.asInstanceOf[Tuple4[AnyRef, AnyRef, AnyRef, AnyRef]]
-                setters(f1).invoke(obj, result._1)
-                setters(f2).invoke(obj, result._2)
-                setters(f3).invoke(obj, result._3)
-                setters(f4).invoke(obj, result._4)
-                4.success[String] // +4 to the count of fields successfully set
-            }
-          case Failure(e) =>
-            e.fail[Int]
+          out match {
+            case Success(s) =>
+              field match {
+                case f: String =>
+                  val result = s.asInstanceOf[AnyRef]
+                  setters(f).invoke(obj, result)
+                  1.success[String] // +1 to the count of fields successfully set
+                case Tuple2(f1: String, f2: String) =>
+                  val result = s.asInstanceOf[Tuple2[AnyRef, AnyRef]]
+                  setters(f1).invoke(obj, result._1)
+                  setters(f2).invoke(obj, result._2)
+                  2.success[String] // +2 to the count of fields successfully set
+                case Tuple3(f1: String, f2: String, f3: String) =>
+                  val result = s.asInstanceOf[Tuple3[AnyRef, AnyRef, AnyRef]]
+                  setters(f1).invoke(obj, result._1)
+                  setters(f2).invoke(obj, result._2)
+                  setters(f3).invoke(obj, result._3)
+                  3.success[String] // +3 to the count of fields successfully set
+                case Tuple4(f1: String, f2: String, f3: String, f4: String) =>
+                  val result = s.asInstanceOf[Tuple4[AnyRef, AnyRef, AnyRef, AnyRef]]
+                  setters(f1).invoke(obj, result._1)
+                  setters(f2).invoke(obj, result._2)
+                  setters(f3).invoke(obj, result._3)
+                  setters(f4).invoke(obj, result._4)
+                  4.success[String] // +4 to the count of fields successfully set
+              }
+            case Failure(e) =>
+              e.fail[Int]
+          }
+        } else {
+          0.success[String] // Key not found: zero fields updated
         }
-      } else {
-        0.success[String] // Key not found: zero fields updated
-      }
     }.toList
 
     results.foldLeft(0.successNel[String])(_ +++ _.toValidationNel)
@@ -204,7 +208,7 @@ object MapTransformer {
    *           in lowercase
    */
   private def lowerFirst(s: String): String =
-    s.substring(0,1).toLowerCase + s.substring(1)
+    s.substring(0, 1).toLowerCase + s.substring(1)
 
   /**
    * Gets the field name from a setter Method,
@@ -226,9 +230,6 @@ object MapTransformer {
    *          setter methods to return
    * @return the Map of setter Methods
    */
-  private def getSetters[T](c: Class[T]): SettersMap = c
-    .getDeclaredMethods
-    .filter { _.getName.startsWith("set") }
-    .groupBy { setterToFieldName(_) }
-    .mapValues { _.head }
+  private def getSetters[T](c: Class[T]): SettersMap =
+    c.getDeclaredMethods.filter { _.getName.startsWith("set") }.groupBy { setterToFieldName(_) }.mapValues { _.head }
 }

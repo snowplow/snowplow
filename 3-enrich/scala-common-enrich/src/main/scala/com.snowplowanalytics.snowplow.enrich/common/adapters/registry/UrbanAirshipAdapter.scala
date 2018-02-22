@@ -52,23 +52,29 @@ object UrbanAirshipAdapter extends Adapter {
   private val TrackerVersion = "com.urbanairship.connect-v1"
 
   // Schemas for reverse-engineering a Snowplow unstructured event
-  private val EventSchemaMap = Map (
-    "CLOSE"                         -> SchemaKey("com.urbanairship.connect", "CLOSE", "jsonschema", "1-0-0").toSchemaUri,
-    "CUSTOM"                        -> SchemaKey("com.urbanairship.connect", "CUSTOM", "jsonschema", "1-0-0").toSchemaUri,
-    "FIRST_OPEN"                    -> SchemaKey("com.urbanairship.connect", "FIRST_OPEN", "jsonschema", "1-0-0").toSchemaUri,
-    "IN_APP_MESSAGE_DISPLAY"        -> SchemaKey("com.urbanairship.connect", "IN_APP_MESSAGE_DISPLAY", "jsonschema", "1-0-0").toSchemaUri,
-    "IN_APP_MESSAGE_EXPIRATION"     -> SchemaKey("com.urbanairship.connect", "IN_APP_MESSAGE_EXPIRATION", "jsonschema", "1-0-0").toSchemaUri,
-    "IN_APP_MESSAGE_RESOLUTION"     -> SchemaKey("com.urbanairship.connect", "IN_APP_MESSAGE_RESOLUTION", "jsonschema", "1-0-0").toSchemaUri,
-    "LOCATION"                      -> SchemaKey("com.urbanairship.connect", "LOCATION", "jsonschema", "1-0-0").toSchemaUri,
-    "OPEN"                          -> SchemaKey("com.urbanairship.connect", "OPEN", "jsonschema", "1-0-0").toSchemaUri,
-    "PUSH_BODY"                     -> SchemaKey("com.urbanairship.connect", "PUSH_BODY", "jsonschema", "1-0-0").toSchemaUri,
-    "REGION"                        -> SchemaKey("com.urbanairship.connect", "REGION", "jsonschema", "1-0-0").toSchemaUri,
-    "RICH_DELETE"                   -> SchemaKey("com.urbanairship.connect", "RICH_DELETE", "jsonschema", "1-0-0").toSchemaUri,
-    "RICH_DELIVERY"                 -> SchemaKey("com.urbanairship.connect", "RICH_DELIVERY", "jsonschema", "1-0-0").toSchemaUri,
-    "RICH_HEAD"                     -> SchemaKey("com.urbanairship.connect", "RICH_HEAD", "jsonschema", "1-0-0").toSchemaUri,
-    "SEND"                          -> SchemaKey("com.urbanairship.connect", "SEND", "jsonschema", "1-0-0").toSchemaUri,
-    "TAG_CHANGE"                    -> SchemaKey("com.urbanairship.connect", "TAG_CHANGE", "jsonschema", "1-0-0").toSchemaUri,
-    "UNINSTALL"                     -> SchemaKey("com.urbanairship.connect", "UNINSTALL", "jsonschema", "1-0-0").toSchemaUri
+  private val EventSchemaMap = Map(
+    "CLOSE"                  -> SchemaKey("com.urbanairship.connect", "CLOSE", "jsonschema", "1-0-0").toSchemaUri,
+    "CUSTOM"                 -> SchemaKey("com.urbanairship.connect", "CUSTOM", "jsonschema", "1-0-0").toSchemaUri,
+    "FIRST_OPEN"             -> SchemaKey("com.urbanairship.connect", "FIRST_OPEN", "jsonschema", "1-0-0").toSchemaUri,
+    "IN_APP_MESSAGE_DISPLAY" -> SchemaKey("com.urbanairship.connect", "IN_APP_MESSAGE_DISPLAY", "jsonschema", "1-0-0").toSchemaUri,
+    "IN_APP_MESSAGE_EXPIRATION" -> SchemaKey("com.urbanairship.connect",
+                                             "IN_APP_MESSAGE_EXPIRATION",
+                                             "jsonschema",
+                                             "1-0-0").toSchemaUri,
+    "IN_APP_MESSAGE_RESOLUTION" -> SchemaKey("com.urbanairship.connect",
+                                             "IN_APP_MESSAGE_RESOLUTION",
+                                             "jsonschema",
+                                             "1-0-0").toSchemaUri,
+    "LOCATION"      -> SchemaKey("com.urbanairship.connect", "LOCATION", "jsonschema", "1-0-0").toSchemaUri,
+    "OPEN"          -> SchemaKey("com.urbanairship.connect", "OPEN", "jsonschema", "1-0-0").toSchemaUri,
+    "PUSH_BODY"     -> SchemaKey("com.urbanairship.connect", "PUSH_BODY", "jsonschema", "1-0-0").toSchemaUri,
+    "REGION"        -> SchemaKey("com.urbanairship.connect", "REGION", "jsonschema", "1-0-0").toSchemaUri,
+    "RICH_DELETE"   -> SchemaKey("com.urbanairship.connect", "RICH_DELETE", "jsonschema", "1-0-0").toSchemaUri,
+    "RICH_DELIVERY" -> SchemaKey("com.urbanairship.connect", "RICH_DELIVERY", "jsonschema", "1-0-0").toSchemaUri,
+    "RICH_HEAD"     -> SchemaKey("com.urbanairship.connect", "RICH_HEAD", "jsonschema", "1-0-0").toSchemaUri,
+    "SEND"          -> SchemaKey("com.urbanairship.connect", "SEND", "jsonschema", "1-0-0").toSchemaUri,
+    "TAG_CHANGE"    -> SchemaKey("com.urbanairship.connect", "TAG_CHANGE", "jsonschema", "1-0-0").toSchemaUri,
+    "UNINSTALL"     -> SchemaKey("com.urbanairship.connect", "UNINSTALL", "jsonschema", "1-0-0").toSchemaUri
   )
 
   /**
@@ -82,30 +88,30 @@ object UrbanAirshipAdapter extends Adapter {
    */
   private def payloadBodyToEvent(body_json: String, payload: CollectorPayload): Validated[RawEvent] = {
 
-    def toTtmFormat(jsonTimestamp: String) = {
+    def toTtmFormat(jsonTimestamp: String) =
       "%d".format(new DateTime(jsonTimestamp).getMillis)
-    }
 
     try {
 
-      val parsed = parse(body_json)
+      val parsed    = parse(body_json)
       val eventType = (parsed \ "type").extractOpt[String]
 
-      val trueTimestamp = (parsed \ "occurred").extractOpt[String]
-      val eid = (parsed \ "id").extractOpt[String]
+      val trueTimestamp      = (parsed \ "occurred").extractOpt[String]
+      val eid                = (parsed \ "id").extractOpt[String]
       val collectorTimestamp = (parsed \ "processed").extractOpt[String]
 
-      lookupSchema(eventType, VendorName, EventSchemaMap) map {
-        schema => RawEvent(api = payload.api,
+      lookupSchema(eventType, VendorName, EventSchemaMap) map { schema =>
+        RawEvent(
+          api = payload.api,
           parameters = toUnstructEventParams(TrackerVersion,
-            toMap(payload.querystring) ++ Map("ttm" -> toTtmFormat(trueTimestamp.get), "eid" -> eid.get),
-            schema,
-            parsed,
-            "srv"
-          ),
+                                             toMap(payload.querystring) ++ Map("ttm" -> toTtmFormat(trueTimestamp.get),
+                                                                               "eid" -> eid.get),
+                                             schema,
+                                             parsed,
+                                             "srv"),
           contentType = payload.contentType,
-          source = payload.source,
-          context = payload.context.copy(timestamp = Some(new DateTime(collectorTimestamp.get, DateTimeZone.UTC)))
+          source      = payload.source,
+          context     = payload.context.copy(timestamp = Some(new DateTime(collectorTimestamp.get, DateTimeZone.UTC)))
         )
       }
 
@@ -133,7 +139,7 @@ object UrbanAirshipAdapter extends Adapter {
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
     (payload.body, payload.contentType) match {
-      case (None, _) => s"Request body is empty: no ${VendorName} event to process".failNel
+      case (None, _)     => s"Request body is empty: no ${VendorName} event to process".failNel
       case (_, Some(ct)) => s"Content type of ${ct} provided, expected None for ${VendorName}".failNel
       case (Some(body), _) => {
         val event = payloadBodyToEvent(body, payload)
