@@ -18,6 +18,7 @@ import akka.http.scaladsl.model.{ContentType, HttpResponse}
 import akka.http.scaladsl.model.headers.HttpCookiePair
 import akka.http.scaladsl.server.{Directive1, Route}
 import akka.http.scaladsl.server.Directives._
+import com.snowplowanalytics.snowplow.collectors.scalastream.monitoring.BeanRegistry
 
 trait CollectorRoute {
   def collectorService: Service
@@ -43,6 +44,8 @@ trait CollectorRoute {
             post {
               extractContentType { ct =>
                 entity(as[String]) { body =>
+                  BeanRegistry.collectorBean.incrementSuccessfulRequests()
+
                   complete {
                     collectorService.cookie(qs, Some(body),
                       path, cookie, userAgent, refererURI, host, ip, request, false, Some(ct))._1
@@ -51,6 +54,8 @@ trait CollectorRoute {
               }
             } ~
             get {
+              BeanRegistry.collectorBean.incrementSuccessfulRequests()
+
               complete { collectorService.cookie(
                 qs, None, path, cookie, userAgent, refererURI, host, ip, request, true)._1
               }
@@ -58,6 +63,8 @@ trait CollectorRoute {
           } ~
           path("""ice\.png""".r | "i".r) { path =>
             get {
+              BeanRegistry.collectorBean.incrementSuccessfulRequests()
+
               complete { collectorService.cookie(
                 qs, None, "/" + path, cookie, userAgent, refererURI, host, ip, request, true)._1
               }
@@ -65,8 +72,11 @@ trait CollectorRoute {
           }
         }
       }
-    } ~ corsRoute ~ healthRoute ~ crossDomainRoute ~
+    } ~ corsRoute ~ healthRoute ~ crossDomainRoute ~ {
+      BeanRegistry.collectorBean.incrementFailedRequests()
+
       complete(HttpResponse(404, entity = "404 not found"))
+    }
 
   /**
    * Extract the query string from a request URI
