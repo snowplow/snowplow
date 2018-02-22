@@ -14,10 +14,12 @@
  */
 package com.snowplowanalytics.snowplow.collectors.scalastream
 
-import akka.http.scaladsl.model.{ContentType, HttpResponse}
+import akka.http.scaladsl.model.{ContentType, HttpResponse, StatusCode, StatusCodes}
 import akka.http.scaladsl.model.headers.HttpCookiePair
 import akka.http.scaladsl.server.{Directive1, Route}
 import akka.http.scaladsl.server.Directives._
+
+import monitoring.BeanRegistry
 
 trait CollectorRoute {
   def collectorService: Service
@@ -43,30 +45,34 @@ trait CollectorRoute {
             post {
               extractContentType { ct =>
                 entity(as[String]) { body =>
-                  complete {
-                    collectorService.cookie(qs, Some(body),
-                      path, cookie, userAgent, refererURI, host, ip, request, false, Some(ct))._1
-                  }
+                  val (r, _) = collectorService.cookie(qs, Some(body),
+                      path, cookie, userAgent, refererURI, host, ip, request, false, Some(ct))
+                  incrementRequests(r.status)
+                  complete(r)
                 }
               }
             } ~
             get {
-              complete { collectorService.cookie(
-                qs, None, path, cookie, userAgent, refererURI, host, ip, request, true)._1
-              }
+              val (r, _) = collectorService.cookie(
+                qs, None, path, cookie, userAgent, refererURI, host, ip, request, true)
+              incrementRequests(r.status)
+              complete(r)
             }
           } ~
           path("""ice\.png""".r | "i".r) { path =>
             get {
-              complete { collectorService.cookie(
-                qs, None, "/" + path, cookie, userAgent, refererURI, host, ip, request, true)._1
-              }
+              val (r,l) = collectorService.cookie(
+                qs, None, "/" + path, cookie, userAgent, refererURI, host, ip, request, true)
+              incrementRequests(r.status)
+              complete(r)
             }
           }
         }
       }
-    } ~ corsRoute ~ healthRoute ~ crossDomainRoute ~
+    } ~ corsRoute ~ healthRoute ~ crossDomainRoute ~ {
+      BeanRegistry.collectorBean.incrementFailedRequests()
       complete(HttpResponse(404, entity = "404 not found"))
+    }
 
   /**
    * Extract the query string from a request URI
@@ -82,9 +88,9 @@ trait CollectorRoute {
   }
 
   /**
-   * Directive to extract a cookie if a cookie name is specified and if such a cookie exists
-   * @param name Optionally configured cookie name
-   */
+    * Directive to extract a cookie if a cookie name is specified and if such a cookie exists
+    * @param name Optionally configured cookie name
+    */
   def cookieIfWanted(name: Option[String]): Directive1[Option[HttpCookiePair]] = name match {
     case Some(n) => optionalCookie(n)
     case None => optionalHeaderValue(x => None)
@@ -105,6 +111,14 @@ trait CollectorRoute {
   private def corsRoute: Route = options {
     extractRequest { request =>
       complete(collectorService.preflightResponse(request))
+    }
+  }
+
+  private def incrementRequests(status: StatusCode): Unit = {
+    if (List(StatusCodes.OK, StatusCodes.Found).contains(status)) {
+      BeanRegistry.collectorBean.incrementSuccessfulRequests()
+    } else {
+      BeanRegistry.collectorBean.incrementFailedRequests()
     }
   }
 }
