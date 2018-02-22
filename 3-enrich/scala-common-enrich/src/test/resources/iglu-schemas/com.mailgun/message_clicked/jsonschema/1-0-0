@@ -1,0 +1,108 @@
+{
+  "$schema": "http://iglucentral.com/schemas/com.snowplowanalytics.self-desc/schema/jsonschema/1-0-0#",
+  "description": "Schema for a Mailgun message clicked event",
+  "self": {
+    "vendor": "com.mailgun",
+    "name": "message_clicked",
+    "format": "jsonschema",
+    "version": "1-0-0"
+  },
+  "type": "object",
+  "properties": {
+    "campaignId": {
+      "description": "id of campaign triggering the event.",
+      "type": "string"
+    },
+    "campaignName": {
+      "description": "The name of campaign triggering the event.",
+      "type": "string"
+    },
+    "city": {
+      "description": "Name of the city the event came from or ‘unknown’ if it couldn’t be determined.",
+      "type": "string",
+      "maxLength": 64
+    },
+    "clientName": {
+      "description": "Name of the client software, e.g. ‘Thunderbird’, ‘Chrome’, ‘Firefox’.",
+      "type": "string",
+      "maxLength": 64
+    },
+    "clientOs": {
+      "description": "OS family running the client software, e.g. ‘Linux’, ‘Windows’, ‘OSX’.",
+      "type": "string",
+      "maxLength": 64
+    },
+    "clientType": {
+      "description": "Type of software the link was opened in, e.g. ‘browser’, ‘mobile browser’, ‘email client’.",
+      "type": "string",
+      "maxLength": 64
+    },
+    "country": {
+      "description": "Two-letter country code (as specified by ISO3166) the event came from or ‘unknown’ if it couldn’t be determined.",
+      "type": "string",
+      "maxLength": 2
+    },
+    "deviceType": {
+      "description": "Device type the link was clicked on. Can be ‘desktop’, ‘mobile’, ‘tablet’, ‘other’ or ‘unknown’.",
+      "type": "string",
+      "maxLength": 64
+    },
+    "domain": {
+      "description": "Domain that sent the original message.",
+      "type": "string",
+      "format": "hostname",
+      "maxLength": 256
+    },
+    "ip": {
+      "description": "IP address the event originated from (currently only seems to support ipv4).",
+      "type": "string",
+      "format": "ipv4"
+    },
+    "mailingList": {
+      "description": "The address of mailing list the original message was sent to.",
+      "type": "string"
+    },
+    "messageId": {
+      "description": "The Id of the message that bounced.",
+      "type": "string",
+      "maxLength": 1024
+    },
+    "recipient": {
+      "description": "Recipient who clicked.",
+      "type": "string",
+      "format": "email",
+      "maxLength": 256
+    },
+    "region": {
+      "description": "Two-letter or two-digit region code or ‘unknown’ if it couldn’t be determined.",
+      "type": "string",
+      "maxLength": 8
+    },
+    "signature": {
+      "description": "String with hexadecimal digits generate by HMAC algorithm (see securing webhooks).",
+      "type": "string",
+      "maxLength": 128
+    },
+    "tag": {
+      "description": "Message tag, if it was tagged. See Tagging.",
+      "type": "string"
+    },
+    "token": {
+      "description": "Randomly generated string with length 50 (see securing webhooks).",
+      "type": "string",
+      "maxLength": 64
+    },
+    "url": {
+      "description": "The URL that was clicked (size from rfc7230#section-3.1.1).",
+      "type": "string",
+      "format": "uri",
+      "maxLength": 8192
+    },
+    "userAgent": {
+      "description": "User agent string of the client triggered the event.",
+      "type": "string",
+      "maxLength": 1024
+    }
+  },
+  "additionalProperties": true
+}
