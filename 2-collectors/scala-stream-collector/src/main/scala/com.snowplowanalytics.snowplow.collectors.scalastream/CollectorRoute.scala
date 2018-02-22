@@ -24,8 +24,6 @@ import monitoring.BeanRegistry
 trait CollectorRoute {
   def collectorService: Service
 
-  private val successfulStatuses = List(StatusCodes.OK, StatusCodes.Found)
-
   private val headers = optionalHeaderValueByName("User-Agent") &
     optionalHeaderValueByName("Referer") &
     optionalHeaderValueByName("Raw-Request-URI")
@@ -120,6 +118,7 @@ trait CollectorRoute {
     }
   }
 
+  private val successfulStatuses = List(StatusCodes.OK, StatusCodes.Found)
   private def incrementRequests(status: StatusCode) : Unit = {
     if (successfulStatuses.contains(status)) {
       BeanRegistry.collectorBean.incrementSuccessfulRequests()
