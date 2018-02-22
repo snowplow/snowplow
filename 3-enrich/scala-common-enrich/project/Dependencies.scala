@@ -33,7 +33,7 @@ object Dependencies {
     val http             = "4.3.3"
     val commonsLang      = "3.4"
     val commonsIo        = "2.4"
-    val commonsCodec     = "1.10"
+    val commonsCodec     = "1.11"
     val yodaTime         = "2.2"
     val yodaConvert      = "1.2"
     val useragent        = "1.20"
