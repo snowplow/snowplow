@@ -38,14 +38,17 @@ import com.amazonaws.services.dynamodbv2.document.DynamoDB
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.amazonaws.services.s3.model.GetObjectRequest
+
 import com.typesafe.config.ConfigFactory
 import org.json4s.jackson.JsonMethods._
 import org.json4s.JsonDSL._
 import org.slf4j.LoggerFactory
 import pureconfig._
+
 import scalaz.{Sink => _, _}
 import Scalaz._
 
+import snowplow.scalatracker.Tracker
 import common.FatalEtlError
 import common.enrichments.EnrichmentRegistry
 import common.utils.JsonUtils
@@ -151,21 +154,25 @@ object EnrichApp {
       e => throw new RuntimeException(e),
       s => s
     )
-
     cacheFiles(registry, forceDownload, provider).fold(fs => throw FatalEtlError(fs), _ => ())
+    run(ec, igluResolver, registry, tracker)
+  }
 
+  def run(
+    ec: EnrichConfig,
+    igluResolver: Resolver,
+    registry: EnrichmentRegistry,
+    tracker: Option[Tracker]
+  ): Unit = {
     val source = ec.sourceType match {
       case KafkaSource => new KafkaSource(ec, igluResolver, registry, tracker)
       case KinesisSource => new KinesisSource(ec, igluResolver, registry, tracker)
       case StdinSource => new StdinSource(ec, igluResolver, registry, tracker)
       case NsqSource => new NsqSource(ec, igluResolver, registry, tracker)
     }
-
     tracker.foreach(SnowplowTracking.initializeSnowplowTracking)
-
     source.run
   }
-
   /**
    * Download the IP lookup files locally.
    * @param registry Enrichment registry

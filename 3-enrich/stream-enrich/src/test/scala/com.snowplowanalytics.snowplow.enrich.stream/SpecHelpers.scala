@@ -141,82 +141,12 @@ object SpecHelpers {
    */
   lazy val TestSource = {
 
-    val enrichmentConfig = """|{
-      |"schema": "iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0",
-      |"data": [
-        |{
-          |"schema": "iglu:com.snowplowanalytics.snowplow/anon_ip/jsonschema/1-0-0",
-          |"data": {
-            |"vendor": "com.snowplowanalytics.snowplow",
-            |"name": "anon_ip",
-            |"enabled": true,
-            |"parameters": {
-              |"anonOctets": 1
-            |}
-          |}
-        |},
-        |{
-          |"schema": "iglu:com.snowplowanalytics.snowplow/ip_lookups/jsonschema/1-0-0",
-          |"data": {
-            |"vendor": "com.snowplowanalytics.snowplow",
-            |"name": "ip_lookups",
-            |"enabled": true,
-            |"parameters": {
-              |"geo": {
-                |"database": "GeoIPCity.dat",
-                |"uri":  "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind"
-              |}
-            |}
-          |}
-        |},
-        |{
-          |"schema": "iglu:com.snowplowanalytics.snowplow/campaign_attribution/jsonschema/1-0-0",
-          |"data": {
-            |"vendor": "com.snowplowanalytics.snowplow",
-            |"name": "campaign_attribution",
-            |"enabled": true,
-            |"parameters": {
-              |"mapping": "static",
-              |"fields": {
-                |"mktMedium": ["utm_medium", "medium"],
-                |"mktSource": ["utm_source", "source"],
-                |"mktTerm": ["utm_term", "legacy_term"],
-                |"mktContent": ["utm_content"],
-                |"mktCampaign": ["utm_campaign", "cid", "legacy_campaign"]
-              |}
-            |}
-          |}
-        |},
-        |{
-          |"schema": "iglu:com.snowplowanalytics.snowplow/user_agent_utils_config/jsonschema/1-0-0",
-          |"data": {
-            |"vendor": "com.snowplowanalytics.snowplow",
-            |"name": "user_agent_utils_config",
-            |"enabled": true,
-            |"parameters": {
-            |}
-          |}
-        |},
-        |{
-          |"schema": "iglu:com.snowplowanalytics.snowplow/referer_parser/jsonschema/1-0-0",
-          |"data": {
-            |"vendor": "com.snowplowanalytics.snowplow",
-            |"name": "referer_parser",
-            |"enabled": true,
-            |"parameters": {
-              |"internalDomains": ["www.subdomain1.snowplowanalytics.com"]
-            |}
-          |}
-        |}
-      |]
-    |}""".stripMargin.replaceAll("[\n\r]","").stripMargin.replaceAll("[\n\r]","")
-
     val config = EnrichConfig(
       source = "kafka", sink = "kafka",
       aws = AWSConfig("default", "default"),
       streams = StreamsConfig(
         InConfig("raw"),
-        OutConfig("enriched", "bad", "partitionkey"),
+        OutConfig("enriched", "pii", "bad", "partitionkey"),
         KinesisConfig("region", 10, "TRIM_HORIZON", None, BackoffPolicyConfig(10, 100)),
         KafkaConfig("brokers", 1),
         NsqConfig("channel", "localhost", 4160, "localhost", 4161),
@@ -224,44 +154,164 @@ object SpecHelpers {
         "appName"
       ),
       monitoring = None)
-
-    val validatedResolver = for {
-      json <- JsonUtils.extractJson("", """{
-        "schema": "iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-0",
-        "data": {
-
-          "cacheSize": 500,
-          "repositories": [
-            {
-              "name": "Iglu Central",
-              "priority": 0,
-              "vendorPrefixes": [ "com.snowplowanalytics" ],
-              "connection": {
-                "http": {
-                  "uri": "http://iglucentral.com"
-                }
-              }
-            }
-          ]
-        }
-      }
-      """)
-      resolver <- Resolver.parse(json).leftMap(_.toString)
-    } yield resolver
-
-    implicit val resolver: Resolver = validatedResolver.fold(
-      e => throw new RuntimeException(e),
-      s => s
-    )
-
-    val enrichmentRegistry = (for {
-      registryConfig <- JsonUtils.extractJson("", enrichmentConfig)
-      reg <- EnrichmentRegistry.parse(fromJsonNode(registryConfig), true).leftMap(_.toString)
-    } yield reg) fold (
-      e => throw new RuntimeException(e),
-      s => s
-    )
-
     new TestSource(config, resolver, enrichmentRegistry, None)
   }
+  val igluCentralDefaultConfig =
+  """{
+    "schema": "iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-0",
+    "data": {
+
+      "cacheSize": 500,
+      "repositories": [
+        {
+          "name": "Iglu Central",
+          "priority": 0,
+          "vendorPrefixes": [ "com.snowplowanalytics" ],
+          "connection": {
+            "http": {
+              "uri": "http://iglucentral.com"
+            }
+          }
+        }
+      ]
+    }
+  }
+  """
+
+  val igluConfig = {
+    val resolverEnvVar = for {
+      config <- sys.env.get("ENRICH_RESOLVER_CONFIG")
+      if config.nonEmpty
+    } yield config
+    resolverEnvVar.getOrElse(igluCentralDefaultConfig)
+  }
+  val validatedResolver = for {
+    json <- JsonUtils.extractJson("", igluConfig)
+    resolver <- Resolver.parse(json).leftMap(_.toString)
+  } yield resolver
+
+  implicit val resolver: Resolver = validatedResolver.fold(
+    e => throw new RuntimeException(e),
+    s => s
+  )
+  val enrichmentConfig = """|{
+    |"schema": "iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0",
+    |"data": [
+      |{
+        |"schema": "iglu:com.snowplowanalytics.snowplow/anon_ip/jsonschema/1-0-0",
+        |"data": {
+          |"vendor": "com.snowplowanalytics.snowplow",
+          |"name": "anon_ip",
+          |"enabled": true,
+          |"parameters": {
+            |"anonOctets": 1
+          |}
+        |}
+      |},
+      |{
+        |"schema": "iglu:com.snowplowanalytics.snowplow/ip_lookups/jsonschema/1-0-0",
+        |"data": {
+          |"vendor": "com.snowplowanalytics.snowplow",
+          |"name": "ip_lookups",
+          |"enabled": true,
+          |"parameters": {
+            |"geo": {
+              |"database": "GeoIPCity.dat",
+              |"uri":  "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind"
+            |}
+          |}
+        |}
+      |},
+      |{
+        |"schema": "iglu:com.snowplowanalytics.snowplow/campaign_attribution/jsonschema/1-0-0",
+        |"data": {
+          |"vendor": "com.snowplowanalytics.snowplow",
+          |"name": "campaign_attribution",
+          |"enabled": true,
+          |"parameters": {
+            |"mapping": "static",
+            |"fields": {
+              |"mktMedium": ["utm_medium", "medium"],
+              |"mktSource": ["utm_source", "source"],
+              |"mktTerm": ["utm_term", "legacy_term"],
+              |"mktContent": ["utm_content"],
+              |"mktCampaign": ["utm_campaign", "cid", "legacy_campaign"]
+            |}
+          |}
+        |}
+      |},
+      |{
+        |"schema": "iglu:com.snowplowanalytics.snowplow/user_agent_utils_config/jsonschema/1-0-0",
+        |"data": {
+          |"vendor": "com.snowplowanalytics.snowplow",
+          |"name": "user_agent_utils_config",
+          |"enabled": true,
+          |"parameters": {
+          |}
+        |}
+      |},
+      |{
+        |"schema": "iglu:com.snowplowanalytics.snowplow/referer_parser/jsonschema/1-0-0",
+        |"data": {
+          |"vendor": "com.snowplowanalytics.snowplow",
+          |"name": "referer_parser",
+          |"enabled": true,
+          |"parameters": {
+            |"internalDomains": ["www.subdomain1.snowplowanalytics.com"]
+          |}
+        |}
+      |},
+      |{
+        |"schema": "iglu:com.snowplowanalytics.snowplow.enrichments/pii_enrichment_config/jsonschema/2-0-0",
+        |"data": {
+          |"vendor": "com.snowplowanalytics.snowplow.enrichments",
+          |"name": "pii_enrichment_config",
+          |"emitEvent": true,
+          |"enabled": true,
+          |"parameters": {
+            |"pii": [
+              |{
+                |"pojo": {
+                  |"field": "user_id"
+                |}
+              |},
+              |{
+                |"pojo": {
+                  |"field": "user_ipaddress"
+                |}
+              |},
+              |{
+                |"json": {
+                  |"field": "unstruct_event",
+                  |"schemaCriterion": "iglu:com.mailgun/message_delivered/jsonschema/1-0-*",
+                  |"jsonPath": "$$['recipient']"
+                |}
+              |},
+              |{
+                |"json": {
+                  |"field": "unstruct_event",
+                  |"schemaCriterion": "iglu:com.mailchimp/subscribe/jsonschema/1-*-*",
+                  |"jsonPath": "$$.data.['email', 'ip_opt']"
+                |}
+              |}
+            |],
+            |"strategy": {
+              |"pseudonymize": {
+                |"hashFunction": "SHA-1"
+              |}
+            |}
+          |}
+        |}
+      |}
+    |]
+  |}""".stripMargin.replaceAll("[\n\r]","").stripMargin.replaceAll("[\n\r]","")
+
+  val enrichmentRegistry = (for {
+    registryConfig <- JsonUtils.extractJson("", enrichmentConfig)
+    reg <- EnrichmentRegistry.parse(fromJsonNode(registryConfig), true).leftMap(_.toString)
+  } yield reg) fold (
+    e => throw new RuntimeException(e),
+    s => s
+  )
+
 }

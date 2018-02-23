@@ -40,6 +40,7 @@ class StdouterrSink(inputType: InputType) extends ISink {
   def storeEnrichedEvents(events: List[(String, String)]): Boolean = {
     inputType match {
       case Good => events.foreach(e => println(e._1)) // To stdout
+      case Pii  => events.foreach(e => println(e._1)) // To stdout
       case Bad => events.foreach(e => Console.err.println(e._1)) // To stderr
     }
     !events.isEmpty

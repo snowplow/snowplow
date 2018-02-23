@@ -38,8 +38,8 @@ object TransactionSpec {
     "js-0.13.1",
     "ssc-0.1.0-stdout",
     EnrichVersion,
-    "alex 123",
-    "10.0.2.x",
+    "9a8418f7ec966d75e207a407c9def52c46f391e4",
+    "7135f2790b847ec9ec865f669b00b0a97ac33ad0",
     "1804954790",
     "3c1757544e39bca4",
     "26",
@@ -158,6 +158,7 @@ object TransactionSpec {
     "",
     ""
     )
+  val pii = """{"schema":"iglu:com.snowplowanalytics.snowplow/pii_transformation/jsonschema/1-0-0","data":{"pii":{"pojo":[{"fieldName":"user_ipaddress","originalValue":"10.0.2.x","modifiedValue":"7135f2790b847ec9ec865f669b00b0a97ac33ad0"},{"fieldName":"user_id","originalValue":"alex 123","modifiedValue":"9a8418f7ec966d75e207a407c9def52c46f391e4"}]},"strategy":{"pseudonymize":{"hashFunction":"SHA-1"}}}}"""
 }
 
 class TransactionSpec extends Specification {
@@ -174,7 +175,7 @@ class TransactionSpec extends Specification {
       // "-1" prevents empty strings from being discarded from the end of the array
       val fields = enrichedEvent.toOption.get._1.split("\t", -1)
       fields.size must beEqualTo(TransactionSpec.expected.size)
-
+      enrichedEvent.toOption.get._3.get must_== TransactionSpec.pii
       Result.unit(
         for (idx <- TransactionSpec.expected.indices) {
           fields(idx) must beFieldEqualTo(TransactionSpec.expected(idx), withIndex = idx)

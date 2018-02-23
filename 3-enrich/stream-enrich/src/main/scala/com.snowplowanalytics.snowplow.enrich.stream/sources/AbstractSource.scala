@@ -122,10 +122,13 @@ abstract class AbstractSource(
   // Initialize the sink to output enriched events to.
   protected val sink = getThreadLocalSink(Good)
 
+  protected val piiSink = getThreadLocalSink(Pii)
+
   protected val badSink = getThreadLocalSink(Bad)
 
   private def getStreamName(inputType: InputType): String = inputType match {
     case Good => config.streams.out.enriched
+    case Pii => config.streams.out.pii
     case Bad => config.streams.out.bad
   }
 
@@ -154,15 +157,20 @@ abstract class AbstractSource(
 
   implicit val resolver: Resolver = igluResolver
 
+  def getPiiEvent(event: EnrichedEvent): Option[String] = {
+    if (event.pii == null || event.pii.isEmpty) None
+    else Some(event.pii)
+  }
+
   // Iterate through an enriched EnrichedEvent object and tab separate
   // the fields to a string.
-  def tabSeparateEnrichedEvent(output: EnrichedEvent): String = {
-    output.getClass.getDeclaredFields
+  def tabSeparateEnrichedEvent(output: EnrichedEvent): String =
+   output.getClass.getDeclaredFields
+    .filterNot(_.getName.equals("pii"))
     .map{ field =>
       field.setAccessible(true)
       Option(field.get(output)).getOrElse("")
     }.mkString("\t")
-  }
 
   def getProprertyValue(ee: EnrichedEvent, property: String): String =
     property match {
@@ -180,10 +188,10 @@ abstract class AbstractSource(
    * Convert incoming binary Thrift records to lists of enriched events
    *
    * @param binaryData Thrift raw event
-   * @return List containing successful or failed events, each with a
-   *         partition key
+   * @return List containing failed, successful and, if present, pii events. Successful and failed, each specify a
+   *         partition key.
    */
-  def enrichEvents(binaryData: Array[Byte]): List[Validation[(String, String), (String, String)]] = {
+  def enrichEvents(binaryData: Array[Byte]): List[Validation[(String, String), (String, String, Option[String])]] = {
     val canonicalInput: ValidatedMaybeCollectorPayload = ThriftLoader.toCollectorPayload(binaryData)
     val processedEvents: List[ValidationNel[String, EnrichedEvent]] = EtlPipeline.processEvents(
       enrichmentRegistry,
@@ -193,7 +201,7 @@ abstract class AbstractSource(
     processedEvents.map(validatedMaybeEvent => {
       validatedMaybeEvent match {
         case Success(co) =>
-          (tabSeparateEnrichedEvent(co), getProprertyValue(co, config.streams.out.partitionKey)).success
+          (tabSeparateEnrichedEvent(co), getProprertyValue(co, config.streams.out.partitionKey), getPiiEvent(co)).success
         case Failure(errors) =>
           val line = new String(Base64.encodeBase64(binaryData), UTF_8)
           (BadRow(line, errors).toCompactJson -> Random.nextInt.toString).fail
@@ -225,16 +233,21 @@ abstract class AbstractSource(
     val (tooBigSuccesses, smallEnoughSuccesses) = successes partition { s => isTooLarge(s._1) }
 
     val sizeBasedFailures = for {
-      (value, key) <- tooBigSuccesses
+      (value, key, _) <- tooBigSuccesses
       m <- MaxRecordSize
     } yield AbstractSource.oversizedSuccessToFailure(value, m) -> key
 
-    val successesTriggeredFlush = sink.get.map(_.storeEnrichedEvents(smallEnoughSuccesses))
+
+    val anonymizedSuccesses = smallEnoughSuccesses.map({case (event: String, partition: String, _) => (event, partition)})
+    val piiSuccesses = smallEnoughSuccesses.flatMap({case (_, partition: String, pii: Option[String]) => pii.map((_, partition))})
+    val successesTriggeredFlush = sink.get.map(_.storeEnrichedEvents(anonymizedSuccesses))
+    val piiTriggeredFlush = piiSink.get.map(_.storeEnrichedEvents(piiSuccesses))
     val failuresTriggeredFlush = badSink.get.map(_.storeEnrichedEvents(failures ++ sizeBasedFailures))
-    if (successesTriggeredFlush == Some(true) || failuresTriggeredFlush == Some(true)) {
+    if (successesTriggeredFlush == Some(true) || failuresTriggeredFlush == Some(true) || piiTriggeredFlush == Some(true)) {
 
       // Block until the records have been sent to Kinesis
       sink.get.foreach(_.flush)
+      piiSink.get.foreach(_.flush)
       badSink.get.foreach(_.flush)
       true
     } else {

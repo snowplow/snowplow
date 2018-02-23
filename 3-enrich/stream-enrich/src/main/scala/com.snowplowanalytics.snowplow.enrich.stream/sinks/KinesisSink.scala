@@ -177,6 +177,7 @@ class KinesisSink(
     // Log BadRows
     inputType match {
       case Good => None
+      case Pii  => None
       case Bad  => events.foreach(e => log.debug(s"BadRow: ${e._1}"))
     }
 

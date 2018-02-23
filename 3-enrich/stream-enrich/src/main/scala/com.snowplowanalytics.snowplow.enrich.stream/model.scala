@@ -49,6 +49,7 @@ object model {
   sealed trait InputType
   case object Good extends InputType
   case object Bad extends InputType
+  case object Pii extends InputType
 
   // Case classes necessary to the decoding of the configuration
   final case class AWSConfig(accessKey: String, secretKey: String) {
@@ -83,7 +84,7 @@ object model {
     appName: String
   )
   final case class InConfig(raw: String)
-  final case class OutConfig(enriched: String, bad: String, partitionKey: String)
+  final case class OutConfig(enriched: String, pii: String, bad: String, partitionKey: String)
   final case class KinesisConfig(
     region: String,
     maxRecords: Int,
