@@ -23,9 +23,11 @@ import scala.collection.mutable.MutableList
 import org.json4s
 import org.json4s.{DefaultFormats, JValue}
 import org.json4s.JsonAST._
+import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods
 import org.json4s.jackson.JsonMethods.{compact, parse, render}
 import org.json4s.jackson.Serialization.write
+import org.json4s.Extraction.decompose
 
 // Java
 import org.apache.commons.codec.digest.DigestUtils
@@ -167,10 +169,15 @@ case class PiiPseudonymizerEnrichment(fieldList: List[PiiField],
     new PiiModifiedFieldsSerializer +
     new PiiStrategyPseudonymizeSerializer
 
+  private val UnstructEventSchema =
+    SchemaKey("com.snowplowanalytics.snowplow", "unstruct_event", "jsonschema", "1-0-0").toSchemaUri
   def transformer(event: EnrichedEvent): Unit = {
     val modifiedFields: ModifiedFields = fieldList.flatMap(_.transform(event, strategy))
     event.pii =
-      if (emitIdentificationEvent && modifiedFields.nonEmpty) write(PiiModifiedFields(modifiedFields, strategy))
+      if (modifiedFields.nonEmpty)
+        write(
+          ("schema" -> UnstructEventSchema) ~ ("data" -> decompose(PiiModifiedFields(modifiedFields, strategy)))
+        )
       else null
   }
 }

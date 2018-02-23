@@ -40,6 +40,7 @@ import org.apache.thrift.TDeserializer
 import scalaz._
 import Scalaz._
 
+import utils.emitPii
 import common.enrichments.EnrichmentRegistry
 import iglu.client.Resolver
 import model.{Kinesis, StreamsConfig}
@@ -92,6 +93,9 @@ class KinesisSource private (
     override def initialValue: Sink =
       new KinesisSink(client, kinesisConfig.backoffPolicy, config.buffer, config.out.enriched, tracker)
   }
+  override val threadLocalPiiSink: Option[ThreadLocal[Sink]] = if(emitPii(enrichmentRegistry)) Some(new ThreadLocal[Sink] {
+    override def initialValue: Sink = new KinesisSink(client, kinesisConfig.backoffPolicy, config.buffer, config.out.pii, tracker)
+  }) else None
   override val threadLocalBadSink: ThreadLocal[Sink] = new ThreadLocal[Sink] {
     override def initialValue: Sink =
       new KinesisSink(client, kinesisConfig.backoffPolicy, config.buffer, config.out.bad, tracker)
