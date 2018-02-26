@@ -42,10 +42,7 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.scalaz.JsonScalaz._
 
 // Iglu
-import iglu.client.{
-  SchemaKey,
-  Resolver
-}
+import iglu.client.{Resolver, SchemaKey}
 
 // This project
 import loaders.CollectorPayload
@@ -68,7 +65,7 @@ object MandrillAdapter extends Adapter {
   private val ContentType = "application/x-www-form-urlencoded"
 
   // Schemas for reverse-engineering a Snowplow unstructured event
-  private val EventSchemaMap = Map (
+  private val EventSchemaMap = Map(
     "hard_bounce" -> SchemaKey("com.mandrill", "message_bounced", "jsonschema", "1-0-0").toSchemaUri,
     "click"       -> SchemaKey("com.mandrill", "message_clicked", "jsonschema", "1-0-0").toSchemaUri,
     "deferral"    -> SchemaKey("com.mandrill", "message_delayed", "jsonschema", "1-0-0").toSchemaUri,
@@ -99,13 +96,15 @@ object MandrillAdapter extends Adapter {
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
     (payload.body, payload.contentType) match {
-      case (None, _)                          => s"Request body is empty: no ${VendorName} events to process".failNel
-      case (_, None)                          => s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failNel
-      case (_, Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failNel
-      case (Some(body),_)                     => {
+      case (None, _) => s"Request body is empty: no ${VendorName} events to process".failNel
+      case (_, None) =>
+        s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failNel
+      case (_, Some(ct)) if ct != ContentType =>
+        s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failNel
+      case (Some(body), _) => {
 
         payloadBodyToEvents(body) match {
-          case Failure(str)  => str.failNel
+          case Failure(str) => str.failNel
           case Success(list) => {
 
             // Create our list of Validated RawEvents
@@ -119,17 +118,17 @@ object MandrillAdapter extends Adapter {
                   schema <- lookupSchema(eventOpt, VendorName, index, EventSchemaMap)
                 } yield {
 
-                  val formattedEvent = cleanupJsonEventValues(event,
-                                                             eventOpt match { case Some(x) => ("event", x).some case None => None },
-                                                             "ts"
-                                                             )
+                  val formattedEvent = cleanupJsonEventValues(event, eventOpt match {
+                    case Some(x) => ("event", x).some
+                    case None    => None
+                  }, "ts")
                   val qsParams = toMap(payload.querystring)
                   RawEvent(
-                    api          = payload.api,
-                    parameters   = toUnstructEventParams(TrackerVersion, qsParams, schema, formattedEvent, "srv"),
-                    contentType  = payload.contentType,
-                    source       = payload.source,
-                    context      = payload.context
+                    api         = payload.api,
+                    parameters  = toUnstructEventParams(TrackerVersion, qsParams, schema, formattedEvent, "srv"),
+                    contentType = payload.contentType,
+                    source      = payload.source,
+                    context     = payload.context
                   )
                 }
               }
@@ -156,16 +155,16 @@ object MandrillAdapter extends Adapter {
    * @return a list of single events formatted as
    *         json4s JValue JSONs or a Failure String
    */
-  private[registry] def payloadBodyToEvents(rawEventString: String): Validation[String,List[JValue]] = {
+  private[registry] def payloadBodyToEvents(rawEventString: String): Validation[String, List[JValue]] = {
 
     val bodyMap = toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + rawEventString), "UTF-8").toList)
 
     bodyMap match {
       case map if map.size != 1 => s"Mapped ${VendorName} body has invalid count of keys: ${map.size}".fail
-      case map                  => {
+      case map => {
         map.get("mandrill_events") match {
-          case None       => s"Mapped ${VendorName} body does not have 'mandrill_events' as a key".fail
-          case Some("")   => s"${VendorName} events string is empty: nothing to process".fail
+          case None     => s"Mapped ${VendorName} body does not have 'mandrill_events' as a key".fail
+          case Some("") => s"${VendorName} events string is empty: nothing to process".fail
           case Some(dStr) => {
             try {
               val parsed = parse(dStr)

@@ -22,8 +22,11 @@ import java.net.URI
 import org.apache.http.client.utils.URLEncodedUtils
 
 // Joda-Time
-import org.joda.time.DateTimeZone
-import org.joda.time.format.DateTimeFormat
+import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
+
+// Jackson
+import com.fasterxml.jackson.databind.JsonNode
 
 // Scala
 import scala.collection.JavaConversions._
@@ -39,10 +42,7 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.scalaz.JsonScalaz._
 
 // Iglu
-import iglu.client.{
-  SchemaKey,
-  Resolver
-}
+import iglu.client.{Resolver, SchemaKey}
 import iglu.client.validation.ValidatableJsonMethods._
 
 // This project
@@ -66,7 +66,7 @@ object MailchimpAdapter extends Adapter {
   private val TrackerVersion = "com.mailchimp-v1"
 
   // Schemas for reverse-engineering a Snowplow unstructured event
-  private val EventSchemaMap = Map (
+  private val EventSchemaMap = Map(
     "subscribe"   -> SchemaKey("com.mailchimp", "subscribe", "jsonschema", "1-0-0").toSchemaUri,
     "unsubscribe" -> SchemaKey("com.mailchimp", "unsubscribe", "jsonschema", "1-0-0").toSchemaUri,
     "campaign"    -> SchemaKey("com.mailchimp", "campaign_sending_status", "jsonschema", "1-0-0").toSchemaUri,
@@ -79,8 +79,8 @@ object MailchimpAdapter extends Adapter {
   private val MailchimpDateTimeFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").withZone(DateTimeZone.UTC)
 
   // Formatter Function to convert RawEventParameters into a merged Json Object
-  private val MailchimpFormatter: FormatterFunc = {
-    (parameters: RawEventParameters) => mergeJFields(toJFields(parameters))
+  private val MailchimpFormatter: FormatterFunc = { (parameters: RawEventParameters) =>
+    mergeJFields(toJFields(parameters))
   }
 
   /**
@@ -98,10 +98,12 @@ object MailchimpAdapter extends Adapter {
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
     (payload.body, payload.contentType) match {
-      case (None, _)                          => s"Request body is empty: no ${VendorName} event to process".failNel
-      case (_, None)                          => s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failNel
-      case (_, Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failNel
-      case (Some(body), _)                    => {
+      case (None, _) => s"Request body is empty: no ${VendorName} event to process".failNel
+      case (_, None) =>
+        s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failNel
+      case (_, Some(ct)) if ct != ContentType =>
+        s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failNel
+      case (Some(body), _) => {
 
         val params = toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), "UTF-8").toList)
         params.get("type") match {
@@ -112,13 +114,14 @@ object MailchimpAdapter extends Adapter {
             for {
               schema <- lookupSchema(eventType.some, VendorName, EventSchemaMap)
             } yield {
-              NonEmptyList(RawEvent(
-                api          = payload.api,
-                parameters   = toUnstructEventParams(TrackerVersion, allParams, schema, MailchimpFormatter, "srv"),
-                contentType  = payload.contentType,
-                source       = payload.source,
-                context      = payload.context
-              ))
+              NonEmptyList(
+                RawEvent(
+                  api         = payload.api,
+                  parameters  = toUnstructEventParams(TrackerVersion, allParams, schema, MailchimpFormatter, "srv"),
+                  contentType = payload.contentType,
+                  source      = payload.source,
+                  context     = payload.context
+                ))
             }
           }
         }
@@ -133,11 +136,10 @@ object MailchimpAdapter extends Adapter {
    * @return a (possibly-empty) List of JFields, where each
    *         JField represents an entry from teh incoming Map
    */
-  private[registry] def toJFields(parameters: RawEventParameters): List[JField] = {
+  private[registry] def toJFields(parameters: RawEventParameters): List[JField] =
     for {
       (k, v) <- parameters.toList
     } yield toNestedJField(toKeys(k), v)
-  }
 
   /**
    * Returns a NonEmptyList of nested keys from a String representing
@@ -187,7 +189,7 @@ object MailchimpAdapter extends Adapter {
   private[registry] def mergeJFields(jfields: List[JField]): JObject =
     jfields match {
       case x :: xs => xs.foldLeft(JObject(x))(_ merge JObject(_))
-      case Nil => JObject(Nil)
+      case Nil     => JObject(Nil)
     }
 
   /**

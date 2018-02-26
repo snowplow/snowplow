@@ -21,6 +21,8 @@ package registry
 import java.net.URI
 import java.lang.{Byte => JByte}
 
+import com.snowplowanalytics.iglu.client.SchemaCriterion
+
 // Apache Commons Codec
 import org.apache.commons.codec.binary.Base64
 
@@ -76,16 +78,25 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
           },
           "isp": {
             "database": "GeoIPISP.dat",
-            "uri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind"            
+            "uri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind"
           }
         }
       }""")
 
       val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "ip_lookups", "jsonschema", "1-0-0")
 
-      val expected = IpLookupsEnrichment(Some("geo", new URI("http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoIPCity.dat"), "GeoIPCity.dat"),
-                                         Some("isp", new URI("http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoIPISP.dat"), "GeoIPISP.dat"),
-                                         None, None, None, true)
+      val expected = IpLookupsEnrichment(
+        Some("geo",
+             new URI("http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoIPCity.dat"),
+             "GeoIPCity.dat"),
+        Some("isp",
+             new URI("http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoIPISP.dat"),
+             "GeoIPISP.dat"),
+        None,
+        None,
+        None,
+        true
+      )
 
       val result = IpLookupsEnrichment.parse(ipToGeoJson, schemaKey, true)
       result must beSuccessful(expected)
@@ -100,7 +111,7 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
         "enabled": true,
         "parameters": {
           "internalDomains": [
-            "www.subdomain1.snowplowanalytics.com", 
+            "www.subdomain1.snowplowanalytics.com",
             "www.subdomain2.snowplowanalytics.com"
           ]
         }
@@ -108,18 +119,20 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
 
       val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "referer_parser", "jsonschema", "1-0-0")
 
-      val expected = RefererParserEnrichment(List("www.subdomain1.snowplowanalytics.com", "www.subdomain2.snowplowanalytics.com"))
+      val expected =
+        RefererParserEnrichment(List("www.subdomain1.snowplowanalytics.com", "www.subdomain2.snowplowanalytics.com"))
 
       val result = RefererParserEnrichment.parse(refererParserJson, schemaKey)
       result must beSuccessful(expected)
 
-    }      
+    }
   }
 
   "Parsing a valid campaign_attribution enrichment JSON" should {
     "successfully construct a CampaignAttributionEnrichment case class" in {
 
-      val campaignAttributionEnrichmentJson = parse("""{
+      val campaignAttributionEnrichmentJson =
+        parse("""{
         "enabled": true,
         "parameters": {
           "mapping": "static",
@@ -146,9 +159,9 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
         List(),
         List("utm _ campaign", "CID", "legacy-campaign!?-`@#$%^&*()=\\][}{/.,<>~|"),
         List(
-          "gclid" -> "Override",
-          "msclkid" -> "Microsoft",
-          "dclid" -> "DoubleClick",
+          "gclid"      -> "Override",
+          "msclkid"    -> "Microsoft",
+          "dclid"      -> "DoubleClick",
           "customclid" -> "Custom"
         )
       )
@@ -156,13 +169,13 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
       val result = CampaignAttributionEnrichment.parse(campaignAttributionEnrichmentJson, schemaKey)
       result must beSuccessful(expected)
 
-    }      
+    }
   }
 
   "Parsing a valid user_agent_utils_config enrichment JSON" should {
     "successfully construct a UserAgentUtilsEnrichment case object" in {
 
-      val  userAgentUtilsEnrichmentJson = parse("""{
+      val userAgentUtilsEnrichmentJson = parse("""{
         "enabled": true,
         "parameters": {
         }
@@ -176,10 +189,10 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
     }
   }
 
-    "Parsing a valid ua_parser_config enrichment JSON" should {
+  "Parsing a valid ua_parser_config enrichment JSON" should {
     "successfully construct a UaParserEnrichment case object" in {
 
-      val  uaParserEnrichmentJson = parse("""{
+      val uaParserEnrichmentJson = parse("""{
         "enabled": true,
         "parameters": {
         }
@@ -196,7 +209,7 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
   "Parsing a valid currency_convert_config enrichment JSON" should {
     "successfully construct a CurrencyConversionEnrichment case object" in {
 
-      val  currencyConversionEnrichmentJson = parse("""{
+      val currencyConversionEnrichmentJson = parse("""{
         "enabled": true,
         "parameters": {
           "accountType": "DEVELOPER",
@@ -243,7 +256,6 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
     }
   }
 
-
   "Parsing a valid event_fingerprint_config enrichment JSON" should {
     "successfully construct a EventFingerprintEnrichmentConfig case class" in {
 
@@ -266,11 +278,10 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
     }
   }
 
-
   "Parsing a valid cookie_extractor_config enrichment JSON" should {
     "successfully construct a CookieExtractorEnrichment case object" in {
 
-      val  cookieExtractorEnrichmentJson = parse("""{
+      val cookieExtractorEnrichmentJson = parse("""{
         "enabled": true,
         "parameters": {
           "cookies": ["foo", "bar"]
@@ -281,6 +292,73 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
 
       val result = CookieExtractorEnrichmentConfig.parse(cookieExtractorEnrichmentJson, schemaKey)
       result must beSuccessful(CookieExtractorEnrichment(List("foo", "bar")))
+    }
+  }
+
+  "Parsing a valid pii_enrichment_config enrichment JSON" should {
+    "successfully construct a PiiPsedonymizerEnrichment case object" in {
+      import PiiConstants._
+      val piiPseudonymizerEnrichmentJson =
+        parse("""{
+          |  "enabled": true,
+          |  "parameters": {
+          |    "pii": [
+          |      {
+          |        "pojo": {
+          |          "field": "user_id"
+          |        }
+          |      },
+          |      {
+          |        "json": {
+          |          "jsonPath": "$.emailAddress",
+          |          "schemaCriterion": "iglu:com.acme/email_sent/jsonschema/1-*-*",
+          |          "field": "contexts"
+          |        }
+          |      }
+          |    ],
+          |    "strategy": {
+          |      "pseudonymize": {
+          |        "hashFunction": "SHA-256"
+          |      }
+          |    }
+          |  }
+          |}""".stripMargin)
+
+      val schemaKey =
+        SchemaKey("com.snowplowanalytics.snowplow.enrichments", "pii_enrichment_config", "jsonschema", "1-0-0")
+
+      val result = PiiPseudonymizerEnrichment.parse(piiPseudonymizerEnrichmentJson, schemaKey)
+
+      result must beSuccessful.like {
+        case piiRes: PiiPseudonymizerEnrichment => {
+          (piiRes.fieldList.size must_== 2) and
+            (piiRes.fieldList(0) must haveClass[PiiScalar]) and
+            (piiRes.fieldList(0).asInstanceOf[PiiScalar].strategy must haveClass[PiiStrategyPseudonymize]) and
+            (piiRes
+              .fieldList(0)
+              .asInstanceOf[PiiScalar]
+              .strategy
+              .asInstanceOf[PiiStrategyPseudonymize]
+              .hashFunction("1234".getBytes("UTF-8"))
+              must_== "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4") and
+            (piiRes.fieldList(0).asInstanceOf[PiiScalar].fieldMutator must_== ScalarMutators.get("user_id").get) and
+            (piiRes.fieldList(1).asInstanceOf[PiiJson].strategy must haveClass[PiiStrategyPseudonymize]) and
+            (piiRes.fieldList(1).asInstanceOf[PiiJson].fieldMutator must_== JsonMutators.get("contexts").get) and
+            (piiRes
+              .fieldList(1)
+              .asInstanceOf[PiiJson]
+              .schemaCriterion
+              .toString must_== "iglu:com.acme/email_sent/jsonschema/1-*-*") and
+            (piiRes.fieldList(1).asInstanceOf[PiiJson].jsonPath must_== "$.emailAddress") and
+            (piiRes
+              .fieldList(1)
+              .asInstanceOf[PiiJson]
+              .strategy
+              .asInstanceOf[PiiStrategyPseudonymize]
+              .hashFunction("12345".getBytes("UTF-8"))
+              must_== "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5")
+        }
+      }
     }
   }
 }

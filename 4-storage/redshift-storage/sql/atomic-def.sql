@@ -1,4 +1,4 @@
--- Copyright (c) 2013-2017 Snowplow Analytics Ltd. All rights reserved.
+-- Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
 --
 -- This program is licensed to you under the Apache License Version 2.0,
 -- and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -9,11 +9,11 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.9.0
+-- Version:     0.10.0
 -- URL:         -
 --
--- Authors:     Yali Sassoon, Alex Dean, Peter van Wesep, Fred Blundun
--- Copyright:   Copyright (c) 2013-2017 Snowplow Analytics Ltd
+-- Authors:     Yali Sassoon, Alex Dean, Peter van Wesep, Fred Blundun, Konstantinos Servis
+-- Copyright:   Copyright (c) 2013-2018 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
 -- Create the schema
@@ -40,11 +40,11 @@ CREATE TABLE atomic.events (
 	v_etl varchar(100) encode ZSTD not null,
 	-- User and visit
 	user_id varchar(255) encode ZSTD,
-	user_ipaddress varchar(45) encode ZSTD,
-	user_fingerprint varchar(50) encode ZSTD,
-	domain_userid varchar(36) encode ZSTD,
+	user_ipaddress varchar(128) encode ZSTD,
+	user_fingerprint varchar(128) encode ZSTD,
+	domain_userid varchar(128) encode ZSTD,
 	domain_sessionidx int encode ZSTD,
-	network_userid varchar(38) encode ZSTD,
+	network_userid varchar(128) encode ZSTD,
 	-- Location
 	geo_country char(2) encode ZSTD,
 	geo_region char(2) encode ZSTD,
@@ -55,8 +55,8 @@ CREATE TABLE atomic.events (
 	geo_region_name varchar(100) encode ZSTD,
 	-- IP lookups
 	ip_isp varchar(100) encode ZSTD,
-	ip_organization varchar(100) encode ZSTD,
-	ip_domain varchar(100) encode ZSTD,
+	ip_organization varchar(128) encode ZSTD,
+	ip_domain varchar(128) encode ZSTD,
 	ip_netspeed varchar(100) encode ZSTD,
 	-- Page
 	page_url varchar(4096) encode ZSTD,
@@ -89,7 +89,7 @@ CREATE TABLE atomic.events (
 	-- Custom structured event
 	se_category varchar(1000) encode ZSTD,
 	se_action varchar(1000) encode ZSTD,
-	se_label varchar(1000) encode ZSTD,
+	se_label varchar(4096) encode ZSTD,
 	se_property varchar(1000) encode ZSTD,
 	se_value double precision encode ZSTD,
 	-- Ecommerce
@@ -172,11 +172,11 @@ CREATE TABLE atomic.events (
 	dvce_sent_tstamp timestamp encode ZSTD,
 
 	-- Referer
-	refr_domain_userid varchar(36) encode ZSTD,
+	refr_domain_userid varchar(128) encode ZSTD,
 	refr_dvce_tstamp timestamp encode ZSTD,
 
 	-- Session ID
-	domain_sessionid char(36) encode ZSTD,
+	domain_sessionid char(128) encode ZSTD,
 
 	-- Derived timestamp
 	derived_tstamp timestamp encode ZSTD,
@@ -193,10 +193,10 @@ CREATE TABLE atomic.events (
 	-- True timestamp
 	true_tstamp timestamp encode ZSTD,
 
-	CONSTRAINT event_id_090_pk PRIMARY KEY(event_id)
+	CONSTRAINT event_id_0100_pk PRIMARY KEY(event_id)
 )
 DISTSTYLE KEY
 DISTKEY (event_id)
 SORTKEY (collector_tstamp);
 
-COMMENT ON TABLE "atomic"."events" IS '0.9.0'
+COMMENT ON TABLE "atomic"."events" IS '0.10.0';

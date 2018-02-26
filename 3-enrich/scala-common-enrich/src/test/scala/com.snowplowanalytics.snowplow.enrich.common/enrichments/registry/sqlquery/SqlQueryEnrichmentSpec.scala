@@ -22,28 +22,39 @@ import org.specs2.scalaz.ValidationMatchers
 // Iglu
 import com.snowplowanalytics.iglu.client.SchemaKey
 
-class SqlQueryEnrichmentSpec extends Specification with ValidationMatchers { def is = s2"""
+class SqlQueryEnrichmentSpec extends Specification with ValidationMatchers {
+  def is = s2"""
   This is a specification to test the SqlQueryEnrichment configuration
   Extract correct configuration       $e1
   Fail to parse invalid configuration $e2
   Extract correct MySQL configuration $e3
   """
 
-  val SCHEMA_KEY = SchemaKey("com.snowplowanalytics.snowplow.enrichments", "sql_query_enrichment_config", "jsonschema", "1-0-0")
+  val SCHEMA_KEY =
+    SchemaKey("com.snowplowanalytics.snowplow.enrichments", "sql_query_enrichment_config", "jsonschema", "1-0-0")
 
   def e1 = {
     val inputs = List(
       Input(1, pojo = Some(PojoInput("user_id")), json = None),
-      Input(1, pojo = None, json = Some(JsonInput("contexts", "iglu:com.snowplowanalytics.snowplow/client_session/jsonschema/1-*-*", "$.userId"))),
+      Input(
+        1,
+        pojo = None,
+        json = Some(
+          JsonInput("contexts", "iglu:com.snowplowanalytics.snowplow/client_session/jsonschema/1-*-*", "$.userId"))),
       Input(2, pojo = Some(PojoInput("app_id")), json = None)
     )
-    val db = Db(postgresql = Some(PostgresqlDb("cluster01.redshift.acme.com", 5439, sslMode = true, "snowplow_enrich_ro", "1asIkJed", "crm")), mysql = None)
+    val db = Db(
+      postgresql = Some(
+        PostgresqlDb("cluster01.redshift.acme.com", 5439, sslMode = true, "snowplow_enrich_ro", "1asIkJed", "crm")),
+      mysql = None)
     val output = JsonOutput("iglu:com.acme/user/jsonschema/1-0-0", "ALL_ROWS", "CAMEL_CASE")
-    val cache = Cache(3000, 60)
-    val query = Query("SELECT username, email_address, date_of_birth FROM tbl_users WHERE user = ? AND client = ? LIMIT 1")
+    val cache  = Cache(3000, 60)
+    val query = Query(
+      "SELECT username, email_address, date_of_birth FROM tbl_users WHERE user = ? AND client = ? LIMIT 1")
     val config = SqlQueryEnrichment(inputs, db, query, Output(output, "AT_MOST_ONE"), cache)
 
-    val configuration = parseJson("""|{
+    val configuration = parseJson(
+      """|{
       |    "vendor": "com.snowplowanalytics.snowplow.enrichments",
       |    "name": "sql_query_enrichment_config",
       |    "enabled": true,
@@ -103,7 +114,8 @@ class SqlQueryEnrichmentSpec extends Specification with ValidationMatchers { def
 
   def e2 = {
     // $.output.json.describes contains invalid value
-    val configuration = parseJson("""|{
+    val configuration = parseJson(
+      """|{
       |    "vendor": "com.snowplowanalytics.snowplow.enrichments",
       |    "name": "sql_query_enrichment_config",
       |    "enabled": true,
@@ -162,7 +174,8 @@ class SqlQueryEnrichmentSpec extends Specification with ValidationMatchers { def
   }
 
   def e3 = {
-    val configuration = parseJson("""|{
+    val configuration = parseJson(
+      """|{
       |    "vendor": "com.snowplowanalytics.snowplow.enrichments",
       |    "name": "sql_query_enrichment_config",
       |    "enabled": true,

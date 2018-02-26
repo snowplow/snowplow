@@ -22,22 +22,17 @@ import scalaz._
 import Scalaz._
 
 // Snowplow
-import loaders.{
-  TsvLoader,
-  CollectorApi,
-  CollectorSource,
-  CollectorContext,
-  CollectorPayload
-}
+import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource, TsvLoader}
 import utils.ConversionUtils
 import SpecHelpers._
 
 // Specs2
-import org.specs2.{Specification, ScalaCheck}
+import org.specs2.{ScalaCheck, Specification}
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
 
-class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is = s2"""
+class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck {
+  def is = s2"""
   This is a specification to test the CloudfrontAccessLogAdapter functionality
   toRawEvents should return a NEL containing one RawEvent if the line contains 12 fields   $e1
   toRawEvents should return a NEL containing one RawEvent if the line contains 15 fields   $e2
@@ -50,11 +45,14 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
   """
 
   implicit val resolver = SpecHelpers.IgluResolver
-  val loader = new TsvLoader("com.amazon.aws.cloudfront/wd_access_log")
+  val loader            = new TsvLoader("com.amazon.aws.cloudfront/wd_access_log")
 
-  val doubleEncodedUa = "Mozilla/5.0%2520(Macintosh;%2520Intel%2520Mac%2520OS%2520X%252010_9_2)%2520AppleWebKit/537.36%2520(KHTML,%2520like%2520Gecko)%2520Chrome/34.0.1847.131%2520Safari/537.36"
-  val singleEncodedUa = "Mozilla/5.0%20(Macintosh;%20Intel%20Mac%20OS%20X%2010_9_2)%20AppleWebKit/537.36%20(KHTML,%20like%20Gecko)%20Chrome/34.0.1847.131%20Safari/537.36"
-  val unEncodedUa =     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.131 Safari/537.36"
+  val doubleEncodedUa =
+    "Mozilla/5.0%2520(Macintosh;%2520Intel%2520Mac%2520OS%2520X%252010_9_2)%2520AppleWebKit/537.36%2520(KHTML,%2520like%2520Gecko)%2520Chrome/34.0.1847.131%2520Safari/537.36"
+  val singleEncodedUa =
+    "Mozilla/5.0%20(Macintosh;%20Intel%20Mac%20OS%20X%2010_9_2)%20AppleWebKit/537.36%20(KHTML,%20like%20Gecko)%20Chrome/34.0.1847.131%20Safari/537.36"
+  val unEncodedUa =
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.131 Safari/537.36"
 
   val doubleEncodedQs = "a=b%2520c"
   val singleEncodedQs = "a=b%20c"
@@ -62,25 +60,25 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
   val url = "http://snowplowanalytics.com/analytics/index.html"
 
   object Shared {
-    val api = CollectorApi("com.amazon.aws.cloudfront", "wd_access_log")
+    val api    = CollectorApi("com.amazon.aws.cloudfront", "wd_access_log")
     val source = CollectorSource("tsv", "UTF-8", None)
-    val context = CollectorContext(
-      DateTime.parse("2013-10-07T23:35:30.000Z").some,
-      "255.255.255.255".some,
-      singleEncodedUa.some,
-      None,
-      Nil,
-      None)
+    val context =
+      CollectorContext(DateTime.parse("2013-10-07T23:35:30.000Z").some,
+                       "255.255.255.255".some,
+                       singleEncodedUa.some,
+                       None,
+                       Nil,
+                       None)
   }
 
   object Expected {
     val staticNoPlatform = Map(
-      "tv" -> "com.amazon.aws.cloudfront/wd_access_log",
-      "e"  -> "ue",
+      "tv"  -> "com.amazon.aws.cloudfront/wd_access_log",
+      "e"   -> "ue",
       "url" -> url
-      )
+    )
     val static = staticNoPlatform ++ Map(
-      "p"  -> "srv"
+      "p" -> "srv"
     )
   }
 
@@ -111,14 +109,17 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
                 |"csUriQuery":"$singleEncodedQs"
               |}
             |}
-          |}""".stripMargin.replaceAll("[\n\r]","")
+          |}""".stripMargin.replaceAll("[\n\r]", "")
 
-    actual must beSuccessful(Some(Success(NonEmptyList(RawEvent(Shared.api, Expected.static ++ Map("ue_pr" -> expectedJson), None, Shared.source, Shared.context)))))
+    actual must beSuccessful(
+      Some(Success(NonEmptyList(
+        RawEvent(Shared.api, Expected.static ++ Map("ue_pr" -> expectedJson), None, Shared.source, Shared.context)))))
   }
 
-def e2 = {
+  def e2 = {
 
-    val input = s"2013-10-07\t23:35:30\tc\t100\t255.255.255.255\tf\tg\th\ti\t$url\t$doubleEncodedUa\t$doubleEncodedQs\tm\tn\to"
+    val input =
+      s"2013-10-07\t23:35:30\tc\t100\t255.255.255.255\tf\tg\th\ti\t$url\t$doubleEncodedUa\t$doubleEncodedQs\tm\tn\to"
 
     val payload = loader.toCollectorPayload(input)
 
@@ -146,14 +147,17 @@ def e2 = {
                 |"xEdgeRequestId":"o"
               |}
             |}
-          |}""".stripMargin.replaceAll("[\n\r]","")
+          |}""".stripMargin.replaceAll("[\n\r]", "")
 
-    actual must beSuccessful(Some(Success(NonEmptyList(RawEvent(Shared.api, Expected.static ++ Map("ue_pr" -> expectedJson), None, Shared.source, Shared.context)))))
+    actual must beSuccessful(
+      Some(Success(NonEmptyList(
+        RawEvent(Shared.api, Expected.static ++ Map("ue_pr" -> expectedJson), None, Shared.source, Shared.context)))))
   }
 
-def e3 = {
+  def e3 = {
 
-    val input = s"2013-10-07\t23:35:30\tc\t100\t255.255.255.255\tf\tg\th\ti\t$url\t$doubleEncodedUa\t$doubleEncodedQs\tm\tn\to\tp\tq\t90"
+    val input =
+      s"2013-10-07\t23:35:30\tc\t100\t255.255.255.255\tf\tg\th\ti\t$url\t$doubleEncodedUa\t$doubleEncodedQs\tm\tn\to\tp\tq\t90"
 
     val payload = loader.toCollectorPayload(input)
 
@@ -184,14 +188,17 @@ def e3 = {
                 |"csBytes":90
               |}
             |}
-          |}""".stripMargin.replaceAll("[\n\r]","")
+          |}""".stripMargin.replaceAll("[\n\r]", "")
 
-    actual must beSuccessful(Some(Success(NonEmptyList(RawEvent(Shared.api, Expected.static ++ Map("ue_pr" -> expectedJson), None, Shared.source, Shared.context)))))
+    actual must beSuccessful(
+      Some(Success(NonEmptyList(
+        RawEvent(Shared.api, Expected.static ++ Map("ue_pr" -> expectedJson), None, Shared.source, Shared.context)))))
   }
 
-def e4 = {
+  def e4 = {
 
-    val input = s"2013-10-07\t23:35:30\tc\t100\t255.255.255.255\tf\tg\th\ti\t$url\t$doubleEncodedUa\t$doubleEncodedQs\tm\tn\to\tp\tq\t90\t0.001"
+    val input =
+      s"2013-10-07\t23:35:30\tc\t100\t255.255.255.255\tf\tg\th\ti\t$url\t$doubleEncodedUa\t$doubleEncodedQs\tm\tn\to\tp\tq\t90\t0.001"
 
     val payload = loader.toCollectorPayload(input)
 
@@ -223,14 +230,17 @@ def e4 = {
                 |"timeTaken":0.001
               |}
             |}
-          |}""".stripMargin.replaceAll("[\n\r]","")
+          |}""".stripMargin.replaceAll("[\n\r]", "")
 
-    actual must beSuccessful(Some(Success(NonEmptyList(RawEvent(Shared.api, Expected.static ++ Map("ue_pr" -> expectedJson), None, Shared.source, Shared.context)))))
+    actual must beSuccessful(
+      Some(Success(NonEmptyList(
+        RawEvent(Shared.api, Expected.static ++ Map("ue_pr" -> expectedJson), None, Shared.source, Shared.context)))))
   }
 
   def e5 = {
 
-    val input = s"2013-10-07\t23:35:30\tc\t100\t255.255.255.255\tf\tg\th\ti\t$url\t$doubleEncodedUa\t$doubleEncodedQs\tm\tn\to\tp\tq\t90\t0.001\tr\ts\tt\tu"
+    val input =
+      s"2013-10-07\t23:35:30\tc\t100\t255.255.255.255\tf\tg\th\ti\t$url\t$doubleEncodedUa\t$doubleEncodedQs\tm\tn\to\tp\tq\t90\t0.001\tr\ts\tt\tu"
 
     val payload = loader.toCollectorPayload(input)
 
@@ -266,14 +276,17 @@ def e4 = {
                 |"xEdgeResponseResultType":"u"
               |}
             |}
-          |}""".stripMargin.replaceAll("[\n\r]","")
+          |}""".stripMargin.replaceAll("[\n\r]", "")
 
-    actual must beSuccessful(Some(Success(NonEmptyList(RawEvent(Shared.api, Expected.static ++ Map("ue_pr" -> expectedJson), None, Shared.source, Shared.context)))))
+    actual must beSuccessful(
+      Some(Success(NonEmptyList(
+        RawEvent(Shared.api, Expected.static ++ Map("ue_pr" -> expectedJson), None, Shared.source, Shared.context)))))
   }
 
   def e6 = {
 
-    val input = s"2013-10-07\t23:35:30\tc\t100\t255.255.255.255\tf\tg\th\ti\t$url\t$doubleEncodedUa\t$doubleEncodedQs\tm\tn\to\tp\tq\t90\t0.001\tr\ts\tt\tu\tHTTP/2.0"
+    val input =
+      s"2013-10-07\t23:35:30\tc\t100\t255.255.255.255\tf\tg\th\ti\t$url\t$doubleEncodedUa\t$doubleEncodedQs\tm\tn\to\tp\tq\t90\t0.001\tr\ts\tt\tu\tHTTP/2.0"
 
     val payload = loader.toCollectorPayload(input)
 
@@ -310,14 +323,17 @@ def e4 = {
                 |"csProtocolVersion":"HTTP/2.0"
               |}
             |}
-          |}""".stripMargin.replaceAll("[\n\r]","")
+          |}""".stripMargin.replaceAll("[\n\r]", "")
 
-    actual must beSuccessful(Some(Success(NonEmptyList(RawEvent(Shared.api, Expected.static ++ Map("ue_pr" -> expectedJson), None, Shared.source, Shared.context)))))
+    actual must beSuccessful(
+      Some(Success(NonEmptyList(
+        RawEvent(Shared.api, Expected.static ++ Map("ue_pr" -> expectedJson), None, Shared.source, Shared.context)))))
   }
 
   def e7 = {
     val params = toNameValuePairs()
-    val payload = CollectorPayload(Shared.api, params, None, "2013-10-07\t23:35:30\tc\t\t".some, Shared.source, Shared.context)
+    val payload =
+      CollectorPayload(Shared.api, params, None, "2013-10-07\t23:35:30\tc\t\t".some, Shared.source, Shared.context)
     val actual = CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(payload)
 
     actual must beFailing(NonEmptyList("Access log TSV line contained 5 fields, expected 12, 15, 18, 19, 23 or 24"))
@@ -325,9 +341,19 @@ def e4 = {
 
   def e8 = {
     val params = toNameValuePairs()
-    val payload = CollectorPayload(Shared.api, params, None, "a\tb\tc\td\te\tf\tg\th\ti\t$url\tk\t$doubleEncodedQs".some, Shared.source, Shared.context)
+    val payload =
+      CollectorPayload(Shared.api,
+                       params,
+                       None,
+                       "a\tb\tc\td\te\tf\tg\th\ti\t$url\tk\t$doubleEncodedQs".some,
+                       Shared.source,
+                       Shared.context)
     val actual = CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(payload)
 
-    actual must beFailing(NonEmptyList("Unexpected exception converting Cloudfront web distribution access log date [a] and time [b] to timestamp: [Invalid format: \"aTb+00:00\"]", "Field [scBytes]: cannot convert [d] to Int"))
+    actual must beFailing(
+      NonEmptyList(
+        "Unexpected exception converting Cloudfront web distribution access log date [a] and time [b] to timestamp: [Invalid format: \"aTb+00:00\"]",
+        "Field [scBytes]: cannot convert [d] to Int"
+      ))
   }
 }
