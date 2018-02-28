@@ -17,6 +17,7 @@
 enrich {
   # Sources currently supported are:
   # 'kinesis' for reading Thrift-serialized records from a Kinesis stream
+  # 'pubsub' for reading Thrift-serialized records from a PubSub topic
   # 'kafka' for reading Thrift-serialized records from a Kafka topic
   # 'nsq' for reading Thrift-serialized records from a Nsq topic
   # 'stdin' for reading Base64-encoded Thrift-serialized records from stdin
@@ -24,6 +25,7 @@ enrich {
 
   # Sinks currently supported are:
   # 'kinesis' for writing enriched events to one Kinesis stream and invalid events to another.
+  # 'pubsub' for writing enriched events to one PubSub topic and invalid events to another.
   # 'kafka' for writing enriched events to one Kafka topic and invalid events to another.
   # 'nsq' for writing enriched events to one Nsq topic and invalid events to another.
   # 'stdouterr' for writing enriched events to stdout and invalid events to stderr.
@@ -80,10 +82,25 @@ enrich {
       # Note: Time need to specified in UTC.
       initialTimestamp = "{{initialTimestamp}}"
 
-      # Minimum and maximum backoff periods, in milliseconds
+      # Minimum, maximum and total backoff periods, in milliseconds
+      # and multiplier between two backoffs
       backoffPolicy {
         minBackoff = {{enrichStreamsOutMinBackoff}}
         maxBackoff = {{enrichStreamsOutMaxBackoff}}
+        totalBackoff = {{enrichStreamsOutTotalBackoff}}
+        multiplier = {{enrichStreamsOutTotalBackoff}}
+      }
+    }
+
+    pubsub {
+      googleProjectId = my-project-id
+      # Size of the subscriber thread pool
+      threadPoolSize = 4
+      backoffPolicy {
+        minBackoff = {{enrichStreamsOutMinBackoff}}
+        maxBackoff = {{enrichStreamsOutMaxBackoff}}
+        totalBackoff = {{enrichStreamsOutTotalBackoff}}
+        multiplier = {{enrichStreamsOutTotalBackoff}}
       }
     }
 
