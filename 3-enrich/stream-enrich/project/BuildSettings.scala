@@ -43,4 +43,14 @@ object BuildSettings {
   lazy val sbtAssemblySettings = Seq(
     assemblyJarName in assembly := { s"${moduleName.value}-${version.value}.jar" }
   )
+
+  lazy val formatting = Seq(
+    scalafmtConfig    := file(".scalafmt.conf"),
+    scalafmtOnCompile := true,
+    scalafmtVersion   := "1.3.0"
+  )
+
+  lazy val addExampleConfToTestCp = Seq(
+    unmanagedClasspath in Test += baseDirectory.value.getParentFile / "examples"
+  )
 }

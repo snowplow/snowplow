@@ -231,7 +231,6 @@ abstract class Source(
     } else {
       false
     }
-
   }
 
   /**

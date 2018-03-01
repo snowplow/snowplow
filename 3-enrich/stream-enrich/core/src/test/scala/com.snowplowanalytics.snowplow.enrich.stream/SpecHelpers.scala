@@ -17,8 +17,6 @@ package snowplow
 package enrich
 package stream
 
-import java.util.regex.Pattern
-
 import org.json4s.jackson.JsonMethods._
 import org.specs2.matcher.{Expectable, Matcher}
 import scalaz._
@@ -28,7 +26,6 @@ import common.utils.JsonUtils
 import common.enrichments.EnrichmentRegistry
 import iglu.client.Resolver
 import model._
-
 import scala.util.matching.Regex
 import sources.TestSource
 
@@ -37,16 +34,16 @@ import sources.TestSource
  */
 object SpecHelpers {
 
+
   implicit def stringToJustString(s: String) = JustString(s)
-  implicit def regexToJustRegex(r: Regex)    = JustRegex(r)
+  implicit def regexToJustRegex(r: Regex) = JustRegex(r)
 
   /**
    * The Stream Enrich being used
    */
   val EnrichVersion = s"stream-enrich-${generated.BuildInfo.version}-common-${generated.BuildInfo.commonEnrichVersion}"
 
-  val TimestampRegex =
-    "[0-9]{1,4}-[0-9]{1,2}-[0-9]{1,2} [0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}(\\.\\d{3})?".r
+  val TimestampRegex = "[0-9]{1,4}-[0-9]{1,2}-[0-9]{1,2} [0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}(\\.\\d{3})?".r
 
   /**
    * The regexp pattern for a Type 4 UUID.
@@ -57,13 +54,6 @@ object SpecHelpers {
    * TODO: should this be a Specs2 contrib?
    */
   val Uuid4Regexp = "[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}".r
-
-  val ContextWithUuid4Regexp =
-    new Regex(
-      Pattern.quote(
-        """{"schema":"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0","data":[{"schema":"com.snowplowanalytics.snowplow/parent_event/jsonschema/1-0-0","data":{"parentEventId":"""") +
-        "[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}" +
-        Pattern.quote("\"}}]}"))
 
   /**
    * Fields in our EnrichedEvent which will be checked
@@ -81,8 +71,7 @@ object SpecHelpers {
    * User-friendly wrapper to instantiate
    * a BeFieldEqualTo Matcher.
    */
-  def beFieldEqualTo(expected: StringOrRegex, withIndex: Int) =
-    new BeFieldEqualTo(expected, withIndex)
+  def beFieldEqualTo(expected: StringOrRegex, withIndex: Int) = new BeFieldEqualTo(expected, withIndex)
 
   /**
    * A Specs2 matcher to check if a EnrichedEvent
@@ -98,8 +87,9 @@ object SpecHelpers {
   class BeFieldEqualTo(expected: StringOrRegex, index: Int) extends Matcher[String] {
 
     private val field = OutputFields(index)
+
     private val regexp = expected match {
-      case JustRegex(_)  => true
+      case JustRegex(_) => true
       case JustString(_) => false
     }
 
@@ -112,7 +102,9 @@ object SpecHelpers {
         s"$field: ${actual.description} does not %s $expected"
           .format(if (regexp) "match" else "equal")
 
-      result(equalsOrMatches(actual.value, expected), successMsg, failureMsg, actual)
+
+      result(equalsOrMatches(actual.value, expected),
+        successMsg, failureMsg, actual)
     }
 
     /**
@@ -126,8 +118,8 @@ object SpecHelpers {
      * @return true if the actual equals or
      * matches expected, false otherwise
      */
-    private def equalsOrMatches(actual: String, expected: StringOrRegex): Boolean = expected match {
-      case JustRegex(r)  => r.pattern.matcher(actual).matches
+    private def equalsOrMatches( actual: String, expected: StringOrRegex): Boolean = expected match {
+      case JustRegex(r) => r.pattern.matcher(actual).matches
       case JustString(s) => actual == s
     }
 

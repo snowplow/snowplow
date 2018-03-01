@@ -33,7 +33,6 @@ import java.util.Properties
 // Scala libraries
 import org.apache.kafka.clients.consumer.{ConsumerRecords, KafkaConsumer}
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
-import org.apache.kafka.clients.producer.ProducerConfig
 import io.bfil.kafka.specs2.DefaultKafkaPorts
 import io.bfil.kafka.specs2.EmbeddedKafkaContext
 
@@ -75,8 +74,7 @@ trait KafkaIntegrationSpec
 
   def producerTimeoutSec: Int
   def inputProduced: Try[Unit] = Try { Await.result(produce, Duration(s"$producerTimeoutSec sec")) }
-  def produce: Future[Unit] = Future {
-    val testKafkaPropertiesProducer = {
+  val testKafkaPropertiesProducer = {
       val props = new Properties()
       props.put("bootstrap.servers", kafkaHost)
       props.put("client.id", "producer-george")
@@ -84,7 +82,7 @@ trait KafkaIntegrationSpec
       props.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer")
       props
     }
-
+  def produce: Future[Unit] = Future {
     val testProducer = new KafkaProducer[String, Array[Byte]](testKafkaPropertiesProducer)
     val events = inputGood
     events.foreach { r =>
@@ -141,3 +139,4 @@ object KafkaIntegrationSpecValues {
     ("testGoodIn", "testEnrichedGood", "testEnrichedBad", "testEnrichedUglyPii")
   val kafkaHost = "127.0.0.1:9092"
 }
+
