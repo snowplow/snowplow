@@ -54,6 +54,10 @@ object BuildSettings {
     }.taskValue
   )
 
+  lazy val addExampleConfToTestCp = Seq(
+    unmanagedClasspath in Test += baseDirectory.value / "examples"
+  )
+
   // sbt-assembly settings for building a fat jar
   import sbtassembly.AssemblyPlugin.autoImport._
   lazy val sbtAssemblySettings = Seq(

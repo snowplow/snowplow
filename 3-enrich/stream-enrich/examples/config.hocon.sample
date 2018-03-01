@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2017 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0, and
 # you may not use this file except in compliance with the Apache License
@@ -20,7 +20,7 @@ enrich {
   # 'kafka' for reading Thrift-serialized records from a Kafka topic
   # 'nsq' for reading Thrift-serialized records from a Nsq topic
   # 'stdin' for reading Base64-encoded Thrift-serialized records from stdin
-  source = kinesis
+  source = {{ sourceType }}
 
   # Sinks currently supported are:
   # 'kinesis' for writing enriched events to one Kinesis stream and invalid events to another.
@@ -28,7 +28,7 @@ enrich {
   # 'nsq' for writing enriched events to one Nsq topic and invalid events to another.
   # 'stdouterr' for writing enriched events to stdout and invalid events to stderr.
   #    Using "sbt assembly" and "java -jar" is recommended to disable sbt logging.
-  sink = kinesis
+  sink = {{ sinkType }}
 
   # AWS credentials
   # If both are set to 'default', use the default AWS credentials provider chain.
@@ -48,8 +48,6 @@ enrich {
     out {
       # Stream/topic where the events that were successfully enriched will end up
       enriched = {{outEnriched}}
-      # Stream/topic where the pii tranformation events will end up
-      pii = {{outPii}}
       # Stream/topic where the event that failed enrichment will be stored
       bad = {{outBad}}
       # Stream/topic where the pii tranformation events will end up

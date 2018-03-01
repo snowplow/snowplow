@@ -157,10 +157,8 @@ abstract class AbstractSource(
 
   implicit val resolver: Resolver = igluResolver
 
-  def getPiiEvent(event: EnrichedEvent): Option[String] = {
-    if (event.pii == null || event.pii.isEmpty) None
-    else Some(event.pii)
-  }
+  def getPiiEvent(event: EnrichedEvent): Option[String] =
+    Option(event.pii).filter(_.nonEmpty)
 
   // Iterate through an enriched EnrichedEvent object and tab separate
   // the fields to a string.
@@ -237,7 +235,6 @@ abstract class AbstractSource(
       m <- MaxRecordSize
     } yield AbstractSource.oversizedSuccessToFailure(value, m) -> key
 
-
     val anonymizedSuccesses = smallEnoughSuccesses.map({case (event: String, partition: String, _) => (event, partition)})
     val piiSuccesses = smallEnoughSuccesses.flatMap({case (_, partition: String, pii: Option[String]) => pii.map((_, partition))})
     val successesTriggeredFlush = sink.get.map(_.storeEnrichedEvents(anonymizedSuccesses))
@@ -253,7 +250,6 @@ abstract class AbstractSource(
     } else {
       false
     }
-
   }
 
   /**

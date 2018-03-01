@@ -164,6 +164,7 @@ object EnrichApp {
     registry: EnrichmentRegistry,
     tracker: Option[Tracker]
   ): Unit = {
+
     val source = ec.sourceType match {
       case KafkaSource => new KafkaSource(ec, igluResolver, registry, tracker)
       case KinesisSource => new KinesisSource(ec, igluResolver, registry, tracker)

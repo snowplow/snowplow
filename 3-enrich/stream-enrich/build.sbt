@@ -26,6 +26,7 @@ lazy val root = project.in(file("."))
   )
   .settings(BuildSettings.scalifySettings)
   .settings(BuildSettings.sbtAssemblySettings)
+  .settings(BuildSettings.addExampleConfToTestCp)
   .settings(
     libraryDependencies ++= Seq(
       // Java
@@ -51,6 +52,8 @@ lazy val root = project.in(file("."))
       Dependencies.Libraries.snowplowTracker,
       // Test
       Dependencies.Libraries.specs2,
-      Dependencies.Libraries.scalacheck
+      Dependencies.Libraries.scalacheck,
+      Dependencies.Libraries.embeddedKafka,
+      Dependencies.Libraries.jinJava
     )
   )

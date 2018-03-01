@@ -25,7 +25,7 @@ object TransactionSpec {
 
   val raw = "CgABAAABQ/SiVe8LABQAAAAQc3NjLTAuMS4wLXN0ZG91dAsAHgAAAAVVVEYtOAsAKAAAAAgxMC4wLjIuMgwAKQgAAQAAAAEIAAIAAAABCwADAAABpmU9dHImdHJfaWQ9b3JkZXItMTIzJnRyX3R0PTgwMDAmdHJfY3U9SlBZJmR0bT0xMzkxMzc4NzE2MjcxJnRpZD02MzYyMzkmdnA9MTY4MHg0MTUmZHM9MTY4MHg0MTUmdmlkPTI2JmR1aWQ9M2MxNzU3NTQ0ZTM5YmNhNCZwPXdlYiZ0dj1qcy0wLjEzLjEmZnA9MTgwNDk1NDc5MCZhaWQ9Q0ZlMjNhJmxhbmc9ZW4tVVMmY3M9VVRGLTgmdHo9RXVyb3BlL0xvbmRvbiZ1aWQ9YWxleCsxMjMmZl9wZGY9MCZmX3F0PTEmZl9yZWFscD0wJmZfd21hPTAmZl9kaXI9MCZmX2ZsYT0xJmZfamF2YT0wJmZfZ2VhcnM9MCZmX2FnPTAmcmVzPTE5MjB4MTA4MCZjZD0yNCZjb29raWU9MSZ1cmw9ZmlsZTovL2ZpbGU6Ly8vVXNlcnMvYWxleC9EZXZlbG9wbWVudC9kZXYtZW52aXJvbm1lbnQvZGVtby8xLXRyYWNrZXIvZXZlbnRzLmh0bWwvb3ZlcnJpZGRlbi11cmwvAAsALQAAAAlsb2NhbGhvc3QLADIAAABRTW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTAuOTsgcnY6MjYuMCkgR2Vja28vMjAxMDAxMDEgRmlyZWZveC8yNi4wDwBGCwAAAAcAAAAWQ29ubmVjdGlvbjoga2VlcC1hbGl2ZQAAAnBDb29raWU6IF9fdXRtYT0xMTE4NzIyODEuODc4MDg0NDg3LjEzOTAyMzcxMDcuMTM5MDkzMTUyMS4xMzkxMTEwNTgyLjc7IF9fdXRtej0xMTE4NzIyODEuMTM5MDIzNzEwNy4xLjEudXRtY3NyPShkaXJlY3QpfHV0bWNjbj0oZGlyZWN0KXx1dG1jbWQ9KG5vbmUpOyBfc3BfaWQuMWZmZj1iODlhNmZhNjMxZWVmYWMyLjEzOTAyMzcxMDcuNy4xMzkxMTExODE5LjEzOTA5MzE1NDU7IGhibGlkPUNQamp1aHZGMDV6a3RQN0o3TTVWbzNOSUdQTEp5MVNGOyBvbGZzaz1vbGZzazU2MjkyMzYzNTYxNzU1NDsgc3A9NzVhMTM1ODMtNWM5OS00MGUzLTgxZmMtNTQxMDg0ZGZjNzg0OyB3Y3NpZD1LUmhoazRIRUxwMkFpcHFMN001Vm9uQ1BPUHlBbkYxSjsgX29rbHY9MTM5MTExMTc3OTMyOCUyQ0tSaGhrNEhFTHAyQWlwcUw3TTVWb25DUE9QeUFuRjFKOyBfX3V0bWM9MTExODcyMjgxOyBfb2tiaz1jZDQlM0R0cnVlJTJDdmk1JTNEMCUyQ3ZpNCUzRDEzOTExMTA1ODU0OTAlMkN2aTMlM0RhY3RpdmUlMkN2aTIlM0RmYWxzZSUyQ3ZpMSUzRGZhbHNlJTJDY2Q4JTNEY2hhdCUyQ2NkNiUzRDAlMkNjZDUlM0Rhd2F5JTJDY2QzJTNEZmFsc2UlMkNjZDIlM0QwJTJDY2QxJTNEMCUyQzsgX29rPTk3NTItNTAzLTEwLTUyMjcAAAAeQWNjZXB0LUVuY29kaW5nOiBnemlwLCBkZWZsYXRlAAAAGkFjY2VwdC1MYW5ndWFnZTogZW4tVVMsIGVuAAAAK0FjY2VwdDogaW1hZ2UvcG5nLCBpbWFnZS8qO3E9MC44LCAqLyo7cT0wLjUAAABdVXNlci1BZ2VudDogTW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTAuOTsgcnY6MjYuMCkgR2Vja28vMjAxMDAxMDEgRmlyZWZveC8yNi4wAAAAFEhvc3Q6IGxvY2FsaG9zdDo0MDAxCwBQAAAAJDc1YTEzNTgzLTVjOTktNDBlMy04MWZjLTU0MTA4NGRmYzc4NAA="
 
-  val expected = List(
+  val expected = List[StringOrRegex](
     "CFe23a",
     "web",
     TimestampRegex,
@@ -38,8 +38,8 @@ object TransactionSpec {
     "js-0.13.1",
     "ssc-0.1.0-stdout",
     EnrichVersion,
-    "9a8418f7ec966d75e207a407c9def52c46f391e4",
-    "7135f2790b847ec9ec865f669b00b0a97ac33ad0",
+    "d1a21f2589511b4ed04ee297d88d950efb2612dc",
+    "850474a1f035479d332a5c2d2ad6fe4d07a3f722",
     "1804954790",
     "3c1757544e39bca4",
     "26",
@@ -157,8 +157,9 @@ object TransactionSpec {
     "1-0-0",
     "",
     ""
-    )
-  val pii = """{"schema":"iglu:com.snowplowanalytics.snowplow/pii_transformation/jsonschema/1-0-0","data":{"pii":{"pojo":[{"fieldName":"user_ipaddress","originalValue":"10.0.2.x","modifiedValue":"7135f2790b847ec9ec865f669b00b0a97ac33ad0"},{"fieldName":"user_id","originalValue":"alex 123","modifiedValue":"9a8418f7ec966d75e207a407c9def52c46f391e4"}]},"strategy":{"pseudonymize":{"hashFunction":"SHA-1"}}}}"""
+  )
+  val pii =
+    """{"schema":"iglu:com.snowplowanalytics.snowplow/pii_transformation/jsonschema/1-0-0","data":{"pii":{"pojo":[{"fieldName":"user_ipaddress","originalValue":"10.0.2.x","modifiedValue":"850474a1f035479d332a5c2d2ad6fe4d07a3f722"},{"fieldName":"user_id","originalValue":"alex 123","modifiedValue":"d1a21f2589511b4ed04ee297d88d950efb2612dc"}]},"strategy":{"pseudonymize":{"hashFunction":"SHA-1"}}}}"""
 }
 
 class TransactionSpec extends Specification {
@@ -175,7 +176,7 @@ class TransactionSpec extends Specification {
       // "-1" prevents empty strings from being discarded from the end of the array
       val fields = enrichedEvent.toOption.get._1.split("\t", -1)
       fields.size must beEqualTo(TransactionSpec.expected.size)
-      enrichedEvent.toOption.get._3.get must_== TransactionSpec.pii
+      enrichedEvent.toOption.get._3 must beSome(TransactionSpec.pii)
       Result.unit(
         for (idx <- TransactionSpec.expected.indices) {
           fields(idx) must beFieldEqualTo(TransactionSpec.expected(idx), withIndex = idx)
