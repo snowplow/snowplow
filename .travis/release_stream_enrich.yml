@@ -23,10 +23,28 @@ packages :
     version : <%= FUNC['sbt_version(3-enrich/stream-enrich/)'] %>
     build_version : <%= ENV['TRAVIS_BUILD_RELEASE_TAG'] %>
     build_commands :
-      - cd 3-enrich/stream-enrich && sbt assembly && cd ../..
+      - cd 3-enrich/stream-enrich && sbt "project kinesis" assembly && cd ../..
+      - cd 3-enrich/stream-enrich && sbt "project pubsub" assembly && cd ../..
+      - cd 3-enrich/stream-enrich && sbt "project kafka" assembly && cd ../..
+      - cd 3-enrich/stream-enrich && sbt "project nsq" assembly && cd ../..
     artifacts :
       - type : "zip"
-        prefix : "snowplow_stream_enrich_"
+        prefix : "snowplow_stream_enrich_kinesis_"
         suffix : ""
         binary_paths :
-          - "3-enrich/stream-enrich/target/scala-2.11/snowplow-stream-enrich-{{ packages.0.build_version }}.jar"
+          - "3-enrich/stream-enrich/kinesis/target/scala-2.11/snowplow-stream-enrich-kinesis-{{ packages.0.build_version }}.jar"
+      - type : "zip"
+        prefix : "snowplow_stream_enrich_pubsub_"
+        suffix : ""
+        binary_paths :
+          - "3-enrich/stream-enrich/pubsub/target/scala-2.11/snowplow-stream-enrich-google-pubsub-{{ packages.0.build_version }}.jar"
+      - type : "zip"
+        prefix : "snowplow_stream_enrich_kafka_"
+        suffix : ""
+        binary_paths :
+          - "3-enrich/stream-enrich/kafka/target/scala-2.11/snowplow-stream-enrich-kafka-{{ packages.0.build_version }}.jar"
+      - type : "zip"
+        prefix : "snowplow_stream_enrich_nsq_"
+        suffix : ""
+        binary_paths :
+          - "3-enrich/stream-enrich/nsq/target/scala-2.11/snowplow-stream-enrich-nsq-{{ packages.0.build_version }}.jar"
