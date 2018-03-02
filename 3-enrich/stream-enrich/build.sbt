@@ -10,49 +10,88 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
+
+lazy val commonDependencies = Seq(
+  // Java
+  Dependencies.Libraries.commonsCodec,
+  Dependencies.Libraries.config,
+  Dependencies.Libraries.slf4j,
+  Dependencies.Libraries.log4jOverSlf4j,
+  // Scala
+  Dependencies.Libraries.scopt,
+  Dependencies.Libraries.scalaz7,
+  Dependencies.Libraries.json4s,
+  Dependencies.Libraries.json4sJackson,
+  Dependencies.Libraries.pureconfig,
+  Dependencies.Libraries.snowplowRawEvent,
+  Dependencies.Libraries.snowplowCommonEnrich,
+  Dependencies.Libraries.igluClient,
+  Dependencies.Libraries.snowplowTracker,
+  // Test
+  Dependencies.Libraries.specs2,
+  Dependencies.Libraries.scalacheck
+)
+
+lazy val buildSettings = Seq(
+  organization  :=  "com.snowplowanalytics",
+  name          :=  "snowplow-stream-enrich",
+  version       :=  "0.14.0",
+  description   :=  "The streaming Snowplow Enrichment process",
+  scalaVersion  :=  "2.11.11",
+  scalacOptions :=  BuildSettings.compilerOptions,
+  scalacOptions in (Compile, console) ~= { _.filterNot(Set("-Ywarn-unused-import")) },
+  scalacOptions in (Test, console)    := (scalacOptions in (Compile, console)).value,
+  javacOptions  :=  BuildSettings.javaCompilerOptions,
+  resolvers     ++= Dependencies.resolutionRepos
+)
+
+lazy val allSettings = buildSettings ++
+  BuildSettings.sbtAssemblySettings ++
+  Seq(libraryDependencies ++= commonDependencies)
+
 lazy val root = project.in(file("."))
-  .settings(
-    organization  :=  "com.snowplowanalytics",
-    name          :=  "snowplow-stream-enrich",
-    version       :=  "0.14.0",
-    description   :=  "The Snowplow Enrichment process, implemented as an Amazon Kinesis app",
-    scalaVersion  :=  "2.11.11",
-    scalacOptions :=  BuildSettings.compilerOptions,
-    scalacOptions in (Compile, console) ~= { _.filterNot(Set("-Ywarn-unused-import")) },
-    scalacOptions in (Test, console)    := (scalacOptions in (Compile, console)).value,
-    javacOptions  :=  BuildSettings.javaCompilerOptions,
-    resolvers     ++= Dependencies.resolutionRepos,
-    shellPrompt   := { _ => "stream-enrich> " }
-  )
+  .settings(buildSettings)
+  .aggregate(core, kinesis, pubsub, kafka, nsq, stdin)
+
+lazy val core = project
+  .settings(moduleName := "snowplow-stream-enrich")
+  .settings(buildSettings)
   .settings(BuildSettings.scalifySettings)
-  .settings(BuildSettings.sbtAssemblySettings)
-  .settings(
-    libraryDependencies ++= Seq(
-      // Java
-      Dependencies.Libraries.kinesisClient,
-      Dependencies.Libraries.kinesisSdk,
-      Dependencies.Libraries.s3Sdk,
-      Dependencies.Libraries.dynamodbSdk,
-      Dependencies.Libraries.pubsub,
-      Dependencies.Libraries.datastore,
-      Dependencies.Libraries.kafkaClients,
-      Dependencies.Libraries.nsqClient,
-      Dependencies.Libraries.commonsCodec,
-      Dependencies.Libraries.config,
-      Dependencies.Libraries.slf4j,
-      Dependencies.Libraries.log4jOverSlf4j,
-      // Scala
-      Dependencies.Libraries.scopt,
-      Dependencies.Libraries.scalaz7,
-      Dependencies.Libraries.json4s,
-      Dependencies.Libraries.json4sJackson,
-      Dependencies.Libraries.pureconfig,
-      Dependencies.Libraries.snowplowRawEvent,
-      Dependencies.Libraries.snowplowCommonEnrich,
-      Dependencies.Libraries.igluClient,
-      Dependencies.Libraries.snowplowTracker,
-      // Test
-      Dependencies.Libraries.specs2,
-      Dependencies.Libraries.scalacheck
-    )
-  )
+  .settings(libraryDependencies ++= commonDependencies)
+
+lazy val kinesis = project
+  .settings(moduleName := "snowplow-stream-enrich-kinesis")
+  .settings(allSettings)
+  .settings(libraryDependencies ++= Seq(
+    Dependencies.Libraries.kinesisClient,
+    Dependencies.Libraries.kinesisSdk,
+    Dependencies.Libraries.s3Sdk,
+    Dependencies.Libraries.dynamodbSdk
+  ))
+  .dependsOn(core)
+
+lazy val pubsub = project
+  .settings(moduleName := "snowplow-stream-enrich-pubsub")
+  .settings(allSettings)
+  .settings(libraryDependencies ++= Seq(
+    Dependencies.Libraries.pubsub,
+    Dependencies.Libraries.datastore
+  ))
+  .dependsOn(core)
+
+lazy val kafka = project
+  .settings(moduleName := "snowplow-stream-enrich-kafka")
+  .settings(allSettings)
+  .settings(libraryDependencies ++= Seq(Dependencies.Libraries.kafkaClients))
+  .dependsOn(core)
+
+lazy val nsq = project
+  .settings(moduleName := "snowplow-stream-enrich-nsq")
+  .settings(allSettings)
+  .settings(libraryDependencies ++= Seq(Dependencies.Libraries.nsqClient))
+  .dependsOn(core)
+
+lazy val stdin = project
+  .settings(moduleName := "snowplow-stream-enrich-stdin")
+  .settings(allSettings)
+  .dependsOn(core)
