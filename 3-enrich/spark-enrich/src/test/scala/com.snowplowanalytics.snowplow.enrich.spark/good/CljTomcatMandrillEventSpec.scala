@@ -139,7 +139,7 @@ class CljTomcatMandrillEventSpec extends Specification with EnrichJobSpec {
   override def appName = "clj-tomcat-mandrill-event"
   sequential
   "A job which processes a Clojure-Tomcat file containing a Mandrill POST raw event representing " +
-  "1 valid completed call" should {
+    "1 valid completed call" should {
     runEnrichJob(CljTomcatMandrillEventSpec.lines, "clj-tomcat", "2", true, List("geo"))
 
     "correctly output 1 completed call" in {

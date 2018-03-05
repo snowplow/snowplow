@@ -13,7 +13,6 @@
 package com.snowplowanalytics.snowplow.enrich.spark
 package good
 
-
 // Specs2
 import org.specs2.mutable.Specification
 
@@ -25,7 +24,7 @@ object CljTomcatStatusGatorEventSpec {
   import EnrichJobSpec._
   val lines = Lines(
     "2017-11-11 15:37:08  - - 54.205.110.234  POST  54.205.110.234  /com.statusgator/v1 200 - Ruby  &cv=clj-1.1.0-tom-0.2.0&nuid=61d4eae4-f00f-4a87-8d53-8a396a1a77a6 - - - application%2Fx-www-form-urlencoded c2VydmljZV9uYW1lPUFtYXpvbitXZWIrU2VydmljZXMmZmF2aWNvbl91cmw9aHR0cHMlM0ElMkYlMkZkd3hqZDljZDZyd25vLmNsb3VkZnJvbnQubmV0JTJGZmF2aWNvbnMlMkZhbWF6b24td2ViLXNlcnZpY2VzLmljbyZzdGF0dXNfcGFnZV91cmw9aHR0cCUzQSUyRiUyRnN0YXR1cy5hd3MuYW1hem9uLmNvbSUyRiZob21lX3BhZ2VfdXJsPWh0dHAlM0ElMkYlMkZhd3MuYW1hem9uLmNvbSUyRiZjdXJyZW50X3N0YXR1cz13YXJuJmxhc3Rfc3RhdHVzPXVwJm9jY3VycmVkX2F0PTIwMTctMTEtMTFUMTUlM0EzNiUzQTE4JTJCMDAlM0EwMA"
-    )
+  )
 
   val expected = List(
     null,
@@ -136,7 +135,7 @@ object CljTomcatStatusGatorEventSpec {
     null,
     null,
     null
-    )
+  )
 }
 
 class CljTomcatStatusGatorEventSpec extends Specification with EnrichJobSpec {

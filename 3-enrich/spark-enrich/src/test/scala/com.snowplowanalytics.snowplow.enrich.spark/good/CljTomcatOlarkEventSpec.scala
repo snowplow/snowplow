@@ -13,7 +13,6 @@
 package com.snowplowanalytics.snowplow.enrich.spark
 package good
 
-
 // Specs2
 import org.specs2.mutable.Specification
 
@@ -27,7 +26,7 @@ object CljTomcatOlarkEventSpec {
   import EnrichJobSpec._
   val lines = Lines(
     "2014-10-09  16:28:31    -   13  255.255.255.255   POST    255.255.255.255   /com.olark/v1   404 -  -    aid=email&cv=clj-0.6.0-tom-0.0.4&nuid=-   -   -   -   application%2Fx-www-form-urlencoded   ZGF0YT0lN0IlMjJraW5kJTIyJTNBKyUyMkNvbnZlcnNhdGlvbiUyMiUyQyslMjJ0YWdzJTIyJTNBKyU1QiUyMnRlc3RfZXhhbXBsZSUyMiU1RCUyQyslMjJpdGVtcyUyMiUzQSslNUIlN0IlMjJib2R5JTIyJTNBKyUyMkhpK2Zyb20rYW4rb3BlcmF0b3IlMjIlMkMrJTIydGltZXN0YW1wJTIyJTNBKyUyMjE0NzM3NzQ4MTkuMjYzMDgzJTIyJTJDKyUyMmtpbmQlMjIlM0ErJTIyTWVzc2FnZVRvVmlzaXRvciUyMiUyQyslMjJuaWNrbmFtZSUyMiUzQSslMjJPbGFyaytvcGVyYXRvciUyMiUyQyslMjJvcGVyYXRvcklkJTIyJTNBKyUyMjY0NzU2MyUyMiU3RCUyQyslN0IlMjJib2R5JTIyJTNBKyUyMkhpK2Zyb20rYSt2aXNpdG9yJTIyJTJDKyUyMnRpbWVzdGFtcCUyMiUzQSslMjIxNDczNzc0ODIxLjQxMTE1NCUyMiUyQyslMjJraW5kJTIyJTNBKyUyMk1lc3NhZ2VUb09wZXJhdG9yJTIyJTJDKyUyMm5pY2tuYW1lJTIyJTNBKyUyMlJldHVybmluZytWaXNpdG9yKyU3QytVU0ErJTI4U2FuK0ZyYW5jaXNjbyUyQytDQSUyOSslMjM3NjE3JTIyJTJDKyUyMnZpc2l0b3Jfbmlja25hbWUlMjIlM0ErJTIyT2xhcmsrVmlzaXRvciUyMiU3RCU1RCUyQyslMjJvcGVyYXRvcnMlMjIlM0ErJTdCJTIyNjQ3NTYzJTIyJTNBKyU3QiUyMnVzZXJuYW1lJTIyJTNBKyUyMnlhbGklMjIlMkMrJTIyZW1haWxBZGRyZXNzJTIyJTNBKyUyMnlhbGklNDBzbm93cGxvd2FuYWx5dGljcy5jb20lMjIlMkMrJTIya2luZCUyMiUzQSslMjJPcGVyYXRvciUyMiUyQyslMjJuaWNrbmFtZSUyMiUzQSslMjJZYWxpJTIyJTJDKyUyMmlkJTIyJTNBKyUyMjY0NzU2MyUyMiU3RCU3RCUyQyslMjJ2aXNpdG9yJTIyJTNBKyU3QiUyMmNpdHklMjIlM0ErJTIyU2FuK0ZyYW5jaXNjbyUyMiUyQyslMjJraW5kJTIyJTNBKyUyMlZpc2l0b3IlMjIlMkMrJTIyb3JnYW5pemF0aW9uJTIyJTNBKyUyMlZpc2l0b3IrT3JnYW5pemF0aW9uJTIyJTJDKyUyMmNvbnZlcnNhdGlvbkJlZ2luUGFnZSUyMiUzQSslMjJodHRwJTNBJTJGJTJGd3d3Lm9sYXJrLmNvbSUyMiUyQyslMjJjb3VudHJ5Q29kZSUyMiUzQSslMjJVUyUyMiUyQyslMjJyZWZlcnJlciUyMiUzQSslMjJodHRwJTNBJTJGJTJGd3d3Lm9sYXJrLmNvbSUyMiUyQyslMjJpcCUyMiUzQSslMjIxMjcuMC4wLjElMjIlMkMrJTIycmVnaW9uJTIyJTNBKyUyMkNBJTIyJTJDKyUyMmNoYXRfZmVlZGJhY2slMjIlM0ErJTdCJTIyb3ZlcmFsbF9jaGF0JTIyJTNBKzQlMkMrJTIycmVzcG9uc2l2ZW5lc3MlMjIlM0ErNSUyQyslMjJmcmllbmRsaW5lc3MlMjIlM0ErNSUyQyslMjJrbm93bGVkZ2UlMjIlM0ErNCU3RCUyQyslMjJvcGVyYXRpbmdTeXN0ZW0lMjIlM0ErJTIyV2luZG93cyUyMiUyQyslMjJlbWFpbEFkZHJlc3MlMjIlM0ErJTIyc3VwcG9ydCUyQmludGVncmF0aW9udGVzdCU0MG9sYXJrLmNvbSUyMiUyQyslMjJjb3VudHJ5JTIyJTNBKyUyMlVuaXRlZCtTdGF0ZXMlMjIlMkMrJTIycGhvbmVOdW1iZXIlMjIlM0ErJTIyNTU1NTU1NTU1NSUyMiUyQyslMjJmdWxsTmFtZSUyMiUzQSslMjJPbGFyayUyMiUyQyslMjJpZCUyMiUzQSslMjJOT1RBUkVBTFZJU0lUT1JJRFM1TEdsNlFVcksyT2FQUCUyMiUyQyslMjJicm93c2VyJTIyJTNBKyUyMkludGVybmV0K0V4cGxvcmVyKzExJTIyJTdEJTJDKyUyMmlkJTIyJTNBKyUyMk5PVEFSRUFMVFJBTlNDUklQVDVMR2NiVlRhM2hLQlJCJTIyJTJDKyUyMm1hbnVhbGx5U3VibWl0dGVkJTIyJTNBK2ZhbHNlJTdE"
-    )
+  )
 
   val expected = List(
     "email",
@@ -138,7 +137,7 @@ object CljTomcatOlarkEventSpec {
     null,
     null,
     null
-    )
+  )
 }
 
 class CljTomcatOlarkEventSpec extends Specification with EnrichJobSpec {
@@ -154,7 +153,8 @@ class CljTomcatOlarkEventSpec extends Specification with EnrichJobSpec {
       for (idx <- CljTomcatOlarkEventSpec.expected.indices) {
         Try(parse(CljTomcatOlarkEventSpec.expected(idx))) match {
           case Success(parsedJSON) => parse(actual(idx)) must beEqualTo(parsedJSON)
-          case Failure(msg) => actual(idx) must BeFieldEqualTo(CljTomcatOlarkEventSpec.expected(idx), idx)
+          case Failure(msg) =>
+            actual(idx) must BeFieldEqualTo(CljTomcatOlarkEventSpec.expected(idx), idx)
         }
       }
     }

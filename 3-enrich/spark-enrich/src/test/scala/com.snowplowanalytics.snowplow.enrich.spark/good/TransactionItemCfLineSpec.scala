@@ -90,12 +90,12 @@ object TransactionItemCfLineSpec {
     null, //
     null, //
     null, //
-    "order-123",    // Transaction item fields are set
-    "PBZ1001",      //
+    "order-123", // Transaction item fields are set
+    "PBZ1001", //
     "Blue t-shirt", //
-    "APPAREL",      //
-    "2000",         //
-    "2",            //
+    "APPAREL", //
+    "2000", //
+    "2", //
     null, // Page ping fields are empty
     null, //
     null, //
@@ -130,7 +130,7 @@ object TransactionItemCfLineSpec {
     "1080",
     null, // Not set (legacy input lines)
     null, //
-    null  //
+    null //
   )
 }
 

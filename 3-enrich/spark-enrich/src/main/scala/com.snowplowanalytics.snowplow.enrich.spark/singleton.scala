@@ -33,9 +33,11 @@ import iglu.client.validation.ProcessingMessageMethods._
 
 /** Singletons needed for unserializable classes. */
 object singleton {
+
   /** Singleton for Iglu's Resolver to maintain one Resolver per node. */
   object ResolverSingleton {
     @volatile private var instance: Resolver = _
+
     /**
      * Retrieve or build an instance of Iglu's Resolver.
      * @param igluConfig JSON representing the Iglu configuration
@@ -67,7 +69,8 @@ object singleton {
   /** Singleton for EnrichmentRegistry. */
   object RegistrySingleton {
     @volatile private var instance: EnrichmentRegistry = _
-    @volatile private var enrichments: String = _
+    @volatile private var enrichments: String          = _
+
     /**
      * Retrieve or build an instance of EnrichmentRegistry.
      * @param igluConfig JSON representing the Iglu configuration
@@ -95,21 +98,21 @@ object singleton {
      * @param resolver (implicit) The Iglu resolver used for schema lookup and validation
      * @return An EnrichmentRegistry or one or more error messages boxed in a Scalaz ValidationNel
      */
-    private[spark] def getEnrichmentRegistry(enrichments: String, local: Boolean
-    )(implicit resolver: Resolver): ValidatedNelMessage[EnrichmentRegistry] = {
+    private[spark] def getEnrichmentRegistry(enrichments: String, local: Boolean)(
+      implicit resolver: Resolver): ValidatedNelMessage[EnrichmentRegistry] =
       for {
-        node <- base64ToJsonNode(enrichments, "enrichments")
-          .toValidationNel: ValidatedNelMessage[JsonNode]
+        node <- base64ToJsonNode(enrichments, "enrichments").toValidationNel: ValidatedNelMessage[
+          JsonNode]
         reg <- EnrichmentRegistry.parse(fromJsonNode(node), local)
       } yield reg
-    }
   }
 
   /** Singleton for Loader. */
   object LoaderSingleton {
     import common.loaders.Loader
     @volatile private var instance: Loader[_] = _
-    @volatile private var inFormat: String = _
+    @volatile private var inFormat: String    = _
+
     /**
      * Retrieve or build an instance of EnrichmentRegistry.
      * @param inFormat Collector format in which the data is coming in
@@ -118,7 +121,8 @@ object singleton {
       if (instance == null || this.inFormat != inFormat) {
         synchronized {
           if (instance == null || this.inFormat != inFormat) {
-            instance = Loader.getLoader(inFormat)
+            instance = Loader
+              .getLoader(inFormat)
               .valueOr(e => throw new FatalEtlError(e.toString))
             this.inFormat = inFormat
           }

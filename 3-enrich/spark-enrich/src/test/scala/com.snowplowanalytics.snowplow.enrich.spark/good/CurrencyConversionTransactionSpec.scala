@@ -83,14 +83,14 @@ object CurrencyConversionTransactionSpec {
     null, //
     null, //
     null, // Unstructured event field empty
-    "order-123",     // Transaction fields are set
+    "order-123", // Transaction fields are set
     "psychicbazaar", //
-    "8000",          //
-    "200",           //
-    "50",            //
-    "London",        //
-    "England",       //
-    "UK",            //
+    "8000", //
+    "200", //
+    "50", //
+    "London", //
+    "England", //
+    "UK", //
     null, // Transaction item fields empty
     null, //
     null, //
@@ -132,13 +132,13 @@ object CurrencyConversionTransactionSpec {
     null, // Not set (legacy input lines)
     null,
     null,
-    "USD",     // tr_currency
+    "USD", // tr_currency
     "6384.46", // tr_total_base
-    "159.61",  // tr_tax_base
-    "39.90",   // tr_shipping_base
-    null,      // ti_currency
-    null,      // ti_price_base
-    "EUR",     // base_currency
+    "159.61", // tr_tax_base
+    "39.90", // tr_shipping_base
+    null, // ti_currency
+    null, // ti_price_base
+    "EUR", // base_currency
     "America/Los_Angeles",
     null,
     null,
@@ -165,8 +165,13 @@ class CurrencyConversionTransactionSpec extends Specification with EnrichJobSpec
   // Only run currency enrichment tests if the credentials exist in an environment variable
   if (sys.env.get("OER_KEY").isDefined) {
     "A job which processes a CloudFront file containing 1 valid transaction" should {
-      runEnrichJob(CurrencyConversionTransactionSpec.lines, "cloudfront", "4", true,
-        List("geo"), true)
+      runEnrichJob(
+        CurrencyConversionTransactionSpec.lines,
+        "cloudfront",
+        "4",
+        true,
+        List("geo"),
+        true)
 
       "correctly output 1 transaction" in {
         val Some(goods) = readPartFile(dirs.output)
@@ -182,6 +187,7 @@ class CurrencyConversionTransactionSpec extends Specification with EnrichJobSpec
       }
     }
   } else {
-    println("WARNING: Skipping CurrencyConversionTransactionSpec as no OER_KEY environment variable was found for authentication")
+    println(
+      "WARNING: Skipping CurrencyConversionTransactionSpec as no OER_KEY environment variable was found for authentication")
   }
 }

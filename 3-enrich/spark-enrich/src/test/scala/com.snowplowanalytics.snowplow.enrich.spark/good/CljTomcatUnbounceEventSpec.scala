@@ -30,7 +30,7 @@ object CljTomcatUnbounceEventSpec {
   import EnrichJobSpec._
   val lines = Lines(
     "2017-11-15 12:12:36  - - 52.91.101.141 POST  50.19.99.184  /com.unbounce/v1  200 - Apache-HttpClient%2F4.5.1+%28Java%2F1.8.0_101%29  &cv=clj-1.1.0-tom-0.2.0&nuid=9965b812-9030-42de-8c18-41213abcf73b - - - application%2Fx-www-form-urlencoded cGFnZV91cmw9aHR0cCUzQSUyRiUyRnVuYm91bmNlcGFnZXMuY29tJTJGd2F5ZmFyaW5nLTE0NyUyRiZwYWdlX25hbWU9V2F5ZmFyaW5nJnBhZ2VfaWQ9NzY0ODE3N2QtNzMyMy00MzMwLWI0ZjktOTk1MWE1MjEzOGI2JnZhcmlhbnQ9YSZkYXRhLmpzb249JTdCJTIydXNlcmZpZWxkMSUyMiUzQSU1QiUyMmFzZGZhc2RmYWQlMjIlNUQlMkMlMjJpcF9hZGRyZXNzJTIyJTNBJTVCJTIyODUuNzMuMzkuMTYzJTIyJTVEJTJDJTIycGFnZV91dWlkJTIyJTNBJTVCJTIyNzY0ODE3N2QtNzMyMy00MzMwLWI0ZjktOTk1MWE1MjEzOGI2JTIyJTVEJTJDJTIydmFyaWFudCUyMiUzQSU1QiUyMmElMjIlNUQlMkMlMjJ0aW1lX3N1Ym1pdHRlZCUyMiUzQSU1QiUyMjEyJTNBMTIrUE0rVVRDJTIyJTVEJTJDJTIyZGF0ZV9zdWJtaXR0ZWQlMjIlM0ElNUIlMjIyMDE3LTExLTE1JTIyJTVEJTJDJTIycGFnZV91cmwlMjIlM0ElNUIlMjJodHRwJTNBJTJGJTJGdW5ib3VuY2VwYWdlcy5jb20lMkZ3YXlmYXJpbmctMTQ3JTJGJTIyJTVEJTJDJTIycGFnZV9uYW1lJTIyJTNBJTVCJTIyV2F5ZmFyaW5nJTIyJTVEJTdEJmRhdGEueG1sPSUzQyUzRnhtbCt2ZXJzaW9uJTNEJTIyMS4wJTIyK2VuY29kaW5nJTNEJTIyVVRGLTglMjIlM0YlM0UlM0Nmb3JtX2RhdGElM0UlM0N1c2VyZmllbGQxJTNFYXNkZmFzZGZhZCUzQyUyRnVzZXJmaWVsZDElM0UlM0NpcF9hZGRyZXNzJTNFODUuNzMuMzkuMTYzJTNDJTJGaXBfYWRkcmVzcyUzRSUzQ3BhZ2VfdXVpZCUzRTc2NDgxNzdkLTczMjMtNDMzMC1iNGY5LTk5NTFhNTIxMzhiNiUzQyUyRnBhZ2VfdXVpZCUzRSUzQ3ZhcmlhbnQlM0VhJTNDJTJGdmFyaWFudCUzRSUzQ3RpbWVfc3VibWl0dGVkJTNFMTIlM0ExMitQTStVVEMlM0MlMkZ0aW1lX3N1Ym1pdHRlZCUzRSUzQ2RhdGVfc3VibWl0dGVkJTNFMjAxNy0xMS0xNSUzQyUyRmRhdGVfc3VibWl0dGVkJTNFJTNDcGFnZV91cmwlM0VodHRwJTNBJTJGJTJGdW5ib3VuY2VwYWdlcy5jb20lMkZ3YXlmYXJpbmctMTQ3JTJGJTNDJTJGcGFnZV91cmwlM0UlM0NwYWdlX25hbWUlM0VXYXlmYXJpbmclM0MlMkZwYWdlX25hbWUlM0UlM0MlMkZmb3JtX2RhdGElM0U"
-    )
+  )
 
   val expected = List(
     null,
@@ -141,7 +141,7 @@ object CljTomcatUnbounceEventSpec {
     null,
     null,
     null
-    )
+  )
 }
 
 class CljTomcatUnbounceEventSpec extends Specification with EnrichJobSpec {
@@ -157,7 +157,8 @@ class CljTomcatUnbounceEventSpec extends Specification with EnrichJobSpec {
       for (idx <- CljTomcatUnbounceEventSpec.expected.indices) {
         Try(parse(CljTomcatUnbounceEventSpec.expected(idx))) match {
           case Success(parsedJSON) => parse(actual(idx)) must beEqualTo(parsedJSON)
-          case Failure(msg) => actual(idx) must BeFieldEqualTo(CljTomcatUnbounceEventSpec.expected(idx), idx)
+          case Failure(msg) =>
+            actual(idx) must BeFieldEqualTo(CljTomcatUnbounceEventSpec.expected(idx), idx)
         }
       }
     }

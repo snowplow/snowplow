@@ -18,10 +18,10 @@ import org.specs2.mutable.Specification
 
 object MasterCljTomcatSpec {
   // Concatenate ALL lines from ALL other jobs
-  val lines = good.CljTomcatTp1SingleEventSpec.lines.lines ++  // 1 good
-              good.CljTomcatCallrailEventSpec.lines.lines ++   // 1 good
-              good.CljTomcatTp2MultiEventsSpec.lines.lines ++  // 3 good
-              good.CljTomcatTp2MegaEventsSpec.lines.lines      // 7,500 good = 7,505 GOOD
+  val lines = good.CljTomcatTp1SingleEventSpec.lines.lines ++ // 1 good
+    good.CljTomcatCallrailEventSpec.lines.lines ++  // 1 good
+    good.CljTomcatTp2MultiEventsSpec.lines.lines ++ // 3 good
+    good.CljTomcatTp2MegaEventsSpec.lines.lines // 7,500 good = 7,505 GOOD
   object expected {
     val goodCount = 7505
   }
@@ -33,7 +33,7 @@ class MasterCljTomcatSpec extends Specification with EnrichJobSpec {
   override def appName = "master-clj-tomcat"
   sequential
   "A job which processes a Clojure-Tomcat file containing 7,505 valid events, 0 bad lines and " +
-  "3 discardable lines" should {
+    "3 discardable lines" should {
     runEnrichJob(Lines(MasterCljTomcatSpec.lines: _*), "clj-tomcat", "1", false, List("geo"))
 
     "write 7,505 events" in {

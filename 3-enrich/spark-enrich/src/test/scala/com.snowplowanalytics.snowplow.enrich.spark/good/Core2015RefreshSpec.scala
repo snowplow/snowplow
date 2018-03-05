@@ -160,7 +160,7 @@ class Core2015RefreshSpec extends Specification with EnrichJobSpec {
   override def appName = "core-2015-refresh"
   sequential
   "A job which processes a CloudFront file containing 1 valid page ping with campaign attribution" +
-  " fields" should {
+    " fields" should {
     runEnrichJob(Core2015RefreshSpec.lines, "cloudfront", "1", false, List("geo"), false, true)
 
     "correctly output 1 page ping" in {

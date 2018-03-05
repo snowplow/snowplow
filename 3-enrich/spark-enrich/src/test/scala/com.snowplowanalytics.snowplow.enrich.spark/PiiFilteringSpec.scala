@@ -21,12 +21,10 @@ class PiiFilteringSpec extends Specification with EnrichJobSpec {
   import EnrichJobSpec._
   override def appName = "pii-filter-cf"
   sequential
-  "A job which processes a CloudFront file" should{
-      "filter out pii events" in
-    {
+  "A job which processes a CloudFront file" should {
+    "filter out pii events" in {
       runEnrichJob(Lines(MasterCfSpec.lines: _*), "cloudfront", "1", false, List("geo"))
       val Some(goods) = readPartFile(dirs.output)
-
       val Some(bads)  = readPartFile(dirs.badRows)
       goods must not(contain(matching(".*pii.*")))
       bads must not(contain(matching(".*pii.*")))
