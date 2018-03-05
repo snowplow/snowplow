@@ -50,7 +50,7 @@ object UnstructEventCfLineSpec {
     "Florida",
     null,
     null,
-    "nuvox.net",  // Using the MaxMind domain lookup service
+    "nuvox.net", // Using the MaxMind domain lookup service
     null,
     "http://www.psychicbazaar.com/2-tarot-cards",
     null, // No page title for events

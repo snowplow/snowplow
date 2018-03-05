@@ -82,14 +82,14 @@ object TransactionCfLineSpec {
     null, //
     null, //
     null, // Unstructured event field empty
-    "order-123",     // Transaction fields are set
+    "order-123", // Transaction fields are set
     "psychicbazaar", //
-    "8000",          //
-    "200",           //
-    "50",            //
-    "London",        //
-    "England",       //
-    "UK",            //
+    "8000", //
+    "200", //
+    "50", //
+    "London", //
+    "England", //
+    "UK", //
     null, // Transaction item fields empty
     null, //
     null, //
@@ -130,7 +130,7 @@ object TransactionCfLineSpec {
     "1080",
     null, // Not set (legacy input lines)
     null, //
-    null  //
+    null //
   )
 }
 

@@ -76,11 +76,11 @@ object StructEventCfLineSpec {
     null, //
     null, //
     null, // No custom contexts
-    "ecomm",         // Structured event fields are set
+    "ecomm", // Structured event fields are set
     "add-to-basket", //
-    "Χαριτίνη",      // Check Unicode handling
-    "1",             //
-    "35708.23",      //
+    "Χαριτίνη", // Check Unicode handling
+    "1", //
+    "35708.23", //
     null, // Unstructured event field empty
     null, // Transaction fields empty
     null, //

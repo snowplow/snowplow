@@ -38,8 +38,8 @@ import org.specs2.execute.{AsResult, ResultExecution}
 import org.specs2.matcher.{Expectable, Matcher}
 import org.specs2.matcher.Matchers._
 
-
 object EnrichJobSpec {
+
   /** Case class representing the input lines written in a file. */
   case class Lines(l: String*) {
     val lines = l.toList
@@ -59,18 +59,20 @@ object EnrichJobSpec {
 
   /** Case class representing the directories where the output of the job has been written. */
   case class OutputDirs(output: File, badRows: File) {
+
     /** Delete recursively the output and bad rows directories. */
     def deleteAll(): Unit = List(badRows, output).foreach(deleteRecursively)
   }
 
-  val etlVersion = s"spark-${generated.ProjectSettings.version}-common-${generated.ProjectSettings.commonEnrichVersion}"
+  val etlVersion =
+    s"spark-${generated.ProjectSettings.version}-common-${generated.ProjectSettings.commonEnrichVersion}"
 
   val etlTimestamp = "2001-09-09 01:46:40.000"
 
-  private val outputFields = classOf[common.outputs.EnrichedEvent]
-    .getDeclaredFields
+  private val outputFields = classOf[common.outputs.EnrichedEvent].getDeclaredFields
     .map(_.getName)
   private val unmatchableFields = List("event_id")
+
   /**
    * Is lzo available?
    */
@@ -84,7 +86,7 @@ object EnrichJobSpec {
    */
   case class BeFieldEqualTo(expected: String, index: Int) extends Matcher[String] {
 
-    private val field = outputFields(index)
+    private val field        = outputFields(index)
     private val unmatcheable = isUnmatchable(field)
 
 
@@ -107,10 +109,14 @@ object EnrichJobSpec {
 
   /** A Specs2 matcher to check if a directory on disk is empty or not. */
   val beEmptyDir: Matcher[File] =
-    ((f: File) =>
-      !f.isDirectory ||
-        f.list().length == 0 ||
-        f.listFiles().filter(f => f.getName != "_SUCCESS" && !f.getName.endsWith(".crc")).map(_.length).sum == 0,
+    (
+      (f: File) =>
+        !f.isDirectory ||
+          f.list().length == 0 ||
+          f.listFiles()
+            .filter(f => f.getName != "_SUCCESS" && !f.getName.endsWith(".crc"))
+            .map(_.length)
+            .sum == 0,
       "is populated dir")
 
   /**
@@ -131,9 +137,7 @@ object EnrichJobSpec {
       .filter(s => s.contains("part-") && !s.contains("crc"))
     files.headOption match {
       case Some(f) =>
-        val list = Source.fromFile(new File(f))
-          .getLines
-          .toList
+        val list = Source.fromFile(new File(f)).getLines.toList
         Some(list)
       case None => None
     }
@@ -157,7 +161,7 @@ object EnrichJobSpec {
    * Throws an exception if deletion is unsuccessful.
    */
   def deleteRecursively(file: File): Unit = {
-    def listFilesSafely(file: File): Seq[File] = {
+    def listFilesSafely(file: File): Seq[File] =
       if (file.exists()) {
         val files = file.listFiles()
         if (files == null) throw new IOException(s"Failed to list files for dir: $file")
@@ -165,7 +169,6 @@ object EnrichJobSpec {
       } else {
         Seq.empty[File]
       }
-    }
 
     try {
       if (file.isDirectory) {
@@ -207,7 +210,8 @@ object EnrichJobSpec {
    * @return the created file
    */
   def randomFile(tag: String): File =
-    new File(System.getProperty("java.io.tmpdir"),
+    new File(
+      System.getProperty("java.io.tmpdir"),
       s"snowplow-enrich-job-${tag}-${Random.nextInt(Int.MaxValue)}")
 
   /** Remove the timestamp from bad rows so that what remains is deterministic */
@@ -224,8 +228,8 @@ object EnrichJobSpec {
    */
   private val igluCentralConfig = {
     val encoder = new Base64(true)
-    new String(encoder.encode(
-      """|{
+    new String(
+      encoder.encode("""|{
         |"schema": "iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-0",
         |"data": {
           |"cacheSize": 500,
@@ -271,18 +275,20 @@ object EnrichJobSpec {
      * @param lookup One of the lookup types
      * @return JSON fragment containing the lookup's database and URI
      */
-    def getLookupJson(lookup: String): String = {
+    def getLookupJson(lookup: String): String =
       """|"%s": {
             |"database": "%s",
             |"uri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind"
-          |}""".format(lookup, lookup match {
-        case "geo" => "GeoIPCity.dat"
-        case "isp" => "GeoIPISP.dat"
-        case "organization" => "GeoIPOrg.dat"
-        case "domain" => "GeoIPDomain.dat"
-        case "netspeed" => "GeoIPNetSpeedCell.dat"
-      })
-    }
+          |}""".format(
+        lookup,
+        lookup match {
+          case "geo"          => "GeoIPCity.dat"
+          case "isp"          => "GeoIPISP.dat"
+          case "organization" => "GeoIPOrg.dat"
+          case "domain"       => "GeoIPDomain.dat"
+          case "netspeed"     => "GeoIPNetSpeedCell.dat"
+        }
+      )
 
     /** Converts the JavaScript script to Base64. */
     def getJavascriptScript(): String = {
@@ -407,8 +413,7 @@ object EnrichJobSpec {
       |}""".stripMargin
 
     val encoder = new Base64(true) // true means "url safe"
-    new String(encoder.encode(
-      s"""|{
+    new String(encoder.encode(s"""|{
             |"schema": "iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0",
             |"data": [
               |{
@@ -605,8 +610,16 @@ trait EnrichJobSpec extends SparkSpec {
     apiRequestEnabled: Boolean = false,
     sqlQueryEnabled: Boolean = false): Unit = {
     val input = mkTmpFile("input", lines)
-    runEnrichJob(input.toString(), collector, anonOctets, anonOctetsEnabled, lookups,
-      currencyConversionEnabled, javascriptScriptEnabled, apiRequestEnabled, sqlQueryEnabled)
+    runEnrichJob(
+      input.toString(),
+      collector,
+      anonOctets,
+      anonOctetsEnabled,
+      lookups,
+      currencyConversionEnabled,
+      javascriptScriptEnabled,
+      apiRequestEnabled,
+      sqlQueryEnabled)
     deleteRecursively(input)
   }
 
@@ -626,15 +639,29 @@ trait EnrichJobSpec extends SparkSpec {
     apiRequestEnabled: Boolean,
     sqlQueryEnabled: Boolean): Unit = {
     val config = Array(
-      "--input-folder", inputFile,
-      "--input-format", collector,
-      "--output-folder", dirs.output.toString(),
-      "--bad-folder", dirs.badRows.toString(),
-      "--enrichments", getEnrichments(anonOctets, anonOctetsEnabled, lookups,
-        currencyConversionEnabled, javascriptScriptEnabled, apiRequestEnabled, sqlQueryEnabled),
-      "--iglu-config", igluConfig,
-      "--etl-timestamp", 1000000000000L.toString,
-      "--local")
+      "--input-folder",
+      inputFile,
+      "--input-format",
+      collector,
+      "--output-folder",
+      dirs.output.toString(),
+      "--bad-folder",
+      dirs.badRows.toString(),
+      "--enrichments",
+      getEnrichments(
+        anonOctets,
+        anonOctetsEnabled,
+        lookups,
+        currencyConversionEnabled,
+        javascriptScriptEnabled,
+        apiRequestEnabled,
+        sqlQueryEnabled),
+      "--iglu-config",
+      igluConfig,
+      "--etl-timestamp",
+      1000000000000L.toString,
+      "--local"
+    )
 
     val job = EnrichJob(spark, config)
     job.run()
@@ -650,9 +677,11 @@ trait EnrichJobSpec extends SparkSpec {
     import com.twitter.elephantbird.mapreduce.io.ThriftWritable
     import com.twitter.elephantbird.mapreduce.output.LzoThriftBlockOutputFormat
     import org.apache.hadoop.io.LongWritable
-    val f = new File(System.getProperty("java.io.tmpdir"),
+    val f = new File(
+      System.getProperty("java.io.tmpdir"),
       s"snowplow-enrich-job-${tag}-${scala.util.Random.nextInt(Int.MaxValue)}")
-    val rdd = spark.sparkContext.parallelize(Seq(payload))
+    val rdd = spark.sparkContext
+      .parallelize(Seq(payload))
       .map { e =>
         val writable = ThriftWritable.newInstance(classOf[CollectorPayload])
         writable.set(e)
@@ -664,7 +693,8 @@ trait EnrichJobSpec extends SparkSpec {
       classOf[org.apache.hadoop.io.LongWritable],
       classOf[ThriftWritable[CollectorPayload]],
       classOf[LzoThriftBlockOutputFormat[ThriftWritable[CollectorPayload]]],
-      hadoopConfig)
+      hadoopConfig
+    )
     f
   }
 

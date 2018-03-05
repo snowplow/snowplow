@@ -133,7 +133,7 @@ object Aug2013CfLineSpec {
     "UTF-8",
     "1024",
     "635"
-    )
+  )
 }
 
 /**
