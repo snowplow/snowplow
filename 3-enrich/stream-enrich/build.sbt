@@ -10,20 +10,24 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-lazy val root = project.in(file("."))
+lazy val root = project
+  .in(file("."))
   .settings(
-    organization  :=  "com.snowplowanalytics",
-    name          :=  "snowplow-stream-enrich",
-    version       :=  "0.14.0",
-    description   :=  "The Snowplow Enrichment process, implemented as an Amazon Kinesis app",
-    scalaVersion  :=  "2.11.11",
-    scalacOptions :=  BuildSettings.compilerOptions,
+    organization := "com.snowplowanalytics",
+    name := "snowplow-stream-enrich",
+    version := "0.14.0",
+    description := "The Snowplow Enrichment process, implemented as an Amazon Kinesis app",
+    scalaVersion := "2.11.11",
+    scalacOptions := BuildSettings.compilerOptions,
     scalacOptions in (Compile, console) ~= { _.filterNot(Set("-Ywarn-unused-import")) },
-    scalacOptions in (Test, console)    := (scalacOptions in (Compile, console)).value,
-    javacOptions  :=  BuildSettings.javaCompilerOptions,
-    resolvers     ++= Dependencies.resolutionRepos,
-    shellPrompt   := { _ => "stream-enrich> " }
+    scalacOptions in (Test, console) := (scalacOptions in (Compile, console)).value,
+    javacOptions := BuildSettings.javaCompilerOptions,
+    resolvers ++= Dependencies.resolutionRepos,
+    shellPrompt := { _ =>
+      "stream-enrich> "
+    }
   )
+  .settings(BuildSettings.formatting)
   .settings(BuildSettings.scalifySettings)
   .settings(BuildSettings.sbtAssemblySettings)
   .settings(BuildSettings.addExampleConfToTestCp)
