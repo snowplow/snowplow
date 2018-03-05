@@ -41,7 +41,7 @@ class StdouterrSink(inputType: InputType) extends ISink {
     inputType match {
       case Good => events.foreach(e => println(e._1)) // To stdout
       case Pii  => events.foreach(e => println(e._1)) // To stdout
-      case Bad => events.foreach(e => Console.err.println(e._1)) // To stderr
+      case Bad  => events.foreach(e => Console.err.println(e._1)) // To stderr
     }
     !events.isEmpty
   }

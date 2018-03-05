@@ -1,21 +1,21 @@
 /*
-* Copyright (c) 2013-2017 Snowplow Analytics Ltd.
-* All rights reserved.
-*
-* This program is licensed to you under the Apache License Version 2.0,
-* and you may not use this file except in compliance with the Apache
-* License Version 2.0.
-* You may obtain a copy of the Apache License Version 2.0 at
-* http://www.apache.org/licenses/LICENSE-2.0.
-*
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the Apache License Version 2.0 is distributed
-* on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
-* either express or implied.
-*
-* See the Apache License Version 2.0 for the specific language
-* governing permissions and limitations there under.
-*/
+ * Copyright (c) 2013-2017 Snowplow Analytics Ltd.
+ * All rights reserved.
+ *
+ * This program is licensed to you under the Apache License Version 2.0,
+ * and you may not use this file except in compliance with the Apache
+ * License Version 2.0.
+ * You may obtain a copy of the Apache License Version 2.0 at
+ * http://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the Apache License Version 2.0 is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied.
+ *
+ * See the Apache License Version 2.0 for the specific language
+ * governing permissions and limitations there under.
+ */
 
 package com.snowplowanalytics
 package snowplow
@@ -48,13 +48,13 @@ import org.slf4j.LoggerFactory
 import model._
 
 /**
-  * Source to read raw events from NSQ.
-  *
-  * @param config Configuration for NSQ
-  * @param igluResolver Instance of resolver for iglu
-  * @param enrichmentRegistry EnrichmentRegistry instance
-  * @param tracker Tracker instance
-  */
+ * Source to read raw events from NSQ.
+ *
+ * @param config Configuration for NSQ
+ * @param igluResolver Instance of resolver for iglu
+ * @param enrichmentRegistry EnrichmentRegistry instance
+ * @param tracker Tracker instance
+ */
 class NsqSource(
   config: EnrichConfig,
   igluResolver: Resolver,
@@ -65,15 +65,15 @@ class NsqSource(
   lazy val log = LoggerFactory.getLogger(getClass())
 
   /**
-    * Consumer will be started to wait new message.
-    */
+   * Consumer will be started to wait new message.
+   */
   override def run(): Unit = {
 
     val nsqCallback = new NSQMessageCallback {
       override def message(msg: NSQMessage): Unit = {
         val bytes = msg.getMessage()
         enrichAndStoreEvents(List(bytes)) match {
-          case true => msg.finished()
+          case true  => msg.finished()
           case false => log.error(s"Error while enriching the event")
         }
       }
@@ -87,12 +87,13 @@ class NsqSource(
     // use NSQLookupd
     val lookup = new DefaultNSQLookup
     lookup.addLookupAddress(config.streams.nsq.lookupHost, config.streams.nsq.lookupPort)
-    val consumer = new NSQConsumer(lookup,
-                                   config.streams.in.raw,
-                                   config.streams.nsq.rawChannel,
-                                   nsqCallback,
-                                   new NSQConfig(),
-                                   errorCallback)
+    val consumer = new NSQConsumer(
+      lookup,
+      config.streams.in.raw,
+      config.streams.nsq.rawChannel,
+      nsqCallback,
+      new NSQConfig(),
+      errorCallback)
     consumer.start()
   }
 }

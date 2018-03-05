@@ -63,7 +63,7 @@ class KafkaSource(
     consumer.subscribe(List(config.streams.in.raw).asJava)
     while (true) {
       val recordValues = consumer
-        .poll(100)    // Wait 100 ms if data is not available
+        .poll(100) // Wait 100 ms if data is not available
         .asScala
         .toList
         .map(_.value) // Get the values
@@ -86,10 +86,8 @@ class KafkaSource(
     props.put("auto.commit.interval.ms", "1000")
     props.put("auto.offset.reset", "earliest")
     props.put("session.timeout.ms", "30000")
-    props.put("key.deserializer",
-      "org.apache.kafka.common.serialization.StringDeserializer")
-    props.put("value.deserializer",
-      "org.apache.kafka.common.serialization.ByteArrayDeserializer")
+    props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer")
+    props.put("value.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer")
     props
   }
 }

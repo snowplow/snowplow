@@ -32,8 +32,8 @@ import scala.collection.JavaConverters._
 import model._
 
 /**
-  * NSQSink for Scala enrichment
-  */
+ * NSQSink for Scala enrichment
+ */
 class NsqSink(
   nsqConfig: NsqConfig,
   topicName: String
@@ -42,10 +42,10 @@ class NsqSink(
   private val producer = new NSQProducer().addAddress(nsqConfig.host, nsqConfig.port).start()
 
   /**
-    *
-    * @param events Sequence of enriched events and (unused) partition keys
-    * @return Whether to checkpoint
-    */
+   *
+   * @param events Sequence of enriched events and (unused) partition keys
+   * @return Whether to checkpoint
+   */
   override def storeEnrichedEvents(events: List[(String, String)]): Boolean = {
     val msgList = events.unzip._1.map(_.getBytes(UTF_8)).asJava
     producer.produceMulti(topicName, msgList)

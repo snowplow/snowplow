@@ -44,26 +44,27 @@ class PiiEmitSpec extends Specification {
 
   val jinJava = new Jinjava()
   val configValues = Map(
-    "sourceType" -> "kafka",
-    "sinkType" -> "kafka",
-    "streamsInRaw" -> s"$testGoodIn",
-    "outEnriched" -> s"$testGood",
-    "outPii" -> s"$testPii",
-    "outBad" -> s"$testBad",
-    "partitionKeyName" -> "\"\"",
-    "kafkaBrokers" -> s"$kafkaHost",
-    "region" -> "\"\"",
+    "sourceType"                 -> "kafka",
+    "sinkType"                   -> "kafka",
+    "streamsInRaw"               -> s"$testGoodIn",
+    "outEnriched"                -> s"$testGood",
+    "outPii"                     -> s"$testPii",
+    "outBad"                     -> s"$testBad",
+    "partitionKeyName"           -> "\"\"",
+    "kafkaBrokers"               -> s"$kafkaHost",
+    "region"                     -> "\"\"",
     "enrichStreamsOutMaxBackoff" -> "\"\"",
     "enrichStreamsOutMinBackoff" -> "\"\"",
-    "nsqdPort" -> "123",
-    "nsqlookupdPort" -> "234",
-    "bufferTimeThreshold" -> "1",
-    "bufferRecordThreshold" -> "1",
-    "bufferByteThreshold" -> "100000",
-    "enrichAppName" -> "Jim",
+    "nsqdPort"                   -> "123",
+    "nsqlookupdPort"             -> "234",
+    "bufferTimeThreshold"        -> "1",
+    "bufferRecordThreshold"      -> "1",
+    "bufferByteThreshold"        -> "100000",
+    "enrichAppName"              -> "Jim",
     "enrichStreamsOutMaxBackoff" -> "1000",
     "enrichStreamsOutMinBackoff" -> "1000",
-    "appName" -> "jim")
+    "appName"                    -> "jim"
+  )
 
   val configRes         = getClass.getResourceAsStream("/config.hocon.sample")
   val config            = Source.fromInputStream(configRes).getLines.mkString("\n")
@@ -117,18 +118,25 @@ class PiiEmitSpec extends Specification {
           (bad aka "bad result list" must have size (expectedBad)) and
             (pii aka "pii result list" must have size (expectedPii)) and
             (good aka "good result list" must have size (expectedGood)) and
-            (good aka "good result list" must containMatch(spaceJoinResult(PagePingWithContextSpec.expected))) and
+            (good aka "good result list" must containMatch(
+              spaceJoinResult(PagePingWithContextSpec.expected))) and
             (pii aka "pii result list" must contain(PagePingWithContextSpec.pii)) and
-            (good aka "good result list" must containMatch(spaceJoinResult(PageViewWithContextSpec.expected))) and
+            (good aka "good result list" must containMatch(
+              spaceJoinResult(PageViewWithContextSpec.expected))) and
             (pii aka "pii result list" must contain(PageViewWithContextSpec.pii)) and
-            (good aka "good result list" must containMatch(spaceJoinResult(StructEventSpec.expected))) and
+            (good aka "good result list" must containMatch(
+              spaceJoinResult(StructEventSpec.expected))) and
             (pii aka "pii result list" must contain(StructEventSpec.pii)) and
-            (good aka "good result list" must containMatch(spaceJoinResult(StructEventWithContextSpec.expected))) and
+            (good aka "good result list" must containMatch(
+              spaceJoinResult(StructEventWithContextSpec.expected))) and
             (pii aka "pii result list" must contain(StructEventWithContextSpec.pii)) and
-            (good aka "good result list" must containMatch(spaceJoinResult(TransactionItemSpec.expected))) and
+            (good aka "good result list" must containMatch(
+              spaceJoinResult(TransactionItemSpec.expected))) and
             (pii aka "pii result list" must contain(TransactionItemSpec.pii)) and
-            (good aka "good result list" must containMatch(spaceJoinResult(TransactionSpec.expected))) and
+            (good aka "good result list" must containMatch(
+              spaceJoinResult(TransactionSpec.expected))) and
             (pii aka "pii result list" must contain(TransactionSpec.pii))
+
         }
       }
     }

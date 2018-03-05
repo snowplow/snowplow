@@ -34,22 +34,22 @@ object model {
    * as defined in the following enumerations.
    */
   sealed trait Source
-  case object KafkaSource extends Source
+  case object KafkaSource   extends Source
   case object KinesisSource extends Source
-  case object StdinSource extends Source
-  case object NsqSource extends Source
+  case object StdinSource   extends Source
+  case object NsqSource     extends Source
 
   sealed trait Sink
-  case object KafkaSink extends Sink
-  case object KinesisSink extends Sink
+  case object KafkaSink     extends Sink
+  case object KinesisSink   extends Sink
   case object StdouterrSink extends Sink
-  case object NsqSink extends Sink
+  case object NsqSink       extends Sink
 
   /** Whether the sink is for good rows or bad rows */
   sealed trait InputType
   case object Good extends InputType
-  case object Bad extends InputType
-  case object Pii extends InputType
+  case object Bad  extends InputType
+  case object Pii  extends InputType
 
   // Case classes necessary to the decoding of the configuration
   final case class AWSConfig(accessKey: String, secretKey: String) {
@@ -71,8 +71,8 @@ object model {
     }).fold(s => throw new IllegalArgumentException(s), identity)
 
     private def isDefault(key: String): Boolean = key == "default"
-    private def isIam(key: String): Boolean = key == "iam"
-    private def isEnv(key: String): Boolean = key == "env"
+    private def isIam(key: String): Boolean     = key == "iam"
+    private def isEnv(key: String): Boolean     = key == "env"
   }
   final case class StreamsConfig(
     in: InConfig,
@@ -94,15 +94,16 @@ object model {
   ) {
     val timestamp = initialTimestamp
       .toRight("An initial timestamp needs to be provided when choosing AT_TIMESTAMP")
-      .right.flatMap { s =>
+      .right
+      .flatMap { s =>
         val format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
         utils.fold(Try(format.parse(s)))(t => Left(t.getMessage), Right(_))
       }
     require(initialPosition != "AT_TIMESTAMP" || timestamp.isRight, timestamp.left.getOrElse(""))
 
     val streamEndpoint = region match {
-      case cn@"cn-north-1" => s"https://kinesis.$cn.amazonaws.com.cn"
-      case _ => s"https://kinesis.$region.amazonaws.com"
+      case cn @ "cn-north-1" => s"https://kinesis.$cn.amazonaws.com.cn"
+      case _                 => s"https://kinesis.$region.amazonaws.com"
     }
   }
   final case class BackoffPolicyConfig(minBackoff: Long, maxBackoff: Long)
