@@ -47,7 +47,6 @@ import registry.{
   IpLookupsEnrichment,
   JavascriptScriptEnrichment,
   JavascriptScriptEnrichmentConfig,
-  PiiPseudonymizerEnrichment,
   RefererParserEnrichment,
   UaParserEnrichment,
   UaParserEnrichmentConfig,
@@ -57,6 +56,7 @@ import registry.{
   WeatherEnrichmentConfig
 }
 import registry.apirequest.{ApiRequestEnrichment, ApiRequestEnrichmentConfig}
+import registry.pii.PiiPseudonymizerEnrichment
 import registry.sqlquery.{SqlQueryEnrichment, SqlQueryEnrichmentConfig}
 
 import utils.ScalazJson4sUtils
