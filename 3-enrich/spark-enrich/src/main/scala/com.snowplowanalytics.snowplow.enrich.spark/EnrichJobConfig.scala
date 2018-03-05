@@ -82,28 +82,43 @@ case class ParsedEnrichJobConfig(
 object EnrichJobConfig {
   private val parser = new scopt.OptionParser[RawEnrichJobConfig]("EnrichJob") {
     head("EnrichJob")
-    opt[String]("input-folder").required().valueName("<input folder>")
+    opt[String]("input-folder")
+      .required()
+      .valueName("<input folder>")
       .action((f, c) => c.copy(inFolder = f))
       .text("Folder where the input events are located")
-    opt[String]("input-format").required().valueName("<input format>")
+    opt[String]("input-format")
+      .required()
+      .valueName("<input format>")
       .action((f, c) => c.copy(inFormat = f))
       .text("The format in which the collector is saving data")
-    opt[String]("output-folder").required().valueName("<output folder>")
+    opt[String]("output-folder")
+      .required()
+      .valueName("<output folder>")
       .action((f, c) => c.copy(outFolder = f))
       .text("Output folder where the enriched events will be stored")
-    opt[String]("bad-folder").required().valueName("<bad folder>")
+    opt[String]("bad-folder")
+      .required()
+      .valueName("<bad folder>")
       .action((f, c) => c.copy(badFolder = f))
       .text("Output folder where the malformed events will be stored")
-    opt[String]("enrichments").required().valueName("<enrichments>")
+    opt[String]("enrichments")
+      .required()
+      .valueName("<enrichments>")
       .action((e, c) => c.copy(enrichments = e))
       .text("Directory where the JSONs describing the enrichments are stored")
-    opt[String]("iglu-config").required().valueName("<iglu config>")
+    opt[String]("iglu-config")
+      .required()
+      .valueName("<iglu config>")
       .action((i, c) => c.copy(igluConfig = i))
       .text("Iglu resolver configuration")
-    opt[Long]("etl-timestamp").required().valueName("<ETL timestamp>")
+    opt[Long]("etl-timestamp")
+      .required()
+      .valueName("<ETL timestamp>")
       .action((t, c) => c.copy(etlTstamp = t))
       .text("Timestamp at which the job was launched, in milliseconds")
-    opt[Unit]("local").hidden()
+    opt[Unit]("local")
+      .hidden()
       .action((_, c) => c.copy(local = true))
       .text("Whether to build a local enrichment registry")
     help("help").text("Prints this usage text")
@@ -118,11 +133,20 @@ object EnrichJobConfig {
     val resolver = ResolverSingleton.getIgluResolver(c.igluConfig)
     val registry = resolver
       .flatMap(RegistrySingleton.getEnrichmentRegistry(c.enrichments, c.local)(_))
-    val loader = Loader.getLoader(c.inFormat)
+    val loader = Loader
+      .getLoader(c.inFormat)
       .fold(_.toProcessingMessage.failureNel, _.successNel)
     (resolver |@| registry |@| loader) { (_, reg, _) =>
-        ParsedEnrichJobConfig(c.inFolder, c.inFormat, c.outFolder, c.badFolder,
-          c.enrichments, c.igluConfig, c.local, new DateTime(c.etlTstamp), filesToCache(reg))
+      ParsedEnrichJobConfig(
+        c.inFolder,
+        c.inFormat,
+        c.outFolder,
+        c.badFolder,
+        c.enrichments,
+        c.igluConfig,
+        c.local,
+        new DateTime(c.etlTstamp),
+        filesToCache(reg))
     }
   }
 
@@ -133,12 +157,11 @@ object EnrichJobConfig {
    */
   def loadConfigFrom(
     args: Array[String]
-  ): ValidatedNelMessage[ParsedEnrichJobConfig] = {
+  ): ValidatedNelMessage[ParsedEnrichJobConfig] =
     parser.parse(args, RawEnrichJobConfig()).map(transform) match {
       case Some(c) => c
-      case _ => "Parsing of the configuration failed".toProcessingMessage.failureNel
+      case _       => "Parsing of the configuration failed".toProcessingMessage.failureNel
     }
-  }
 
   /**
    * Build the list of enrichment files to cache.
@@ -148,6 +171,6 @@ object EnrichJobConfig {
   private def filesToCache(registry: EnrichmentRegistry): List[(URI, String)] =
     registry.getIpLookupsEnrichment match {
       case Some(ipLookups) => ipLookups.dbsToCache
-      case None => Nil
+      case None            => Nil
     }
 }

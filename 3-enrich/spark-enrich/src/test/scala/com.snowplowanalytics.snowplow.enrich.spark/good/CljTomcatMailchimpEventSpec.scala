@@ -139,7 +139,7 @@ class CljTomcatMailchimpEventSpec extends Specification with EnrichJobSpec {
   override def appName = "clj-tomcat-mailchimp-event"
   sequential
   "A job which processes a Clojure-Tomcat file containing a POST raw event representing 1 valid " +
-  "completed call" should {
+    "completed call" should {
     runEnrichJob(CljTomcatMailchimpEventSpec.lines, "clj-tomcat", "2", true, List("geo"))
 
     "correctly output 1 completed call" in {
