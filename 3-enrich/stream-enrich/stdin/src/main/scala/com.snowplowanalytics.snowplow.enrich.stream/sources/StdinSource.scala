@@ -24,22 +24,46 @@ package stream
 package sources
 
 import org.apache.commons.codec.binary.Base64
+import scalaz._
+import Scalaz._
 
 import common.enrichments.EnrichmentRegistry
 import iglu.client.Resolver
-import model.EnrichConfig
+import model.{Stdin, StreamsConfig}
 import scalatracker.Tracker
-import sinks.Sink
+import sinks.{Sink, StderrSink, StdoutSink}
+
+/** StdinSource companion object with factory method */
+object StdinSource {
+  def create(
+    config: StreamsConfig,
+    igluResolver: Resolver,
+    enrichmentRegistry: EnrichmentRegistry,
+    tracker: Option[Tracker]
+  ): Validation[String, StdinSource] = for {
+    _ <- config.sourceSink match {
+      case Stdin => ().success
+      case _ => "Configured source/sink is not Stdin".failure
+    }
+    goodSink = new ThreadLocal[Sink] {
+      override def initialValue = new StdoutSink()
+    }
+    badSink = new ThreadLocal[Sink] {
+      override def initialValue = new StderrSink()
+    }
+  } yield new StdinSource(
+    goodSink, badSink, igluResolver, enrichmentRegistry, tracker, config.out.partitionKey)
+}
 
 /** Source to decode raw events (in base64) from stdin. */
-class StdinSource(
-  config: EnrichConfig,
+class StdinSource private (
+  goodSink: ThreadLocal[Sink],
+  badSink: ThreadLocal[Sink],
   igluResolver: Resolver,
   enrichmentRegistry: EnrichmentRegistry,
   tracker: Option[Tracker],
-  goodSink: ThreadLocal[Sink],
-  badSink: ThreadLocal[Sink]
-) extends Source(config, igluResolver, enrichmentRegistry, tracker, goodSink, badSink) {
+  partitionKey: String
+) extends Source(goodSink, badSink, igluResolver, enrichmentRegistry, tracker, partitionKey) {
 
   override val MaxRecordSize = None
 

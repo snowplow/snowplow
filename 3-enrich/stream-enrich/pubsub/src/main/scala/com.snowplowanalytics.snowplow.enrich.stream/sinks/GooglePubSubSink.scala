@@ -39,27 +39,28 @@ import Scalaz._
 import model._
 import utils._
 
-/** PubSubSink companion object with factory method */
-object PubSubSink {
+/** GooglePubSubSink companion object with factory method */
+object GooglePubSubSink {
   def createAndInitialize(
-    pubSubConfig: PubSubConfig,
+    googlePubSubConfig: GooglePubSub,
     bufferConfig: BufferConfig,
     topicName: String
-  ): \/[Throwable, PubSubSink] = for {
+  ): \/[Throwable, GooglePubSubSink] = for {
     batching <- batchingSettings(bufferConfig).right
-    retry = retrySettings(pubSubConfig.backoffPolicy)
-    publisher <- toEither(createPublisher(pubSubConfig.googleProjectId, topicName, batching, retry))
-    topicExists <- topicExists(pubSubConfig.googleProjectId, topicName)
+    retry = retrySettings(googlePubSubConfig.backoffPolicy)
+    publisher <- toEither(
+      createPublisher(googlePubSubConfig.googleProjectId, topicName, batching, retry))
+    _ <- topicExists(googlePubSubConfig.googleProjectId, topicName)
       .flatMap { b =>
         if (b) b.right
-        else new IllegalArgumentException(s"PubSub topic $topicName doesn't exist").left
+        else new IllegalArgumentException(s"Google PubSub topic $topicName doesn't exist").left
       }
-  } yield new PubSubSink(publisher, topicName)
+  } yield new GooglePubSubSink(publisher, topicName)
 
   /**
    * Instantiates a Publisher on an existing topic with the given configuration options.
    * This can fail if the publisher can't be created.
-   * @return a PubSub publisher or an error
+   * @return a Google PubSub publisher or an error
    */
   private def createPublisher(
     projectId: String,
@@ -79,7 +80,7 @@ object PubSubSink {
       .setDelayThreshold(Duration.ofMillis(bufferConfig.timeLimit))
       .build()
 
-  private def retrySettings(backoffPolicy: BackoffPolicyConfig): RetrySettings =
+  private def retrySettings(backoffPolicy: GooglePubSubBackoffPolicyConfig): RetrySettings =
     RetrySettings.newBuilder()
       .setInitialRetryDelay(Duration.ofMillis(backoffPolicy.minBackoff))
       .setMaxRetryDelay(Duration.ofMillis(backoffPolicy.maxBackoff))
@@ -90,7 +91,7 @@ object PubSubSink {
       .setMaxRpcTimeout(Duration.ofSeconds(10))
       .build()
 
-  /** Checks that a PubSub topic exists **/
+  /** Checks that a Google PubSub topic exists **/
   private def topicExists(projectId: String, topicName: String): \/[Throwable, Boolean] = for {
     topicAdminClient <- toEither(Try(TopicAdminClient.create()))
     topics <- toEither(Try(topicAdminClient.listTopics(ProjectName.of(projectId))))
@@ -102,9 +103,9 @@ object PubSubSink {
 
 
 /**
- * PubSub Sink for the Scala enrichment process
+ * Google PubSub Sink for the Scala enrichment process
  */
-class PubSubSink private (publisher: Publisher, topicName: String) extends Sink {
+class GooglePubSubSink private (publisher: Publisher, topicName: String) extends Sink {
 
   /**
    * Convert event bytes to a PubsubMessage to be published
@@ -123,7 +124,7 @@ class PubSubSink private (publisher: Publisher, topicName: String) extends Sink 
    */
   override def storeEnrichedEvents(events: List[(String, String)]): Boolean = {
     if (events.nonEmpty)
-      log.info(s"Writing ${events.size} Thrift records to PubSub topic ${topicName}")
+      log.info(s"Writing ${events.size} Thrift records to Google PubSub topic ${topicName}")
     events.foreach { case (value, _) =>
       publisher.right.map { p =>
         val future = p.publish(eventToPubsubMessage(value))

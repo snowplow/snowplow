@@ -24,40 +24,27 @@ package stream
 import java.io.File
 import java.net.URI
 
-import scalaz.{Sink => _, Source => _, _}
-import Scalaz._
+import scalaz.Validation
 
 import common.enrichments.EnrichmentRegistry
 import config.FileConfig
 import iglu.client.Resolver
-import model.{Credentials, EnrichConfig}
+import model.{Credentials, StreamsConfig}
 import scalatracker.Tracker
-import sinks.{KafkaSink, Sink}
 import sources.{KafkaSource, Source}
 
 /** The main entry point for Stream Enrich for Kafka. */
-object KafkaEnrich extends App with Enrich {
+object KafkaEnrich extends Enrich {
 
-  run(args)
+  def main(args: Array[String]): Unit = run(args)
 
   override def getSource(
-    enrichConfig: EnrichConfig,
+    streamsConfig: StreamsConfig,
     resolver: Resolver,
     enrichmentRegistry: EnrichmentRegistry,
     tracker: Option[Tracker]
-  ): Validation[String, Source] = {
-    val kafkaConfig = enrichConfig.streams.kafka
-    val bufferConfig = enrichConfig.streams.buffer
-    val goodSink = new ThreadLocal[Sink] {
-      override def initialValue =
-        new KafkaSink(kafkaConfig, bufferConfig, enrichConfig.streams.out.enriched, tracker)
-    }
-    val badSink = new ThreadLocal[Sink] {
-      override def initialValue =
-        new KafkaSink(kafkaConfig, bufferConfig, enrichConfig.streams.out.bad, tracker)
-    }
-    new KafkaSource(enrichConfig, resolver, enrichmentRegistry, tracker, goodSink, badSink).success
-  }
+  ): Validation[String, Source] =
+    KafkaSource.create(streamsConfig, resolver, enrichmentRegistry, tracker)
 
   override val parser: scopt.OptionParser[FileConfig] = localParser
 

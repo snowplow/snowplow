@@ -30,27 +30,48 @@ import com.snowplowanalytics.client.nsq.NSQConfig
 import com.snowplowanalytics.client.nsq.callbacks.NSQMessageCallback
 import com.snowplowanalytics.client.nsq.callbacks.NSQErrorCallback
 import com.snowplowanalytics.client.nsq.exceptions.NSQException
+import scalaz._
+import Scalaz._
 
 import iglu.client.Resolver
 import common.enrichments.EnrichmentRegistry
+import model.{Nsq, StreamsConfig}
+import sinks.{NsqSink, Sink}
 import scalatracker.Tracker
-import model._
 
-/**
-  * Source to read raw events from NSQ.
-  * @param config Configuration for NSQ
-  * @param igluResolver Instance of resolver for iglu
-  * @param enrichmentRegistry EnrichmentRegistry instance
-  * @param tracker Tracker instance
-  */
-class NsqSource(
-  config: EnrichConfig,
+/** NsqSource companion object with factory method */
+object NsqSource {
+  def create(
+    config: StreamsConfig,
+    igluResolver: Resolver,
+    enrichmentRegistry: EnrichmentRegistry,
+    tracker: Option[Tracker]
+  ): Validation[Throwable, NsqSource] = for {
+    nsqConfig <- config.sourceSink match {
+      case c: Nsq => c.success
+      case _ => new IllegalArgumentException("Configured source/sink is not Nsq").failure
+    }
+    goodSink = new ThreadLocal[Sink] {
+      override def initialValue = new NsqSink(nsqConfig, config.out.enriched)
+    }
+    badSink = new ThreadLocal[Sink] {
+      override def initialValue = new NsqSink(nsqConfig, config.out.bad)
+    }
+  } yield new NsqSource(goodSink, badSink, igluResolver, enrichmentRegistry, tracker, nsqConfig,
+    config.in.raw, config.out.partitionKey)
+}
+
+/** Source to read raw events from NSQ. */
+class NsqSource private (
+  goodSink: ThreadLocal[sinks.Sink],
+  badSink: ThreadLocal[sinks.Sink],
   igluResolver: Resolver,
   enrichmentRegistry: EnrichmentRegistry,
   tracker: Option[Tracker],
-  goodSink: ThreadLocal[sinks.Sink],
-  badSink: ThreadLocal[sinks.Sink]
-) extends Source(config, igluResolver, enrichmentRegistry, tracker, goodSink, badSink) {
+  nsqConfig: Nsq,
+  topicName: String,
+  partitionKey: String
+) extends Source(goodSink, badSink, igluResolver, enrichmentRegistry, tracker, partitionKey) {
 
   override val MaxRecordSize = None
 
@@ -69,18 +90,14 @@ class NsqSource(
 
     val errorCallback = new NSQErrorCallback {
       override def error(e: NSQException): Unit =
-        log.error(s"Exception while consuming topic $config.streams.in.raw", e)
+        log.error(s"Exception while consuming topic $topicName", e)
     }
 
     // use NSQLookupd
     val lookup = new DefaultNSQLookup
-    lookup.addLookupAddress(config.streams.nsq.lookupHost, config.streams.nsq.lookupPort)
-    val consumer = new NSQConsumer(lookup,
-                                   config.streams.in.raw,
-                                   config.streams.nsq.rawChannel,
-                                   nsqCallback,
-                                   new NSQConfig(),
-                                   errorCallback)
+    lookup.addLookupAddress(nsqConfig.lookupHost, nsqConfig.lookupPort)
+    val consumer = new NSQConsumer(
+      lookup, topicName, nsqConfig.rawChannel, nsqCallback, new NSQConfig(),  errorCallback)
     consumer.start()
   }
 }
