@@ -56,8 +56,13 @@ lazy val root = project.in(file("."))
 lazy val core = project
   .settings(moduleName := "snowplow-stream-enrich")
   .settings(buildSettings)
-  .settings(BuildSettings.scalifySettings)
   .settings(libraryDependencies ++= commonDependencies)
+  .enablePlugins(BuildInfoPlugin)
+  .settings(
+    buildInfoKeys := Seq[BuildInfoKey](organization, name, version,
+      "commonEnrichVersion" -> Dependencies.V.snowplowCommonEnrich),
+    buildInfoPackage := "com.snowplowanalytics.snowplow.enrich.stream.generated"
+  )
 
 lazy val kinesis = project
   .settings(moduleName := "snowplow-stream-enrich-kinesis")
