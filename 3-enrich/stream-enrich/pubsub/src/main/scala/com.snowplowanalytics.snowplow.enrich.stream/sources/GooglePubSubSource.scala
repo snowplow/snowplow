@@ -28,6 +28,7 @@ import scala.util.Try
 
 import com.google.api.core.ApiService.{Listener, State}
 import com.google.api.gax.core.FixedExecutorProvider
+import com.google.api.gax.rpc.FixedHeaderProvider
 import com.google.cloud.pubsub.v1._
 import com.google.common.util.concurrent.MoreExecutors
 import com.google.pubsub.v1._
@@ -116,6 +117,7 @@ class GooglePubSubSource private (
     val subscriber = {
       val s = Subscriber.newBuilder(sub, receiver)
         .setExecutorProvider(executorProvider)
+        .setHeaderProvider(FixedHeaderProvider.create("User-Agent", GooglePubSubEnrich.UserAgent))
         .build()
       s.addListener(new Listener() {
         override def failed(from: State, failure: Throwable): Unit =
