@@ -135,7 +135,7 @@ abstract class Source(
     val canonicalInput: ValidatedMaybeCollectorPayload = ThriftLoader.toCollectorPayload(binaryData)
     val processedEvents: List[ValidationNel[String, EnrichedEvent]] = EtlPipeline.processEvents(
       enrichmentRegistry,
-      s"kinesis-${generated.BuildInfo.version}",
+      s"stream-enrich-${generated.BuildInfo.version}",
       new DateTime(System.currentTimeMillis),
       canonicalInput)
     processedEvents.map(validatedMaybeEvent => {
