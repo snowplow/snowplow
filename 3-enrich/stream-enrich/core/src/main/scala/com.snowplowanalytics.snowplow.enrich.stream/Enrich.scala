@@ -61,12 +61,12 @@ trait Enrich {
       enrichmentRegistry <- parseEnrichmentRegistry(enrichmentsArg)(resolver, implicitly)
       _ <- cacheFiles(enrichmentRegistry, forceDownload)
       tracker = enrichConfig.monitoring.map(c => SnowplowTracking.initializeTracker(c.snowplow))
-      source <- getSource(enrichConfig, resolver, enrichmentRegistry, tracker)
+      source <- getSource(enrichConfig.streams, resolver, enrichmentRegistry, tracker)
     } yield (tracker, source)
 
     trackerSource match {
       case Failure(e) =>
-        System.err.println(e)
+        System.err.println(s"An error occured: $e")
         System.exit(1)
       case Success((tracker, source)) =>
         tracker.foreach(SnowplowTracking.initializeSnowplowTracking)
@@ -76,14 +76,14 @@ trait Enrich {
 
   /**
    * Source of events
-   * @param enrichConfig configuration for the enrichment
+   * @param streamsConfig configuration for the streams
    * @param resolver iglu resolver
    * @param enrichmentRegistry registry of enrichments
    * @param tracker optional tracker
    * @return a validated source, ready to be read from
    */
   def getSource(
-    enrichConfig: EnrichConfig,
+    streamsConfig: StreamsConfig,
     resolver: Resolver,
     enrichmentRegistry: EnrichmentRegistry,
     tracker: Option[Tracker]
@@ -98,6 +98,7 @@ trait Enrich {
   def parseConfig(
       args: Array[String]): \/[String, (EnrichConfig, String, Option[String], Boolean)] = {
     implicit def hint[T] = ProductHint[T](ConfigFieldMapping(CamelCase, CamelCase))
+    implicit val sourceSinkConfigHint = new FieldCoproductHint[SourceSinkConfig]("enabled")
     for {
       parsedCliArgs <- \/.fromEither(
         parser.parse(args, FileConfig()).toRight("Error while parsing command line arguments"))

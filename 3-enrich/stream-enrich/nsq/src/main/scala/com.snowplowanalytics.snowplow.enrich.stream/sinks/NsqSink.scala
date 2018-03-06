@@ -25,13 +25,13 @@ import scala.collection.JavaConverters._
 
 import com.snowplowanalytics.client.nsq.NSQProducer
 
-import model._
+import model.Nsq
 
 /**
   * NSQSink for Scala enrichment
   */
 class NsqSink(
-  nsqConfig: NsqConfig,
+  nsqConfig: Nsq,
   topicName: String
 ) extends Sink {
 

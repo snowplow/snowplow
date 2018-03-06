@@ -36,45 +36,26 @@ import Scalaz._
 import common.enrichments.EnrichmentRegistry
 import config._
 import iglu.client.Resolver
-import model.{Credentials, EnrichConfig}
+import model.{Credentials, StreamsConfig}
 import scalatracker.Tracker
-import sinks.{PubSubSink, Sink}
-import sources.{PubSubSource, Source}
+import sources.{GooglePubSubSource, Source}
 
-/** The main entry point for Stream Enrich for PubSub. */
-object PubSubEnrich extends App with Enrich {
+/** The main entry point for Stream Enrich for Google PubSub. */
+object GooglePubSubEnrich extends Enrich {
 
   private val DatastoreRegex = "^datastore:([^/]*)/([^/]*)$".r
   private val regexMsg = "'file:[filename]' or 'datastore:[kind/key]'"
 
-  run(args)
+  def main(args: Array[String]): Unit = run(args)
 
   override def getSource(
-    enrichConfig: EnrichConfig,
+    streamsConfig: StreamsConfig,
     resolver: Resolver,
     enrichmentRegistry: EnrichmentRegistry,
     tracker: Option[Tracker]
-  ): Validation[String, Source] = {
-    val pubSubConfig = enrichConfig.streams.pubsub
-    val bufferConfig = enrichConfig.streams.buffer
-    for {
-      goodSink <- PubSubSink.createAndInitialize(
-        pubSubConfig, bufferConfig, enrichConfig.streams.out.enriched)
-          .validation.leftMap(_.getMessage)
-      badSink <- PubSubSink.createAndInitialize(
-        pubSubConfig, bufferConfig, enrichConfig.streams.out.bad)
-          .validation.leftMap(_.getMessage)
-      threadLocalGoodSink = new ThreadLocal[Sink] {
-        override def initialValue = goodSink
-      }
-      threadLocalBadSink = new ThreadLocal[Sink] {
-        override def initialValue = badSink
-      }
-      source <- PubSubSource.createAndInitialize(
-        enrichConfig, resolver, enrichmentRegistry, tracker, threadLocalGoodSink, threadLocalBadSink)
-          .validation.leftMap(_.getMessage)
-    } yield source
-  }
+  ): Validation[String, Source] =
+    GooglePubSubSource.createAndInitialize(streamsConfig, resolver, enrichmentRegistry, tracker)
+      .leftMap(_.getMessage)
 
   override val parser: scopt.OptionParser[FileConfig] =
     new scopt.OptionParser[FileConfig](generated.Settings.name) with FileConfigOptions {
@@ -86,14 +67,14 @@ object PubSubEnrich extends App with Enrich {
         .text(s"Iglu resolver file, $regexMsg")
         .action((r: String, c: FileConfig) => c.copy(resolver = r))
         .validate(_ match {
-          case FilepathRegex(_) | DatastoreRegex(_) => success
+          case FilepathRegex(_) | DatastoreRegex(_, _) => success
           case _ => failure(s"Resolver doesn't match accepted uris: $regexMsg")
         })
       opt[String]("enrichments").optional().valueName("<enrichment directory uri>")
         .text(s"Directory of enrichment configuration JSONs, $regexMsg")
         .action((e: String, c: FileConfig) => c.copy(enrichmentsDir = Some(e)))
         .validate(_ match {
-          case FilepathRegex(_) | DatastoreRegex(_) => success
+          case FilepathRegex(_) | DatastoreRegex(_, _) => success
           case _ => failure(s"Enrichments directory doesn't match accepted uris: $regexMsg")
         })
       forceIpLookupsDownloadOption()

@@ -27,23 +27,61 @@ import scala.collection.JavaConverters._
 import scala.concurrent.{Future, Await}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import scala.util.Try
 import scala.util.control.NonFatal
 
 import com.amazonaws.services.kinesis.model._
-import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
-import com.amazonaws.services.kinesis.AmazonKinesisClientBuilder
+import com.amazonaws.services.kinesis.{AmazonKinesis, AmazonKinesisClientBuilder}
+import scalaz._
+import Scalaz._
 
 import model._
 import scalatracker.Tracker
 
-/**
- * Kinesis Sink for Scala enrichment
- */
-class KinesisSink(
-  provider: AWSCredentialsProvider,
-  kinesisConfig: KinesisConfig,
-  bufferConfig: BufferConfig,
+/** KinesisSink companion object with factory method */
+object KinesisSink {
+  def createAndInitialize(
+    kinesisConfig: Kinesis,
+    bufferConfig: BufferConfig,
+    streamName: String,
+    tracker: Option[Tracker]
+  ): \/[String, KinesisSink] = for {
+    provider <- KinesisEnrich.getProvider(kinesisConfig.aws)
+    endpointConfiguration =
+      new EndpointConfiguration(kinesisConfig.streamEndpoint, kinesisConfig.region)
+    client = AmazonKinesisClientBuilder
+      .standard()
+      .withCredentials(provider)
+      .withEndpointConfiguration(endpointConfiguration)
+      .build()
+    _ <- streamExists(client, streamName).leftMap(_.getMessage)
+      .flatMap { b =>
+        if (b) b.right
+        else s"Kinesis stream $streamName doesn't exist".left
+      }
+  } yield new KinesisSink(client, kinesisConfig.backoffPolicy, bufferConfig, streamName, tracker)
+
+  /**
+   * Check whether a Kinesis stream exists
+   * @param name Name of the stream
+   * @return Whether the stream exists
+   */
+  private def streamExists(client: AmazonKinesis, name: String): \/[Throwable, Boolean] = {
+    val existsTry = Try {
+      val describeStreamResult = client.describeStream(name)
+      val status = describeStreamResult.getStreamDescription.getStreamStatus
+      status == "ACTIVE" || status == "UPDATING"
+    }
+    utils.toEither(existsTry)
+  }
+}
+
+/** Kinesis Sink for Scala enrichment */
+class KinesisSink private (
+  client: AmazonKinesis,
+  backoffPolicy: KinesisBackoffPolicyConfig,
+  buffer: BufferConfig,
   streamName: String,
   tracker: Option[Tracker]
 ) extends Sink {
@@ -51,41 +89,13 @@ class KinesisSink(
   /** Kinesis records must not exceed 1MB */
   private val MaxBytes = 1000000L
 
-  private val maxBackoff = kinesisConfig.backoffPolicy.maxBackoff
-  private val minBackoff = kinesisConfig.backoffPolicy.minBackoff
+  private val maxBackoff = backoffPolicy.maxBackoff
+  private val minBackoff = backoffPolicy.minBackoff
   private val randomGenerator = new java.util.Random()
 
-  // explicitly create a client so we can configure the end point
-  private val endpointConfiguration =
-    new EndpointConfiguration(kinesisConfig.streamEndpoint, kinesisConfig.region)
-  val client = AmazonKinesisClientBuilder
-    .standard()
-    .withCredentials(provider)
-    .withEndpointConfiguration(endpointConfiguration)
-    .build()
-
-  if (!streamExists(streamName)) {
-    // needed to get out of thread local in the kcl, illegal argument exceptions are swallowed
-    throw new RuntimeException(s"Kinesis stream $streamName doesn't exist or is neither" +
-      " active nor updating (deleted or creating)")
-  }
-
-  /**
-   * Check whether a Kinesis stream exists
-   * @param name Name of the stream
-   * @return Whether the stream exists
-   */
-  def streamExists(name: String): Boolean = try {
-    val describeStreamResult = client.describeStream(name)
-    val status = describeStreamResult.getStreamDescription.getStreamStatus
-    status == "ACTIVE" || status == "UPDATING"
-  } catch {
-    case rnfe: ResourceNotFoundException => false
-  }
-
-  val ByteThreshold = bufferConfig.byteLimit
-  val RecordThreshold = bufferConfig.recordLimit
-  val TimeThreshold = bufferConfig.timeLimit
+  val ByteThreshold = buffer.byteLimit
+  val RecordThreshold = buffer.recordLimit
+  val TimeThreshold = buffer.timeLimit
   var nextRequestTime = 0L
 
   /**

@@ -27,35 +27,59 @@ import java.util.Properties
 import scala.collection.JavaConverters._
 
 import org.apache.kafka.clients.consumer.KafkaConsumer
+import scalaz._
+import Scalaz._
 
 import common.enrichments.EnrichmentRegistry
 import iglu.client.Resolver
-import model.EnrichConfig
+import model.{Kafka, StreamsConfig}
 import scalatracker.Tracker
-import sinks.Sink
+import sinks.{KafkaSink, Sink}
 
-/**
- * Source to read events from a Kafka topic
- */
-class KafkaSource(
-  config: EnrichConfig,
+/** KafkaSubSource companion object with factory method */
+object KafkaSource {
+  def create(
+    config: StreamsConfig,
+    igluResolver: Resolver,
+    enrichmentRegistry: EnrichmentRegistry,
+    tracker: Option[Tracker]
+  ): Validation[String, KafkaSource] = for {
+    kafkaConfig <- config.sourceSink match {
+      case c: Kafka => c.success
+      case _ => "Configured source/sink is not Kafka".failure
+    }
+    goodSink = new ThreadLocal[Sink] {
+      override def initialValue =
+        new KafkaSink(kafkaConfig, config.buffer, config.out.enriched, tracker)
+    }
+    badSink = new ThreadLocal[Sink] {
+      override def initialValue = new KafkaSink(kafkaConfig, config.buffer, config.out.bad, tracker)
+    }
+  } yield new KafkaSource(goodSink, badSink, igluResolver, enrichmentRegistry, tracker, config,
+    kafkaConfig.brokers)
+}
+/** Source to read events from a Kafka topic */
+class KafkaSource private (
+  goodSink: ThreadLocal[Sink],
+  badSink: ThreadLocal[Sink],
   igluResolver: Resolver,
   enrichmentRegistry: EnrichmentRegistry,
   tracker: Option[Tracker],
-  goodSink: ThreadLocal[Sink],
-  badSink: ThreadLocal[Sink]
-) extends Source(config, igluResolver, enrichmentRegistry, tracker, goodSink, badSink) {
+  config: StreamsConfig,
+  brokers: String
+) extends Source(
+  goodSink, badSink, igluResolver, enrichmentRegistry, tracker, config.out.partitionKey) {
 
   override val MaxRecordSize = None
 
   /** Never-ending processing loop over source stream. */
   override def run(): Unit = {
-    val consumer = createConsumer(config)
+    val consumer = createConsumer(brokers, config.appName)
 
-    log.info(s"Running Kafka consumer group: ${config.streams.appName}.")
-    log.info(s"Processing raw input Kafka topic: ${config.streams.in.raw}")
+    log.info(s"Running Kafka consumer group: ${config.appName}.")
+    log.info(s"Processing raw input Kafka topic: ${config.in.raw}")
 
-    consumer.subscribe(List(config.streams.in.raw).asJava)
+    consumer.subscribe(List(config.in.raw).asJava)
     while (true) {
       val recordValues = consumer
         .poll(100)    // Wait 100 ms if data is not available
@@ -67,16 +91,16 @@ class KafkaSource(
     }
   }
 
-  private def createConsumer(config: EnrichConfig): KafkaConsumer[String, Array[Byte]] = {
-    val properties = createProperties(config)
+  private def createConsumer(
+      brokers: String, groupId: String): KafkaConsumer[String, Array[Byte]] = {
+    val properties = createProperties(brokers, groupId)
     new KafkaConsumer[String, Array[Byte]](properties)
   }
 
-  private def createProperties(config: EnrichConfig): Properties = {
-
+  private def createProperties(brokers: String, groupId: String): Properties = {
     val props = new Properties()
-    props.put("bootstrap.servers", config.streams.kafka.brokers)
-    props.put("group.id", config.streams.appName)
+    props.put("bootstrap.servers", brokers)
+    props.put("group.id", groupId)
     props.put("enable.auto.commit", "true")
     props.put("auto.commit.interval.ms", "1000")
     props.put("auto.offset.reset", "earliest")

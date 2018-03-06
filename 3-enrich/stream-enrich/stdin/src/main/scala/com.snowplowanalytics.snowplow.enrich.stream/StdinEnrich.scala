@@ -25,35 +25,26 @@ import java.io.File
 import java.net.URI
 
 import scalaz.{Sink => _, Source => _, _}
-import Scalaz._
 
 import common.enrichments.EnrichmentRegistry
 import config.FileConfig
 import iglu.client.Resolver
-import model.{Credentials, EnrichConfig}
+import model.{Credentials, StreamsConfig}
 import scalatracker.Tracker
-import sinks.{Sink, StderrSink, StdoutSink}
 import sources.{Source, StdinSource}
 
 /** The main entry point for Stream Enrich for stdin/out. */
-object StdinEnrich extends App with Enrich {
+object StdinEnrich extends Enrich {
 
-  run(args)
+  def main(args: Array[String]): Unit = run(args)
 
   override def getSource(
-    enrichConfig: EnrichConfig,
+    streamsConfig: StreamsConfig,
     resolver: Resolver,
     enrichmentRegistry: EnrichmentRegistry,
     tracker: Option[Tracker]
-  ): Validation[String, Source] = {
-    val goodSink = new ThreadLocal[Sink] {
-      override def initialValue = new StdoutSink()
-    }
-    val badSink = new ThreadLocal[Sink] {
-      override def initialValue = new StderrSink()
-    }
-    new StdinSource(enrichConfig, resolver, enrichmentRegistry, tracker, goodSink, badSink).success
-  }
+  ): Validation[String, Source] =
+    StdinSource.create(streamsConfig, resolver, enrichmentRegistry, tracker)
 
   override val parser: scopt.OptionParser[FileConfig] = localParser
 

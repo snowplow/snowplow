@@ -44,7 +44,6 @@ import common.enrichments.EnrichmentRegistry
 import common.loaders.ThriftLoader
 import common.outputs.{EnrichedEvent, BadRow}
 import iglu.client.Resolver
-import model.EnrichConfig
 import scalatracker.Tracker
 import sinks._
 
@@ -86,12 +85,12 @@ object Source {
 
 /** Abstract base for the different sources we support. */
 abstract class Source(
-  config: EnrichConfig,
+  goodSink: ThreadLocal[Sink],
+  badSink: ThreadLocal[Sink],
   igluResolver: Resolver,
   enrichmentRegistry: EnrichmentRegistry,
   tracker: Option[Tracker],
-  goodSink: ThreadLocal[Sink],
-  badSink: ThreadLocal[Sink]
+  partitionKey: String
 ) {
 
   val MaxRecordSize: Option[Long]
@@ -142,7 +141,7 @@ abstract class Source(
     processedEvents.map(validatedMaybeEvent => {
       validatedMaybeEvent match {
         case Success(co) =>
-          (tabSeparateEnrichedEvent(co), getProprertyValue(co, config.streams.out.partitionKey)).success
+          (tabSeparateEnrichedEvent(co), getProprertyValue(co, partitionKey)).success
         case Failure(errors) =>
           val line = new String(Base64.encodeBase64(binaryData), UTF_8)
           (BadRow(line, errors).toCompactJson -> Random.nextInt.toString).fail
