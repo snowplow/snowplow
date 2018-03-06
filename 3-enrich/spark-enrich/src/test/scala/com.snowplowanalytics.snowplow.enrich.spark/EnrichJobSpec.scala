@@ -89,7 +89,6 @@ object EnrichJobSpec {
     private val field        = outputFields(index)
     private val unmatcheable = isUnmatchable(field)
 
-
     def apply[S <: String](actual: Expectable[S]) =
       result(
         (unmatcheable && expected == null) || actual.value == expected,

@@ -63,8 +63,9 @@ object PiiPseudonymizerEnrichment extends ParseableEnrichment {
   def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[PiiPseudonymizerEnrichment] = {
     for {
       conf <- matchesSchema(config, schemaKey)
+
       emitIdentificationEvent = ScalazJson4sUtils
-        .extract[Boolean](conf, "emitIdentificationEvent")
+        .extract[Boolean](conf, "emitEvent")
         .toOption
         .getOrElse(false)
       piiFields        <- ScalazJson4sUtils.extract[List[JObject]](conf, "parameters", "pii").leftMap(_.getMessage)

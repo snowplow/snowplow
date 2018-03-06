@@ -25,7 +25,7 @@ class PiiFilteringSpec extends Specification with EnrichJobSpec {
     "filter out pii events" in {
       runEnrichJob(Lines(MasterCfSpec.lines: _*), "cloudfront", "1", false, List("geo"))
       val Some(goods) = readPartFile(dirs.output)
-      val Some(bads) = readPartFile(dirs.badRows)
+      val Some(bads)  = readPartFile(dirs.badRows)
       goods must not(contain(matching(".*pii.*")))
       bads must not(contain(matching(".*pii.*")))
     }

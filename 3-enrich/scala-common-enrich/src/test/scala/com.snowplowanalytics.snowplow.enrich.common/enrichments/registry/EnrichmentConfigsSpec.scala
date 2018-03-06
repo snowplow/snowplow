@@ -301,7 +301,7 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
       val piiPseudonymizerEnrichmentJson =
         parse("""{
           |  "enabled": true,
-          |  "emitIdentificationEvent": true,
+          |  "emitEvent": true,
           |  "parameters": {
           |    "pii": [
           |      {
