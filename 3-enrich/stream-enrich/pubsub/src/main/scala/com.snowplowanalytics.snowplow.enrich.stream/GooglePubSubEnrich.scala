@@ -57,9 +57,9 @@ object GooglePubSubEnrich extends Enrich {
     GooglePubSubSource.createAndInitialize(streamsConfig, resolver, enrichmentRegistry, tracker)
       .leftMap(_.getMessage)
 
-  override val parser: scopt.OptionParser[FileConfig] =
-    new scopt.OptionParser[FileConfig](generated.Settings.name) with FileConfigOptions {
-      head(generated.Settings.name, generated.Settings.version)
+  override lazy val parser: scopt.OptionParser[FileConfig] =
+    new scopt.OptionParser[FileConfig](generated.BuildInfo.name) with FileConfigOptions {
+      head(generated.BuildInfo.name, generated.BuildInfo.version)
       help("help")
       version("version")
       configOption()

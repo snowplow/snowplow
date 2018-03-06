@@ -41,7 +41,7 @@ object SnowplowTracking {
    */
   def initializeTracker(config: SnowplowMonitoringConfig): Tracker = {
     val emitter = AsyncEmitter.createAndStart(config.collectorUri, config.collectorPort)
-    val tracker = new Tracker(List(emitter), generated.Settings.name, config.appId)
+    val tracker = new Tracker(List(emitter), generated.BuildInfo.name, config.appId)
     tracker.enableEc2Context()
     tracker
   }
