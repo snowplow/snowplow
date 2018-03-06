@@ -43,6 +43,8 @@ import sources.{GooglePubSubSource, Source}
 /** The main entry point for Stream Enrich for Google PubSub. */
 object GooglePubSubEnrich extends Enrich {
 
+  lazy val UserAgent = s"snowplow/stream-enrich-${generated.BuildInfo.version}"
+
   private val DatastoreRegex = "^datastore:([^/]*)/([^/]*)$".r
   private val regexMsg = "'file:[filename]' or 'datastore:[kind/key]'"
 
