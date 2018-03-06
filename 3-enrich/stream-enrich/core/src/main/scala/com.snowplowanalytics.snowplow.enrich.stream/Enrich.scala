@@ -119,8 +119,8 @@ trait Enrich {
   /** Cli arguments parser */
   def parser: scopt.OptionParser[FileConfig]
   val localParser =
-    new scopt.OptionParser[FileConfig](generated.Settings.name) with FileConfigOptions {
-      head(generated.Settings.name, generated.Settings.version)
+    new scopt.OptionParser[FileConfig](generated.BuildInfo.name) with FileConfigOptions {
+      head(generated.BuildInfo.name, generated.BuildInfo.version)
       help("help")
       version("version")
       configOption()
