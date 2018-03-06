@@ -39,7 +39,7 @@ object SpecHelpers {
   /**
    * The Stream Enrich being used
    */
-  val EnrichVersion = s"kinesis-${generated.Settings.version}-common-${generated.Settings.commonEnrichVersion}"
+  val EnrichVersion = s"kinesis-${generated.BuildInfo.version}-common-${generated.BuildInfo.commonEnrichVersion}"
 
   val TimestampRegex = "[0-9\\s-:.]+"
 

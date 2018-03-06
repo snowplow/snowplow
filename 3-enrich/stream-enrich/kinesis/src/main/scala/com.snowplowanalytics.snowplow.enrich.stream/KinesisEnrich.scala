@@ -50,32 +50,34 @@ import scalatracker.Tracker
 import sources.KinesisSource
 
 /** The main entry point for Stream Enrich for Kinesis. */
-object KinesisEnrich extends App with Enrich {
+object KinesisEnrich extends Enrich {
 
   val DynamoDBRegex = "^dynamodb:([^/]*)/([^/]*)/([^/]*)$".r
   private val regexMsg = "'file:[filename]' or 'dynamodb:[region/table/key]'"
 
-  val trackerSource = for {
-    config <- parseConfig(args).validation
-    (enrichConfig, resolverArg, enrichmentsArg, forceDownload) = config
-    creds <- enrichConfig.streams.sourceSink match {
-      case c: Kinesis => c.aws.success
-      case _ => "Configured source/sink is not Kinesis".failure
-    }
-    resolver <- parseResolver(resolverArg)(creds)
-    enrichmentRegistry <- parseEnrichmentRegistry(enrichmentsArg)(resolver, creds)
-    _ <- cacheFiles(enrichmentRegistry, forceDownload)(creds)
-    tracker = enrichConfig.monitoring.map(c => SnowplowTracking.initializeTracker(c.snowplow))
-    source <- getSource(enrichConfig.streams, resolver, enrichmentRegistry, tracker)
-  } yield (tracker, source)
+  def main(args: Array[String]): Unit = {
+    val trackerSource = for {
+      config <- parseConfig(args).validation
+      (enrichConfig, resolverArg, enrichmentsArg, forceDownload) = config
+      creds <- enrichConfig.streams.sourceSink match {
+        case c: Kinesis => c.aws.success
+        case _ => "Configured source/sink is not Kinesis".failure
+      }
+      resolver <- parseResolver(resolverArg)(creds)
+      enrichmentRegistry <- parseEnrichmentRegistry(enrichmentsArg)(resolver, creds)
+      _ <- cacheFiles(enrichmentRegistry, forceDownload)(creds)
+      tracker = enrichConfig.monitoring.map(c => SnowplowTracking.initializeTracker(c.snowplow))
+      source <- getSource(enrichConfig.streams, resolver, enrichmentRegistry, tracker)
+    } yield (tracker, source)
 
-  trackerSource match {
-    case Failure(e) =>
-      System.err.println(e)
-      System.exit(1)
-    case Success((tracker, source)) =>
-      tracker.foreach(SnowplowTracking.initializeSnowplowTracking)
-      source.run()
+    trackerSource match {
+      case Failure(e) =>
+        System.err.println(e)
+        System.exit(1)
+      case Success((tracker, source)) =>
+        tracker.foreach(SnowplowTracking.initializeSnowplowTracking)
+        source.run()
+    }
   }
 
   override def getSource(
@@ -86,9 +88,9 @@ object KinesisEnrich extends App with Enrich {
   ): Validation[String, sources.Source] =
     KinesisSource.createAndInitialize(streamsConfig, resolver, enrichmentRegistry, tracker)
 
-  override val parser: scopt.OptionParser[FileConfig] =
-    new scopt.OptionParser[FileConfig](generated.Settings.name) with FileConfigOptions {
-      head(generated.Settings.name, generated.Settings.version)
+  override lazy val parser: scopt.OptionParser[FileConfig] =
+    new scopt.OptionParser[FileConfig](generated.BuildInfo.name) with FileConfigOptions {
+      head(generated.BuildInfo.name, generated.BuildInfo.version)
       help("help")
       version("version")
       configOption()
