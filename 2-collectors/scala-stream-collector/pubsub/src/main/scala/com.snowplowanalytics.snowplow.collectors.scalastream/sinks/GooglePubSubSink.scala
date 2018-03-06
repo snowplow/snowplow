@@ -21,7 +21,7 @@ import scala.util.Try
 import com.google.api.core.{ApiFutureCallback, ApiFutures}
 import com.google.api.gax.batching.BatchingSettings
 import com.google.api.gax.retrying.RetrySettings
-import com.google.api.gax.rpc.ApiException
+import com.google.api.gax.rpc.{ApiException, FixedHeaderProvider}
 import com.google.cloud.pubsub.v1.{Publisher, TopicAdminClient}
 import com.google.pubsub.v1.{ProjectName, PubsubMessage, ProjectTopicName}
 import com.google.protobuf.ByteString
@@ -50,6 +50,8 @@ object GooglePubSubSink {
       }
   } yield new GooglePubSubSink(publisher, topicName)
 
+  private val UserAgent = s"snowplow/stream-enrich-${generated.BuildInfo.version}"
+
   /**
    * Instantiates a Publisher on an existing topic with the given configuration options.
    * This can fail if the publisher can't be created.
@@ -64,6 +66,7 @@ object GooglePubSubSink {
     Try(Publisher.newBuilder(ProjectTopicName.of(projectId, topicName))
       .setBatchingSettings(batchingSettings)
       .setRetrySettings(retrySettings)
+      .setHeaderProvider(FixedHeaderProvider.create("User-Agent", UserAgent))
       .build())
 
   private def batchingSettings(bufferConfig: BufferConfig): BatchingSettings =
@@ -120,7 +123,7 @@ class GooglePubSubSink private (publisher: Publisher, topicName: String) extends
    */
   override def storeRawEvents(events: List[Array[Byte]], key: String): List[Array[Byte]] = {
     if (events.nonEmpty)
-      log.info(s"Writing ${events.size} Thrift records to Google PubSub topic ${topicName}")
+      log.debug(s"Writing ${events.size} Thrift records to Google PubSub topic ${topicName}")
     events.foreach { event =>
       publisher.right.map { p =>
         val future = p.publish(eventToPubsubMessage(event))
