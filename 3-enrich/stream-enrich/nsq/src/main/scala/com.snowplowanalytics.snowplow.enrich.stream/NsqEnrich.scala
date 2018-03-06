@@ -25,36 +25,27 @@ import java.io.File
 import java.net.URI
 
 import scalaz.{Sink => _, Source => _, _}
-import Scalaz._
 
 import common.enrichments.EnrichmentRegistry
 import config.FileConfig
 import iglu.client.Resolver
-import model.{Credentials, EnrichConfig}
+import model.{Credentials, StreamsConfig}
 import scalatracker.Tracker
-import sinks.{NsqSink, Sink}
 import sources.{NsqSource, Source}
 
 /** The main entry point for Stream Enrich for NSQ. */
-object NsqEnrich extends App with Enrich {
+object NsqEnrich extends Enrich {
 
-  run(args)
+  def main(args: Array[String]): Unit = run(args)
 
   override def getSource(
-    enrichConfig: EnrichConfig,
+    streamsConfig: StreamsConfig,
     resolver: Resolver,
     enrichmentRegistry: EnrichmentRegistry,
     tracker: Option[Tracker]
-  ): Validation[String, Source] = {
-    val nsqConfig = enrichConfig.streams.nsq
-    val goodSink = new ThreadLocal[Sink] {
-      override def initialValue = new NsqSink(nsqConfig, enrichConfig.streams.out.enriched)
-    }
-    val badSink = new ThreadLocal[Sink] {
-      override def initialValue = new NsqSink(nsqConfig, enrichConfig.streams.out.bad)
-    }
-    new NsqSource(enrichConfig, resolver, enrichmentRegistry, tracker, goodSink, badSink).success
-  }
+  ): Validation[String, Source] =
+    NsqSource.create(streamsConfig, resolver, enrichmentRegistry, tracker)
+      .leftMap(_.getMessage)
 
   override val parser: scopt.OptionParser[FileConfig] = localParser
 

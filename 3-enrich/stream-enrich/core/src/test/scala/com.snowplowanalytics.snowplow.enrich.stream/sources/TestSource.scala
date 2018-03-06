@@ -37,7 +37,7 @@ class TestSource(
   igluResolver: Resolver,
   enrichmentRegistry: EnrichmentRegistry,
   tracker: Option[Tracker]
-) extends Source(config, igluResolver, enrichmentRegistry, tracker, null, null) {
+) extends Source(null, null, igluResolver, enrichmentRegistry, tracker, "") {
 
   override val MaxRecordSize = None
 

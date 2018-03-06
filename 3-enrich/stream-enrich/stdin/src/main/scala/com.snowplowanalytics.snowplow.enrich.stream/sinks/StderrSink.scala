@@ -19,8 +19,6 @@
 package com.snowplowanalytics.snowplow.enrich.stream
 package sinks
 
-import model._
-
 /** Stdout Sink for Scala enrichment */
 class StderrSink() extends Sink {
 

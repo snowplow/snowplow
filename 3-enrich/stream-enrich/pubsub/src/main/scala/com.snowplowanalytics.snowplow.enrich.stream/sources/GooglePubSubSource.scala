@@ -22,10 +22,12 @@ package enrich
 package stream
 package sources
 
+import java.util.concurrent.Executors
+
 import scala.util.Try
 
 import com.google.api.core.ApiService.{Listener, State}
-import com.google.api.gax.core.InstantiatingExecutorProvider
+import com.google.api.gax.core.FixedExecutorProvider
 import com.google.cloud.pubsub.v1._
 import com.google.common.util.concurrent.MoreExecutors
 import com.google.pubsub.v1._
@@ -34,26 +36,40 @@ import Scalaz._
 
 import common.enrichments.EnrichmentRegistry
 import iglu.client.Resolver
-import model.EnrichConfig
+import model.{GooglePubSub, StreamsConfig}
 import scalatracker.Tracker
-import sinks.Sink
+import sinks.{GooglePubSubSink, Sink}
 import utils._
 
-/** PubSubSource companion object with factory method */
-object PubSubSource {
+/** GooglePubSubSource companion object with factory method */
+object GooglePubSubSource {
   def createAndInitialize(
-    config: EnrichConfig,
+    config: StreamsConfig,
     igluResolver: Resolver,
     enrichmentRegistry: EnrichmentRegistry,
-    tracker: Option[Tracker],
-    goodSink: ThreadLocal[Sink],
-    badSink: ThreadLocal[Sink]
-  ): \/[Throwable, PubSubSource] = for {
-    pubSubConfig <- config.streams.pubsub.right
-    topic = ProjectTopicName.of(pubSubConfig.googleProjectId, config.streams.in.raw)
-    subName = ProjectSubscriptionName.of(pubSubConfig.googleProjectId, config.streams.appName)
-    _ <- createSubscription(subName, topic)
-  } yield new PubSubSource(config, igluResolver, enrichmentRegistry, tracker, subName, goodSink, badSink)
+    tracker: Option[Tracker]
+  ): Validation[Throwable, GooglePubSubSource] = for {
+    googlePubSubConfig <- config.sourceSink match {
+      case c: GooglePubSub => c.success
+      case _ => new IllegalArgumentException("Configured source/sink is not Google PubSub").failure
+    }
+    goodSink <- GooglePubSubSink
+      .createAndInitialize(googlePubSubConfig, config.buffer, config.out.enriched)
+      .validation
+    threadLocalGoodSink = new ThreadLocal[Sink] {
+      override def initialValue = goodSink
+    }
+    badSink <- GooglePubSubSink
+      .createAndInitialize(googlePubSubConfig, config.buffer, config.out.bad)
+      .validation
+    threadLocalBadSink = new ThreadLocal[Sink] {
+      override def initialValue = badSink
+    }
+    topic = ProjectTopicName.of(googlePubSubConfig.googleProjectId, config.in.raw)
+    subName = ProjectSubscriptionName.of(googlePubSubConfig.googleProjectId, config.appName)
+    _ <- createSubscription(subName, topic).validation
+  } yield new GooglePubSubSource(threadLocalGoodSink, threadLocalBadSink, igluResolver,
+    enrichmentRegistry, tracker, subName, googlePubSubConfig.threadPoolSize, config.out.partitionKey)
 
   private def createSubscription(
     sub: ProjectSubscriptionName,
@@ -67,19 +83,20 @@ object PubSubSource {
 }
 
 /** Source to read events from a GCP Pub/Sub topic */
-class PubSubSource private (
-  config: EnrichConfig,
+class GooglePubSubSource private (
+  goodSink: ThreadLocal[Sink],
+  badSink: ThreadLocal[Sink],
   igluResolver: Resolver,
   enrichmentRegistry: EnrichmentRegistry,
   tracker: Option[Tracker],
   subName: ProjectSubscriptionName,
-  goodSink: ThreadLocal[Sink],
-  badSink: ThreadLocal[Sink]
-) extends Source(config, igluResolver, enrichmentRegistry, tracker, goodSink, badSink) {
+  threadPoolSize: Int,
+  partitionKey: String
+) extends Source(goodSink, badSink, igluResolver, enrichmentRegistry, tracker, partitionKey) {
 
   override val MaxRecordSize = Some(10000000L)
 
-  private val subscriber = createSubscriber(subName, config.streams.pubsub.threadPoolSize)
+  private val subscriber = createSubscriber(subName, threadPoolSize)
 
   /** Never-ending processing loop over source stream. */
   override def run(): Unit = subscriber.startAsync().awaitRunning()
@@ -93,9 +110,8 @@ class PubSubSource private (
       }
     }
 
-    val executorProvider = InstantiatingExecutorProvider.newBuilder()
-      .setExecutorThreadCount(threadPoolSize)
-      .build()
+    val executorProvider = FixedExecutorProvider
+      .create(Executors.newScheduledThreadPool(threadPoolSize))
 
     val subscriber = {
       val s = Subscriber.newBuilder(sub, receiver)

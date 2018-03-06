@@ -45,8 +45,7 @@ import Scalaz._
 import common.enrichments.EnrichmentRegistry
 import config._
 import iglu.client.Resolver
-import model.{AWSCredentials, Credentials, EnrichConfig, NoCredentials}
-import sinks.KinesisSink
+import model.{AWSCredentials, Credentials, NoCredentials, Kinesis, StreamsConfig}
 import scalatracker.Tracker
 import sources.KinesisSource
 
@@ -59,12 +58,15 @@ object KinesisEnrich extends App with Enrich {
   val trackerSource = for {
     config <- parseConfig(args).validation
     (enrichConfig, resolverArg, enrichmentsArg, forceDownload) = config
-    creds = enrichConfig.aws
+    creds <- enrichConfig.streams.sourceSink match {
+      case c: Kinesis => c.aws.success
+      case _ => "Configured source/sink is not Kinesis".failure
+    }
     resolver <- parseResolver(resolverArg)(creds)
     enrichmentRegistry <- parseEnrichmentRegistry(enrichmentsArg)(resolver, creds)
     _ <- cacheFiles(enrichmentRegistry, forceDownload)(creds)
     tracker = enrichConfig.monitoring.map(c => SnowplowTracking.initializeTracker(c.snowplow))
-    source <- getSource(enrichConfig, resolver, enrichmentRegistry, tracker)
+    source <- getSource(enrichConfig.streams, resolver, enrichmentRegistry, tracker)
   } yield (tracker, source)
 
   trackerSource match {
@@ -77,27 +79,12 @@ object KinesisEnrich extends App with Enrich {
   }
 
   override def getSource(
-    enrichConfig: EnrichConfig,
+    streamsConfig: StreamsConfig,
     resolver: Resolver,
     enrichmentRegistry: EnrichmentRegistry,
     tracker: Option[Tracker]
-  ): Validation[String, sources.Source] = {
-    val kinesisConfig = enrichConfig.streams.kinesis
-    val bufferConfig = enrichConfig.streams.buffer
-    for {
-      provider <- getProvider(enrichConfig.aws).validation
-      goodSink = new ThreadLocal[sinks.Sink] {
-        override def initialValue = new KinesisSink(
-          provider, kinesisConfig, bufferConfig, enrichConfig.streams.out.enriched, tracker)
-      }
-      badSink = new ThreadLocal[sinks.Sink] {
-        override def initialValue = new KinesisSink(
-          provider, kinesisConfig, bufferConfig, enrichConfig.streams.out.bad, tracker)
-      }
-      source <- KinesisSource.createAndInitialize(
-        enrichConfig, resolver, enrichmentRegistry, tracker, goodSink, badSink).validation
-    } yield source
-  }
+  ): Validation[String, sources.Source] =
+    KinesisSource.createAndInitialize(streamsConfig, resolver, enrichmentRegistry, tracker)
 
   override val parser: scopt.OptionParser[FileConfig] =
     new scopt.OptionParser[FileConfig](generated.Settings.name) with FileConfigOptions {
@@ -109,14 +96,14 @@ object KinesisEnrich extends App with Enrich {
         .text(s"Iglu resolver file, $regexMsg")
         .action((r: String, c: FileConfig) => c.copy(resolver = r))
         .validate(_ match {
-          case FilepathRegex(_) | DynamoDBRegex(_) => success
+          case FilepathRegex(_) | DynamoDBRegex(_, _, _) => success
           case _ => failure(s"Resolver doesn't match accepted uris: $regexMsg")
         })
       opt[String]("enrichments").optional().valueName("<enrichment directory uri>")
         .text(s"Directory of enrichment configuration JSONs, $regexMsg")
         .action((e: String, c: FileConfig) => c.copy(enrichmentsDir = Some(e)))
         .validate(_ match {
-          case FilepathRegex(_) | DynamoDBRegex(_) => success
+          case FilepathRegex(_) | DynamoDBRegex(_, _, _) => success
           case _ => failure(s"Enrichments directory doesn't match accepted uris: $regexMsg")
         })
       forceIpLookupsDownloadOption()
