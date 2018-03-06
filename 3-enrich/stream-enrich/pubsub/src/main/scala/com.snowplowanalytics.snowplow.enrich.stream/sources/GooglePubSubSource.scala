@@ -24,10 +24,12 @@ package sources
 
 import java.util.concurrent.Executors
 
+import scala.collection.JavaConverters._
 import scala.util.Try
 
 import com.google.api.core.ApiService.{Listener, State}
 import com.google.api.gax.core.FixedExecutorProvider
+import com.google.api.gax.rpc.FixedHeaderProvider
 import com.google.cloud.pubsub.v1._
 import com.google.common.util.concurrent.MoreExecutors
 import com.google.pubsub.v1._
@@ -67,18 +69,25 @@ object GooglePubSubSource {
     }
     topic = ProjectTopicName.of(googlePubSubConfig.googleProjectId, config.in.raw)
     subName = ProjectSubscriptionName.of(googlePubSubConfig.googleProjectId, config.appName)
-    _ <- createSubscription(subName, topic).validation
+    _ <- toEither(createSubscriptionIfNotExist(subName, topic)).validation
   } yield new GooglePubSubSource(threadLocalGoodSink, threadLocalBadSink, igluResolver,
     enrichmentRegistry, tracker, subName, googlePubSubConfig.threadPoolSize, config.out.partitionKey)
 
-  private def createSubscription(
+  private def createSubscriptionIfNotExist(
     sub: ProjectSubscriptionName,
     topic: ProjectTopicName
-  ): \/[Throwable, Subscription] = for {
-    subscriptionAdminClient <- toEither(Try(SubscriptionAdminClient.create()))
-    subscription = subscriptionAdminClient.createSubscription(
-      sub, topic, PushConfig.getDefaultInstance(), 0)
-    _ <- toEither(Try(subscriptionAdminClient.close()))
+  ): Try[Subscription] = for {
+    subscriptionAdminClient <- Try(SubscriptionAdminClient.create())
+    subscriptions <- Try(subscriptionAdminClient.listSubscriptions(ProjectName.of(sub.getProject())))
+      .map(_.iterateAll.asScala.toList)
+    exists = subscriptions.map(_.getName).exists(_.contains(sub.getSubscription()))
+    subscription <- if (exists) {
+      Try(subscriptionAdminClient.getSubscription(sub))
+    } else {
+      // 0 as ackDeadlineS use the default deadline which is 10s
+      Try(subscriptionAdminClient.createSubscription(sub, topic, PushConfig.getDefaultInstance(), 0))
+    }
+    _ <- Try(subscriptionAdminClient.close())
   } yield subscription
 }
 
@@ -116,6 +125,7 @@ class GooglePubSubSource private (
     val subscriber = {
       val s = Subscriber.newBuilder(sub, receiver)
         .setExecutorProvider(executorProvider)
+        .setHeaderProvider(FixedHeaderProvider.create("User-Agent", GooglePubSubEnrich.UserAgent))
         .build()
       s.addListener(new Listener() {
         override def failed(from: State, failure: Throwable): Unit =
