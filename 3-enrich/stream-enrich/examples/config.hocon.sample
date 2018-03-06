@@ -15,33 +15,9 @@
 # configuration options for Stream Enrich.
 
 enrich {
-  # Sources currently supported are:
-  # 'kinesis' for reading Thrift-serialized records from a Kinesis stream
-  # 'pubsub' for reading Thrift-serialized records from a PubSub topic
-  # 'kafka' for reading Thrift-serialized records from a Kafka topic
-  # 'nsq' for reading Thrift-serialized records from a Nsq topic
-  # 'stdin' for reading Base64-encoded Thrift-serialized records from stdin
-  source = kinesis
-
-  # Sinks currently supported are:
-  # 'kinesis' for writing enriched events to one Kinesis stream and invalid events to another.
-  # 'pubsub' for writing enriched events to one PubSub topic and invalid events to another.
-  # 'kafka' for writing enriched events to one Kafka topic and invalid events to another.
-  # 'nsq' for writing enriched events to one Nsq topic and invalid events to another.
-  # 'stdouterr' for writing enriched events to stdout and invalid events to stderr.
-  #    Using "sbt assembly" and "java -jar" is recommended to disable sbt logging.
-  sink = kinesis
-
-  # AWS credentials
-  # If both are set to 'default', use the default AWS credentials provider chain.
-  # If both are set to 'iam', use AWS IAM Roles to provision credentials.
-  # If both are set to 'env', use environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
-  aws {
-    accessKey = iam
-    secretKey = iam
-  }
 
   streams {
+
     in {
       # Stream/topic where the raw events to be enriched are located
       raw = {{streamsInRaw}}
@@ -63,9 +39,31 @@ enrich {
       partitionKey = {{partitionKeyName}}
     }
 
-    kinesis {
+    # Configuration shown is for Kinesis, to use another uncomment the appropriate configuration
+    # and comment out the other
+    # To use stdin, comment or remove everything in the "enrich.streams.sourceSink" section except
+    # "enabled" which should be set to "stdin".
+    sourceSink {
+      # Sources / sinks currently supported are:
+      # 'kinesis' for reading Thrift-serialized records and writing enriched and bad events to a
+      # Kinesis stream
+      # 'googlepubsub' for reading / writing to a Google PubSub topic
+      # 'kafka' for reading / writing to a Kafka topic
+      # 'nsq' for reading / writing to a Nsq topic
+      # 'stdin' for reading from stdin and writing to stdout and stderr
+      enabled = kinesis
+
       # Region where the streams are located
       region = {{region}}
+
+      # AWS credentials
+      # If both are set to 'default', use the default AWS credentials provider chain.
+      # If both are set to 'iam', use AWS IAM Roles to provision credentials.
+      # If both are set to 'env', use env variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
+      aws {
+        accessKey = iam
+        secretKey = iam
+      }
 
       # Maximum number of records to get from Kinesis per call to GetRecords
       maxRecords = 10000
@@ -82,54 +80,43 @@ enrich {
       # Note: Time need to specified in UTC.
       initialTimestamp = "{{initialTimestamp}}"
 
-      # Minimum, maximum and total backoff periods, in milliseconds
-      # and multiplier between two backoffs
+      # Minimum and maximum backoff periods, in milliseconds
       backoffPolicy {
         minBackoff = {{enrichStreamsOutMinBackoff}}
         maxBackoff = {{enrichStreamsOutMaxBackoff}}
-        totalBackoff = {{enrichStreamsOutTotalBackoff}}
-        multiplier = {{enrichStreamsOutTotalBackoff}}
       }
-    }
 
-    pubsub {
-      googleProjectId = my-project-id
-      # Size of the subscriber thread pool
-      threadPoolSize = 4
-      backoffPolicy {
-        minBackoff = {{enrichStreamsOutMinBackoff}}
-        maxBackoff = {{enrichStreamsOutMaxBackoff}}
-        totalBackoff = {{enrichStreamsOutTotalBackoff}}
-        multiplier = {{enrichStreamsOutTotalBackoff}}
-      }
-    }
+      # Or Google PubSub
+      #googleProjectId = my-project-id
+      ## Size of the subscriber thread pool
+      #threadPoolSize = 4
+      ## Minimum, maximum and total backoff periods, in milliseconds
+      ## and multiplier between two backoffs
+      #backoffPolicy {
+      #  minBackoff = {{enrichStreamsOutMinBackoff}}
+      #  maxBackoff = {{enrichStreamsOutMaxBackoff}}
+      #  totalBackoff = {{enrichStreamsOutTotalBackoff}} # must be >= 10000
+      #  multiplier = {{enrichStreamsOutTotalBackoff}}
+      #}
 
-    # Kafka configuration
-    kafka {
-      brokers = "{{kafkaBrokers}}"
+      # Or Kafka
+      #brokers = "{{kafkaBrokers}}"
+      ## Number of retries to perform before giving up on sending a record
+      #retries = 0
 
-      # Number of retries to perform before giving up on sending a record
-      retries = 0
-    }
-
-    # config for nsq
-    nsq {
-      # Channel name for nsq source
-      # If more than one application is reading from the same NSQ topic at the same time,
-      # all of them must have the same channel name
-      rawChannel = "{{nsqSourceChannelName}}"
-
-      # Host name for nsqd
-      host = "{{nsqHost}}"
-
-      # TCP port for nsqd, 4150 by default
-      port = {{nsqdPort}}
-
-      # Host name for lookupd
-      lookupHost = "{{lookupHost}}"
-
-      # HTTP port for nsqlookupd, 4161 by default
-      lookupPort = {{nsqlookupdPort}}
+      # Or NSQ
+      ## Channel name for nsq source
+      ## If more than one application is reading from the same NSQ topic at the same time,
+      ## all of them must have the same channel name
+      #rawChannel = "{{nsqSourceChannelName}}"
+      ## Host name for nsqd
+      #host = "{{nsqHost}}"
+      ## TCP port for nsqd, 4150 by default
+      #port = {{nsqdPort}}
+      ## Host name for lookupd
+      #lookupHost = "{{lookupHost}}"
+      ## HTTP port for nsqlookupd, 4161 by default
+      #lookupPort = {{nsqlookupdPort}}
     }
 
     # After enrichment, events are accumulated in a buffer before being sent to Kinesis/Kafka.
@@ -147,7 +134,7 @@ enrich {
 
     # Used for a DynamoDB table to maintain stream state.
     # Used as the Kafka consumer group ID.
-    # You can set it automatically using: "SnowplowEnrich-$\\{enrich.streams.in.raw\\}"
+    # Used as the Google PubSub subscription name.
     appName = "{{appName}}"
   }
 

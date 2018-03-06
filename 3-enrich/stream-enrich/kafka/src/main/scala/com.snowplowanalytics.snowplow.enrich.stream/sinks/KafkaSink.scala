@@ -24,14 +24,12 @@ import java.util.Properties
 
 import org.apache.kafka.clients.producer._
 
-import model._
+import model.{BufferConfig, Kafka}
 import scalatracker.Tracker
 
-/**
- * Kafka Sink for Scala enrichment
- */
+/** Kafka Sink for Scala enrichment */
 class KafkaSink(
-  kafkaConfig: KafkaConfig,
+  kafkaConfig: Kafka,
   bufferConfig: BufferConfig,
   topicName: String,
   tracker: Option[Tracker]
@@ -64,16 +62,16 @@ class KafkaSink(
   override def flush(): Unit = kafkaProducer.flush()
 
   private def createProducer(
-    kafkaConfig: KafkaConfig,
+    kafkaConfig: Kafka,
     bufferConfig: BufferConfig
   ): KafkaProducer[String, String] = {
-    val properties = createProperties(kafkaConfig, bufferConfig)
+    val properties = createProperties(kafkaConfig.brokers, bufferConfig)
     new KafkaProducer[String, String](properties)
   }
 
-  private def createProperties(kafkaConfig: KafkaConfig, bufferConfig: BufferConfig): Properties = {
+  private def createProperties(brokers: String, bufferConfig: BufferConfig): Properties = {
     val props = new Properties()
-    props.put("bootstrap.servers", kafkaConfig.brokers)
+    props.put("bootstrap.servers", brokers)
     props.put("acks", "all")
     props.put("retries", kafkaConfig.retries.toString)
     props.put("buffer.memory", bufferConfig.byteLimit.toString)

@@ -22,29 +22,9 @@ import java.text.SimpleDateFormat
 
 import scala.util.Try
 
+// TODO: file is named Amodel.scala instead of model.scala, rename once >= 2.12.4
+// https://github.com/pureconfig/pureconfig/issues/205
 object model {
-
-  /**
-   * The enrichment process takes input SnowplowRawEvent objects from
-   * an input source and outputs enriched objects to a sink,
-   * as defined in the following enumerations.
-   */
-  sealed trait Source
-  case object KafkaSource extends Source
-  case object KinesisSource extends Source
-  case object StdinSource extends Source
-  case object NsqSource extends Source
-
-  sealed trait Sink
-  case object KafkaSink extends Sink
-  case object KinesisSink extends Sink
-  case object StdouterrSink extends Sink
-  case object NsqSink extends Sink
-
-  /** Whether the sink is for good rows or bad rows */
-  sealed trait InputType
-  case object Good extends InputType
-  case object Bad extends InputType
 
   sealed trait Credentials
   case object NoCredentials extends Credentials
@@ -54,28 +34,28 @@ object model {
   final case class StreamsConfig(
     in: InConfig,
     out: OutConfig,
-    kinesis: KinesisConfig,
-    pubsub: PubSubConfig,
-    kafka: KafkaConfig,
-    nsq: NsqConfig,
+    sourceSink: SourceSinkConfig,
     buffer: BufferConfig,
     appName: String
   )
   final case class InConfig(raw: String)
   final case class OutConfig(enriched: String, bad: String, partitionKey: String)
-  final case class BackoffPolicyConfig(
+  final case class KinesisBackoffPolicyConfig(minBackoff: Long, maxBackoff: Long)
+  final case class GooglePubSubBackoffPolicyConfig(
     minBackoff: Long,
     maxBackoff: Long,
     totalBackoff: Long,
     multiplier: Double
   )
-  final case class KinesisConfig(
+  sealed trait SourceSinkConfig
+  final case class Kinesis(
     region: String,
+    aws: AWSCredentials,
     maxRecords: Int,
     initialPosition: String,
     initialTimestamp: Option[String],
-    backoffPolicy: BackoffPolicyConfig
-  ) {
+    backoffPolicy: KinesisBackoffPolicyConfig
+  ) extends SourceSinkConfig {
     val timestamp = initialTimestamp
       .toRight("An initial timestamp needs to be provided when choosing AT_TIMESTAMP")
       .right.flatMap { s =>
@@ -89,19 +69,20 @@ object model {
       case _ => s"https://kinesis.$region.amazonaws.com"
     }
   }
-  final case class PubSubConfig(
+  final case class GooglePubSub(
     googleProjectId: String,
-    backoffPolicy: BackoffPolicyConfig,
+    backoffPolicy: GooglePubSubBackoffPolicyConfig,
     threadPoolSize: Int
-  )
-  final case class KafkaConfig(brokers: String, retries: Int)
-  final case class NsqConfig(
+  ) extends SourceSinkConfig
+  final case class Kafka(brokers: String, retries: Int) extends SourceSinkConfig
+  final case class Nsq(
     rawChannel: String,
     host: String,
     port: Int,
     lookupHost: String,
     lookupPort: Int
-  )
+  ) extends SourceSinkConfig
+  case object Stdin extends SourceSinkConfig
   final case class BufferConfig(byteLimit: Long, recordLimit: Long, timeLimit: Long)
   final case class MonitoringConfig(snowplow: SnowplowMonitoringConfig)
   final case class SnowplowMonitoringConfig(
@@ -111,25 +92,7 @@ object model {
     method: String
   )
   final case class EnrichConfig(
-    source: String,
-    sink: String,
-    aws: AWSCredentials,
     streams: StreamsConfig,
     monitoring: Option[MonitoringConfig]
-  ) {
-    val sourceType: Source = source.toLowerCase match {
-      case "kinesis" => KinesisSource
-      case "kafka"   => KafkaSource
-      case "stdin"   => StdinSource
-      case "nsq"     => NsqSource
-      case o         => throw new IllegalArgumentException(s"Unknown enrich.source: $o")
-    }
-    val sinkType: Sink = sink.toLowerCase match {
-      case "kinesis"   => KinesisSink
-      case "kafka"     => KafkaSink
-      case "stdouterr" => StdouterrSink
-      case "nsq"       => NsqSink
-      case o           => throw new IllegalArgumentException(s"Unknown enrich.sink: $o")
-    }
-  }
+  )
 }

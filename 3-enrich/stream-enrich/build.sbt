@@ -71,7 +71,7 @@ lazy val kinesis = project
   .dependsOn(core)
 
 lazy val pubsub = project
-  .settings(moduleName := "snowplow-stream-enrich-pubsub")
+  .settings(moduleName := "snowplow-stream-enrich-google-pubsub")
   .settings(allSettings)
   .settings(libraryDependencies ++= Seq(
     Dependencies.Libraries.pubsub,

@@ -36,70 +36,85 @@ import com.amazonaws.services.kinesis.clientlibrary.lib.worker._
 import com.amazonaws.services.kinesis.model.Record
 import org.apache.thrift.TDeserializer
 import scalaz._
+import Scalaz._
 
 import common.enrichments.EnrichmentRegistry
 import iglu.client.Resolver
-import model.EnrichConfig
+import model.{Kinesis, StreamsConfig}
 import scalatracker.Tracker
 import sinks._
 
 /** KinesisSource companion object with factory method */
 object KinesisSource {
   def createAndInitialize(
-    config: EnrichConfig,
+    config: StreamsConfig,
     igluResolver: Resolver,
     enrichmentRegistry: EnrichmentRegistry,
-    tracker: Option[Tracker],
-    goodSink: ThreadLocal[Sink],
-    badSink: ThreadLocal[Sink]
-  ): \/[String, KinesisSource] =
-    KinesisEnrich.getProvider(config.aws).map(p =>
-      new KinesisSource(config, igluResolver, enrichmentRegistry, tracker, goodSink, badSink, p))
+    tracker: Option[Tracker]
+  ): Validation[String, KinesisSource] = for {
+    kinesisConfig <- config.sourceSink match {
+      case c: Kinesis => c.success
+      case _ => "Configured source/sink is not Kinesis".failure
+    }
+    goodSink <-
+      KinesisSink.createAndInitialize(kinesisConfig, config.buffer, config.out.enriched, tracker)
+        .validation
+    threadLocalGoodSink = new ThreadLocal[Sink] {
+      override def initialValue = goodSink
+    }
+    badSink <-
+      KinesisSink.createAndInitialize(kinesisConfig, config.buffer, config.out.bad, tracker)
+        .validation
+    threadLocalBadSink = new ThreadLocal[Sink] {
+      override def initialValue = badSink
+    }
+    provider <- KinesisEnrich.getProvider(kinesisConfig.aws).validation
+  } yield new KinesisSource(threadLocalGoodSink, threadLocalBadSink,
+    igluResolver, enrichmentRegistry, tracker, config, kinesisConfig, provider)
 }
 
 /** Source to read events from a Kinesis stream */
 class KinesisSource private (
-  config: EnrichConfig,
+  goodSink: ThreadLocal[Sink],
+  badSink: ThreadLocal[Sink],
   igluResolver: Resolver,
   enrichmentRegistry: EnrichmentRegistry,
   tracker: Option[Tracker],
-  goodSink: ThreadLocal[Sink],
-  badSink: ThreadLocal[Sink],
+  config: StreamsConfig,
+  kinesisConfig: Kinesis,
   provider: AWSCredentialsProvider
-) extends Source(config, igluResolver, enrichmentRegistry, tracker, goodSink, badSink) {
+) extends Source(goodSink, badSink, igluResolver, enrichmentRegistry, tracker, config.out.partitionKey) {
 
   override val MaxRecordSize = Some(1000000L)
 
-  /**
-   * Never-ending processing loop over source stream.
-   */
+  /** Never-ending processing loop over source stream. */
   override def run(): Unit = {
     val workerId = InetAddress.getLocalHost().getCanonicalHostName() + ":" + UUID.randomUUID()
     log.info("Using workerId: " + workerId)
 
     val kinesisClientLibConfiguration = {
       val kclc = new KinesisClientLibConfiguration(
-        config.streams.appName,
-        config.streams.in.raw,
+        config.appName,
+        config.in.raw,
         provider,
         workerId
-      ).withKinesisEndpoint(config.streams.kinesis.streamEndpoint)
-        .withMaxRecords(config.streams.kinesis.maxRecords)
-        .withRegionName(config.streams.kinesis.region)
+      ).withKinesisEndpoint(kinesisConfig.streamEndpoint)
+        .withMaxRecords(kinesisConfig.maxRecords)
+        .withRegionName(kinesisConfig.region)
         // If the record list is empty, we still check whether it is time to flush the buffer
         .withCallProcessRecordsEvenForEmptyRecordList(true)
 
-      val position = InitialPositionInStream.valueOf(config.streams.kinesis.initialPosition)
-      config.streams.kinesis.timestamp.right.toOption
+      val position = InitialPositionInStream.valueOf(kinesisConfig.initialPosition)
+      kinesisConfig.timestamp.right.toOption
         .filter(_ => position == InitialPositionInStream.AT_TIMESTAMP)
         .map(kclc.withTimestampAtInitialPositionInStream(_))
         .getOrElse(kclc.withInitialPositionInStream(position))
     }
 
-    log.info(s"Running: ${config.streams.appName}.")
-    log.info(s"Processing raw input stream: ${config.streams.in.raw}")
+    log.info(s"Running: ${config.appName}.")
+    log.info(s"Processing raw input stream: ${config.in.raw}")
 
-    val rawEventProcessorFactory = new RawEventProcessorFactory(config, goodSink.get)
+    val rawEventProcessorFactory = new RawEventProcessorFactory()
     val worker = new Worker(
       rawEventProcessorFactory,
       kinesisClientLibConfiguration
@@ -110,14 +125,12 @@ class KinesisSource private (
 
   // Factory needed by the Amazon Kinesis Consumer library to
   // create a processor.
-  class RawEventProcessorFactory(config: EnrichConfig, sink: Sink)
-      extends IRecordProcessorFactory {
-    override def createProcessor: IRecordProcessor = new RawEventProcessor(config, sink)
+  class RawEventProcessorFactory extends IRecordProcessorFactory {
+    override def createProcessor: IRecordProcessor = new RawEventProcessor()
   }
 
   // Process events from a Kinesis stream.
-  class RawEventProcessor(config: EnrichConfig, sink: Sink)
-      extends IRecordProcessor {
+  class RawEventProcessor extends IRecordProcessor {
     private val thriftDeserializer = new TDeserializer()
 
     private var kinesisShardId: String = _
