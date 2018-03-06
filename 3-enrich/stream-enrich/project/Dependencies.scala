@@ -30,7 +30,7 @@ object Dependencies {
     val kinesisClient        = "1.8.1"
     val pubsub               = "0.37.0-beta"
     val datastore            = "1.19.0"
-    val kafkaClients         = "0.10.2.1"
+    val kafkaClients         = "1.0.1"
     val nsqClient            = "1.2.0"
     val commonsCodec         = "1.10"
     val config               = "1.3.1"
