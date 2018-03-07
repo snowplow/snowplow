@@ -61,6 +61,11 @@ package model {
     enabled: Boolean,
     placeholder: Option[String]
   )
+  final case class RootResponseConfig(
+    statusCode: Option[Int],
+    headers: Map[String, String],
+    body: Option[String]
+  )
   final case class P3PConfig(policyRef: String, CP: String)
   final case class CrossDomainConfig(domain: String, secure: Boolean)
   final case class AWSConfig(accessKey: String, secretKey: String) {
@@ -117,6 +122,7 @@ package model {
     cookie: CookieConfig,
     cookieBounce: CookieBounceConfig,
     redirectMacro: RedirectMacroConfig,
+    rootResponse: Option[RootResponseConfig],
     streams: StreamsConfig
   ) {
     val cookieConfig = if (cookie.enabled) Some(cookie) else None

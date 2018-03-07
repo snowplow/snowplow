@@ -27,6 +27,7 @@ object TestUtils {
     cookie = CookieConfig(true, "sp", 365.days, None),
     cookieBounce = CookieBounceConfig(false, "bounce", "new-nuid", None),
     redirectMacro = RedirectMacroConfig(false, None),
+    rootResponse = Some(RootResponseConfig(Some(302), Map("Location" -> "https://127.0.0.1/"), None)),
     streams = StreamsConfig(
       good = "good",
       bad = "bad",

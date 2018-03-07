@@ -39,6 +39,7 @@ import utils.SplitBatch
 trait Service {
   def preflightResponse(req: HttpRequest): HttpResponse
   def flashCrossDomainPolicy: HttpResponse
+  def rootResponse: HttpResponse
   def cookie(
     queryString: Option[String],
     body: Option[String],
@@ -153,6 +154,24 @@ class CollectorService(
                         |  <allow-access-from domain=\"${c.domain}\" secure=\"${c.secure}\" />
                         |</cross-domain-policy>""".stripMargin
           )
+        )
+      case None => HttpResponse(404, entity = "404 not found")
+    }
+
+
+  override def rootResponse: HttpResponse =
+    rootResponse(config.rootResponse)
+
+  def rootResponse(unknownRoute: Option[RootResponseConfig]): HttpResponse =
+    unknownRoute match {
+      case Some(c) =>
+        val statusCode = c.statusCode.getOrElse(404)
+        HttpResponse(
+          statusCode,
+          c.headers
+            .map((tuple: (String, String)) => RawHeader(tuple._1, tuple._2))
+            .to[collection.immutable.Seq],
+          HttpEntity(c.body.getOrElse(""))
         )
       case None => HttpResponse(404, entity = "404 not found")
     }
