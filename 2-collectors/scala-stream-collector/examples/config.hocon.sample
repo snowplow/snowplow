@@ -82,10 +82,11 @@ collector {
     # Optional, defaults to 404
     statusCode = 302
     headers = {
-        Location = https://127.0.0.1/
+        Location = "https://127.0.0.1/",
+        X-Custom = "something"
     }
     # Optional, defaults to empty string
-    body = 302, redirecting
+    body = "302, redirecting"
   }
 
   streams {

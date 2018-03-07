@@ -168,9 +168,11 @@ class CollectorService(
         val statusCode = c.statusCode.getOrElse(404)
         HttpResponse(
           statusCode,
-          c.headers
-            .map((tuple: (String, String)) => RawHeader(tuple._1, tuple._2))
-            .to[collection.immutable.Seq],
+          c.headers.map((headersMap: Map[String, String]) =>
+            headersMap
+              .map((tuple: (String, String)) => RawHeader(tuple._1, tuple._2))
+              .to[collection.immutable.Seq]
+          ).getOrElse(Nil),
           HttpEntity(c.body.getOrElse(""))
         )
       case None => HttpResponse(404, entity = "404 not found")

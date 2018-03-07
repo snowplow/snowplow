@@ -107,6 +107,11 @@ class CollectorServiceSpec extends Specification {
           302, collection.immutable.Seq(RawHeader("Location", "https://127.0.0.1/")), entity = ""
         )
       }
+      "return the configured response for root requests (no headers)" in {
+        service.rootResponse(Some(RootResponseConfig(Some(302)))) shouldEqual HttpResponse(
+          302, entity = ""
+        )
+      }
       "return the original 404 if not configured" in {
         service.rootResponse(None) shouldEqual HttpResponse(
           404, entity = "404 not found"
