@@ -578,7 +578,10 @@ object EnrichJobSpec {
                     |],
                     |"strategy": {
                       |"pseudonymize": {
-                        |"hashFunction": "SHA-1"
+                        |"hashFunction": "SHA-1",
+                        |"salt": {
+                          |"plainValue": "pepper123"
+                        |}
                       |}
                     |}
                   |}
