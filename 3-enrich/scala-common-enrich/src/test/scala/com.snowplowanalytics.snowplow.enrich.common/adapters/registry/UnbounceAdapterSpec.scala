@@ -182,7 +182,7 @@ class UnbounceAdapterSpec extends Specification with DataTables with ValidationM
       "page_id=f7afd389-65a3-45fa-8bad-b7a42236044c&page_name=Test-Webhook&variant=a&page_url=http%3A%2F%2Funbouncepages.com%2Ftest-webhook-1&data.json=%7B%7B%22email%22%3A%5B%22test%40snowplowanalytics.com%22%5D%2C%22ip_address%22%3A%5B%22200.121.220.179%22%5D%2C%22time_submitted%22%3A%5B%2204%3A17%20PM%20UTC%22%5D%7D"
     val payload = CollectorPayload(Shared.api, params, ContentType.some, body.some, Shared.cljSource, Shared.context)
     val expected = NonEmptyList(
-      "Unbounce event string failed to parse into JSON: [Unexpected character ('{' (code 123)): was expecting double-quote to start field name at [Source: java.io.StringReader@xxxxxx; line: 1, column: 3]]")
+      "Unbounce event string failed to parse into JSON: [Unexpected character ('{' (code 123)): was expecting double-quote to start field name at [Source: {{\"email\":[\"test@snowplowanalytics.com\"],\"ip_address\":[\"200.121.220.179\"],\"time_submitted\":[\"04:17 PM UTC\"]}; line: 1, column: 3]]")
     UnbounceAdapter.toRawEvents(payload) must beFailing(expected)
   }
 

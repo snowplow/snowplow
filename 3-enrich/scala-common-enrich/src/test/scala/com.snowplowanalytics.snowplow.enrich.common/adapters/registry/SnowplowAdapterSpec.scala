@@ -426,7 +426,7 @@ class SnowplowAdapterSpec extends Specification with DataTables with ValidationM
       Shared.context)
     val actual = RedirectAdapter.toRawEvents(payload)
     actual must beFailing(NonEmptyList(
-      "Field [co|cx]: invalid JSON [{[-] with parsing error: Unexpected character ('[' (code 91)): was expecting double-quote to start field name at [Source: java.io.StringReader@xxxxxx; line: 1, column: 3]"))
+      "Field [co|cx]: invalid JSON [{[-] with parsing error: Unexpected character ('[' (code 91)): was expecting double-quote to start field name at [Source: {[-; line: 1, column: 3]"))
   }
 
   def e19 = {
@@ -439,7 +439,7 @@ class SnowplowAdapterSpec extends Specification with DataTables with ValidationM
       Shared.context)
     val actual = RedirectAdapter.toRawEvents(payload)
     actual must beFailing(NonEmptyList(
-      "Field [co|cx]: invalid JSON [] with parsing error: No content to map due to end-of-input at [Source: java.io.StringReader@xxxxxx; line: 1, column: 1]"))
+      "Field [co|cx]: invalid JSON [] with parsing error: No content to map due to end-of-input at [Source: ; line: 1, column: 1]"))
   }
 
 }

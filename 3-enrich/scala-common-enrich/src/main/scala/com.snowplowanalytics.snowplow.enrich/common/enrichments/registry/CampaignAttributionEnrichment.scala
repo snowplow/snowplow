@@ -28,7 +28,7 @@ import scalaz._
 import Scalaz._
 
 // json4s
-import org.json4s.JValue
+import org.json4s.{DefaultFormats, JValue}
 
 import iglu.client.{SchemaCriterion, SchemaKey}
 
@@ -42,6 +42,8 @@ import utils.ScalazJson4sUtils
  * CampaignAttributionEnrichment from a JValue
  */
 object CampaignAttributionEnrichment extends ParseableEnrichment {
+
+  implicit val formats = DefaultFormats
 
   val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "campaign_attribution", "jsonschema", 1, 0)
 

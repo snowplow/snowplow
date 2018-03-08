@@ -43,6 +43,8 @@ import utils.ScalazJson4sUtils
  */
 object EventFingerprintEnrichmentConfig extends ParseableEnrichment {
 
+  implicit val formats = DefaultFormats
+
   val supportedSchema =
     SchemaCriterion("com.snowplowanalytics.snowplow", "event_fingerprint_config", "jsonschema", 1, 0)
 

@@ -31,7 +31,7 @@ import scalaz._
 import Scalaz._
 
 // json4s
-import org.json4s.JValue
+import org.json4s.{DefaultFormats, JValue}
 
 // Iglu
 import iglu.client.{SchemaCriterion, SchemaKey}
@@ -49,6 +49,8 @@ import utils.ScalazJson4sUtils
  * instance from a JValue.
  */
 object IpLookupsEnrichment extends ParseableEnrichment {
+
+  implicit val formats = DefaultFormats
 
   val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "ip_lookups", "jsonschema", 1, 0)
 

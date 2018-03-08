@@ -37,6 +37,9 @@ import org.apache.http.message.BasicHeaderValueParser
 import utils.ScalazJson4sUtils
 
 object CookieExtractorEnrichmentConfig extends ParseableEnrichment {
+
+  implicit val formats = DefaultFormats
+
   val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "cookie_extractor_config", "jsonschema", 1, 0)
 
   /**

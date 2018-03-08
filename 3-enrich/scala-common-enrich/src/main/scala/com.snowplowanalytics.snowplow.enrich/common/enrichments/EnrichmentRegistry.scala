@@ -67,6 +67,8 @@ import utils.ScalazJson4sUtils
  */
 object EnrichmentRegistry {
 
+  implicit val formats = DefaultFormats
+
   private val EnrichmentConfigSchemaCriterion =
     SchemaCriterion("com.snowplowanalytics.snowplow", "enrichments", "jsonschema", 1, 0)
 
