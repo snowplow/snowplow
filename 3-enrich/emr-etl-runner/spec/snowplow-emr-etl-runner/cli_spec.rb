@@ -29,6 +29,14 @@ describe Cli do
     filename += "/"+name
   end
 
+  describe '#load_targets' do
+    it 'raises a ConfigError if two storage targets with identical ids are passed' do
+      expect {
+        Cli.load_targets(resource('invalid-targets'))
+      }.to raise_exception( ConfigError, "Duplicate storage target ids: [\"id1\"]" )
+    end
+  end
+
   describe '#load_config' do
     it 'raises a ConfigError if the config file argument was nil' do
       expect {
@@ -152,7 +160,7 @@ describe Cli do
     it 'should reject bogus skip' do
       a[:skip] = [ 'lunch' ]
       expect { Cli.validate_and_coalesce(a, c) }.to raise_exception(ConfigError,
-        "Invalid option: skip can be staging, enrich, shred, elasticsearch, archive_raw, rdb_load, analyze, archive_enriched, archive_shredded not 'lunch'")
+                                                                    "Invalid option: skip can be staging, enrich, shred, elasticsearch, archive_raw, rdb_load, consistency_check, analyze, archive_enriched, archive_shredded not 'lunch'")
 
       %w(enrich shred elasticsearch archive_raw).each do |from|
         a[:skip] = [ from ]
