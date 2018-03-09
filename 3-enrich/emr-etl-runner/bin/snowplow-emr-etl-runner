@@ -107,9 +107,6 @@ rescue runner::Error => e
   exit 1
 rescue SystemExit => e
   exit e.status
-rescue Exception => e
-  fatal.call(e)
-  exit 1
 end
 
 exit 0 # Success
