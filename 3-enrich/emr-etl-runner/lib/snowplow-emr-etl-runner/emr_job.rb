@@ -882,7 +882,10 @@ module Snowplow
             logger.warn "Got IOError #{ioe}, waiting 5 minutes before checking jobflow again"
             sleep(300)
           rescue RestClient::SSLCertificateNotVerified => sce
-            logger.warn "Got RestClient::SSSLCertificateNotVerified #{sce}, waiting 5 minutes before checking jobflow again"
+            logger.warn "Got RestClient::SSLCertificateNotVerified #{sce}, waiting 5 minutes before checking jobflow again"
+            sleep(300)
+          rescue RestClient::RequestTimeout => rt
+            logger.warn "Got RestClient::RequestTimeout #{rt}, waiting 5 minutes before checking jobflow again"
             sleep(300)
           end
         end
