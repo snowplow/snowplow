@@ -50,16 +50,17 @@ module Snowplow
       :assets => String,
       :jsonpath_assets => Maybe[String],
       :log => String,
-      :raw => ({
+      :raw => Maybe[({
         :in => ArrayOf[String],
         :processing => String,
         :archive => String
-        }),
+        })],
       :enriched => ({
         :good => String,
         :bad => String,
         :errors => Maybe[String],
-        :archive => Maybe[String]
+        :archive => Maybe[String],
+        :stream => Maybe[String]
         }),
       :shredded => ({
         :good => String,
