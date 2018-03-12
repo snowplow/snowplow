@@ -42,6 +42,8 @@ module Snowplow
       ENRICH_STEP_OUTPUT = 'hdfs:///local/snowplow/enriched-events/'
       SHRED_STEP_OUTPUT = 'hdfs:///local/snowplow/shredded-events/'
 
+      SHRED_JOB_WITH_PROCESSING_MANIFEST = Gem::Version.new('0.14.0')
+
       # Need to understand the status of all our jobflow steps
       @@running_states = Set.new(%w(WAITING RUNNING PENDING SHUTTING_DOWN))
       @@failed_states  = Set.new(%w(FAILED CANCELLED))
@@ -378,6 +380,22 @@ module Snowplow
           # 3. Shredding
           shred_final_output = partition_by_run(csbs[:good], run_id)
 
+          # Add processing manifest if available
+          processing_manifest = get_processing_manifest(targets)
+          processing_manifest_shred_args = 
+            if not processing_manifest.nil? 
+              if Gem::Version.new(config[:storage][:versions][:rdb_shredder]) >= SHRED_JOB_WITH_PROCESSING_MANIFEST
+                  {
+                    'processing-manifest-table' => processing_manifest,
+                    'item-id' => shred_final_output
+                  }
+              else 
+                {}
+              end
+            else
+              {}
+            end
+
           # If we enriched, we free some space on HDFS by deleting the raw events
           # otherwise we need to copy the enriched events back to HDFS
           if enrich
@@ -408,7 +426,7 @@ module Snowplow
                 },
                 {
                   'iglu-config' => build_iglu_config_json(resolver)
-                }.merge(duplicate_storage_config)
+                }.merge(duplicate_storage_config).merge(processing_manifest_shred_args)
               )
             else
               duplicate_storage_config = build_duplicate_storage_json(targets[:DUPLICATE_TRACKING])
@@ -990,6 +1008,10 @@ module Snowplow
         step
       end
 
+      Contract TargetsHash => Maybe[String]
+      def get_processing_manifest(targets)
+        targets[:ENRICHED_EVENTS].select { |t| not t.data[:processingManifest].nil? }.map { |t| t.data.dig(:processingManifest, :amazonDynamoDb, :tableName) }.first
+      end
     end
   end
 end
