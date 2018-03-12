@@ -69,22 +69,6 @@ module Snowplow
         })
       })
 
-    # The Hash containing the storage targets to load
-    TargetHash = ({
-      :name => String,
-      :type => String,
-      :host => String,
-      :database => String,
-      :port => Num,
-      :ssl_mode => Maybe[String],
-      :table => String,
-      :username => Maybe[String],
-      :password => Maybe[String],
-      :es_nodes_wan_only => Maybe[Bool],
-      :maxerror => Maybe[Num],
-      :comprows => Maybe[Num]
-      })
-
     # The Hash containing the configuration for a core instance using EBS.
     CoreInstanceEbsHash = ({
       :volume_size => PositiveInt,
