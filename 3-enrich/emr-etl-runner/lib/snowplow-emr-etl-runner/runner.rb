@@ -51,14 +51,16 @@ module Snowplow
 
         resume = @args[:resume_from]
         skips = @args[:skip]
+        enriched_stream = @config[:aws][:s3][:buckets][:enriched][:stream]
         steps = {
-          :staging => (resume.nil? and not skips.include?('staging')),
-          :enrich => ((resume.nil? or resume == 'enrich') and not skips.include?('enrich')),
+          :staging => (enriched_stream.nil? and resume.nil? and not skips.include?('staging')),
+          :enrich => (enriched_stream.nil? and (resume.nil? or resume == 'enrich') and not skips.include?('enrich')),
+          :staging_stream_enrich => (not enriched_stream.nil? and resume.nil?),
           :shred => ((resume.nil? or [ 'enrich', 'shred' ].include?(resume)) and
             not skips.include?('shred')),
           :es => ((resume.nil? or [ 'enrich', 'shred', 'elasticsearch' ].include?(resume)) and
             not skips.include?('elasticsearch')),
-          :archive_raw => ((resume.nil? or [ 'enrich', 'shred', 'elasticsearch', 'archive_raw' ].include?(resume)) and
+          :archive_raw => (enriched_stream.nil? and (resume.nil? or [ 'enrich', 'shred', 'elasticsearch', 'archive_raw' ].include?(resume)) and 
             not skips.include?('archive_raw')),
           :rdb_load => ((resume.nil? or [ 'enrich', 'shred', 'elasticsearch', 'archive_raw', 'rdb_load' ].include?(resume)) and
             not skips.include?('rdb_load')),
@@ -74,7 +76,7 @@ module Snowplow
 
         archive_enriched = if not steps[:archive_enriched]
           'skip'
-        elsif steps[:enrich]
+        elsif steps[:enrich] || steps[:staging_stream_enrich]
           'pipeline'
         else
           'recover'
@@ -99,7 +101,7 @@ module Snowplow
         while true
           begin
             tries_left -= 1
-            job = EmrJob.new(@args[:debug], steps[:staging], steps[:enrich], steps[:shred], steps[:es],
+            job = EmrJob.new(@args[:debug], steps[:staging], steps[:enrich], steps[:staging_stream_enrich], steps[:shred], steps[:es],
               steps[:archive_raw], steps[:rdb_load], archive_enriched, archive_shredded, @config,
               @enrichments_array, @resolver_config, @targets, rdbloader_steps)
             job.run(@config)

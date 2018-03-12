@@ -55,8 +55,8 @@ module Snowplow
       include Snowplow::EmrEtlRunner::Utils
 
       # Initializes our wrapper for the Amazon EMR client.
-      Contract Bool, Bool, Bool, Bool, Bool, Bool, Bool, ArchiveStep, ArchiveStep, ConfigHash, ArrayOf[String], String, TargetsHash, RdbLoaderSteps => EmrJob
-      def initialize(debug, staging, enrich, shred, es, archive_raw, rdb_load, archive_enriched, archive_shredded, config, enrichments_array, resolver, targets, rdbloader_steps)
+      Contract Bool, Bool, Bool, Bool, Bool, Bool, Bool, Bool, ArchiveStep, ArchiveStep, ConfigHash, ArrayOf[String], String, TargetsHash, RdbLoaderSteps => EmrJob
+      def initialize(debug, staging, enrich, staging_stream_enrich, shred, es, archive_raw, rdb_load, archive_enriched, archive_shredded, config, enrichments_array, resolver, targets, rdbloader_steps)
 
         logger.debug "Initializing EMR jobflow"
 
@@ -283,7 +283,7 @@ module Snowplow
           @jobflow.set_task_instance_group(instance_group)
         end
 
-        enrich_final_output = if enrich
+        enrich_final_output = if enrich || staging_stream_enrich
           partition_by_run(csbe[:good], run_id)
         else
           csbe[:good] # Doesn't make sense to partition if enrich has already been done
@@ -382,6 +382,28 @@ module Snowplow
           @jobflow.add_step(copy_success_file_step)
         end
 
+        # Staging data produced by Stream Enrich
+        if staging_stream_enrich
+          enrich_final_output_loc = Sluice::Storage::S3::Location.new(enrich_final_output)
+
+          src_pattern = '.+'
+
+          unless Sluice::Storage::S3::is_empty?(s3, enrich_final_output_loc)
+            raise DirectoryNotEmptyError, "Cannot safely add stream staging step to jobflow, #{enrich_final_output_loc} is not empty"
+          end
+
+          staging_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
+          staging_step.arguments = [
+            "--src"        , csbe[:stream],
+            "--dest"       , enrich_final_output,
+            "--s3Endpoint" , s3_endpoint,
+            "--srcPattern" , src_pattern,
+            "--deleteOnSuccess"
+          ]
+          staging_step.name << ": Stream Enriched #{csbe[:stream]} -> Enriched Staging S3"
+          @jobflow.add_step(staging_step)
+        end
+
         if shred
 
           # 3. Shredding
@@ -405,11 +427,13 @@ module Snowplow
           if enrich
             @jobflow.add_step(get_rmr_step(ENRICH_STEP_INPUT, standard_assets_bucket))
           else
+            src_pattern = unless staging_stream_enrich then PARTFILE_REGEXP else '.+' end
+
             copy_to_hdfs_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
             copy_to_hdfs_step.arguments = [
               "--src"        , enrich_final_output, # Opposite way round to normal
               "--dest"       , ENRICH_STEP_OUTPUT,
-              "--srcPattern" , PARTFILE_REGEXP,
+              "--srcPattern" , src_pattern,
               "--s3Endpoint" , s3_endpoint
             ] # Either user doesn't want compression, or files are already compressed
             copy_to_hdfs_step.name << ": Enriched S3 -> HDFS"
