@@ -887,6 +887,9 @@ module Snowplow
           rescue RestClient::RequestTimeout => rt
             logger.warn "Got RestClient::RequestTimeout #{rt}, waiting 5 minutes before checking jobflow again"
             sleep(300)
+          rescue RestClient::ServiceUnavailable => su
+            logger.warn "Got RestClient::ServiceUnavailable #{su}, waiting 5 minutes before checking jobflow again"
+            sleep(300)
           end
         end
 
