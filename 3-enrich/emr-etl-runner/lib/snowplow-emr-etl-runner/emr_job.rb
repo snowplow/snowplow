@@ -44,6 +44,9 @@ module Snowplow
 
       SHRED_JOB_WITH_PROCESSING_MANIFEST = Gem::Version.new('0.14.0-rc1')
 
+      AMI_4 = Gem::Version.new("4.0.0")
+      AMI_5 = Gem::Version.new("5.0.0")
+
       # Need to understand the status of all our jobflow steps
       @@running_states = Set.new(%w(WAITING RUNNING PENDING SHUTTING_DOWN))
       @@failed_states  = Set.new(%w(FAILED CANCELLED))
@@ -83,6 +86,8 @@ module Snowplow
           config[:aws][:access_key_id],
           config[:aws][:secret_access_key])
 
+        ami_version = Gem::Version.new(config[:aws][:emr][:ami_version])
+
         # Configure Elasticity with your AWS credentials
         Elasticity.configure do |c|
           c.access_key = config[:aws][:access_key_id]
@@ -95,7 +100,7 @@ module Snowplow
         # Configure
         @jobflow.name                 = config[:aws][:emr][:jobflow][:job_name]
 
-        if config[:aws][:emr][:ami_version] =~ /^[1-3].*/
+        if ami_version < AMI_4
           @legacy = true
           @jobflow.ami_version = config[:aws][:emr][:ami_version]
         else
@@ -223,10 +228,12 @@ module Snowplow
         end
 
         # Prepare a bootstrap action based on the AMI version
-        bootstrap_script_location = if @legacy
+        bootstrap_script_location = if ami_version < AMI_4
           "#{standard_assets_bucket}common/emr/snowplow-ami3-bootstrap-0.1.0.sh"
-        else
+        elsif ami_version >= AMI_4 && ami_version < AMI_5
           "#{standard_assets_bucket}common/emr/snowplow-ami4-bootstrap-0.2.0.sh"
+        else
+          "#{standard_assets_bucket}common/emr/snowplow-ami5-bootstrap-0.1.0.sh"
         end
         cc_version = get_cc_version(config[:enrich][:versions][:spark_enrich])
         @jobflow.add_bootstrap_action(Elasticity::BootstrapAction.new(bootstrap_script_location, cc_version))

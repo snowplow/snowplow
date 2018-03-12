@@ -147,11 +147,11 @@ describe EmrConfigGenerator do
 
   describe '#get_configurations' do
     it 'should give back an empty array if legacy' do
-      expect(subject.send(:get_configurations, true)).to eq([])
+      expect(subject.send(:get_configurations,  Gem::Version.new("3.9.0"))).to eq([])
     end
 
     it 'should give back an array of config if not legacy' do
-      expect(subject.send(:get_configurations, false)).to eq([
+      expect(subject.send(:get_configurations, Gem::Version.new("4.7.0"))).to eq([
         { "classification" => "core-site", "properties" => { "io.file.buffer.size" => "65536" } },
         { "classification" => "mapred-site", "properties" => { "mapreduce.user.classpath.first" => "true" } }
       ])
@@ -188,7 +188,7 @@ describe EmrConfigGenerator do
 
   describe '#get_ami_action' do
     it 'should give back a 0.1.0 script if legacy' do
-      expect(subject.send(:get_ami_action, true, 'eu-west-1', '1.8.0')).to eq({
+      expect(subject.send(:get_ami_action, Gem::Version.new("3.8.0"), 'eu-west-1', '1.8.0')).to eq({
         "name" => "Bootstrap action (ami bootstrap script)",
         "scriptBootstrapAction" => {
           "path" => "s3://snowplow-hosted-assets/common/emr/snowplow-ami3-bootstrap-0.1.0.sh",
@@ -198,10 +198,20 @@ describe EmrConfigGenerator do
     end
 
     it 'should give back a 0.2.0 script if not legacy' do
-      expect(subject.send(:get_ami_action, false, 'eu-west-1', '1.9.0')).to eq({
+      expect(subject.send(:get_ami_action, Gem::Version.new("4.1.0"), 'eu-west-1', '1.9.0')).to eq({
         "name" => "Bootstrap action (ami bootstrap script)",
         "scriptBootstrapAction" => {
           "path" => "s3://snowplow-hosted-assets/common/emr/snowplow-ami4-bootstrap-0.2.0.sh",
+          "args" => [ "1.10" ]
+        }
+      })
+    end
+
+    it 'should give back am ami5 script if AMI is greater than 5' do
+      expect(subject.send(:get_ami_action, Gem::Version.new("5.1.0"), 'eu-west-1', '1.9.0')).to eq({
+        "name" => "Bootstrap action (ami bootstrap script)",
+        "scriptBootstrapAction" => {
+          "path" => "s3://snowplow-hosted-assets/common/emr/snowplow-ami5-bootstrap-0.1.0.sh",
           "args" => [ "1.10" ]
         }
       })
@@ -233,7 +243,7 @@ describe EmrConfigGenerator do
   describe '#get_bootstrap_actions' do
     it 'should build a list of actions starting with no actions (thrift + legacy)' do
       expect(subject.send(:get_bootstrap_actions,
-        [], 'thrift', true, 'eu-west-1', '1.8.0')).to eq([
+        [], 'thrift', Gem::Version.new('3.8.0'), 'eu-west-1', '1.8.0')).to eq([
           {
             "name" => "Hadoop bootstrap action (buffer size)",
             "scriptBootstrapAction" => {
@@ -262,7 +272,7 @@ describe EmrConfigGenerator do
       expect(subject.send(:get_bootstrap_actions, [
         { "name" => "something", "scriptBootstrapAction" => { "path" => "path", "args" => [] } },
         { "name" => "another thing", "scriptBootstrapAction" => { "path" => "another path", "args" => [] } },
-      ], 'not-thrift', false, 'eu-west-1', '1.9.0')).to eq([
+      ], 'not-thrift', Gem::Version.new('4.8.0'), 'eu-west-1', '1.9.0')).to eq([
         { "name" => "something", "scriptBootstrapAction" => { "path" => "path", "args" => [] } },
         { "name" => "another thing", "scriptBootstrapAction" => { "path" => "another path", "args" => [] } },
         {
