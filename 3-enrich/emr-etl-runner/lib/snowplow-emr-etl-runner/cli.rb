@@ -32,8 +32,8 @@ module Snowplow
 
       # Supported options
       COLLECTOR_FORMAT_REGEX = /^(?:cloudfront|clj-tomcat|thrift|(?:json\/.+\/.+)|(?:tsv\/.+\/.+)|(?:ndjson\/.+\/.+))$/
-      RESUMABLES = Set.new(%w(enrich shred elasticsearch archive_raw rdb_load analyze archive_enriched archive_shredded))
-      SKIPPABLES = Set.new(%w(staging enrich shred elasticsearch archive_raw rdb_load consistency_check analyze archive_enriched archive_shredded))
+      RESUMABLES = Set.new(%w(enrich shred elasticsearch archive_raw rdb_load analyze archive_enriched archive_shredded staging_stream_enrich))
+      SKIPPABLES = Set.new(%w(staging enrich shred elasticsearch archive_raw rdb_load consistency_check analyze archive_enriched archive_shredded staging_stream_enrich))
       INCLUDES = Set.new(%w(vacuum))
 
       # Get our arguments, configuration,
@@ -315,16 +315,20 @@ module Snowplow
           raise ConfigError, 'resume-from and skip are mutually exclusive'
         end
 
+        if args[:resume_from] == "staging_stream_enrich" && config[:aws][:s3][:buckets][:enriched][:stream].nil?
+          raise ConfigError, 'staging_stream_enrich is invalid step to resume from without aws.s3.buckets.enriched.stream settings'
+        end
+
         args[:include].each { |opt|
           unless INCLUDES.include?(opt)
             raise ConfigError, "Invalid option: include can be #{INCLUDES.to_a.join(', ')} not '#{opt}'"
           end
         }
 
-        collector_format = config[:collectors][:format]
+        collector_format = config.dig(:collectors, :format)
 
         # Validate the collector format
-        unless collector_format =~ COLLECTOR_FORMAT_REGEX
+        unless collector_format.nil? || collector_format =~ COLLECTOR_FORMAT_REGEX
           raise ConfigError, "collector_format '%s' not supported" % collector_format
         end
 

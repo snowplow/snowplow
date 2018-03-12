@@ -75,7 +75,7 @@ module Snowplow
           "tags" => get_tags(config[:monitoring][:tags]),
           "bootstrapActionConfigs" => get_bootstrap_actions(
             config[:aws][:emr][:bootstrap],
-            config[:collectors][:format],
+            config.dig(:collectors, :format),
             ami_version,
             region,
             config[:enrich][:versions][:spark_enrich]
@@ -143,7 +143,7 @@ module Snowplow
         end
       end
 
-      Contract ArrayOf[Hash], String, Gem::Version, String, String => ArrayOf[Hash]
+      Contract ArrayOf[Hash], Maybe[String], Gem::Version, String, String => ArrayOf[Hash]
       def get_bootstrap_actions(actions, collector_format, ami_version, region, enrich_version)
         bs_actions = []
         bs_actions += actions

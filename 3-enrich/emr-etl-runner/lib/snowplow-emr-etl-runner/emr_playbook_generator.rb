@@ -89,7 +89,7 @@ module Snowplow
         csbe = config[:aws][:s3][:buckets][:enriched]
         enrich_final_output = enrich ? partition_by_run(csbe[:good], run_id) : csbe[:good]
 
-        collector_format = config[:collectors][:format]
+        collector_format = config.dig(:collectors, :format)
 
         if enrich
           etl_tstamp = (run_tstamp.to_f * 1000).to_i.to_s
@@ -195,7 +195,7 @@ module Snowplow
           [ '--iglu_config', Base64.strict_encode64(resolver) ]
         )
 
-        output_codec = output_codec_from_compression_format(config[:enrich][:output_compression])
+        output_codec = output_codec_from_compression_format(config.dig(:enrich, :output_compression))
         steps << get_s3distcp_step(legacy, 'S3DistCp: shredded HDFS -> S3', SHRED_STEP_OUTPUT,
           shred_final_output, s3_endpoint, [ '--srcPattern', PART_REGEX ] + output_codec)
         steps << get_s3distcp_step(legacy, 'S3DistCp: shredded HDFS _SUCCESS -> S3',
@@ -241,7 +241,7 @@ module Snowplow
           ]
         )
 
-        output_codec = output_codec_from_compression_format(config[:enrich][:output_compression])
+        output_codec = output_codec_from_compression_format(config.dig(:enrich, :output_compression))
         steps << get_s3distcp_step(legacy, 'S3DistCp: enriched HDFS -> S3', ENRICH_STEP_OUTPUT,
           enrich_final_output, s3_endpoint, [ '--srcPattern', PART_REGEX ] + output_codec)
         steps << get_s3distcp_step(legacy, 'S3DistCp: enriched HDFS _SUCCESS -> S3',

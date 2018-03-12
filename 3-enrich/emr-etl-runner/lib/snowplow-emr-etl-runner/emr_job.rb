@@ -55,8 +55,8 @@ module Snowplow
       include Snowplow::EmrEtlRunner::Utils
 
       # Initializes our wrapper for the Amazon EMR client.
-      Contract Bool, Bool, Bool, Bool, Bool, Bool, Bool, ArchiveStep, ArchiveStep, ConfigHash, ArrayOf[String], String, TargetsHash, RdbLoaderSteps => EmrJob
-      def initialize(debug, staging, enrich, shred, es, archive_raw, rdb_load, archive_enriched, archive_shredded, config, enrichments_array, resolver, targets, rdbloader_steps)
+      Contract Bool, Bool, Bool, Bool, Bool, Bool, Bool, Bool, ArchiveStep, ArchiveStep, ConfigHash, ArrayOf[String], String, TargetsHash, RdbLoaderSteps => EmrJob
+      def initialize(debug, staging, enrich, staging_stream_enrich, shred, es, archive_raw, rdb_load, archive_enriched, archive_shredded, config, enrichments_array, resolver, targets, rdbloader_steps)
 
         logger.debug "Initializing EMR jobflow"
 
@@ -67,19 +67,19 @@ module Snowplow
           get_hosted_assets_bucket(STANDARD_HOSTED_ASSETS, STANDARD_HOSTED_ASSETS, config[:aws][:emr][:region])
         assets = get_assets(
           custom_assets_bucket,
-          config[:enrich][:versions][:spark_enrich],
+          config.dig(:enrich, :versions, :spark_enrich),
           config[:storage][:versions][:rdb_shredder],
           config[:storage][:versions][:hadoop_elasticsearch],
           config[:storage][:versions][:rdb_loader])
 
-        collector_format = config[:collectors][:format]
+        collector_format = config.dig(:collectors, :format)
         run_tstamp = Time.new
         run_id = run_tstamp.strftime("%Y-%m-%d-%H-%M-%S")
         @run_id = run_id
         @rdb_loader_log_base = config[:aws][:s3][:buckets][:log] + "rdb-loader/#{@run_id}/"
         @rdb_loader_logs = []   # pairs of target name and associated log
         etl_tstamp = (run_tstamp.to_f * 1000).to_i.to_s
-        output_codec = output_codec_from_compression_format(config[:enrich][:output_compression])
+        output_codec = output_codec_from_compression_format(config.dig(:enrich, :output_compression))
 
         s3 = Sluice::Storage::S3::new_fog_s3_from(
           config[:aws][:s3][:region],
@@ -235,7 +235,7 @@ module Snowplow
         else
           "#{standard_assets_bucket}common/emr/snowplow-ami5-bootstrap-0.1.0.sh"
         end
-        cc_version = get_cc_version(config[:enrich][:versions][:spark_enrich])
+        cc_version = get_cc_version(config.dig(:enrich, :versions, :spark_enrich))
         @jobflow.add_bootstrap_action(Elasticity::BootstrapAction.new(bootstrap_script_location, cc_version))
 
         # Install and launch HBase
@@ -283,7 +283,7 @@ module Snowplow
           @jobflow.set_task_instance_group(instance_group)
         end
 
-        enrich_final_output = if enrich
+        enrich_final_output = if enrich || staging_stream_enrich
           partition_by_run(csbe[:good], run_id)
         else
           csbe[:good] # Doesn't make sense to partition if enrich has already been done
@@ -318,12 +318,20 @@ module Snowplow
           @jobflow.add_step(compact_to_hdfs_step)
 
           # 2. Enrichment
+          enrich_asset = if assets[:enrich].nil?
+            raise ConfigError, "Cannot add enrich step as spark_enrich version is not configured"
+          else
+            assets[:enrich]
+          end
+
+          enrich_version = config.dig(:enrich, :versions, :spark_enrich)
+
           enrich_step =
-            if is_spark_enrich(config[:enrich][:versions][:spark_enrich]) then
+            if is_spark_enrich(enrich_version) then
               @jobflow.add_application("Spark")
               build_spark_step(
                 "Enrich Raw Events",
-                assets[:enrich],
+                enrich_asset,
                 "enrich.spark.EnrichJob",
                 { :in     => glob_path(ENRICH_STEP_INPUT),
                   :good   => ENRICH_STEP_OUTPUT,
@@ -338,12 +346,12 @@ module Snowplow
             else
               build_scalding_step(
                 "Enrich Raw Events",
-                assets[:enrich],
+                enrich_asset,
                 "enrich.hadoop.EtlJob",
                 { :in     => glob_path(ENRICH_STEP_INPUT),
                   :good   => ENRICH_STEP_OUTPUT,
                   :bad    => partition_by_run(csbe[:bad],    run_id),
-                  :errors => partition_by_run(csbe[:errors], run_id, config[:enrich][:continue_on_unexpected_error])
+                  :errors => partition_by_run(csbe[:errors], run_id, config.dig(:enrich, :continue_on_unexpected_error))
                 },
                 { :input_format     => collector_format,
                   :etl_tstamp       => etl_tstamp,
@@ -382,6 +390,36 @@ module Snowplow
           @jobflow.add_step(copy_success_file_step)
         end
 
+        # Staging data produced by Stream Enrich
+        if staging_stream_enrich
+          enrich_final_output_loc = Sluice::Storage::S3::Location.new(enrich_final_output)
+
+          src_pattern = '.+'
+
+          unless Sluice::Storage::S3::is_empty?(s3, enrich_final_output_loc)
+            raise DirectoryNotEmptyError, "Cannot safely add stream staging step to jobflow, #{enrich_final_output_loc} is not empty"
+          end
+
+          stream_enrich_loc = Sluice::Storage::S3::Location.new(csbe[:stream])
+
+          src_pattern_regex = Regexp.new src_pattern
+          files = Sluice::Storage::S3::list_files(s3, stream_enrich_loc).select { |f| !(f.key =~ src_pattern_regex).nil? }
+          if files.empty?
+            raise NoDataToProcessError, "No Snowplow enriched stream logs to process since last run"
+          end
+
+          staging_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
+          staging_step.arguments = [
+            "--src"        , csbe[:stream],
+            "--dest"       , enrich_final_output,
+            "--s3Endpoint" , s3_endpoint,
+            "--srcPattern" , src_pattern,
+            "--deleteOnSuccess"
+          ]
+          staging_step.name << ": Stream Enriched #{csbe[:stream]} -> Enriched Staging S3"
+          @jobflow.add_step(staging_step)
+        end
+
         if shred
 
           # 3. Shredding
@@ -405,11 +443,13 @@ module Snowplow
           if enrich
             @jobflow.add_step(get_rmr_step(ENRICH_STEP_INPUT, standard_assets_bucket))
           else
+            src_pattern = unless staging_stream_enrich then PARTFILE_REGEXP else '.+' end
+
             copy_to_hdfs_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
             copy_to_hdfs_step.arguments = [
               "--src"        , enrich_final_output, # Opposite way round to normal
               "--dest"       , ENRICH_STEP_OUTPUT,
-              "--srcPattern" , PARTFILE_REGEXP,
+              "--srcPattern" , src_pattern,
               "--s3Endpoint" , s3_endpoint
             ] # Either user doesn't want compression, or files are already compressed
             copy_to_hdfs_step.name << ": Enriched S3 -> HDFS"
@@ -441,7 +481,7 @@ module Snowplow
                 { :in          => glob_path(ENRICH_STEP_OUTPUT),
                   :good        => SHRED_STEP_OUTPUT,
                   :bad         => partition_by_run(csbs[:bad],    run_id),
-                  :errors      => partition_by_run(csbs[:errors], run_id, config[:enrich][:continue_on_unexpected_error])
+                  :errors      => partition_by_run(csbs[:errors], run_id, config.dig(:enrich, :continue_on_unexpected_error))
                 },
                 {
                   :iglu_config => build_iglu_config_json(resolver)
@@ -498,7 +538,9 @@ module Snowplow
         end
 
         if rdb_load
-          get_rdb_loader_steps(config, targets[:ENRICHED_EVENTS], resolver, assets[:loader], rdbloader_steps).each do |step|
+          rdb_loader_version = Gem::Version.new(config[:storage][:versions][:rdb_loader])
+          skip_manifest = staging_stream_enrich && rdb_loader_version > RDB_LOADER_WITH_PROCESSING_MANIFEST
+          get_rdb_loader_steps(config, targets[:ENRICHED_EVENTS], resolver, assets[:loader], rdbloader_steps, skip_manifest).each do |step|
             @jobflow.add_step(step)
           end
         end
@@ -676,8 +718,9 @@ module Snowplow
       # +targets+:: list of Storage target config hashes
       # +resolver+:: base64-encoded Iglu resolver JSON
       # +jar+:: s3 object with RDB Loader jar
-      Contract ConfigHash, ArrayOf[Iglu::SelfDescribingJson], String, String, RdbLoaderSteps => ArrayOf[Elasticity::CustomJarStep]
-      def get_rdb_loader_steps(config, targets, resolver, jar, rdbloader_steps)
+      # +skip_manifest+:: whether load_manifest RDB Loader step should be skipped
+      Contract ConfigHash, ArrayOf[Iglu::SelfDescribingJson], String, String, RdbLoaderSteps, Bool => ArrayOf[Elasticity::CustomJarStep]
+      def get_rdb_loader_steps(config, targets, resolver, jar, rdbloader_steps, skip_manifest)
 
         # Remove credentials from config
         clean_config = deep_copy(config)
@@ -688,6 +731,8 @@ module Snowplow
           :config      => Base64.strict_encode64(recursive_stringify_keys(clean_config).to_yaml),
           :resolver    => build_iglu_config_json(resolver)
         }
+
+        skip_steps = if skip_manifest then rdbloader_steps[:skip] + ["load_manifest"] else rdbloader_steps[:skip] end
 
         targets.map { |target|
           name = target.data[:name]
