@@ -36,7 +36,7 @@ module Snowplow
         "#{bucket}#{suffix}/"
       end
 
-      # Get commons-codec version required by Scala Hadoop Enrich for further replace
+      # Get commons-codec version required by Spark Enrich for further replace
       # See: https://github.com/snowplow/snowplow/issues/2735
       Contract String => String
       def get_cc_version(she_version)
