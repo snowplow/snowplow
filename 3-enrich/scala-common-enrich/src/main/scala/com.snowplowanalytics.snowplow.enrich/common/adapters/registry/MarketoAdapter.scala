@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -40,7 +40,7 @@ import com.snowplowanalytics.snowplow.enrich.common.utils.{JsonUtils => JU}
 
 /**
  * Transforms a collector payload which conforms to
- * a known version of the Mailchimp Tracking webhook
+ * a known version of the Marketo webhook
  * into raw events.
  */
 object MarketoAdapter extends Adapter {
@@ -51,57 +51,65 @@ object MarketoAdapter extends Adapter {
   // Expected content type for a request body
   private val ContentType = "application/json"
 
-  // Tracker version for an Mailchimp Tracking webhook
+  // Tracker version for an Marketo webhook
   private val TrackerVersion = "com.marketo-v1"
 
   // Schemas for reverse-engineering a Snowplow unstructured event
-  private val EventSchemaMap = Map (
-    "event"   -> SchemaKey("com.marketo", "event", "jsonschema", "1-0-0").toSchemaUri 
+  private val EventSchemaMap = Map(
+    "event" -> SchemaKey("com.marketo", "event", "jsonschema", "1-0-0").toSchemaUri
   )
 
   // Datetime format used by Marketo
   private val MarketoDateTimeFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").withZone(DateTimeZone.UTC)
 
-  private def payloadBodyToEvent(json: String, payload: CollectorPayload): Validated[RawEvent] = {
-
+  /**
+   * Returns a validated JSON payload event
+   * Converts all date-time values to a valid format
+   * The payload will be validated against marketo "event" schema
+   *
+   * @param json The JSON payload sent by Marketo
+   * @param payload Rest of the payload details
+   * @return a validated JSON payload on
+   *         Success, or a NEL
+   */
+  private def payloadBodyToEvent(json: String, payload: CollectorPayload): Validated[RawEvent] =
     try {
       val parsed = parse(json)
 
-      val parsed_converted = parsed transformField {
-        case ("acquisition_date", JString(value))         => ("acquisition_date", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
-        case ("created_at", JString(value))               => ("created_at", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
-        case ("email_suspended_at", JString(value))       => ("email_suspended_at", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
-        case ("last_referred_enrollment", JString(value)) => ("last_referred_enrollment", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
-        case ("last_referred_visit", JString(value))      => ("last_referred_visit", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
-        case ("updated_at", JString(value))               => ("updated_at", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
-        case ("datetime", JString(value))                 => ("datetime", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
-    }
+      val parsed_converted = parsed.transformField {
+        case ("acquisition_date", JString(value))         =>  ("acquisition_date", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
+        case ("created_at", JString(value))               =>  ("created_at", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
+        case ("email_suspended_at", JString(value))       =>  ("email_suspended_at", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
+        case ("last_referred_enrollment", JString(value)) =>  ("last_referred_enrollment", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
+        case ("last_referred_visit", JString(value))      =>  ("last_referred_visit", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
+        case ("updated_at", JString(value))               =>  ("updated_at", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
+        case ("datetime", JString(value))                 =>  ("datetime", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
+      }
 
       val eventType = Some("event")
 
-      lookupSchema(eventType, VendorName, EventSchemaMap) map {
-        schema => RawEvent(
-            api = payload.api,
-            parameters = toUnstructEventParams(
-              TrackerVersion,
-              toMap(payload.querystring),
-              schema,
-              parsed_converted,
-              "srv"
-            ),
-            contentType = payload.contentType,
-            source = payload.source,
-            context = payload.context
-          )
+      lookupSchema(eventType, VendorName, EventSchemaMap) map { schema =>
+        RawEvent(
+          api = payload.api,
+          parameters = toUnstructEventParams(
+            TrackerVersion,
+            toMap(payload.querystring),
+            schema,
+            parsed_converted,
+            "srv"
+          ),
+          contentType = payload.contentType,
+          source      = payload.source,
+          context     = payload.context
+        )
       }
 
     } catch {
       case e: JsonParseException => {
         val exception = JU.stripInstanceEtc(e.toString).orNull
-        s"$VendorName event failed to parse into JSON: [$exception]".failNel
+        s"$VendorName event failed to parse into JSON: [$exception]".failureNel
       }
     }
-  }
 
   /**
    * Converts a CollectorPayload instance into raw events.
@@ -118,7 +126,7 @@ object MarketoAdapter extends Adapter {
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
     (payload.body, payload.contentType) match {
-      case (None, _) => s"Request body is empty: no ${VendorName} event to process".failNel
+      case (None, _) => s"Request body is empty: no $VendorName event to process".failureNel
       case (Some(body), _) => {
         val event = payloadBodyToEvent(body, payload)
         rawEventsListProcessor(List(event))
