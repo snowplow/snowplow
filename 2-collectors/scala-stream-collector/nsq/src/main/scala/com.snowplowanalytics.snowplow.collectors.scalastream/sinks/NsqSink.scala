@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2013-2017 Snowplow Analytics Ltd.
+* Copyright (c) 2013-2018 Snowplow Analytics Ltd.
 * All rights reserved.
 *
 * This program is licensed to you under the Apache License Version 2.0,
