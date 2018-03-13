@@ -61,7 +61,7 @@ packages:
     publish  : true
     override : false
     continue_on_conflict : false
-    version  : <%= CMD['cat 3-enrich/emr-etl-runner/bin/snowplow-ami5-bootstrap.sh | grep \#\ Version\: | sed -rn "s/.*([0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?)$/\1/p" | xargs echo -n'] %>
+    version  : <%= CMD['cat 3-enrich/emr-etl-runner/bin/snowplow-ami5-bootstrap.sh | grep \#\ Version | sed -rn "s/.*([0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?)$/\1/p" | xargs echo -n'] %>
 
     # Required IF '--check-version' is passed: will assert that both versions are the same
     build_version : <%= ENV['TRAVIS_BUILD_RELEASE_TAG'] %>
