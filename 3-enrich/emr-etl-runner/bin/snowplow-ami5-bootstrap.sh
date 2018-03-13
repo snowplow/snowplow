@@ -15,7 +15,7 @@
 # Copyright::     Copyright (c) 2012-2018 Snowplow Analytics Ltd
 # License::       Apache License Version 2.0
 
-# Version::       0.1.0
+# Version::       0.1.0-rc1
 # Compatibility:: AMI 5.0.0
 
 # Fast fail

@@ -211,7 +211,7 @@ describe EmrConfigGenerator do
       expect(subject.send(:get_ami_action, Gem::Version.new("5.1.0"), 'eu-west-1', '1.9.0')).to eq({
         "name" => "Bootstrap action (ami bootstrap script)",
         "scriptBootstrapAction" => {
-          "path" => "s3://snowplow-hosted-assets/common/emr/snowplow-ami5-bootstrap-0.1.0.sh",
+          "path" => "s3://snowplow-hosted-assets/common/emr/snowplow-ami5-bootstrap-0.1.0-rc1.sh",
           "args" => [ "1.10" ]
         }
       })
