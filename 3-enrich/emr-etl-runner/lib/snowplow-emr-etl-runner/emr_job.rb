@@ -233,7 +233,7 @@ module Snowplow
         elsif ami_version >= AMI_4 && ami_version < AMI_5
           "#{standard_assets_bucket}common/emr/snowplow-ami4-bootstrap-0.2.0.sh"
         else
-          "#{standard_assets_bucket}common/emr/snowplow-ami5-bootstrap-0.1.0.sh"
+          "#{standard_assets_bucket}common/emr/snowplow-ami5-bootstrap-0.1.0-rc1.sh"
         end
         cc_version = get_cc_version(config[:enrich][:versions][:spark_enrich])
         @jobflow.add_bootstrap_action(Elasticity::BootstrapAction.new(bootstrap_script_location, cc_version))
