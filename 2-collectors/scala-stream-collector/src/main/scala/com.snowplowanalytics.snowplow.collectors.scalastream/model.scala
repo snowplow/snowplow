@@ -62,9 +62,10 @@ package model {
     placeholder: Option[String]
   )
   final case class RootResponseConfig(
-    statusCode: Option[Int] = None,
-    headers: Option[Map[String, String]] = None,
-    body: Option[String] = None
+    enabled: Boolean = false,
+    statusCode: Int = 404,
+    headers: Map[String, String] = Map.empty[String, String],
+    body: String = ""
   )
   final case class P3PConfig(policyRef: String, CP: String)
   final case class CrossDomainConfig(domain: String, secure: Boolean)
@@ -122,7 +123,7 @@ package model {
     cookie: CookieConfig,
     cookieBounce: CookieBounceConfig,
     redirectMacro: RedirectMacroConfig,
-    rootResponse: Option[RootResponseConfig],
+    rootResponse: RootResponseConfig,
     streams: StreamsConfig
   ) {
     val cookieConfig = if (cookie.enabled) Some(cookie) else None

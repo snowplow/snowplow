@@ -32,6 +32,8 @@ import model._
 import sinks.KinesisSink
 import utils.SplitBatch
 
+import scala.collection.immutable
+
 /**
  * Service responding to HTTP requests, mainly setting a cookie identifying the user and storing
  * events
@@ -162,20 +164,12 @@ class CollectorService(
   override def rootResponse: HttpResponse =
     rootResponse(config.rootResponse)
 
-  def rootResponse(unknownRoute: Option[RootResponseConfig]): HttpResponse =
-    unknownRoute match {
-      case Some(c) =>
-        val statusCode = c.statusCode.getOrElse(404)
-        HttpResponse(
-          statusCode,
-          c.headers.map((headersMap: Map[String, String]) =>
-            headersMap
-              .map((tuple: (String, String)) => RawHeader(tuple._1, tuple._2))
-              .to[collection.immutable.Seq]
-          ).getOrElse(Nil),
-          HttpEntity(c.body.getOrElse(""))
-        )
-      case None => HttpResponse(404, entity = "404 not found")
+  def rootResponse(c: RootResponseConfig): HttpResponse =
+    if (c.enabled) {
+      val rawHeaders = if (c.headers.nonEmpty) c.headers.map { case (k, v) => RawHeader(k, v) }.toSeq.to[immutable.Seq] else Nil
+      HttpResponse(c.statusCode, rawHeaders, HttpEntity(c.body))
+    } else {
+      HttpResponse(404, entity = "404 not found")
     }
 
   /** Builds a raw event from an Http request. */

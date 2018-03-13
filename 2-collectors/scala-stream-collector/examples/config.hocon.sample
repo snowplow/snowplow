@@ -76,11 +76,13 @@ collector {
     placeholder = "[TOKEN]"
   }
 
-  # Optional, customize response handling for requests for the root path ("/").
+  # Customize response handling for requests for the root path ("/").
   # Useful if you need to redirect to web content or privacy policies regarding the use of this collector.
   rootResponse {
+    enabled = false
     # Optional, defaults to 404
     statusCode = 302
+    # Optional, defaults to empty map
     headers = {
         Location = "https://127.0.0.1/",
         X-Custom = "something"
