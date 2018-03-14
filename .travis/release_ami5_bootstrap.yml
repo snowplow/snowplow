@@ -72,4 +72,4 @@ packages:
         prefix : "snowplow-ami5-bootstrap-"
         suffix : ".sh"
         binary_paths:
-          - "3-enrich/emr-etl-runner/bin/snowplow-ami5-bootstrap-{{ packages.0.build_version }}.sh"
+          - "3-enrich/emr-etl-runner/bin/snowplow-ami5-bootstrap.sh"
