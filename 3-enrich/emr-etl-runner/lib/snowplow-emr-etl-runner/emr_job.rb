@@ -43,6 +43,7 @@ module Snowplow
       SHRED_STEP_OUTPUT = 'hdfs:///local/snowplow/shredded-events/'
 
       SHRED_JOB_WITH_PROCESSING_MANIFEST = Gem::Version.new('0.14.0-rc1')
+      RDB_LOADER_WITH_PROCESSING_MANIFEST = Gem::Version.new('0.15.0-rc4')
 
       AMI_4 = Gem::Version.new("4.0.0")
       AMI_5 = Gem::Version.new("5.0.0")
@@ -728,8 +729,8 @@ module Snowplow
             "--resolver", default_arguments[:resolver],
             "--logkey", log_key,
             "--target", encoded_target
-          ] + unless rdbloader_steps[:skip].empty?
-            ["--skip", rdbloader_steps[:skip].join(",")]
+          ] + unless skip_steps.empty?
+            ["--skip", skip_steps.join(",")]
           else
             []
           end + unless rdbloader_steps[:include].empty?
