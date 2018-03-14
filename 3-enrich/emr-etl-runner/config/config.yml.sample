@@ -19,6 +19,7 @@ aws:
         bad: ADD HERE        # e.g. s3://my-out-bucket/enriched/bad
         errors: ADD HERE     # Leave blank unless :continue_on_unexpected_error: set to true below
         archive: ADD HERE    # Where to archive enriched events to, e.g. s3://my-archive-bucket/enriched
+        stream: ADD HERE     # S3 Loader's output folder with enriched data. If present raw buckets will be discarded
       shredded:
         good: ADD HERE       # e.g. s3://my-out-bucket/shredded/good
         bad: ADD HERE        # e.g. s3://my-out-bucket/shredded/bad

@@ -43,6 +43,7 @@ module Snowplow
       SHRED_STEP_OUTPUT = 'hdfs:///local/snowplow/shredded-events/'
 
       SHRED_JOB_WITH_PROCESSING_MANIFEST = Gem::Version.new('0.14.0-rc1')
+      RDB_LOADER_WITH_PROCESSING_MANIFEST = Gem::Version.new('0.15.0-rc4')
 
       AMI_4 = Gem::Version.new("4.0.0")
       AMI_5 = Gem::Version.new("5.0.0")
@@ -522,7 +523,9 @@ module Snowplow
         end
 
         if rdb_load
-          get_rdb_loader_steps(config, targets[:ENRICHED_EVENTS], resolver, assets[:loader], rdbloader_steps).each do |step|
+          rdb_loader_version = Gem::Version.new(config[:storage][:versions][:rdb_loader])
+          skip_manifest = staging_stream_enrich && (rdb_loader_version > RDB_LOADER_WITH_PROCESSING_MANIFEST)
+          get_rdb_loader_steps(config, targets[:ENRICHED_EVENTS], resolver, assets[:loader], rdbloader_steps, skip_manifest).each do |step|
             @jobflow.add_step(step)
           end
         end
@@ -700,8 +703,8 @@ module Snowplow
       # +targets+:: list of Storage target config hashes
       # +resolver+:: base64-encoded Iglu resolver JSON
       # +jar+:: s3 object with RDB Loader jar
-      Contract ConfigHash, ArrayOf[Iglu::SelfDescribingJson], String, String, RdbLoaderSteps => ArrayOf[Elasticity::CustomJarStep]
-      def get_rdb_loader_steps(config, targets, resolver, jar, rdbloader_steps)
+      Contract ConfigHash, ArrayOf[Iglu::SelfDescribingJson], String, String, RdbLoaderSteps, Bool => ArrayOf[Elasticity::CustomJarStep]
+      def get_rdb_loader_steps(config, targets, resolver, jar, rdbloader_steps, skip_manifest)
 
         # Remove credentials from config
         clean_config = deep_copy(config)
@@ -713,6 +716,8 @@ module Snowplow
           :resolver    => build_iglu_config_json(resolver)
         }
 
+        skip_steps = if skip_manifest then rdbloader_steps else rdbloader_steps[:skip] + ["load_manifest"] end
+
         targets.map { |target|
           name = target.data[:name]
           log_key = @rdb_loader_log_base + SecureRandom.uuid
@@ -723,8 +728,8 @@ module Snowplow
             "--resolver", default_arguments[:resolver],
             "--logkey", log_key,
             "--target", encoded_target
-          ] + unless rdbloader_steps[:skip].empty?
-            ["--skip", rdbloader_steps[:skip].join(",")]
+          ] + unless skip_steps.empty?
+            ["--skip", skip_steps.join(",")]
           else
             []
           end + unless rdbloader_steps[:include].empty?
