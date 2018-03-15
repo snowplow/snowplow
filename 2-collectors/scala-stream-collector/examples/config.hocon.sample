@@ -76,6 +76,20 @@ collector {
     placeholder = "[TOKEN]"
   }
 
+  # Customize response handling for requests for the root path ("/").
+  # Useful if you need to redirect to web content or privacy policies regarding the use of this collector.
+  rootResponse {
+    enabled = false
+    statusCode = 302
+    # Optional, defaults to empty map
+    headers = {
+        Location = "https://127.0.0.1/",
+        X-Custom = "something"
+    }
+    # Optional, defaults to empty string
+    body = "302, redirecting"
+  }
+
   streams {
     # Events which have successfully been collected will be stored in the good stream/topic
     good = {{good}}

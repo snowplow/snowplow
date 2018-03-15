@@ -65,7 +65,7 @@ trait CollectorRoute {
           }
         }
       }
-    } ~ corsRoute ~ healthRoute ~ crossDomainRoute ~
+    } ~ corsRoute ~ healthRoute ~ crossDomainRoute ~ rootRoute ~
       complete(HttpResponse(404, entity = "404 not found"))
 
   /**
@@ -107,4 +107,11 @@ trait CollectorRoute {
       complete(collectorService.preflightResponse(request))
     }
   }
+
+  private def rootRoute: Route = get {
+    pathSingleSlash {
+      complete(collectorService.rootResponse)
+    }
+  }
+
 }

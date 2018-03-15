@@ -26,6 +26,7 @@ class CollectorRouteSpec extends Specification with Specs2RouteTest {
       def preflightResponse(req: HttpRequest): HttpResponse =
         HttpResponse(200, entity = "preflight response")
       def flashCrossDomainPolicy: HttpResponse = HttpResponse(200, entity = "flash cross domain")
+      def rootResponse: HttpResponse = HttpResponse(200, entity = "200 collector root")
       def cookie(
         queryString: Option[String],
         body: Option[String],
@@ -75,6 +76,11 @@ class CollectorRouteSpec extends Specification with Specs2RouteTest {
       }
       Get("/i") ~> route.collectorRoute ~> check {
         responseAs[String] shouldEqual "cookie"
+      }
+    }
+    "respond to customizable root requests" in {
+      Get("/") ~> route.collectorRoute ~> check {
+        responseAs[String] shouldEqual "200 collector root"
       }
     }
     "respond to anything else with a not found" in {

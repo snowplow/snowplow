@@ -101,6 +101,24 @@ class CollectorServiceSpec extends Specification {
       }
     }
 
+    "rootResponse" in {
+      "return the configured response for root requests" in {
+        service.rootResponse(RootResponseConfig(enabled = true, 302, Map("Location" -> "https://127.0.0.1/"))) shouldEqual HttpResponse(
+          302, collection.immutable.Seq(RawHeader("Location", "https://127.0.0.1/")), entity = ""
+        )
+      }
+      "return the configured response for root requests (no headers)" in {
+        service.rootResponse(RootResponseConfig(enabled = true, 302)) shouldEqual HttpResponse(
+          302, entity = ""
+        )
+      }
+      "return the original 404 if not configured" in {
+        service.rootResponse shouldEqual HttpResponse(
+          404, entity = "404 not found"
+        )
+      }
+    }
+
     "buildEvent" in {
       "fill the correct values" in {
         val l = `Location`("l")
