@@ -62,8 +62,8 @@ package model {
     placeholder: Option[String]
   )
   final case class RootResponseConfig(
-    enabled: Boolean = false,
-    statusCode: Int = 404,
+    enabled: Boolean,
+    statusCode: Int,
     headers: Map[String, String] = Map.empty[String, String],
     body: String = ""
   )
