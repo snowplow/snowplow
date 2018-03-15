@@ -32,8 +32,6 @@ import model._
 import sinks.KinesisSink
 import utils.SplitBatch
 
-import scala.collection.immutable
-
 /**
  * Service responding to HTTP requests, mainly setting a cookie identifying the user and storing
  * events
