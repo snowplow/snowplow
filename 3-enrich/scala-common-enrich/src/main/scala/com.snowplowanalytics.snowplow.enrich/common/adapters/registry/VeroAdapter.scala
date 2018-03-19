@@ -82,7 +82,7 @@ object VeroAdapter extends Adapter {
       val parsed    = parse(json)
       val eventType = (parsed \ "type").extractOpt[String].orElse(Some("user_updated"))
       val formattedEvent = eventType match {
-        case Some("user_updated") => reformatParameters(parsed)
+        case Some("user_updated") => parsed
         case _ => {
           cleanupJsonEventValues(
             parsed,
