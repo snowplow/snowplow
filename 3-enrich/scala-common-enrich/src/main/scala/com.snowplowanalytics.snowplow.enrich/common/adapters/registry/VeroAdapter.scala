@@ -72,14 +72,14 @@ object VeroAdapter extends Adapter {
    * For "user_updated" events the field is named "action" instead of "type"
    * in which case the event type will be set to Some("user_updated")
    *
-   * @param body_json Payload body that is sent by Vero
+   * @param json Payload body that is sent by Vero
    * @param payload The details of the payload
    * @return a Validation boxing either a NEL of RawEvents on
    *         Success, or a NEL of Failure Strings
    */
-  private def payloadBodyToEvent(body_json: String, payload: CollectorPayload): Validated[RawEvent] =
+  private def payloadBodyToEvent(json: String, payload: CollectorPayload): Validated[RawEvent] =
     try {
-      val parsed    = parse(body_json)
+      val parsed    = parse(json)
       val eventType = (parsed \ "type").extractOpt[String].orElse(Some("user_updated"))
       val formattedEvent = eventType match {
         case Some("user_updated") => reformatParameters(parsed)
@@ -87,7 +87,7 @@ object VeroAdapter extends Adapter {
           cleanupJsonEventValues(
             parsed,
             ("type", eventType.get).some,
-            eventType.get.concat("_at")
+            s"$eventType_at")
           )
         }
       }
@@ -148,7 +148,7 @@ object VeroAdapter extends Adapter {
    *        update values for
    * @return the updated JSON with updated fields and values
    */
-  private[registry] def reformatParameters(json: JValue): JValue = {
+  def reformatParameters(json: JValue): JValue = {
 
     def toStringField(value: Long): JString = {
       val dt: DateTime = new DateTime(value)

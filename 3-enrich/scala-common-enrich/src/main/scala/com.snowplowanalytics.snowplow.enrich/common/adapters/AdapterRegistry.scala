@@ -53,7 +53,7 @@ object AdapterRegistry {
     val StatusGator     = "com.statusgator"
     val Unbounce        = "com.unbounce"
     val UrbanAirship    = "com.urbanairship.connect"
-    val Vero            = "com.vero"
+    val Vero            = "com.getvero"
   }
 
   /**
