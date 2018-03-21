@@ -37,6 +37,7 @@ import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 // This project
 import com.snowplowanalytics.snowplow.enrich.common.loaders.CollectorPayload
 import com.snowplowanalytics.snowplow.enrich.common.utils.{JsonUtils => JU}
+import scala.util.{Failure, Success, Try}
 
 /**
  * Transforms a collector payload which conforms to
@@ -72,44 +73,42 @@ object MarketoAdapter extends Adapter {
    * @return a validated JSON payload on
    *         Success, or a NEL
    */
-  private def payloadBodyToEvent(json: String, payload: CollectorPayload): Validated[RawEvent] =
-    try {
-      val parsed = parse(json)
+  private def payloadBodyToEvent(json: String, payload: CollectorPayload): Validated[RawEvent] = {
 
-      val parsed_converted = parsed.transformField {
-        case ("acquisition_date", JString(value))         =>  ("acquisition_date", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
-        case ("created_at", JString(value))               =>  ("created_at", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
-        case ("email_suspended_at", JString(value))       =>  ("email_suspended_at", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
-        case ("last_referred_enrollment", JString(value)) =>  ("last_referred_enrollment", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
-        case ("last_referred_visit", JString(value))      =>  ("last_referred_visit", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
-        case ("updated_at", JString(value))               =>  ("updated_at", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
-        case ("datetime", JString(value))                 =>  ("datetime", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
+    val parsed = Try(parse(json))
+      parsed match {
+        case Success(parsed) => parsed
+        case Failure(e)      => return s"$VendorName event failed to parse into JSON: [${e.getMessage}]".failureNel
       }
 
-      val eventType = Some("event")
-
-      lookupSchema(eventType, VendorName, EventSchemaMap) map { schema =>
-        RawEvent(
-          api = payload.api,
-          parameters = toUnstructEventParams(
-            TrackerVersion,
-            toMap(payload.querystring),
-            schema,
-            parsed_converted,
-            "srv"
-          ),
-          contentType = payload.contentType,
-          source      = payload.source,
-          context     = payload.context
-        )
-      }
-
-    } catch {
-      case e: JsonParseException => {
-        val exception = JU.stripInstanceEtc(e.toString).orNull
-        s"$VendorName event failed to parse into JSON: [$exception]".failureNel
-      }
+    val parsed_converted = parsed.get.transformField {
+      case ("acquisition_date", JString(value))         => ("acquisition_date", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
+      case ("created_at", JString(value))               => ("created_at", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
+      case ("email_suspended_at", JString(value))       => ("email_suspended_at", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
+      case ("last_referred_enrollment", JString(value)) => ("last_referred_enrollment", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
+      case ("last_referred_visit", JString(value))      => ("last_referred_visit", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
+      case ("updated_at", JString(value))               => ("updated_at", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
+      case ("datetime", JString(value))                 => ("datetime", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
     }
+
+    val eventType = Some("event")
+
+    lookupSchema(eventType, VendorName, EventSchemaMap) map { schema =>
+      RawEvent(
+        api = payload.api,
+        parameters = toUnstructEventParams(
+          TrackerVersion,
+          toMap(payload.querystring),
+          schema,
+          parsed_converted,
+          "srv"
+        ),
+        contentType = payload.contentType,
+        source      = payload.source,
+        context     = payload.context
+      )
+    }
+  }
 
   /**
    * Converts a CollectorPayload instance into raw events.
