@@ -36,7 +36,9 @@ import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 
 // This project
 import com.snowplowanalytics.snowplow.enrich.common.loaders.CollectorPayload
-import com.snowplowanalytics.snowplow.enrich.common.utils.{JsonUtils => JU}
+//import com.snowplowanalytics.snowplow.enrich.common.utils.{JsonUtils => JU}
+
+import scala.util.{Failure, Success, Try}
 
 /**
  * Transforms a collector payload which conforms to
@@ -77,45 +79,43 @@ object VeroAdapter extends Adapter {
    * @return a Validation boxing either a NEL of RawEvents on
    *         Success, or a NEL of Failure Strings
    */
-  private def payloadBodyToEvent(json: String, payload: CollectorPayload): Validated[RawEvent] =
-    try {
-      val parsed    = parse(json)
-      val eventType = (parsed \ "type").extractOpt[String].orElse(Some("user_updated"))
-      val formattedEvent = eventType match {
-        case Some("user_updated") => parsed
-        case _ => {
-          cleanupJsonEventValues(
-            parsed,
-            ("type", eventType.get).some,
-            s"$eventType_at")
-          )
-        }
-      }
+  private def payloadBodyToEvent(json: String, payload: CollectorPayload): Validated[RawEvent] = {
 
-      val reformattedEvent = reformatParameters(formattedEvent)
-
-      lookupSchema(eventType, VendorName, EventSchemaMap) map { schema =>
-        RawEvent(
-          api = payload.api,
-          parameters = toUnstructEventParams(
-            TrackerVersion,
-            toMap(payload.querystring),
-            schema,
-            reformattedEvent,
-            "srv"
-          ),
-          contentType = payload.contentType,
-          source      = payload.source,
-          context     = payload.context
+    val parsed = Try(parse(json))
+    parsed match {
+      case Success(parsed) => parsed
+      case Failure(e)      => return s"$VendorName event failed to parse into JSON: [${e.getMessage}]".failureNel
+    }
+    val eventType = (parsed.get \ "type").extractOpt[String].orElse(Some("user_updated"))
+    val formattedEvent = eventType match {
+      case Some("user_updated") => parsed.get
+      case _ => {
+        cleanupJsonEventValues(
+          parsed.get,
+          ("type", eventType.get).some,
+          s"${eventType.get}_at"
         )
       }
-
-    } catch {
-      case e: JsonParseException => {
-        val exception = JU.stripInstanceEtc(e.toString).orNull
-        s"$VendorName event failed to parse into JSON: [$exception]".failureNel
-      }
     }
+
+    val reformattedEvent = reformatParameters(formattedEvent)
+
+    lookupSchema(eventType, VendorName, EventSchemaMap) map { schema =>
+      RawEvent(
+        api = payload.api,
+        parameters = toUnstructEventParams(
+          TrackerVersion,
+          toMap(payload.querystring),
+          schema,
+          reformattedEvent,
+          "srv"
+        ),
+        contentType = payload.contentType,
+        source      = payload.source,
+        context     = payload.context
+      )
+    }
+  }
 
   /**
    * Converts a CollectorPayload instance into raw events.
