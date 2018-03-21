@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
  * you may not use this file except in compliance with the Apache License
@@ -24,14 +24,15 @@ object Dependencies {
 
   object V {
     // Java
-    val awsSdk               = "1.11.115"
+    val awsSdk               = "1.11.290"
+    val pubsub               = "0.37.0-beta"
+    val kafka                = "1.0.1"
+    val nsqClient            = "1.2.0"
     val yodaTime             = "2.9.9"
-    val kafka                = "0.10.2.1"
     val slf4j                = "1.7.5"
     val config               = "1.3.1"
-    val nsqClient            = "1.2.0"
     // Scala
-    val snowplowCommonEnrich = "0.26.0"
+    val snowplowCommonEnrich = "0.31.0"
     val igluClient           = "0.5.0"
     val collectorPayload     = "0.0.0"
     val scalaz7              = "7.0.9"
@@ -46,13 +47,14 @@ object Dependencies {
 
   object Libraries {
     // Java
-    val awsSdk               = "com.amazonaws"         %  "aws-java-sdk-kinesis"   % V.awsSdk
-    val yodaTime             = "joda-time"             %  "joda-time"              % V.yodaTime
+    val kinesis              = "com.amazonaws"         %  "aws-java-sdk-kinesis"   % V.awsSdk
+    val pubsub               = "com.google.cloud"      %  "google-cloud-pubsub"    % V.pubsub
     val kafkaClients         = "org.apache.kafka"      %  "kafka-clients"          % V.kafka
+    val nsqClient            = "com.snowplowanalytics" %  "nsq-java-client"        % V.nsqClient
+    val yodaTime             = "joda-time"             %  "joda-time"              % V.yodaTime
     val slf4j                = "org.slf4j"             %  "slf4j-simple"           % V.slf4j
     val log4jOverSlf4j       = "org.slf4j"             %  "log4j-over-slf4j"       % V.slf4j
     val config               = "com.typesafe"          %  "config"                 % V.config
-    val nsqClient            = "com.snowplowanalytics" %  "nsq-java-client"        % V.nsqClient
 
     // Scala
     val snowplowCommonEnrich = "com.snowplowanalytics" %% "snowplow-common-enrich" % V.snowplowCommonEnrich

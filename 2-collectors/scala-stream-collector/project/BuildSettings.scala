@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the
@@ -41,25 +41,17 @@ object BuildSettings {
     "-target", "1.8"
   )
 
-  // Makes our SBT app settings available from within the app
-  lazy val scalifySettings = Seq(
-    sourceGenerators in Compile += Def.task {
-      val file = (sourceManaged in Compile).value / "settings.scala"
-      IO.write(file, """package com.snowplowanalytics.snowplow.collectors.scalastream.generated
-        |object Settings {
-        |  val organization = "%s"
-        |  val version = "%s"
-        |  val name = "%s"
-        |  val shortName = "ssc"
-        |}
-        |""".stripMargin.format(organization.value, version.value, name.value))
-      Seq(file)
-    }.taskValue
-  )
-
   // sbt-assembly settings for building an executable
   import sbtassembly.AssemblyPlugin.autoImport._
   lazy val sbtAssemblySettings = Seq(
-    assemblyJarName in assembly := { s"${name.value}-${version.value}.jar" }
+    assemblyJarName in assembly := { s"${moduleName.value}-${version.value}.jar" },
+    // merge strategy for fixing netty conflict
+    assemblyMergeStrategy in assembly := {
+      case PathList("io", "netty", xs @ _*) => MergeStrategy.first
+      case x if x.endsWith("io.netty.versions.properties") => MergeStrategy.discard
+      case x =>
+        val oldStrategy = (assemblyMergeStrategy in assembly).value
+        oldStrategy(x)
+    }
   )
 }

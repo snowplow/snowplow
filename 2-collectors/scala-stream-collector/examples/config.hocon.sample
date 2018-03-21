@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2017 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0, and
 # you may not use this file except in compliance with the Apache License
@@ -28,10 +28,11 @@ collector {
     CP = "NOI DSP COR NID PSA OUR IND COM NAV STA"
   }
 
-  # Optional cross domain policy configuration.
-  # To disable, remove the "crossDomain" configuration and the collector will respond with a 404 to
-  # the /crossdomain.xml route.
+  # Cross domain policy configuration.
+  # If "enabled" is set to "false", the collector will respond with a 404 to the /crossdomain.xml
+  # route.
   crossDomain {
+    enabled = false
     # Domain that is granted access, *.acme.com will match http://acme.com and http://sub.acme.com
     domain = "*"
     # Whether to only grant access to HTTPS or both HTTPS and HTTP sources
@@ -89,7 +90,7 @@ collector {
 
     # Enable the chosen sink by uncommenting the appropriate configuration
     sink {
-      # Choose between kinesis, kafka, nsq, or stdout.
+      # Choose between kinesis, googlepubsub, kafka, nsq, or stdout.
       # To use stdout, comment or remove everything in the "collector.streams.sink" section except
       # "enabled" which should be set to "stdout".
       enabled = kinesis
@@ -110,11 +111,22 @@ collector {
         secretKey = iam
       }
 
-      # Minimum and maximum backoff periods
+      # Minimum and maximum backoff periods, in milliseconds
       backoffPolicy {
-        minBackoff = {{kinesisMinBackoffMillis}}
-        maxBackoff = {{kinesisMaxBackoffMillis}}
+        minBackoff = {{minBackoffMillis}}
+        maxBackoff = {{maxBackoffMillis}}
       }
+
+      # Or Google Pubsub
+      #googleProjectId = ID
+      ## Minimum, maximum and total backoff periods, in milliseconds
+      ## and multiplier between two backoff
+      #backoffPolicy {
+      #  minBackoff = {{minBackoffMillis}}
+      #  maxBackoff = {{maxBackoffMillis}}
+      #  totalBackoff = {{totalBackoffMillis}} # must be >= 10000
+      #  multiplier = {{backoffMultiplier}}
+      #}
 
       # Or Kafka
       #brokers = "{{kafkaBrokers}}"
