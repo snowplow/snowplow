@@ -66,7 +66,9 @@ module Snowplow
             not skips.include?('rdb_load')),
           :consistency_check => ((resume.nil? or [ 'enrich', 'shred', 'elasticsearch', 'archive_raw', 'rdb_load', 'consistency_check' ].include?(resume)) and
             not skips.include?('consistency_check')),
-          :analyze => ((resume.nil? or [ 'enrich', 'shred', 'elasticsearch', 'archive_raw', 'rdb_load', 'consistency_check', 'analyze' ].include?(resume)) and
+          :load_manifest_check => ((resume.nil? or [ 'enrich', 'shred', 'elasticsearch', 'archive_raw', 'rdb_load'  ].include?(resume)) and
+            not skips.include?('load_manifest_check')),
+          :analyze => ((resume.nil? or [ 'enrich', 'shred', 'elasticsearch', 'archive_raw', 'rdb_load', 'consistency_check', 'load_manifest_check', 'analyze' ].include?(resume)) and
             not skips.include?('analyze')),
           :archive_enriched => ((resume.nil? or
             [ 'enrich', 'shred', 'elasticsearch', 'archive_raw', 'rdb_load', 'consistency_check', 'analyze', 'archive_enriched' ].include?(resume)) and
@@ -169,6 +171,10 @@ module Snowplow
 
         if not steps[:consistency_check]
           s[:skip] << "consistency_check"
+        end
+
+        if not steps[:load_manifest_check]
+          s[:skip] << "load_manifest_check"
         end
 
         if inclusions.include?("vacuum")
