@@ -33,7 +33,7 @@ module Snowplow
       # Supported options
       COLLECTOR_FORMAT_REGEX = /^(?:cloudfront|clj-tomcat|thrift|(?:json\/.+\/.+)|(?:tsv\/.+\/.+)|(?:ndjson\/.+\/.+))$/
       RESUMABLES = Set.new(%w(enrich shred elasticsearch archive_raw rdb_load analyze archive_enriched archive_shredded staging_stream_enrich))
-      SKIPPABLES = Set.new(%w(staging enrich shred elasticsearch archive_raw rdb_load consistency_check analyze archive_enriched archive_shredded staging_stream_enrich))
+      SKIPPABLES = Set.new(%w(staging enrich shred elasticsearch archive_raw rdb_load consistency_check analyze load_manifest_check archive_enriched archive_shredded staging_stream_enrich))
       INCLUDES = Set.new(%w(vacuum))
 
       # Get our arguments, configuration,
