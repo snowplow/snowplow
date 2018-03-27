@@ -1,5 +1,5 @@
 {
-	"schema": "iglu:com.snowplowanalytics.snowplow/ip_lookups/jsonschema/1-0-0",
+	"schema": "iglu:com.snowplowanalytics.snowplow/ip_lookups/jsonschema/2-0-0",
 
 	"data": {
 
@@ -8,7 +8,7 @@
 		"enabled": true,
 		"parameters": {
 			"geo": {
-				"database": "GeoLiteCity.dat",
+				"database": "GeoLite2-City.mmdb",
 				"uri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind"
 			}
 		}
