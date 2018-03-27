@@ -22,9 +22,6 @@ import Scalaz._
 // Apache URLEncodedUtils
 import org.apache.http.NameValuePair
 
-// Scala MaxMind GeoIP
-import com.snowplowanalytics.maxmind.iplookups.IpLocation
-
 // JSON Schema
 import com.github.fge.jsonschema.core.report.ProcessingMessage
 
@@ -117,12 +114,6 @@ package object common {
    * `CanonicalOutput`.
    */
   type MaybeEnrichedEvent = Option[EnrichedEvent]
-
-  /**
-   * Type alias for an `Option`-boxed
-   * `IpLocation`.
-   */
-  type MaybeIpLocation = Option[IpLocation]
 
   /**
    * Type alias for either a `ValidationNel`

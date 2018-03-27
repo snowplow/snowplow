@@ -232,38 +232,38 @@ object EnrichmentManager {
       event.page_urlfragment = components.fragment.orNull
     }
 
-    // If our IpToGeo enrichment is enabled,
-    // get the geo-location from the IP address
-    val geoLocation = {
-      registry.getIpLookupsEnrichment match {
-        case Some(geo) => {
-          Option(event.user_ipaddress) match {
-            case Some(address) => {
-              val ipLookupResult = geo.extractIpInformation(address)
-              for (res <- ipLookupResult) {
-                for (loc <- res._1) {
-                  event.geo_country     = loc.countryCode
-                  event.geo_region      = loc.region.orNull
-                  event.geo_city        = loc.city.orNull
-                  event.geo_zipcode     = loc.postalCode.orNull
-                  event.geo_latitude    = loc.latitude
-                  event.geo_longitude   = loc.longitude
-                  event.geo_region_name = loc.regionName.orNull
-                  event.geo_timezone    = loc.timezone.orNull
-                }
-                event.ip_isp          = res._2.orNull
-                event.ip_organization = res._3.orNull
-                event.ip_domain       = res._4.orNull
-                event.ip_netspeed     = res._5.orNull
-              }
-              ipLookupResult
-            }
-            case None => unitSuccess
-          }
-        }
-        case None => unitSuccess
+    // If our IpToGeo enrichment is enabled, get the geo-location from the IP address
+    // enrichment doesn't fail to maintain the previous approach where failures were suppressed
+    // c.f. https://github.com/snowplow/snowplow/issues/351
+    val geoLocation = (for {
+      enrichment <- registry.getIpLookupsEnrichment
+      ip         <- Option(event.user_ipaddress)
+      result = {
+        val ipLookupResult = enrichment.extractIpInformation(ip)
+        ipLookupResult.ipLocation.foreach(_.foreach { loc =>
+          event.geo_country     = loc.countryCode
+          event.geo_region      = loc.region.orNull
+          event.geo_city        = loc.city.orNull
+          event.geo_zipcode     = loc.postalCode.orNull
+          event.geo_latitude    = loc.latitude
+          event.geo_longitude   = loc.longitude
+          event.geo_region_name = loc.regionName.orNull
+          event.geo_timezone    = loc.timezone.orNull
+        })
+        ipLookupResult.isp.foreach(_.foreach { i =>
+          event.ip_isp = i
+        })
+        ipLookupResult.organization.foreach(_.foreach { org =>
+          event.ip_organization = org
+        })
+        ipLookupResult.domain.foreach(_.foreach { d =>
+          event.ip_domain = d
+        })
+        ipLookupResult.connectionType.foreach(_.foreach { ct =>
+          event.ip_netspeed = ct
+        })
       }
-    }
+    } yield unitSuccess).getOrElse(unitSuccess)
 
     // To anonymize the IP address
     Option(event.user_ipaddress).map(ip =>
@@ -553,6 +553,7 @@ object EnrichmentManager {
         refererUri.toValidationNel) { (_, _, _, _, _, _, _, _, _, _) =>
         ()
       }
+
     val second =
       (transform |@|
         currency |@|
