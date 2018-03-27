@@ -10,7 +10,8 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common
+package com.snowplowanalytics
+package snowplow.enrich.common
 package enrichments
 package registry
 
@@ -29,71 +30,63 @@ import scalaz._
 import Scalaz._
 
 // Scala MaxMind GeoIP
-import com.snowplowanalytics.maxmind.iplookups.{IpLocation, IpLookups}
+import maxmind.iplookups.IpLookups
+import maxmind.iplookups.model.IpLocation
 
 class IpLookupsEnrichmentSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck {
   def is = s2"""
   This is a specification to test the IpLookupsEnrichment
-  extractIpInformation should not return failure for any valid or invalid IP address                $e1
-  extractIpInformation should correctly extract location data from IP addresses where possible      $e2
-  extractIpInformation should correctly extract ISP data from IP addresses where possible           $e3
-  an IpLookupsEnrichment instance should expose no database files to cache in local mode            $e4
-  an IpLookupsEnrichment instance should expose a list of database files to cache in non-local mode $e5
+  extractIpInformation should correctly extract location data from IP addresses where possible      $e1
+  extractIpInformation should correctly extract ISP data from IP addresses where possible           $e2
+  an IpLookupsEnrichment instance should expose no database files to cache in local mode            $e3
+  an IpLookupsEnrichment instance should expose a list of database files to cache in non-local mode $e4
   """
 
   // When testing, localMode is set to true, so the URIs are ignored and the databases are loaded from test/resources
-  val config = IpLookupsEnrichment(Some(("geo", new URI("/ignored-in-local-mode/"), "GeoIPCity.dat")),
-                                   Some(("isp", new URI("/ignored-in-local-mode/"), "GeoIPISP.dat")),
-                                   None,
-                                   None,
-                                   None,
-                                   true)
+  val config = IpLookupsEnrichment(
+    Some(("geo", new URI("/ignored-in-local-mode/"), "GeoIP2-City.mmdb")),
+    Some(("isp", new URI("/ignored-in-local-mode/"), "GeoIP2-ISP.mmdb")),
+    None,
+    None,
+    true
+  )
 
-  // Impossible to make extractIpInformation throw a validation error
   def e1 =
-    check { (ipAddress: String) =>
-      config.extractIpInformation(ipAddress) must beSuccessful
-    }
-
-  def e2 =
     "SPEC NAME"               || "IP ADDRESS" | "EXPECTED LOCATION" |
-      "blank IP address"      !! "" ! None |
-      "null IP address"       !! null ! None |
-      "invalid IP address #1" !! "localhost" ! None |
-      "invalid IP address #2" !! "hello" ! None |
-      "valid IP address"      !! "70.46.123.145" ! Some(
+      "blank IP address"      !! "" ! Some(Failure("The address 127.0.0.1 is not in the database.")) |
+      "null IP address"       !! null ! Some(Failure("The address 127.0.0.1 is not in the database.")) |
+      "invalid IP address #1" !! "localhost" ! Some(Failure("The address 127.0.0.1 is not in the database.")) |
+      "invalid IP address #2" !! "hello" ! Some(Failure("hello: Name or service not known")) |
+      "valid IP address"      !! "175.16.199.0" !
         IpLocation( // Taken from scala-maxmind-geoip. See that test suite for other valid IP addresses
-          countryCode = "US",
-          countryName = "United States",
-          region      = Some("FL"),
-          city        = Some("Delray Beach"),
-          latitude    = 26.461502F,
-          longitude   = -80.0728F,
-          timezone    = Some("America/New_York"),
+          countryCode = "CN",
+          countryName = "China",
+          region      = Some("22"),
+          city        = Some("Changchun"),
+          latitude    = 43.88F,
+          longitude   = 125.3228F,
+          timezone    = Some("Asia/Harbin"),
           postalCode  = None,
-          dmaCode     = Some(548),
-          areaCode    = Some(561),
-          metroCode   = Some(548),
-          regionName  = Some("Florida")
-        )) |> { (_, ipAddress, expected) =>
-      config.extractIpInformation(ipAddress).map(_._1) must beSuccessful(expected)
+          metroCode   = None,
+          regionName  = Some("Jilin Sheng")
+        ).success.some |> { (_, ipAddress, expected) =>
+      config.extractIpInformation(ipAddress).ipLocation.map(_.leftMap(_.getMessage)) must_== expected
     }
 
-  def e3 = config.extractIpInformation("70.46.123.145").map(_._2) must beSuccessful(Some("FDN Communications"))
+  def e2 = config.extractIpInformation("70.46.123.145").isp must_== "FDN Communications".success.some
 
-  def e4 = config.dbsToCache must_== Nil
+  def e3 = config.dbsToCache must_== Nil
 
   val configRemote = IpLookupsEnrichment(
-    Some(("geo", new URI("http://public-website.com/files/GeoLiteCity.dat"), "GeoLiteCity.dat")),
-    Some(("isp", new URI("s3://private-bucket/files/GeoIPISP.dat"), "GeoIPISP.dat")),
-    None,
+    Some(("geo", new URI("http://public-website.com/files/GeoLite2-City.mmdb"), "GeoLite2-City.mmdb")),
+    Some(("isp", new URI("s3://private-bucket/files/GeoIP2-ISP.mmdb"), "GeoIP2-ISP.mmdb")),
     None,
     None,
     false
   )
 
-  def e5 = configRemote.dbsToCache must_== List(
-    (new URI("http://public-website.com/files/GeoLiteCity.dat"), "./ip_geo"),
-    (new URI("s3://private-bucket/files/GeoIPISP.dat"), "./ip_isp")
+  def e4 = configRemote.dbsToCache must_== List(
+    (new URI("http://public-website.com/files/GeoLite2-City.mmdb"), "./ip_geo"),
+    (new URI("s3://private-bucket/files/GeoIP2-ISP.mmdb"), "./ip_isp")
   )
 }

@@ -78,7 +78,7 @@ class MandrillAdapterSpec extends Specification with DataTables with ValidationM
   def e3 = {
     val bodyStr = "mandrill_events=%5B%7B%22event%22%3A%22click%7D%5D"
     val expected =
-      "Mandrill events string failed to parse into JSON: [com.fasterxml.jackson.core.JsonParseException: Unexpected end-of-input: was expecting closing quote for a string value at [Source: java.io.StringReader@xxxxxx; line: 1, column: 37]]"
+      "Mandrill events string failed to parse into JSON: [com.fasterxml.jackson.core.io.JsonEOFException: Unexpected end-of-input: was expecting closing quote for a string value at [Source: (String)\"[{\"event\":\"click}]\"; line: 1, column: 37]]"
     MandrillAdapter.payloadBodyToEvents(bodyStr) must beFailing(expected)
   }
 

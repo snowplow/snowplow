@@ -52,15 +52,15 @@ class ValidateAndReformatJsonSpec extends Specification with DataTables with Val
     }
 
   def err1 =
-    """Field [%s]: invalid JSON [] with parsing error: No content to map due to end-of-input at [Source: java.io.StringReader@xxxxxx; line: 1, column: 1]"""
+    """Field [%s]: invalid JSON [] with parsing error: mapping resulted in null"""
       .format(FieldName)
   def err2: (String, Char, Integer, Integer) => String =
     (str, char, code, pos) =>
-      "Field [%s]: invalid JSON [%s] with parsing error: Unexpected character ('%c' (code %d)): expected a valid value (number, String, array, object, 'true', 'false' or 'null') at [Source: java.io.StringReader@xxxxxx; line: 1, column: %d]"
+      """Field [%s]: invalid JSON [%s] with parsing error: Unexpected character ('%c' (code %d)): expected a valid value (number, String, array, object, 'true', 'false' or 'null') at [Source: (String)"%2$s"; line: 1, column: %d]"""
         .format(FieldName, str, char, code, pos)
   def err3: (String, Char, Integer) => String =
     (str, char, int) =>
-      """Field [%s]: invalid JSON [%s] with parsing error: Unexpected character ('%c' (code %d)): was expecting double-quote to start field name at [Source: java.io.StringReader@xxxxxx; line: 1, column: 3]"""
+      """Field [%s]: invalid JSON [%s] with parsing error: Unexpected character ('%c' (code %d)): was expecting double-quote to start field name at [Source: (String)"%2$s"; line: 1, column: 3]"""
         .format(FieldName, str, char, int)
 
   def e2 =

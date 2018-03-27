@@ -39,25 +39,24 @@ import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
 
 class MailgunAdapterSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck {
-  def is =
-    "This is a specification to test the MailgunAdapter functionality" ^
-      p ^
-      "1. toRawEvents must return a Success Nel if every event 'delivered' in the payload is successful"                ! e1 ^
-      "2. toRawEvents must return a Success Nel if every event 'opened' in the payload is successful"                   ! e2 ^
-      "3. toRawEvents must return a Success Nel if every event 'clicked' in the payload is successful"                  ! e3 ^
-      "4. toRawEvents must return a Success Nel if every event 'unsubscribed' in the payload is successful"             ! e4 ^
-      "5. toRawEvents must return a Success Nel if the content type is 'multipart/form-data' and parsing is successful" ! e5 ^
-      "6. toRawEvents must return a Nel Failure if the request body is missing"                                         ! e6 ^
-      "7. toRawEvents must return a Nel Failure if the content type is missing"                                         ! e7 ^
-      "8. toRawEvents must return a Nel Failure if the content type is incorrect"                                       ! e8 ^
-      "9. toRawEvents must return a Failure Nel if the request body is empty"                                           ! e9 ^
-      "10. toRawEvents must return a Failure if the request body could not be parsed"                                   ! e10 ^
-      "11. toRawEvents must return a Failure if the request body does not contain an event parameter"                   ! e11 ^
-      "12. toRawEvents must return a Failure if the event type is not recognized"                                       ! e12 ^
-      "13. payloadBodyToEvent must return a Failure if the event data is missing 'timestamp'"                           ! e13 ^
-      "14. payloadBodyToEvent must return a Failure if the event data is missing 'token'"                               ! e14 ^
-      "15. payloadBodyToEvent must return a Failure if the event data is missing 'signature'"                           ! e15 ^
-      end
+  def is = s2"""
+    This is a specification to test the MailgunAdapter functionality
+    toRawEvents must return a Success Nel if every event 'delivered' in the payload is successful                $e1
+    toRawEvents must return a Success Nel if every event 'opened' in the payload is successful                   $e2
+    toRawEvents must return a Success Nel if every event 'clicked' in the payload is successful                  $e3
+    toRawEvents must return a Success Nel if every event 'unsubscribed' in the payload is successful             $e4
+    toRawEvents must return a Success Nel if the content type is 'multipart/form-data' and parsing is successful $e5
+    toRawEvents must return a Nel Failure if the request body is missing                                         $e6
+    toRawEvents must return a Nel Failure if the content type is missing                                         $e7
+    toRawEvents must return a Nel Failure if the content type is incorrect                                       $e8
+    toRawEvents must return a Failure Nel if the request body is empty                                           $e9
+    toRawEvents must return a Failure if the request body could not be parsed                                    $e10
+    toRawEvents must return a Failure if the request body does not contain an event parameter                    $e11
+    toRawEvents must return a Failure if the event type is not recognized                                        $e12
+    payloadBodyToEvent must return a Failure if the event data is missing 'timestamp'                            $e13
+    payloadBodyToEvent must return a Failure if the event data is missing 'token'                                $e14
+    payloadBodyToEvent must return a Failure if the event data is missing 'signature'                            $e15
+    """
 
   implicit val resolver = SpecHelpers.IgluResolver
 
