@@ -32,6 +32,7 @@ object Dependencies {
     val datastore            = "1.19.0"
     val kafkaClients         = "1.0.1"
     val nsqClient            = "1.2.0"
+    val jackson              = "2.9.3"
     val commonsCodec         = "1.10"
     val config               = "1.3.1"
     val slf4j                = "1.7.5"
@@ -51,30 +52,31 @@ object Dependencies {
 
   object Libraries {
     // Java
-    val kinesisSdk           = "com.amazonaws"         %  "aws-java-sdk-kinesis"      % V.awsSdk
-    val dynamodbSdk          = "com.amazonaws"         %  "aws-java-sdk-dynamodb"     % V.awsSdk
-    val s3Sdk                = "com.amazonaws"         %  "aws-java-sdk-s3"           % V.awsSdk
-    val kinesisClient        = "com.amazonaws"         %  "amazon-kinesis-client"     % V.kinesisClient
-    val pubsub               = "com.google.cloud"      %  "google-cloud-pubsub"       % V.pubsub
-    val datastore            = "com.google.cloud"      %  "google-cloud-datastore"    % V.datastore
-    val kafkaClients         = "org.apache.kafka"      %  "kafka-clients"             % V.kafkaClients
-    val nsqClient            = "com.snowplowanalytics" %  "nsq-java-client"           % V.nsqClient
-    val commonsCodec         = "commons-codec"         %  "commons-codec"             % V.commonsCodec
-    val config               = "com.typesafe"          %  "config"                    % V.config
-    val slf4j                = "org.slf4j"             %  "slf4j-simple"              % V.slf4j
-    val log4jOverSlf4j       = "org.slf4j"             %  "log4j-over-slf4j"          % V.slf4j
+    val kinesisSdk           = "com.amazonaws"                    %  "aws-java-sdk-kinesis"      % V.awsSdk
+    val dynamodbSdk          = "com.amazonaws"                    %  "aws-java-sdk-dynamodb"     % V.awsSdk
+    val s3Sdk                = "com.amazonaws"                    %  "aws-java-sdk-s3"           % V.awsSdk
+    val kinesisClient        = "com.amazonaws"                    %  "amazon-kinesis-client"     % V.kinesisClient
+    val pubsub               = "com.google.cloud"                 %  "google-cloud-pubsub"       % V.pubsub
+    val datastore            = "com.google.cloud"                 %  "google-cloud-datastore"    % V.datastore
+    val kafkaClients         = "org.apache.kafka"                 %  "kafka-clients"             % V.kafkaClients
+    val nsqClient            = "com.snowplowanalytics"            %  "nsq-java-client"           % V.nsqClient
+    val jacksonCbor          = "com.fasterxml.jackson.dataformat" %  "jackson-dataformat-cbor"   % V.jackson
+    val commonsCodec         = "commons-codec"                    %  "commons-codec"             % V.commonsCodec
+    val config               = "com.typesafe"                     %  "config"                    % V.config
+    val slf4j                = "org.slf4j"                        %  "slf4j-simple"              % V.slf4j
+    val log4jOverSlf4j       = "org.slf4j"                        %  "log4j-over-slf4j"          % V.slf4j
     // Scala
-    val scopt                = "com.github.scopt"      %% "scopt"                     % V.scopt
-    val scalaz7              = "org.scalaz"            %% "scalaz-core"               % V.scalaz7
-    val json4s               = "org.json4s"            %% "json4s"                    % V.json4s
-    val json4sJackson        = "org.json4s"            %% "json4s-jackson"            % V.json4s
-    val pureconfig           = "com.github.pureconfig" %% "pureconfig"                % V.pureconfig
-    val snowplowRawEvent     = "com.snowplowanalytics" %  "snowplow-thrift-raw-event" % V.snowplowRawEvent
-    val igluClient           = "com.snowplowanalytics" %% "iglu-scala-client"         % V.igluClient
-    val snowplowCommonEnrich = "com.snowplowanalytics" %% "snowplow-common-enrich"    % V.snowplowCommonEnrich
-    val snowplowTracker      = "com.snowplowanalytics" %% "snowplow-scala-tracker"    % V.snowplowTracker
+    val scopt                = "com.github.scopt"                 %% "scopt"                     % V.scopt
+    val scalaz7              = "org.scalaz"                       %% "scalaz-core"               % V.scalaz7
+    val json4s               = "org.json4s"                       %% "json4s"                    % V.json4s
+    val json4sJackson        = "org.json4s"                       %% "json4s-jackson"            % V.json4s
+    val pureconfig           = "com.github.pureconfig"            %% "pureconfig"                % V.pureconfig
+    val snowplowRawEvent     = "com.snowplowanalytics"            %  "snowplow-thrift-raw-event" % V.snowplowRawEvent
+    val igluClient           = "com.snowplowanalytics"            %% "iglu-scala-client"         % V.igluClient
+    val snowplowCommonEnrich = "com.snowplowanalytics"            %% "snowplow-common-enrich"    % V.snowplowCommonEnrich
+    val snowplowTracker      = "com.snowplowanalytics"            %% "snowplow-scala-tracker"    % V.snowplowTracker
     // Scala (test only)
-    val specs2               = "org.specs2"            %% "specs2"                    % V.specs2         % "test"
-    val scalacheck           = "org.scalacheck"        %% "scalacheck"                % V.scalacheck     % "test"
+    val specs2               = "org.specs2"                       %% "specs2"                    % V.specs2         % "test"
+    val scalacheck           = "org.scalacheck"                   %% "scalacheck"                % V.scalacheck     % "test"
   }
 }
