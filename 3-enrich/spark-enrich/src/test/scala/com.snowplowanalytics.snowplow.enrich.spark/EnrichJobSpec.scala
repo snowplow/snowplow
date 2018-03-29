@@ -243,6 +243,16 @@ object EnrichJobSpec {
                 |"uri": "http://iglucentral.com"
               |}
             |}
+          |},
+          |{
+            |"name": "Ben",
+            |"priority": 0,
+            |"vendorPrefixes": [ "com.snowplowanalytics" ],
+            |"connection": {
+              |"http": {
+                |"uri": "http://ben-sp-test-registry.s3-website-eu-west-1.amazonaws.com"
+              |}
+            |}
           |}
           |]
         |}
@@ -282,11 +292,10 @@ object EnrichJobSpec {
             |"database": "%s",
             |"uri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind"
           |}""".format(lookup, lookup match {
-        case "geo"          => "GeoIPCity.dat"
-        case "isp"          => "GeoIPISP.dat"
-        case "organization" => "GeoIPOrg.dat"
-        case "domain"       => "GeoIPDomain.dat"
-        case "netspeed"     => "GeoIPNetSpeedCell.dat"
+        case "geo"            => "GeoIP2-City.mmdb"
+        case "isp"            => "GeoIP2-ISP.mmdb"
+        case "domain"         => "GeoIP2-Domain.mmdb"
+        case "connectionType" => "GeoIP2-Connection-Type.mmdb"
         })
     }
 
@@ -430,7 +439,7 @@ object EnrichJobSpec {
                 |}
               |},
               |{
-                |"schema": "iglu:com.snowplowanalytics.snowplow/ip_lookups/jsonschema/1-0-0",
+                |"schema": "iglu:com.snowplowanalytics.snowplow/ip_lookups/jsonschema/2-0-0",
                 |"data": {
                   |"vendor": "com.snowplowanalytics.snowplow",
                   |"name": "ip_lookups",
