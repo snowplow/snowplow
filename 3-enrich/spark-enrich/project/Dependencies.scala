@@ -30,6 +30,7 @@ object Dependencies {
     // Java
     val hadoopLZO        = "0.4.20"
     val elephantBird     = "4.14"
+    val geoip2           = "2.5.0"
     // Scala
     val spark            = "2.2.0"
     val scalaz7          = "7.0.9"
@@ -45,19 +46,22 @@ object Dependencies {
 
   object Libraries {
     // Java
-    val hadoopLZO        = "com.hadoop.gplcompression"    %  "hadoop-lzo"                   % V.hadoopLZO
-    val elephantBird     = "com.twitter.elephantbird"     %  "elephant-bird-core"           % V.elephantBird
+    val hadoopLZO         = "com.hadoop.gplcompression" %  "hadoop-lzo"               % V.hadoopLZO
+    val elephantBird      = "com.twitter.elephantbird"  %  "elephant-bird-core"       % V.elephantBird
+    // Downgrading needed to resolve conflicts between Spark's jackson (2.6.7) and geoip2's (2.9.3)
+    val geoip2            = "com.maxmind.geoip2"        %  "geoip2"                   % V.geoip2
     // Scala
-    val sparkCore        = "org.apache.spark"             %% "spark-core"                   % V.spark        % "provided"
-    val sparkSQL         = "org.apache.spark"             %% "spark-sql"                    % V.spark        % "provided"
-    val scalaz7          = "org.scalaz"                   %% "scalaz-core"                  % V.scalaz7
-    val scopt            = "com.github.scopt"             %% "scopt"                        % V.scopt
-    val commonEnrich     = "com.snowplowanalytics"        %% "snowplow-common-enrich"       % V.commonEnrich
-    val igluClient       = "com.snowplowanalytics"        %% "iglu-scala-client"            % V.igluClient
+    val sparkCore         = "org.apache.spark"          %% "spark-core"               % V.spark        % "provided"
+    val sparkSQL          = "org.apache.spark"          %% "spark-sql"                % V.spark        % "provided"
+    val scalaz7           = "org.scalaz"                %% "scalaz-core"              % V.scalaz7
+    val scopt             = "com.github.scopt"          %% "scopt"                    % V.scopt
+    val commonEnrich      = ("com.snowplowanalytics"    %% "snowplow-common-enrich"   % V.commonEnrich)
+      .exclude("com.maxmind.geoip2", "geoip2")
+    val igluClient        = "com.snowplowanalytics"     %% "iglu-scala-client"        % V.igluClient
     // Thrift
-    val snowplowRawEvent = "com.snowplowanalytics"        % "snowplow-thrift-raw-event"     % V.snowplowRawEvent
-    val collectorPayload = "com.snowplowanalytics"        % "collector-payload-1"           % V.collectorPayload
+    val snowplowRawEvent  = "com.snowplowanalytics"     % "snowplow-thrift-raw-event" % V.snowplowRawEvent
+    val collectorPayload  = "com.snowplowanalytics"     % "collector-payload-1"       % V.collectorPayload
     // Scala (test only)
-    val specs2           = "org.specs2"                   %% "specs2-core"                  % V.specs2           % "test"
+    val specs2            = "org.specs2"                %% "specs2-core"              % V.specs2           % "test"
   }
 }
