@@ -122,7 +122,7 @@
 
       <Host name="localhost"  appBase="webapps"
             unpackWARs="true" autoDeploy="true">
-        
+
         <!--Following class replaces the apparent client remote IP address and hostname for the request with the IP address list presented by a proxy or a load balancer via a request headers (e.g. "X-Forwarded-For").-->
         <Valve className="org.apache.catalina.valves.RemoteIpValve"
            remoteIpHeader="x-forwarded-for"
@@ -135,7 +135,7 @@
         <Valve className="com.snowplowanalytics.snowplow.collectors.clojure.SnowplowAccessLogValve" directory="logs"
                prefix="localhost_access_log" suffix=".txt" rotatable="false" requestAttributesEnabled="true"
                encoding="UTF-8"
-               pattern="%{yyyy-MM-dd}t&#9;%{HH:mm:ss}t&#9;-&#9;%b&#9;%a&#9;%m&#9;%h&#9;%U&#9;%s&#9;%{Referer}i&#9;%{User-Agent}I&#9;%q&amp;cv=clj-1.1.0-%v&amp;nuid=%{sp}C&#9;-&#9;-&#9;-&#9;%~&#9;%w" />
+               pattern="%{yyyy-MM-dd}t&#9;%{HH:mm:ss}t&#9;-&#9;%b&#9;%a&#9;%m&#9;%h&#9;%U&#9;%s&#9;%{Referer}i&#9;%{User-Agent}I&#9;%q&amp;cv=clj-2.0.0-%v&amp;nuid=%{sp}C&#9;-&#9;-&#9;-&#9;%~&#9;%w" />
 
 
       </Host>
