@@ -33,7 +33,7 @@ class NullNumericFieldsSpec extends Specification with EnrichJobSpec {
   override def appName = "null-numeric-fields"
   sequential
   "A job which processes a CF file containing 1 event with null int and double fields" should {
-    runEnrichJob(NullNumericFieldsSpec.lines, "clj-tomcat", "2", true, List("geo", "organization"))
+    runEnrichJob(NullNumericFieldsSpec.lines, "clj-tomcat", "2", true, List("geo"))
 
     "write a bad row JSON containing the input line and all errors" in {
       val Some(bads) = readPartFile(dirs.badRows)

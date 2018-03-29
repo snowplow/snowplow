@@ -20,7 +20,7 @@ import org.specs2.mutable.Specification
 object StructEventCfLineSpec {
   import EnrichJobSpec._
   val lines = Lines(
-    "2012-05-27  11:35:53  DFW3  3343  255.255.255.255 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/oracles/internal/_session/119-psycards-book-and-deck-starter-pack.html?view=print#detail Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0  &e=se&se_ca=ecomm&se_ac=add-to-basket&se_la=%CE%A7%CE%B1%CF%81%CE%B9%CF%84%CE%AF%CE%BD%CE%B7&se_pr=1&ip=70.46.123.145&se_va=35708.23&dtm=1364230969450&tid=598951&evn=com.snowplowanalytics&vp=2560x934&ds=2543x1420&vid=43&duid=9795bd0203804cd1&p=web&tv=js-0.11.1&fp=2876815413&aid=pbzsite&lang=en-GB&cs=UTF-8&tz=Europe%2FLondon&refr=http%3A%2F%2Fwww.psychicbazaar.com%2F&f_pdf=1&f_qt=0&f_realp=0&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=2560x1440&cd=32&cookie=1&url=http%3A%2F%2Fwww.psychicbazaar.com%2Foracles%2F119-psycards-book-and-deck-starter-pack.html%3Fview%3Dprint%23detail"
+    "2012-05-27  11:35:53  DFW3  3343  255.255.255.255 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/oracles/internal/_session/119-psycards-book-and-deck-starter-pack.html?view=print#detail Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0  &e=se&se_ca=ecomm&se_ac=add-to-basket&se_la=%CE%A7%CE%B1%CF%81%CE%B9%CF%84%CE%AF%CE%BD%CE%B7&se_pr=1&ip=216.160.83.56&se_va=35708.23&dtm=1364230969450&tid=598951&evn=com.snowplowanalytics&vp=2560x934&ds=2543x1420&vid=43&duid=9795bd0203804cd1&p=web&tv=js-0.11.1&fp=2876815413&aid=pbzsite&lang=en-GB&cs=UTF-8&tz=Europe%2FLondon&refr=http%3A%2F%2Fwww.psychicbazaar.com%2F&f_pdf=1&f_qt=0&f_realp=0&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=2560x1440&cd=32&cookie=1&url=http%3A%2F%2Fwww.psychicbazaar.com%2Foracles%2F119-psycards-book-and-deck-starter-pack.html%3Fview%3Dprint%23detail"
   )
   val expected = List(
     "pbzsite",
@@ -36,20 +36,20 @@ object StructEventCfLineSpec {
     "cloudfront",
     etlVersion,
     null, // No user_id set
-    "70.46.x.x", // Anonymization and geo both work using &ip=
+    "216.160.x.x", // Anonymization and geo both work using &ip=
     "2876815413",
     "9795bd0203804cd1",
     "43",
     null, // No network_userid set
-    "US", // Anonymization and geo both work using &ip=
-    "FL",
-    "Delray Beach",
-    null,
-    "26.461502",
-    "-80.0728",
-    "Florida",
+    "US", // US geolocation
+    "WA",
+    "Milton",
+    "98354",
+    "47.2513",
+    "-122.3149",
+    "Washington",
     null, // No additional MaxMind databases used
-    "DSLAM WAN Allocation", // Using the MaxMind organization lookup service
+    null,
     null,
     null,
     "http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html?view=print#detail",
@@ -143,7 +143,7 @@ class StructEventCfLineSpec extends Specification with EnrichJobSpec {
   override def appName = "struct-event-cf-lines"
   sequential
   "A job which processes a CloudFront file containing 1 valid custom structured event" should {
-    runEnrichJob(StructEventCfLineSpec.lines, "cloudfront", "2", true, List("geo", "organization"))
+    runEnrichJob(StructEventCfLineSpec.lines, "cloudfront", "2", true, List("geo"))
 
     "correctly output 1 custom structured event" in {
       val Some(goods) = readPartFile(dirs.output)

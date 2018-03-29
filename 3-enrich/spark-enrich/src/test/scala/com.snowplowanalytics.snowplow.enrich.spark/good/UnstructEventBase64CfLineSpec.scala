@@ -20,7 +20,7 @@ import org.specs2.mutable.Specification
 object UnstructEventBase64CfLineSpec {
   import EnrichJobSpec._
   val lines = Lines(
-    "2012-05-27  11:35:53  DFW3  3343  70.46.123.145 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html?view=print#detail Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0  &e=ue&ue_px=eyJzY2hlbWEiOiJpZ2x1OmNvbS5zbm93cGxvd2FuYWx5dGljcy5zbm93cGxvdy91bnN0cnVjdF9ldmVudC9qc29uc2NoZW1hLzEtMC0wIiwiZGF0YSI6eyJzY2hlbWEiOiJpZ2x1OmNvbS5zbm93cGxvd2FuYWx5dGljcy5zbm93cGxvdy5pbnB1dC1hZGFwdGVycy9zZWdtZW50X3dlYmhvb2tfY29uZmlnL2pzb25zY2hlbWEvMS0wLTAiLCJkYXRhIjp7InZlbmRvciI6Is6nzrHPgc65z4TOr869zrcgTkVXIFVuaWNvZGUgdGVzdCIsIm5hbWUiOiJhbGV4K3Rlc3RAc25vd3Bsb3dhbmFseXRpY3MuY29tIiwicGFyYW1ldGVycyI6eyJtYXBwaW5ncyI6eyJldmVudHNQZXJNb250aCI6IjwgMSBtaWxsaW9uIiwic2VydmljZVR5cGUiOiJ1bnN1cmUifX19fX0=&dtm=1364230969450&evn=com.acme&tid=598951&vp=2560x934&ds=2543x1420&vid=43&duid=9795bd0203804cd1&p=web&tv=js-0.11.1&fp=2876815413&aid=pbzsite&lang=en-GB&cs=UTF-8&tz=Europe%2FLondon&refr=http%3A%2F%2Fwww.psychicbazaar.com%2F&f_pdf=1&f_qt=0&f_realp=0&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=2560x1440&cd=32&cookie=1&url=http%3A%2F%2Fwww.psychicbazaar.com%2F2-tarot-cards"
+    "2012-05-27  11:35:53  DFW3  3343  216.160.83.56 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html?view=print#detail Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0  &e=ue&ue_px=eyJzY2hlbWEiOiJpZ2x1OmNvbS5zbm93cGxvd2FuYWx5dGljcy5zbm93cGxvdy91bnN0cnVjdF9ldmVudC9qc29uc2NoZW1hLzEtMC0wIiwiZGF0YSI6eyJzY2hlbWEiOiJpZ2x1OmNvbS5zbm93cGxvd2FuYWx5dGljcy5zbm93cGxvdy5pbnB1dC1hZGFwdGVycy9zZWdtZW50X3dlYmhvb2tfY29uZmlnL2pzb25zY2hlbWEvMS0wLTAiLCJkYXRhIjp7InZlbmRvciI6Is6nzrHPgc65z4TOr869zrcgTkVXIFVuaWNvZGUgdGVzdCIsIm5hbWUiOiJhbGV4K3Rlc3RAc25vd3Bsb3dhbmFseXRpY3MuY29tIiwicGFyYW1ldGVycyI6eyJtYXBwaW5ncyI6eyJldmVudHNQZXJNb250aCI6IjwgMSBtaWxsaW9uIiwic2VydmljZVR5cGUiOiJ1bnN1cmUifX19fX0=&dtm=1364230969450&evn=com.acme&tid=598951&vp=2560x934&ds=2543x1420&vid=43&duid=9795bd0203804cd1&p=web&tv=js-0.11.1&fp=2876815413&aid=pbzsite&lang=en-GB&cs=UTF-8&tz=Europe%2FLondon&refr=http%3A%2F%2Fwww.psychicbazaar.com%2F&f_pdf=1&f_qt=0&f_realp=0&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=2560x1440&cd=32&cookie=1&url=http%3A%2F%2Fwww.psychicbazaar.com%2F2-tarot-cards"
   )
   val expected = List(
     "pbzsite",
@@ -36,21 +36,21 @@ object UnstructEventBase64CfLineSpec {
     "cloudfront",
     etlVersion,
     null, // No user_id set
-    "70.46.123.145",
+    "216.160.83.56",
     "2876815413",
     "9795bd0203804cd1",
     "43",
     null, // No network_userid set
     "US", // US geolocation
-    "FL",
-    "Delray Beach",
+    "WA",
+    "Milton",
+    "98354",
+    "47.2513",
+    "-122.3149",
+    "Washington",
     null,
-    "26.461502",
-    "-80.0728",
-    "Florida",
     null,
     null,
-    "nuvox.net",  // Using the MaxMind domain lookup service
     null,
     "http://www.psychicbazaar.com/2-tarot-cards",
     null, // No page title for events

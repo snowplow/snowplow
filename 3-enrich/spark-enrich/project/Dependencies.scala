@@ -34,7 +34,7 @@ object Dependencies {
     val spark            = "2.2.0"
     val scalaz7          = "7.0.9"
     val scopt            = "3.5.0"
-    val commonEnrich     = "0.30.0"
+    val commonEnrich     = "0.32.0"
     val igluClient       = "0.5.0"
     // Scala (test only)
     val specs2           = "2.3.13"
@@ -45,19 +45,19 @@ object Dependencies {
 
   object Libraries {
     // Java
-    val hadoopLZO        = "com.hadoop.gplcompression" %  "hadoop-lzo"                   % V.hadoopLZO
-    val elephantBird     = "com.twitter.elephantbird"  %  "elephant-bird-core"           % V.elephantBird
+    val hadoopLZO        = "com.hadoop.gplcompression"    %  "hadoop-lzo"                   % V.hadoopLZO
+    val elephantBird     = "com.twitter.elephantbird"     %  "elephant-bird-core"           % V.elephantBird
     // Scala
-    val sparkCore        = "org.apache.spark"          %% "spark-core"                   % V.spark        % "provided"
-    val sparkSQL         = "org.apache.spark"          %% "spark-sql"                    % V.spark        % "provided"
-    val scalaz7          = "org.scalaz"                %% "scalaz-core"                  % V.scalaz7
-    val scopt            = "com.github.scopt"          %% "scopt"                        % V.scopt
-    val commonEnrich     = "com.snowplowanalytics"     %% "snowplow-common-enrich"       % V.commonEnrich
-    val igluClient       = "com.snowplowanalytics"     %% "iglu-scala-client"            % V.igluClient
+    val sparkCore        = "org.apache.spark"             %% "spark-core"                   % V.spark        % "provided"
+    val sparkSQL         = "org.apache.spark"             %% "spark-sql"                    % V.spark        % "provided"
+    val scalaz7          = "org.scalaz"                   %% "scalaz-core"                  % V.scalaz7
+    val scopt            = "com.github.scopt"             %% "scopt"                        % V.scopt
+    val commonEnrich     = "com.snowplowanalytics"        %% "snowplow-common-enrich"       % V.commonEnrich
+    val igluClient       = "com.snowplowanalytics"        %% "iglu-scala-client"            % V.igluClient
     // Thrift
-    val snowplowRawEvent = "com.snowplowanalytics"     % "snowplow-thrift-raw-event"     % V.snowplowRawEvent
-    val collectorPayload = "com.snowplowanalytics"     % "collector-payload-1"           % V.collectorPayload
+    val snowplowRawEvent = "com.snowplowanalytics"        % "snowplow-thrift-raw-event"     % V.snowplowRawEvent
+    val collectorPayload = "com.snowplowanalytics"        % "collector-payload-1"           % V.collectorPayload
     // Scala (test only)
-    val specs2           = "org.specs2"                %% "specs2-core"                  % V.specs2           % "test"
+    val specs2           = "org.specs2"                   %% "specs2-core"                  % V.specs2           % "test"
   }
 }
