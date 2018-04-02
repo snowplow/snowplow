@@ -39,14 +39,13 @@
     (if (blank? value) default value)))
 
 (defn- get-var
-  "Try first option as a Java system
-   property, then second option as
-   an environment variable. Supports
-   optional `default` as fallback"
+  "Try the two options as Java system properties.
+   Recent tomcat AMIs do not make use of env variables.
+   Supports optional `default` as fallback"
   ([varnames] (get-var varnames nil))
   ([varnames default]
     (get-property-safely (first varnames)
-      (get (System/getenv) (second varnames)
+      (get-property-safely (second varnames)
         default))))
 
 (def duration
