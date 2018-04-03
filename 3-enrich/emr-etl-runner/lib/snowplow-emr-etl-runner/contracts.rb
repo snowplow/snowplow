@@ -29,7 +29,7 @@ module Snowplow
 
     # The Hash containing assets for Hadoop.
     AssetsHash = ({
-      :enrich  => String,
+      :enrich  => Maybe[String],
       :shred   => String,
       :loader  => String,
       :elasticsearch => String
@@ -50,16 +50,17 @@ module Snowplow
       :assets => String,
       :jsonpath_assets => Maybe[String],
       :log => String,
-      :raw => ({
+      :raw => Maybe[({
         :in => ArrayOf[String],
         :processing => String,
         :archive => String
-        }),
+        })],
       :enriched => ({
         :good => String,
-        :bad => String,
+        :bad => Maybe[String],
         :errors => Maybe[String],
-        :archive => Maybe[String]
+        :archive => Maybe[String],
+        :stream => Maybe[String]
         }),
       :shredded => ({
         :good => String,
@@ -67,22 +68,6 @@ module Snowplow
         :errors => Maybe[String],
         :archive => Maybe[String]
         })
-      })
-
-    # The Hash containing the storage targets to load
-    TargetHash = ({
-      :name => String,
-      :type => String,
-      :host => String,
-      :database => String,
-      :port => Num,
-      :ssl_mode => Maybe[String],
-      :table => String,
-      :username => Maybe[String],
-      :password => Maybe[String],
-      :es_nodes_wan_only => Maybe[Bool],
-      :maxerror => Maybe[Num],
-      :comprows => Maybe[Num]
       })
 
     # The Hash containing the configuration for a core instance using EBS.
@@ -130,14 +115,14 @@ module Snowplow
           :configuration => Maybe[HashOf[Symbol, HashOf[Symbol, String]]]
           }),
         }),
-      :collectors => ({
+      :collectors => Maybe[({
         :format => String,
-        }),
+        })],
       :enrich => ({
-        :versions => ({
+        :versions => Maybe[({
           :spark_enrich => String
-          }),
-        :continue_on_unexpected_error => Bool,
+          })],
+        :continue_on_unexpected_error => Maybe[Bool],
         :output_compression => CompressionFormat
         }),
       :storage => ({

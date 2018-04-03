@@ -22,11 +22,20 @@ describe Cli do
   ConfigError = Snowplow::EmrEtlRunner::ConfigError
 
   let(:c) { Cli.load_config(resource("sparse_config.yml"), "<<usage message>>") }
+  let(:s) { Cli.load_config(resource("stream_config.yml"), "<<usage message>>") }
   let(:a) { { :debug => true, :include => [], :skip => [] } }
 
   def resource(name)
     filename = File.expand_path(File.dirname(__FILE__)+"/resources/").to_s
     filename += "/"+name
+  end
+
+  describe '#load_targets' do
+    it 'raises a ConfigError if two storage targets with identical ids are passed' do
+      expect {
+        Cli.load_targets(resource('invalid-targets'))
+      }.to raise_exception( ConfigError, "Duplicate storage target ids: [\"id1\"]" )
+    end
   end
 
   describe '#load_config' do
@@ -141,7 +150,7 @@ describe Cli do
     it 'should reject bogus resume_from' do
       a[:resume_from] = 'lunch'
       expect { Cli.validate_and_coalesce(a, c) }.to raise_exception(ConfigError,
-        "Invalid option: resume-from can be enrich, shred, elasticsearch, archive_raw, rdb_load, analyze, archive_enriched, archive_shredded not 'lunch'")
+        "Invalid option: resume-from can be enrich, shred, elasticsearch, archive_raw, rdb_load, analyze, archive_enriched, archive_shredded, staging_stream_enrich not 'lunch'")
 
       %w(enrich shred elasticsearch archive_raw).each do |from|
         a[:resume_from] = from
@@ -152,7 +161,7 @@ describe Cli do
     it 'should reject bogus skip' do
       a[:skip] = [ 'lunch' ]
       expect { Cli.validate_and_coalesce(a, c) }.to raise_exception(ConfigError,
-        "Invalid option: skip can be staging, enrich, shred, elasticsearch, archive_raw, rdb_load, analyze, archive_enriched, archive_shredded not 'lunch'")
+                                                                    "Invalid option: skip can be staging, enrich, shred, elasticsearch, archive_raw, rdb_load, consistency_check, analyze, load_manifest_check, archive_enriched, archive_shredded, staging_stream_enrich not 'lunch'")
 
       %w(enrich shred elasticsearch archive_raw).each do |from|
         a[:skip] = [ from ]
@@ -228,6 +237,10 @@ describe Cli do
         ConfigError, "collector_format 'ndjson/something/' not supported")
       c[:collectors][:format] = "ndjson/something/something"
       Cli.validate_and_coalesce(a, c)
+    end
+
+    it 'should accept stream-mode config' do
+      Cli.validate_and_coalesce(a, s)
     end
   end
 

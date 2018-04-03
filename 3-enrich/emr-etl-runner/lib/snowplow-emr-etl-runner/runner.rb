@@ -51,20 +51,24 @@ module Snowplow
 
         resume = @args[:resume_from]
         skips = @args[:skip]
+        enriched_stream = @config[:aws][:s3][:buckets][:enriched][:stream]
         steps = {
-          :staging => (resume.nil? and not skips.include?('staging')),
-          :enrich => ((resume.nil? or resume == 'enrich') and not skips.include?('enrich')),
+          :staging => (enriched_stream.nil? and resume.nil? and not skips.include?('staging')),
+          :enrich => (enriched_stream.nil? and (resume.nil? or resume == 'enrich') and not skips.include?('enrich')),
+          :staging_stream_enrich => ((not enriched_stream.nil? and resume.nil?) and not skips.include?('staging_stream_enrich')),
           :shred => ((resume.nil? or [ 'enrich', 'shred' ].include?(resume)) and
             not skips.include?('shred')),
           :es => ((resume.nil? or [ 'enrich', 'shred', 'elasticsearch' ].include?(resume)) and
             not skips.include?('elasticsearch')),
-          :archive_raw => ((resume.nil? or [ 'enrich', 'shred', 'elasticsearch', 'archive_raw' ].include?(resume)) and
+          :archive_raw => (enriched_stream.nil? and (resume.nil? or [ 'enrich', 'shred', 'elasticsearch', 'archive_raw' ].include?(resume)) and 
             not skips.include?('archive_raw')),
           :rdb_load => ((resume.nil? or [ 'enrich', 'shred', 'elasticsearch', 'archive_raw', 'rdb_load' ].include?(resume)) and
             not skips.include?('rdb_load')),
           :consistency_check => ((resume.nil? or [ 'enrich', 'shred', 'elasticsearch', 'archive_raw', 'rdb_load', 'consistency_check' ].include?(resume)) and
             not skips.include?('consistency_check')),
-          :analyze => ((resume.nil? or [ 'enrich', 'shred', 'elasticsearch', 'archive_raw', 'rdb_load', 'consistency_check', 'analyze' ].include?(resume)) and
+          :load_manifest_check => ((resume.nil? or [ 'enrich', 'shred', 'elasticsearch', 'archive_raw', 'rdb_load'  ].include?(resume)) and
+            not skips.include?('load_manifest_check')),
+          :analyze => ((resume.nil? or [ 'enrich', 'shred', 'elasticsearch', 'archive_raw', 'rdb_load', 'consistency_check', 'load_manifest_check', 'analyze' ].include?(resume)) and
             not skips.include?('analyze')),
           :archive_enriched => ((resume.nil? or
             [ 'enrich', 'shred', 'elasticsearch', 'archive_raw', 'rdb_load', 'consistency_check', 'analyze', 'archive_enriched' ].include?(resume)) and
@@ -74,7 +78,7 @@ module Snowplow
 
         archive_enriched = if not steps[:archive_enriched]
           'skip'
-        elsif steps[:enrich]
+        elsif steps[:enrich] || steps[:staging_stream_enrich]
           'pipeline'
         else
           'recover'
@@ -99,7 +103,7 @@ module Snowplow
         while true
           begin
             tries_left -= 1
-            job = EmrJob.new(@args[:debug], steps[:staging], steps[:enrich], steps[:shred], steps[:es],
+            job = EmrJob.new(@args[:debug], steps[:staging], steps[:enrich], steps[:staging_stream_enrich], steps[:shred], steps[:es],
               steps[:archive_raw], steps[:rdb_load], archive_enriched, archive_shredded, @config,
               @enrichments_array, @resolver_config, @targets, rdbloader_steps)
             job.run(@config)
@@ -167,6 +171,10 @@ module Snowplow
 
         if not steps[:consistency_check]
           s[:skip] << "consistency_check"
+        end
+
+        if not steps[:load_manifest_check]
+          s[:skip] << "load_manifest_check"
         end
 
         if inclusions.include?("vacuum")

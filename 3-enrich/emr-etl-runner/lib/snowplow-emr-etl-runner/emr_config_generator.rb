@@ -27,6 +27,9 @@ module Snowplow
 
       STANDARD_HOSTED_ASSETS = "s3://snowplow-hosted-assets"
 
+      AMI_4 = Gem::Version.new("4.0.0")
+      AMI_5 = Gem::Version.new("5.0.0")
+
       Contract String => Iglu::SchemaKey
       def get_schema_key(version)
         Iglu::SchemaKey.parse_key("iglu:com.snowplowanalytics.dataflowrunner/ClusterConfig/avro/#{version}")
@@ -34,7 +37,7 @@ module Snowplow
 
       Contract ConfigHash, Bool, Maybe[String], String, ArrayOf[String] => Hash
       def create_datum(config, debug=false, resume_from=nil, resolver='', enrichments=[])
-        legacy = (not (config[:aws][:emr][:ami_version] =~ /^[1-3]\..*/).nil?)
+        ami_version = Gem::Version.new(config[:aws][:emr][:ami_version])
         region = config[:aws][:emr][:region]
 
         {
@@ -72,12 +75,12 @@ module Snowplow
           "tags" => get_tags(config[:monitoring][:tags]),
           "bootstrapActionConfigs" => get_bootstrap_actions(
             config[:aws][:emr][:bootstrap],
-            config[:collectors][:format],
-            legacy,
+            config.dig(:collectors, :format),
+            ami_version,
             region,
             config[:enrich][:versions][:spark_enrich]
           ),
-          "configurations" => get_configurations(legacy),
+          "configurations" => get_configurations(ami_version),
           "applications" => ["Hadoop", "Spark"]
         }
       end
@@ -101,9 +104,9 @@ module Snowplow
         end
       end
 
-      Contract Bool => ArrayOf[Hash]
-      def get_configurations(legacy)
-        if legacy
+      Contract Gem::Version => ArrayOf[Hash]
+      def get_configurations(ami_version)
+        if ami_version < AMI_4
           []
         else
           [
@@ -140,11 +143,11 @@ module Snowplow
         end
       end
 
-      Contract ArrayOf[Hash], String, Bool, String, String => ArrayOf[Hash]
-      def get_bootstrap_actions(actions, collector_format, legacy, region, enrich_version)
+      Contract ArrayOf[Hash], Maybe[String], Gem::Version, String, String => ArrayOf[Hash]
+      def get_bootstrap_actions(actions, collector_format, ami_version, region, enrich_version)
         bs_actions = []
         bs_actions += actions
-        if collector_format == 'thrift' && legacy
+        if collector_format == 'thrift' && ami_version < AMI_4
           bs_actions += [
             get_action("Hadoop bootstrap action (buffer size)",
               "s3n://elasticmapreduce/bootstrap-actions/configure-hadoop",
@@ -157,7 +160,7 @@ module Snowplow
           ]
         else
         end
-        bs_actions << get_ami_action(legacy, region, enrich_version)
+        bs_actions << get_ami_action(ami_version, region, enrich_version)
         bs_actions
       end
 
@@ -173,18 +176,22 @@ module Snowplow
           "s3://#{region}.elasticmapreduce/bootstrap-actions/setup-hbase")
       end
 
-      Contract Bool, String, String => Hash
-      def get_ami_action(legacy, region, enrich_version)
+      Contract Gem::Version, String, String => Hash
+      def get_ami_action(ami_version, region, enrich_version)
         standard_assets_bucket =
           get_hosted_assets_bucket(STANDARD_HOSTED_ASSETS, STANDARD_HOSTED_ASSETS, region)
-        bootstrap_script_location = if legacy
+        bootstrap_script_location = if ami_version < AMI_4
           "#{standard_assets_bucket}common/emr/snowplow-ami3-bootstrap-0.1.0.sh"
-        else
+        elsif ami_version >= AMI_4 && ami_version < AMI_5
           "#{standard_assets_bucket}common/emr/snowplow-ami4-bootstrap-0.2.0.sh"
+        else
+          "#{standard_assets_bucket}common/emr/snowplow-ami5-bootstrap-0.1.0.sh"
         end
         cc_version = get_cc_version(enrich_version)
-        get_action("Bootstrap action (ami bootstrap script)",
-          bootstrap_script_location, [ cc_version ])
+        unless cc_version.nil?
+          get_action("Bootstrap action (ami bootstrap script)",
+            bootstrap_script_location, [ cc_version ])
+        end
       end
 
       Contract String, String, ArrayOf[String] => Hash

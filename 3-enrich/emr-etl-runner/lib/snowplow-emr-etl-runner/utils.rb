@@ -36,27 +36,39 @@ module Snowplow
         "#{bucket}#{suffix}/"
       end
 
-      # Get commons-codec version required by Scala Hadoop Enrich for further replace
+      # Get commons-codec version required by Spark Enrich for further replace
       # See: https://github.com/snowplow/snowplow/issues/2735
-      Contract String => String
+      Contract Maybe[String] => String
       def get_cc_version(she_version)
-        she_version_normalized = Gem::Version.new(she_version)
-        if she_version_normalized > Gem::Version.new("1.8.0")
+        if she_version.nil?
           "1.10"
         else
-          "1.5"
+          she_version_normalized = Gem::Version.new(she_version)
+          if she_version_normalized > Gem::Version.new("1.8.0")
+            "1.10"
+          else
+            "1.5"
+          end
         end
       end
 
       # Does this collector format represent CloudFront access logs?
-      Contract String => Bool
+      # Parameters:
+      # +collector_format+:: collector format from config.yml, nil in case of stream mode
+      Contract Maybe[String] => Bool
       def is_cloudfront_log(collector_format)
-        collector_format == "cloudfront" or
-          collector_format.start_with?("tsv/com.amazon.aws.cloudfront/")
+        if collector_format.nil?
+          false
+        else
+          collector_format == "cloudfront" or
+            collector_format.start_with?("tsv/com.amazon.aws.cloudfront/")
+        end
       end
 
       # Does this collector format represent ndjson/urbanairship?
-      Contract String => Bool
+      # Parameters:
+      # +collector_format+:: collector format from config.yml, nil in case of stream mode
+      Contract Maybe[String] => Bool
       def is_ua_ndjson(collector_format)
         /^ndjson\/com\.urbanairship\.connect\/.+$/ === collector_format
       end
@@ -72,9 +84,11 @@ module Snowplow
       end
 
       # Retrieves the paths of hadoop enrich, hadoop shred and hadoop elasticsearch
-      Contract String, String, String, String, String => AssetsHash
+      Contract String, Maybe[String], String, String, String => AssetsHash
       def get_assets(assets_bucket, spark_enrich_version, rds_version, hadoop_elasticsearch_version, rdl_version)
-        enrich_path_middle = if is_spark_enrich(spark_enrich_version)
+        enrich_path_middle = if spark_enrich_version.nil?
+          nil
+        elsif is_spark_enrich(spark_enrich_version)
           'spark-enrich/snowplow-spark-enrich'
         else
           spark_enrich_version[0] == '0' ? 'hadoop-etl/snowplow-hadoop-etl' : 'scala-hadoop-enrich/snowplow-hadoop-enrich'
@@ -84,8 +98,9 @@ module Snowplow
         else
           '3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-'
         end
+        enrich_final = if enrich_path_middle.nil? then nil else "#{assets_bucket}3-enrich/#{enrich_path_middle}-#{spark_enrich_version}.jar" end
         {
-          :enrich   => "#{assets_bucket}3-enrich/#{enrich_path_middle}-#{spark_enrich_version}.jar",
+          :enrich   => enrich_final,
           :shred    => "#{assets_bucket}#{shred_path}#{rds_version}.jar",
           :loader   => "#{assets_bucket}4-storage/rdb-loader/snowplow-rdb-loader-#{rdl_version}.jar",
           :elasticsearch => "#{assets_bucket}4-storage/hadoop-elasticsearch-sink/hadoop-elasticsearch-sink-#{hadoop_elasticsearch_version}.jar",
@@ -111,13 +126,17 @@ module Snowplow
       #
       # Parameters:
       # +enrich_version+:: the specified enrich version
-      Contract String => Bool
+      Contract Maybe[String] => Bool
       def is_spark_enrich(enrich_version)
-        version = enrich_version.split('.').map { |v| v.to_i }
-        unless version.length == 3
-          raise ArgumentError, 'The enrich job version could not be parsed'
+        if enrich_version.nil?
+          false
+        else
+          version = enrich_version.split('.').map { |v| v.to_i }
+          unless version.length == 3
+            raise ArgumentError, 'The enrich job version could not be parsed'
+          end
+          version[0] >= 1 && version[1] >= 9
         end
-        version[0] >= 1 && version[1] >= 9
       end
 
       # Returns a base64-encoded JSON containing an array of enrichment JSONs
@@ -160,7 +179,11 @@ module Snowplow
       # +retain+:: set to false if this folder should be nillified
       Contract Maybe[String], String, Bool => Maybe[String]
       def partition_by_run(folder, run_id, retain=true)
-        "#{folder}run=#{run_id}/" if retain
+        unless folder.nil?
+          "#{folder}run=#{run_id}/" if retain
+        else
+          nil
+        end
       end
 
       # Converts the output_compression configuration field to

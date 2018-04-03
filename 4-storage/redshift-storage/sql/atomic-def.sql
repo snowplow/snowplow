@@ -20,7 +20,6 @@
 CREATE SCHEMA atomic;
 
 -- Create events table
--- Create events table
 CREATE TABLE atomic.events (
 	-- App
 	app_id varchar(255) encode ZSTD,
