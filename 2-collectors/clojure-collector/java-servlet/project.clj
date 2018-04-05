@@ -17,7 +17,7 @@
 (cemerick.pomegranate.aether/register-wagon-factory!
   "http" #(org.apache.maven.wagon.providers.http.HttpWagon.))
 
-(defproject snowplow/clojure-collector "2.0.0" ;; MUST also bump version in server.xml
+(defproject snowplow/clojure-collector "2.0.0-rc1" ;; MUST also bump version in server.xml
   :license {:name "Apache Version 2.0"
   :url "http://www.apache.org/licenses/LICENSE-2.0"}
   :description "A SnowPlow event collector written in Clojure. AWS Elastic Beanstalk compatible."
