@@ -48,6 +48,7 @@ env:
   - TEST_DIR=3-enrich/stream-enrich/
 before_install:
   - sudo apt-get -qq update
+  - sudo apt-get install leiningen
   - sudo apt-get install -y lzop
   - pip install --user awscli
   - export PATH=$PATH:$HOME/.local/bin
@@ -121,3 +122,9 @@ deploy:
     on:
       tags: true
       condition: '"$(.travis/is_release_tag.sh ami5_bootstrap $TRAVIS_TAG)" == "" && $? == 0 && $TEST_DIR = 3-enrich/scala-common-enrich/'
+  - provider: script
+    script: ./.travis/deploy.sh clojure_collector $TRAVIS_TAG
+    skip_cleanup: true
+    on:
+      tags: true
+      condition: '"$(.travis/is_release_tag.sh clojure_collector $TRAVIS_TAG)" == "" && $? == 0 && $TEST_DIR = 3-enrich/scala-common-enrich/'
