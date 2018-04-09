@@ -79,43 +79,25 @@ object VeroAdapter extends Adapter {
    * @return a Validation boxing either a NEL of RawEvents on
    *         Success, or a NEL of Failure Strings
    */
-  private def payloadBodyToEvent(json: String, payload: CollectorPayload): Validated[RawEvent] = {
-
-    val parsed = Try(parse(json))
-    parsed match {
-      case Success(parsed) => parsed
-      case Failure(e)      => return s"$VendorName event failed to parse into JSON: [${e.getMessage}]".failureNel
-    }
-    val eventType = (parsed.get \ "type").extractOpt[String].orElse(Some("user_updated"))
-    val formattedEvent = eventType match {
-      case Some("user_updated") => parsed.get
-      case _ => {
-        cleanupJsonEventValues(
-          parsed.get,
-          ("type", eventType.get).some,
-          s"${eventType.get}_at"
-        )
+  private def payloadBodyToEvent(json: String, payload: CollectorPayload): Validated[RawEvent] =
+    for {
+      parsed <- Try(parse(json)) match {
+        case Success(p) => p.successNel
+        case Failure(e) => s"$VendorName event failed to parse into JSON: [${e.getMessage}]".failureNel
       }
-    }
-
-    val reformattedEvent = reformatParameters(formattedEvent)
-
-    lookupSchema(eventType, VendorName, EventSchemaMap) map { schema =>
-      RawEvent(
-        api = payload.api,
-        parameters = toUnstructEventParams(
-          TrackerVersion,
-          toMap(payload.querystring),
-          schema,
-          reformattedEvent,
-          "srv"
-        ),
-        contentType = payload.contentType,
-        source      = payload.source,
-        context     = payload.context
-      )
-    }
-  }
+      eventType = parsed.toOption.flatMap(p => (p \ "type").extractOpt[String]).getOrElse("user_updated")
+      formattedEvent = 
+        if (eventType == "user_updated") parsed
+        else cleanupJsonEventValues(parsed, ("type", eventType).some, s"${eventType}_at")
+      reformattedEvent = reformatParameters(formattedEvent)
+      schema <- lookupSchema(eventType.some, VendorName, EventSchemaMap)
+      params = toUnstructEventParams(TrackerVersion, toMap(payload.querystring), schema, reformattedEvent, "srv")
+      rawEvent = RawEvent(api = payload.api,
+                          parameters  = params,
+                          contentType = payload.contentType,
+                          source      = payload.source,
+                          context     = payload.context)
+    } yield rawEvent
 
   /**
    * Converts a CollectorPayload instance into raw events.
@@ -155,13 +137,13 @@ object VeroAdapter extends Adapter {
       JString(JsonSchemaDateTimeFormat.print(dt))
     }
 
-    val j1 = json.transformField {
-      case ("triggered_at", JInt(value)) => ("triggered_at", toStringField(value.toLong * 1000))
-    }
-    val j2 = j1.removeField {
-      case ("action", _) => true
-      case _             => false
-    }
-    j2
+    json
+      .transformField {
+        case ("triggered_at", JInt(value)) => ("triggered_at", toStringField(value.toLong * 1000))
+      }
+      .removeField {
+        case ("action", _) => true
+        case _             => false
+      }
   }
 }
