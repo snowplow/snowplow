@@ -73,42 +73,39 @@ object MarketoAdapter extends Adapter {
    * @return a validated JSON payload on
    *         Success, or a NEL
    */
-  private def payloadBodyToEvent(json: String, payload: CollectorPayload): Validated[RawEvent] = {
-
-    val parsed = Try(parse(json))
-      parsed match {
-        case Success(parsed) => parsed
-        case Failure(e)      => return s"$VendorName event failed to parse into JSON: [${e.getMessage}]".failureNel
+  private def payloadBodyToEvent(json: String, payload: CollectorPayload): Validated[RawEvent] =
+    for {
+      parsed <- Try(parse(json)) match {
+        case Success(p) => p.successNel
+        case Failure(e) => s"$VendorName event failed to parse into JSON: [${e.getMessage}]".failureNel
       }
 
-    val parsed_converted = parsed.get.transformField {
-      case ("acquisition_date", JString(value))         => ("acquisition_date", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
-      case ("created_at", JString(value))               => ("created_at", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
-      case ("email_suspended_at", JString(value))       => ("email_suspended_at", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
-      case ("last_referred_enrollment", JString(value)) => ("last_referred_enrollment", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
-      case ("last_referred_visit", JString(value))      => ("last_referred_visit", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
-      case ("updated_at", JString(value))               => ("updated_at", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
-      case ("datetime", JString(value))                 => ("datetime", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
-    }
-
-    val eventType = Some("event")
-
-    lookupSchema(eventType, VendorName, EventSchemaMap) map { schema =>
-      RawEvent(
-        api = payload.api,
-        parameters = toUnstructEventParams(
-          TrackerVersion,
-          toMap(payload.querystring),
-          schema,
-          parsed_converted,
-          "srv"
-        ),
-        contentType = payload.contentType,
-        source      = payload.source,
-        context     = payload.context
-      )
-    }
-  }
+      parsedConverted = parsed.transformField {
+        case ("acquisition_date", JString(value)) =>
+          ("acquisition_date", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
+        case ("created_at", JString(value)) =>
+          ("created_at", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
+        case ("email_suspended_at", JString(value)) =>
+          ("email_suspended_at", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
+        case ("last_referred_enrollment", JString(value)) =>
+          ("last_referred_enrollment", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
+        case ("last_referred_visit", JString(value)) =>
+          ("last_referred_visit", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
+        case ("updated_at", JString(value)) =>
+          ("updated_at", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
+        case ("datetime", JString(value)) =>
+          ("datetime", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
+      }
+      // The payload doesn't contain a "type" field so we're constraining the eventType to be of type "event"
+      eventType = Some("event")
+      schema <- lookupSchema(eventType, VendorName, EventSchemaMap)
+      params = toUnstructEventParams(TrackerVersion, toMap(payload.querystring), schema, parsedConverted, "srv")
+      rawEvent = RawEvent(api = payload.api,
+                          parameters  = params,
+                          contentType = payload.contentType,
+                          source      = payload.source,
+                          context     = payload.context)
+    } yield rawEvent
 
   /**
    * Converts a CollectorPayload instance into raw events.
@@ -123,7 +120,7 @@ object MarketoAdapter extends Adapter {
    * @return a Validation boxing either a NEL of RawEvents on
    *         Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
+  override def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
     (payload.body, payload.contentType) match {
       case (None, _) => s"Request body is empty: no $VendorName event to process".failureNel
       case (Some(body), _) => {
