@@ -86,9 +86,8 @@ object VeroAdapter extends Adapter {
         case Failure(e) => s"$VendorName event failed to parse into JSON: [${e.getMessage}]".failureNel
       }
       eventType = parsed.toOption.flatMap(p => (p \ "type").extractOpt[String]).getOrElse("user_updated")
-      formattedEvent = 
-        if (eventType == "user_updated") parsed
-        else cleanupJsonEventValues(parsed, ("type", eventType).some, s"${eventType}_at")
+      formattedEvent = if (eventType == "user_updated") parsed
+      else cleanupJsonEventValues(parsed, ("type", eventType).some, s"${eventType}_at")
       reformattedEvent = reformatParameters(formattedEvent)
       schema <- lookupSchema(eventType.some, VendorName, EventSchemaMap)
       params = toUnstructEventParams(TrackerVersion, toMap(payload.querystring), schema, reformattedEvent, "srv")
@@ -112,7 +111,7 @@ object VeroAdapter extends Adapter {
    * @return a Validation boxing either a NEL of RawEvents on
    *         Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
+  override def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
     (payload.body, payload.contentType) match {
       case (None, _) => s"Request body is empty: no $VendorName event to process".failureNel
       case (Some(body), _) => {
