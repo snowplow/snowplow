@@ -172,5 +172,20 @@ module Snowplow
       :include => ArrayOf[String]
     })
 
+    # Record of all possible steps that can be launched during EMR job
+    EmrSteps = ({
+      :staging => Bool,
+      :enrich => Bool,
+      :staging_stream_enrich => Bool,
+      :shred => Bool,
+      :es => Bool,
+      :archive_raw => Bool,
+      :rdb_load => Bool,
+      :consistency_check => Bool,
+      :load_manifest_check => Bool,
+      :analyze => Bool,
+      :archive_enriched => Bool,
+      :archive_shredded => Bool
+    })
   end
 end
