@@ -36,6 +36,7 @@ module Snowplow
       # Constants
       JAVA_PACKAGE = "com.snowplowanalytics.snowplow"
       PARTFILE_REGEXP = ".*part-.*"
+      STREAM_ENRICH_REGEXP = ".*\.gz"
       SUCCESS_REGEXP = ".*_SUCCESS"
       STANDARD_HOSTED_ASSETS = "s3://snowplow-hosted-assets"
       ENRICH_STEP_INPUT = 'hdfs:///local/snowplow/raw-events/'
@@ -284,10 +285,15 @@ module Snowplow
           @jobflow.set_task_instance_group(instance_group)
         end
 
+        stream_enrich_mode = !csbe[:stream].nil?
+
+        # Get full path when we need to move data to enrich_final_output
+        # otherwise (when enriched/good is non-empty already)
+        # we can list files withing folders using '*.'-regexps
         enrich_final_output = if enrich || staging_stream_enrich
           partition_by_run(csbe[:good], run_id)
         else
-          csbe[:good] # Doesn't make sense to partition if enrich has already been done
+          csbe[:good]
         end
 
         if enrich
@@ -393,8 +399,6 @@ module Snowplow
 
         # Staging data produced by Stream Enrich
         if staging_stream_enrich
-          src_pattern = '.+'
-
           csbe_good_loc = Sluice::Storage::S3::Location.new(csbe[:good])
           unless Sluice::Storage::S3::is_empty?(s3, csbe_good_loc)
             raise DirectoryNotEmptyError, "Cannot safely add stream staging step to jobflow, #{csbe_good_loc} is not empty"
@@ -402,7 +406,7 @@ module Snowplow
 
           stream_enrich_loc = Sluice::Storage::S3::Location.new(csbe[:stream])
 
-          src_pattern_regex = Regexp.new src_pattern
+          src_pattern_regex = Regexp.new STREAM_ENRICH_REGEXP
           files = Sluice::Storage::S3::list_files(s3, stream_enrich_loc).select { |f| !(f.key =~ src_pattern_regex).nil? }
           if files.empty?
             raise NoDataToProcessError, "No Snowplow enriched stream logs to process since last run"
@@ -413,7 +417,7 @@ module Snowplow
             "--src"        , csbe[:stream],
             "--dest"       , enrich_final_output,
             "--s3Endpoint" , s3_endpoint,
-            "--srcPattern" , src_pattern,
+            "--srcPattern" , STREAM_ENRICH_REGEXP,
             "--deleteOnSuccess"
           ]
           staging_step.name << ": Stream Enriched #{csbe[:stream]} -> Enriched Staging S3"
@@ -443,7 +447,7 @@ module Snowplow
           if enrich
             @jobflow.add_step(get_rmr_step(ENRICH_STEP_INPUT, standard_assets_bucket))
           else
-            src_pattern = unless staging_stream_enrich then PARTFILE_REGEXP else '.+' end
+            src_pattern = if stream_enrich_mode then STREAM_ENRICH_REGEXP else PARTFILE_REGEXP end
 
             copy_to_hdfs_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
             copy_to_hdfs_step.arguments = [
@@ -539,7 +543,7 @@ module Snowplow
 
         if rdb_load
           rdb_loader_version = Gem::Version.new(config[:storage][:versions][:rdb_loader])
-          skip_manifest = staging_stream_enrich && rdb_loader_version > RDB_LOADER_WITH_PROCESSING_MANIFEST
+          skip_manifest = stream_enrich_mode && rdb_loader_version > RDB_LOADER_WITH_PROCESSING_MANIFEST
           get_rdb_loader_steps(config, targets[:ENRICHED_EVENTS], resolver, assets[:loader], rdbloader_steps, skip_manifest).each do |step|
             @jobflow.add_step(step)
           end
