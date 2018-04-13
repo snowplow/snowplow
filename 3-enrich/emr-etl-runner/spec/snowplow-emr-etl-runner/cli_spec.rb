@@ -34,7 +34,7 @@ describe Cli do
     it 'raises a ConfigError if two storage targets with identical ids are passed' do
       expect {
         Cli.load_targets(resource('invalid-targets'))
-      }.to raise_exception( ConfigError, "Duplicate storage target ids: [\"id1\"]" )
+      }.to raise_exception(ConfigError, "Duplicate storage target ids: [\"id1\"]" )
     end
   end
 
@@ -42,7 +42,7 @@ describe Cli do
     it 'raises a ConfigError if the config file argument was nil' do
       expect {
         Cli.load_config(nil, "<<usage message>>")
-      }.to raise_exception( ConfigError, "Missing option: config\n<<usage message>>" )
+      }.to raise_exception(ConfigError, "Missing option: config\n<<usage message>>" )
     end
 
     it 'raises a ConfigError if the config file argument could not be found' do

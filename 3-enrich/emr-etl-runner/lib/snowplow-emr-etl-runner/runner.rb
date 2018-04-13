@@ -28,31 +28,10 @@ module Snowplow
 
       include Monitoring::Logging
 
-      # Initialize the class.
-      Contract ArgsHash, ConfigHash, ArrayOf[String], String, ArrayOf[JsonFileHash] => Runner
-      def initialize(args, config, enrichments_array, resolver, targets_array)
-
-        # Let's set our logging level immediately
-        Monitoring::Logging::set_level config[:monitoring][:logging][:level]
-
-        @args = args
-        @config = config
-        @enrichments_array = enrichments_array
-        @resolver_config = resolver
-        resolver_config_json = JSON.parse(@resolver_config, {:symbolize_names => true})
-        @resolver = Iglu::Resolver.parse(resolver_config_json)
-        @targets = group_targets(validate_targets(targets_array))
-        self
-      end
-
-      # Our core flow
-      Contract None => nil
-      def run
-
-        resume = @args[:resume_from]
-        skips = @args[:skip]
-        enriched_stream = @config[:aws][:s3][:buckets][:enriched][:stream]
-        steps = {
+      # Decide what steps should be submitted to EMR job
+      Contract ArrayOf[String], Maybe[String], Maybe[String] => EmrSteps
+      def self.get_steps(skips, resume, enriched_stream)
+        {
           :staging => (enriched_stream.nil? and resume.nil? and not skips.include?('staging')),
           :enrich => (enriched_stream.nil? and (resume.nil? or resume == 'enrich') and not skips.include?('enrich')),
           :staging_stream_enrich => ((not enriched_stream.nil? and resume.nil?) and not skips.include?('staging_stream_enrich')),
@@ -75,6 +54,56 @@ module Snowplow
             not skips.include?('archive_enriched')),
           :archive_shredded => (not skips.include?('archive_shredded'))
         }
+      end
+
+
+      Contract HashOf[Symbol, Bool], ArrayOf[String] => RdbLoaderSteps
+      def self.get_rdbloader_steps(steps, inclusions)
+        s = {
+          :skip => [],
+          :include => []
+        }
+
+        if not steps[:analyze]
+          s[:skip] << "analyze"
+        end
+
+        if not steps[:consistency_check]
+          s[:skip] << "consistency_check"
+        end
+
+        if not steps[:load_manifest_check]
+          s[:skip] << "load_manifest_check"
+        end
+
+        if inclusions.include?("vacuum")
+          s[:include] << "vacuum"
+        end
+
+        s
+      end
+
+      # Initialize the class.
+      Contract ArgsHash, ConfigHash, ArrayOf[String], String, ArrayOf[JsonFileHash] => Runner
+      def initialize(args, config, enrichments_array, resolver, targets_array)
+
+        # Let's set our logging level immediately
+        Monitoring::Logging::set_level config[:monitoring][:logging][:level]
+
+        @args = args
+        @config = config
+        @enrichments_array = enrichments_array
+        @resolver_config = resolver
+        resolver_config_json = JSON.parse(@resolver_config, {:symbolize_names => true})
+        @resolver = Iglu::Resolver.parse(resolver_config_json)
+        @targets = group_targets(validate_targets(targets_array))
+        self
+      end
+
+      # Our core flow
+      Contract None => nil
+      def run
+        steps = Runner.get_steps(@args[:skip], @args[:resume_from], @config[:aws][:s3][:buckets][:enriched][:stream])
 
         archive_enriched = if not steps[:archive_enriched]
           'skip'
@@ -99,7 +128,7 @@ module Snowplow
 
         # Keep relaunching the job until it succeeds or fails for a reason other than a bootstrap failure
         tries_left = @config[:aws][:emr][:bootstrap_failure_tries]
-        rdbloader_steps = get_rdbloader_steps(steps, @args[:include])
+        rdbloader_steps = Runner.get_rdbloader_steps(steps, @args[:include])
         while true
           begin
             tries_left -= 1
@@ -156,32 +185,6 @@ module Snowplow
         elsif bucketData.class == [].class
           bucketData.each {|b| add_trailing_slashes(b)}
         end
-      end
-
-      Contract HashOf[Symbol, Bool], ArrayOf[String] => RdbLoaderSteps
-      def get_rdbloader_steps(steps, inclusions)
-        s = {
-          :skip => [],
-          :include => []
-        }
-
-        if not steps[:analyze]
-          s[:skip] << "analyze"
-        end
-
-        if not steps[:consistency_check]
-          s[:skip] << "consistency_check"
-        end
-
-        if not steps[:load_manifest_check]
-          s[:skip] << "load_manifest_check"
-        end
-
-        if inclusions.include?("vacuum")
-          s[:include] << "vacuum"
-        end
-
-        s
       end
 
       # Validate array of self-describing JSONs
