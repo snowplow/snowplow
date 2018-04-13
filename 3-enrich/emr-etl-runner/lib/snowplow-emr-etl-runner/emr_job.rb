@@ -454,8 +454,10 @@ module Snowplow
               "--src"        , enrich_final_output, # Opposite way round to normal
               "--dest"       , ENRICH_STEP_OUTPUT,
               "--srcPattern" , src_pattern,
+              "--outputCodec", "none",
               "--s3Endpoint" , s3_endpoint
-            ] # Either user doesn't want compression, or files are already compressed
+            ]
+
             copy_to_hdfs_step.name << ": Enriched S3 -> HDFS"
             @jobflow.add_step(copy_to_hdfs_step)
           end
