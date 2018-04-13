@@ -393,12 +393,11 @@ module Snowplow
 
         # Staging data produced by Stream Enrich
         if staging_stream_enrich
-          enrich_final_output_loc = Sluice::Storage::S3::Location.new(enrich_final_output)
-
           src_pattern = '.+'
 
-          unless Sluice::Storage::S3::is_empty?(s3, enrich_final_output_loc)
-            raise DirectoryNotEmptyError, "Cannot safely add stream staging step to jobflow, #{enrich_final_output_loc} is not empty"
+          csbe_good_loc = Sluice::Storage::S3::Location.new(csbe[:good])
+          unless Sluice::Storage::S3::is_empty?(s3, csbe_good_loc)
+            raise DirectoryNotEmptyError, "Cannot safely add stream staging step to jobflow, #{csbe_good_loc} is not empty"
           end
 
           stream_enrich_loc = Sluice::Storage::S3::Location.new(csbe[:stream])
