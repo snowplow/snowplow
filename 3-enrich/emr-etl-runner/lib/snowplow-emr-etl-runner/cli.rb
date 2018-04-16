@@ -315,8 +315,16 @@ module Snowplow
           raise ConfigError, 'resume-from and skip are mutually exclusive'
         end
 
-        if args[:resume_from] == "staging_stream_enrich" && config[:aws][:s3][:buckets][:enriched][:stream].nil?
+        if args[:resume_from] == "staging_stream_enrich" && config.dig(:aws, :s3, :buckets, :enriched, :stream).nil?
           raise ConfigError, 'staging_stream_enrich is invalid step to resume from without aws.s3.buckets.enriched.stream settings'
+        end
+        unless config.dig(:aws, :s3, :buckets, :enriched, :stream).nil?
+          if args[:resume_from] == "enrich"
+            raise ConfigError, 'cannot resume from enrich in stream enrich mode'
+          end
+          if args[:skip].include?('staging') || args[:skip].include?('enrich') 
+            raise ConfigError, 'cannot skip staging nor enrich in stream enrich mode. Either skip staging_stream_enrich or resume from shred'
+          end
         end
 
         args[:include].each { |opt|
