@@ -239,9 +239,29 @@ describe Cli do
       Cli.validate_and_coalesce(a, c)
     end
 
-    it 'should accept stream-mode config' do
+    it 'should accept stream enrich mode config' do
       Cli.validate_and_coalesce(a, s)
     end
-  end
 
+    it 'should reject --skip staging in stream enrich mode' do
+      a[:skip] = [ 'staging' ]
+      expect {
+        Cli.validate_and_coalesce(a, s)
+      }.to raise_exception(ConfigError, "cannot skip staging nor enrich in stream enrich mode. Either skip staging_stream_enrich or resume from shred")
+    end
+
+    it 'should reject --resume-from enrich in stream enrich mode' do
+      a[:resume_from] = 'enrich'
+      expect {
+        Cli.validate_and_coalesce(a, s)
+      }.to raise_exception(ConfigError, "cannot resume from enrich in stream enrich mode")
+    end
+
+    it 'should reject --skip archive_raw in stream enrich mode' do
+      a[:skip] = [ 'archive_raw' ]
+      expect {
+        Cli.validate_and_coalesce(a, s)
+      }.to raise_exception(ConfigError, "cannot skip nor resume from archive_raw in stream enrich mode")
+    end
+  end
 end
