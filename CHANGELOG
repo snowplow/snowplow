@@ -1,6 +1,6 @@
-Release 104 (2018-04-XX)
-------------------------
-Common: remove trailing hyphen from CHANGELOG entry for R103 (closes #3731)
+Release 104 Stoplesteinan (2018-04-30)
+--------------------------------------
+Common: remove trailing hyphen from CHANGELOG entry for R103 (#3731)
 EmrEtlRunner: fail fast when trying to skip staging or enrich in stream enrich mode (#3726)
 EmrEtlRunner: factor out steps-generating function (#3718)
 EmrEtlRunner: uncompress enriched files when copying to HDFS (#3719)
