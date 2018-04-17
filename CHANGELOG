@@ -1,5 +1,15 @@
+Release 104 (2018-04-XX)
+------------------------
+Common: remove trailing hyphen from CHANGELOG entry for R103 (closes #3731)
+EmrEtlRunner: fail fast when trying to skip staging or enrich in stream enrich mode (#3726)
+EmrEtlRunner: factor out steps-generating function (#3718)
+EmrEtlRunner: uncompress enriched files when copying to HDFS (#3719)
+EmrEtlRunner: bump to 0.32.0 (#3723)
+EmrEtlRunner: fix srcPattern for copying stream enriched data to HDFS (#3722)
+EmrEtlRunner: check if whole enriched.good is non-empty in stream enrich mode (#3717)
+
 Release 103 Paestum (2018-04-17)
----------------------------------
+--------------------------------
 Scala Common Enrich: bump to 0.32.0 (#3673)
 Scala Common Enrich: bump scala-maxmind-iplookups to 0.4.0 (#3675)
 Scala Common Enrich: update IP Lookups Enrichment to support non-legacy database (#3672)
