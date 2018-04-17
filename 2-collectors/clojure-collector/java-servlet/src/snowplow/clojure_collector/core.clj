@@ -46,6 +46,12 @@
   [cookies pixel]
   (send-cookie-pixel-or-200-or-redirect' cookies pixel nil {}))
 
+(def send-flash-crossdomain
+  "Send back the cross domain policy if configured, 404 otherwise"
+  (if (and config/cross-domain-policy-domain config/cross-domain-policy-secure)
+    (responses/send-flash-crossdomain config/cross-domain-policy-domain config/cross-domain-policy-secure)
+    responses/send-404))
+
 (defroutes routes
   "Our routes"
   (GET  "/i"                  {c :cookies} (send-cookie-pixel-or-200' c true))
@@ -54,7 +60,7 @@
   (POST "/:vendor/:version"   {c :cookies} (send-cookie-pixel-or-200' c false)) ; for tracker POST support, no pixel
   (HEAD "/:vendor/:version"   request responses/send-200)                       ; for webhooks' own checks e.g. Mandrill
   (GET  "/healthcheck"        request responses/send-200)
-  (GET  "/crossdomain.xml"    request responses/send-flash-crossdomain)         ; for Flash cross-domain posting
+  (GET  "/crossdomain.xml"    request send-flash-crossdomain)                   ; for Flash cross-domain posting
   ;GET "/status"              available from expose-metrics-as-json, only in development env
   ;HEAD "/"                   available from beanstalk.clj
   (compojure.route/not-found  responses/send-404))

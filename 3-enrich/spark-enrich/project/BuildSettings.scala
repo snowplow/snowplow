@@ -77,6 +77,7 @@ object BuildSettings {
       case x if x.endsWith("package-info.class") => MergeStrategy.first
       case PathList("com", "google", "common", tail@_*) => MergeStrategy.first
       case PathList("org", "apache", "spark", "unused", tail@_*) => MergeStrategy.first
+      case "build.properties" => MergeStrategy.first
       case x =>
         val oldStrategy = (assemblyMergeStrategy in assembly).value
         oldStrategy(x)

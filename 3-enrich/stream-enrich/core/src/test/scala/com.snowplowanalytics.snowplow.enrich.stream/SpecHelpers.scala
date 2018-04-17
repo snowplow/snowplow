@@ -156,20 +156,6 @@ object SpecHelpers {
           |}
         |},
         |{
-          |"schema": "iglu:com.snowplowanalytics.snowplow/ip_lookups/jsonschema/1-0-0",
-          |"data": {
-            |"vendor": "com.snowplowanalytics.snowplow",
-            |"name": "ip_lookups",
-            |"enabled": true,
-            |"parameters": {
-              |"geo": {
-                |"database": "GeoIPCity.dat",
-                |"uri":  "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind"
-              |}
-            |}
-          |}
-        |},
-        |{
           |"schema": "iglu:com.snowplowanalytics.snowplow/campaign_attribution/jsonschema/1-0-0",
           |"data": {
             |"vendor": "com.snowplowanalytics.snowplow",

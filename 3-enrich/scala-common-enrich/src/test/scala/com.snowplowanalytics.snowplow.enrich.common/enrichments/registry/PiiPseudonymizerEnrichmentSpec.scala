@@ -135,9 +135,8 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
     EtlPipeline.processEvents(registry, s"spark-0.0.0", new DateTime(1500000000L), input)
   }
 
-  private val ipEnrichment = IpLookupsEnrichment(Some(("geo", new URI("/ignored-in-local-mode/"), "GeoIPCity.dat")),
-                                                 Some(("isp", new URI("/ignored-in-local-mode/"), "GeoIPISP.dat")),
-                                                 None,
+  private val ipEnrichment = IpLookupsEnrichment(Some(("geo", new URI("/ignored-in-local-mode/"), "GeoIP2-City.mmdb")),
+                                                 Some(("isp", new URI("/ignored-in-local-mode/"), "GeoIP2-ISP.mmdb")),
                                                  None,
                                                  None,
                                                  true)
@@ -164,7 +163,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
     expected.user_ipaddress   = "36595ea260a82b7e2d7cf44121892bf31031a9c27077d8c802454464178456c2"
     expected.ip_domain        = null
     expected.user_fingerprint = "9f9fc89b7a5428f2646347974404650fc8776f791afc2200efc8a82aa754e7e6"
-    expected.geo_city         = "Delray Beach"
+    expected.geo_city         = null
     expected.etl_tstamp       = "1970-01-18 08:40:00.000"
     expected.collector_tstamp = "2017-07-14 03:39:39.000"
     output.size must_== 1

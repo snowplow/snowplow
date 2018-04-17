@@ -79,7 +79,7 @@ class PingdomAdapterSpec extends Specification with DataTables with ValidationMa
   def e3 = {
     val jsonStr = """{"event":incident_assign"}"""
     val expected =
-      "Pingdom event failed to parse into JSON: [com.fasterxml.jackson.core.JsonParseException: Unrecognized token 'incident_assign': was expecting ('true', 'false' or 'null') at [Source: java.io.StringReader@xxxxxx; line: 1, column: 25]]"
+      """Pingdom event failed to parse into JSON: [com.fasterxml.jackson.core.JsonParseException: Unrecognized token 'incident_assign': was expecting ('true', 'false' or 'null') at [Source: (String)"{"event":incident_assign"}"; line: 1, column: 25]]"""
     PingdomAdapter.parseJson(jsonStr) must beFailing(NonEmptyList(expected))
   }
 

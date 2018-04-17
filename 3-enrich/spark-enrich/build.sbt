@@ -15,7 +15,7 @@
 lazy val root = project.in(file("."))
   .settings(
     name        := "snowplow-spark-enrich",
-    version     := "1.12.0",
+    version     := "1.13.0",
     description := "The Snowplow Spark Enrichment process"
   )
   .settings(BuildSettings.buildSettings)
@@ -25,6 +25,7 @@ lazy val root = project.in(file("."))
       // Java
       Dependencies.Libraries.hadoopLZO,
       Dependencies.Libraries.elephantBird,
+      Dependencies.Libraries.geoip2,
       // Scala
       Dependencies.Libraries.sparkCore,
       Dependencies.Libraries.sparkSQL,

@@ -33,8 +33,15 @@ class IpAddressExtractorSpec extends Specification with DataTables with Validati
                                               "Connection: keep-alive") ! "129.78.138.66" |
         "Good incorrectly capitalized X-FORWARDED-FOR header" !! List("Accept-Charset: utf-8",
                                                                       "x-FoRwaRdeD-FOr: 129.78.138.66, 129.78.64.103",
-                                                                      "Connection: keep-alive") ! "129.78.138.66" |> {
-
+                                                                      "Connection: keep-alive") ! "129.78.138.66"                                                   |
+        "IPv6 address in X-FORWARDED-FOR header"                                                !! List("X-Forwarded-For: 2001:0db8:85a3:0000:0000:8a2e:0370:7334") ! "2001:0db8:85a3:0000:0000:8a2e:0370:7334" |
+        "IPv6 quoted address in X-FORWARDED-FOR header"                     !! List(
+          "X-Forwarded-For: \"[2001:0db8:85a3:0000:0000:8a2e:0370:7334]\"") ! "2001:0db8:85a3:0000:0000:8a2e:0370:7334" |
+        "IPv4 address in Forwarded header"                                  !! List("Forwarded: for=129.78.138.66, 129.78.64.103") ! "129.78.138.66" |
+        "IPv6 incorrectly quoted address in Forwarded header"                          !! List(
+          "Forwarded: for=2001:0db8:85a3:0000:0000:8a2e:0370:7334, for=129.78.138.56") ! "2001:0db8:85a3:0000:0000:8a2e:0370:7334" |
+        "IPv6 quoted correctly in Forwarded header"                                          !! List(
+          "Forwarded: for=\"[2001:0db8:85a3:0000:0000:8a2e:0370:7334]\", \"129.78.128.66\"") ! "2001:0db8:85a3:0000:0000:8a2e:0370:7334" |> {
         (_, headers, expected) =>
           {
             IpAddressExtractor.extractIpAddress(headers, Default) must_== expected

@@ -68,7 +68,7 @@
                     "Content-Type"   "image/gif"
                     "Content-Length"  pixel-length)
      :cookies cookies
-     :body    (ByteArrayInputStream. pixel)})   
+     :body    (ByteArrayInputStream. pixel)})
 
 (defn- send-cookie-200
   "Respond with a 200,
@@ -76,7 +76,7 @@
   [cookies headers]
     {:status  200
      :headers headers
-     :cookies cookies})   
+     :cookies cookies})
 
 (defn- send-redirect
   "If our params map contains `u`, 302 redirect to that URI,
@@ -121,9 +121,11 @@
    :body    "OK"})
 
 
-(def send-flash-crossdomain
-  "Send the most permissive Flash security settings as per
+(defn send-flash-crossdomain
+  "Send the configured Flash security settings as per
    http://www.adobe.com/devnet/articles/crossdomain_policy_file_spec.html"
+  [cross-domain-policy-domain cross-domain-policy-secure]
   {:status  200
    :headers {"Content-Type" "text/xml"}
-   :body    "<?xml version=\"1.0\"?>\n<cross-domain-policy>\n  <allow-access-from domain=\"*\" secure=\"false\" />\n</cross-domain-policy>"})
+   :body    (str "<?xml version=\"1.0\"?>\n<cross-domain-policy>\n  <allow-access-from domain=\""
+    cross-domain-policy-domain "\" secure=\"" cross-domain-policy-secure "\" />\n</cross-domain-policy>")})

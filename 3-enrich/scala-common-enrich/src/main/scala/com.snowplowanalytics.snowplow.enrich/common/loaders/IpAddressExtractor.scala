@@ -21,14 +21,15 @@ import scala.annotation.tailrec
  */
 object IpAddressExtractor {
 
-  private val IpExtractionRegex = """^x-forwarded-for: ((?:[0-9]|\.)+).*""".r
+  private val IpExtractionXForwardedForRegex = """^x-forwarded-for: \"?\[?((?:[0-9a-f]|\.|\:+)+).*\]?\"?""".r
+  private val IpExtractionForwardedRegex     = """^forwarded: for=\"?\[?((?:[0-9a-f]|\.|\:+)+).*\]?\"?""".r
 
   /**
    * If a request has been forwarded, extract the original client IP address;
    * otherwise return the standard IP address
    *
-   * @param headers List of headers potentially containing X-FORWARDED-FOR
-   * @param lastIp Fallback IP address if no XI-FORWARDED-FOR header exists
+   * @param headers List of headers potentially containing X-FORWARDED-FOR or FORWARDED
+   * @param lastIp Fallback IP address if no X-FORWARDED-FOR or FORWARDED header exists
    * @return True client IP address
    */
   @tailrec
@@ -36,8 +37,9 @@ object IpAddressExtractor {
     headers match {
       case h :: t =>
         h.toLowerCase match {
-          case IpExtractionRegex(originalIpAddress) => originalIpAddress
-          case _                                    => extractIpAddress(t, lastIp)
+          case IpExtractionXForwardedForRegex(originalIpAddress) => originalIpAddress
+          case IpExtractionForwardedRegex(originalIpAddress)     => originalIpAddress
+          case _                                                 => extractIpAddress(t, lastIp)
         }
       case Nil => lastIp
     }

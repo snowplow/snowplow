@@ -73,26 +73,25 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
         "enabled": true,
         "parameters": {
           "geo": {
-            "database": "GeoIPCity.dat",
+            "database": "GeoIP2-City.mmdb",
             "uri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind"
           },
           "isp": {
-            "database": "GeoIPISP.dat",
+            "database": "GeoIP2-ISP.mmdb",
             "uri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind"
           }
         }
       }""")
 
-      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "ip_lookups", "jsonschema", "1-0-0")
+      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "ip_lookups", "jsonschema", "2-0-0")
 
       val expected = IpLookupsEnrichment(
         Some("geo",
-             new URI("http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoIPCity.dat"),
-             "GeoIPCity.dat"),
+             new URI("http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoIP2-City.mmdb"),
+             "GeoIP2-City.mmdb"),
         Some("isp",
-             new URI("http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoIPISP.dat"),
-             "GeoIPISP.dat"),
-        None,
+             new URI("http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoIP2-ISP.mmdb"),
+             "GeoIP2-ISP.mmdb"),
         None,
         None,
         true

@@ -96,7 +96,7 @@ class PagerdutyAdapterSpec extends Specification with DataTables with Validation
 
   def e5 =
     "SPEC NAME"                     || "INPUT"                   | "EXPECTED OUTPUT"                                              |
-    "Failure, parse exception"      !! """{"something:"some"}""" ! "PagerDuty payload failed to parse into JSON: [com.fasterxml.jackson.core.JsonParseException: Unexpected character ('s' (code 115)): was expecting a colon to separate field name and value at [Source: java.io.StringReader@xxxxxx; line: 1, column: 15]]"     |
+    "Failure, parse exception"      !! """{"something:"some"}""" ! """PagerDuty payload failed to parse into JSON: [com.fasterxml.jackson.core.JsonParseException: Unexpected character ('s' (code 115)): was expecting a colon to separate field name and value at [Source: (String)"{"something:"some"}"; line: 1, column: 15]]""" |
     "Failure, missing messages key" !! """{"somekey":"key"}"""   ! "PagerDuty payload does not contain the needed 'messages' key" |> {
       (_, input, expected) => PagerdutyAdapter.payloadBodyToEvents(input) must beFailing(expected)
     }
