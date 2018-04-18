@@ -53,6 +53,7 @@ class GoogleAnalyticsAdapterSpec
     toRawEvents returns a succNel with repeated composite contexts           $e12
     toRawEvents returns a succNel with promo composite contexts              $e13
     toRawEvents returns a succnel with multiple raw events                   $e14
+    toRawEvents returns a succNel with multiple composite contexts with cu   $e15
     breakDownCompositeField should work properly                             $e20
   """
 
@@ -258,7 +259,7 @@ class GoogleAnalyticsAdapterSpec
              |"data":{"dimensionIndex":42,"productIndex":12,"value":"val"}
            |},{
              |"schema":"iglu:com.google.analytics.measurement-protocol/product/jsonschema/1-0-0",
-             |"data":{"sku":"ident","currencyCode":"EUR","index":12}
+             |"data":{"currencyCode":"EUR","sku":"ident","index":12}
            |}]
          |}""".stripMargin.replaceAll("[\n\r]", "")
     val expectedParams = static ++ Map("ue_pr" -> expectedUE, "co" -> expectedCO, "tr_cu" -> "EUR", "tr_id" -> "tr")
@@ -404,6 +405,41 @@ class GoogleAnalyticsAdapterSpec
     val expectedParams = static ++ Map("ue_pr" -> expectedJson, "co" -> expectedCO)
     val event          = RawEvent(api, expectedParams, None, source, context)
     actual must beSuccessful(NonEmptyList(event, event))
+  }
+
+  def e15 = {
+    val body =
+      "t=pageview&dh=host&dp=path&cu=EUR&il1pi1pr=1&il1pi1nm=name1&il1pi1ps=1&il1pi1ca=cat1&il1pi1id=id1&il1pi1br=brand1&il1pi2pr=2&il1pi2nm=name2&il1pi2ps=2&il1pi2ca=cat2&il1pi2id=id2&il1pi2br=brand2&il2pi1pr=21&il2pi1nm=name21&il2pi1ps=21&il2pi1ca=cat21&il2pi1id=id21&il2pi1br=brand21"
+    val payload = CollectorPayload(api, Nil, None, body.some, source, context)
+    val actual  = toRawEvents(payload)
+
+    val expectedJson =
+      """|{
+           |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
+           |"data":{
+             |"schema":"iglu:com.google.analytics.measurement-protocol/page_view/jsonschema/1-0-0",
+             |"data":{
+               |"documentHostName":"host",
+               |"documentPath":"path"
+             |}
+           |}
+         |}""".stripMargin.replaceAll("[\n\r]", "")
+    val expectedCO =
+      s"""|{
+           |"schema":"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-1",
+           |"data":[${hitContext("pageview")},{
+             |"schema":"iglu:com.google.analytics.measurement-protocol/product_impression/jsonschema/1-0-0",
+             |"data":{"productIndex":1,"name":"name1","sku":"id1","price":1.0,"brand":"brand1","currencyCode":"EUR","category":"cat1","position":1,"listIndex":1}
+           |},{
+             |"schema":"iglu:com.google.analytics.measurement-protocol/product_impression/jsonschema/1-0-0",
+             |"data":{"productIndex":2,"name":"name2","sku":"id2","price":2.0,"brand":"brand2","currencyCode":"EUR","category":"cat2","position":2,"listIndex":1}
+           |},{
+             |"schema":"iglu:com.google.analytics.measurement-protocol/product_impression/jsonschema/1-0-0",
+             |"data":{"productIndex":1,"name":"name21","sku":"id21","price":21.0,"brand":"brand21","currencyCode":"EUR","category":"cat21","position":21,"listIndex":2}
+           |}]
+         |}""".stripMargin.replaceAll("[\n\r]", "")
+    val expectedParams = static ++ Map("ue_pr" -> expectedJson, "co" -> expectedCO, "ti_cu" -> "EUR")
+    actual must beSuccessful(NonEmptyList(RawEvent(api, expectedParams, None, source, context)))
   }
 
   def e20 = {
