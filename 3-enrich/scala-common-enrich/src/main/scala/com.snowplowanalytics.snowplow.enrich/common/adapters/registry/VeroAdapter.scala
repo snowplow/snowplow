@@ -71,8 +71,6 @@ object VeroAdapter extends Adapter {
   /**
    * Converts a payload into a single validated event
    * Expects a valid json returns failure if one is not present
-   * For "user_updated" events the field is named "action" instead of "type"
-   * in which case the event type will be set to Some("user_updated")
    *
    * @param json Payload body that is sent by Vero
    * @param payload The details of the payload
@@ -85,9 +83,8 @@ object VeroAdapter extends Adapter {
         case Success(p) => p.successNel
         case Failure(e) => s"$VendorName event failed to parse into JSON: [${e.getMessage}]".failureNel
       }
-      eventType = parsed.toOption.flatMap(p => (p \ "type").extractOpt[String]).getOrElse("user_updated")
-      formattedEvent = if (eventType == "user_updated") parsed
-      else cleanupJsonEventValues(parsed, ("type", eventType).some, s"${eventType}_at")
+      eventType = (parsed \ "type").extract[String]
+      formattedEvent   = cleanupJsonEventValues(parsed, ("type", eventType).some, s"${eventType}_at")
       reformattedEvent = reformatParameters(formattedEvent)
       schema <- lookupSchema(eventType.some, VendorName, EventSchemaMap)
       params = toUnstructEventParams(TrackerVersion, toMap(payload.querystring), schema, reformattedEvent, "srv")
@@ -122,7 +119,7 @@ object VeroAdapter extends Adapter {
 
   /**
    * Returns an updated Vero event JSON where
-   * the "action" field has been removed
+   * the "_tag" field is renamed to "tag"
    * and "triggered_at" fields' values have been converted
    *
    * @param json The event JSON which we need to
@@ -136,13 +133,9 @@ object VeroAdapter extends Adapter {
       JString(JsonSchemaDateTimeFormat.print(dt))
     }
 
-    json
-      .transformField {
-        case ("triggered_at", JInt(value)) => ("triggered_at", toStringField(value.toLong * 1000))
-      }
-      .removeField {
-        case ("action", _) => true
-        case _             => false
-      }
+    json transformField {
+      case ("_tags", JObject(v))         => ("tags", JObject(v))
+      case ("triggered_at", JInt(value)) => ("triggered_at", toStringField(value.toLong * 1000))
+    }
   }
 }

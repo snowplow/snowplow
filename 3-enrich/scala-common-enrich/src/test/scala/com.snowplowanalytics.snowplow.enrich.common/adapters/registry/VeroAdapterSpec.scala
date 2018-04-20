@@ -198,7 +198,7 @@ class VeroAdapterSpec extends Specification with DataTables with ValidationMatch
           "tv"    -> "com.getvero-v1",
           "e"     -> "ue",
           "p"     -> "srv",
-          "ue_pr" -> """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.getvero/created/jsonschema/1-0-0","data":{"user":{"id":123,"email":"steve@getvero.com"},"changes":{"_tags":{"add":["active-customer"],"remove":["unactive-180-days"]}}}}}"""
+          "ue_pr" -> """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.getvero/created/jsonschema/1-0-0","data":{"user":{"id":123,"email":"steve@getvero.com"},"changes":{"tags":{"add":["active-customer"],"remove":["unactive-180-days"]}}}}}"""
         ),
         ContentType.some,
         Shared.cljSource,
@@ -209,7 +209,7 @@ class VeroAdapterSpec extends Specification with DataTables with ValidationMatch
 
   def e8 = {
     val bodyStr =
-      """{"action": "user_updated", "id": "peter", "email": "peter@test.com", "changes": {"id": "peter", "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/604.5.6 (KHTML, like Gecko) Version/11.0.3 Safari/604.5.6", "platform": "MacIntel", "language": "en-AU", "timezone": 11}}"""
+      """{"type": "user_updated", "user": {"id": 123, "email": "steve@getvero.com"}, "changes": {"_tags": {"add": ["active-customer"], "remove": ["unactive-180-days"]}}}"""
     val payload = CollectorPayload(Shared.api, Nil, ContentType.some, bodyStr.some, Shared.cljSource, Shared.context)
     val expected = NonEmptyList(
       RawEvent(
@@ -218,7 +218,7 @@ class VeroAdapterSpec extends Specification with DataTables with ValidationMatch
           "tv"    -> "com.getvero-v1",
           "e"     -> "ue",
           "p"     -> "srv",
-          "ue_pr" -> """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.getvero/updated/jsonschema/1-0-0","data":{"id":"peter","email":"peter@test.com","changes":{"id":"peter","userAgent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/604.5.6 (KHTML, like Gecko) Version/11.0.3 Safari/604.5.6","platform":"MacIntel","language":"en-AU","timezone":11}}}}"""
+          "ue_pr" -> """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.getvero/updated/jsonschema/1-0-0","data":{"user":{"id":123,"email":"steve@getvero.com"},"changes":{"tags":{"add":["active-customer"],"remove":["unactive-180-days"]}}}}}"""
         ),
         ContentType.some,
         Shared.cljSource,
@@ -237,10 +237,7 @@ class VeroAdapterSpec extends Specification with DataTables with ValidationMatch
       "Valid, type created"      !! "user_created" ! "iglu:com.getvero/created/jsonschema/1-0-0" |
       "Valid, type updated"      !! "user_updated" ! "iglu:com.getvero/updated/jsonschema/1-0-0" |
       "Valid, type bounced"      !! "bounced"      ! "iglu:com.getvero/bounced/jsonschema/1-0-0" |> { (_, schema, expected) =>
-      val body = schema match {
-        case "user_updated" => "{\"action\":\"" + schema + "\"}"
-        case _              => "{\"type\":\""   + schema + "\"}"
-      }
+      val body         = "{\"type\":\"" + schema + "\"}"
       val payload      = CollectorPayload(Shared.api, Nil, ContentType.some, body.some, Shared.cljSource, Shared.context)
       val expectedJson = "{\"schema\":\"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0\",\"data\":{\"schema\":\"" + expected + "\",\"data\":{}}}"
       val actual       = VeroAdapter.toRawEvents(payload)
