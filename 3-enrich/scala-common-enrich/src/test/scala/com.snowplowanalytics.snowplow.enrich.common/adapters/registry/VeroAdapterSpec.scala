@@ -189,7 +189,7 @@ class VeroAdapterSpec extends Specification with DataTables with ValidationMatch
 
   def e7 = {
     val bodyStr =
-      """{"type": "user_created", "user": {"id": 123, "email": "steve@getvero.com"}, "changes": {"_tags": {"add": ["active-customer"], "remove": ["unactive-180-days"]}}}"""
+      """{"type": "user_created", "user": {"id": 123, "email": "steve@getvero.com"}, "firstname": "Steve", "company": "Vero", "role": "Bot"}"""
     val payload = CollectorPayload(Shared.api, Nil, ContentType.some, bodyStr.some, Shared.cljSource, Shared.context)
     val expected = NonEmptyList(
       RawEvent(
@@ -198,7 +198,7 @@ class VeroAdapterSpec extends Specification with DataTables with ValidationMatch
           "tv"    -> "com.getvero-v1",
           "e"     -> "ue",
           "p"     -> "srv",
-          "ue_pr" -> """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.getvero/created/jsonschema/1-0-0","data":{"user":{"id":123,"email":"steve@getvero.com"},"changes":{"tags":{"add":["active-customer"],"remove":["unactive-180-days"]}}}}}"""
+          "ue_pr" -> """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.getvero/created/jsonschema/1-0-0","data":{"user":{"id":123,"email":"steve@getvero.com"},"firstname":"Steve","company":"Vero","role":"Bot"}}}"""
         ),
         ContentType.some,
         Shared.cljSource,

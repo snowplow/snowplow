@@ -83,7 +83,7 @@ object VeroAdapter extends Adapter {
         case Success(p) => p.successNel
         case Failure(e) => s"$VendorName event failed to parse into JSON: [${e.getMessage}]".failureNel
       }
-      eventType = (parsed \ "type").extract[String]
+      eventType        = (parsed \ "type").extract[String]
       formattedEvent   = cleanupJsonEventValues(parsed, ("type", eventType).some, s"${eventType}_at")
       reformattedEvent = reformatParameters(formattedEvent)
       schema <- lookupSchema(eventType.some, VendorName, EventSchemaMap)
