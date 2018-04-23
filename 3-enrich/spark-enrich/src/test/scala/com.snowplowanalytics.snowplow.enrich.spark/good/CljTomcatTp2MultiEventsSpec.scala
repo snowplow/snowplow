@@ -32,14 +32,14 @@ object CljTomcatTp2MultiEventsSpec {
     val contexts =
       """{"data":[{"data":{"osType":"OSX","appleIdfv":"some_appleIdfv","openIdfa":"some_Idfa","carrier":"some_carrier","deviceModel":"large","osVersion":"3.0.0","appleIdfa":"some_appleIdfa","androidIdfa":"some_androidIdfa","deviceManufacturer":"Amstrad"},"schema":"iglu:com.snowplowanalytics.snowplow/mobile_context/jsonschema/1-0-0"},{"data":{"longitude":10,"bearing":50,"speed":16,"altitude":20,"altitudeAccuracy":0.3,"latitudeLongitudeAccuracy":0.5,"latitude":7},"schema":"iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-0-0"}],"schema":"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0"}"""
     val useragent       = "python-requests/2.2.1 CPython/3.3.5 Linux/3.2.0-61-generic"
-    val br_name         = "Unknown"
-    val br_family       = "Unknown"
-    val br_type         = "unknown"
+    val br_name         = "Robot/Spider"
+    val br_family       = "Robot/Spider"
+    val br_type         = "Robot"
     val br_renderengine = "OTHER"
-    val os_name         = "Linux"
-    val os_family       = "Linux"
+    val os_name         = "Unknown"
+    val os_family       = "Unknown"
     val os_manufacturer = "Other"
-    val dvce_type       = "Computer"
+    val dvce_type       = "Unknown"
     val dvce_ismobile   = "0"
 
     // 3 events
