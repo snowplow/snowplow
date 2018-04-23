@@ -35,6 +35,9 @@ import iglu.client.{SchemaCriterion, SchemaKey}
 import utils.ScalazJson4sUtils
 
 object HttpHeaderExtractorEnrichmentConfig extends ParseableEnrichment {
+
+  implicit val formats = DefaultFormats
+
   val supportedSchema =
     SchemaCriterion("com.snowplowanalytics.snowplow.enrichments", "http_header_extractor_config", "jsonschema", 1, 0)
 
