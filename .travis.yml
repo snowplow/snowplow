@@ -46,20 +46,17 @@ env:
   - TEST_DIR=3-enrich/scala-common-enrich/
   - TEST_DIR=3-enrich/spark-enrich/
   - TEST_DIR=3-enrich/stream-enrich/
-before_install:
-  - sudo apt-get -qq update
-  - sudo apt-get install leiningen
-  - sudo apt-get install -y lzop
-  - pip install --user awscli
-  - export PATH=$PATH:$HOME/.local/bin
-  - rvm implode --force
-  - \curl -sSL https://get.rvm.io | bash -s 1.27.0
-  - rvm reload
-  - rvm install jruby-9.1.6.0
-  - gem uninstall -i /home/travis/.rvm/gems/jruby-9.1.6.0 bundler -a -x
-  - gem install bundler -v 1.15.4
 addons:
   postgresql: '9.3'
+  apt:
+    packages:
+      - leiningen
+      - lzop
+rvm: jruby-9.1.6.0
+before_install:
+  - pip install --user awscli
+  - gem uninstall -i /home/travis/.rvm/gems/jruby-9.1.6.0 bundler -a -x
+  - gem install bundler -v 1.15.4
 services:
   - postgresql
 before_deploy:
