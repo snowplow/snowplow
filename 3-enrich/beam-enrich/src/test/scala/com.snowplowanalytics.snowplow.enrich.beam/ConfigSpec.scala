@@ -1,8 +1,24 @@
+/*
+ * Copyright (c) 2012-2018 Snowplow Analytics Ltd. All rights reserved.
+ *
+ * This program is licensed to you under the Apache License Version 2.0,
+ * and you may not use this file except in compliance with the Apache License Version 2.0.
+ * You may obtain a copy of the Apache License Version 2.0 at
+ * http://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the Apache License Version 2.0 is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the Apache License Version 2.0 for the specific language governing permissions and
+ * limitations there under.
+ */
 package com.snowplowanalytics.snowplow.enrich.beam
 
 import java.nio.file.Files
 
 import com.spotify.scio.Args
+import org.json4s.JsonDSL._
+import org.json4s.jackson.JsonMethods._
 import org.scalatest._
 import Matchers._
 import scalaz._
@@ -89,16 +105,16 @@ class ConfigSpec extends FreeSpec {
       }
       "which succeeds if the contents of the enrichment dir are enrichments" in {
         val path = writeToFile("enrichments", "enrichments", enrichmentConfig)
-        parseEnrichmentRegistry(Some(path)) match {
-          case Success(_) => succeed
-          case _ => fail()
-        }
+        parseEnrichmentRegistry(Some(path)) shouldEqual Success(
+          ("schema" -> "iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0") ~
+          ("data" -> List(parse(enrichmentConfig)))
+        )
       }
       "which succeeds if no enrichments dir is given" in {
-        parseEnrichmentRegistry(None) match {
-          case Success(_) => succeed
-          case _ => fail()
-        }
+        parseEnrichmentRegistry(None) shouldEqual Success(
+          ("schema" -> "iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0") ~
+          ("data" -> List.empty[String])
+        )
       }
     }
   }

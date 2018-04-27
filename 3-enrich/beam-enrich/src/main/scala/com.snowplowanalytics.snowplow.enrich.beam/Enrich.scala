@@ -1,3 +1,17 @@
+/*
+ * Copyright (c) 2012-2018 Snowplow Analytics Ltd. All rights reserved.
+ *
+ * This program is licensed to you under the Apache License Version 2.0,
+ * and you may not use this file except in compliance with the Apache License Version 2.0.
+ * You may obtain a copy of the Apache License Version 2.0 at
+ * http://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the Apache License Version 2.0 is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the Apache License Version 2.0 for the specific language governing permissions and
+ * limitations there under.
+ */
 package com.snowplowanalytics
 package snowplow
 package enrich
@@ -18,8 +32,9 @@ import common.enrichments.EnrichmentRegistry
 import common.loaders.ThriftLoader
 import common.outputs.{EnrichedEvent, BadRow}
 import config._
-import utils._
 import iglu.client.Resolver
+import singleton._
+import utils._
 
 /*
 sbt "runMain com.snowplowanalytics.snowplow.enrich.beam.Enrich
@@ -42,9 +57,11 @@ object Enrich {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     val parsedConfig = for {
       config <- EnrichConfig(args)
-      resolver <- parseResolver(config.resolver)
-      enrichmentRegistry <- parseEnrichmentRegistry(config.enrichments)(resolver)
-    } yield ParsedEnrichConfig(config.input, config.output, config.bad, resolver, enrichmentRegistry)
+      resolverJson <- parseResolver(config.resolver)
+      resolver <- Resolver.parse(resolverJson).leftMap(_.toList.mkString("\n"))
+      enrichmentRegistryJson <- parseEnrichmentRegistry(config.enrichments)(resolver)
+    } yield ParsedEnrichConfig(
+      config.input, config.output, config.bad, resolverJson, enrichmentRegistryJson)
 
     parsedConfig match {
       case Failure(e) =>
@@ -57,11 +74,12 @@ object Enrich {
   }
 
   def run(sc: ScioContext, config: ParsedEnrichConfig): Unit = {
-    implicit val resolver = config.resolver
-
     val input: SCollection[Array[Byte]] = sc.pubsubTopic(config.input).withName("input")
     val enriched: SCollection[Validation[BadRow, EnrichedEvent]] = input
-      .map(enrich(_, config.enrichmentRegistry))
+      .map { rawEvent =>
+        implicit val resolver = ResolverSingleton.get(config.resolver)
+        enrich(rawEvent, EnrichmentRegistrySingleton.get(config.enrichmentRegistry))
+      }
       .flatten
       .withName("enriched")
 
