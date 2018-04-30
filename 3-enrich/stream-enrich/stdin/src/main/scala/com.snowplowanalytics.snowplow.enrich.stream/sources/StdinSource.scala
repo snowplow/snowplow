@@ -45,27 +45,25 @@ object StdinSource {
       case Stdin => ().success
       case _ => "Configured source/sink is not Stdin".failure
     }
-    goodSink = new ThreadLocal[Sink] {
-      override def initialValue = new StdoutSink()
-    }
-    badSink = new ThreadLocal[Sink] {
-      override def initialValue = new StderrSink()
-    }
-  } yield new StdinSource(
-    goodSink, badSink, igluResolver, enrichmentRegistry, tracker, config.out.partitionKey)
+  } yield new StdinSource(igluResolver, enrichmentRegistry, tracker, config.out.partitionKey)
 }
 
 /** Source to decode raw events (in base64) from stdin. */
 class StdinSource private (
-  goodSink: ThreadLocal[Sink],
-  badSink: ThreadLocal[Sink],
   igluResolver: Resolver,
   enrichmentRegistry: EnrichmentRegistry,
   tracker: Option[Tracker],
   partitionKey: String
-) extends Source(goodSink, badSink, igluResolver, enrichmentRegistry, tracker, partitionKey) {
+) extends Source(igluResolver, enrichmentRegistry, tracker, partitionKey) {
 
   override val MaxRecordSize = None
+
+  override val threadLocalGoodSink: ThreadLocal[Sink] = new ThreadLocal[Sink] {
+    override def initialValue: Sink = new StdoutSink()
+  }
+  override val threadLocalBadSink: ThreadLocal[Sink] = new ThreadLocal[Sink] {
+    override def initialValue: Sink = new StderrSink()
+  }
 
   /** Never-ending processing loop over source stream. */
   override def run(): Unit =

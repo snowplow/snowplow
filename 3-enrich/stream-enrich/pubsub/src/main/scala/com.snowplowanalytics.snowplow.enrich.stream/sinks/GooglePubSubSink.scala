@@ -41,11 +41,11 @@ import utils._
 
 /** GooglePubSubSink companion object with factory method */
 object GooglePubSubSink {
-  def createAndInitialize(
+  def validateAndCreatePublisher(
     googlePubSubConfig: GooglePubSub,
     bufferConfig: BufferConfig,
     topicName: String
-  ): \/[Throwable, GooglePubSubSink] = for {
+  ): \/[Throwable, Publisher] = for {
     batching <- batchingSettings(bufferConfig).right
     retry = retrySettings(googlePubSubConfig.backoffPolicy)
     publisher <- toEither(
@@ -55,7 +55,7 @@ object GooglePubSubSink {
         if (b) b.right
         else new IllegalArgumentException(s"Google PubSub topic $topicName doesn't exist").left
       }
-  } yield new GooglePubSubSink(publisher, topicName)
+  } yield publisher
 
   /**
    * Instantiates a Publisher on an existing topic with the given configuration options.
@@ -106,7 +106,7 @@ object GooglePubSubSink {
 /**
  * Google PubSub Sink for the Scala enrichment process
  */
-class GooglePubSubSink private (publisher: Publisher, topicName: String) extends Sink {
+class GooglePubSubSink(publisher: Publisher, topicName: String) extends Sink {
 
   /**
    * Convert event bytes to a PubsubMessage to be published
