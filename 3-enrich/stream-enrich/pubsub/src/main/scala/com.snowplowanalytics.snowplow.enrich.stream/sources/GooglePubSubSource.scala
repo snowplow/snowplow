@@ -55,23 +55,17 @@ object GooglePubSubSource {
       case c: GooglePubSub => c.success
       case _ => new IllegalArgumentException("Configured source/sink is not Google PubSub").failure
     }
-    goodSink <- GooglePubSubSink
-      .createAndInitialize(googlePubSubConfig, config.buffer, config.out.enriched)
+    goodPublisher <- GooglePubSubSink
+      .validateAndCreatePublisher(googlePubSubConfig, config.buffer, config.out.enriched)
       .validation
-    threadLocalGoodSink = new ThreadLocal[Sink] {
-      override def initialValue = goodSink
-    }
-    badSink <- GooglePubSubSink
-      .createAndInitialize(googlePubSubConfig, config.buffer, config.out.bad)
+    badPublisher <- GooglePubSubSink
+      .validateAndCreatePublisher(googlePubSubConfig, config.buffer, config.out.bad)
       .validation
-    threadLocalBadSink = new ThreadLocal[Sink] {
-      override def initialValue = badSink
-    }
     topic = ProjectTopicName.of(googlePubSubConfig.googleProjectId, config.in.raw)
     subName = ProjectSubscriptionName.of(googlePubSubConfig.googleProjectId, config.appName)
     _ <- toEither(createSubscriptionIfNotExist(subName, topic)).validation
-  } yield new GooglePubSubSource(threadLocalGoodSink, threadLocalBadSink, igluResolver,
-    enrichmentRegistry, tracker, subName, googlePubSubConfig.threadPoolSize, config.out.partitionKey)
+  } yield new GooglePubSubSource(goodPublisher, badPublisher, igluResolver,
+    enrichmentRegistry, tracker, config, googlePubSubConfig, subName)
 
   private def createSubscriptionIfNotExist(
     sub: ProjectSubscriptionName,
@@ -93,19 +87,26 @@ object GooglePubSubSource {
 
 /** Source to read events from a GCP Pub/Sub topic */
 class GooglePubSubSource private (
-  goodSink: ThreadLocal[Sink],
-  badSink: ThreadLocal[Sink],
+  goodPubslisher: Publisher,
+  badPublisher: Publisher,
   igluResolver: Resolver,
   enrichmentRegistry: EnrichmentRegistry,
   tracker: Option[Tracker],
-  subName: ProjectSubscriptionName,
-  threadPoolSize: Int,
-  partitionKey: String
-) extends Source(goodSink, badSink, igluResolver, enrichmentRegistry, tracker, partitionKey) {
+  config: StreamsConfig,
+  pubsubConfig: GooglePubSub,
+  subName: ProjectSubscriptionName
+) extends Source(igluResolver, enrichmentRegistry, tracker, config.out.partitionKey) {
 
   override val MaxRecordSize = Some(10000000L)
 
-  private val subscriber = createSubscriber(subName, threadPoolSize)
+  private val subscriber = createSubscriber(subName, pubsubConfig.threadPoolSize)
+
+  override val threadLocalGoodSink: ThreadLocal[Sink] = new ThreadLocal[Sink] {
+    override def initialValue: Sink = new GooglePubSubSink(goodPubslisher, config.out.enriched)
+  }
+  override val threadLocalBadSink: ThreadLocal[Sink] = new ThreadLocal[Sink] {
+    override def initialValue: Sink = new GooglePubSubSink(badPublisher, config.out.bad)
+  }
 
   /** Never-ending processing loop over source stream. */
   override def run(): Unit = subscriber.startAsync().awaitRunning()

@@ -30,6 +30,8 @@ import scala.collection.JavaConversions._
 import scala.util.control.NonFatal
 
 import com.amazonaws.auth.AWSCredentialsProvider
+import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
+import com.amazonaws.services.kinesis.AmazonKinesisClientBuilder
 import com.amazonaws.services.kinesis.clientlibrary.interfaces._
 import com.amazonaws.services.kinesis.clientlibrary.exceptions._
 import com.amazonaws.services.kinesis.clientlibrary.lib.worker._
@@ -56,36 +58,44 @@ object KinesisSource {
       case c: Kinesis => c.success
       case _ => "Configured source/sink is not Kinesis".failure
     }
-    goodSink <-
-      KinesisSink.createAndInitialize(kinesisConfig, config.buffer, config.out.enriched, tracker)
-        .validation
-    threadLocalGoodSink = new ThreadLocal[Sink] {
-      override def initialValue = goodSink
-    }
-    badSink <-
-      KinesisSink.createAndInitialize(kinesisConfig, config.buffer, config.out.bad, tracker)
-        .validation
-    threadLocalBadSink = new ThreadLocal[Sink] {
-      override def initialValue = badSink
-    }
+    _ <- (KinesisSink.validate(kinesisConfig, config.out.enriched).validation.leftMap(_.wrapNel) |@|
+      KinesisSink.validate(kinesisConfig, config.out.bad).validation.leftMap(_.wrapNel)) {
+        (_, _) => ()
+      }.leftMap(_.toList.mkString("\n"))
     provider <- KinesisEnrich.getProvider(kinesisConfig.aws).validation
-  } yield new KinesisSource(threadLocalGoodSink, threadLocalBadSink,
-    igluResolver, enrichmentRegistry, tracker, config, kinesisConfig, provider)
+  } yield new KinesisSource(igluResolver, enrichmentRegistry, tracker, config, kinesisConfig, provider)
 }
 
 /** Source to read events from a Kinesis stream */
 class KinesisSource private (
-  goodSink: ThreadLocal[Sink],
-  badSink: ThreadLocal[Sink],
   igluResolver: Resolver,
   enrichmentRegistry: EnrichmentRegistry,
   tracker: Option[Tracker],
   config: StreamsConfig,
   kinesisConfig: Kinesis,
   provider: AWSCredentialsProvider
-) extends Source(goodSink, badSink, igluResolver, enrichmentRegistry, tracker, config.out.partitionKey) {
+) extends Source(igluResolver, enrichmentRegistry, tracker, config.out.partitionKey) {
 
   override val MaxRecordSize = Some(1000000L)
+
+  private val client = {
+    val endpointConfiguration =
+      new EndpointConfiguration(kinesisConfig.streamEndpoint, kinesisConfig.region)
+    AmazonKinesisClientBuilder
+      .standard()
+      .withCredentials(provider)
+      .withEndpointConfiguration(endpointConfiguration)
+      .build()
+  }
+
+  override val threadLocalGoodSink: ThreadLocal[Sink] = new ThreadLocal[Sink] {
+    override def initialValue: Sink =
+      new KinesisSink(client, kinesisConfig.backoffPolicy, config.buffer, config.out.enriched, tracker)
+  }
+  override val threadLocalBadSink: ThreadLocal[Sink] = new ThreadLocal[Sink] {
+    override def initialValue: Sink =
+      new KinesisSink(client, kinesisConfig.backoffPolicy, config.buffer, config.out.bad, tracker)
+  }
 
   /** Never-ending processing loop over source stream. */
   override def run(): Unit = {

@@ -48,33 +48,31 @@ object KafkaSource {
       case c: Kafka => c.success
       case _ => "Configured source/sink is not Kafka".failure
     }
-    goodSink = new ThreadLocal[Sink] {
-      override def initialValue =
-        new KafkaSink(kafkaConfig, config.buffer, config.out.enriched, tracker)
-    }
-    badSink = new ThreadLocal[Sink] {
-      override def initialValue = new KafkaSink(kafkaConfig, config.buffer, config.out.bad, tracker)
-    }
-  } yield new KafkaSource(goodSink, badSink, igluResolver, enrichmentRegistry, tracker, config,
-    kafkaConfig.brokers)
+  } yield new KafkaSource(igluResolver, enrichmentRegistry, tracker, config, kafkaConfig)
 }
 /** Source to read events from a Kafka topic */
 class KafkaSource private (
-  goodSink: ThreadLocal[Sink],
-  badSink: ThreadLocal[Sink],
   igluResolver: Resolver,
   enrichmentRegistry: EnrichmentRegistry,
   tracker: Option[Tracker],
   config: StreamsConfig,
-  brokers: String
-) extends Source(
-  goodSink, badSink, igluResolver, enrichmentRegistry, tracker, config.out.partitionKey) {
+  kafkaConfig: Kafka
+) extends Source(igluResolver, enrichmentRegistry, tracker, config.out.partitionKey) {
 
   override val MaxRecordSize = None
 
+  override val threadLocalGoodSink: ThreadLocal[Sink] = new ThreadLocal[Sink] {
+    override def initialValue: Sink =
+      new KafkaSink(kafkaConfig, config.buffer, config.out.enriched, tracker)
+  }
+  override val threadLocalBadSink: ThreadLocal[Sink] = new ThreadLocal[Sink] {
+    override def initialValue: Sink =
+      new KafkaSink(kafkaConfig, config.buffer, config.out.bad, tracker)
+  }
+
   /** Never-ending processing loop over source stream. */
   override def run(): Unit = {
-    val consumer = createConsumer(brokers, config.appName)
+    val consumer = createConsumer(kafkaConfig.brokers, config.appName)
 
     log.info(s"Running Kafka consumer group: ${config.appName}.")
     log.info(s"Processing raw input Kafka topic: ${config.in.raw}")

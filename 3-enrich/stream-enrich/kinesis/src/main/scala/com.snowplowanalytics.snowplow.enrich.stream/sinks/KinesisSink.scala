@@ -41,12 +41,7 @@ import scalatracker.Tracker
 
 /** KinesisSink companion object with factory method */
 object KinesisSink {
-  def createAndInitialize(
-    kinesisConfig: Kinesis,
-    bufferConfig: BufferConfig,
-    streamName: String,
-    tracker: Option[Tracker]
-  ): \/[String, KinesisSink] = for {
+  def validate(kinesisConfig: Kinesis, streamName: String): \/[String, Unit] = for {
     provider <- KinesisEnrich.getProvider(kinesisConfig.aws)
     endpointConfiguration =
       new EndpointConfiguration(kinesisConfig.streamEndpoint, kinesisConfig.region)
@@ -56,11 +51,8 @@ object KinesisSink {
       .withEndpointConfiguration(endpointConfiguration)
       .build()
     _ <- streamExists(client, streamName).leftMap(_.getMessage)
-      .flatMap { b =>
-        if (b) b.right
-        else s"Kinesis stream $streamName doesn't exist".left
-      }
-  } yield new KinesisSink(client, kinesisConfig.backoffPolicy, bufferConfig, streamName, tracker)
+      .ensure(s"Kinesis stream $streamName doesn't exist")(_ == true)
+  } yield ()
 
   /**
    * Check whether a Kinesis stream exists
@@ -78,7 +70,7 @@ object KinesisSink {
 }
 
 /** Kinesis Sink for Scala enrichment */
-class KinesisSink private (
+class KinesisSink(
   client: AmazonKinesis,
   backoffPolicy: KinesisBackoffPolicyConfig,
   buffer: BufferConfig,
