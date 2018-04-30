@@ -72,7 +72,8 @@ lazy val kinesis = project
     Dependencies.Libraries.kinesisSdk,
     Dependencies.Libraries.s3Sdk,
     Dependencies.Libraries.dynamodbSdk,
-    Dependencies.Libraries.jacksonCbor
+    Dependencies.Libraries.jacksonCbor,
+    Dependencies.Libraries.jacksonDatabind
   ))
   .dependsOn(core)
 
