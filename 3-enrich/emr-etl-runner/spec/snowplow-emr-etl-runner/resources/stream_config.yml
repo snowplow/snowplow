@@ -12,6 +12,7 @@ aws:
       enriched:
         good: eg       # e.g. s3://my-out-bucket/enriched/good
         archive: ea    # Where to archive enriched events to, e.g. s3://my-out-bucket/enriched/archive
+        stream: es    # Where to archive enriched events to, e.g. s3://my-out-bucket/enriched/archive
       shredded:
         good: sg       # e.g. s3://my-out-bucket/shredded/good
         bad: sb       # e.g. s3://my-out-bucket/shredded/bad
