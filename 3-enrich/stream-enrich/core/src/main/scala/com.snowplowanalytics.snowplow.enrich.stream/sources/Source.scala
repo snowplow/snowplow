@@ -85,8 +85,6 @@ object Source {
 
 /** Abstract base for the different sources we support. */
 abstract class Source(
-  goodSink: ThreadLocal[Sink],
-  badSink: ThreadLocal[Sink],
   igluResolver: Resolver,
   enrichmentRegistry: EnrichmentRegistry,
   tracker: Option[Tracker],
@@ -101,6 +99,9 @@ abstract class Source(
   def run(): Unit
 
   implicit val resolver: Resolver = igluResolver
+
+  val threadLocalGoodSink: ThreadLocal[Sink]
+  val threadLocalBadSink: ThreadLocal[Sink]
 
   // Iterate through an enriched EnrichedEvent object and tab separate
   // the fields to a string.
@@ -176,12 +177,12 @@ abstract class Source(
       m <- MaxRecordSize
     } yield Source.oversizedSuccessToFailure(value, m) -> key
 
-    val successesTriggeredFlush = goodSink.get.storeEnrichedEvents(smallEnoughSuccesses)
-    val failuresTriggeredFlush = badSink.get.storeEnrichedEvents(failures ++ sizeBasedFailures)
+    val successesTriggeredFlush = threadLocalGoodSink.get.storeEnrichedEvents(smallEnoughSuccesses)
+    val failuresTriggeredFlush = threadLocalBadSink.get.storeEnrichedEvents(failures ++ sizeBasedFailures)
     if (successesTriggeredFlush == true || failuresTriggeredFlush == true) {
       // Block until the records have been sent to Kinesis
-      goodSink.get.flush
-      badSink.get.flush
+      threadLocalGoodSink.get.flush
+      threadLocalBadSink.get.flush
       true
     } else {
       false
