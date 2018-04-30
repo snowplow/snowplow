@@ -61,6 +61,7 @@ object Dependencies {
     val kafkaClients         = "org.apache.kafka"                 %  "kafka-clients"             % V.kafkaClients
     val nsqClient            = "com.snowplowanalytics"            %  "nsq-java-client"           % V.nsqClient
     val jacksonCbor          = "com.fasterxml.jackson.dataformat" %  "jackson-dataformat-cbor"   % V.jackson
+    val jacksonDatabind      = "com.fasterxml.jackson.core"       %  "jackson-databind"          % V.jackson
     val commonsCodec         = "commons-codec"                    %  "commons-codec"             % V.commonsCodec
     val config               = "com.typesafe"                     %  "config"                    % V.config
     val slf4j                = "org.slf4j"                        %  "slf4j-simple"              % V.slf4j
