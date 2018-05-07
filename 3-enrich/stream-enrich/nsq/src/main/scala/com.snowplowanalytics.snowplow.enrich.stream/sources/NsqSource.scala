@@ -51,29 +51,26 @@ object NsqSource {
       case c: Nsq => c.success
       case _ => new IllegalArgumentException("Configured source/sink is not Nsq").failure
     }
-    goodSink = new ThreadLocal[Sink] {
-      override def initialValue = new NsqSink(nsqConfig, config.out.enriched)
-    }
-    badSink = new ThreadLocal[Sink] {
-      override def initialValue = new NsqSink(nsqConfig, config.out.bad)
-    }
-  } yield new NsqSource(goodSink, badSink, igluResolver, enrichmentRegistry, tracker, nsqConfig,
-    config.in.raw, config.out.partitionKey)
+  } yield new NsqSource(igluResolver, enrichmentRegistry, tracker, config, nsqConfig)
 }
 
 /** Source to read raw events from NSQ. */
 class NsqSource private (
-  goodSink: ThreadLocal[sinks.Sink],
-  badSink: ThreadLocal[sinks.Sink],
   igluResolver: Resolver,
   enrichmentRegistry: EnrichmentRegistry,
   tracker: Option[Tracker],
-  nsqConfig: Nsq,
-  topicName: String,
-  partitionKey: String
-) extends Source(goodSink, badSink, igluResolver, enrichmentRegistry, tracker, partitionKey) {
+  config: StreamsConfig,
+  nsqConfig: Nsq
+) extends Source(igluResolver, enrichmentRegistry, tracker, config.out.partitionKey) {
 
   override val MaxRecordSize = None
+
+  override val threadLocalGoodSink: ThreadLocal[Sink] = new ThreadLocal[Sink] {
+    override def initialValue: Sink = new NsqSink(nsqConfig, config.out.enriched)
+  }
+  override val threadLocalBadSink: ThreadLocal[Sink] = new ThreadLocal[Sink] {
+    override def initialValue: Sink = new NsqSink(nsqConfig, config.out.bad)
+  }
 
   /** Consumer will be started to wait new message. */
   override def run(): Unit = {
@@ -90,14 +87,14 @@ class NsqSource private (
 
     val errorCallback = new NSQErrorCallback {
       override def error(e: NSQException): Unit =
-        log.error(s"Exception while consuming topic $topicName", e)
+        log.error(s"Exception while consuming topic ${config.in.raw}", e)
     }
 
     // use NSQLookupd
     val lookup = new DefaultNSQLookup
     lookup.addLookupAddress(nsqConfig.lookupHost, nsqConfig.lookupPort)
     val consumer = new NSQConsumer(
-      lookup, topicName, nsqConfig.rawChannel, nsqCallback, new NSQConfig(),  errorCallback)
+      lookup, config.in.raw, nsqConfig.rawChannel, nsqCallback, new NSQConfig(), errorCallback)
     consumer.start()
   }
 }

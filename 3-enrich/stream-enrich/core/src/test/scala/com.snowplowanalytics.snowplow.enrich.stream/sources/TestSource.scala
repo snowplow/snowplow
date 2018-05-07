@@ -26,6 +26,7 @@ import iglu.client.Resolver
 import common.enrichments.EnrichmentRegistry
 import model.EnrichConfig
 import scalatracker.Tracker
+import sinks.Sink
 
 /**
  * Source to allow the testing framework to enrich events
@@ -37,9 +38,16 @@ class TestSource(
   igluResolver: Resolver,
   enrichmentRegistry: EnrichmentRegistry,
   tracker: Option[Tracker]
-) extends Source(null, null, igluResolver, enrichmentRegistry, tracker, "") {
+) extends Source(igluResolver, enrichmentRegistry, tracker, "") {
 
   override val MaxRecordSize = None
+
+  override val threadLocalGoodSink: ThreadLocal[Sink] = new ThreadLocal[Sink] {
+    override def initialValue: Sink = null
+  }
+  override val threadLocalBadSink: ThreadLocal[Sink] = new ThreadLocal[Sink] {
+    override def initialValue: Sink = null
+  }
 
   override def run(): Unit =
     throw new RuntimeException("run() should not be called on TestSource")

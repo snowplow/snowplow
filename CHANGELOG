@@ -1,3 +1,10 @@
+Release 105 Pompeii (2018-05-07)
+--------------------------------
+Stream Enrich: bump to 0.16.1 (#3748)
+Stream Enrich: ensure a one-to-one relationship between sink and record processor (#3745)
+Stream Enrich: force jackson-databind to 2.9.3 (#3744)
+Scala Common Enrich: update WeatherEnrichmentSpec (#3749)
+
 Release 104 Stoplesteinan (2018-04-30)
 --------------------------------------
 Common: remove trailing hyphen from CHANGELOG entry for R103 (#3731)
