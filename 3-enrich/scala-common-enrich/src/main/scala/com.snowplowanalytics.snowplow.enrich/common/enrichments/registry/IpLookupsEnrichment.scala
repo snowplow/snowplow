@@ -52,8 +52,7 @@ import utils.ScalazJson4sUtils
 object IpLookupsEnrichment extends ParseableEnrichment {
 
   implicit val formats = DefaultFormats
-  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "ip_lookups", "jsonschema", 2, 0)
-
+  val supportedSchema  = SchemaCriterion("com.snowplowanalytics.snowplow", "ip_lookups", "jsonschema", 2, 0)
 
   /**
    * Creates an IpLookupsEnrichment instance from a JValue.
