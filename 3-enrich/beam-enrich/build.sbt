@@ -16,6 +16,21 @@ lazy val compilerOptions = Seq(
   "-Xfuture"
 )
 
+lazy val resolutionRepos = Seq(
+  // For Snowplow
+  "Snowplow Analytics Maven releases repo" at "http://maven.snplow.com/releases/",
+  // For ua-parser
+  "user-agent-parser repo"                 at "https://clojars.org/repo/"
+)
+
+// we fork a JVM per test in order to not reuse enrichment registries
+import Tests._
+{
+  def oneJVMPerTest(tests: Seq[TestDefinition]) =
+    tests.map(t => new Group(t.name, Seq(t), SubProcess(ForkOptions()))).toSeq
+  testGrouping in Test := oneJVMPerTest((definedTests in Test).value)
+}
+
 lazy val commonSettings = Defaults.coreDefaultSettings ++ Seq(
   organization  := "com.snowplowanalytics",
   version       := "0.1.0-SNAPSHOT",
@@ -43,9 +58,9 @@ lazy val noPublishSettings = Seq(
   publishArtifact := false
 )
 
-lazy val scioVersion = "0.5.2"
-lazy val beamVersion = "2.4.0"
-lazy val sceVersion = "0.32.0"
+lazy val scioVersion = "0.5.7"
+lazy val beamVersion = "2.5.0"
+lazy val sceVersion = "0.35.0"
 lazy val scalaMacrosVersion = "2.1.0"
 lazy val slf4jVersion = "1.7.25"
 lazy val scalatestVersion = "3.0.5"

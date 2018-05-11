@@ -14,7 +14,7 @@
  */
 package com.snowplowanalytics.snowplow.enrich.beam
 
-import java.nio.file.Paths
+import java.nio.file.{Path, Paths}
 
 import com.spotify.scio.testing._
 import org.apache.commons.codec.binary.Base64
@@ -33,7 +33,7 @@ class EnrichSpec extends PipelineSpec {
     "ssc-0.1.0-stdout",
     s"beam-enrich-${generated.BuildInfo.version}",
     "alex 123",
-    "10.0.2.x",
+    "10.0.2.2",
     "1804954790",
     "3c1757544e39bca4",
     "26",
@@ -82,9 +82,10 @@ class EnrichSpec extends PipelineSpec {
 
   "Enrich" should "enrich a struct event" in {
     JobTest[Enrich.type]
-      .args("--input=in", "--output=out", "--bad=bad",
+      .args("--job-name=j", "--input=in", "--output=out", "--bad=bad",
         "--resolver=" + Paths.get(getClass.getResource("/iglu_resolver.json").toURI()))
       .input(PubsubIO("in"), raw.map(Base64.decodeBase64))
+      .distCache(DistCacheIO(""), List.empty[Either[String, Path]])
       .output(PubsubIO[String]("out"))(_ should satisfy { c: Iterable[String] =>
         c.size == 1 && expected.forall(c.head.contains)
       })
