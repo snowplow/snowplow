@@ -35,6 +35,7 @@ import iglu.client.Resolver
 
 object config {
   final case class EnrichConfig(
+    jobName: String,
     input: String,
     output: String,
     bad: String,
@@ -43,12 +44,38 @@ object config {
   )
   object EnrichConfig {
     def apply(args: Args): Validation[String, EnrichConfig] = for {
-      input <- args.optional("input").toSuccess("Missing `input` argument")
-      output <- args.optional("output").toSuccess("Missing `output` argument")
-      bad <- args.optional("bad").toSuccess("Missing `bad` argument")
-      resolver <- args.optional("resolver").toSuccess("Missing `resolver` argument")
-    } yield EnrichConfig(input, output, bad, resolver, args.optional("enrichments"))
+      _ <- if (args.optional("help").isDefined) helpString(configurations).failure else "".success
+      l <- configurations.collect {
+        case RequiredConfiguration(key, _) => args.optional(key).toSuccess(s"Missing `$key` argument").toValidationNel
+      }.sequenceU.leftMap(_.toList.mkString("\n"))
+      List(jobName, input, output, bad, resolver) = l
+    } yield EnrichConfig(jobName, input, output, bad, resolver, args.optional("enrichments"))
+
+    private val configurations = List(
+      RequiredConfiguration("job-name", "Name of the Dataflow job that will be launched"),
+      RequiredConfiguration("input", "Name of the subscription to the input topic projects/{project}/subscriptions/{subscription}"),
+      RequiredConfiguration("output", "Name of the output topic projects/{project}/topics/{topic}"),
+      RequiredConfiguration("bad", "Name of the bad topic projects/{project}/topics/{topic}"),
+      RequiredConfiguration("resolver", "Path to the resolver file"),
+      OptionalConfiguration("enrichments", "Path to the directory containing the enrichment files")
+    )
+
+    private def helpString(configs: List[Configuration]): String =
+      "Possible configuration are:\n" +
+        configs.map {
+          case OptionalConfiguration(key, desc) => s"--$key=VALUE, optional, $desc"
+          case RequiredConfiguration(key, desc) => s"--$key=VALUE, required, $desc"
+        }.mkString("\n") +
+        "\n--help, Display this message" +
+        "\nA full list of all the Beam CLI options can be found at: https://cloud.google.com/dataflow/pipelines/specifying-exec-params#setting-other-cloud-pipeline-options"
   }
+
+  sealed trait Configuration {
+    def key: String
+    def desc: String
+  }
+  final case class OptionalConfiguration(key: String, desc: String) extends Configuration
+  final case class RequiredConfiguration(key: String, desc: String) extends Configuration
 
   final case class ParsedEnrichConfig(
     input: String,
