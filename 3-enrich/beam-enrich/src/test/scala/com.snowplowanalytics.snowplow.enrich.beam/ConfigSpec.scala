@@ -29,28 +29,49 @@ import SpecHelpers._
 class ConfigSpec extends FreeSpec {
   "the config object should" - {
     "make an EnrichConfig smart ctor available" - {
+      "which fails if --job-name is not present" in {
+        EnrichConfig(Args(Array.empty)) shouldEqual Failure(
+          "Missing `job-name` argument\n" +
+          "Missing `input` argument\n" +
+          "Missing `output` argument\n" +
+          "Missing `bad` argument\n" +
+          "Missing `resolver` argument"
+        )
+      }
       "which fails if --input is not present" in {
-        EnrichConfig(Args(Array.empty)) shouldEqual Failure("Missing `input` argument")
+        EnrichConfig(Args(Array("--job-name=j"))) shouldEqual Failure(
+          "Missing `input` argument\n" +
+          "Missing `output` argument\n" +
+          "Missing `bad` argument\n" +
+          "Missing `resolver` argument"
+        )
       }
       "which fails if --output is not present" in {
-        EnrichConfig(Args(Array("--input=i"))) shouldEqual Failure("Missing `output` argument")
+        EnrichConfig(Args(Array("--job-name=j", "--input=i"))) shouldEqual Failure(
+          "Missing `output` argument\n" +
+          "Missing `bad` argument\n" +
+          "Missing `resolver` argument"
+        )
       }
       "which fails if --bad is not present" in {
-        EnrichConfig(Args(Array("--input=i", "--output=o"))) shouldEqual
-          Failure("Missing `bad` argument")
+        EnrichConfig(Args(Array("--job-name=j", "--input=i", "--output=o"))) shouldEqual Failure(
+          "Missing `bad` argument\n" +
+          "Missing `resolver` argument"
+        )
       }
       "which fails if --resolver is not present" in {
-        EnrichConfig(Args(Array("--input=i", "--output=o", "--bad=b"))) shouldEqual
+        EnrichConfig(Args(Array("--job-name=j", "--input=i", "--output=o", "--bad=b"))) shouldEqual
           Failure("Missing `resolver` argument")
       }
       "which succeeds otherwise" in {
-        EnrichConfig(Args(Array("--input=i", "--output=o", "--bad=b", "--resolver=r"))) shouldEqual
-          Success(EnrichConfig("i", "o", "b", "r", None))
+        EnrichConfig(Args(
+          Array("--job-name=j", "--input=i", "--output=o", "--bad=b", "--resolver=r"))) shouldEqual
+          Success(EnrichConfig("j", "i", "o", "b", "r", None))
       }
       "which succeeds if --enrichments is present" in {
-        val args = Args(
-          Array("--input=i", "--output=o", "--bad=b", "--resolver=r", "--enrichments=e"))
-        EnrichConfig(args) shouldEqual Success(EnrichConfig("i", "o", "b", "r", Some("e")))
+        val args = Args(Array(
+          "--job-name=j", "--input=i", "--output=o", "--bad=b", "--resolver=r", "--enrichments=e"))
+        EnrichConfig(args) shouldEqual Success(EnrichConfig("j", "i", "o", "b", "r", Some("e")))
       }
     }
 
