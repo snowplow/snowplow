@@ -42,6 +42,7 @@ lazy val root = project
       Dependencies.Libraries.postgresDriver,
       Dependencies.Libraries.mysqlConnector,
       Dependencies.Libraries.jaywayJsonpath,
+      Dependencies.Libraries.iabClient,
       // Scala
       Dependencies.Libraries.scalaz7,
       Dependencies.Libraries.snowplowRawEvent,
