@@ -44,6 +44,7 @@ import registry.{
   EventFingerprintEnrichmentConfig,
   HttpHeaderExtractorEnrichment,
   HttpHeaderExtractorEnrichmentConfig,
+  IabEnrichment,
   IpLookupsEnrichment,
   JavascriptScriptEnrichment,
   JavascriptScriptEnrichmentConfig,
@@ -170,6 +171,8 @@ object EnrichmentRegistry {
             SqlQueryEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "pii_enrichment_config") {
             PiiPseudonymizerEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+          } else if (nm == "iab_spiders_and_robots_enrichment") {
+            IabEnrichment.parse(enrichmentConfig, schemaKey, localMode).map((nm, _).some)
           } else {
             None.success // Enrichment is not recognized yet
           }
@@ -328,6 +331,15 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    */
   def getPiiPseudonymizerEnrichment: Option[PiiPseudonymizerEnrichment] =
     getEnrichment[PiiPseudonymizerEnrichment]("pii_enrichment_config")
+
+  /**
+   * Returns an Option boxing the IabEnrichment
+   * config value if present, or None if not
+   *
+   * @return Option boxing the IabEnrichment instance
+   */
+  def getIabEnrichment: Option[IabEnrichment] =
+    getEnrichment[IabEnrichment]("iab_spiders_and_robots_enrichment")
 
   /**
    * Returns an Option boxing an Enrichment

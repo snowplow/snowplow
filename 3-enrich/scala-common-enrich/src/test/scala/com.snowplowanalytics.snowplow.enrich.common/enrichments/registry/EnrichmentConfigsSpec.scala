@@ -21,8 +21,6 @@ package registry
 import java.net.URI
 import java.lang.{Byte => JByte}
 
-import com.snowplowanalytics.iglu.client.SchemaCriterion
-
 // Apache Commons Codec
 import org.apache.commons.codec.binary.Base64
 
@@ -35,6 +33,7 @@ import org.json4s.jackson.JsonMethods.parse
 
 // Iglu
 import com.snowplowanalytics.iglu.client.SchemaKey
+import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
 
 // Scala-Forex
 import com.snowplowanalytics.forex.oerclient.DeveloperAccount
@@ -346,6 +345,113 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
             (piiRes.fieldList(1).asInstanceOf[PiiJson].jsonPath must_== "$.emailAddress")
         }
       }
+    }
+  }
+
+  "Parsing an iab_spiders_and_robots_enrichment JSON" should {
+    "successfully construct an IabEnrichment case class" in {
+
+      val iabJson = parse("""{
+        "enabled": true,
+        "parameters": {
+          "ipFile": {
+            "database": "ip_exclude_current_cidr.txt",
+            "uri": "https://example.com/"
+          },
+          "excludeUseragentFile": {
+            "database": "exclude_current.txt",
+            "uri": "https://example.com"
+          },
+          "includeUseragentFile": {
+             "database": "include_current.txt",
+             "uri": "https://example.com/"
+          }
+        }
+      }""")
+
+      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow.enrichments",
+                                "iab_spiders_and_robots_enrichment",
+                                "jsonschema",
+                                "1-0-0")
+
+      val expected = IabEnrichment(
+        Some(
+          IabDatabase("ipFile",
+                      new URI("https://example.com/ip_exclude_current_cidr.txt"),
+                      "ip_exclude_current_cidr.txt")),
+        Some(
+          IabDatabase("excludeUseragentFile",
+                      new URI("https://example.com/exclude_current.txt"),
+                      "exclude_current.txt")),
+        Some(
+          IabDatabase("includeUseragentFile",
+                      new URI("https://example.com/include_current.txt"),
+                      "include_current.txt")),
+        true
+      )
+
+      val result = IabEnrichment.parse(iabJson, schemaKey, true)
+      result must beSuccessful(expected)
+
+    }
+
+    "fail if a database file is missing" in {
+
+      val iabJson = parse("""{
+        "enabled": true,
+        "parameters": {
+          "ipFile": {
+            "database": "ip_exclude_current_cidr.txt",
+            "uri": "https://example.com"
+          },
+          "excludeUseragentFile": {
+            "database": "DOES_NOT_EXIST",
+            "uri": "https://example.com"
+          },
+          "includeUseragentFile": {
+             "database": "include_current.txt",
+             "uri": "https://example.com"
+          }
+        }
+      }""")
+
+      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow.enrichments",
+                                "iab_spiders_and_robots_enrichment",
+                                "jsonschema",
+                                "1-0-0")
+
+      IabEnrichment.parse(iabJson, schemaKey, true) must throwA[NullPointerException]
+
+    }
+
+    "fail if the URI to a database file is invalid" in {
+
+      val iabJson = parse("""{
+        "enabled": true,
+        "parameters": {
+          "ipFile": {
+            "database": "ip_exclude_current_cidr.txt",
+            "uri": "https://example.com"
+          },
+          "excludeUseragentFile": {
+            "database": "exclude_current.txt",
+            "uri": "https://example.com"
+          },
+          "includeUseragentFile": {
+             "database": "include_current.txt",
+             "uri": "invalid\\uri"
+          }
+        }
+      }""")
+
+      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow.enrichments",
+                                "iab_spiders_and_robots_enrichment",
+                                "jsonschema",
+                                "1-0-0")
+
+      val result = IabEnrichment.parse(iabJson, schemaKey, true)
+      result must beFailing
+
     }
   }
 }
