@@ -9,9 +9,9 @@ aws:
       jsonpath_assets: # If you have defined your own JSON Schemas, add the s3:// path to your own JSON Path files in your own bucket here
       log: ADD HERE
       raw:
-        in:                  # This is a YAML array of one or more in buckets - you MUST use hyphens before each entry in the array, as below
-          - ADD HERE         # e.g. s3://my-old-collector-bucket
-          - ADD HERE         # e.g. s3://my-new-collector-bucket
+        in:                  # This is a YAML array of one or more in bucket log locations - you MUST use hyphens before each entry in the array, as below
+          - ADD HERE         # e.g. s3://my-old-collector-bucket/
+          - ADD HERE         # e.g. s3://my-new-collector-bucket/resources/environments/logs/publish/e-*******  # e-******* represents the Elastic Beanstalk Environment ID
         processing: ADD HERE
         archive: ADD HERE    # e.g. s3://my-archive-bucket/raw
       enriched:
