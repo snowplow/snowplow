@@ -46,7 +46,7 @@ object CljTomcatUnbounceEventSpec {
     "clj-1.1.0-tom-0.2.0",
     etlVersion,
     null, // No user_id set
-    "430b08dcf9b27c2df05c5cffea5878364b362ff7",
+    "1f25c6b95380e6f125f9c2bf2e9b9553fb2bd8d9",
     null,
     null,
     null,

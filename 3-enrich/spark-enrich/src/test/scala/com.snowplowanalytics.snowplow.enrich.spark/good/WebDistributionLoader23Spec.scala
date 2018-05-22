@@ -37,7 +37,7 @@ object WebDistributionLoader23Spec {
     "tsv", // "collector version"
     etlVersion,
     null,
-    "d6a4eed80594f0806043581292d64483ebc5d34f",
+    "104851162466b684c03faccae36f42622bead233",
     null,
     null,
     null,

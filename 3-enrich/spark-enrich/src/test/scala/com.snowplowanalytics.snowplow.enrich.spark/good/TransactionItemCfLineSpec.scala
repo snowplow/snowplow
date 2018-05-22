@@ -36,7 +36,7 @@ object TransactionItemCfLineSpec {
     "cloudfront",
     etlVersion,
     null, // No user_id set
-    "d6a4eed80594f0806043581292d64483ebc5d34f",
+    "104851162466b684c03faccae36f42622bead233",
     null, // Not set (legacy input line)
     "a279872d76480afb",
     "1",

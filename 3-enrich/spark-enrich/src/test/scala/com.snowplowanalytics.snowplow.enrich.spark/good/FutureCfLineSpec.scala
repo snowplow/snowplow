@@ -37,7 +37,7 @@ object FutureCfLineSpec {
     "cloudfront",
     etlVersion,
     null, // No user_id set
-    "d6a4eed80594f0806043581292d64483ebc5d34f",
+    "104851162466b684c03faccae36f42622bead233",
     "2071613637",
     "44082d3af0e30126",
     "2",

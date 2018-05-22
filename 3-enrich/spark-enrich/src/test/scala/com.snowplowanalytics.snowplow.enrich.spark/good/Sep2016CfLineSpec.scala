@@ -37,7 +37,7 @@ object Sep2016CfLineSpec {
     "cloudfront",
     etlVersion,
     null, // No user_id set
-    "d6a4eed80594f0806043581292d64483ebc5d34f",
+    "104851162466b684c03faccae36f42622bead233",
     null, // no user fp
     null, // no domain user id
     null, // no domain session id

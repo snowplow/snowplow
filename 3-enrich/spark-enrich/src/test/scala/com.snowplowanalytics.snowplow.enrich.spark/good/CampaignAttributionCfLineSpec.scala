@@ -36,7 +36,7 @@ object CampaignAttributionCfLineSpec {
     "cloudfront",
     etlVersion,
     null, // No user_id set
-    "d6a4eed80594f0806043581292d64483ebc5d34f",
+    "104851162466b684c03faccae36f42622bead233",
     "1202972880",
     "81aa96d6d6ee6ad4",
     "1",

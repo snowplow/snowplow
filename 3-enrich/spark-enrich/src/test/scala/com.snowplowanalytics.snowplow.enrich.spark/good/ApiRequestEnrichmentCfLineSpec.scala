@@ -38,7 +38,7 @@ object ApiRequestEnrichmentCfLineSpec {
     "cloudfront",
     etlVersion,
     null, // No user_id set
-    "2bb78eff3fc1f7004b982646187c6db0cb8931da",
+    "17803d07577023208861c69cbccbdfc0a041b06c",
     "9795bd0203804cd1",
     "43",
     null, // No network_userid set
