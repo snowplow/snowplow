@@ -64,6 +64,7 @@ object KafkaSource {
       .validation
   } yield new KafkaSource(goodProducer, piiProducer, badProducer, igluResolver, enrichmentRegistry, tracker, config, kafkaConfig)
 }
+
 /** Source to read events from a Kafka topic */
 class KafkaSource private (
   goodProducer: KafkaProducer[String, String],
@@ -104,7 +105,7 @@ class KafkaSource private (
     consumer.subscribe(List(config.in.raw).asJava)
     while (true) {
       val recordValues = consumer
-        .poll(100)    // Wait 100 ms if data is not available
+        .poll(100) // Wait 100 ms if data is not available
         .asScala
         .toList
         .map(_.value) // Get the values
@@ -114,7 +115,8 @@ class KafkaSource private (
   }
 
   private def createConsumer(
-      brokers: String, groupId: String): KafkaConsumer[String, Array[Byte]] = {
+    brokers: String,
+    groupId: String): KafkaConsumer[String, Array[Byte]] = {
     val properties = createProperties(brokers, groupId)
     new KafkaConsumer[String, Array[Byte]](properties)
   }
@@ -127,10 +129,8 @@ class KafkaSource private (
     props.put("auto.commit.interval.ms", "1000")
     props.put("auto.offset.reset", "earliest")
     props.put("session.timeout.ms", "30000")
-    props.put("key.deserializer",
-      "org.apache.kafka.common.serialization.StringDeserializer")
-    props.put("value.deserializer",
-      "org.apache.kafka.common.serialization.ByteArrayDeserializer")
+    props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer")
+    props.put("value.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer")
     props
   }
 }

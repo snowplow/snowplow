@@ -25,7 +25,7 @@ import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets.UTF_8
 
 import scala.collection.JavaConverters._
-import scala.concurrent.{Future, Await}
+import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.util.Try
@@ -73,7 +73,7 @@ object KinesisSink {
   private def streamExists(client: AmazonKinesis, name: String): \/[Throwable, Boolean] = {
     val existsTry = Try {
       val describeStreamResult = client.describeStream(name)
-      val status = describeStreamResult.getStreamDescription.getStreamStatus
+      val status               = describeStreamResult.getStreamDescription.getStreamStatus
       status == "ACTIVE" || status == "UPDATING"
     }
     utils.toEither(existsTry)
@@ -92,13 +92,13 @@ class KinesisSink(
   /** Kinesis records must not exceed 1MB */
   private val MaxBytes = 1000000L
 
-  private val maxBackoff = backoffPolicy.maxBackoff
-  private val minBackoff = backoffPolicy.minBackoff
+  private val maxBackoff      = backoffPolicy.maxBackoff
+  private val minBackoff      = backoffPolicy.minBackoff
   private val randomGenerator = new java.util.Random()
 
-  val ByteThreshold = buffer.byteLimit
+  val ByteThreshold   = buffer.byteLimit
   val RecordThreshold = buffer.recordLimit
-  val TimeThreshold = buffer.timeLimit
+  val TimeThreshold   = buffer.timeLimit
   var nextRequestTime = 0L
 
   /**
@@ -209,13 +209,13 @@ class KinesisSink(
    *
    * @param batch Events to send
    */
-  def sendBatch(batch: List[(ByteBuffer, String)]): Unit = {
+  def sendBatch(batch: List[(ByteBuffer, String)]): Unit =
     if (!batch.isEmpty) {
       log.info(s"Writing ${batch.size} records to Kinesis stream $streamName")
-      var unsentRecords = batch
-      var backoffTime = minBackoff
+      var unsentRecords         = batch
+      var backoffTime           = minBackoff
       var sentBatchSuccessfully = false
-      var attemptNumber = 0
+      var attemptNumber         = 0
       while (!sentBatchSuccessfully) {
         attemptNumber += 1
 
@@ -224,9 +224,10 @@ class KinesisSink(
         } yield p
 
         try {
-          val results = Await.result(putData, 10.seconds).getRecords.asScala.toList
+          val results      = Await.result(putData, 10.seconds).getRecords.asScala.toList
           val failurePairs = unsentRecords zip results filter { _._2.getErrorMessage != null }
-          log.info(s"Successfully wrote ${unsentRecords.size-failurePairs.size} out of ${unsentRecords.size} records")
+          log.info(
+            s"Successfully wrote ${unsentRecords.size - failurePairs.size} out of ${unsentRecords.size} records")
           if (failurePairs.nonEmpty) {
             val (failedRecords, failedResults) = failurePairs.unzip
             unsentRecords = failedRecords
@@ -234,13 +235,20 @@ class KinesisSink(
             backoffTime = getNextBackoff(backoffTime)
             log.error(s"Retrying all failed records in $backoffTime milliseconds...")
 
-            val err = s"Failed to send ${failurePairs.size} events"
-            val putSize: Long = unsentRecords.foldLeft(0L)((a,b) => a + b._1.capacity)
+            val err           = s"Failed to send ${failurePairs.size} events"
+            val putSize: Long = unsentRecords.foldLeft(0L)((a, b) => a + b._1.capacity)
 
             tracker match {
-              case Some(t) => SnowplowTracking.sendFailureEvent(t, "PUT Failure", err, streamName,
-                "snowplow-stream-enrich", attemptNumber.toLong, putSize)
-              case _       => None
+              case Some(t) =>
+                SnowplowTracking.sendFailureEvent(
+                  t,
+                  "PUT Failure",
+                  err,
+                  streamName,
+                  "snowplow-stream-enrich",
+                  attemptNumber.toLong,
+                  putSize)
+              case _ => None
             }
 
             Thread.sleep(backoffTime)
@@ -253,30 +261,37 @@ class KinesisSink(
             log.error(s"Writing failed.", f)
             log.error(s"  + Retrying in $backoffTime milliseconds...")
 
-            val putSize: Long = unsentRecords.foldLeft(0L)((a,b) => a + b._1.capacity)
+            val putSize: Long = unsentRecords.foldLeft(0L)((a, b) => a + b._1.capacity)
 
             tracker match {
-              case Some(t) => SnowplowTracking.sendFailureEvent(t, "PUT Failure", f.toString,
-                streamName, "snowplow-stream-enrich", attemptNumber.toLong, putSize)
-              case _       => None
+              case Some(t) =>
+                SnowplowTracking.sendFailureEvent(
+                  t,
+                  "PUT Failure",
+                  f.toString,
+                  streamName,
+                  "snowplow-stream-enrich",
+                  attemptNumber.toLong,
+                  putSize)
+              case _ => None
             }
 
             Thread.sleep(backoffTime)
         }
       }
     }
-  }
 
   private def multiPut(name: String, batch: List[(ByteBuffer, String)]): Future[PutRecordsResult] =
     Future {
       val putRecordsRequest = {
         val prr = new PutRecordsRequest()
         prr.setStreamName(name)
-        val putRecordsRequestEntryList = batch.map { case (b, s) =>
-          val prre = new PutRecordsRequestEntry()
-          prre.setPartitionKey(s)
-          prre.setData(b)
-          prre
+        val putRecordsRequestEntryList = batch.map {
+          case (b, s) =>
+            val prre = new PutRecordsRequestEntry()
+            prre.setPartitionKey(s)
+            prre.setData(b)
+            prre
         }
         prr.setRecords(putRecordsRequestEntryList.asJava)
         prr
@@ -284,19 +299,20 @@ class KinesisSink(
       client.putRecords(putRecordsRequest)
     }
 
-  private[sinks] def getErrorsSummary(badResponses: List[PutRecordsResultEntry]): Map[String, (Long, String)] = {
-    badResponses.foldLeft(Map[String, (Long, String)]())((counts, r) => if (counts.contains(r.getErrorCode)) {
-      counts + (r.getErrorCode -> (counts(r.getErrorCode)._1 + 1 -> r.getErrorMessage))
-    } else {
-      counts + (r.getErrorCode -> ((1, r.getErrorMessage)))
+  private[sinks] def getErrorsSummary(
+    badResponses: List[PutRecordsResultEntry]): Map[String, (Long, String)] =
+    badResponses.foldLeft(Map[String, (Long, String)]())((counts, r) =>
+      if (counts.contains(r.getErrorCode)) {
+        counts + (r.getErrorCode -> (counts(r.getErrorCode)._1 + 1 -> r.getErrorMessage))
+      } else {
+        counts + (r.getErrorCode -> ((1, r.getErrorMessage)))
     })
-  }
 
-  private[sinks] def logErrorsSummary(errorsSummary: Map[String, (Long, String)]): Unit = {
+  private[sinks] def logErrorsSummary(errorsSummary: Map[String, (Long, String)]): Unit =
     for ((errorCode, (count, sampleMessage)) <- errorsSummary) {
-      log.error(s"$count records failed with error code ${errorCode}. Example error message: ${sampleMessage}")
+      log.error(
+        s"$count records failed with error code ${errorCode}. Example error message: ${sampleMessage}")
     }
-  }
 
   /**
    * How long to wait before sending the next request
@@ -306,7 +322,7 @@ class KinesisSink(
    */
   private def getNextBackoff(lastBackoff: Long): Long = {
     val offset: Long = (randomGenerator.nextDouble() * (lastBackoff * 3 - minBackoff)).toLong
-    val sum: Long = minBackoff + offset
+    val sum: Long    = minBackoff + offset
     sum min maxBackoff
   }
 }

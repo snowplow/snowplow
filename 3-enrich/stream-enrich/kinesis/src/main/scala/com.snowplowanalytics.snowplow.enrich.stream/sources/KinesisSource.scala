@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright (c) 2013-2018 Snowplow Analytics Ltd.
  * All rights reserved.
  *
@@ -157,8 +157,8 @@ class KinesisSource private (
     private var kinesisShardId: String = _
 
     // Backoff and retry settings.
-    private val BACKOFF_TIME_IN_MILLIS = 3000L
-    private val NUM_RETRIES = 10
+    private val BACKOFF_TIME_IN_MILLIS     = 3000L
+    private val NUM_RETRIES                = 10
     private val CHECKPOINT_INTERVAL_MILLIS = 1000L
 
     override def initialize(shardId: String) = {
@@ -166,8 +166,9 @@ class KinesisSource private (
       this.kinesisShardId = shardId
     }
 
-    override def processRecords(records: List[Record],
-        checkpointer: IRecordProcessorCheckpointer) = {
+    override def processRecords(
+      records: List[Record],
+      checkpointer: IRecordProcessorCheckpointer) = {
 
       if (!records.isEmpty) {
         log.info(s"Processing ${records.size} records from $kinesisShardId")
@@ -179,7 +180,7 @@ class KinesisSource private (
       }
     }
 
-    private def processRecordsWithRetries(records: List[Record]): Boolean = {
+    private def processRecordsWithRetries(records: List[Record]): Boolean =
       try {
         enrichAndStoreEvents(records.map(_.getData.array).toList)
       } catch {
@@ -188,10 +189,8 @@ class KinesisSource private (
           log.error(s"Caught throwable while processing records $records", e)
           false
       }
-    }
 
-    override def shutdown(checkpointer: IRecordProcessorCheckpointer,
-        reason: ShutdownReason) = {
+    override def shutdown(checkpointer: IRecordProcessorCheckpointer, reason: ShutdownReason) = {
       log.info(s"Shutting down record processor for shard: $kinesisShardId")
       if (reason == ShutdownReason.TERMINATE) {
         checkpoint(checkpointer)
@@ -201,7 +200,7 @@ class KinesisSource private (
     private def checkpoint(checkpointer: IRecordProcessorCheckpointer) = {
       log.info(s"Checkpointing shard $kinesisShardId")
       breakable {
-        for (i <- 0 to NUM_RETRIES-1) {
+        for (i <- 0 to NUM_RETRIES - 1) {
           try {
             checkpointer.checkpoint()
             break
@@ -211,14 +210,18 @@ class KinesisSource private (
               break
             case e: ThrottlingException =>
               if (i >= (NUM_RETRIES - 1)) {
-                log.error(s"Checkpoint failed after ${i+1} attempts.", e)
+                log.error(s"Checkpoint failed after ${i + 1} attempts.", e)
               } else {
-                log.info(s"Transient issue when checkpointing - attempt ${i+1} of "
-                  + NUM_RETRIES, e)
+                log.info(
+                  s"Transient issue when checkpointing - attempt ${i + 1} of "
+                    + NUM_RETRIES,
+                  e)
               }
             case e: InvalidStateException =>
-              log.error("Cannot save checkpoint to the DynamoDB table used by " +
-                "the Amazon Kinesis Client Library.", e)
+              log.error(
+                "Cannot save checkpoint to the DynamoDB table used by " +
+                  "the Amazon Kinesis Client Library.",
+                e)
               break
           }
           Thread.sleep(BACKOFF_TIME_IN_MILLIS)
