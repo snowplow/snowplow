@@ -157,17 +157,17 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
           )
         ),
         false,
-        PiiStrategyPseudonymize("SHA-256", hashFunction = (b: Array[Byte]) => DigestUtils.sha256Hex(b))
+        PiiStrategyPseudonymize("SHA-256", hashFunction = DigestUtils.sha256Hex(_: Array[Byte]), "pepper123")
       )
     )
     val output   = commonSetup(enrichmentMap = enrichmentMap)
     val expected = new EnrichedEvent()
     expected.app_id           = "ads"
-    expected.user_id          = "4b2d8785b49bad23638b17d8db76857a79bf79441241a78a97d88cc64bbf766e"
-    expected.user_ipaddress   = "36595ea260a82b7e2d7cf44121892bf31031a9c27077d8c802454464178456c2"
+    expected.user_id          = "7d8a4beae5bc9d314600667d2f410918f9af265017a6ade99f60a9c8f3aac6e9"
+    expected.user_ipaddress   = "dd9720903c89ae891ed5c74bb7a9f2f90f6487927ac99afe73b096ad0287f3f5"
     expected.ip_domain        = null
     expected.user_fingerprint = "27abac60dff12792c6088b8d00ce7f25c86b396b8c3740480cd18e21068ecff4"
-    expected.geo_city         = null
+    expected.geo_city         = null 
     expected.etl_tstamp       = "1970-01-18 08:40:00.000"
     expected.collector_tstamp = "2017-07-14 03:39:39.000"
     output.size must_== 1
@@ -207,7 +207,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
           )
         ),
         false,
-        PiiStrategyPseudonymize("SHA-256", hashFunction = (b: Array[Byte]) => DigestUtils.sha256Hex(b))
+        PiiStrategyPseudonymize("SHA-256", hashFunction = DigestUtils.sha256Hex(_: Array[Byte]), "pepper123")
       )
     )
 
@@ -229,7 +229,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
         val contextJ         = parse(enrichedEvent.contexts)
         val unstructEventJ   = parse(enrichedEvent.unstruct_event)
         (((contextJ \ "data")(0) \ "data" \ "emailAddress")
-          .extract[String] must_== "3571b422ecb9ac85cb654b2fce521ae351d4695b0fb788aac75caf724e7881f0") and
+          .extract[String] must_== "72f323d5359eabefc69836369e4cabc6257c43ab6419b05dfb2211d0e44284c6") and
           (((contextJ \ "data")(0) \ "data" \ "emailAddress2").extract[String] must_== "bob@acme.com") and
           (((contextJ \ "data")(1) \ "data" \ "emailAddress").extract[String] must_== "tim@acme.com") and
           (((contextJ \ "data")(1) \ "data" \ "emailAddress2").extract[String] must_== "tom@acme.com") and
@@ -238,11 +238,11 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
           // (unless that is specified in jsonpath)
           (((contextJ \ "data")(1) \ "data" \ "data" \ "emailAddress").extract[String] must_== "jim@acme.com") and
           (((contextJ \ "data")(1) \ "data" \ "data" \ "emailAddress2")
-            .extract[String] must_== "405ac8384fa984f787f9486daf34d84d98f20c4d6a12e2cc4ed89be3bcb06ad6") and
+            .extract[String] must_== "1c6660411341411d5431669699149283d10e070224be4339d52bbc4b007e78c5") and
           (((contextJ \ "data")(1) \ "data" \ "schema")
             .extract[String] must_== "iglu:com.acme/email_sent/jsonschema/1-0-0") and
           (((unstructEventJ \ "data") \ "data" \ "ip")
-            .extract[String] must_== "b5814ada7bb3abb2ed7f8713433a60ed3b3780f7d98a95c936cc62abb16f316f") and
+            .extract[String] must_== "269c433d0cc00395e3bc5fe7f06c5ad822096a38bec2d8a005367b52c0dfb428") and
           (((unstructEventJ \ "data") \ "data" \ "myVar2").extract[String] must_== "awesome")
     }
   }
@@ -259,7 +259,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
           )
         ),
         false,
-        PiiStrategyPseudonymize("SHA-256", hashFunction = (b: Array[Byte]) => DigestUtils.sha256Hex(b))
+        PiiStrategyPseudonymize("SHA-256", hashFunction = DigestUtils.sha256Hex(_: Array[Byte]), "pepper123")
       )
     )
 
@@ -298,7 +298,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
           )
         ),
         false,
-        PiiStrategyPseudonymize("SHA-256", hashFunction = (b: Array[Byte]) => DigestUtils.sha256Hex(b))
+        PiiStrategyPseudonymize("SHA-256", hashFunction = DigestUtils.sha256Hex(_: Array[Byte]), "pepper123")
       )
     )
 
@@ -319,9 +319,9 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
         implicit val formats = org.json4s.DefaultFormats
         val contextJ         = parse(enrichedEvent.contexts)
         (((contextJ \ "data")(0) \ "data" \ "emailAddress")
-          .extract[String] must_== "3571b422ecb9ac85cb654b2fce521ae351d4695b0fb788aac75caf724e7881f0") and
+          .extract[String] must_== "72f323d5359eabefc69836369e4cabc6257c43ab6419b05dfb2211d0e44284c6") and
           (((contextJ \ "data")(0) \ "data" \ "emailAddress2")
-            .extract[String] must_== "405ac8384fa984f787f9486daf34d84d98f20c4d6a12e2cc4ed89be3bcb06ad6") and
+            .extract[String] must_== "1c6660411341411d5431669699149283d10e070224be4339d52bbc4b007e78c5") and
           (((contextJ \ "data")(1) \ "data" \ "emailAddress").extract[String] must_== "tim@acme.com") and
           (((contextJ \ "data")(1) \ "data" \ "emailAddress2").extract[String] must_== "tom@acme.com")
     }
@@ -339,7 +339,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
           )
         ),
         false,
-        PiiStrategyPseudonymize("SHA-256", hashFunction = (b: Array[Byte]) => DigestUtils.sha256Hex(b))
+        PiiStrategyPseudonymize("SHA-256", hashFunction = DigestUtils.sha256Hex(_: Array[Byte]), "pepper123")
       )
     )
     val output   = commonSetup(enrichmentMap = enrichmentMap)
@@ -359,11 +359,11 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
         implicit val formats = org.json4s.DefaultFormats
         val contextJ         = parse(enrichedEvent.contexts)
         (((contextJ \ "data")(0) \ "data" \ "emailAddress")
-          .extract[String] must_== "3571b422ecb9ac85cb654b2fce521ae351d4695b0fb788aac75caf724e7881f0") and
+          .extract[String] must_== "72f323d5359eabefc69836369e4cabc6257c43ab6419b05dfb2211d0e44284c6") and
           (((contextJ \ "data")(0) \ "data" \ "emailAddress2")
             .extract[String] must_== "bob@acme.com") and
           (((contextJ \ "data")(1) \ "data" \ "emailAddress")
-            .extract[String] must_== "663ea32adb6f26f7a025e3b6c850294d0d7755c3010c5e7a5fd690cfa5d2938f") and
+            .extract[String] must_== "09e4160b10703767dcb28d834c1905a182af0f828d6d3512dd07d466c283c840") and
           (((contextJ \ "data")(1) \ "data" \ "emailAddress2").extract[String] must_== "tom@acme.com")
     }
   }
@@ -380,7 +380,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
           )
         ),
         false,
-        PiiStrategyPseudonymize("SHA-256", hashFunction = (b: Array[Byte]) => DigestUtils.sha256Hex(b))
+        PiiStrategyPseudonymize("SHA-256", hashFunction = DigestUtils.sha256Hex(_: Array[Byte]), "pepper123")
       )
     )
     val output   = commonSetup(enrichmentMap = enrichmentMap)
@@ -435,8 +435,8 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
             jsonPath        = "$.ip"
           )
         ),
-        false,
-        PiiStrategyPseudonymize("SHA-256", hashFunction = (b: Array[Byte]) => DigestUtils.sha256Hex(b))
+        true,
+        PiiStrategyPseudonymize("SHA-256", hashFunction = DigestUtils.sha256Hex(_: Array[Byte]), "pepper123")
       )
     )
     val output   = commonSetup(enrichmentMap = enrichmentMap)
