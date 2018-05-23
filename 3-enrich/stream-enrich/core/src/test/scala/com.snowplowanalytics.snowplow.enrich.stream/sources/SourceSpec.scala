@@ -52,7 +52,14 @@ class SourceSpec extends Specification {
     "create a bad row JSON from an oversized success" in {
       val actual = parse(Source.oversizedSuccessToFailure("abc", 2))
       actual \ "size" must_== JInt(3)
-      actual \ "errors" must_== JArray(List(JObject(List(("level",JString("error")), ("message",JString("Enriched event size of 3 bytes is greater than allowed maximum of 2"))))))
+      actual \ "errors" must_== JArray(
+        List(
+          JObject(
+            List(
+              ("level", JString("error")),
+              (
+                "message",
+                JString("Enriched event size of 3 bytes is greater than allowed maximum of 2"))))))
     }
   }
 }

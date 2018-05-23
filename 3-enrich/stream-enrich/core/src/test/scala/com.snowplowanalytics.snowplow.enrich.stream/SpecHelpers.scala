@@ -36,14 +36,15 @@ object SpecHelpers {
 
 
   implicit def stringToJustString(s: String) = JustString(s)
-  implicit def regexToJustRegex(r: Regex) = JustRegex(r)
+  implicit def regexToJustRegex(r: Regex)    = JustRegex(r)
 
   /**
    * The Stream Enrich being used
    */
   val EnrichVersion = s"stream-enrich-${generated.BuildInfo.version}-common-${generated.BuildInfo.commonEnrichVersion}"
 
-  val TimestampRegex = "[0-9]{1,4}-[0-9]{1,2}-[0-9]{1,2} [0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}(\\.\\d{3})?".r
+  val TimestampRegex =
+    "[0-9]{1,4}-[0-9]{1,2}-[0-9]{1,2} [0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}(\\.\\d{3})?".r
 
   /**
    * The regexp pattern for a Type 4 UUID.
@@ -71,7 +72,8 @@ object SpecHelpers {
    * User-friendly wrapper to instantiate
    * a BeFieldEqualTo Matcher.
    */
-  def beFieldEqualTo(expected: StringOrRegex, withIndex: Int) = new BeFieldEqualTo(expected, withIndex)
+  def beFieldEqualTo(expected: StringOrRegex, withIndex: Int) =
+    new BeFieldEqualTo(expected, withIndex)
 
   /**
    * A Specs2 matcher to check if a EnrichedEvent
@@ -89,7 +91,7 @@ object SpecHelpers {
     private val field = OutputFields(index)
 
     private val regexp = expected match {
-      case JustRegex(_) => true
+      case JustRegex(_)  => true
       case JustString(_) => false
     }
 
@@ -103,8 +105,7 @@ object SpecHelpers {
           .format(if (regexp) "match" else "equal")
 
 
-      result(equalsOrMatches(actual.value, expected),
-        successMsg, failureMsg, actual)
+      result(equalsOrMatches(actual.value, expected), successMsg, failureMsg, actual)
     }
 
     /**
@@ -118,8 +119,8 @@ object SpecHelpers {
      * @return true if the actual equals or
      * matches expected, false otherwise
      */
-    private def equalsOrMatches( actual: String, expected: StringOrRegex): Boolean = expected match {
-      case JustRegex(r) => r.pattern.matcher(actual).matches
+    private def equalsOrMatches(actual: String, expected: StringOrRegex): Boolean = expected match {
+      case JustRegex(r)  => r.pattern.matcher(actual).matches
       case JustString(s) => actual == s
     }
 
@@ -290,7 +291,7 @@ object SpecHelpers {
         |}
       |}
     |]
-  |}""".stripMargin.replaceAll("[\n\r]","").stripMargin.replaceAll("[\n\r]","")
+  |}""".stripMargin.replaceAll("[\n\r]", "").stripMargin.replaceAll("[\n\r]", "")
 
   val enrichmentRegistry = (for {
     registryConfig <- JsonUtils.extractJson("", enrichmentConfig)
