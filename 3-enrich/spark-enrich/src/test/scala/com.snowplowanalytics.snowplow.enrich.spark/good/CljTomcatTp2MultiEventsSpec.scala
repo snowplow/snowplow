@@ -386,7 +386,7 @@ class CljTomcatTp2MultiEventsSpec extends Specification with EnrichJobSpec {
   override def appName = "clj-tomcat-tp2-multi-events"
   sequential
   "A job which processes a Clojure-Tomcat file containing a POST raw event representing " +
-  "3 events" should {
+    "3 events" should {
     runEnrichJob(CljTomcatTp2MultiEventsSpec.lines, "clj-tomcat", "2", true, List("geo"))
 
     "correctly output 1 page view and 2 structured events" in {

@@ -96,7 +96,7 @@ object PagePingCfLineSpec {
     null, //
     null, //
     null, //
-    "21",  // Page ping fields are set
+    "21", // Page ping fields are set
     "214", //
     "251", //
     "517", //

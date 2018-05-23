@@ -90,12 +90,12 @@ object CurrencyConversionTransactionItemSpec {
     null, //
     null, //
     null, //
-    "order-123",    // Transaction item fields are set
-    "PBZ1001",      //
+    "order-123", // Transaction item fields are set
+    "PBZ1001", //
     "Blue t-shirt", //
-    "APPAREL",      //
-    "2000",         //
-    "2",            //
+    "APPAREL", //
+    "2000", //
+    "2", //
     null, // Page ping fields are empty
     null, //
     null, //
@@ -135,9 +135,9 @@ object CurrencyConversionTransactionItemSpec {
     null,
     null,
     null,
-    "GBP",     // ti_currency
+    "GBP", // ti_currency
     "2501.12", // ti_price_base
-    "EUR",     // base_currency
+    "EUR", // base_currency
     null,
     null,
     null,
@@ -155,8 +155,13 @@ class CurrencyConversionTransactionItemSpec extends Specification with EnrichJob
   // Only run currency enrichment tests if the credentials exist in an environment variable
   if (sys.env.get("OER_KEY").isDefined) {
     "A job which processes a CloudFront file containing 1 valid transaction item" should {
-      runEnrichJob(CurrencyConversionTransactionItemSpec.lines,
-        "cloudfront", "1", false, List("geo"), true)
+      runEnrichJob(
+        CurrencyConversionTransactionItemSpec.lines,
+        "cloudfront",
+        "1",
+        false,
+        List("geo"),
+        true)
 
       "correctly output 1 transaction item" in {
         val Some(goods) = readPartFile(dirs.output)
@@ -172,6 +177,7 @@ class CurrencyConversionTransactionItemSpec extends Specification with EnrichJob
       }
     }
   } else {
-    println("WARNING: Skipping CurrencyConversionTransactionItemSpec as no OER_KEY environment variable was found for authentication")
+    println(
+      "WARNING: Skipping CurrencyConversionTransactionItemSpec as no OER_KEY environment variable was found for authentication")
   }
 }

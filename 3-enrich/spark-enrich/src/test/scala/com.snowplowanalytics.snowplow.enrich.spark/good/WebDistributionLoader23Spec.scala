@@ -144,8 +144,12 @@ class WebDistributionLoader23Spec extends Specification with EnrichJobSpec {
   override def appName = "web-distribution-loader-23"
   sequential
   "A job which processes a CloudFront web distribution log file" should {
-    runEnrichJob(WebDistributionLoader23Spec.lines, "tsv/com.amazon.aws.cloudfront/wd_access_log",
-      "1", false, List("geo"))
+    runEnrichJob(
+      WebDistributionLoader23Spec.lines,
+      "tsv/com.amazon.aws.cloudfront/wd_access_log",
+      "1",
+      false,
+      List("geo"))
 
     "correctly output 1 page ping" in {
       val Some(goods) = readPartFile(dirs.output)

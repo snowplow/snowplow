@@ -24,7 +24,7 @@ import org.specs2.specification.Step
  * TODO: To remove once specs2 has been updated.
  */
 trait BeforeAfterAll extends SpecificationLike {
-  override def map(fragments: =>Fragments) =
+  override def map(fragments: => Fragments) =
     Step(beforeAll) ^ fragments ^ Step(afterAll)
 
   def beforeAll(): Unit

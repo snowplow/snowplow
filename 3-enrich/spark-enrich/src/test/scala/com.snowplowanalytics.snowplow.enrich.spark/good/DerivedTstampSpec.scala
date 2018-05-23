@@ -163,7 +163,7 @@ class DerivedTstampSpec extends Specification with EnrichJobSpec {
   override def appName = "derive-tstamp"
   sequential
   "A job which processes a CloudFront file containing 1 valid page ping with campaign attribution" +
-  " fields" should {
+    " fields" should {
     runEnrichJob(DerivedTstampSpec.lines, "cloudfront", "1", false, List("geo"), false, true)
 
     "correctly output 1 page ping" in {

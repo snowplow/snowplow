@@ -39,7 +39,8 @@ object LzoGoogleAnalyticsEventSpec {
   collectorPayload.setPath("/com.google.analytics/v1")
   collectorPayload.setHostname("localhost")
   collectorPayload.setBody(payloadData)
-  collectorPayload.setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.8 Safari/537.36")
+  collectorPayload.setUserAgent(
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.8 Safari/537.36")
   collectorPayload.setNetworkUserId("8712a379-4bcb-46ee-815d-85f26540577f")
 
   val expected = List(
@@ -123,7 +124,7 @@ object LzoGoogleAnalyticsEventSpec {
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.8 Safari/537.36", // previously "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.131 Safari/537.36",
     "Chrome 31", // previously "Chrome"
     "Chrome",
-    "31.0.1650.8",// previously "34.0.1847.131"
+    "31.0.1650.8", // previously "34.0.1847.131"
     "Browser",
     "WEBKIT",
     null,
@@ -165,23 +166,23 @@ class LzoGoogleAnalyticsEventSpec extends Specification with EnrichJobSpec {
   sequential
   "A job which processes a RawThrift file containing 1 valid google analytics page view" should {
 
-      if (!isLzoSupported) "native-lzo not supported" in skipped
-      else {
-        val f = writeLzo("google-analytics", LzoGoogleAnalyticsEventSpec.collectorPayload)
-        runEnrichJob(f.toString(), "thrift", "1", true, List("geo"), false, false, false, false)
+    if (!isLzoSupported) "native-lzo not supported" in skipped
+    else {
+      val f = writeLzo("google-analytics", LzoGoogleAnalyticsEventSpec.collectorPayload)
+      runEnrichJob(f.toString(), "thrift", "1", true, List("geo"), false, false, false, false)
 
-        "correctly output 1 google analytics page view" in {
-          val Some(goods) = readPartFile(dirs.output)
-          goods.size must_== 1
-          val actual = goods.head.split("\t").map(s => if (s.isEmpty()) null else s)
-          for (idx <- LzoGoogleAnalyticsEventSpec.expected.indices) {
-            actual(idx) must BeFieldEqualTo(LzoGoogleAnalyticsEventSpec.expected(idx), idx)
-          }
-        }
-
-        "not write any bad rows" in {
-          dirs.badRows must beEmptyDir
+      "correctly output 1 google analytics page view" in {
+        val Some(goods) = readPartFile(dirs.output)
+        goods.size must_== 1
+        val actual = goods.head.split("\t").map(s => if (s.isEmpty()) null else s)
+        for (idx <- LzoGoogleAnalyticsEventSpec.expected.indices) {
+          actual(idx) must BeFieldEqualTo(LzoGoogleAnalyticsEventSpec.expected(idx), idx)
         }
       }
+
+      "not write any bad rows" in {
+        dirs.badRows must beEmptyDir
+      }
+    }
   }
 }

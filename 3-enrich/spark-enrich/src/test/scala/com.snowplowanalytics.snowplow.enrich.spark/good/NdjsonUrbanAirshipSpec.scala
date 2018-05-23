@@ -15,7 +15,7 @@
 package com.snowplowanalytics.snowplow.enrich.spark
 package good
 
-import scala.collection.mutable.{ArrayBuffer, ListBuffer, Buffer}
+import scala.collection.mutable.{ArrayBuffer, Buffer, ListBuffer}
 
 import org.specs2.mutable.Specification
 
@@ -24,8 +24,9 @@ import org.json4s.jackson.JsonMethods._
 
 object NdjsonUrbanAirshipSingleEvent {
   import EnrichJobSpec._
-  val lines = Lines(compact(
-    parse("""
+  val lines = Lines(
+    compact(
+      parse("""
       |{
       |  "id": "e3314efb-9058-dbaf-c4bb-b754fca73613",
       |  "offset": "1",
@@ -40,8 +41,7 @@ object NdjsonUrbanAirshipSingleEvent {
       |  "type": "CLOSE"
       |}
       |""".stripMargin)
-    )
-  )
+    ))
   val expected = List(
     null,
     "srv",
@@ -169,7 +169,7 @@ object NdjsonUrbanAirshipSingleEvent {
     null, // dvce_screenheight
     null, // doc_charset
     null, // doc_width
-    null  // doc_height
+    null // doc_height
   )
 }
 
@@ -240,7 +240,7 @@ object NdjsonUrbanAirshipMultiEvent {
         |}""".stripMargin
     )
   )
-  val sampleInAppResolutionEventResponse =  compact(
+  val sampleInAppResolutionEventResponse = compact(
     parse(
       """{
         |  "schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
@@ -266,31 +266,28 @@ object NdjsonUrbanAirshipMultiEvent {
         |}""".stripMargin
     )
   )
-  val eventSource = "srv"
+  val eventSource     = "srv"
   val collectorTstamp = "2015-11-13 16:31:52.393"
-  val eventType = "unstruct"
-  val adapter = "com.urbanairship.connect-v1"
-  val loaderType = "ndjson"
+  val eventType       = "unstruct"
+  val adapter         = "com.urbanairship.connect-v1"
+  val loaderType      = "ndjson"
   val expectedBase = {
-    val r = ArrayBuffer.fill(NdjsonUrbanAirshipSingleEvent.expected.size)(null:String)
-    r(1)  = eventSource
-    r(2)  = etlTimestamp
-    r(3)  = collectorTstamp
-    r(5)  = eventType
-    r(9)  = adapter
+    val r = ArrayBuffer.fill(NdjsonUrbanAirshipSingleEvent.expected.size)(null: String)
+    r(1) = eventSource
+    r(2) = etlTimestamp
+    r(3) = collectorTstamp
+    r(5) = eventType
+    r(9) = adapter
     r(10) = loaderType
     r(11) = etlVersion
     r.toList
   }
 
-  val lines = Lines(sampleLine,
-    sampleBlank,
-    sampleInAppResolutionEvent,
-    sampleBlank,
-    sampleBlank) // the blanks should be ignored
+  val lines = Lines(sampleLine, sampleBlank, sampleInAppResolutionEvent, sampleBlank, sampleBlank) // the blanks should be ignored
 
   val expectedJsonOutputIdx = 58 // position of unstruct event json in list
-  val expected = List(expectedBase.updated(expectedJsonOutputIdx, sampleLineResponse),
+  val expected = List(
+    expectedBase.updated(expectedJsonOutputIdx, sampleLineResponse),
     expectedBase.updated(expectedJsonOutputIdx, sampleInAppResolutionEventResponse))
 }
 
@@ -300,8 +297,12 @@ class NdjsonUrbanAirshipSingleSpec extends Specification with EnrichJobSpec {
   override def appName = "ndjson-urban-airship-single"
   sequential
   "A job which processes a NDJSON file with one event" should {
-    runEnrichJob(NdjsonUrbanAirshipSingleEvent.lines, "ndjson/com.urbanairship.connect/v1",
-      "2", true, List("geo"))
+    runEnrichJob(
+      NdjsonUrbanAirshipSingleEvent.lines,
+      "ndjson/com.urbanairship.connect/v1",
+      "2",
+      true,
+      List("geo"))
 
     "correctly output 1 event" in {
       val Some(goods) = readPartFile(dirs.output)
@@ -323,8 +324,12 @@ class NdjsonUrbanAirshipMultiSpec extends Specification with EnrichJobSpec {
   override def appName = "ndjson-urban-airship-multi"
   sequential
   "A job which processes a NDJSON file with more than one event (but two valid ones)" should {
-    runEnrichJob(NdjsonUrbanAirshipMultiEvent.lines, "ndjson/com.urbanairship.connect/v1",
-      "2", true, List("geo"))
+    runEnrichJob(
+      NdjsonUrbanAirshipMultiEvent.lines,
+      "ndjson/com.urbanairship.connect/v1",
+      "2",
+      true,
+      List("geo"))
 
     "correctly output 2 events" in {
       val Some(goods) = readPartFile(dirs.output)
