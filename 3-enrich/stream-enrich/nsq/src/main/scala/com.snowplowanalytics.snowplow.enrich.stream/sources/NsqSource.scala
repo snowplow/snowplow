@@ -33,6 +33,7 @@ import com.snowplowanalytics.client.nsq.exceptions.NSQException
 import scalaz._
 import Scalaz._
 
+import utils.emitPii
 import iglu.client.Resolver
 import common.enrichments.EnrichmentRegistry
 import model.{Nsq, StreamsConfig}
@@ -68,6 +69,11 @@ class NsqSource private (
   override val threadLocalGoodSink: ThreadLocal[Sink] = new ThreadLocal[Sink] {
     override def initialValue: Sink = new NsqSink(nsqConfig, config.out.enriched)
   }
+
+  override val threadLocalPiiSink: Option[ThreadLocal[Sink]] = if(emitPii(enrichmentRegistry)) Some(new ThreadLocal[Sink] {
+    override def initialValue: Sink = new NsqSink(nsqConfig, config.out.pii)
+  }) else None
+
   override val threadLocalBadSink: ThreadLocal[Sink] = new ThreadLocal[Sink] {
     override def initialValue: Sink = new NsqSink(nsqConfig, config.out.bad)
   }

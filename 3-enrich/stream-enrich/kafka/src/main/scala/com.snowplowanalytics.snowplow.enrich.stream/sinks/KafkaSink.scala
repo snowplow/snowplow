@@ -54,7 +54,6 @@ class KafkaSink(
         }
       )
     }
-
     true
   }
 
