@@ -15,6 +15,10 @@
 import sbt._
 import Keys._
 
+// Scalafmt plugin
+import com.lucidchart.sbt.scalafmt.ScalafmtPlugin._
+import com.lucidchart.sbt.scalafmt.ScalafmtCorePlugin.autoImport._
+
 object BuildSettings {
 
   lazy val compilerOptions = Seq(
@@ -43,7 +47,6 @@ object BuildSettings {
   lazy val sbtAssemblySettings = Seq(
     assemblyJarName in assembly := { s"${moduleName.value}-${version.value}.jar" }
   )
-
   lazy val formatting = Seq(
     scalafmtConfig    := file(".scalafmt.conf"),
     scalafmtOnCompile := true,
