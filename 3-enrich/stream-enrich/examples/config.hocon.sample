@@ -26,8 +26,6 @@ enrich {
     out {
       # Stream/topic where the events that were successfully enriched will end up
       enriched = {{outEnriched}}
-      # Stream/topic where the pii tranformation events will end up
-      pii = {{outPii}}
       # Stream/topic where the event that failed enrichment will be stored
       bad = {{outBad}}
       # Stream/topic where the pii tranformation events will end up
@@ -55,28 +53,29 @@ enrich {
       # 'kafka' for reading / writing to a Kafka topic
       # 'nsq' for reading / writing to a Nsq topic
       # 'stdin' for reading from stdin and writing to stdout and stderr
-      enabled = kinesis
+      type =  {{ sinkType }}
 
-      # Region where the streams are located
-      region = {{region}}
+      # Region where the streams are located (AWS region, pertinent to kinesis sink/source type)
+      # region = {{ region }}
 
-      # AWS credentials
+      # AWS credentials (pertinent to kinesis sink/source type)
       # If both are set to 'default', use the default AWS credentials provider chain.
       # If both are set to 'iam', use AWS IAM Roles to provision credentials.
       # If both are set to 'env', use env variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
-      aws {
-        accessKey = iam
-        secretKey = iam
-      }
+      # aws {
+      #   accessKey = iam
+      #   secretKey = iam
+      # }
 
       # Maximum number of records to get from Kinesis per call to GetRecords
-      maxRecords = 10000
+      # maxRecords = 10000
 
       # LATEST: most recent data.
       # TRIM_HORIZON: oldest available data.
       # "AT_TIMESTAMP": Start from the record at or after the specified timestamp
       # Note: This only effects the first run of this application on a stream.
-      initialPosition = TRIM_HORIZON
+      # (pertinent to kinesis source type)
+      # initialPosition = TRIM_HORIZON
 
       # Need to be specified when initial-position is "AT_TIMESTAMP".
       # Timestamp format need to be in "yyyy-MM-ddTHH:mm:ssZ".
@@ -103,10 +102,10 @@ enrich {
       #  multiplier = {{enrichStreamsOutTotalBackoff}}
       #}
 
-      # Or Kafka
-      #brokers = "{{kafkaBrokers}}"
-      ## Number of retries to perform before giving up on sending a record
-      #retries = 0
+      # Or Kafka (Comment out for other types)
+      brokers = "{{kafkaBrokers}}"
+      # Number of retries to perform before giving up on sending a record
+      retries = 0
 
       # Or NSQ
       ## Channel name for nsq source
