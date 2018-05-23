@@ -213,7 +213,7 @@ object StructEventSpec {
     "",
     "",
     "",
-    "",
+    ContextWithUuid4Regexp,
     "",
     "",
     "",

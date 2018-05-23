@@ -212,7 +212,7 @@ object PagePingWithContextSpec {
     "",
     "",
     "",
-    "",
+    ContextWithUuid4Regexp,
     "",
     "",
     "",

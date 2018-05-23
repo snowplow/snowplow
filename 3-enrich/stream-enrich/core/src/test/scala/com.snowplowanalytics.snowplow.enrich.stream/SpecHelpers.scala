@@ -17,6 +17,8 @@ package snowplow
 package enrich
 package stream
 
+import java.util.regex.Pattern
+
 import org.json4s.jackson.JsonMethods._
 import org.specs2.matcher.{Expectable, Matcher}
 import scalaz._
@@ -26,6 +28,7 @@ import common.utils.JsonUtils
 import common.enrichments.EnrichmentRegistry
 import iglu.client.Resolver
 import model._
+
 import scala.util.matching.Regex
 import sources.TestSource
 
@@ -55,6 +58,13 @@ object SpecHelpers {
    * TODO: should this be a Specs2 contrib?
    */
   val Uuid4Regexp = "[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}".r
+
+  val ContextWithUuid4Regexp =
+    new Regex(
+      Pattern.quote(
+        """{"schema":"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0","data":[{"schema":"com.snowplowanalytics.snowplow/parent_event/jsonschema/1-0-0","data":{"parentEventId":"""") +
+        "[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}" +
+        Pattern.quote("\"}}]}"))
 
   /**
    * Fields in our EnrichedEvent which will be checked
