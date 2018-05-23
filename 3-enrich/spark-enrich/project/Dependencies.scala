@@ -35,7 +35,6 @@ object Dependencies {
     val spark            = "2.2.0"
     val scalaz7          = "7.0.9"
     val scopt            = "3.5.0"
-
     val commonEnrich     = "0.33.0"
     val igluClient       = "0.5.0"
     // Scala (test only)
