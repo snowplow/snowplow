@@ -27,6 +27,7 @@ import java.util.Properties
 import scala.collection.JavaConverters._
 
 import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.apache.kafka.clients.producer._
 import scalaz._
 import Scalaz._
 
@@ -49,10 +50,25 @@ object KafkaSource {
       case c: Kafka => c.success
       case _ => "Configured source/sink is not Kafka".failure
     }
-  } yield new KafkaSource(igluResolver, enrichmentRegistry, tracker, config, kafkaConfig)
+    goodProducer <- KafkaSink
+      .validateAndCreateProducer(kafkaConfig, config.buffer, config.out.enriched)
+      .validation
+    piiProducer <- (emitPii(enrichmentRegistry), config.out.pii) match {
+        case (true, Some(piiStreamName)) => KafkaSink.validateAndCreateProducer(kafkaConfig, config.buffer, piiStreamName).validation.map(Some(_))
+        case (false, Some(piiStreamName)) => s"PII was configured to not emit, but PII stream name was given as $piiStreamName".failure
+        case (true, None) => "PII was configured to emit, but no PII stream name was given".failure
+        case (false, None) => None.success
+      }
+    badProducer <- KafkaSink
+      .validateAndCreateProducer(kafkaConfig, config.buffer, config.out.bad)
+      .validation
+  } yield new KafkaSource(goodProducer, piiProducer, badProducer, igluResolver, enrichmentRegistry, tracker, config, kafkaConfig)
 }
 /** Source to read events from a Kafka topic */
 class KafkaSource private (
+  goodProducer: KafkaProducer[String, String],
+  piiProducer: Option[KafkaProducer[String, String]],
+  badProducer: KafkaProducer[String, String],
   igluResolver: Resolver,
   enrichmentRegistry: EnrichmentRegistry,
   tracker: Option[Tracker],
@@ -64,17 +80,18 @@ class KafkaSource private (
 
   override val threadLocalGoodSink: ThreadLocal[Sink] = new ThreadLocal[Sink] {
     override def initialValue: Sink =
-      new KafkaSink(kafkaConfig, config.buffer, config.out.enriched, tracker)
+      new KafkaSink(goodProducer, config.out.enriched)
   }
 
-  override val threadLocalPiiSink: Option[ThreadLocal[Sink]] =  if (emitPii(enrichmentRegistry)) Some(new ThreadLocal[Sink] {
+  override val threadLocalPiiSink: Option[ThreadLocal[Sink]] =  piiProducer.flatMap{ somePiiProducer => 
+  config.out.pii.map { piiTopicName =>  new ThreadLocal[Sink] {
     override def initialValue: Sink =
-      new KafkaSink(kafkaConfig, config.buffer, config.out.pii, tracker)
-  }) else None
+      new KafkaSink(somePiiProducer, piiTopicName)
+  }}}
 
   override val threadLocalBadSink: ThreadLocal[Sink] = new ThreadLocal[Sink] {
     override def initialValue: Sink =
-      new KafkaSink(kafkaConfig, config.buffer, config.out.bad, tracker)
+      new KafkaSink(badProducer, config.out.bad)
   }
 
   /** Never-ending processing loop over source stream. */

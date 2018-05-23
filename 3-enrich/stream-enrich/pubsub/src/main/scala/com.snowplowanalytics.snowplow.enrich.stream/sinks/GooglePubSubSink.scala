@@ -45,17 +45,18 @@ object GooglePubSubSink {
     googlePubSubConfig: GooglePubSub,
     bufferConfig: BufferConfig,
     topicName: String
-  ): \/[Throwable, Publisher] = for {
-    batching <- batchingSettings(bufferConfig).right
-    retry = retrySettings(googlePubSubConfig.backoffPolicy)
-    publisher <- toEither(
-      createPublisher(googlePubSubConfig.googleProjectId, topicName, batching, retry))
-    _ <- topicExists(googlePubSubConfig.googleProjectId, topicName)
-      .flatMap { b =>
-        if (b) b.right
-        else new IllegalArgumentException(s"Google PubSub topic $topicName doesn't exist").left
-      }
-  } yield publisher
+  ): \/[Throwable, Publisher] =
+    for {
+      batching <- batchingSettings(bufferConfig).right
+      retry = retrySettings(googlePubSubConfig.backoffPolicy)
+      publisher <- toEither(
+        createPublisher(googlePubSubConfig.googleProjectId, topicName, batching, retry))
+      _ <- topicExists(googlePubSubConfig.googleProjectId, topicName)
+        .flatMap { b =>
+          if (b) b.right
+          else new IllegalArgumentException(s"Google PubSub topic $topicName doesn't exist").left
+        }
+    } yield publisher
 
   /**
    * Instantiates a Publisher on an existing topic with the given configuration options.

@@ -39,7 +39,7 @@ object model {
     appName: String
   )
   final case class InConfig(raw: String)
-  final case class OutConfig(enriched: String, pii:String, bad: String, partitionKey: String)
+  final case class OutConfig(enriched: String, pii: Option[String], bad: String, partitionKey: String)
   final case class KinesisBackoffPolicyConfig(minBackoff: Long, maxBackoff: Long)
   final case class GooglePubSubBackoffPolicyConfig(
     minBackoff: Long,
