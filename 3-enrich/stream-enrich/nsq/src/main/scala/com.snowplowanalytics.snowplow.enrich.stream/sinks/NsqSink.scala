@@ -35,18 +35,18 @@ object NsqSink {
     new NSQProducer().addAddress(nsqConfig.host, nsqConfig.port).right
   }
 /**
-  * NSQSink for Scala enrichment
-  */
+ * NSQSink for Scala enrichment
+ */
 class NsqSink(
   nsqProducer: NSQProducer,
   topicName: String
 ) extends Sink {
   val producer = nsqProducer.start()
   /**
-    *
-    * @param events Sequence of enriched events and (unused) partition keys
-    * @return Whether to checkpoint
-    */
+   *
+   * @param events Sequence of enriched events and (unused) partition keys
+   * @return Whether to checkpoint
+   */
   override def storeEnrichedEvents(events: List[(String, String)]): Boolean = {
     val msgList = events.unzip._1.map(_.getBytes(UTF_8)).asJava
     producer.produceMulti(topicName, msgList)
