@@ -111,10 +111,10 @@ object CljTomcatUnbounceEventSpec {
     null, //
     null, //
     "Apache-HttpClient/4.5.1 (Java/1.8.0_101)",
-    "Downloading Tool",
-    "Downloading Tool",
+    "Robot/Spider",
+    "Robot/Spider",
     null,
-    "Downloading tool",
+    "Robot",
     "OTHER",
     null,
     null,
