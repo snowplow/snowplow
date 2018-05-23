@@ -50,28 +50,48 @@ object GooglePubSubSource {
     igluResolver: Resolver,
     enrichmentRegistry: EnrichmentRegistry,
     tracker: Option[Tracker]
-  ): Validation[Throwable, GooglePubSubSource] = for {
-    googlePubSubConfig <- config.sourceSink match {
-      case c: GooglePubSub => c.success
-      case _ => new IllegalArgumentException("Configured source/sink is not Google PubSub").failure
-    }
-    goodPublisher <- GooglePubSubSink
-      .validateAndCreatePublisher(googlePubSubConfig, config.buffer, config.out.enriched)
-      .validation
+  ): Validation[Throwable, GooglePubSubSource] =
+    for {
+      googlePubSubConfig <- config.sourceSink match {
+        case c: GooglePubSub => c.success
+        case _ =>
+          new IllegalArgumentException("Configured source/sink is not Google PubSub").failure
+      }
+      goodPublisher <- GooglePubSubSink
+        .validateAndCreatePublisher(googlePubSubConfig, config.buffer, config.out.enriched)
+        .validation
 
-    piiPublisher <- if (emitPii(enrichmentRegistry))
-        GooglePubSubSink
-          .validateAndCreatePublisher(googlePubSubConfig, config.buffer, config.out.pii).validation.rightMap(Some(_))
-      else
-        None.success
-    badPublisher <- GooglePubSubSink
-      .validateAndCreatePublisher(googlePubSubConfig, config.buffer, config.out.bad)
-      .validation
-    topic = ProjectTopicName.of(googlePubSubConfig.googleProjectId, config.in.raw)
-    subName = ProjectSubscriptionName.of(googlePubSubConfig.googleProjectId, config.appName)
-    _ <- toEither(createSubscriptionIfNotExist(subName, topic)).validation
-  } yield new GooglePubSubSource(goodPublisher,piiPublisher, badPublisher, igluResolver,
-    enrichmentRegistry, tracker, config, googlePubSubConfig, subName)
+      piiPublisher <- (emitPii(enrichmentRegistry), config.out.pii) match {
+        case (true, Some(piiStreamName)) =>
+          GooglePubSubSink
+            .validateAndCreatePublisher(googlePubSubConfig, config.buffer, piiStreamName)
+            .validation
+            .rightMap(Some(_))
+        case (false, Some(piiStreamName)) =>
+          new IllegalArgumentException(
+            s"PII was configured to not emit, but PII stream name was given as $piiStreamName").failure
+        case (true, None) =>
+          new IllegalArgumentException(
+            "PII was configured to emit, but no PII stream name was given").failure
+        case (false, None) => None.success
+      }
+      badPublisher <- GooglePubSubSink
+        .validateAndCreatePublisher(googlePubSubConfig, config.buffer, config.out.bad)
+        .validation
+      topic = ProjectTopicName.of(googlePubSubConfig.googleProjectId, config.in.raw)
+      subName = ProjectSubscriptionName.of(googlePubSubConfig.googleProjectId, config.appName)
+      _ <- toEither(createSubscriptionIfNotExist(subName, topic)).validation
+    } yield
+      new GooglePubSubSource(
+        goodPublisher,
+        piiPublisher,
+        badPublisher,
+        igluResolver,
+        enrichmentRegistry,
+        tracker,
+        config,
+        googlePubSubConfig,
+        subName)
 
   private def createSubscriptionIfNotExist(
     sub: ProjectSubscriptionName,
@@ -111,9 +131,14 @@ class GooglePubSubSource private (
   override val threadLocalGoodSink: ThreadLocal[Sink] = new ThreadLocal[Sink] {
     override def initialValue: Sink = new GooglePubSubSink(goodPubslisher, config.out.enriched)
   }
-  override val threadLocalPiiSink: Option[ThreadLocal[Sink]] = if (emitPii(enrichmentRegistry)) piiPublisher.map { (publisher: Publisher) => new ThreadLocal[Sink] {
-    override def initialValue: Sink = new GooglePubSubSink(publisher, config.out.pii)
-  }} else None
+  override val threadLocalPiiSink: Option[ThreadLocal[Sink]] = piiPublisher.flatMap {
+    somePiiProducer =>
+      config.out.pii.map { piiTopic =>
+        new ThreadLocal[Sink] {
+          override def initialValue: Sink = new GooglePubSubSink(somePiiProducer, piiTopic)
+        }
+      }
+  }
   override val threadLocalBadSink: ThreadLocal[Sink] = new ThreadLocal[Sink] {
     override def initialValue: Sink = new GooglePubSubSink(badPublisher, config.out.bad)
   }

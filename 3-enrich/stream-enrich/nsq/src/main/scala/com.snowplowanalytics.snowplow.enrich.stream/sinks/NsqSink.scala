@@ -20,23 +20,28 @@ package com.snowplowanalytics.snowplow.enrich.stream
 package sinks
 
 import java.nio.charset.StandardCharsets.UTF_8
-
 import scala.collection.JavaConverters._
-
 import com.snowplowanalytics.client.nsq.NSQProducer
+
+import scalaz._
+import Scalaz._
 
 import model.Nsq
 
+/** NsqSink companion object with factory method */
+object NsqSink {
+  def validateAndCreateProducer(
+    nsqConfig: Nsq): \/[Throwable, NSQProducer] =
+    new NSQProducer().addAddress(nsqConfig.host, nsqConfig.port).right
+  }
 /**
   * NSQSink for Scala enrichment
   */
 class NsqSink(
-  nsqConfig: Nsq,
+  nsqProducer: NSQProducer,
   topicName: String
 ) extends Sink {
-
-  private val producer = new NSQProducer().addAddress(nsqConfig.host, nsqConfig.port).start()
-
+  val producer = nsqProducer.start()
   /**
     *
     * @param events Sequence of enriched events and (unused) partition keys

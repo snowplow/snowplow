@@ -153,7 +153,7 @@ object SpecHelpers {
     val config = EnrichConfig(
       streams = StreamsConfig(
         InConfig("raw"),
-        OutConfig("enriched", "pii", "bad", "partitionkey"),
+        OutConfig("enriched", Some("pii"), "bad", "partitionkey"),
         Kafka("brokers", 1),
         BufferConfig(1000L, 100L, 1200L),
         "appName"

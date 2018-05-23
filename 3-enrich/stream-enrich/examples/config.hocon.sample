@@ -26,8 +26,12 @@ enrich {
     out {
       # Stream/topic where the events that were successfully enriched will end up
       enriched = {{outEnriched}}
+      # Stream/topic where the pii tranformation events will end up
+      pii = {{outPii}}
       # Stream/topic where the event that failed enrichment will be stored
       bad = {{outBad}}
+      # Stream/topic where the pii tranformation events will end up
+      pii = {{outPii}}
 
       # How the output stream/topic will be partitioned.
       # Possible partition keys are: event_id, event_fingerprint, domain_userid, network_userid,
@@ -39,7 +43,7 @@ enrich {
       partitionKey = {{partitionKeyName}}
     }
 
-    # Configuration shown is for Kinesis, to use another uncomment the appropriate configuration
+    # Configuration shown is for Kafka, to use another uncomment the appropriate configuration
     # and comment out the other
     # To use stdin, comment or remove everything in the "enrich.streams.sourceSink" section except
     # "enabled" which should be set to "stdin".
