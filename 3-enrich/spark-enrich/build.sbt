@@ -18,6 +18,7 @@ lazy val root = project.in(file("."))
     version     := "1.13.0",
     description := "The Snowplow Spark Enrichment process"
   )
+  .settings(BuildSettings.formatting)
   .settings(BuildSettings.buildSettings)
   .settings(BuildSettings.sbtAssemblySettings)
   .settings(
