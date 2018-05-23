@@ -56,7 +56,7 @@ object CollectorPayload1LzoSpec {
     "collector",
     etlVersion,
     null, // No user_id set
-    "123.123.123.x",
+    "a125dd343866ca654dc79abf258b3971215c59ed",
     "2071613637",
     "44082d3af0e30126",
     "2",

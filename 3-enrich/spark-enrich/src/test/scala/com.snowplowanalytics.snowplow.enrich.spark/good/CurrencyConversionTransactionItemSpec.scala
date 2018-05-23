@@ -36,7 +36,7 @@ object CurrencyConversionTransactionItemSpec {
     "cloudfront",
     etlVersion,
     null, // No user_id set
-    "255.255.255.255",
+    "104851162466b684c03faccae36f42622bead233",
     null, // Not set (legacy input line)
     "a279872d76480afb",
     "1",

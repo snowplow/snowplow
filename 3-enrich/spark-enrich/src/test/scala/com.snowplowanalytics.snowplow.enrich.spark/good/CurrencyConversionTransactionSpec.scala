@@ -37,7 +37,7 @@ object CurrencyConversionTransactionSpec {
     "clj-0.3.0-tom-0.0.2",
     etlVersion,
     null, // No user_id set
-    "x.x.x.x",
+    "f57fc380f09a03e4190ed4f5234fe14055b7b6ca",
     null, // Not set (legacy input line)
     "a279872d76480afb",
     "1",

@@ -36,7 +36,7 @@ object CljTomcatTp1TnuidSpec {
     "clj-0.5.0-tom-0.0.4",
     etlVersion,
     null, // No user_id set
-    "255.255.x.x",
+    "79398dd7e78a8998b6e58e380e7168d8766f1644",
     "812263905",
     "d159c05f2aa8e1b9",
     "1",

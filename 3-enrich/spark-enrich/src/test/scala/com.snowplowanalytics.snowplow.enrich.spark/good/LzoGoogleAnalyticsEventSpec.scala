@@ -56,7 +56,7 @@ object LzoGoogleAnalyticsEventSpec {
     "collector",
     etlVersion,
     null, // No user_id set
-    "123.123.123.x",
+    "a125dd343866ca654dc79abf258b3971215c59ed",
     null,
     null,
     null,

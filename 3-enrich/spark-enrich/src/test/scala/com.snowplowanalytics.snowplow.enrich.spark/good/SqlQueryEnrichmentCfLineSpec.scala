@@ -37,7 +37,7 @@ object SqlQueryEnrichmentCfLineSpec {
     "cloudfront",
     etlVersion,
     null, // No user_id set
-    "216.160.83.56",
+    "17803d07577023208861c69cbccbdfc0a041b06c",
     "2876815413",
     "9795bd0203804cd1",
     "43",
