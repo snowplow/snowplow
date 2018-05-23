@@ -40,6 +40,8 @@ import utils.{HttpClient, ScalazJson4sUtils}
  */
 object ApiRequestEnrichmentConfig extends ParseableEnrichment {
 
+  implicit val formats = DefaultFormats
+
   val supportedSchema =
     SchemaCriterion("com.snowplowanalytics.snowplow.enrichments",
                     "api_request_enrichment_config",
