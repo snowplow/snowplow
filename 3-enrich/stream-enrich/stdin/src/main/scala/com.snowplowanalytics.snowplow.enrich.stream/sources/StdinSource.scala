@@ -32,6 +32,7 @@ import iglu.client.Resolver
 import model.{Stdin, StreamsConfig}
 import scalatracker.Tracker
 import sinks.{Sink, StderrSink, StdoutSink}
+import utils.emitPii
 
 /** StdinSource companion object with factory method */
 object StdinSource {
@@ -61,6 +62,10 @@ class StdinSource private (
   override val threadLocalGoodSink: ThreadLocal[Sink] = new ThreadLocal[Sink] {
     override def initialValue: Sink = new StdoutSink()
   }
+  override val threadLocalPiiSink: Option[ThreadLocal[Sink]] = if(emitPii(enrichmentRegistry)) Some(new ThreadLocal[Sink] {
+    override def initialValue: Sink = new StdoutSink()
+  }) else None
+
   override val threadLocalBadSink: ThreadLocal[Sink] = new ThreadLocal[Sink] {
     override def initialValue: Sink = new StderrSink()
   }

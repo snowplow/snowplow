@@ -20,15 +20,16 @@ package stream
 import java.util.regex.Pattern
 
 import org.json4s.jackson.JsonMethods._
-import org.specs2.matcher.{Matcher, Expectable}
+import org.specs2.matcher.{Expectable, Matcher}
 import scalaz._
 import Scalaz._
-
 import common.outputs.EnrichedEvent
 import common.utils.JsonUtils
 import common.enrichments.EnrichmentRegistry
 import iglu.client.Resolver
 import model._
+
+import scala.util.matching.Regex
 import sources.TestSource
 
 /**
@@ -36,12 +37,16 @@ import sources.TestSource
  */
 object SpecHelpers {
 
+  implicit def stringToJustString(s: String) = JustString(s)
+  implicit def regexToJustRegex(r: Regex)    = JustRegex(r)
+
   /**
    * The Stream Enrich being used
    */
   val EnrichVersion = s"stream-enrich-${generated.BuildInfo.version}-common-${generated.BuildInfo.commonEnrichVersion}"
 
-  val TimestampRegex = "[0-9\\s-:.]+"
+  val TimestampRegex =
+    "[0-9]{1,4}-[0-9]{1,2}-[0-9]{1,2} [0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}(\\.\\d{3})?".r
 
   /**
    * The regexp pattern for a Type 4 UUID.
@@ -51,7 +56,14 @@ object SpecHelpers {
    *
    * TODO: should this be a Specs2 contrib?
    */
-  val Uuid4Regexp = "[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}"
+  val Uuid4Regexp = "[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}".r
+
+  val ContextWithUuid4Regexp =
+    new Regex(
+      Pattern.quote(
+        """{"schema":"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0","data":[{"schema":"com.snowplowanalytics.snowplow/parent_event/jsonschema/1-0-0","data":{"parentEventId":"""") +
+        "[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}" +
+        Pattern.quote("\"}}]}"))
 
   /**
    * Fields in our EnrichedEvent which will be checked
@@ -62,15 +74,15 @@ object SpecHelpers {
   /**
    * The names of the fields written out
    */
-  lazy val OutputFields = classOf[EnrichedEvent]
-    .getDeclaredFields
+  lazy val OutputFields = classOf[EnrichedEvent].getDeclaredFields
     .map(_.getName)
 
   /**
    * User-friendly wrapper to instantiate
    * a BeFieldEqualTo Matcher.
    */
-  def beFieldEqualTo(expected: String, withIndex: Int) = new BeFieldEqualTo(expected, withIndex)
+  def beFieldEqualTo(expected: StringOrRegex, withIndex: Int) =
+    new BeFieldEqualTo(expected, withIndex)
 
   /**
    * A Specs2 matcher to check if a EnrichedEvent
@@ -83,21 +95,24 @@ object SpecHelpers {
    * 2. On failure, print out the field's name as
    *    well as the mismatch, to help with debugging
    */
-  class BeFieldEqualTo(expected: String, index: Int) extends Matcher[String] {
+  class BeFieldEqualTo(expected: StringOrRegex, index: Int) extends Matcher[String] {
 
     private val field = OutputFields(index)
-    private val regexp = useRegexp(field)
+    private val regexp = expected match {
+      case JustRegex(_)  => true
+      case JustString(_) => false
+    }
 
     def apply[S <: String](actual: Expectable[S]) = {
 
-      lazy val successMsg = s"$field: ${actual.description} %s $expected".format(
-        if (regexp) "matches" else "equals")
+      lazy val successMsg =
+        s"$field: ${actual.description} %s $expected".format(if (regexp) "matches" else "equals")
 
-      lazy val failureMsg = s"$field: ${actual.description} does not %s $expected".format(
-        if (regexp) "match" else "equal")
+      lazy val failureMsg =
+        s"$field: ${actual.description} does not %s $expected"
+          .format(if (regexp) "match" else "equal")
 
-      result(equalsOrMatches(regexp, actual.value, expected),
-        successMsg, failureMsg, actual)
+      result(equalsOrMatches(actual.value, expected), successMsg, failureMsg, actual)
     }
 
     /**
@@ -105,21 +120,15 @@ object SpecHelpers {
      * or matches the regular expression as
      * required.
      *
-     * @param useRegexp Whether we should do an
-     * equality check or a regexp match
      * @param actual The actual value
      * @param expected The expected value, or
      * regular expression to match against
      * @return true if the actual equals or
      * matches expected, false otherwise
      */
-    private def equalsOrMatches(useRegexp: Boolean, actual: String, expected: String): Boolean = {
-      if (useRegexp) {
-        val pattern = Pattern.compile(expected)
-        pattern.matcher(actual).matches
-      } else {
-        actual == expected
-      }
+    private def equalsOrMatches(actual: String, expected: StringOrRegex): Boolean = expected match {
+      case JustRegex(r)  => r.pattern.matcher(actual).matches
+      case JustString(s) => actual == s
     }
 
     /**
@@ -141,7 +150,58 @@ object SpecHelpers {
    */
   lazy val TestSource = {
 
-    val enrichmentConfig = """|{
+    val config = EnrichConfig(
+      streams = StreamsConfig(
+        InConfig("raw"),
+        OutConfig("enriched", "pii", "bad", "partitionkey"),
+        Kafka("brokers", 1),
+        BufferConfig(1000L, 100L, 1200L),
+        "appName"
+      ),
+      monitoring = None
+    )
+    new TestSource(config, resolver, enrichmentRegistry, None)
+  }
+  val igluCentralDefaultConfig =
+    """{
+    "schema": "iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-0",
+    "data": {
+
+      "cacheSize": 500,
+      "repositories": [
+        {
+          "name": "Iglu Central",
+          "priority": 0,
+          "vendorPrefixes": [ "com.snowplowanalytics" ],
+          "connection": {
+            "http": {
+              "uri": "http://iglucentral.com"
+            }
+          }
+        }
+      ]
+    }
+  }
+  """
+
+  val igluConfig = {
+    val resolverEnvVar = for {
+      config <- sys.env.get("ENRICH_RESOLVER_CONFIG")
+      if config.nonEmpty
+    } yield config
+    resolverEnvVar.getOrElse(igluCentralDefaultConfig)
+  }
+  val validatedResolver = for {
+    json     <- JsonUtils.extractJson("", igluConfig)
+    resolver <- Resolver.parse(json).leftMap(_.toString)
+  } yield resolver
+
+  implicit val resolver: Resolver = validatedResolver.fold(
+    e => throw new RuntimeException(e),
+    s => s
+  )
+
+   val enrichmentConfig = """|{
       |"schema": "iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0",
       |"data": [
         |{
@@ -193,57 +253,59 @@ object SpecHelpers {
               |"internalDomains": ["www.subdomain1.snowplowanalytics.com"]
             |}
           |}
+        |},
+        |{
+        |"schema": "iglu:com.snowplowanalytics.snowplow.enrichments/pii_enrichment_config/jsonschema/2-0-0",
+        |"data": {
+          |"vendor": "com.snowplowanalytics.snowplow.enrichments",
+          |"name": "pii_enrichment_config",
+          |"emitEvent": true,
+          |"enabled": true,
+          |"parameters": {
+            |"pii": [
+              |{
+                |"pojo": {
+                  |"field": "user_id"
+                |}
+              |},
+              |{
+                |"pojo": {
+                  |"field": "user_ipaddress"
+                |}
+              |},
+              |{
+                |"json": {
+                  |"field": "unstruct_event",
+                  |"schemaCriterion": "iglu:com.mailgun/message_delivered/jsonschema/1-0-*",
+                  |"jsonPath": "$$['recipient']"
+                |}
+              |},
+              |{
+                |"json": {
+                  |"field": "unstruct_event",
+                  |"schemaCriterion": "iglu:com.mailchimp/subscribe/jsonschema/1-*-*",
+                  |"jsonPath": "$$.data.['email', 'ip_opt']"
+                |}
+              |}
+            |],
+            |"strategy": {
+              |"pseudonymize": {
+                |"hashFunction": "SHA-1",
+                |"salt": "pepper123"
+              |}
+            |}
+          |}
         |}
-      |]
-    |}""".stripMargin.replaceAll("[\n\r]","").stripMargin.replaceAll("[\n\r]","")
+      |}
+    |]
+  |}""".stripMargin.replaceAll("[\n\r]","").stripMargin.replaceAll("[\n\r]","")
 
-    val config = EnrichConfig(
-      streams = StreamsConfig(
-        InConfig("raw"),
-        OutConfig("enriched", "bad", "partitionkey"),
-        Kafka("brokers", 1),
-        BufferConfig(1000L, 100L, 1200L),
-        "appName"
-      ),
-      monitoring = None)
+  val enrichmentRegistry = (for {
+    registryConfig <- JsonUtils.extractJson("", enrichmentConfig)
+    reg            <- EnrichmentRegistry.parse(fromJsonNode(registryConfig), true).leftMap(_.toString)
+  } yield reg) fold (
+    e => throw new RuntimeException(e),
+    s => s
+  )
 
-    val validatedResolver = for {
-      json <- JsonUtils.extractJson("", """{
-        "schema": "iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-0",
-        "data": {
-
-          "cacheSize": 500,
-          "repositories": [
-            {
-              "name": "Iglu Central",
-              "priority": 0,
-              "vendorPrefixes": [ "com.snowplowanalytics" ],
-              "connection": {
-                "http": {
-                  "uri": "http://iglucentral.com"
-                }
-              }
-            }
-          ]
-        }
-      }
-      """)
-      resolver <- Resolver.parse(json).leftMap(_.toString)
-    } yield resolver
-
-    implicit val resolver: Resolver = validatedResolver.fold(
-      e => throw new RuntimeException(e),
-      s => s
-    )
-
-    val enrichmentRegistry = (for {
-      registryConfig <- JsonUtils.extractJson("", enrichmentConfig)
-      reg <- EnrichmentRegistry.parse(fromJsonNode(registryConfig), true).leftMap(_.toString)
-    } yield reg) fold (
-      e => throw new RuntimeException(e),
-      s => s
-    )
-
-    new TestSource(config, resolver, enrichmentRegistry, None)
-  }
 }
