@@ -34,6 +34,8 @@ import common.loaders.{CollectorApi, CollectorContext, CollectorPayload, Collect
 import common.outputs.EnrichedEvent
 import utils.TestResourcesRepositoryRef
 import common.SpecHelpers.toNameValuePairs
+import common.utils.TestResourcesRepositoryRef
+import utils.ScalazJson4sUtils
 
 // Iglu
 import iglu.client.SchemaCriterion
@@ -54,6 +56,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
     Hashing configured JSON fields in POJO should work when multiple fields are matched through schemacriterion  $e5
     Hashing configured JSON fields in POJO should silently ignore unsupported types                              $e6
     Hashing configured JSON and scalar fields in POJO emits a correct pii_transformation event                   $e7
+    Hashing configured JSON fields in POJO should not create new fields                                          $e8
   """
 
   def commonSetup(enrichmentMap: EnrichmentMap): List[ValidatedEnrichedEvent] = {
@@ -469,6 +472,49 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
           (((contextJ \ "data")(1) \ "data" \ "schema")
             .extract[String] must_== "iglu:com.acme/email_sent/jsonschema/1-0-0") and
           (((unstructEventJ \ "data") \ "data" \ "myVar2").extract[String] must_== "awesome")
+    }
+  }
+
+  def e8 = {
+    val enrichmentMap = Map(
+      ("ip_lookups" -> ipEnrichment),
+      ("pii_enrichment_config" -> PiiPseudonymizerEnrichment(
+        List(
+          PiiJson(
+            fieldMutator    = JsonMutators.get("contexts").get,
+            schemaCriterion = SchemaCriterion.parse("iglu:com.acme/email_sent/jsonschema/1-0-0").toOption.get,
+            jsonPath        = "$.['emailAddress', 'nonExistentEmailAddress']"
+          )
+        ),
+        true,
+        PiiStrategyPseudonymize("SHA-256", hashFunction = DigestUtils.sha256Hex(_: Array[Byte]), "pepper123")
+      ))
+    )
+    val output   = commonSetup(enrichmentMap = enrichmentMap)
+    val expected = new EnrichedEvent()
+    expected.app_id           = "ads"
+    expected.user_id          = "john@acme.com"
+    expected.user_ipaddress   = "70.46.123.145"
+    expected.ip_domain        = null
+    expected.user_fingerprint = "its_you_again!"
+    expected.geo_city         = "Delray Beach"
+    expected.etl_tstamp       = "1970-01-18 08:40:00.000"
+    expected.collector_tstamp = "2017-07-14 03:39:39.000"
+    output.size must_== 1
+    val out = output(0)
+    out must beSuccessful.like {
+      case enrichedEvent => {
+        implicit val formats = org.json4s.DefaultFormats
+        val contextJ         = parse(enrichedEvent.contexts)
+        (((contextJ \ "data")(0) \ "data" \ "emailAddress")
+          .extract[String] must_== "72f323d5359eabefc69836369e4cabc6257c43ab6419b05dfb2211d0e44284c6") and
+          (ScalazJson4sUtils.fieldExists(((contextJ \ "data")(0) \ "data"), "nonExistentEmailAddress") must_== false) and
+          (((contextJ \ "data")(0) \ "data" \ "emailAddress2")
+            .extract[String] must_== "bob@acme.com") and
+          (((contextJ \ "data")(1) \ "data" \ "emailAddress")
+            .extract[String] must_== "tim@acme.com") and
+          (((contextJ \ "data")(1) \ "data" \ "emailAddress2").extract[String] must_== "tom@acme.com")
+      }
     }
   }
 }
