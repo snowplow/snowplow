@@ -21,7 +21,7 @@ import scala.collection.mutable.MutableList
 
 // Scala libraries
 import org.json4s
-import org.json4s.{DefaultFormats, JValue}
+import org.json4s.{DefaultFormats, Diff, JValue}
 import org.json4s.JsonAST._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods
@@ -275,7 +275,11 @@ final case class PiiJson(fieldMutator: Mutator, schemaCriterion: SchemaCriterion
     val documentContext2 = documentContext.map(
       jsonPath,
       new ScrambleMapFunction(strategy, modifiedFields, fieldMutator.fieldName, jsonPath, schema))
-    (JsonMethods.fromJsonNode(documentContext2.json[JsonNode]), modifiedFields.toList)
+    // make sure it is a structure preserving method, see #3636
+    val transformedJValue            = JsonMethods.fromJsonNode(documentContext.json[JsonNode]())
+    val Diff(_, erroneouslyAdded, _) = jValue diff transformedJValue
+    val Diff(_, withoutCruft, _)     = erroneouslyAdded diff transformedJValue
+    (withoutCruft, modifiedFields.toList)
   }
 }
 
@@ -295,7 +299,7 @@ private final class ScrambleMapFunction(strategy: PiiStrategy,
         case t: TextNode =>
           val originalValue = t.asText()
           val newValue      = strategy.scramble(originalValue)
-          val _             = modifiedFields += JsonModifiedField(fieldName, originalValue, newValue, jsonPath, schema)
+          modifiedFields += JsonModifiedField(fieldName, originalValue, newValue, jsonPath, schema)
           newValue
         case default: AnyRef => default
       }
