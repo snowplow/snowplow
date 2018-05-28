@@ -90,6 +90,7 @@ object Enrich {
     val input: SCollection[Array[Byte]] = sc.pubsubTopic(config.input).withName("input")
     val enriched: SCollection[Validation[BadRow, EnrichedEvent]] = input
       .map { rawEvent =>
+        cachedFiles()
         implicit val resolver = ResolverSingleton.get(config.resolver)
         enrich(rawEvent, EnrichmentRegistrySingleton.get(config.enrichmentRegistry))
       }
