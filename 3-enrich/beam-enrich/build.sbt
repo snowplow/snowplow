@@ -16,6 +16,14 @@ lazy val compilerOptions = Seq(
   "-Xfuture"
 )
 
+lazy val resolutionRepos = Seq(
+  // For Snowplow
+  "Snowplow Analytics Maven releases repo" at "http://maven.snplow.com/releases/",
+  // For ua-parser
+  "user-agent-parser repo"                 at "https://clojars.org/repo/"
+)
+
+
 lazy val commonSettings = Defaults.coreDefaultSettings ++ Seq(
   organization  := "com.snowplowanalytics",
   version       := "0.1.0-SNAPSHOT",
@@ -27,7 +35,8 @@ lazy val commonSettings = Defaults.coreDefaultSettings ++ Seq(
   },
   scalacOptions in (Test, console) ~= {
     _.filterNot(Set("-Ywarn-unused-import"))
-  }
+  },
+  resolvers     ++= resolutionRepos
 )
 
 lazy val paradiseDependency =
@@ -51,7 +60,7 @@ lazy val slf4jVersion = "1.7.25"
 lazy val scalatestVersion = "3.0.5"
 
 lazy val root: Project = Project(
-  "beam-enrich",
+  "snowplow-beam-enrich",
   file(".")
 ).settings(
   commonSettings ++ macroSettings ++ noPublishSettings,
@@ -67,7 +76,7 @@ lazy val root: Project = Project(
     "com.spotify" %% "scio-test" % scioVersion,
     "org.scalatest" %% "scalatest" % scalatestVersion
   ).map(_ % "test")
-).enablePlugins(PackPlugin, BuildInfoPlugin)
+).enablePlugins(JavaAppPackaging, BuildInfoPlugin)
 
 lazy val repl: Project = Project(
   "repl",
