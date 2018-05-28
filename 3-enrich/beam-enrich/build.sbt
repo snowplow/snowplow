@@ -42,7 +42,8 @@ lazy val commonSettings = Defaults.coreDefaultSettings ++ Seq(
   },
   scalacOptions in (Test, console) ~= {
     _.filterNot(Set("-Ywarn-unused-import"))
-  }
+  },
+  resolvers     ++= resolutionRepos
 )
 
 lazy val paradiseDependency =
@@ -89,7 +90,7 @@ lazy val root: Project = Project(
     "com.spotify" %% "scio-test" % scioVersion,
     "org.scalatest" %% "scalatest" % scalatestVersion
   ).map(_ % "test")
-).enablePlugins(PackPlugin, BuildInfoPlugin)
+).enablePlugins(JavaAppPackaging, BuildInfoPlugin)
 
 lazy val repl: Project = Project(
   "repl",
