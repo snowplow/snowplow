@@ -76,7 +76,9 @@ deploy:
       tags: true
       condition: '"$(.travis/is_release_tag.sh scala_common_enrich $TRAVIS_TAG)" == "" && $? == 0 && $TEST_DIR = 3-enrich/scala-common-enrich/'
   - provider: script
-    script: ./.travis/deploy.sh scala_stream_collector $TRAVIS_TAG
+    script:
+      - bash <(curl -s https://blackducksoftware.github.io/hub-detect/hub-detect.sh) --blackduck.hub.url="https://saleshub.blackducksoftware.com" --blackduck.hub.username=$BLACKDUCK_HUB_USERNAME --blackduck.hub.password=BLACKDUCK_HUB_PASSWORD --blackduck.hub.trust.cert=true --detect.policy.check=true
+      - ./.travis/deploy.sh scala_stream_collector $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
