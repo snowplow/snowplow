@@ -33,7 +33,7 @@ class EnrichSpec extends PipelineSpec {
     "ssc-0.1.0-stdout",
     s"beam-enrich-${generated.BuildInfo.version}",
     "alex 123",
-    "10.0.2.x",
+    "10.0.2.2",
     "1804954790",
     "3c1757544e39bca4",
     "26",

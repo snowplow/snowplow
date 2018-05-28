@@ -80,10 +80,11 @@ object Enrich {
   }
 
   def run(sc: ScioContext, config: ParsedEnrichConfig): Unit = {
-    val cachedFiles: DistCache[List[Either[String, Path]]] = {
+    // Path is not serializable
+    val cachedFiles: DistCache[List[Either[String, String]]] = {
       val filesToCache = getFilesToCache(config.resolver, config.enrichmentRegistry)
       sc.distCache(filesToCache.map(_._1.toString)) { files =>
-        createSymLinks(files.toList.zip(filesToCache.map(_._2)))
+        createSymLinks(files.toList.zip(filesToCache.map(_._2))).map(_.map(_.toString))
       }
     }
 

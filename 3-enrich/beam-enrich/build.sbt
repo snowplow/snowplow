@@ -23,6 +23,13 @@ lazy val resolutionRepos = Seq(
   "user-agent-parser repo"                 at "https://clojars.org/repo/"
 )
 
+// we fork a JVM per test in order to not reuse enrichment registries
+import Tests._
+{
+  def oneJVMPerTest(tests: Seq[TestDefinition]) =
+    tests.map(t => new Group(t.name, Seq(t), SubProcess(ForkOptions()))).toSeq
+  testGrouping in Test := oneJVMPerTest((definedTests in Test).value)
+}
 
 lazy val commonSettings = Defaults.coreDefaultSettings ++ Seq(
   organization  := "com.snowplowanalytics",

@@ -62,7 +62,7 @@ class EnrichWithLocalFileSpec extends PipelineSpec {
         "--enrichments=" + Paths.get(getClass.getResource("/enrichments").toURI()))
       .input(PubsubIO("in"), raw.map(Base64.decodeBase64))
       .distCache(DistCacheIO("http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoLite2-City.mmdb"),
-        List(Right(Paths.get("./ip_geo"))))
+        List(Right("./ip_geo")))
       .output(PubsubIO[String]("out"))(_ should satisfy { c: Iterable[String] =>
         c.size == 1 && expected.forall(c.head.contains)
       })
