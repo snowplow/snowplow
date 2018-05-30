@@ -31,7 +31,7 @@
   ;; The jetty adapter is only used during development
   :profiles         {:dev {:dependencies [[ring/ring-jetty-adapter "1.6.3"]]}}
   :war-resources-path   "war-resources"
-  :plugins          [[lein-ring "0.8.3"]
+  :plugins          [[lein-ring "0.12.4"]
                      [lein-beanstalk "0.2.6"]]
   :ring {:handler snowplow.clojure-collector.beanstalk/app}) ; .beanstalk -> .core if you don't need Beanstalk support
 
