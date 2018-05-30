@@ -24,6 +24,7 @@
 (def ^:const duration-varnames ["PARAM4", "SP_DURATION"])
 (def ^:const cross-domain-policy-domain-varnames ["PARAM5", "SP_CDP_DOMAIN"])
 (def ^:const cross-domain-policy-secure-varnames ["PARAM6", "SP_CDP_SECURE"])
+(def ^:const path-varnames ["PARAM7", "SP_PATH"])
 
 ;; Defaults
 (def ^:const default-p3p-header "policyref=\"/w3c/p3p.xml\", CP=\"NOI DSP COR NID PSA OUR IND COM NAV STA\"")
@@ -69,8 +70,13 @@
 (def domain
   "Get the domain the name cookies will be set on.
    Can be a wildcard e.g. '.foo.com'.
-   If undefined we'll just use the FQDN of the host"
+   If undefined we'll just use the FQDN of the host."
   (get-var domain-varnames))
+
+(def path
+  "Get the path the cookies will be set on.
+   If undefined we'll just use /"
+  (get-var path-varnames))
 
 (def cross-domain-policy-domain
   "Get the cross domain policy domain.
