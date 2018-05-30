@@ -24,7 +24,7 @@
   :dependencies     [[org.clojure/clojure "1.9.0"]
                      [ring/ring-core "1.6.3"]
                      [ring/ring-devel "1.6.3"]
-                     [compojure "1.1.3"]
+                     [compojure "1.6.1"]
                      [metrics-clojure "0.9.2"]
                      [metrics-clojure-ring "0.9.2"]
                      [commons-codec/commons-codec "1.7"]]
