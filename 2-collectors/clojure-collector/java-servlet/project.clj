@@ -21,7 +21,7 @@
   :license {:name "Apache Version 2.0"
   :url "http://www.apache.org/licenses/LICENSE-2.0"}
   :description "A SnowPlow event collector written in Clojure. AWS Elastic Beanstalk compatible."
-  :dependencies     [[org.clojure/clojure "1.4.0"]
+  :dependencies     [[org.clojure/clojure "1.9.0"]
                      [ring/ring-core "1.6.3"]
                      [ring/ring-devel "1.6.3"]
                      [compojure "1.1.3"]
