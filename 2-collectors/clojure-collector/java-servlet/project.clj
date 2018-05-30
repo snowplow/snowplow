@@ -13,10 +13,6 @@
 ;;;; Copyright: Copyright (c) 2012-2013 Snowplow Analytics Ltd
 ;;;; License:   Apache License Version 2.0
 
-(require 'cemerick.pomegranate.aether)
-(cemerick.pomegranate.aether/register-wagon-factory!
-  "http" #(org.apache.maven.wagon.providers.http.HttpWagon.))
-
 (defproject snowplow/clojure-collector "2.0.0" ;; MUST also bump version in server.xml
   :license {:name "Apache Version 2.0"
   :url "http://www.apache.org/licenses/LICENSE-2.0"}
