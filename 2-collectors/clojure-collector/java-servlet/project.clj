@@ -27,7 +27,7 @@
                      [compojure "1.6.1"]
                      [metrics-clojure "2.10.0"]
                      [metrics-clojure-ring "2.10.0"]
-                     [commons-codec/commons-codec "1.7"]]
+                     [commons-codec/commons-codec "1.11"]]
   ;; The jetty adapter is only used during development
   :profiles         {:dev {:dependencies [[ring/ring-jetty-adapter "1.6.3"]]}}
   :war-resources-path   "war-resources"
