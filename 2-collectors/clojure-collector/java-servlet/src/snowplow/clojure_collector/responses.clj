@@ -38,13 +38,17 @@
 
 (defn- set-cookie
   "Sets a Snowplow cookie with visitor `id`,
-   to last `duration` seconds for `domain`.
+   to last `duration` seconds for `domain` at `path`.
    If domain is nil, leave out so the FQDN
-   of the host can be used instead"
-  [id duration domain]
+   of the host can be used instead.
+   If path is nil, path will be /."
+  [id duration domain path]
   (merge
     {:value    id
-     :expires (now-plus duration)}
+     :expires (now-plus duration)
+     :path (if (nil? path)
+       "/"
+       path)}
    (when-let [d domain]
     {:domain   d})))
 
@@ -95,11 +99,11 @@
 (defn send-cookie-pixel-or-200-or-redirect
   "Respond with the cookie and either a
    transparent pixel, a 200 or a redirect"
-  [cookies duration domain p3p-header pixel vendor params]
+  [cookies duration domain path p3p-header pixel vendor params]
   (let [id      (generate-id cookies)
         cookies (if (= duration 0)
                   {}
-                  {cookie-name (set-cookie id duration domain)})
+                  {cookie-name (set-cookie id duration domain path)})
         headers {"P3P" p3p-header}]
     (if (= vendor "r")
       (send-redirect cookies headers params)
