@@ -98,6 +98,10 @@ collector {
       # Region where the streams are located
       region = {{kinesisRegion}}
 
+      ## Optional endpoint url configuration to override aws kinesis endpoints,
+      ## this can be used to specify local endpoints when using localstack
+      # customEndpoint = {{kinesisEndpoint}}
+
       # Thread pool size for Kinesis API requests
       threadPoolSize = 10
 
