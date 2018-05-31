@@ -56,6 +56,10 @@ enrich {
       # Region where the streams are located
       region = {{region}}
 
+      ## Optional endpoint url configuration to override aws kinesis endpoints,
+      ## this can be used to specify local endpoints when using localstack
+      # customEndpoint = {{kinesisEndpoint}}
+
       # AWS credentials
       # If both are set to 'default', use the default AWS credentials provider chain.
       # If both are set to 'iam', use AWS IAM Roles to provision credentials.
