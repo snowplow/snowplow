@@ -170,7 +170,17 @@ class CollectorPayload1LzoSpec extends Specification with EnrichJobSpec {
     if (!isLzoSupported) "native-lzo not supported" in skipped
     else {
       val f = writeLzo("input", CollectorPayload1LzoSpec.collectorPayload)
-      runEnrichJob(f.toString(), "thrift", "1", true, List("geo"), false, false, false, false)
+      runEnrichJob(
+        f.toString(),
+        "thrift",
+        "1",
+        true,
+        List("geo"),
+        false,
+        false,
+        false,
+        false,
+        false)
 
       "correctly output 1 page view" in {
         val Some(goods) = readPartFile(dirs.output)

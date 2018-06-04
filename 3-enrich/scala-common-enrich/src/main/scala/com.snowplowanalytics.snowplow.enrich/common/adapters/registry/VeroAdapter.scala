@@ -80,7 +80,7 @@ object VeroAdapter extends Adapter {
       }
       eventType <- Try((parsed \ "type").extract[String]) match {
         case Success(et) => et.successNel
-        case Failure(e) => s"Could not extract type from $VendorName event JSON: [${e.getMessage}]".failureNel
+        case Failure(e)  => s"Could not extract type from $VendorName event JSON: [${e.getMessage}]".failureNel
       }
       formattedEvent   = cleanupJsonEventValues(parsed, ("type", eventType).some, s"${eventType}_at")
       reformattedEvent = reformatParameters(formattedEvent)
