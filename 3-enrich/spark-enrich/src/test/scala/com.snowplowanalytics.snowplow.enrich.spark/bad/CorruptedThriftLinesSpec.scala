@@ -30,7 +30,7 @@ class CorruptedThriftLinesSpec extends Specification with EnrichJobSpec {
     if (!isLzoSupported) "native-lzo not supported" in skipped
     else {
       runEnrichJob(getClass().getResource("CorruptedThriftLinesSpec.line.lzo").toString(), "thrift",
-        "1", false, List("geo"), false, false, false, false)
+        "1", false, List("geo"), false, false, false, false, false)
 
       "write a bad row JSON containing the input line and all errors" in {
         val Some(bads) = readPartFile(dirs.badRows)

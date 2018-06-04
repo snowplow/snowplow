@@ -1,0 +1,96 @@
+{
+    "$schema": "http://iglucentral.com/schemas/com.snowplowanalytics.self-desc/schema/jsonschema/1-0-0#",
+    "description": "Schema for IAB spiders&robots enrichment",
+    "self": {
+        "vendor": "com.snowplowanalytics.snowplow.enrichments",
+        "name": "iab_spiders_and_robots_enrichment",
+        "format": "jsonschema",
+        "version": "1-0-0"
+    },
+
+    "type": "object",
+    "properties": {
+        "vendor": {
+            "type": "string"
+        },
+        "name": {
+            "type": "string"
+        },
+        "enabled": {
+            "type": "boolean"
+        },
+
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "ipFile": {
+                    "description": "Path to IP address exclude file",
+                    "type": "object",
+                    "properties": {
+                        "database": {
+                            "enum": ["ip_exclude_current_cidr.txt"]
+                        },
+                        "uri": {
+                            "type": "string",
+                            "format": "uri"
+                        }
+                    },
+                    "required": ["database", "uri"]
+                },
+                "excludeUseragentFile": {
+                    "description": "Path to user agent exclude file",
+                    "type": "object",
+                    "properties": {
+                        "database": {
+                            "enum": ["exclude_current.txt"]
+                        },
+                        "uri": {
+                            "type": "string",
+                            "format": "uri"
+                        }
+                    },
+                    "required": ["database", "uri"]
+                },
+                "includeUseragentFile": {
+                    "description": "Path to user agent include file",
+                    "type": "object",
+                    "properties": {
+                        "database": {
+                            "enum": ["include_current.txt"]
+                        },
+                        "uri": {
+                            "type": "string",
+                            "format": "uri"
+                        }
+                    },
+                    "required": ["database", "uri"]
+                },
+                "httpUsername": {
+                    "description": "Optional username for basic HTTP authentication",
+                    "type": "string"
+                },
+                "httpPassword": {
+                    "description": "Optional password for basic HTTP authentication",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "ipFile",
+                "excludeUseragentFile",
+                "includeUseragentFile"
+            ],
+            "dependencies": {
+                "httpUsername": ["httpPassword"],
+                "httpPassword": ["httpUsername"]
+            },
+            "additionalProperties": false
+        }
+    },
+    "required": [
+        "vendor",
+        "name",
+        "enabled",
+        "parameters"
+    ],
+    "additionalProperties": false
+}
