@@ -168,7 +168,7 @@ class LzoGoogleAnalyticsEventSpec extends Specification with EnrichJobSpec {
       if (!isLzoSupported) "native-lzo not supported" in skipped
       else {
         val f = writeLzo("google-analytics", LzoGoogleAnalyticsEventSpec.collectorPayload)
-        runEnrichJob(f.toString(), "thrift", "1", true, List("geo"), false, false, false, false)
+        runEnrichJob(f.toString(), "thrift", "1", true, List("geo"), false, false, false, false, false)
 
         "correctly output 1 google analytics page view" in {
           val Some(goods) = readPartFile(dirs.output)
