@@ -75,6 +75,12 @@ object BuildSettings {
   lazy val sbtAssemblySettings = Seq(
     // Slightly cleaner jar name
     assemblyJarName in assembly := { name.value + "-" + version.value + ".jar" },
+    assemblyShadeRules in assembly := Seq(
+      ShadeRule.rename(
+        // Fix incompatibility with IAB client
+        "org.apache.commons.io.**" -> "shadecommonsio.@1"
+      ).inAll
+    ),
     assemblyMergeStrategy in assembly := {
       case x if x.startsWith("META-INF") => MergeStrategy.discard
       case x if x.endsWith(".html") => MergeStrategy.discard
