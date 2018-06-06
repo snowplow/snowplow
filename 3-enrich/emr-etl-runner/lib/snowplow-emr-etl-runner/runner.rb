@@ -39,7 +39,7 @@ module Snowplow
             not skips.include?('shred')),
           :es => ((resume.nil? or [ 'enrich', 'shred', 'elasticsearch' ].include?(resume)) and
             not skips.include?('elasticsearch')),
-          :archive_raw => (enriched_stream.nil? and (resume.nil? or [ 'enrich', 'shred', 'elasticsearch', 'archive_raw' ].include?(resume)) and 
+          :archive_raw => (enriched_stream.nil? and (resume.nil? or [ 'enrich', 'shred', 'elasticsearch', 'archive_raw' ].include?(resume)) and
             not skips.include?('archive_raw')),
           :rdb_load => ((resume.nil? or [ 'enrich', 'shred', 'elasticsearch', 'archive_raw', 'rdb_load' ].include?(resume)) and
             not skips.include?('rdb_load')),
@@ -122,7 +122,7 @@ module Snowplow
         end
 
         lock = get_lock(@args[:lock], @args[:consul])
-        if not lock.nil?
+        if not lock.nil? and not @args[:ignore_lock_on_start]
           lock.try_lock
         end
 
