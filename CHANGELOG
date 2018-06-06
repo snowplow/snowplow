@@ -1,5 +1,6 @@
 Release 106 Acropolis (2018-06-07)
 ----------------------------------
+EmrEtlRunner: update rdb_shredder version in config.yml.sample to 1.13.1 (#3790)
 Scala Common Enrich: add formats as ScalazJson4sUtils.extract as implicit parameter (#3668)
 Scala Common Enrich: add salt to PII Enrichment (#3648)
 Scala Common Enrich: bump to 0.33.0 (#3763)
