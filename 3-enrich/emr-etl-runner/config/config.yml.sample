@@ -75,5 +75,6 @@ monitoring:
     level: DEBUG # You can optionally switch to INFO for production
   snowplow:
     method: get
+    protocol: http
     app_id: ADD HERE # e.g. snowplow
     collector: ADD HERE # e.g. d3rkrsqld9gmqf.cloudfront.net
