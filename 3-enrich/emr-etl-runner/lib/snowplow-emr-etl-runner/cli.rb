@@ -56,7 +56,8 @@ module Snowplow
         options = {
           :debug => false,
           :skip => [],
-          :include => []
+          :include => [],
+          :ignore_lock_on_start => false,
         }
 
         commands = {
@@ -72,6 +73,7 @@ module Snowplow
             opts.on('-x', "--skip {#{SKIPPABLES.to_a.join(',')}}", Array, 'skip the specified step(s)') { |config| options[:skip] = config }
             opts.on('-i', "--include {#{INCLUDES.to_a.join(',')}}", Array, 'include additional step(s)') { |config| options[:include] = config }
             opts.on('-l', '--lock PATH', 'where to store the lock') { |config| options[:lock] = config }
+            opts.on('--ignore-lock-on-start', 'ignore the lock if it is set when starting') { |config| options[:ignore_lock_on_start] = true }
             opts.on('--consul ADDRESS', 'address to the Consul server') { |config| options[:consul] = config }
           end,
           'generate emr-config' => OptionParser.new do |opts|
@@ -183,6 +185,7 @@ module Snowplow
           :resume_from => options[:resume_from],
           :include => options[:include],
           :lock => options[:lock],
+          :ignore_lock_on_start => options[:ignore_lock_on_start],
           :consul => options[:consul]
         }
 
@@ -267,7 +270,7 @@ module Snowplow
           Dir.entries(targets_path).select do |f|
             f.end_with?('.json')
           end.map do |f|
-            json = JSON.parse(File.read(targets_path + '/' + f), {:symbolize_names => true}) 
+            json = JSON.parse(File.read(targets_path + '/' + f), {:symbolize_names => true})
             id = json.dig(:data, :id)
             unless id.nil?
               ids.push(id)
@@ -322,7 +325,7 @@ module Snowplow
           if args[:resume_from] == "enrich"
             raise ConfigError, 'cannot resume from enrich in stream enrich mode'
           end
-          if args[:skip].include?('staging') || args[:skip].include?('enrich') 
+          if args[:skip].include?('staging') || args[:skip].include?('enrich')
             raise ConfigError, 'cannot skip staging nor enrich in stream enrich mode. Either skip staging_stream_enrich or resume from shred'
           end
           if args[:skip].include?('archive_raw') || args[:resume_from] == "archive_raw"
