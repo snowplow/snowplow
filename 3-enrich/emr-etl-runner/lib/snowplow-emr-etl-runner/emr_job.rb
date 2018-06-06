@@ -15,7 +15,7 @@
 
 require 'set'
 require 'elasticity'
-require 'sluice'
+require 'aws-sdk-s3'
 require 'awrence'
 require 'json'
 require 'base64'
@@ -23,7 +23,6 @@ require 'contracts'
 require 'iglu-client'
 require 'securerandom'
 require 'tempfile'
-require 'fog'
 
 # Ruby class to execute Snowplow's Hive jobs against Amazon EMR
 # using Elasticity (https://github.com/rslifka/elasticity).
@@ -55,6 +54,7 @@ module Snowplow
 
       include Monitoring::Logging
       include Snowplow::EmrEtlRunner::Utils
+      include Snowplow::EmrEtlRunner::S3
 
       # Initializes our wrapper for the Amazon EMR client.
       Contract Bool, Bool, Bool, Bool, Bool, Bool, Bool, Bool, ArchiveStep, ArchiveStep, ConfigHash, ArrayOf[String], String, TargetsHash, RdbLoaderSteps => EmrJob
@@ -83,10 +83,10 @@ module Snowplow
         etl_tstamp = (run_tstamp.to_f * 1000).to_i.to_s
         output_codec = output_codec_from_compression_format(config.dig(:enrich, :output_compression))
 
-        s3 = Sluice::Storage::S3::new_fog_s3_from(
-          config[:aws][:s3][:region],
-          config[:aws][:access_key_id],
-          config[:aws][:secret_access_key])
+        s3 = Aws::S3::Client.new(
+          :access_key_id => config[:aws][:access_key_id],
+          :secret_access_key => config[:aws][:secret_access_key],
+          :region => config[:aws][:s3][:region])
 
         ami_version = Gem::Version.new(config[:aws][:emr][:ami_version])
 
@@ -137,18 +137,15 @@ module Snowplow
 
         # staging
         if staging
-          csbr_processing_loc = Sluice::Storage::S3::Location.new(csbr[:processing])
-          unless Sluice::Storage::S3::is_empty?(s3, csbr_processing_loc)
-            raise DirectoryNotEmptyError, "Cannot safely add staging step to jobflow, #{csbr_processing_loc} is not empty"
+          unless empty?(s3, csbr[:processing])
+            raise DirectoryNotEmptyError, "Cannot safely add staging step to jobflow, #{csbr[:processing]} is not empty"
           end
 
           src_pattern = collector_format == 'clj-tomcat' ? '.*localhost\_access\_log.*\.txt.*' : '.+'
           src_pattern_regex = Regexp.new src_pattern
           non_empty_locs = csbr[:in].select { |l|
-            loc = Sluice::Storage::S3::Location.new(l)
-            files = Sluice::Storage::S3::list_files(s3, loc)
-              .select { |f| !(f.key =~ src_pattern_regex).nil? }
-            files.length > 0
+            not empty?(s3, l,
+              lambda { |k| !(k =~ /\/$/) and !(k =~ /\$folder\$$/) and !(k =~ src_pattern_regex).nil? })
           }
 
           if non_empty_locs.empty?
@@ -369,9 +366,8 @@ module Snowplow
             end
 
           # Late check whether our enrichment directory is empty. We do an early check too
-          csbe_good_loc = Sluice::Storage::S3::Location.new(csbe[:good])
-          unless Sluice::Storage::S3::is_empty?(s3, csbe_good_loc)
-            raise DirectoryNotEmptyError, "Cannot safely add enrichment step to jobflow, #{csbe_good_loc} is not empty"
+          unless empty?(s3, csbe[:good])
+            raise DirectoryNotEmptyError, "Cannot safely add enrichment step to jobflow, #{csbe[:good]} is not empty"
           end
           @jobflow.add_step(enrich_step)
 
@@ -399,16 +395,12 @@ module Snowplow
 
         # Staging data produced by Stream Enrich
         if staging_stream_enrich
-          csbe_good_loc = Sluice::Storage::S3::Location.new(csbe[:good])
-          unless Sluice::Storage::S3::is_empty?(s3, csbe_good_loc)
-            raise DirectoryNotEmptyError, "Cannot safely add stream staging step to jobflow, #{csbe_good_loc} is not empty"
+          unless empty?(s3, csbe[:good])
+            raise DirectoryNotEmptyError, "Cannot safely add stream staging step to jobflow, #{csbe[:good]} is not empty"
           end
 
-          stream_enrich_loc = Sluice::Storage::S3::Location.new(csbe[:stream])
-
           src_pattern_regex = Regexp.new STREAM_ENRICH_REGEXP
-          files = Sluice::Storage::S3::list_files(s3, stream_enrich_loc).select { |f| !(f.key =~ src_pattern_regex).nil? }
-          if files.empty?
+          if empty?(s3, csbe[:stream], lambda { |k| !(k =~ /\/$/) and !(k =~ /\$folder\$$/) and !(k =~ src_pattern_regex).nil? })
             raise NoDataToProcessError, "No Snowplow enriched stream logs to process since last run"
           end
 
@@ -431,11 +423,11 @@ module Snowplow
 
           # Add processing manifest if available
           processing_manifest = get_processing_manifest(targets)
-          processing_manifest_shred_args = 
-            if not processing_manifest.nil? 
+          processing_manifest_shred_args =
+            if not processing_manifest.nil?
               if Gem::Version.new(config[:storage][:versions][:rdb_shredder]) >= SHRED_JOB_WITH_PROCESSING_MANIFEST
                 { 'processing-manifest-table' => processing_manifest, 'item-id' => shred_final_output }
-              else 
+              else
                 {}
               end
             else
@@ -457,7 +449,6 @@ module Snowplow
               "--outputCodec", "none",
               "--s3Endpoint" , s3_endpoint
             ]
-
             copy_to_hdfs_step.name << ": Enriched S3 -> HDFS"
             @jobflow.add_step(copy_to_hdfs_step)
           end
@@ -496,9 +487,8 @@ module Snowplow
             end
 
           # Late check whether our target directory is empty
-          csbs_good_loc = Sluice::Storage::S3::Location.new(csbs[:good])
-          unless Sluice::Storage::S3::is_empty?(s3, csbs_good_loc)
-            raise DirectoryNotEmptyError, "Cannot safely add shredding step to jobflow, #{csbs_good_loc} is not empty"
+          unless empty?(s3, csbs[:good])
+            raise DirectoryNotEmptyError, "Cannot safely add shredding step to jobflow, #{csbs[:good]} is not empty"
           end
           @jobflow.add_step(shred_step)
 
@@ -674,23 +664,26 @@ module Snowplow
       Contract String, String, String, String => nil
       def output_rdb_loader_logs(region, aws_access_key_id, aws_secret_key, log_level)
 
-        s3 = Sluice::Storage::S3::new_fog_s3_from(region, aws_access_key_id, aws_secret_key)
+        s3 = Aws::S3::Client.new(
+          :access_key_id => aws_access_key_id,
+          :secret_access_key => aws_secret_key,
+          :region => region)
 
-        loc = Sluice::Storage::S3::Location.new(@rdb_loader_log_base)
-
-        if @rdb_loader_logs.empty? or Sluice::Storage::S3::is_empty?(s3, loc)
+        if @rdb_loader_logs.empty? or empty?(s3, @rdb_loader_log_base)
           logger.info "No RDB Loader logs"
         else
           logger.info "RDB Loader logs"
 
           @rdb_loader_logs.each do |l|
             tmp = Tempfile.new("rdbloader")
-            uri = URI.parse(l[1])
-            bucket, key = uri.host, uri.path[1..-1]
-            logger.debug "Downloading #{uri} to #{tmp.path}"
+            bucket, key = parse_bucket_prefix(l[1])
+            logger.debug "Downloading #{l[1]} to #{tmp.path}"
             begin
-              log = s3.directories.get(bucket).files.head(key)
-              Sluice::Storage::S3::download_file(s3, log, tmp)
+              s3.get_object({
+                response_target: tmp,
+                bucket: bucket,
+                key: key,
+              })
               if log_level == 'info'
                 logger.info l[0]
                 logger.info tmp.read
@@ -774,22 +767,15 @@ module Snowplow
       # +s3+:: AWS S3 client
       # +s3_path+:: Full S3 path to folder
       def get_latest_run_id(s3, s3_path)
-        uri = URI.parse(s3_path)
-        folders = s3.directories.get(uri.host, delimiter: '/', prefix: uri.path[1..-1]).files.common_prefixes
-        # each is mandatory, otherwise there'll be pagination issues if there are > 1k objects
-        # cf snowplow/snowplow#3434
-        run_folders = []
-        folders.each { |f|
-          if f.include?('run=')
-            run_folders << f
-          end
-        }
-        begin
-          folder = run_folders[-1].split('/')[-1]
-          folder.slice('run='.length, folder.length)
-        rescue NoMethodError => _
+        run_id_regex = /.*\/run=((\d|-)+)\/.*/
+        folders = list_object_names(s3, s3_path,
+            lambda { |k| !(k =~ /\$folder\$$/) and !k[run_id_regex, 1].nil? })
+          .map { |k| k[run_id_regex, 1] }
+        if folders.empty?
           logger.error "No run folders in [#{s3_path}] found"
           raise UnexpectedStateError, "No run folders in [#{s3_path}] found"
+        else
+          folders.first
         end
       end
 
@@ -802,7 +788,7 @@ module Snowplow
       # +name+:: step description to show in EMR console
       #
       # Returns a step ready for adding to the Elasticity Jobflow.
-      Contract String, String, String, String, String => Elasticity::S3DistCpStep
+      Contract String, String, String, String, String, Bool => Elasticity::S3DistCpStep
       def get_archive_step(good_path, archive_path, run_id_folder, s3_endpoint, name)
         archive_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
         archive_step.arguments = [
