@@ -52,21 +52,12 @@ before_install:
   - sudo apt-get install -y lzop
   - pip install --user awscli
   - export PATH=$PATH:$HOME/.local/bin
-  - rvm implode --force
-  - \curl -sSL https://get.rvm.io | bash -s 1.27.0
-  - rvm reload
-  - rvm install jruby-9.1.6.0
-  - gem uninstall -i /home/travis/.rvm/gems/jruby-9.1.6.0 bundler -a -x
-  - gem install bundler -v 1.15.4
 addons:
   postgresql: '9.3'
 services:
   - postgresql
 before_deploy:
   - pip install --user release-manager==0.3.0
-  # necessary for the deploy section to work, see https://github.com/snowplow/snowplow/issues/3691
-  - rvm install 2.4.3
-  - rvm --default use 2.4.3
 deploy:
   - provider: script
     script: ./.travis/deploy_sce.sh $TRAVIS_TAG
