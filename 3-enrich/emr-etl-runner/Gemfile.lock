@@ -1,12 +1,26 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    CFPropertyList (2.3.5)
     addressable (2.5.0)
       public_suffix (~> 2.0, >= 2.0.2)
     avro (1.8.1)
       multi_json
     awrence (0.1.0)
+    aws-eventstream (1.0.0)
+    aws-partitions (1.89.1)
+    aws-sdk-core (3.21.2)
+      aws-eventstream (~> 1.0)
+      aws-partitions (~> 1.0)
+      aws-sigv4 (~> 1.0)
+      jmespath (~> 1.0)
+    aws-sdk-kms (1.5.0)
+      aws-sdk-core (~> 3)
+      aws-sigv4 (~> 1.0)
+    aws-sdk-s3 (1.13.0)
+      aws-sdk-core (~> 3, >= 3.21.2)
+      aws-sdk-kms (~> 1)
+      aws-sigv4 (~> 1.0)
+    aws-sigv4 (1.0.2)
     builder (3.2.3)
     contracts (0.11.0)
     coveralls (0.8.19)
@@ -26,67 +40,24 @@ GEM
       fog-aws (~> 1.0)
       rest-client (~> 1.0)
       unf (~> 0.1)
-    excon (0.52.0)
+    excon (0.62.0)
     faraday (0.12.2)
       multipart-post (>= 1.2, < 3)
-    fission (0.5.0)
-      CFPropertyList (~> 2.2)
-    fog (1.25.0)
-      fog-brightbox (~> 0.4)
-      fog-core (~> 1.25)
-      fog-json
-      fog-profitbricks
-      fog-radosgw (>= 0.0.2)
-      fog-sakuracloud (>= 0.0.4)
-      fog-softlayer
-      fog-terremark
-      fog-vmfusion
-      fog-voxel
-      fog-xml (~> 0.1.1)
-      ipaddress (~> 0.5)
-      nokogiri (~> 1.5, >= 1.5.11)
-      opennebula
-    fog-aws (1.4.0)
+    fog-aws (1.4.1)
       fog-core (~> 1.38)
       fog-json (~> 1.0)
       fog-xml (~> 0.1)
       ipaddress (~> 0.8)
-    fog-brightbox (0.11.0)
-      fog-core (~> 1.22)
-      fog-json
-      inflecto (~> 0.0.2)
-    fog-core (1.42.0)
+    fog-core (1.45.0)
       builder
-      excon (~> 0.49)
+      excon (~> 0.58)
       formatador (~> 0.2)
     fog-json (1.0.2)
       fog-core (~> 1.0)
       multi_json (~> 1.10)
-    fog-profitbricks (3.0.0)
-      fog-core (~> 1.42)
-      fog-json (~> 1.0)
-    fog-radosgw (0.0.5)
-      fog-core (>= 1.21.0)
-      fog-json
-      fog-xml (>= 0.0.1)
-    fog-sakuracloud (1.7.5)
+    fog-xml (0.1.3)
       fog-core
-      fog-json
-    fog-softlayer (1.1.4)
-      fog-core
-      fog-json
-    fog-terremark (0.1.0)
-      fog-core
-      fog-xml
-    fog-vmfusion (0.1.0)
-      fission
-      fog-core
-    fog-voxel (0.1.0)
-      fog-core
-      fog-xml
-    fog-xml (0.1.2)
-      fog-core
-      nokogiri (~> 1.5, >= 1.5.11)
+      nokogiri (>= 1.5.11, < 2.0.0)
     formatador (0.2.5)
     http-cookie (1.0.3)
       domain_name (~> 0.5)
@@ -95,31 +66,22 @@ GEM
     iglu-ruby-client (0.1.0)
       httparty (<= 0.14.0)
       json-schema (~> 2.7.0, >= 2.7.0)
-    inflecto (0.0.2)
     ipaddress (0.8.3)
-    jruby-jars (9.1.7.0)
-    jruby-rack (1.1.20)
+    jmespath (1.4.0)
+    json (2.0.3)
     json (2.0.3-java)
     json-schema (2.7.0)
       addressable (>= 2.4)
     mime-types (2.99.3)
-    multi_json (1.12.1)
+    mini_portile2 (2.3.0)
+    multi_json (1.13.1)
     multi_xml (0.6.0)
     multipart-post (2.0.0)
-    net-ssh (2.9.4)
     netrc (0.11.0)
-    nokogiri (1.7.0.1-java)
-    opennebula (5.4.0)
-      json
-      nokogiri
-      rbvmomi
+    nokogiri (1.8.2)
+      mini_portile2 (~> 2.3.0)
+    nokogiri (1.8.2-java)
     public_suffix (2.0.5)
-    rake (12.0.0)
-    rbvmomi (1.11.3)
-      builder (~> 3.0)
-      json (>= 1.8)
-      nokogiri (~> 1.5)
-      trollop (~> 2.1)
     rest-client (1.8.0)
       http-cookie (>= 1.0.2, < 2.0)
       mime-types (>= 1.16, < 3.0)
@@ -137,29 +99,21 @@ GEM
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.5.0)
     rspec-support (3.5.0)
-    rubyzip (1.2.1)
     simplecov (0.12.0)
       docile (~> 1.1.0)
       json (>= 1.8, < 3)
       simplecov-html (~> 0.10.0)
     simplecov-html (0.10.0)
-    sluice (0.4.0)
-      contracts (~> 0.9)
-      fog (= 1.25)
-      net-ssh (~> 2.9.2)
     snowplow-tracker (0.5.2)
       contracts (~> 0.7, <= 0.11)
     term-ansicolor (1.4.0)
       tins (~> 1.0)
     thor (0.19.4)
     tins (1.13.2)
-    trollop (2.1.2)
+    unf (0.1.4)
+      unf_ext
     unf (0.1.4-java)
-    warbler (2.0.4)
-      jruby-jars (>= 9.0.0.0)
-      jruby-rack (>= 1.1.1, < 1.3)
-      rake (>= 10.1.0)
-      rubyzip (~> 1.0, < 1.4)
+    unf_ext (0.0.7.5)
 
 PLATFORMS
   java
@@ -167,15 +121,14 @@ PLATFORMS
 DEPENDENCIES
   avro (~> 1.8.1)
   awrence (~> 0.1.0)
+  aws-sdk-s3 (~> 1)
   contracts (~> 0.9, <= 0.11)
   coveralls
   diplomat (~> 2.0.1)
   elasticity (~> 6.0.12)
   iglu-ruby-client (>= 0.1.0)
   rspec (~> 3.5.0)
-  sluice (~> 0.4.0)
   snowplow-tracker (~> 0.5.2)
-  warbler
 
 RUBY VERSION
    ruby 2.3.1p0 (jruby 9.1.6.0)
