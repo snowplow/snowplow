@@ -28,7 +28,6 @@ module Snowplow
         include Contracts
 
         # Constants
-        PORT = 80
         BUFFER_SIZE = 0
         APPLICATION_CONTEXT_SCHEMA = "iglu:com.snowplowanalytics.monitoring.batch/application_context/jsonschema/1-0-0"
         JOB_STATUS_SCHEMA = "iglu:com.snowplowanalytics.monitoring.batch/emr_job_status/jsonschema/1-0-0"
@@ -40,6 +39,7 @@ module Snowplow
         # Parameters
         @@method = "get"
         @@protocol = "http"
+        @@port = 80
         @@collector_uri = nil
         @@app_id = nil
 
@@ -56,6 +56,7 @@ module Snowplow
           else
             @@protocol
           end
+          @@port = cms[:port] || @@port
           @@collector_uri = cms[:collector] # Could be nil
           @@app_id = cms[:app_id] # Could be nil
 
@@ -77,7 +78,7 @@ module Snowplow
               emitter = SnowplowTracker::Emitter.new(@@collector_uri, {
                 :protocol => @@protocol,
                 :method => @@method,
-                :port => PORT,
+                :port => @@port,
                 :buffer_size => BUFFER_SIZE
               })
 
