@@ -25,7 +25,7 @@ gem "avro", "~> 1.8.1"
 gem "awrence", "~> 0.1.0"
 gem "snowplow-tracker", "~> 0.5.2"
 gem "iglu-ruby-client", ">= 0.1.0"
-gem "sluice", "~> 0.4.0"
+gem "aws-sdk-s3", "~> 1"
 gem "diplomat", "~> 2.0.1"
 
 group :development do
