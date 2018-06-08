@@ -8,6 +8,7 @@ aws:
       assets: s3://snowplow-hosted-assets # DO NOT CHANGE unless you are hosting the jarfiles etc yourself in your own bucket
       jsonpath_assets: # If you have defined your own JSON Schemas, add the s3:// path to your own JSON Path files in your own bucket here
       log: ADD HERE
+      encrypted: false # Whether the buckets below are enrcrypted using server side encryption (SSE-S3)
       raw:
         in:                  # This is a YAML array of one or more in buckets - you MUST use hyphens before each entry in the array, as below
           - ADD HERE         # e.g. s3://my-old-collector-bucket
