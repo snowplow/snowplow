@@ -42,7 +42,8 @@ module Snowplow
       :skip => Maybe[ArrayOf[String]],
       :include => Maybe[ArrayOf[String]],
       :lock => Maybe[String],
-      :consul => Maybe[String]
+      :consul => Maybe[String],
+      :ignore_lock_on_start => Maybe[Bool]
       })
 
     # The Hash containing the buckets field from the configuration YAML
@@ -50,6 +51,7 @@ module Snowplow
       :assets => String,
       :jsonpath_assets => Maybe[String],
       :log => String,
+      :encrypted => Bool,
       :raw => Maybe[({
         :in => ArrayOf[String],
         :processing => String,

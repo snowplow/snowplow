@@ -82,6 +82,7 @@ module Snowplow
         @rdb_loader_logs = []   # pairs of target name and associated log
         etl_tstamp = (run_tstamp.to_f * 1000).to_i.to_s
         output_codec = output_codec_from_compression_format(config.dig(:enrich, :output_compression))
+        encrypted = config[:aws][:s3][:buckets][:encrypted]
 
         s3 = Aws::S3::Client.new(
           :access_key_id => config[:aws][:access_key_id],
@@ -162,6 +163,9 @@ module Snowplow
               ]
               if collector_format == 'clj-tomcat'
                 staging_step.arguments = staging_step.arguments + [ '--groupBy', '.*/_*(.+)' ]
+              end
+              if encrypted
+                staging_step.arguments = staging_step.arguments + [ '--s3ServerSideEncryption' ]
               end
               staging_step.name << ": Raw #{l} -> Raw Staging S3"
               @jobflow.add_step(staging_step)
@@ -318,6 +322,9 @@ module Snowplow
           if collector_format == "clj-tomcat" then
             compact_to_hdfs_step.arguments << "--outputCodec" << "none"
           end
+          if encrypted
+            compact_to_hdfs_step.arguments = compact_to_hdfs_step.arguments + [ '--s3ServerSideEncryption' ]
+          end
           compact_to_hdfs_step.name << ": Raw S3 -> Raw HDFS"
           @jobflow.add_step(compact_to_hdfs_step)
 
@@ -379,6 +386,9 @@ module Snowplow
             "--srcPattern" , PARTFILE_REGEXP,
             "--s3Endpoint" , s3_endpoint
           ] + output_codec
+          if encrypted
+            copy_to_s3_step.arguments = copy_to_s3_step.arguments + [ '--s3ServerSideEncryption' ]
+          end
           copy_to_s3_step.name << ": Enriched HDFS -> S3"
           @jobflow.add_step(copy_to_s3_step)
 
@@ -389,6 +399,9 @@ module Snowplow
             "--srcPattern" , SUCCESS_REGEXP,
             "--s3Endpoint" , s3_endpoint
           ]
+          if encrypted
+            copy_success_file_step.arguments = copy_success_file_step.arguments + [ '--s3ServerSideEncryption' ]
+          end
           copy_success_file_step.name << ": Enriched HDFS _SUCCESS -> S3"
           @jobflow.add_step(copy_success_file_step)
         end
@@ -412,6 +425,9 @@ module Snowplow
             "--srcPattern" , STREAM_ENRICH_REGEXP,
             "--deleteOnSuccess"
           ]
+          if encrypted
+            staging_step.arguments = staging_step.arguments + [ '--s3ServerSideEncryption' ]
+          end
           staging_step.name << ": Stream Enriched #{csbe[:stream]} -> Enriched Staging S3"
           @jobflow.add_step(staging_step)
         end
@@ -449,6 +465,9 @@ module Snowplow
               "--outputCodec", "none",
               "--s3Endpoint" , s3_endpoint
             ]
+            if encrypted
+              copy_to_hdfs_step.arguments = copy_to_hdfs_step.arguments + [ '--s3ServerSideEncryption' ]
+            end
             copy_to_hdfs_step.name << ": Enriched S3 -> HDFS"
             @jobflow.add_step(copy_to_hdfs_step)
           end
@@ -500,6 +519,9 @@ module Snowplow
             "--srcPattern" , PARTFILE_REGEXP,
             "--s3Endpoint" , s3_endpoint
           ] + output_codec
+          if encrypted
+            copy_to_s3_step.arguments = copy_to_s3_step.arguments + [ '--s3ServerSideEncryption' ]
+          end
           copy_to_s3_step.name << ": Shredded HDFS -> S3"
           @jobflow.add_step(copy_to_s3_step)
 
@@ -510,6 +532,9 @@ module Snowplow
             "--srcPattern" , SUCCESS_REGEXP,
             "--s3Endpoint" , s3_endpoint
           ]
+          if encrypted
+            copy_success_file_step.arguments = copy_success_file_step.arguments + [ '--s3ServerSideEncryption' ]
+          end
           copy_success_file_step.name << ": Shredded HDFS _SUCCESS -> S3"
           @jobflow.add_step(copy_success_file_step)
         end
@@ -529,6 +554,9 @@ module Snowplow
             "--s3Endpoint" , s3_endpoint,
             "--deleteOnSuccess"
           ]
+          if encrypted
+            archive_raw_step.arguments = archive_raw_step.arguments + [ '--s3ServerSideEncryption' ]
+          end
           archive_raw_step.name << ": Raw Staging S3 -> Raw Archive S3"
           @jobflow.add_step(archive_raw_step)
         end
@@ -542,22 +570,22 @@ module Snowplow
         end
 
         if archive_enriched == 'pipeline'
-          archive_enriched_step = get_archive_step(csbe[:good], csbe[:archive], run_id, s3_endpoint, ": Enriched S3 -> Enriched Archive S3")
+          archive_enriched_step = get_archive_step(csbe[:good], csbe[:archive], run_id, s3_endpoint, ": Enriched S3 -> Enriched Archive S3", encrypted)
           @jobflow.add_step(archive_enriched_step)
         elsif archive_enriched == 'recover'
           latest_run_id = get_latest_run_id(s3, csbe[:good])
-          archive_enriched_step = get_archive_step(csbe[:good], csbe[:archive], latest_run_id, s3_endpoint, ': Enriched S3 -> S3 Enriched Archive')
+          archive_enriched_step = get_archive_step(csbe[:good], csbe[:archive], latest_run_id, s3_endpoint, ': Enriched S3 -> S3 Enriched Archive', encrypted)
           @jobflow.add_step(archive_enriched_step)
         else    # skip
           nil
         end
 
         if archive_shredded == 'pipeline'
-          archive_shredded_step = get_archive_step(csbs[:good], csbs[:archive], run_id, s3_endpoint, ": Shredded S3 -> Shredded Archive S3")
+          archive_shredded_step = get_archive_step(csbs[:good], csbs[:archive], run_id, s3_endpoint, ": Shredded S3 -> Shredded Archive S3", encrypted)
           @jobflow.add_step(archive_shredded_step)
         elsif archive_shredded == 'recover'
           latest_run_id = get_latest_run_id(s3, csbs[:good])
-          archive_shredded_step = get_archive_step(csbs[:good], csbs[:archive], latest_run_id, s3_endpoint, ": Shredded S3 -> S3 Shredded Archive")
+          archive_shredded_step = get_archive_step(csbs[:good], csbs[:archive], latest_run_id, s3_endpoint, ": Shredded S3 -> S3 Shredded Archive", encrypted)
           @jobflow.add_step(archive_shredded_step)
         else    # skip
           nil
@@ -786,10 +814,11 @@ module Snowplow
       # +archive_path+:: enriched:archive or shredded:archive full S3 path
       # +run_id_folder+:: run id foler name (2017-05-10-02-45-30, without `=run`)
       # +name+:: step description to show in EMR console
+      # +encrypted+:: whether the destination bucket is encrypted
       #
       # Returns a step ready for adding to the Elasticity Jobflow.
       Contract String, String, String, String, String, Bool => Elasticity::S3DistCpStep
-      def get_archive_step(good_path, archive_path, run_id_folder, s3_endpoint, name)
+      def get_archive_step(good_path, archive_path, run_id_folder, s3_endpoint, name, encrypted)
         archive_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
         archive_step.arguments = [
           "--src"        , partition_by_run(good_path, run_id_folder),
@@ -797,6 +826,9 @@ module Snowplow
           "--s3Endpoint" , s3_endpoint,
           "--deleteOnSuccess"
         ]
+        if encrypted
+          archive_step.arguments = archive_step.arguments + [ '--s3ServerSideEncryption' ]
+        end
         archive_step.name << name
         archive_step
       end
