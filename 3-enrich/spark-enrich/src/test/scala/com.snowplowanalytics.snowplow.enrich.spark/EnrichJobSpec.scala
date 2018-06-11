@@ -243,6 +243,16 @@ object EnrichJobSpec {
                 |"uri": "http://iglucentral.com"
               |}
             |}
+          |},
+          |{
+            |"name": "Iglu Embedded",
+            |"priority": 1,
+            |"vendorPrefixes": [ "com.snowplowanalytics" ],
+            |"connection": {
+              |"embedded": {
+                |"path": "/iglu"
+              |}
+            |}
           |}
           |]
         |}
@@ -269,7 +279,8 @@ object EnrichJobSpec {
     currencyConversionEnabled: Boolean,
     javascriptScriptEnabled: Boolean,
     apiRequest: Boolean,
-    sqlQuery: Boolean
+    sqlQuery: Boolean,
+    iabEnrichmentEnabled: Boolean
   ): String = {
 
     /**
@@ -287,6 +298,17 @@ object EnrichJobSpec {
         case "domain"         => "GeoIP2-Domain.mmdb"
         case "connectionType" => "GeoIP2-Connection-Type.mmdb"
         })
+    }
+
+    def getIabJson(database: String): String = {
+      """|"%s": {
+         |"database": "%s",
+         |"uri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/iab"
+         |}""".format(database, database match {
+        case "ipFile"               => "ip_exclude_current_cidr.txt"
+        case "excludeUseragentFile" => "exclude_current.txt"
+        case "includeUseragentFile" => "include_current.txt"
+      })
     }
 
     /** Converts the JavaScript script to Base64. */
@@ -440,6 +462,17 @@ object EnrichJobSpec {
                 |}
               |},
               |{
+                |"schema": "iglu:com.snowplowanalytics.snowplow.enrichments/iab_spiders_and_robots_enrichment/jsonschema/1-0-0",
+                |"data": {
+                  |"vendor": "com.snowplowanalytics.snowplow",
+                  |"name": "iab_spiders_and_robots_enrichment",
+                  |"enabled": ${iabEnrichmentEnabled},
+                  |"parameters": {
+                    ${List("ipFile", "excludeUseragentFile", "includeUseragentFile").map(getIabJson(_)).mkString(",\n")}
+                  |}
+                |}
+              |},
+              |{
                 |"schema": "iglu:com.snowplowanalytics.snowplow/campaign_attribution/jsonschema/1-0-1",
                 |"data": {
                   |"vendor": "com.snowplowanalytics.snowplow",
@@ -568,11 +601,12 @@ trait EnrichJobSpec extends SparkSpec {
     currencyConversionEnabled: Boolean = false,
     javascriptScriptEnabled: Boolean = false,
     apiRequestEnabled: Boolean = false,
-    sqlQueryEnabled: Boolean = false
+    sqlQueryEnabled: Boolean = false,
+    iabEnrichmentEnabled: Boolean = false
   ): Unit = {
     val input = mkTmpFile("input", lines)
     runEnrichJob(input.toString(), collector, anonOctets, anonOctetsEnabled, lookups,
-      currencyConversionEnabled, javascriptScriptEnabled, apiRequestEnabled, sqlQueryEnabled)
+      currencyConversionEnabled, javascriptScriptEnabled, apiRequestEnabled, sqlQueryEnabled, iabEnrichmentEnabled)
     deleteRecursively(input)
   }
 
@@ -590,7 +624,8 @@ trait EnrichJobSpec extends SparkSpec {
     currencyConversionEnabled: Boolean,
     javascriptScriptEnabled: Boolean,
     apiRequestEnabled: Boolean,
-    sqlQueryEnabled: Boolean
+    sqlQueryEnabled: Boolean,
+    iabEnrichmentEnabled: Boolean
   ): Unit = {
     val config = Array(
       "--input-folder", inputFile,
@@ -598,7 +633,7 @@ trait EnrichJobSpec extends SparkSpec {
       "--output-folder", dirs.output.toString(),
       "--bad-folder", dirs.badRows.toString(),
       "--enrichments", getEnrichments(anonOctets, anonOctetsEnabled, lookups,
-        currencyConversionEnabled, javascriptScriptEnabled, apiRequestEnabled, sqlQueryEnabled),
+        currencyConversionEnabled, javascriptScriptEnabled, apiRequestEnabled, sqlQueryEnabled, iabEnrichmentEnabled),
       "--iglu-config", igluConfig,
       "--etl-timestamp", 1000000000000L.toString,
       "--local"
