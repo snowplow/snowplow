@@ -230,16 +230,14 @@ a  * @param creds optionally necessary credentials to download the resolver
   def cacheFiles(
     registry: EnrichmentRegistry,
     forceDownload: Boolean
-  )(implicit creds: Credentials): ValidationNel[String, List[Int]] =
-    registry.getIpLookupsEnrichment
-      .map(_.dbsToCache)
-      .toList
-      .flatten
-      .map {
-        case (uri, path) =>
-          (
-            new java.net.URI(uri.toString.replaceAll("(?<!(http:|https:|s3:))//", "/")),
-            new File(path))
+  )(implicit creds: Credentials): ValidationNel[String, List[Int]] = {
+    val ipLookups = registry.getIpLookupsEnrichment.map(_.dbsToCache)
+    val iabDbs = registry.getIabEnrichment.map(_.dbsToCache)
+
+    (ipLookups.toList ++ iabDbs.toList).flatten
+      .map { case (uri, path) =>
+        (new java.net.URI(uri.toString.replaceAll("(?<!(http:|https:|s3:))//", "/")),
+          new File(path))
       }
       .filter { case (_, targetFile) => forceDownload || targetFile.length == 0L }
       .map {
@@ -250,4 +248,5 @@ a  * @param creds optionally necessary credentials to download the resolver
           }.toValidationNel
       }
       .sequenceU
+  }
 }
