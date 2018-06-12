@@ -26,6 +26,7 @@ aws:
     placement: ADD HERE     # Set this if not running in VPC. Leave blank otherwise
     ec2_subnet_id: ADD HERE # Set this if running in VPC. Leave blank otherwise
     ec2_key_name: ADD HERE
+    security_configuration: ADD HERE # Specify your EMR security configuration if needed. Leave blank otherwise
     bootstrap: []           # Set this to specify custom boostrap actions. Leave empty otherwise
     software:
       hbase:                # Optional. To launch on cluster, provide version, "0.92.0", keep quotes. Leave empty otherwise.
