@@ -123,6 +123,10 @@ module Snowplow
           @jobflow.ec2_subnet_id      = config[:aws][:emr][:ec2_subnet_id]
         end
 
+        unless config[:aws][:emr][:security_configuration].nil?
+          @jobflow.security_configuration = config[:aws][:emr][:security_configuration]
+        end
+
         @jobflow.log_uri              = config[:aws][:s3][:buckets][:log]
         @jobflow.enable_debugging     = debug
         @jobflow.visible_to_all_users = true
