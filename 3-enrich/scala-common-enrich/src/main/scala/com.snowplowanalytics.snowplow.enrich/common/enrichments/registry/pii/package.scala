@@ -111,4 +111,10 @@ package pii {
    */
   sealed trait ModifiedField
 
+  /**
+   * Abstract type to get salt using the supported methods
+   */
+  private[pii] trait PiiStrategyPseudonymizeSalt {
+    def getSalt: String
+  }
 }

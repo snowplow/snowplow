@@ -18,24 +18,32 @@ package pii
 // Json4s
 import org.json4s.JsonDSL._
 import org.json4s.Extraction.decompose
-import org.json4s.{CustomSerializer, JObject}
+import org.json4s.{CustomSerializer, JObject, JString, MappingException}
 
 // Scalaz
-import scalaz.{Failure, Success}
+import scalaz._
+import Scalaz._
 
 /**
- * Custom serializer for PiiStrategy class
+ * Custom serializer for PiiStrategyPseudonymize class
  */
-private[pii] final class PiiStrategySerializer
-    extends CustomSerializer[PiiStrategy](formats =>
+private[pii] final class PiiStrategyPseudonymizeSerializer
+    extends CustomSerializer[PiiStrategyPseudonymize](formats =>
       ({
         case jo: JObject =>
           implicit val json4sFormats = formats
-          val function               = (jo \ "pseudonymize" \ "hashFunction").extract[String]
-          PiiPseudonymizerEnrichment.getHashFunction(function) match {
-            case Success(hf) => PiiStrategyPseudonymize(function, hf)
-            case Failure(msg) =>
-              println(msg); PiiStrategyPseudonymize("IDENTITY", (b: Array[Byte]) => b.mkString) // FIXME: What to do here?
+          val function = (jo \ "pseudonymize" \ "hashFunction")
+            .extractOpt[String]
+            .toSuccess("Could not get hashFunction from config")
+          val salt = (jo \ "pseudonymize" \ "salt")
+            .extractOpt[String]
+            .toSuccess("Could not get salt from config")
+          val hashFn = function.flatMap(fn => PiiPseudonymizerEnrichment.getHashFunction(fn))
+          (function |@| salt |@| hashFn) { (functionName, salt, functionFn) =>
+            PiiStrategyPseudonymize(functionName, functionFn, salt)
+          } match {
+            case Success(psp) => psp
+            case Failure(msg) => throw new MappingException(msg)
           }
       }, {
         case psp: PiiStrategyPseudonymize =>
