@@ -40,7 +40,7 @@ object CljTomcatMailgunEventSpec {
     "clj-1.1.0-tom-0.2.0",
     etlVersion,
     null, // No user_id set
-    "52.205.x.x",
+    "5c2999403ebf6d9019488092d42bd0cb3062a9a1",
     null,
     null,
     null,
@@ -85,7 +85,7 @@ object CljTomcatMailgunEventSpec {
     null, //
     null, //
     null, //
-    """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.mailgun/message_delivered/jsonschema/1-0-0","data":{"recipient":"alice@example.com","messageHeaders":"[[\"Received\", \"by luna.mailgun.net with SMTP mgrt 8734663311733; Fri, 03 May 2013 18:26:27 +0000\"], [\"Content-Type\", [\"multipart/alternative\", {\"boundary\": \"eb663d73ae0a4d6c9153cc0aec8b7520\"}]], [\"Mime-Version\", \"1.0\"], [\"Subject\", \"Test deliver webhook\"], [\"From\", \"Bob <bob@sandbox57070072075d4cfd9008d4332108734c.mailgun.org>\"], [\"To\", \"Alice <alice@example.com>\"], [\"Message-Id\", \"<20130503182626.18666.16540@sandbox57070072075d4cfd9008d4332108734c.mailgun.org>\"], [\"X-Mailgun-Variables\", \"{\\\"my_var_1\\\": \\\"Mailgun Variable #1\\\", \\\"my-var-2\\\": \\\"awesome\\\"}\"], [\"Date\", \"Fri, 03 May 2013 18:26:27 +0000\"], [\"Sender\", \"bob@sandbox57070072075d4cfd9008d4332108734c.mailgun.org\"]]","timestamp":"2017-11-08T17:23:47.000Z","domain":"sandbox57070072075d4cfd9008d4332108734c.mailgun.org","signature":"c902ff9e3dea54c2dbe1871f9041653292ea9689d3d2b2d2ecfa996f025b9669","token":"cd87f5a30002794e37aa49e67fb46990e578b1e9197773d817","messageId":"<20130503182626.18666.16540@sandbox57070072075d4cfd9008d4332108734c.mailgun.org>","myVar1":"Mailgun Variable #1","myVar2":"awesome"}}}""",
+    """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.mailgun/message_delivered/jsonschema/1-0-0","data":{"recipient":"b4a671bd13d37fef13b4aa170f22bf6d5bf2f6a3","messageHeaders":"[[\"Received\", \"by luna.mailgun.net with SMTP mgrt 8734663311733; Fri, 03 May 2013 18:26:27 +0000\"], [\"Content-Type\", [\"multipart/alternative\", {\"boundary\": \"eb663d73ae0a4d6c9153cc0aec8b7520\"}]], [\"Mime-Version\", \"1.0\"], [\"Subject\", \"Test deliver webhook\"], [\"From\", \"Bob <bob@sandbox57070072075d4cfd9008d4332108734c.mailgun.org>\"], [\"To\", \"Alice <alice@example.com>\"], [\"Message-Id\", \"<20130503182626.18666.16540@sandbox57070072075d4cfd9008d4332108734c.mailgun.org>\"], [\"X-Mailgun-Variables\", \"{\\\"my_var_1\\\": \\\"Mailgun Variable #1\\\", \\\"my-var-2\\\": \\\"awesome\\\"}\"], [\"Date\", \"Fri, 03 May 2013 18:26:27 +0000\"], [\"Sender\", \"bob@sandbox57070072075d4cfd9008d4332108734c.mailgun.org\"]]","timestamp":"2017-11-08T17:23:47.000Z","domain":"sandbox57070072075d4cfd9008d4332108734c.mailgun.org","signature":"c902ff9e3dea54c2dbe1871f9041653292ea9689d3d2b2d2ecfa996f025b9669","token":"cd87f5a30002794e37aa49e67fb46990e578b1e9197773d817","messageId":"<20130503182626.18666.16540@sandbox57070072075d4cfd9008d4332108734c.mailgun.org>","myVar1":"Mailgun Variable #1","myVar2":"awesome"}}}""",
     null, // Transaction fields empty
     null, //
     null, //

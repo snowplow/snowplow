@@ -48,7 +48,7 @@ object SnowplowRawEventLzoSpec {
     "collector",
     etlVersion,
     null, // No user_id set
-    "255.255.255.x",
+    "b92b272f1ba23811516df7062f7706a43bf0ce03",
     "2071613637",
     "44082d3af0e30126",
     "2",

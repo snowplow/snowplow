@@ -207,7 +207,7 @@ class EnrichJob(@transient val spark: SparkSession, args: Array[String]) extends
     spark.createDataset(good)(Encoders.bean(classOf[EnrichedEvent]))
       .toDF()
       // hack to preserve the order of the fields in the csv, otherwise it's alphabetical
-      .select(classOf[EnrichedEvent].getDeclaredFields().map(f => col(f.getName())): _*)
+      .select(classOf[EnrichedEvent].getDeclaredFields().filterNot(_.getName.equals("pii")).map(f => col(f.getName())): _*)
       .write
       .option("sep", "\t")
       .option("escape", "")
