@@ -27,10 +27,12 @@ import java.util.Properties
 import scala.collection.JavaConverters._
 
 import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.apache.kafka.clients.producer._
 import scalaz._
 import Scalaz._
 
 import common.enrichments.EnrichmentRegistry
+import utils.emitPii
 import iglu.client.Resolver
 import model.{Kafka, StreamsConfig}
 import scalatracker.Tracker
@@ -48,10 +50,26 @@ object KafkaSource {
       case c: Kafka => c.success
       case _ => "Configured source/sink is not Kafka".failure
     }
-  } yield new KafkaSource(igluResolver, enrichmentRegistry, tracker, config, kafkaConfig)
+    goodProducer <- KafkaSink
+      .validateAndCreateProducer(kafkaConfig, config.buffer, config.out.enriched)
+      .validation
+    piiProducer <- (emitPii(enrichmentRegistry), config.out.pii) match {
+        case (true, Some(piiStreamName)) => KafkaSink.validateAndCreateProducer(kafkaConfig, config.buffer, piiStreamName).validation.map(Some(_))
+        case (false, Some(piiStreamName)) => s"PII was configured to not emit, but PII stream name was given as $piiStreamName".failure
+        case (true, None) => "PII was configured to emit, but no PII stream name was given".failure
+        case (false, None) => None.success
+      }
+    badProducer <- KafkaSink
+      .validateAndCreateProducer(kafkaConfig, config.buffer, config.out.bad)
+      .validation
+  } yield new KafkaSource(goodProducer, piiProducer, badProducer, igluResolver, enrichmentRegistry, tracker, config, kafkaConfig)
 }
+
 /** Source to read events from a Kafka topic */
 class KafkaSource private (
+  goodProducer: KafkaProducer[String, String],
+  piiProducer: Option[KafkaProducer[String, String]],
+  badProducer: KafkaProducer[String, String],
   igluResolver: Resolver,
   enrichmentRegistry: EnrichmentRegistry,
   tracker: Option[Tracker],
@@ -63,11 +81,18 @@ class KafkaSource private (
 
   override val threadLocalGoodSink: ThreadLocal[Sink] = new ThreadLocal[Sink] {
     override def initialValue: Sink =
-      new KafkaSink(kafkaConfig, config.buffer, config.out.enriched, tracker)
+      new KafkaSink(goodProducer, config.out.enriched)
   }
+
+  override val threadLocalPiiSink: Option[ThreadLocal[Sink]] =  piiProducer.flatMap{ somePiiProducer => 
+  config.out.pii.map { piiTopicName =>  new ThreadLocal[Sink] {
+    override def initialValue: Sink =
+      new KafkaSink(somePiiProducer, piiTopicName)
+  }}}
+
   override val threadLocalBadSink: ThreadLocal[Sink] = new ThreadLocal[Sink] {
     override def initialValue: Sink =
-      new KafkaSink(kafkaConfig, config.buffer, config.out.bad, tracker)
+      new KafkaSink(badProducer, config.out.bad)
   }
 
   /** Never-ending processing loop over source stream. */
@@ -80,7 +105,7 @@ class KafkaSource private (
     consumer.subscribe(List(config.in.raw).asJava)
     while (true) {
       val recordValues = consumer
-        .poll(100)    // Wait 100 ms if data is not available
+        .poll(100) // Wait 100 ms if data is not available
         .asScala
         .toList
         .map(_.value) // Get the values
@@ -90,7 +115,8 @@ class KafkaSource private (
   }
 
   private def createConsumer(
-      brokers: String, groupId: String): KafkaConsumer[String, Array[Byte]] = {
+    brokers: String,
+    groupId: String): KafkaConsumer[String, Array[Byte]] = {
     val properties = createProperties(brokers, groupId)
     new KafkaConsumer[String, Array[Byte]](properties)
   }
@@ -103,10 +129,8 @@ class KafkaSource private (
     props.put("auto.commit.interval.ms", "1000")
     props.put("auto.offset.reset", "earliest")
     props.put("session.timeout.ms", "30000")
-    props.put("key.deserializer",
-      "org.apache.kafka.common.serialization.StringDeserializer")
-    props.put("value.deserializer",
-      "org.apache.kafka.common.serialization.ByteArrayDeserializer")
+    props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer")
+    props.put("value.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer")
     props
   }
 }

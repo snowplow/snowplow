@@ -21,9 +21,9 @@ import org.specs2.mutable.Specification
 
 object CljTomcatTp2MegaEventsSpec {
   val lines = {
-    val file = getClass.getResource("CljTomcatTp2MegaEventsSpec.line").getFile
+    val file   = getClass.getResource("CljTomcatTp2MegaEventsSpec.line").getFile
     val source = Source.fromFile(file)
-    val line = source.mkString
+    val line   = source.mkString
     source.close()
     EnrichJobSpec.Lines(line)
   }
@@ -34,7 +34,7 @@ class CljTomcatTp2MegaEventsSpec extends Specification with EnrichJobSpec {
   override def appName = "clj-tomcat-tp2-mega-events"
   sequential
   "A job which processes a Clojure-Tomcat file containing a POST raw event representing 7,500 " +
-  "valid events" should {
+    "valid events" should {
     runEnrichJob(CljTomcatTp2MegaEventsSpec.lines, "clj-tomcat", "2", true, List("geo"))
 
     "correctly output 7,500 events" in {

@@ -37,7 +37,7 @@ object RefererParserCfLineSpec {
     "cloudfront",
     etlVersion,
     null, // No user_id set
-    "255.255.255.255",
+    "104851162466b684c03faccae36f42622bead233",
     "2071613637",
     "44082d3af0e30126",
     "2",
@@ -143,7 +143,7 @@ class RefererParserCfLineSpec extends Specification with EnrichJobSpec {
   override def appName = "referer-parser-cf-lines"
   sequential
   "A job which processes a CloudFront file containing 1 valid page ping with an internal " +
-  "subdomain referer" should {
+    "subdomain referer" should {
     runEnrichJob(RefererParserCfLineSpec.lines, "cloudfront", "1", false, List("geo"))
 
     "correctly output 1 page ping" in {

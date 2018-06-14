@@ -50,6 +50,8 @@ import utils.{ScalazJson4sUtils, ConversionUtils, JsonUtils => JU}
  */
 object JavascriptScriptEnrichmentConfig extends ParseableEnrichment {
 
+  implicit val formats = DefaultFormats
+
   val supportedSchema =
     SchemaCriterion("com.snowplowanalytics.snowplow", "javascript_script_config", "jsonschema", 1, 0)
 

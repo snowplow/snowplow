@@ -17,6 +17,8 @@ package common
 package utils
 
 // Scalaz
+import org.json4s.Formats
+
 import scalaz._
 import Scalaz._
 
@@ -28,8 +30,6 @@ import org.json4s.JsonDSL._
 import iglu.client.validation.ProcessingMessageMethods._
 
 object ScalazJson4sUtils {
-
-  implicit val formats = DefaultFormats
 
   /**
    * Returns a field of type A at the end of a
@@ -43,8 +43,8 @@ object ScalazJson4sUtils {
    * @return the list extracted from the JSON on
    *         success or an error String on failure
    */
-  def extract[A: Manifest](config: JValue, head: String, tail: String*): ValidatedMessage[A] = {
-
+  def extract[A: Manifest](config: JValue, head: String, tail: String*)(
+    implicit json4sFormats: Formats): ValidatedMessage[A] = {
     val path = head +: tail
 
     // This check is necessary because attempting to follow
@@ -55,7 +55,7 @@ object ScalazJson4sUtils {
         path.foldLeft(config)(_ \ _).extract[A].success
       } catch {
         case me: MappingException =>
-          s"Could not extract %s as %s from supplied JSON"
+          s"Could not extract %s as %s from supplied JSON due to: ${me.getMessage}"
             .format(path.mkString("."), manifest[A])
             .toProcessingMessage
             .fail

@@ -37,7 +37,7 @@ object Core2015RefreshSpec {
     "cloudfront",
     etlVersion,
     null, // No user_id set
-    "216.160.83.56",
+    "17803d07577023208861c69cbccbdfc0a041b06c",
     "1202972880",
     "81aa96d6d6ee6ad4",
     "1",
@@ -160,7 +160,7 @@ class Core2015RefreshSpec extends Specification with EnrichJobSpec {
   override def appName = "core-2015-refresh"
   sequential
   "A job which processes a CloudFront file containing 1 valid page ping with campaign attribution" +
-  " fields" should {
+    " fields" should {
     runEnrichJob(Core2015RefreshSpec.lines, "cloudfront", "1", false, List("geo"), false, true)
 
     "correctly output 1 page ping" in {

@@ -61,13 +61,13 @@ collectors:
   format: cloudfront # For example: 'clj-tomcat' for the Clojure Collector, 'thrift' for Thrift records, 'tsv/com.amazon.aws.cloudfront/wd_access_log' for Cloudfront access logs or 'ndjson/urbanairship.connect/v1' for UrbanAirship Connect events
 enrich:
   versions:
-    spark_enrich: 1.13.0 # Version of the Spark Enrichment process
+    spark_enrich: 1.14.0 # Version of the Spark Enrichment process
   continue_on_unexpected_error: false # Set to 'true' (and set :out_errors: above) if you don't want any exceptions thrown from ETL
   output_compression: NONE # Compression only supported with Redshift, set to NONE if you have Postgres targets. Allowed formats: NONE, GZIP
 storage:
   versions:
     rdb_loader: 0.14.0
-    rdb_shredder: 0.13.0        # Version of the Spark Shredding process
+    rdb_shredder: 0.13.1        # Version of the Spark Shredding process
     hadoop_elasticsearch: 0.1.0 # Version of the Hadoop to Elasticsearch copying process
 monitoring:
   tags: {} # Name-value pairs describing this job

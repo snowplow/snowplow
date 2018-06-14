@@ -37,7 +37,7 @@ object DerivedTstampSpec {
     "cloudfront",
     etlVersion,
     null, // No user_id set
-    "216.160.83.56",
+    "17803d07577023208861c69cbccbdfc0a041b06c",
     "1202972880",
     "81aa96d6d6ee6ad4",
     "1",
@@ -163,7 +163,7 @@ class DerivedTstampSpec extends Specification with EnrichJobSpec {
   override def appName = "derive-tstamp"
   sequential
   "A job which processes a CloudFront file containing 1 valid page ping with campaign attribution" +
-  " fields" should {
+    " fields" should {
     runEnrichJob(DerivedTstampSpec.lines, "cloudfront", "1", false, List("geo"), false, true)
 
     "correctly output 1 page ping" in {

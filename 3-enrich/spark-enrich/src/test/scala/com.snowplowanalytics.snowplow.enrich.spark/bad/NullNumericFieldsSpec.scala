@@ -21,7 +21,8 @@ object NullNumericFieldsSpec {
   val lines = EnrichJobSpec.Lines(
     "2014-10-11  14:01:05    -   37  172.31.38.31    GET 24.209.95.109   /i  200 http://www.myvideowebsite.com/embed/ab123456789?auto_start=e9&rf=cb Mozilla%2F5.0+%28Macintosh%3B+Intel+Mac+OS+X+10.6%3B+rv%3A32.0%29+Gecko%2F20100101+Firefox%2F32.0   e=se&se_ca=video-player%3Anewformat&se_ac=play-time&se_la=efba3ef384&se_va=&tid="
   )
-  val expected = """{"line":"2014-10-11  14:01:05    -   37  172.31.38.31    GET 24.209.95.109   /i  200 http://www.myvideowebsite.com/embed/ab123456789?auto_start=e9&rf=cb Mozilla%2F5.0+%28Macintosh%3B+Intel+Mac+OS+X+10.6%3B+rv%3A32.0%29+Gecko%2F20100101+Firefox%2F32.0   e=se&se_ca=video-player%3Anewformat&se_ac=play-time&se_la=efba3ef384&se_va=&tid=","errors":[{"level":"error","message":"Field [se_va]: cannot convert [] to Double-like String"},{"level":"error","message":"Field [tid]: [] is not a valid integer"}]}"""
+  val expected =
+    """{"line":"2014-10-11  14:01:05    -   37  172.31.38.31    GET 24.209.95.109   /i  200 http://www.myvideowebsite.com/embed/ab123456789?auto_start=e9&rf=cb Mozilla%2F5.0+%28Macintosh%3B+Intel+Mac+OS+X+10.6%3B+rv%3A32.0%29+Gecko%2F20100101+Firefox%2F32.0   e=se&se_ca=video-player%3Anewformat&se_ac=play-time&se_la=efba3ef384&se_va=&tid=","errors":[{"level":"error","message":"Field [se_va]: cannot convert [] to Double-like String"},{"level":"error","message":"Field [tid]: [] is not a valid integer"}]}"""
 }
 
 /**

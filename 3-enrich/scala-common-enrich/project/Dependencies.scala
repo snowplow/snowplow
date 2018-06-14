@@ -39,7 +39,7 @@ object Dependencies {
     val commonsCodec     = "1.11"
     val yodaTime         = "2.2"
     val yodaConvert      = "1.2"
-    val useragent        = "1.20"
+    val useragent        = "1.21"
     val jacksonDatabind  = "2.2.3"
     val jsonValidator    = "2.2.3"
     val mavenArtifact    = "3.2.2"
@@ -96,7 +96,7 @@ object Dependencies {
     val maxmindIplookups = "com.snowplowanalytics"      %% "scala-maxmind-iplookups"   % V.maxmindIplookups
     val json4sJackson    = "org.json4s"                 %% "json4s-jackson"            % V.json4s
     val json4sScalaz     = "org.json4s"                 %% "json4s-scalaz"             % V.json4s
-    val igluClient       = "com.snowplowanalytics"      %%  "iglu-scala-client"        % V.igluClient
+    val igluClient       = "com.snowplowanalytics"      %% "iglu-scala-client"         % V.igluClient
     val scalaUri         = "io.lemonlabs"               %% "scala-uri"                 % V.scalaUri
     val scalaWeather     = "com.snowplowanalytics"      %% "scala-weather"             % V.scalaWeather
     val scalaj           = "org.scalaj"                 %% "scalaj-http"               % V.scalaj
