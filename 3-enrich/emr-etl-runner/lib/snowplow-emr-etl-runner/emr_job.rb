@@ -305,6 +305,11 @@ module Snowplow
 
           raw_input = csbr[:processing]
 
+          # When resuming from enrich, we need to check for emptiness of the processing bucket
+          if !staging and empty?(s3, raw_input)
+            raise NoDataToProcessError, "No Snowplow logs in #{raw_input}, can't resume from enrich"
+          end
+
           # for ndjson/urbanairship we can group by everything, just aim for the target size
           group_by = is_ua_ndjson(collector_format) ? ".*\/(\w+)\/.*" : ".*([0-9]+-[0-9]+-[0-9]+)-[0-9]+.*"
 
