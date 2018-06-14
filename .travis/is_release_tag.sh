@@ -16,5 +16,6 @@ if [ "${cicd}" == "${slashed}" ]; then
     fi
     exit 0
 else
+    echo "Tag \"${cicd}\" does not equal \"${slashed}\". Skipping deployment of tag: ${tag}"
     exit 1
 fi
