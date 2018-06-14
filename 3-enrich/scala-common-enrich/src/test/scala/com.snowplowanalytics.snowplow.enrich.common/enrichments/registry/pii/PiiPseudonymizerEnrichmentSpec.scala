@@ -167,7 +167,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
     expected.user_ipaddress   = "dd9720903c89ae891ed5c74bb7a9f2f90f6487927ac99afe73b096ad0287f3f5"
     expected.ip_domain        = null
     expected.user_fingerprint = "27abac60dff12792c6088b8d00ce7f25c86b396b8c3740480cd18e21068ecff4"
-    expected.geo_city         = null 
+    expected.geo_city         = null
     expected.etl_tstamp       = "1970-01-18 08:40:00.000"
     expected.collector_tstamp = "2017-07-14 03:39:39.000"
     output.size must_== 1
