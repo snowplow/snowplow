@@ -67,7 +67,7 @@ enrich:
 storage:
   versions:
     rdb_loader: 0.14.0
-    rdb_shredder: 0.13.0        # Version of the Spark Shredding process
+    rdb_shredder: 0.13.1        # Version of the Spark Shredding process
     hadoop_elasticsearch: 0.1.0 # Version of the Hadoop to Elasticsearch copying process
 monitoring:
   tags: {} # Name-value pairs describing this job
