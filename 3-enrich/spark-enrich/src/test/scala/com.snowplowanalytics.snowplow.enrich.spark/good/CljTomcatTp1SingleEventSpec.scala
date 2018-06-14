@@ -139,7 +139,7 @@ class CljTomcatTp1SingleEventSpec extends Specification with EnrichJobSpec {
   override def appName = "clj-tomcat-tp1-single-event"
   sequential
   "A job which processes a Clojure-Tomcat file containing a GET raw event representing 1 valid " +
-  "page view" should {
+    "page view" should {
     runEnrichJob(CljTomcatTp1SingleEventSpec.lines, "clj-tomcat", "2", true, List("geo"))
 
     "correctly output 1 page ping" in {

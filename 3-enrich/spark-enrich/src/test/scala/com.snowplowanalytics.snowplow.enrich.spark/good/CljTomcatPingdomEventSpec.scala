@@ -139,7 +139,7 @@ class CljTomcatPingdomEventSpec extends Specification with EnrichJobSpec {
   override def appName = "clj-tomcat-pingdom-event"
   sequential
   "A job which processes a Clojure-Tomcat file containing a Pingdom GET raw event representing 1 " +
-  "valid completed call" should {
+    "valid completed call" should {
     runEnrichJob(CljTomcatPingdomEventSpec.lines, "clj-tomcat", "2", true, List("geo"))
 
     "correctly output 1 completed call" in {

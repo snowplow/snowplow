@@ -390,7 +390,7 @@ class ForwardCompatibleSchemaverSpec extends Specification with EnrichJobSpec {
   override def appName = "forwarrd-compatbile-schemaver"
   sequential
   "A job which processes a Clojure-Tomcat file containing a POST raw event representing " +
-  "3 events" should {
+    "3 events" should {
     runEnrichJob(ForwardCompatibleSchemaverSpec.lines, "clj-tomcat", "2", true, List("geo"))
 
     "correctly output 1 page view and 2 structured events" in {

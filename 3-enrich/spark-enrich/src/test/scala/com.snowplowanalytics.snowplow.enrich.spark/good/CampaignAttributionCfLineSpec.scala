@@ -144,7 +144,7 @@ class CampaignAttributionCfLineSpec extends Specification with EnrichJobSpec {
   override def appName = "campaign-attribution-cf-lines"
   sequential
   "A job which processes a CloudFront file containing 1 valid page ping with campaign attribution" +
-  " fields" should {
+    " fields" should {
     runEnrichJob(CampaignAttributionCfLineSpec.lines, "cloudfront", "1", false, List("geo"))
 
     "correctly output 1 page ping" in {

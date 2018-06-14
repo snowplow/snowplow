@@ -12,10 +12,11 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and
  * limitations there under.
  */
-lazy val root = project.in(file("."))
+lazy val root = project
+  .in(file("."))
   .settings(
-    name        := "snowplow-spark-enrich",
-    version     := "1.13.0",
+    name := "snowplow-spark-enrich",
+    version := "1.13.0",
     description := "The Snowplow Spark Enrichment process"
   )
   .settings(BuildSettings.formatting)
@@ -42,4 +43,6 @@ lazy val root = project.in(file("."))
     )
   )
 
-shellPrompt := { _ => "spark-enrich> " }
+shellPrompt := { _ =>
+  "spark-enrich> "
+}
