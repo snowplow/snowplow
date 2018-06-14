@@ -11,6 +11,7 @@ before_script:
 script:
   - python integration-tests/api-lookup-test.py &
   - cd 3-enrich/scala-common-enrich && sbt publishLocal && cd ../..
+  - echo ${TRAVIS_TAG}
   - cd $TEST_DIR && sbt test && cd ../..
 env:
   global:
