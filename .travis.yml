@@ -12,8 +12,8 @@ script:
   - python integration-tests/api-lookup-test.py &
   - cd 3-enrich/scala-common-enrich && sbt publishLocal && cd ../..
   - echo ${TRAVIS_TAG}
-  - echo $($TEST_DIR = 3-enrich/scala-common-enrich/)
-  - echo $($(.travis/is_release_tag.sh test_tag $TRAVIS_TAG)" == "" && $? == 0 && $TEST_DIR = 3-enrich/scala-common-enrich/)
+  - echo '$TEST_DIR = 3-enrich/scala-common-enrich/'
+  - echo '$(.travis/is_release_tag.sh test_tag $TRAVIS_TAG)" == "" && $? == 0)'
   - cd $TEST_DIR && sbt test && cd ../..
 env:
   global:
