@@ -48,6 +48,8 @@ object Dependencies {
     // Scala (test only)
     val specs2               = "2.3.13"
     val scalacheck           = "1.11.3"
+    val embeddedKafka        = "0.9.0"
+    val jinJava              = "2.3.6"
   }
 
   object Libraries {
@@ -77,7 +79,10 @@ object Dependencies {
     val snowplowCommonEnrich = "com.snowplowanalytics"            %% "snowplow-common-enrich"    % V.snowplowCommonEnrich
     val snowplowTracker      = "com.snowplowanalytics"            %% "snowplow-scala-tracker"    % V.snowplowTracker
     // Scala (test only)
-    val specs2               = "org.specs2"                       %% "specs2"                    % V.specs2         % "test"
-    val scalacheck           = "org.scalacheck"                   %% "scalacheck"                % V.scalacheck     % "test"
+    val specs2               = "org.specs2"            %% "specs2"                    % V.specs2         % "test"
+    val scalacheck           = "org.scalacheck"        %% "scalacheck"                % V.scalacheck     % "test"
+    val embeddedKafka        = "io.bfil"               %% "specs2-kafka"              % V.embeddedKafka  % "test"
+    // Java (test only)
+    val jinJava              = "com.hubspot.jinjava"   %  "jinjava"                   % V.jinJava        % "test"
   }
 }
