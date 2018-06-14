@@ -24,18 +24,50 @@ import java.util.Properties
 
 import org.apache.kafka.clients.producer._
 
+import scalaz._
+import Scalaz._
+
 import model.{BufferConfig, Kafka}
-import scalatracker.Tracker
+
+/** KafkaSink companion object with factory method */
+object KafkaSink {
+  def validateAndCreateProducer(
+    kafkaConfig: Kafka,
+    bufferConfig: BufferConfig,
+    topicName: String): \/[String, KafkaProducer[String, String]] = {
+    createProducer(kafkaConfig, bufferConfig).right
+  }
+  /**
+   * Instantiates a producer on an existing topic with the given configuration options.
+   * This can fail if the producer can't be created.
+   * @return a Kafka producer
+   */
+  private def createProducer(
+    kafkaConfig: Kafka,
+    bufferConfig: BufferConfig
+  ): KafkaProducer[String, String] = {
+    val properties = createProperties(kafkaConfig, bufferConfig)
+    new KafkaProducer[String, String](properties)
+  }
+
+  private def createProperties(kafkaConfig: Kafka, bufferConfig: BufferConfig): Properties = {
+    val props = new Properties()
+    props.put("bootstrap.servers", kafkaConfig.brokers)
+    props.put("acks", "all")
+    props.put("retries", kafkaConfig.retries.toString)
+    props.put("buffer.memory", bufferConfig.byteLimit.toString)
+    props.put("linger.ms", bufferConfig.timeLimit.toString)
+    props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer")
+    props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer")
+    props
+  }
+}
 
 /** Kafka Sink for Scala enrichment */
 class KafkaSink(
-  kafkaConfig: Kafka,
-  bufferConfig: BufferConfig,
-  topicName: String,
-  tracker: Option[Tracker]
+  kafkaProducer: KafkaProducer[String, String],
+  topicName: String
 ) extends Sink {
-
-  private val kafkaProducer = createProducer(kafkaConfig, bufferConfig)
 
   /**
    * Side-effecting function to store the EnrichedEvent to the given output stream.
@@ -59,27 +91,5 @@ class KafkaSink(
 
   /** Blocking method to send all buffered records to Kafka. */
   override def flush(): Unit = kafkaProducer.flush()
-
-  private def createProducer(
-    kafkaConfig: Kafka,
-    bufferConfig: BufferConfig
-  ): KafkaProducer[String, String] = {
-    val properties = createProperties(kafkaConfig.brokers, bufferConfig)
-    new KafkaProducer[String, String](properties)
-  }
-
-  private def createProperties(brokers: String, bufferConfig: BufferConfig): Properties = {
-    val props = new Properties()
-    props.put("bootstrap.servers", brokers)
-    props.put("acks", "all")
-    props.put("retries", kafkaConfig.retries.toString)
-    props.put("buffer.memory", bufferConfig.byteLimit.toString)
-    props.put("linger.ms", bufferConfig.timeLimit.toString)
-    props.put("key.serializer",
-      "org.apache.kafka.common.serialization.StringSerializer")
-    props.put("value.serializer",
-      "org.apache.kafka.common.serialization.StringSerializer")
-    props
-  }
 
 }
