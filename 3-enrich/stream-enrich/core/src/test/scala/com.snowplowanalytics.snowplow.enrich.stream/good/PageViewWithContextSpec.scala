@@ -213,7 +213,7 @@ object PageViewWithContextSpec {
     "",
     "",
     "",
-    "",
+    ContextWithUuid4Regexp,
     "",
     "",
     "",

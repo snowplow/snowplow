@@ -212,7 +212,7 @@ object TransactionItemSpec {
     "",
     "",
     "",
-    "",
+    ContextWithUuid4Regexp,
     "",
     "",
     "",
