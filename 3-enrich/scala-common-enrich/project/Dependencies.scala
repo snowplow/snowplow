@@ -96,7 +96,7 @@ object Dependencies {
     val maxmindIplookups = "com.snowplowanalytics"      %% "scala-maxmind-iplookups"   % V.maxmindIplookups
     val json4sJackson    = "org.json4s"                 %% "json4s-jackson"            % V.json4s
     val json4sScalaz     = "org.json4s"                 %% "json4s-scalaz"             % V.json4s
-    val igluClient       = "com.snowplowanalytics"      %%  "iglu-scala-client"        % V.igluClient
+    val igluClient       = "com.snowplowanalytics"      %% "iglu-scala-client"         % V.igluClient
     val scalaUri         = "io.lemonlabs"               %% "scala-uri"                 % V.scalaUri
     val scalaWeather     = "com.snowplowanalytics"      %% "scala-weather"             % V.scalaWeather
     val scalaj           = "org.scalaj"                 %% "scalaj-http"               % V.scalaj

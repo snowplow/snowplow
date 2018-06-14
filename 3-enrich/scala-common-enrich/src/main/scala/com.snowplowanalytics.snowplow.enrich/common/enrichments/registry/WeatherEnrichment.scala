@@ -56,6 +56,8 @@ import enrichments.EventEnrichments
  */
 object WeatherEnrichmentConfig extends ParseableEnrichment {
 
+  implicit val formats = DefaultFormats
+
   val supportedSchema =
     SchemaCriterion("com.snowplowanalytics.snowplow.enrichments", "weather_enrichment_config", "jsonschema", 1, 0)
 

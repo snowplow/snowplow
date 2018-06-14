@@ -31,7 +31,7 @@ import scalaz._
 import Scalaz._
 
 // json4s
-import org.json4s.JValue
+import org.json4s.{DefaultFormats, JValue}
 
 // Iglu
 import iglu.client.{SchemaCriterion, SchemaKey}
@@ -60,6 +60,8 @@ import utils.ScalazJson4sUtils
  * instance from a JValue.
  */
 object CurrencyConversionEnrichmentConfig extends ParseableEnrichment {
+
+  implicit val formats = DefaultFormats
 
   val supportedSchema =
     SchemaCriterion("com.snowplowanalytics.snowplow", "currency_conversion_config", "jsonschema", 1, 0)
