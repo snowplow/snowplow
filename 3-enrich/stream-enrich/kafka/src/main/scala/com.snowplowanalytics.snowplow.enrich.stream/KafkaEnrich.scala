@@ -49,14 +49,14 @@ object KafkaEnrich extends Enrich {
   override val parser: scopt.OptionParser[FileConfig] = localParser
 
   override def download(uri: URI, targetFile: File)(
-      implicit creds: Credentials): Validation[String, Int] =
+    implicit creds: Credentials): Validation[String, Int] =
     httpDownloader(uri, targetFile)
 
   override def extractResolver(resolverArgument: String)(
-      implicit creds: Credentials): Validation[String, String] =
+    implicit creds: Credentials): Validation[String, String] =
     localResolverExtractor(resolverArgument)
 
   override def extractEnrichmentConfigs(enrichmentArg: Option[String])(
-      implicit creds: Credentials): Validation[String, String] =
+    implicit creds: Credentials): Validation[String, String] =
     localEnrichmentConfigsExtractor(enrichmentArg)
 }

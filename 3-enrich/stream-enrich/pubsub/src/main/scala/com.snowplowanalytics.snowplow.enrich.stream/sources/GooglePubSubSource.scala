@@ -96,19 +96,23 @@ object GooglePubSubSource {
   private def createSubscriptionIfNotExist(
     sub: ProjectSubscriptionName,
     topic: ProjectTopicName
-  ): Try[Subscription] = for {
-    subscriptionAdminClient <- Try(SubscriptionAdminClient.create())
-    subscriptions <- Try(subscriptionAdminClient.listSubscriptions(ProjectName.of(sub.getProject())))
-      .map(_.iterateAll.asScala.toList)
-    exists = subscriptions.map(_.getName).exists(_.contains(sub.getSubscription()))
-    subscription <- if (exists) {
-      Try(subscriptionAdminClient.getSubscription(sub))
-    } else {
-      // 0 as ackDeadlineS use the default deadline which is 10s
-      Try(subscriptionAdminClient.createSubscription(sub, topic, PushConfig.getDefaultInstance(), 0))
-    }
-    _ <- Try(subscriptionAdminClient.close())
-  } yield subscription
+  ): Try[Subscription] =
+    for {
+      subscriptionAdminClient <- Try(SubscriptionAdminClient.create())
+      subscriptions <- Try(
+        subscriptionAdminClient.listSubscriptions(ProjectName.of(sub.getProject())))
+        .map(_.iterateAll.asScala.toList)
+      exists = subscriptions.map(_.getName).exists(_.contains(sub.getSubscription()))
+      subscription <- if (exists) {
+        Try(subscriptionAdminClient.getSubscription(sub))
+      } else {
+        // 0 as ackDeadlineS use the default deadline which is 10s
+        Try(
+          subscriptionAdminClient
+            .createSubscription(sub, topic, PushConfig.getDefaultInstance(), 0))
+      }
+      _ <- Try(subscriptionAdminClient.close())
+    } yield subscription
 }
 
 /** Source to read events from a GCP Pub/Sub topic */
@@ -159,14 +163,18 @@ class GooglePubSubSource private (
       .create(Executors.newScheduledThreadPool(threadPoolSize))
 
     val subscriber = {
-      val s = Subscriber.newBuilder(sub, receiver)
+      val s = Subscriber
+        .newBuilder(sub, receiver)
         .setExecutorProvider(executorProvider)
         .setHeaderProvider(FixedHeaderProvider.create("User-Agent", GooglePubSubEnrich.UserAgent))
         .build()
-      s.addListener(new Listener() {
-        override def failed(from: State, failure: Throwable): Unit =
-          log.error("Subscriber is shutting down with state: " + from, failure)
-      }, MoreExecutors.directExecutor())
+      s.addListener(
+        new Listener() {
+          override def failed(from: State, failure: Throwable): Unit =
+            log.error("Subscriber is shutting down with state: " + from, failure)
+        },
+        MoreExecutors.directExecutor()
+      )
       s
     }
     subscriber

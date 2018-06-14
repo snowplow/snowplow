@@ -44,7 +44,7 @@ import org.joda.time.format.DateTimeFormat
 import common.{EtlPipeline, ValidatedMaybeCollectorPayload}
 import common.enrichments.EnrichmentRegistry
 import common.loaders.ThriftLoader
-import common.outputs.{EnrichedEvent, BadRow}
+import common.outputs.{BadRow, EnrichedEvent}
 import iglu.client.Resolver
 import scalatracker.Tracker
 import sinks._
@@ -61,12 +61,15 @@ object Source {
     try {
       val jsonWithoutLine = parse(value) removeField {
         case ("line", _) => true
-        case _ => false
+        case _           => false
       }
-      compact(render({("size" -> size): JValue} merge jsonWithoutLine))
+      compact(render({ ("size" -> size): JValue } merge jsonWithoutLine))
+
     } catch {
       case NonFatal(e) =>
-        BadRow.oversizedRow(size, NonEmptyList("Unable to extract errors field from original oversized bad row JSON"))
+        BadRow.oversizedRow(
+          size,
+          NonEmptyList("Unable to extract errors field from original oversized bad row JSON"))
     }
   }
 
@@ -78,7 +81,10 @@ object Source {
    */
   def oversizedSuccessToFailure(value: String, maximum: Long): String = {
     val size = Source.getSize(value)
-    BadRow.oversizedRow(size, NonEmptyList(s"Enriched event size of $size bytes is greater than allowed maximum of $maximum"))
+    BadRow.oversizedRow(
+      size,
+      NonEmptyList(
+        s"Enriched event size of $size bytes is greater than allowed maximum of $maximum"))
   }
 
   /** The size of a string in bytes */
@@ -137,23 +143,24 @@ abstract class Source(
   // Iterate through an enriched EnrichedEvent object and tab separate
   // the fields to a string.
   def tabSeparateEnrichedEvent(output: EnrichedEvent): String =
-   output.getClass.getDeclaredFields
-    .filterNot(_.getName.equals("pii"))
-    .map{ field =>
-      field.setAccessible(true)
-      Option(field.get(output)).getOrElse("")
-    }.mkString("\t")
+    output.getClass.getDeclaredFields
+      .filterNot(_.getName.equals("pii"))
+      .map { field =>
+        field.setAccessible(true)
+        Option(field.get(output)).getOrElse("")
+      }
+      .mkString("\t")
 
   def getProprertyValue(ee: EnrichedEvent, property: String): String =
     property match {
-      case "event_id" => ee.event_id
+      case "event_id"          => ee.event_id
       case "event_fingerprint" => ee.event_fingerprint
-      case "domain_userid" => ee.domain_userid
-      case "network_userid" => ee.network_userid
-      case "user_ipaddress" => ee.user_ipaddress
-      case "domain_sessionid" => ee.domain_sessionid
-      case "user_fingerprint" => ee.user_fingerprint
-      case _ => UUID.randomUUID().toString
+      case "domain_userid"     => ee.domain_userid
+      case "network_userid"    => ee.network_userid
+      case "user_ipaddress"    => ee.user_ipaddress
+      case "domain_sessionid"  => ee.domain_sessionid
+      case "user_fingerprint"  => ee.user_fingerprint
+      case _                   => UUID.randomUUID().toString
     }
 
   /**
@@ -163,7 +170,8 @@ abstract class Source(
    * @return List containing failed, successful and, if present, pii events. Successful and failed, each specify a
    *         partition key.
    */
-  def enrichEvents(binaryData: Array[Byte]): List[Validation[(String, String), (String, String, Option[String])]] = {
+  def enrichEvents(binaryData: Array[Byte]): List[
+    Validation[(String, String), (String, String, Option[String])]] = {
     val canonicalInput: ValidatedMaybeCollectorPayload = ThriftLoader.toCollectorPayload(binaryData)
     val processedEvents: List[ValidationNel[String, EnrichedEvent]] = EtlPipeline.processEvents(
       enrichmentRegistry,
@@ -193,22 +201,25 @@ abstract class Source(
    * @return Whether to checkpoint
    */
   def enrichAndStoreEvents(binaryData: List[Array[Byte]]): Boolean = {
-    val enrichedEvents = binaryData.flatMap(enrichEvents(_))
-    val successes = enrichedEvents collect { case Success(s) => s }
+    val enrichedEvents         = binaryData.flatMap(enrichEvents(_))
+    val successes              = enrichedEvents collect { case Success(s) => s }
     val sizeUnadjustedFailures = enrichedEvents collect { case Failure(s) => s }
     val failures = sizeUnadjustedFailures map {
-      case (value, key) => if (! isTooLarge(value)) {
-        value -> key
-      } else {
-        Source.adjustOversizedFailureJson(value) -> key
-      }
+      case (value, key) =>
+        if (!isTooLarge(value)) {
+          value -> key
+        } else {
+          Source.adjustOversizedFailureJson(value) -> key
+        }
     }
 
-    val (tooBigSuccesses, smallEnoughSuccesses) = successes partition { s => isTooLarge(s._1) }
+    val (tooBigSuccesses, smallEnoughSuccesses) = successes partition { s =>
+      isTooLarge(s._1)
+    }
 
     val sizeBasedFailures = for {
       (value, key, _) <- tooBigSuccesses
-      m <- MaxRecordSize
+      m               <- MaxRecordSize
     } yield Source.oversizedSuccessToFailure(value, m) -> key
 
     val anonymizedSuccesses = smallEnoughSuccesses.map {
@@ -239,7 +250,7 @@ abstract class Source(
    * @return boolean size decision
    */
   private def isTooLarge(evt: String): Boolean = MaxRecordSize match {
-    case None => false
+    case None    => false
     case Some(m) => Source.getSize(evt) >= m
   }
 

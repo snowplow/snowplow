@@ -48,7 +48,7 @@ trait Enrich {
 
   lazy val log = LoggerFactory.getLogger(getClass())
 
-  val FilepathRegex = "^file:(.+)$".r
+  val FilepathRegex    = "^file:(.+)$".r
   private val regexMsg = "'file:[filename]'"
 
   implicit val creds: Credentials = NoCredentials
@@ -57,9 +57,9 @@ trait Enrich {
     val trackerSource = for {
       config <- parseConfig(args).validation
       (enrichConfig, resolverArg, enrichmentsArg, forceDownload) = config
-      resolver <- parseResolver(resolverArg)
+      resolver           <- parseResolver(resolverArg)
       enrichmentRegistry <- parseEnrichmentRegistry(enrichmentsArg)(resolver, implicitly)
-      _ <- cacheFiles(enrichmentRegistry, forceDownload)
+      _                  <- cacheFiles(enrichmentRegistry, forceDownload)
       tracker = enrichConfig.monitoring.map(c => SnowplowTracking.initializeTracker(c.snowplow))
       source <- getSource(enrichConfig.streams, resolver, enrichmentRegistry, tracker)
     } yield (tracker, source)
@@ -96,21 +96,23 @@ trait Enrich {
    * the optional enrichments argument and the force download flag
    */
   def parseConfig(
-      args: Array[String]): \/[String, (EnrichConfig, String, Option[String], Boolean)] = {
-    implicit def hint[T] = ProductHint[T](ConfigFieldMapping(CamelCase, CamelCase))
+    args: Array[String]): \/[String, (EnrichConfig, String, Option[String], Boolean)] = {
+    implicit def hint[T]              = ProductHint[T](ConfigFieldMapping(CamelCase, CamelCase))
     implicit val sourceSinkConfigHint = new FieldCoproductHint[SourceSinkConfig]("enabled")
     for {
       parsedCliArgs <- \/.fromEither(
         parser.parse(args, FileConfig()).toRight("Error while parsing command line arguments"))
       unparsedConfig = utils.fold(Try(ConfigFactory.parseFile(parsedCliArgs.config).resolve()))(
         t => t.getMessage.left,
-        c => (c, parsedCliArgs.resolver, parsedCliArgs.enrichmentsDir, parsedCliArgs.forceDownload)
-          .right
+        c =>
+          (c, parsedCliArgs.resolver, parsedCliArgs.enrichmentsDir, parsedCliArgs.forceDownload).right
       )
       validatedConfig <- utils.filterOrElse(unparsedConfig)(
-        t => t._1.hasPath("enrich"), "No top-level \"enrich\" could be found in the configuration")
+        t => t._1.hasPath("enrich"),
+        "No top-level \"enrich\" could be found in the configuration")
       (config, resolverArg, enrichmentsArg, forceDownload) = validatedConfig
-      parsedConfig <- utils.toEither(Try(loadConfigOrThrow[EnrichConfig](config.getConfig("enrich"))))
+      parsedConfig <- utils
+        .toEither(Try(loadConfigOrThrow[EnrichConfig](config.getConfig("enrich"))))
         .map(ec => (ec, resolverArg, enrichmentsArg, forceDownload))
         .leftMap(_.getMessage)
     } yield parsedConfig
@@ -136,11 +138,11 @@ a  * @param creds optionally necessary credentials to download the resolver
    * @return a validated iglu resolver
    */
   def parseResolver(resolverArg: String)(
-      implicit creds: Credentials): Validation[String, Resolver] =
+    implicit creds: Credentials): Validation[String, Resolver] =
     for {
       parsedResolver <- extractResolver(resolverArg)
-      json <- JsonUtils.extractJson("", parsedResolver)
-      resolver <- Resolver.parse(json).leftMap(_.toString)
+      json           <- JsonUtils.extractJson("", parsedResolver)
+      resolver       <- Resolver.parse(json).leftMap(_.toString)
     } yield resolver
 
   /**
@@ -150,12 +152,13 @@ a  * @param creds optionally necessary credentials to download the resolver
    * @return JSON from a local file or stored in DynamoDB
    */
   def extractResolver(resolverArg: String)(implicit creds: Credentials): Validation[String, String]
-  val localResolverExtractor = (resolverArgument: String) => resolverArgument match {
-    case FilepathRegex(filepath) =>
-      val file = new File(filepath)
-      if (file.exists) Source.fromFile(file).mkString.success
-      else "Iglu resolver configuration file \"%s\" does not exist".format(filepath).failure
-    case _ => s"Resolver argument [$resolverArgument] must match $regexMsg".failure
+  val localResolverExtractor = (resolverArgument: String) =>
+    resolverArgument match {
+      case FilepathRegex(filepath) =>
+        val file = new File(filepath)
+        if (file.exists) Source.fromFile(file).mkString.success
+        else "Iglu resolver configuration file \"%s\" does not exist".format(filepath).failure
+      case _ => s"Resolver argument [$resolverArgument] must match $regexMsg".failure
   }
 
   /**
@@ -166,11 +169,13 @@ a  * @param creds optionally necessary credentials to download the resolver
    * @return a validated enrichment registry
    */
   def parseEnrichmentRegistry(enrichmentsDirArg: Option[String])(
-      implicit resolver: Resolver, creds: Credentials): Validation[String, EnrichmentRegistry] = for {
-    enrichmentConfig <- extractEnrichmentConfigs(enrichmentsDirArg)
-    registryConfig <- JsonUtils.extractJson("", enrichmentConfig)
-    reg <- EnrichmentRegistry.parse(fromJsonNode(registryConfig), false).leftMap(_.toString)
-  } yield reg
+    implicit resolver: Resolver,
+    creds: Credentials): Validation[String, EnrichmentRegistry] =
+    for {
+      enrichmentConfig <- extractEnrichmentConfigs(enrichmentsDirArg)
+      registryConfig   <- JsonUtils.extractJson("", enrichmentConfig)
+      reg              <- EnrichmentRegistry.parse(fromJsonNode(registryConfig), false).leftMap(_.toString)
+    } yield reg
 
   /**
    * Return an enrichment configuration JSON based on the enrichments argument
@@ -181,20 +186,22 @@ a  * @param creds optionally necessary credentials to download the resolver
   def extractEnrichmentConfigs(enrichmentArgument: Option[String])(
     implicit creds: Credentials): Validation[String, String]
   val localEnrichmentConfigsExtractor = (enrichmentArgument: Option[String]) => {
-    val jsons: Validation[String, List[String]] = enrichmentArgument.map {
-      case FilepathRegex(path) =>
-        new File(path).listFiles
-          .filter(_.getName.endsWith(".json"))
-          .map(scala.io.Source.fromFile(_).mkString)
-          .toList
-          .success
-      case other => s"Enrichments argument [$other] must match $regexMsg".failure
-    }.getOrElse(Nil.success)
+    val jsons: Validation[String, List[String]] = enrichmentArgument
+      .map {
+        case FilepathRegex(path) =>
+          new File(path).listFiles
+            .filter(_.getName.endsWith(".json"))
+            .map(scala.io.Source.fromFile(_).mkString)
+            .toList
+            .success
+        case other => s"Enrichments argument [$other] must match $regexMsg".failure
+      }
+      .getOrElse(Nil.success)
 
     jsons.map { js =>
       val combinedJson =
         ("schema" -> "iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0") ~
-        ("data" -> js.toList.map(parse(_)))
+          ("data" -> js.toList.map(parse(_)))
       compact(combinedJson)
     }
   }
@@ -211,7 +218,7 @@ a  * @param creds optionally necessary credentials to download the resolver
     uri.getScheme match {
       case "http" | "https" => (uri.toURL #> targetFile).!.success
       case s                => s"Scheme $s for file $uri not supported".failure
-    }
+  }
 
   /**
    * Download the IP lookup files locally.
@@ -226,19 +233,21 @@ a  * @param creds optionally necessary credentials to download the resolver
   )(implicit creds: Credentials): ValidationNel[String, List[Int]] =
     registry.getIpLookupsEnrichment
       .map(_.dbsToCache)
-      .toList.flatten
-      .map { case (uri, path) =>
-        (new java.net.URI(uri.toString.replaceAll("(?<!(http:|https:|s3:))//", "/")),
-          new File(path))
+      .toList
+      .flatten
+      .map {
+        case (uri, path) =>
+          (
+            new java.net.URI(uri.toString.replaceAll("(?<!(http:|https:|s3:))//", "/")),
+            new File(path))
       }
       .filter { case (_, targetFile) => forceDownload || targetFile.length == 0L }
-      .map { case (cleanURI, targetFile) =>
-        download(cleanURI, targetFile)
-          .flatMap {
+      .map {
+        case (cleanURI, targetFile) =>
+          download(cleanURI, targetFile).flatMap {
             case i if i != 0 => s"Attempt to download $cleanURI to $targetFile failed".failure
-            case o => o.success
-          }
-          .toValidationNel
+            case o           => o.success
+          }.toValidationNel
       }
       .sequenceU
 }
