@@ -22,6 +22,7 @@ import scala.util.{Failure, Success, Try}
 
 import scalaz._
 import Scalaz._
+import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
 
 object utils {
   // to rm once 2.12 as well as the right projections
@@ -37,4 +38,7 @@ object utils {
     case \/-(_)         => l.left
     case o              => o
   }
+
+  def emitPii(enrichmentRegistry: EnrichmentRegistry): Boolean =
+    enrichmentRegistry.getPiiPseudonymizerEnrichment.map(_.emitIdentificationEvent).getOrElse(false)
 }

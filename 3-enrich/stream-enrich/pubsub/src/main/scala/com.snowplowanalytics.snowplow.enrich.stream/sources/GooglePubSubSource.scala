@@ -58,13 +58,19 @@ object GooglePubSubSource {
     goodPublisher <- GooglePubSubSink
       .validateAndCreatePublisher(googlePubSubConfig, config.buffer, config.out.enriched)
       .validation
+
+    piiPublisher <- if (emitPii(enrichmentRegistry))
+        GooglePubSubSink
+          .validateAndCreatePublisher(googlePubSubConfig, config.buffer, config.out.pii).validation.rightMap(Some(_))
+      else
+        None.success
     badPublisher <- GooglePubSubSink
       .validateAndCreatePublisher(googlePubSubConfig, config.buffer, config.out.bad)
       .validation
     topic = ProjectTopicName.of(googlePubSubConfig.googleProjectId, config.in.raw)
     subName = ProjectSubscriptionName.of(googlePubSubConfig.googleProjectId, config.appName)
     _ <- toEither(createSubscriptionIfNotExist(subName, topic)).validation
-  } yield new GooglePubSubSource(goodPublisher, badPublisher, igluResolver,
+  } yield new GooglePubSubSource(goodPublisher,piiPublisher, badPublisher, igluResolver,
     enrichmentRegistry, tracker, config, googlePubSubConfig, subName)
 
   private def createSubscriptionIfNotExist(
@@ -88,6 +94,7 @@ object GooglePubSubSource {
 /** Source to read events from a GCP Pub/Sub topic */
 class GooglePubSubSource private (
   goodPubslisher: Publisher,
+  piiPublisher: Option[Publisher],
   badPublisher: Publisher,
   igluResolver: Resolver,
   enrichmentRegistry: EnrichmentRegistry,
@@ -104,6 +111,9 @@ class GooglePubSubSource private (
   override val threadLocalGoodSink: ThreadLocal[Sink] = new ThreadLocal[Sink] {
     override def initialValue: Sink = new GooglePubSubSink(goodPubslisher, config.out.enriched)
   }
+  override val threadLocalPiiSink: Option[ThreadLocal[Sink]] = if (emitPii(enrichmentRegistry)) piiPublisher.map { (publisher: Publisher) => new ThreadLocal[Sink] {
+    override def initialValue: Sink = new GooglePubSubSink(publisher, config.out.pii)
+  }} else None
   override val threadLocalBadSink: ThreadLocal[Sink] = new ThreadLocal[Sink] {
     override def initialValue: Sink = new GooglePubSubSink(badPublisher, config.out.bad)
   }
