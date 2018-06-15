@@ -73,58 +73,58 @@ deploy:
     skip_cleanup: true
     on:
       tags: true
-      condition: '$([[ "$TEST_DIR" == "3-enrich/scala-common-enrich/" ]] && .travis/is_release_tag.sh scala_common_enrich $TRAVIS_TAG)'
+      condition: '$([[ "$TEST_DIR" == "3-enrich/scala-common-enrich/" ]] && .travis/is_release_tag.sh scala_common_enrich $TRAVIS_TAG && [ $? -eq 0 ] && echo "Deploying")'
   - provider: script
     script: ./.travis/deploy.sh scala_stream_collector $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
-      condition: '$([[ "$TEST_DIR" == "2-collectors/scala-stream-collector/" ]] && .travis/is_release_tag.sh scala_stream_collector $TRAVIS_TAG)'
+      condition: '$([[ "$TEST_DIR" == "2-collectors/scala-stream-collector/" ]] && .travis/is_release_tag.sh scala_stream_collector $TRAVIS_TAG && [ $? -eq 0 ] && echo "Deploying")'
   - provider: script
     script: ./.travis/deploy.sh stream_enrich $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
-      condition: '$([[ "$TEST_DIR" == "3-enrich/stream-enrich/" ]] && .travis/is_release_tag.sh stream_enrich $TRAVIS_TAG)'
+      condition: '$([[ "$TEST_DIR" == "3-enrich/stream-enrich/" ]] && .travis/is_release_tag.sh stream_enrich $TRAVIS_TAG && [ $? -eq 0 ] && echo "Deploying")'
   - provider: script
     script: ./.travis/deploy.sh spark_enrich $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
-      condition: '$([[ "$TEST_DIR" == "3-enrich/spark-enrich/" ]] && .travis/is_release_tag.sh spark_enrich $TRAVIS_TAG)'
+      condition: '$([[ "$TEST_DIR" == "3-enrich/spark-enrich/" ]] && .travis/is_release_tag.sh spark_enrich $TRAVIS_TAG && [ $? -eq 0 ] && echo "Deploying")'
   - provider: script
     script: ./.travis/deploy.sh hadoop_event_recovery $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
-      condition: '$([[ "$TEST_DIR" == "3-enrich/scala-common-enrich/" ]] && .travis/is_release_tag.sh hadoop_event_recovery $TRAVIS_TAG)'
+      condition: '$([[ "$TEST_DIR" == "3-enrich/scala-common-enrich/" ]] && .travis/is_release_tag.sh hadoop_event_recovery $TRAVIS_TAG && [ $? -eq 0 ] && echo "Deploying")'
   - provider: script
     script: ./.travis/deploy.sh emr $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
-      condition: '$([[ "$TEST_DIR" == "3-enrich/scala-common-enrich/" ]] && .travis/is_release_tag.sh emr $TRAVIS_TAG)'
+      condition: '$([[ "$TEST_DIR" == "3-enrich/scala-common-enrich/" ]] && .travis/is_release_tag.sh emr $TRAVIS_TAG && [ $? -eq 0 ] && echo "Deploying")'
   - provider: script
     script: ./.travis/deploy.sh event_manifest_populator $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
-      condition: '$([[ "$TEST_DIR" == "3-enrich/scala-common-enrich/" ]] && .travis/is_release_tag.sh event_manifest_populator $TRAVIS_TAG)'
+      condition: '$([[ "$TEST_DIR" == "3-enrich/scala-common-enrich/" ]] && .travis/is_release_tag.sh event_manifest_populator $TRAVIS_TAG && [ $? -eq 0 ] && echo "Deploying")'
   - provider: script
     script: ./.travis/deploy.sh hadoop_fs_rmr $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
-      condition: '$([[ "$TEST_DIR" == "3-enrich/scala-common-enrich/" ]] && .travis/is_release_tag.sh hadoop_fs_rmr $TRAVIS_TAG)'
+      condition: '$([[ "$TEST_DIR" == "3-enrich/scala-common-enrich/" ]] && .travis/is_release_tag.sh hadoop_fs_rmr $TRAVIS_TAG && [ $? -eq 0 ] && echo "Deploying")'
   - provider: script
     script: ./.travis/deploy.sh ami5_bootstrap $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
-      condition: '$([[ "$TEST_DIR" == "3-enrich/scala-common-enrich/" ]] && .travis/is_release_tag.sh ami5_bootstrap $TRAVIS_TAG)'
+      condition: '$([[ "$TEST_DIR" == "3-enrich/scala-common-enrich/" ]] && .travis/is_release_tag.sh ami5_bootstrap $TRAVIS_TAG && [ $? -eq 0 ] && echo "Deploying")'
   - provider: script
     script: ./.travis/deploy.sh clojure_collector $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
-      condition: '$([[ "$TEST_DIR" == "3-enrich/scala-common-enrich/" ]] && .travis/is_release_tag.sh clojure_collector $TRAVIS_TAG)'
+      condition: '$([[ "$TEST_DIR" == "3-enrich/scala-common-enrich/" ]] && .travis/is_release_tag.sh clojure_collector $TRAVIS_TAG && [ $? -eq 0 ] && echo "Deploying")'
