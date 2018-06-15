@@ -1,0 +1,13 @@
+# Define rules to return a fixed result for any agent string
+# All we care about is knowing we've used this file instead of the built-in.
+user_agent_parsers:
+  - regex: '.*'
+    family_replacement: 'UAP Test Family'
+
+os_parsers:
+  - regex: '.*'
+    os_replacement: 'UAP Test OS'
+
+device_parsers:
+  - regex: '.*'
+    device_replacement: 'UAP Test Device'

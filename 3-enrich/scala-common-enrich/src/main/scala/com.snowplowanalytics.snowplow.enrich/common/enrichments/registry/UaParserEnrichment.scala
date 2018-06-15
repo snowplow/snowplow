@@ -17,6 +17,10 @@ package enrichments
 package registry
 
 // Maven Artifact
+import java.io.FileInputStream
+import java.net.URI
+
+import com.snowplowanalytics.snowplow.enrich.common.utils.ConversionUtils
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion
 
 // Scala
@@ -39,6 +43,7 @@ import org.json4s.jackson.JsonMethods._
 
 // Iglu
 import iglu.client.{SchemaCriterion, SchemaKey}
+import iglu.client.validation.ProcessingMessageMethods._
 import utils.ScalazJson4sUtils
 
 /**
@@ -49,8 +54,35 @@ object UaParserEnrichmentConfig extends ParseableEnrichment {
 
   val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "ua_parser_config", "jsonschema", 1, 0)
 
-  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[UaParserEnrichment.type] =
-    isParseable(config, schemaKey).map(_ => UaParserEnrichment)
+  private val localRulefile = "./ua-parser-rules.yml"
+
+  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[UaParserEnrichment] = {
+    val c = UaParserEnrichment(None)
+    isParseable(config, schemaKey).flatMap(conf => {
+      (for {
+        rules <- getCustomRules(conf)
+      } yield UaParserEnrichment(rules)).toValidationNel
+    })
+  }
+
+  private def getCustomRules(conf: JValue): ValidatedMessage[Option[(URI, String)]] =
+    if (ScalazJson4sUtils.fieldExists(conf, "parameters", "regexFile")) {
+      for {
+        rulefile <- ScalazJson4sUtils.extract[String](conf, "parameters", "regexFile")
+        source   <- getUri(rulefile)
+      } yield (source, localRulefile).some
+    } else {
+      None.success
+    }
+
+  private def getUri(uri: String): ValidatedMessage[URI] =
+    ConversionUtils
+      .stringToUri(uri)
+      .flatMap(_ match {
+        case Some(u) => u.success
+        case None    => "A valid URI to ua-parser regex file must be provided".fail
+      })
+      .toProcessingMessage
 }
 
 /**
@@ -58,9 +90,22 @@ object UaParserEnrichmentConfig extends ParseableEnrichment {
  *
  * Uses uap-java library to parse client attributes
  */
-case object UaParserEnrichment extends Enrichment {
+case class UaParserEnrichment(customRulefile: Option[(URI, String)]) extends Enrichment {
 
-  val uaParser = new Parser()
+  override val filesToCache: List[(URI, String)] =
+    customRulefile.map(List(_)).getOrElse(List.empty)
+
+  lazy val uaParser: Parser =
+    if (filesToCache.isEmpty) {
+      new Parser()
+    } else {
+      val input = new FileInputStream(filesToCache.head._2)
+      try {
+        new Parser(input)
+      } finally {
+        input.close()
+      }
+    }
 
   /*
    * Adds a period in front of a not-null version element
