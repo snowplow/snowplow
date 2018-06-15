@@ -11,15 +11,17 @@ project_len=${#project}
 cicd=${tag:0:${project_len}}
 release=${tag:${project_len}}
 
-if [ "${cicd}" == "${project}" ]; then                                          
-    if [ "${release}" == "" ]; then                                             
-        echo "WARNING! No release specified! Ignoring."                         
-        exit 2                                                                  
-    fi                                                                          
-else                                                                            
+if [ "${cicd}" == "${project}" ]; then
+    if [ "${release}" == "" ]; then
+        echo "WARNING! No release specified! Ignoring."
+        exit 2
+    fi
+else
     echo "This can't be deployed - there's no ${project} tag! (Is the travis condition set?    )"
-    exit 1                                                                      
+    exit 1
 fi
+
+(>&2 echo "DEPLOY_SCE: Deploying ${project} release: ${release}!")
 
 mkdir ~/.bintray/
 FILE=$HOME/.bintray/.credentials
@@ -41,3 +43,4 @@ else
     echo "Tag version '${release}' doesn't match version in scala project ('${project_version}'). Aborting!"
     exit 1
 fi
+(>&2 echo "DEPLOY_SCE: Deploying ${project} release: ${release}, finished successfully!")
