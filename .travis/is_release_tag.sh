@@ -11,12 +11,12 @@ release=${tag:${slashed_len}}
 
 if [ "${cicd}" == "${slashed}" ]; then
     if [ "${release}" == "" ]; then
-        echo "Warning! No release specified! Ignoring."
+        (>&2 echo "Warning! No release specified! Ignoring.")
         exit 2
     fi
-    echo "Deploying project name: \"${slashed}\"!"
+    (>&2 echo "Deploying project name: \"${slashed}\"!")
     exit 0
 else
-    echo "Tag prefix \"${cicd}\" does not equal project name: \"${slashed}\". Skipping deployment of tag: ${tag}"
+    (>&2 echo "Tag prefix \"${cicd}\" does not equal project name: \"${slashed}\". Skipping deployment of tag: ${tag}")
     exit 1
 fi
