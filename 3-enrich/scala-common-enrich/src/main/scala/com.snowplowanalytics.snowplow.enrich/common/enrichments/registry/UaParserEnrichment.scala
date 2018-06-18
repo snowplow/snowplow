@@ -37,6 +37,7 @@ import ua_parser.Client
 
 // json4s
 import org.json4s._
+import org.json4s.DefaultFormats
 import org.json4s.JValue
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
@@ -51,6 +52,7 @@ import utils.ScalazJson4sUtils
  * from a JValue.
  */
 object UaParserEnrichmentConfig extends ParseableEnrichment {
+  implicit val formats = DefaultFormats
 
   val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "ua_parser_config", "jsonschema", 1, 0)
 
