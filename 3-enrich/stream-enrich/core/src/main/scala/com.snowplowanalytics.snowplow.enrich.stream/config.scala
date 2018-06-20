@@ -64,9 +64,9 @@ object config {
           case FilepathRegex(_) => success
           case _                => failure(s"Enrichments directory doesn't match accepted uris: $regexMsg")
         })
-    def forceIpLookupsDownloadOption(): Unit =
-      opt[Unit]("force-ip-lookups-download")
-        .text("Invalidate the cached IP lookup files and download them anew")
+    def forceCachedFilesDownloadOption(): Unit =
+      opt[Unit]("force-cached-files-download")
+        .text("Invalidate the cached IP lookup / IAB database files and download them anew")
         .action((_, c) => c.copy(forceDownload = true))
   }
 }
