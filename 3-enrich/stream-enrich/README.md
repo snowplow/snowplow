@@ -28,8 +28,8 @@ Usage: snowplow-stream-enrich [options]
                            Iglu resolver file, 'file:[filename]' or 'dynamodb:[region/table/key]'
   --enrichments <enrichments directory uri>
                            Directory of enrichment configuration JSONs, 'file:[filename]' or 'dynamodb:[region/table/key]'
-  --force-ip-lookups-download
-                           Invalidate the cached IP lookup files and download them anew
+  --force-cached-files-download
+                           Invalidate the cached IP lookup / IAB database files and download them anew
 ```
 
 ## Copyright and license
