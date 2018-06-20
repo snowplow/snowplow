@@ -58,6 +58,13 @@ lazy val noPublishSettings = Seq(
   publishArtifact := false
 )
 
+import com.typesafe.sbt.packager.docker._
+dockerRepository := Some("snowplow-docker-registry.bintray.io")
+dockerUsername := Some("snowplow")
+dockerBaseImage := "snowplow-docker-registry.bintray.io/snowplow/base-debian:0.1.0"
+maintainer in Docker := "Snowplow Analytics Ltd. <support@snowplowanalytics.com>"
+daemonUser in Docker := "snowplow"
+
 lazy val scioVersion = "0.5.7"
 lazy val beamVersion = "2.5.0"
 lazy val sceVersion = "0.35.0"
