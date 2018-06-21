@@ -192,7 +192,7 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers with D
   "Parsing a valid ua_parser_config enrichment JSON" should {
     "successfully construct a UaParserEnrichment case class" in {
 
-      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "ua_parser_config", "jsonschema", "1-0-0")
+      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "ua_parser_config", "jsonschema", "1-0-1")
 
       val configWithDefaultRules = parse("""{
         "enabled": true,
@@ -204,7 +204,7 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers with D
       val configWithExternalRules = parse(raw"""{
         "enabled": true,
         "parameters": {
-          "regexFile": "$externalUri"
+          "regexFileUri": "$externalUri"
         }
       }""")
 

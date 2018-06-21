@@ -17,7 +17,7 @@ package enrichments
 package registry
 
 // Maven Artifact
-import java.io.FileInputStream
+import java.io.{FileInputStream, InputStream}
 import java.net.URI
 
 import com.snowplowanalytics.snowplow.enrich.common.utils.ConversionUtils
@@ -68,9 +68,9 @@ object UaParserEnrichmentConfig extends ParseableEnrichment {
   }
 
   private def getCustomRules(conf: JValue): ValidatedMessage[Option[(URI, String)]] =
-    if (ScalazJson4sUtils.fieldExists(conf, "parameters", "regexFile")) {
+    if (ScalazJson4sUtils.fieldExists(conf, "parameters", "regexFileUri")) {
       for {
-        rulefile <- ScalazJson4sUtils.extract[String](conf, "parameters", "regexFile")
+        rulefile <- ScalazJson4sUtils.extract[String](conf, "parameters", "regexFileUri")
         source   <- getUri(rulefile)
       } yield (source, localRulefile).some
     } else {
@@ -97,17 +97,27 @@ case class UaParserEnrichment(customRulefile: Option[(URI, String)]) extends Enr
   override val filesToCache: List[(URI, String)] =
     customRulefile.map(List(_)).getOrElse(List.empty)
 
-  lazy val uaParser: Parser =
-    if (filesToCache.isEmpty) {
-      new Parser()
-    } else {
-      val input = new FileInputStream(filesToCache.head._2)
-      try {
-        new Parser(input)
-      } finally {
-        input.close()
-      }
+  lazy val uaParser = {
+    def constructParser(input: Option[InputStream]) = input match {
+      case Some(is) =>
+        try {
+          new Parser(is)
+        } finally {
+          is.close()
+        }
+      case None => new Parser()
     }
+
+    val parser = for {
+      input <- Validation.fromTryCatch(customRulefile.map(f => new FileInputStream(f._2)))
+      p <- try {
+        constructParser(input).success
+      } catch {
+        case NonFatal(e) => e.failure
+      }
+    } yield p
+    parser.leftMap(e => "Failed to initialize ua parser: [%s]".format(e.getMessage))
+  }
 
   /*
    * Adds a period in front of a not-null version element
@@ -153,22 +163,23 @@ case class UaParserEnrichment(customRulefile: Option[(URI, String)]) extends Enr
    *         exception, boxed in a
    *         Scalaz Validation
    */
-  def extractUserAgent(useragent: String): Validation[String, JsonAST.JObject] = {
+  def extractUserAgent(useragent: String): Validation[String, JsonAST.JObject] =
+    for {
+      parser <- uaParser
+      c <- try {
+        parser.parse(useragent).success
+      } catch {
+        case NonFatal(e) => "Exception parsing useragent [%s]: [%s]".format(useragent, e.getMessage).fail
+      }
+    } yield {
+      // To display useragent version
+      val useragentVersion = checkNull(c.userAgent.family) + prependSpace(c.userAgent.major) + prependDot(
+        c.userAgent.minor) + prependDot(c.userAgent.patch)
 
-    val c = try {
-      uaParser.parse(useragent)
-    } catch {
-      case NonFatal(e) => return "Exception parsing useragent [%s]: [%s]".format(useragent, e.getMessage).fail
-    }
-    // To display useragent version
-    val useragentVersion = checkNull(c.userAgent.family) + prependSpace(c.userAgent.major) + prependDot(
-      c.userAgent.minor) + prependDot(c.userAgent.patch)
+      // To display operating system version
+      val osVersion = checkNull(c.os.family) + prependSpace(c.os.major) + prependDot(c.os.minor) + prependDot(
+        c.os.patch) + prependDot(c.os.patchMinor)
 
-    // To display operating system version
-    val osVersion = checkNull(c.os.family) + prependSpace(c.os.major) + prependDot(c.os.minor) + prependDot(c.os.patch) + prependDot(
-      c.os.patchMinor)
-
-    val json =
       (("schema" -> "iglu:com.snowplowanalytics.snowplow/ua_parser_context/jsonschema/1-0-0") ~
         ("data" ->
           ("useragentFamily"    -> c.userAgent.family) ~
@@ -184,6 +195,5 @@ case class UaParserEnrichment(customRulefile: Option[(URI, String)]) extends Enr
             ("osVersion"        -> osVersion) ~
             ("deviceFamily"     -> c.device.family)))
 
-    json.success
-  }
+    }
 }

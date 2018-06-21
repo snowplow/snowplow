@@ -69,4 +69,19 @@ class UaParserEnrichmentSpec extends org.specs2.mutable.Specification with Valid
     }
   }
 
+  val badRulefile = (new URI("s3://private-bucket/files/uap-rules.yml"), "NotAFile")
+
+  "useragent parser" should {
+    "report initialization error" in {
+      "Custom Rules"      | "Input UserAgent"      | "Parsed UserAgent" |
+        Some(badRulefile) !! mobileSafariUserAgent !! "Failed to initialize ua parser" |> {
+        (rules, input, errorPrefix) =>
+          {
+            UaParserEnrichment(rules).extractUserAgent(input) must beFailing.like {
+              case a => a must startWith(errorPrefix)
+            }
+          }
+      }
+    }
+  }
 }
