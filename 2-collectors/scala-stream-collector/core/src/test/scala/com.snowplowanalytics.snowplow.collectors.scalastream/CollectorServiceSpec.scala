@@ -89,15 +89,31 @@ class CollectorServiceSpec extends Specification {
 
     "flashCrossDomainPolicy" in {
       "return the cross domain policy with the specified config" in {
-        service.flashCrossDomainPolicy(CrossDomainConfig(true, "*", false)) shouldEqual HttpResponse(
+        service.flashCrossDomainPolicy(CrossDomainConfig(true, List("*"), false)) shouldEqual HttpResponse(
           entity = HttpEntity(
             contentType = ContentType(MediaTypes.`text/xml`, HttpCharsets.`ISO-8859-1`),
             string = "<?xml version=\"1.0\"?>\n<cross-domain-policy>\n  <allow-access-from domain=\"*\" secure=\"false\" />\n</cross-domain-policy>"
           )
         )
       }
+      "return the cross domain policy with multiple domains" in {
+        service.flashCrossDomainPolicy(CrossDomainConfig(true, List("*", "acme.com"), false)) shouldEqual HttpResponse(
+          entity = HttpEntity(
+            contentType = ContentType(MediaTypes.`text/xml`, HttpCharsets.`ISO-8859-1`),
+            string = "<?xml version=\"1.0\"?>\n<cross-domain-policy>\n  <allow-access-from domain=\"*\" secure=\"false\" />\n  <allow-access-from domain=\"acme.com\" secure=\"false\" />\n</cross-domain-policy>"
+          )
+        )
+      }
+      "return the cross domain policy with no domains" in {
+        service.flashCrossDomainPolicy(CrossDomainConfig(true, List.empty, false)) shouldEqual HttpResponse(
+          entity = HttpEntity(
+            contentType = ContentType(MediaTypes.`text/xml`, HttpCharsets.`ISO-8859-1`),
+            string = "<?xml version=\"1.0\"?>\n<cross-domain-policy>\n\n</cross-domain-policy>"
+          )
+        )
+      }
       "return 404 if the specified config is absent" in {
-        service.flashCrossDomainPolicy(CrossDomainConfig(false, "*", false)) shouldEqual
+        service.flashCrossDomainPolicy(CrossDomainConfig(false, List("*"), false)) shouldEqual
           HttpResponse(404, entity = "404 not found")
       }
     }
