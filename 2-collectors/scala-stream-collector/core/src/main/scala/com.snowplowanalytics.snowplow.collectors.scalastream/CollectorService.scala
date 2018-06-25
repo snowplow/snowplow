@@ -146,9 +146,9 @@ class CollectorService(
     if (config.enabled) {
       HttpResponse(entity = HttpEntity(
         contentType = ContentType(MediaTypes.`text/xml`, HttpCharsets.`ISO-8859-1`),
-        string = s"""<?xml version=\"1.0\"?>\n<cross-domain-policy>
-                    |  <allow-access-from domain=\"${config.domain}\" secure=\"${config.secure}\" />
-                    |</cross-domain-policy>""".stripMargin
+        string = """<?xml version="1.0"?>""" + "\n<cross-domain-policy>\n" +
+          config.domains.map(d => s"""  <allow-access-from domain=\"$d\" secure=\"${config.secure}\" />""").mkString("\n") +
+          "\n</cross-domain-policy>"
       ))
     } else {
       HttpResponse(404, entity = "404 not found")

@@ -33,8 +33,8 @@ collector {
   # route.
   crossDomain {
     enabled = false
-    # Domain that is granted access, *.acme.com will match http://acme.com and http://sub.acme.com
-    domain = "*"
+    # Domains that are granted access, *.acme.com will match http://acme.com and http://sub.acme.com
+    domains = [ "*" ]
     # Whether to only grant access to HTTPS or both HTTPS and HTTP sources
     secure = true
   }
