@@ -79,7 +79,7 @@ object EnrichmentManager {
       e.v_etl          = ME.etlVersion(hostEtlVersion)
       e.etl_tstamp     = EE.toTimestamp(etlTstamp)
       e.network_userid = raw.context.userId.orNull // May be updated later by 'nuid'
-      e.user_ipaddress = raw.context.ipAddress.orNull // May be updated later by 'ip'
+      e.user_ipaddress = ME.extractIp("user_ipaddress", raw.context.ipAddress.orNull).toOption.orNull // May be updated later by 'ip'
       e
     }
 
@@ -115,7 +115,7 @@ object EnrichmentManager {
     val transformMap: TransformMap =
       Map(
         ("e", (EE.extractEventType, "event")),
-        ("ip", (ME.toTsvSafe, "user_ipaddress")),
+        ("ip", (ME.extractIp, "user_ipaddress")),
         ("aid", (ME.toTsvSafe, "app_id")),
         ("p", (ME.extractPlatform, "platform")),
         ("tid", (CU.validateInteger, "txn_id")),
