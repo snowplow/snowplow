@@ -80,10 +80,10 @@ object UaParserEnrichmentConfig extends ParseableEnrichment {
   private def getUri(uri: String): ValidatedMessage[URI] =
     ConversionUtils
       .stringToUri(uri)
-      .flatMap(_ match {
+      .flatMap {
         case Some(u) => u.success
         case None    => "A valid URI to ua-parser regex file must be provided".fail
-      })
+      }
       .toProcessingMessage
 }
 
@@ -116,7 +116,7 @@ case class UaParserEnrichment(customRulefile: Option[(URI, String)]) extends Enr
         case NonFatal(e) => e.failure
       }
     } yield p
-    parser.leftMap(e => "Failed to initialize ua parser: [%s]".format(e.getMessage))
+    parser.leftMap(e => s"Failed to initialize ua parser: [${e.getMessage}]")
   }
 
   /*
@@ -155,9 +155,9 @@ case class UaParserEnrichment(customRulefile: Option[(URI, String)]) extends Enr
    * UserAgentEnrichment.
    *
    * @param useragent The useragent
-   *        String to extract from.
-   *        Should be encoded (i.e.
-   *        not previously decoded).
+   *                  String to extract from.
+   *                  Should be encoded (i.e.
+   *                  not previously decoded).
    * @return the json or
    *         the message of the
    *         exception, boxed in a
@@ -169,31 +169,35 @@ case class UaParserEnrichment(customRulefile: Option[(URI, String)]) extends Enr
       c <- try {
         parser.parse(useragent).success
       } catch {
-        case NonFatal(e) => "Exception parsing useragent [%s]: [%s]".format(useragent, e.getMessage).fail
+        case NonFatal(e) => s"Exception parsing useragent [${useragent}]: [${e.getMessage}]".fail
       }
-    } yield {
-      // To display useragent version
-      val useragentVersion = checkNull(c.userAgent.family) + prependSpace(c.userAgent.major) + prependDot(
-        c.userAgent.minor) + prependDot(c.userAgent.patch)
+    } yield assembleContext(c)
 
-      // To display operating system version
-      val osVersion = checkNull(c.os.family) + prependSpace(c.os.major) + prependDot(c.os.minor) + prependDot(
-        c.os.patch) + prependDot(c.os.patchMinor)
+  /**
+   * Assembles ua_parser_context from a parsed user agent.
+   */
+  def assembleContext(c: Client): JsonAST.JObject = {
+    // To display useragent version
+    val useragentVersion = checkNull(c.userAgent.family) + prependSpace(c.userAgent.major) + prependDot(
+      c.userAgent.minor) + prependDot(c.userAgent.patch)
 
-      (("schema" -> "iglu:com.snowplowanalytics.snowplow/ua_parser_context/jsonschema/1-0-0") ~
-        ("data" ->
-          ("useragentFamily"    -> c.userAgent.family) ~
-            ("useragentMajor"   -> c.userAgent.major) ~
-            ("useragentMinor"   -> c.userAgent.minor) ~
-            ("useragentPatch"   -> c.userAgent.patch) ~
-            ("useragentVersion" -> useragentVersion) ~
-            ("osFamily"         -> c.os.family) ~
-            ("osMajor"          -> c.os.major) ~
-            ("osMinor"          -> c.os.minor) ~
-            ("osPatch"          -> c.os.patch) ~
-            ("osPatchMinor"     -> c.os.patchMinor) ~
-            ("osVersion"        -> osVersion) ~
-            ("deviceFamily"     -> c.device.family)))
+    // To display operating system version
+    val osVersion = checkNull(c.os.family) + prependSpace(c.os.major) + prependDot(c.os.minor) + prependDot(c.os.patch) + prependDot(
+      c.os.patchMinor)
 
-    }
+    (("schema" -> "iglu:com.snowplowanalytics.snowplow/ua_parser_context/jsonschema/1-0-0") ~
+      ("data" ->
+        ("useragentFamily"    -> c.userAgent.family) ~
+          ("useragentMajor"   -> c.userAgent.major) ~
+          ("useragentMinor"   -> c.userAgent.minor) ~
+          ("useragentPatch"   -> c.userAgent.patch) ~
+          ("useragentVersion" -> useragentVersion) ~
+          ("osFamily"         -> c.os.family) ~
+          ("osMajor"          -> c.os.major) ~
+          ("osMinor"          -> c.os.minor) ~
+          ("osPatch"          -> c.os.patch) ~
+          ("osPatchMinor"     -> c.os.patchMinor) ~
+          ("osVersion"        -> osVersion) ~
+          ("deviceFamily"     -> c.device.family)))
+  }
 }

@@ -51,7 +51,7 @@ trait Enrichment {
    * second indicates the local path where the enrichment expects
    * to find the file.
    */
-  def filesToCache(): List[(URI, String)] = List.empty
+  def filesToCache: List[(URI, String)] = List.empty
 }
 
 /**
