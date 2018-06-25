@@ -71,6 +71,26 @@ class ExtractPlatformSpec extends Specification with DataTables {
     }
 }
 
+class ExtractIpSpec extends Specification with DataTables {
+
+  def is = s2"Extracting ips with extractIp should work $e1"
+
+  val nullString: String = null
+
+  def e1 =
+    "SPEC NAME"                       || "INPUT VAL"            | "EXPECTED OUTPUT" |
+      "single ip"                     !! "127.0.0.1"            ! "127.0.0.1".success |
+      "ips ', '-separated"            !! "127.0.0.1, 127.0.0.2" ! "127.0.0.1".success |
+      "ips ','-separated"             !! "127.0.0.1,127.0.0.2"  ! "127.0.0.1".success |
+      "ips separated out of the spec" !! "1.0.0.1!1.0.0.2"      ! "1.0.0.1!1.0.0.2".success |
+      // ConversionUtils.makeTsvSafe returns null for empty string
+      "empty" !! ""   ! Success(null) |
+      "null"  !! null ! Success(null) |> { (_, input, expected) =>
+      MiscEnrichments.extractIp("ip", input) must_== expected
+    }
+
+}
+
 /**
  * Tests the identity function.
  * Uses ScalaCheck.
