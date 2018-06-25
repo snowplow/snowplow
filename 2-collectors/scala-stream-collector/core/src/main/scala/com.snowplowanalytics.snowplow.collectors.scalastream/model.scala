@@ -60,7 +60,7 @@ package model {
     placeholder: Option[String]
   )
   final case class P3PConfig(policyRef: String, CP: String)
-  final case class CrossDomainConfig(enabled: Boolean, domain: String, secure: Boolean)
+  final case class CrossDomainConfig(enabled: Boolean, domains: List[String], secure: Boolean)
   final case class KinesisBackoffPolicyConfig(minBackoff: Long, maxBackoff: Long)
   final case class GooglePubSubBackoffPolicyConfig(
     minBackoff: Long,
