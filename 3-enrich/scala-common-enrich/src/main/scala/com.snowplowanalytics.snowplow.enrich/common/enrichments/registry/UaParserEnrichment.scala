@@ -108,13 +108,16 @@ case class UaParserEnrichment(customRulefile: Option[(URI, String)]) extends Enr
       case None => new Parser()
     }
 
-    val parser = for {
-      input <- Validation.fromTryCatch(customRulefile.map(f => new FileInputStream(f._2)))
-      p <- try {
-        constructParser(input).success
+    def tryWithCatch[T](a: => T): Validation[Throwable, T] =
+      try {
+        a.success
       } catch {
         case NonFatal(e) => e.failure
       }
+
+    val parser = for {
+      input <- tryWithCatch(customRulefile.map(f => new FileInputStream(f._2)))
+      p     <- tryWithCatch(constructParser(input))
     } yield p
     parser.leftMap(e => s"Failed to initialize ua parser: [${e.getMessage}]")
   }
