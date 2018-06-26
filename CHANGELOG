@@ -1,3 +1,21 @@
+Release 107 Trypillia (2018-07-17)
+----------------------------------
+Enrich: update example config for PII to version 2-0-0 (#3812)
+Scala Common Enrich: add adapter to pre-process Marketo webhooks (#2616)
+Scala Common Enrich: add adapter to pre-process Vero webhooks (#2757)
+Scala Common Enrich: propagate the currency code to all the contexts which need it in the GA adapter (#3733)
+Scala Common Enrich: add IAB Spiders & Robots Enrichment (#937)
+Scala Common Enrich: bump to 0.34.0 (#3758)
+Spark Enrich: bump scala-common-enrich to 0.34.0 (#3729)
+Spark Enrich: add support for the IAB Enrichment (#3772)
+Spark Enrich: bump to 1.15.0 (#3728)
+Stream Enrich: bump scala-common-enrich to 0.34.0 (#3730)
+Stream Enrich: add support for the IAB enrichment (#3797)
+Stream Enrich: force jackson-databind to 2.9.3 for all projects (#3767)
+Stream Enrich: rename force-ip-lookups-download to force-cached-files-download (#3809)
+Stream Enrich: bump to 0.18.0 (#3727)
+Common: fix travis deployment test (#3805)
+
 Release 106 Acropolis (2018-06-14)
 ----------------------------------
 EmrEtlRunner: update rdb_shredder version in config samples to 0.13.1 (#3790)
