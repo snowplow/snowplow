@@ -65,6 +65,24 @@ object SpecHelpers {
     }
   """
 
+  val ipLookupsEnrichmentConfig = """
+    {
+      "schema": "iglu:com.snowplowanalytics.snowplow/ip_lookups/jsonschema/2-0-0",
+      "data": {
+        "name": "ip_lookups",
+        "vendor": "com.snowplowanalytics.snowplow",
+        "enabled": true,
+        "parameters": {
+          "geo": {
+          "database": "GeoLite2-City.mmdb",
+          "uri": "http://acme.com"
+          }
+        }
+      }
+    }
+  """
+
+
   val enrichmentRegistry = (for {
     combinedJson <-
       (("schema" -> "iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0") ~
