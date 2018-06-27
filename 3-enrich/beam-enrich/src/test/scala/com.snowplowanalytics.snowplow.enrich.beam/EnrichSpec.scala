@@ -16,6 +16,7 @@ package com.snowplowanalytics.snowplow.enrich.beam
 
 import java.nio.file.{Path, Paths}
 
+import com.spotify.scio.ScioMetrics
 import com.spotify.scio.testing._
 import org.apache.commons.codec.binary.Base64
 
@@ -90,6 +91,22 @@ class EnrichSpec extends PipelineSpec {
         c.size == 1 && expected.forall(c.head.contains)
       })
       .output(PubsubIO[String]("bad"))(_ should beEmpty)
+      .distribution(Enrich.enrichedEventSizeDistribution) { d =>
+        d.getCount() shouldBe 1
+        d.getMin() shouldBe 819
+        d.getMin() shouldBe d.getMax()
+        d.getMin() shouldBe d.getSum()
+        d.getMin() shouldBe d.getMean()
+      }
+      .distribution(Enrich.timeToEnrichDistribution) { d =>
+        d.getCount() shouldBe 1
+        d.getMin() should be >= 100L
+        d.getMin() shouldBe d.getMax()
+        d.getMin() shouldBe d.getSum()
+        d.getMin() shouldBe d.getMean()
+      }
+      .counter(ScioMetrics.counter("snowplow", "vendor_com_google_analytics"))(_ shouldBe 1)
+      .counter(ScioMetrics.counter("snowplow", "tracker_js_0_13_1"))(_ shouldBe 1)
       .run()
   }
 
