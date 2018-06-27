@@ -17,20 +17,15 @@ package snowplow
 package enrich
 package beam
 
-import java.io.File
-import java.net.URI
 import java.nio.charset.StandardCharsets.UTF_8
-import java.nio.file.{Files, Path, Paths}
-
-import scala.util.Try
 
 import com.spotify.scio._
 import com.spotify.scio.pubsub.PubSubAdmin
 import com.spotify.scio.values.{DistCache, SCollection}
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubOptions
 import org.apache.commons.codec.binary.Base64
-import org.json4s.{JObject, JValue}
 import org.joda.time.DateTime
+import org.json4s.{JObject, JValue}
 import org.slf4j.LoggerFactory
 import scalaz._
 import Scalaz._
@@ -44,21 +39,18 @@ import iglu.client.Resolver
 import singleton._
 import utils._
 
-/*
-sbt "runMain com.snowplowanalytics.snowplow.enrich.beam.Enrich
-  --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE] --streaming=true
-  --job-name=[JOB NAME]
-  --input=[INPUT SUBSCRIPTION]
-  --output=[OUTPUT TOPIC]
-  --bad=[BAD TOPIC]
-  --resolver=[RESOLVER FILE PATH]
-  --enrichments=[ENRICHMENTS DIR PATH]"
-*/
+/** Enrich job using the Beam API through SCIO */
 object Enrich {
 
   private val logger = LoggerFactory.getLogger(this.getClass)
   // the maximum record size in Google PubSub is 10Mb
   private val MaxRecordSize = 10000000
+  private val MetricsNamespace = "snowplow"
+
+  val enrichedEventSizeDistribution =
+    ScioMetrics.distribution(MetricsNamespace, "enriched_event_size_bytes")
+  val timeToEnrichDistribution =
+    ScioMetrics.distribution(MetricsNamespace, "time_to_enrich_ms")
 
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
@@ -84,39 +76,52 @@ object Enrich {
   }
 
   def run(sc: ScioContext, config: ParsedEnrichConfig): Unit = {
-    // Path is not serializable
-    val cachedFiles: DistCache[List[Either[String, String]]] = {
-      val filesToCache = getFilesToCache(config.resolver, config.enrichmentRegistry)
-      sc.distCache(filesToCache.map(_._1.toString)) { files =>
-        createSymLinks(files.toList.zip(filesToCache.map(_._2))).map(_.map(_.toString))
-      }
-    }
+    val cachedFiles: DistCache[List[Either[String, String]]] =
+      buildDistCache(sc, config.resolver, config.enrichmentRegistry)
 
     val input: SCollection[Array[Byte]] = sc.pubsubSubscription(config.input).withName("input")
     val enriched: SCollection[Validation[BadRow, EnrichedEvent]] = input
       .map { rawEvent =>
         cachedFiles()
         implicit val resolver = ResolverSingleton.get(config.resolver)
-        enrich(rawEvent, EnrichmentRegistrySingleton.get(config.enrichmentRegistry))
-      }
-      .flatten
-      .withName("enriched")
+        val (enriched, time) = timeMs {
+          enrich(rawEvent, EnrichmentRegistrySingleton.get(config.enrichmentRegistry))
+        }
+        timeToEnrichDistribution.update(time)
+        enriched
+      }.withName("enriched")
+      .flatten.withName("enriched-flattened")
 
     val (successes, failures) = enriched.partition(_.isSuccess)
     val (tooBigSuccesses, properlySizedsuccesses) = successes
       .collect { case Success(enrichedEvent) =>
+        getEnrichedEventMetrics(enrichedEvent)
+          .foreach(ScioMetrics.counter(MetricsNamespace, _).inc())
         val formattedEnrichedEvent = tabSeparatedEnrichedEvent(enrichedEvent)
-        (formattedEnrichedEvent, getStringSize(formattedEnrichedEvent))
-      }
+        val size = getStringSize(formattedEnrichedEvent)
+        enrichedEventSizeDistribution.update(size.toLong)
+        (formattedEnrichedEvent, size)
+      }.withName("enriched-successes")
       .partition(_._2 >= MaxRecordSize)
-    properlySizedsuccesses.map(_._1).withName("enriched-good").saveAsPubsub(config.output)
+    properlySizedsuccesses.withName("undersized-enriched-successes")
+      .map(_._1).withName("enriched-good")
+      .saveAsPubsub(config.output)
 
     val failureCollection: SCollection[BadRow] =
-      failures.collect { case Failure(badRow) => resizeBadRow(badRow, MaxRecordSize) } ++
-      tooBigSuccesses.map { case (event, size) => resizeEnrichedEvent(event, size, MaxRecordSize) }
-    failureCollection.map(_.toCompactJson).withName("enriched-bad").saveAsPubsub(config.bad)
+      failures.collect { case Failure(badRow) => resizeBadRow(badRow, MaxRecordSize) }
+        .withName("bad-rows") ++
+      tooBigSuccesses.withName("oversized-enriched-successes")
+        .map { case (event, size) => resizeEnrichedEvent(event, size, MaxRecordSize) }
+    failureCollection.withName("all-bad-rows")
+      .map(_.toCompactJson).withName("enriched-bad")
+      .saveAsPubsub(config.bad)
   }
 
+  /**
+   * Enrich a collector payload into a list of [[EnrichedEvent]].
+   * @param data serialized collector payload
+   * @return a list of either [[EnrichedEvent]] or [[BadRow]]
+   */
   def enrich(data: Array[Byte], enrichmentRegistry: EnrichmentRegistry)(
       implicit r: Resolver): List[Validation[BadRow, EnrichedEvent]] = {
     val collectorPayload = ThriftLoader.toCollectorPayload(data)
@@ -134,30 +139,22 @@ object Enrich {
     }
   }
 
-  def createSymLinks(filesToCache: List[(File, String)]): List[Either[String, Path]] = filesToCache
-    .map { case (file, symLink) =>
-      val link = createSymLink(file, symLink)
-      link match {
-        case Right(p) => logger.info(s"File $file cached at $p")
-        case Left(e) => logger.warn(s"File $file could not be cached: $e")
+  private def buildDistCache(
+    sc: ScioContext,
+    resolver: JValue,
+    enrichmentRegistry: JObject
+  ): DistCache[List[Either[String, String]]] = {
+    val filesToCache = getFilesToCache(resolver, enrichmentRegistry)
+    // Path is not serializable
+    sc.distCache(filesToCache.map(_._1.toString)) { files =>
+      val symLinks = files.toList.zip(filesToCache.map(_._2))
+        .map { case (file, symLink) => createSymLink(file, symLink) }
+      symLinks.zip(files).foreach {
+        case (Right(p), file) => logger.info(s"File $file cached at $p")
+        case (Left(e), file) => logger.warn(s"File $file could not be cached: $e")
       }
-      link
+      symLinks.map(_.map(_.toString))
     }
-
-  def createSymLink(file: File, symLink: String): Either[String, Path] = {
-    val symLinkPath = Paths.get(symLink)
-    if (Files.notExists(symLinkPath)) {
-      Try(Files.createSymbolicLink(symLinkPath, file.toPath)) match {
-        case scala.util.Success(p) => Right(p)
-        case scala.util.Failure(t) => Left(t.getMessage)
-      }
-    } else Left(s"Symlink $symLinkPath already exists")
-  }
-
-  def getFilesToCache(resolverJson: JValue, registryJson: JObject): List[(URI, String)] = {
-    implicit val resolver = ResolverSingleton.get(resolverJson)
-    val registry = EnrichmentRegistrySingleton.get(registryJson)
-    registry.getIpLookupsEnrichment.map(_.dbsToCache).getOrElse(Nil)
   }
 
   private def checkTopicExists(sc: ScioContext, topicName: String): Validation[String, Unit] =
