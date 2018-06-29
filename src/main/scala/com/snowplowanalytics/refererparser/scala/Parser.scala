@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.snowplowanalytics.refererparser.scala
 
 // Java
@@ -24,7 +23,7 @@ import com.snowplowanalytics.refererparser.{Parser => JParser}
 import com.snowplowanalytics.refererparser.{Medium => JMedium}
 
 // Scala
-import scala.collection.JavaConversions._ 
+import scala.collection.JavaConversions._
 
 /**
  * Enumeration for supported mediums.
@@ -56,7 +55,7 @@ object Medium extends Enumeration {
 case class Referer(
   medium: Medium.Medium,
   source: Option[String],
-  term:   Option[String]
+  term: Option[String]
 )
 
 /**
@@ -113,9 +112,8 @@ object Parser {
    * Parses a `refererUri` String and a `pageUri`
    * URI to return either some Referer, or None.
    */
-  def parse(refererUri: String, pageHost: String): MaybeReferer = {
+  def parse(refererUri: String, pageHost: String): MaybeReferer =
     parse(refererUri, pageHost, Nil)
-  }
 
   /**
    * Parses a `refererUri` String and a `pageUri`
@@ -138,22 +136,18 @@ object Parser {
    * Parses a `refererUri` URI to return
    * either Some Referer, or None.
    */
-  def parse(refererUri: URI, pageHost: String): MaybeReferer = {
+  def parse(refererUri: URI, pageHost: String): MaybeReferer =
     parse(refererUri, pageHost, Nil)
-}
-
 
   /**
    * Parses a `refererUri` URI to return
    * either Some Referer, or None.
    */
   def parse(refererUri: URI, pageHost: String, internalDomains: List[String]): MaybeReferer = {
-    
+
     try {
       val jrefr = Option(jp.parse(refererUri, pageHost, internalDomains))
-      jrefr.map(jr =>
-        Referer(Medium.fromJava(jr.medium), Option(jr.source), Option(jr.term))
-      )
+      jrefr.map(jr => Referer(Medium.fromJava(jr.medium), Option(jr.source), Option(jr.term)))
     } catch {
       case use: URISyntaxException => None
     }
