@@ -53,10 +53,10 @@ enrich {
       # 'kafka' for reading / writing to a Kafka topic
       # 'nsq' for reading / writing to a Nsq topic
       # 'stdin' for reading from stdin and writing to stdout and stderr
-      type =  {{ sinkType }}
+      enabled =  {{sinkType}}
 
       # Region where the streams are located (AWS region, pertinent to kinesis sink/source type)
-      # region = {{ region }}
+      # region = {{region}}
 
       # AWS credentials (pertinent to kinesis sink/source type)
       # If both are set to 'default', use the default AWS credentials provider chain.
