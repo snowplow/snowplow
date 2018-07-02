@@ -25,11 +25,16 @@ import org.specs2.matcher.DataTables
 import org.scalacheck._
 import org.scalacheck.Arbitrary._
 
+// Cats
+import cats.effect.IO
+
 class ParseFuzzTest extends Specification with ScalaCheck {
 
   def is =
     "The parse function should work for any pair of referer and page Strings" ! e1
 
   def e1 =
-    prop { (refererUri: String, pageUri: String) => Parser.parse(refererUri, pageUri) must beAnInstanceOf[Parser.MaybeReferer] }
+    prop { (refererUri: String, pageUri: String) =>
+      Parser.parse[IO](refererUri, pageUri).unsafeRunSync() must beAnInstanceOf[Parser.MaybeReferer]
+    }
 }

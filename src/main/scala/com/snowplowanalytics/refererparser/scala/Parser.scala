@@ -25,6 +25,11 @@ import com.snowplowanalytics.refererparser.{Medium => JMedium}
 // Scala
 import scala.collection.JavaConversions._
 
+// Cats Effect
+import cats.effect.Sync
+import cats.syntax.either._
+import cats.syntax.flatMap._
+
 /**
  * Enumeration for supported mediums.
  *
@@ -84,50 +89,58 @@ object Parser {
    * Parses a `refererUri` UR and a `pageUri`
    * URI to return either Some Referer, or None.
    */
-  def parse(refererUri: URI, pageUri: URI): MaybeReferer =
-    parse(refererUri, getHostSafely(pageUri), Nil);
+  def parse[F[_]: Sync](refererUri: URI, pageUri: URI): F[MaybeReferer] =
+    parse(refererUri, getHostSafely(pageUri), Nil)
 
   /**
    * Parses a `refererUri` UR and a `pageUri`
    * URI to return either Some Referer, or None.
    */
-  def parse(refererUri: URI, pageUri: URI, internalDomains: List[String]): MaybeReferer =
-    parse(refererUri, getHostSafely(pageUri), internalDomains);
+  def parse[F[_]: Sync](
+    refererUri: URI,
+    pageUri: URI,
+    internalDomains: List[String]): F[MaybeReferer] =
+    parse(refererUri, getHostSafely(pageUri), internalDomains)
 
   /**
    * Parses a `refererUri` String and a `pageUri`
    * URI to return either Some Referer, or None.
    */
-  def parse(refererUri: String, pageUri: URI): MaybeReferer =
-    parse(refererUri, getHostSafely(pageUri), Nil);
+  def parse[F[_]: Sync](refererUri: String, pageUri: URI): F[MaybeReferer] =
+    parse(refererUri, getHostSafely(pageUri), Nil)
 
   /**
    * Parses a `refererUri` String and a `pageUri`
    * URI to return either Some Referer, or None.
    */
-  def parse(refererUri: String, pageUri: URI, internalDomains: List[String]): MaybeReferer =
-    parse(refererUri, getHostSafely(pageUri), internalDomains);
+  def parsep[F[_]: Sync](
+    refererUri: String,
+    pageUri: URI,
+    internalDomains: List[String]): F[MaybeReferer] =
+    parse(refererUri, getHostSafely(pageUri), internalDomains)
 
   /**
    * Parses a `refererUri` String and a `pageUri`
    * URI to return either some Referer, or None.
    */
-  def parse(refererUri: String, pageHost: String): MaybeReferer =
+  def parse[F[_]: Sync](refererUri: String, pageHost: String): F[MaybeReferer] =
     parse(refererUri, pageHost, Nil)
 
   /**
    * Parses a `refererUri` String and a `pageUri`
    * URI to return either some Referer, or None.
    */
-  def parse(refererUri: String, pageHost: String, internalDomains: List[String]): MaybeReferer = {
+  def parse[F[_]: Sync](
+    refererUri: String,
+    pageHost: String,
+    internalDomains: List[String]): F[MaybeReferer] = {
 
     if (refererUri == null || refererUri == "") {
-      None
+      Sync[F].pure(None)
     } else {
-      try {
-        parse(new URI(refererUri), pageHost, internalDomains)
-      } catch {
-        case use: URISyntaxException => None
+      Either.catchNonFatal(new URI(refererUri)).toOption match {
+        case Some(uri) => parse(uri, pageHost, internalDomains)
+        case None      => Sync[F].pure(None)
       }
     }
   }
@@ -136,20 +149,31 @@ object Parser {
    * Parses a `refererUri` URI to return
    * either Some Referer, or None.
    */
-  def parse(refererUri: URI, pageHost: String): MaybeReferer =
+  def parse[F[_]: Sync](refererUri: URI, pageHost: String): F[MaybeReferer] =
     parse(refererUri, pageHost, Nil)
 
   /**
    * Parses a `refererUri` URI to return
    * either Some Referer, or None.
    */
-  def parse(refererUri: URI, pageHost: String, internalDomains: List[String]): MaybeReferer = {
-
-    try {
-      val jrefr = Option(jp.parse(refererUri, pageHost, internalDomains))
-      jrefr.map(jr => Referer(Medium.fromJava(jr.medium), Option(jr.source), Option(jr.term)))
-    } catch {
-      case use: URISyntaxException => None
+  def parse[F[_]: Sync](
+    refererUri: URI,
+    pageHost: String,
+    internalDomains: List[String]
+  ): F[MaybeReferer] = {
+    Sync[F].delay {
+      try {
+        Option(jp.parse(refererUri, pageHost, internalDomains))
+          .map(
+            jr =>
+              Referer(
+                Medium.fromJava(jr.medium),
+                Option(jr.source),
+                Option(jr.term)
+            ))
+      } catch {
+        case use: URISyntaxException => None
+      }
     }
   }
 }

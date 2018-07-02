@@ -26,6 +26,9 @@ import org.json4s.jackson.JsonMethods._
 // Specs2
 import org.specs2.mutable.Specification
 
+// cats
+import cats.effect.IO
+
 class JsonParseTest extends Specification {
 
   val testString = fromFile("src/test/resources/referer-tests.json").getLines.mkString
@@ -50,7 +53,7 @@ class JsonParseTest extends Specification {
     "extract the expected details from referer with spec" in {
       for (test <- testJson) yield {
 
-        Parser.parse(getString(test, "uri"), pageHost, internalDomains) shouldEqual
+        Parser.parse[IO](getString(test, "uri"), pageHost, internalDomains).unsafeRunSync() shouldEqual
           Some(Referer(
             Medium.withName(getString(test, "medium")),
             (test \ "source") match {

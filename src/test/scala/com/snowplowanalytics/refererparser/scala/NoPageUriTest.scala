@@ -22,6 +22,9 @@ import java.net.URI
 // Specs2
 import org.specs2.mutable.Specification
 
+// Cats
+import cats.effect.IO
+
 class NoPageUriTest extends Specification {
 
   // Our data
@@ -30,19 +33,19 @@ class NoPageUriTest extends Specification {
 
   "An empty page URI" should {
     "not interfere with the referer parsing" in {
-      Parser.parse(refererUri, "") must_== expected
+      Parser.parse[IO](refererUri, "").unsafeRunSync() must_== expected
     }
   }
 
   "A null (String) page URI" should {
     "not interfere with the referer parsing" in {
-      Parser.parse(refererUri, null.asInstanceOf[String]) must_== expected
+      Parser.parse[IO](refererUri, null.asInstanceOf[String]).unsafeRunSync() must_== expected
     }
   }
 
   "A null (URI) page URI" should {
     "not interfere with the referer parsing" in {
-      Parser.parse(refererUri, null.asInstanceOf[URI]) must_== expected
+      Parser.parse[IO](refererUri, null.asInstanceOf[URI]).unsafeRunSync() must_== expected
     }
   }
 }

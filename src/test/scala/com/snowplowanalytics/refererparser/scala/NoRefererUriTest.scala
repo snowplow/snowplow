@@ -22,6 +22,9 @@ import java.net.URI
 // Specs2
 import org.specs2.mutable.Specification
 
+// Cats
+import cats.effect.IO
+
 class NoRefererUriTest extends Specification {
 
   // Our data
@@ -29,19 +32,19 @@ class NoRefererUriTest extends Specification {
 
   "An empty referer URI" should {
     "return no referal" in {
-      Parser.parse("", pageHost) must beNone
+      Parser.parse[IO]("", pageHost).unsafeRunSync() must beNone
     }
   }
 
   "A null [String] referer URI" should {
     "return no referal" in {
-      Parser.parse(null.asInstanceOf[String], pageHost) must beNone
+      Parser.parse[IO](null.asInstanceOf[String], pageHost).unsafeRunSync() must beNone
     }
   }
 
   "A null [URI] referer URI" should {
     "return no referal" in {
-      Parser.parse(null.asInstanceOf[URI], pageHost) must beNone
+      Parser.parse[IO](null.asInstanceOf[URI], pageHost).unsafeRunSync() must beNone
     }
   }
 }

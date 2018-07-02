@@ -22,6 +22,9 @@ import java.net.URI
 // Specs2
 import org.specs2.mutable.Specification
 
+// Cats
+import cats.effect.IO
+
 class CorruptedRefererQuerystringTest extends Specification {
 
   // Our data
@@ -30,7 +33,7 @@ class CorruptedRefererQuerystringTest extends Specification {
 
   "A corrupted referer querystring" should {
     "identify the search engine but not the search term" in {
-      Parser.parse(refererUri, "") must_== expected
+      Parser.parse[IO](refererUri, "").unsafeRunSync() must_== expected
     }
   }
 }

@@ -18,7 +18,8 @@ val root = (project in file(".")).
       "junit"                     %  "junit"          % "4.12"     % "test",
       "org.json"                  %  "json"           % "20170516" % "test",
       "org.json4s"                %% "json4s-jackson" % "3.5.3"    % "test",
-      "org.json4s"                %% "json4s-scalaz"  % "3.5.3"    % "test"
+      "org.json4s"                %% "json4s-scalaz"  % "3.5.3"    % "test",
+      "org.typelevel"             %% "cats-effect"    % "0.10.1"
     ),
 
     addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), siteSubdirName in ScalaUnidoc),

@@ -22,6 +22,9 @@ import java.net.URI
 // Specs2
 import org.specs2.mutable.Specification
 
+// Cats
+import cats.effect.IO
+
 class ParseArgTypesTest extends Specification {
 
   // Aliases
@@ -34,10 +37,10 @@ class ParseArgTypesTest extends Specification {
 
   "parse " should {
     "work the same regardless of which argument types are used to call it" in {
-      Parser.parse(refererUri, pageHost) must_== expected
-      Parser.parse(refererUri, pageURI)  must_== expected
-      Parser.parse(refererURI, pageHost) must_== expected
-      Parser.parse(refererURI, pageURI)  must_== expected
+      Parser.parse[IO](refererUri, pageHost).unsafeRunSync() must_== expected
+      Parser.parse[IO](refererUri, pageURI).unsafeRunSync()  must_== expected
+      Parser.parse[IO](refererURI, pageHost).unsafeRunSync() must_== expected
+      Parser.parse[IO](refererURI, pageURI).unsafeRunSync()  must_== expected
     }
   }
 }

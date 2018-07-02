@@ -22,6 +22,9 @@ import java.net.URI
 // Specs2
 import org.specs2.mutable.Specification
 
+// Cats
+import cats.effect.IO
+
 class CorruptedRefererUriTest extends Specification {
 
   // Our data
@@ -30,7 +33,7 @@ class CorruptedRefererUriTest extends Specification {
 
   "A corrupted referer URI" should {
     "return None, not throw an Exception" in {
-      Parser.parse(refererUri,pageUri) must beNone
+      Parser.parse[IO](refererUri,pageUri).unsafeRunSync() must beNone
     }
   }
 }
