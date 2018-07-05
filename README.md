@@ -30,32 +30,7 @@ System.out.println(r.term);       // => "gateway oracle cards denise linn"
 
 ### Installation
 
-Add the following code into your `HOME/.m2/settings.xml` to be able to use this repository:
-
-```xml
-<settings>
-  <profiles>
-    <profile>
-      <!-- ... -->
-      <repositories>
-        <repository>
-          <id>com.snowplowanalytics</id>
-          <name>SnowPlow Analytics</name>
-          <url>http://maven.snplow.com/releases</url>
-          <releases>
-            <enabled>true</enabled>
-          </releases>
-          <snapshots>
-            <enabled>true</enabled>
-          </snapshots>
-        </repository>
-      </repositories>
-    </profile>
-  </profiles>
-</settings>
-```
-
-Then add into your project's `pom.xml`:
+Add the following code into your `pow.xml` to be able to use this repository:
 
 ```xml
 <dependency>
@@ -114,10 +89,6 @@ for (r <- Parser.parse(refererUrl, pageUrl, internalDomains)) {
 Add this to your SBT config:
 
 ```scala
-// Resolver
-val snowplowRepo = "SnowPlow Repo" at "http://maven.snplow.com/releases/"
-
-// Dependency
 val refererParser = "com.snowplowanalytics" %% "referer-parser" % "0.3.0"
 ```
 
