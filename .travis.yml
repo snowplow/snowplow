@@ -7,5 +7,12 @@ jdk:
   - openjdk8
 script:
   - sbt coverage test coverageReport
+deploy:
+  skip_cleanup: true
+  provider: script
+  script: "./.travis/deploy.sh $TRAVIS_TAG"
+  on:
+    condition: '"${TRAVIS_SCALA_VERSION}" == "2.12.6"'
+    tags: true
 after_success:
   - bash <(curl -s https://codecov.io/bash)

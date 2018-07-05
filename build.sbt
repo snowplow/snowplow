@@ -24,8 +24,28 @@ val root = (project in file(".")).
 
     addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), siteSubdirName in ScalaUnidoc),
     gitRemoteRepo := "https://github.com/snowplow-referer-parser/jvm-referer-parser.git",
-    siteSubdirName := ""
-  )
+    siteSubdirName := "",
+
+    publishMavenStyle := true,
+	publishArtifact := true,
+	publishArtifact in Test := false,
+	licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0.html")),
+	bintrayOrganization := Some("snowplow"),
+	bintrayRepository := "snowplow-maven",
+	pomIncludeRepository := { _ => false },
+	homepage := Some(url("http://snowplowanalytics.com")),
+	scmInfo := Some(ScmInfo(url("https://github.com/snowplow/scala-maxmind-iplookups"),
+      "scm:git@github.com:snowplow/scala-maxmind-iplookups.git")),
+	pomExtra := (
+      <developers>
+        <developer>
+          <name>Snowplow Analytics Ltd</name>
+            <email>support@snowplowanalytics.com</email>
+            <organization>Snowplow Analytics Ltd</organization>
+            <organizationUrl>http://snowplowanalytics.com</organizationUrl>
+        </developer>
+      </developers>)
+)
 
 
 def specsVersion(scalaVer: String) = scalaVer match {
