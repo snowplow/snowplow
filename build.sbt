@@ -7,8 +7,8 @@ val root = (project in file(".")).
     organization  := "com.snowplowanalytics",
     version       := "0.3.0",
     description   := "Library for extracting marketing attribution data from referer URLs",
-    scalaVersion  := "2.12.4",
-    crossScalaVersions := Seq("2.11.11", "2.12.4"),
+    scalaVersion  := "2.12.6",
+    crossScalaVersions := Seq("2.11.12", "2.12.6"),
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
 
     libraryDependencies ++= Seq(
@@ -29,6 +29,6 @@ val root = (project in file(".")).
 
 
 def specsVersion(scalaVer: String) = scalaVer match {
-  case "2.11.11" => "3.7"
-  case "2.12.4" => "2.5"
+  case "2.11.12" => "3.7"
+  case "2.12.6" => "2.5"
 }
