@@ -43,6 +43,7 @@ object Medium extends Enumeration {
   val Internal = Value("internal")
   val Social   = Value("social")
   val Email    = Value("email")
+  val Paid     = Value("paid")
 
   /**
    * Converts from our Java Medium Enum
