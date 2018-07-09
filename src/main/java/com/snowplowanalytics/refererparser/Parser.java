@@ -23,14 +23,18 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Collections;
+import java.util.Iterator;
 
-// SnakeYAML
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.SafeConstructor;
+// Json
+import org.json.JSONException;
+import org.json.JSONTokener;
+import org.json.JSONObject;
+import org.json.JSONArray;
 
 // Apache URLEncodedUtils
 import org.apache.http.NameValuePair;
@@ -43,7 +47,7 @@ import org.apache.http.client.utils.URLEncodedUtils;
  */
 public class Parser {
 
-  private static final String REFERERS_YAML_PATH = "/referers.yml";
+  private static final String REFERERS_JSON_PATH = "/referers.json";
   private Map<String,RefererLookup> referers;
 
   /**
@@ -64,21 +68,21 @@ public class Parser {
 
   /**
    * Construct our Parser object using the
-   * bundled referers.yml
+   * bundled referers.json
    */
-  public Parser() throws IOException, CorruptYamlException {
-    this(Parser.class.getResourceAsStream(REFERERS_YAML_PATH));
+  public Parser() throws IOException, CorruptJsonException {
+    this(Parser.class.getResourceAsStream(REFERERS_JSON_PATH));
   }
 
   /**
    * Construct our Parser object using a 
-   * InputStream (in YAML format)
+   * InputStream (in JSON format)
    *
-   * @param referersYaml The referers YAML
+   * @param referersJson The referers JSON
    *        to load into our Parser, in
    *        InputStream format
    */
-  public Parser(InputStream referersStream) throws CorruptYamlException {
+  public Parser(InputStream referersStream) throws CorruptJsonException {
     referers = loadReferers(referersStream);
   }
 
@@ -87,9 +91,9 @@ public class Parser {
    * custom resource String
    *
    * @param referersResource The resource pointing
-   *        to the referers YAML file to load
+   *        to the referers JSON file to load
    */
-  public Parser(String referersResource) throws IOException, CorruptYamlException {
+  public Parser(String referersResource) throws IOException, CorruptJsonException {
     this(Parser.class.getResourceAsStream(referersResource));
   }
 
@@ -223,55 +227,69 @@ public class Parser {
 
   /**
    * Builds the map of hosts to referers from the
-   * input YAML file.
+   * input JSON file.
    *
-   * @param referersYaml An InputStream containing the
-   *                     referers database in YAML format.
+   * @param referersJson An InputStream containing the
+   *                     referers database in JSON format.
    *
    * @return a Map where the key is the hostname of each
    *         referer and the value (RefererLookup)
    *         contains all known info about this referer
    */
-  private Map<String,RefererLookup> loadReferers(InputStream referersYaml) throws CorruptYamlException {
-
-    Yaml yaml = new Yaml(new SafeConstructor());
-    Map<String,Map<String,Map>> rawReferers = (Map<String,Map<String,Map>>) yaml.load(referersYaml);
+  private Map<String,RefererLookup> loadReferers(InputStream referersJson) throws JSONException, CorruptJsonException {
+    JSONTokener tok = new JSONTokener(referersJson);
+    JSONObject json = new JSONObject(tok);
 
     // This will store all of our referers
     Map<String,RefererLookup> referers = new HashMap<String,RefererLookup>();
 
     // Outer loop is all referers under a given medium
-    for (Map.Entry<String,Map<String,Map>> mediumReferers : rawReferers.entrySet()) {
+    Iterator<String> mediumKeys = json.keys();
+    while (mediumKeys.hasNext()) {
+      String mediumKey = mediumKeys.next();
 
-      Medium medium = Medium.fromString(mediumReferers.getKey());
+      Medium medium = Medium.fromString(mediumKey);
+      JSONObject referersObject = json.getJSONObject(mediumKey);
 
       // Inner loop is individual referers
-      for (Map.Entry<String,Map> referer : mediumReferers.getValue().entrySet()) {
+      Iterator<String> sourceNames = referersObject.keys();
+      while (sourceNames.hasNext()) {
+        String sourceName = sourceNames.next();
 
-        String sourceName = referer.getKey();
-        Map<String,List<String>> refererMap = referer.getValue();
+        JSONObject referer = referersObject.getJSONObject(sourceName);
 
-        // Validate
-        List<String> parameters = refererMap.get("parameters");
-        if (medium == Medium.SEARCH) {
-          if (parameters == null) {
-            throw new CorruptYamlException("No parameters found for search referer '" + sourceName + "'");
+        List<String> parameters = null;
+        if (referer.has("parameters")) {
+          JSONArray parametersArray = referer.getJSONArray("parameters");
+
+          if (medium != Medium.SEARCH && medium != null) {
+            throw new CorruptJsonException("No parameters found for search referer '" + sourceName +"'");
+          }
+
+          parameters = new ArrayList<String>(parametersArray.length());
+          for (int i=0;i<parametersArray.length();i++) {
+            parameters.add(i, parametersArray.getString(i));
           }
         } else {
-          if (parameters != null) {
-            throw new CorruptYamlException("Parameters not supported for non-search referer '" + sourceName + "'");
+          if (medium == Medium.SEARCH) {
+            throw new CorruptJsonException("Parameters not supported for non-search referer '" + sourceName + "'");
           }
         }
-        List<String> domains = refererMap.get("domains");
-        if (domains == null) { 
-          throw new CorruptYamlException("No domains found for referer '" + sourceName + "'");
+
+        List<String> domains = null;
+        if (referer.has("domains")) {
+          JSONArray domainsArray = referer.getJSONArray("domains");
+          domains = new ArrayList<String>(domainsArray.length());
+          for (int i=0;i<domainsArray.length();i++) {
+            domains.add(i, domainsArray.getString(i));
+          }
+        } else {
+          throw new CorruptJsonException("No domains found for referer '" + sourceName + "'");
         }
 
-        // Our hash needs referer domain as the
-        // key, so let's expand
         for (String domain : domains) {
           if (referers.containsValue(domain)) {
-            throw new CorruptYamlException("Duplicate of domain '" + domain + "' found");
+            throw new CorruptJsonException("Duplicate of domain '" + domain + "' found");
           }
           referers.put(domain, new RefererLookup(medium, sourceName, parameters));
         }

@@ -20,7 +20,7 @@ public class ParserTest {
   private Parser parser;
 
   @Before
-  public void createParser() throws CorruptYamlException, IOException {
+  public void createParser() throws CorruptJsonException, IOException {
     parser = new Parser();
   }
 

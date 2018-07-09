@@ -16,8 +16,8 @@
 
 package com.snowplowanalytics.refererparser;
 
-public class CorruptYamlException extends Exception {
-	public CorruptYamlException(String message) {
-    super(message);
-  }
+public class CorruptJsonException extends Exception {
+	public CorruptJsonException(String message) {
+      super(message);
+    }
 }

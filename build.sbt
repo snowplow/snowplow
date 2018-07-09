@@ -12,14 +12,13 @@ val root = (project in file(".")).
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
 
     libraryDependencies ++= Seq(
-      "org.yaml"                  %  "snakeyaml"      % "1.19",
       "org.apache.httpcomponents" %  "httpclient"     % "4.5.3",
+      "org.typelevel"             %% "cats-effect"    % "0.10.1",
+      "org.json"                  %  "json"           % "20180130",
       "org.specs2"                %% "specs2"         % specsVersion(scalaVersion.value) % "test",
       "junit"                     %  "junit"          % "4.12"     % "test",
-      "org.json"                  %  "json"           % "20170516" % "test",
       "org.json4s"                %% "json4s-jackson" % "3.5.3"    % "test",
-      "org.json4s"                %% "json4s-scalaz"  % "3.5.3"    % "test",
-      "org.typelevel"             %% "cats-effect"    % "0.10.1"
+      "org.json4s"                %% "json4s-scalaz"  % "3.5.3"    % "test"
     ),
 
     addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), siteSubdirName in ScalaUnidoc),
