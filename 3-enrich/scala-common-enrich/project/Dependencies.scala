@@ -43,7 +43,7 @@ object Dependencies {
     val jacksonDatabind  = "2.2.3"
     val jsonValidator    = "2.2.3"
     val mavenArtifact    = "3.2.2"
-    val uaParser         = "1.3.0"
+    val uaParser         = "1.4.0"
     val postgresDriver   = "9.4.1208.jre7"
     val mysqlConnector   = "5.1.39"
     val jaywayJsonpath   = "2.4.0"
@@ -82,7 +82,7 @@ object Dependencies {
     val jacksonDatabind  = "com.fasterxml.jackson.core" %  "jackson-databind"              % V.jacksonDatabind
     val jsonValidator    = "com.github.fge"             %  "json-schema-validator"         % V.jsonValidator
     val mavenArtifact    = "org.apache.maven"           %  "maven-artifact"                % V.mavenArtifact
-    val uaParser         = "org.clojars.timewarrior"    %  "ua-parser"                     % V.uaParser
+    val uaParser         = "com.github.ua-parser"       %  "uap-java"                      % V.uaParser
     val postgresDriver   = "org.postgresql"             %  "postgresql"                    % V.postgresDriver
     val mysqlConnector   = "mysql"                      %  "mysql-connector-java"          % V.mysqlConnector
     val jaywayJsonpath   = "com.jayway.jsonpath"        %  "json-path"                     % V.jaywayJsonpath
