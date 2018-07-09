@@ -147,7 +147,7 @@ object ApiRequestEnrichmentCfLineSpec {
     null,
     null,
     null,
-    """{"schema":"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-1","data":[{"schema":"iglu:com.acme/user/jsonschema/1-0-0","data":{"path":"/guest/users/large/Windows+7/www.psychicbazaar.com/unsure?format=json","message":"unauthorized","method":"GET"}},{"schema":"iglu:com.snowplowanalytics.snowplow/ua_parser_context/jsonschema/1-0-0","data":{"useragentFamily":"Firefox","useragentMajor":"12","useragentMinor":"0","useragentPatch":null,"useragentVersion":"Firefox 12.0","osFamily":"Windows 7","osMajor":null,"osMinor":null,"osPatch":null,"osPatchMinor":null,"osVersion":"Windows 7","deviceFamily":"Other"}}]}""",
+    """{"schema":"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-1","data":[{"schema":"iglu:com.acme/user/jsonschema/1-0-0","data":{"path":"/guest/users/large/Windows/www.psychicbazaar.com/unsure?format=json","message":"unauthorized","method":"GET"}},{"schema":"iglu:com.snowplowanalytics.snowplow/ua_parser_context/jsonschema/1-0-0","data":{"useragentFamily":"Firefox","useragentMajor":"12","useragentMinor":"0","useragentPatch":null,"useragentVersion":"Firefox 12.0","osFamily":"Windows","osMajor":"7","osMinor":null,"osPatch":null,"osPatchMinor":null,"osVersion":"Windows 7","deviceFamily":"Other"}}]}""",
     null,
     "2012-05-27 11:35:53.000",
     "com.snowplowanalytics.snowplow-website",
