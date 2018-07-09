@@ -39,7 +39,7 @@ import com.hubspot.jinjava.Jinjava
 
 // This project
 import good._
-import model.StreamsConfig
+import model.{StreamsConfig, SourceSinkConfig}
 
 class PiiEmitSpec extends Specification with FutureMatchers {
 
@@ -83,6 +83,7 @@ class PiiEmitSpec extends Specification with FutureMatchers {
     "emit all events" in new KafkaIntegrationSpec {
       implicit private def hint[T]: ProductHint[T] =
         ProductHint[T](ConfigFieldMapping(CamelCase, CamelCase))
+      implicit val sourceSinkConfigHint = new FieldCoproductHint[SourceSinkConfig]("enabled")
 
       val parsedConfig = ConfigFactory.parseString(configInstance).resolve()
       val configObject = Try {
