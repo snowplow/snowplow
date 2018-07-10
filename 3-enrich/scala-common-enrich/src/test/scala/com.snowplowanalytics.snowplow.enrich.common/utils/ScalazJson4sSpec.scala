@@ -22,6 +22,7 @@ import Scalaz._
 
 // json4s
 import org.json4s.jackson.JsonMethods.parse
+import org.json4s.DefaultFormats
 
 // Specs2
 import org.specs2.mutable.Specification
@@ -31,8 +32,8 @@ import org.specs2.scalaz.ValidationMatchers
  * Tests ScalazJson4sUtils
  */
 class JsonExtractionSpec extends Specification with ValidationMatchers {
-
-  val testJson = parse("""{
+  implicit val formats = DefaultFormats
+  val testJson         = parse("""{
     "outer": "1",
     "inner": {
       "value": 2

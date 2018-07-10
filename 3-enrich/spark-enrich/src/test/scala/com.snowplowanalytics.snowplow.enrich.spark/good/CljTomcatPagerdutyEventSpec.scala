@@ -36,7 +36,7 @@ object CljTomcatPagerdutyEventSpec {
     "clj-0.6.0-tom-0.0.4",
     etlVersion,
     null, // No user_id set
-    "255.255.x.x",
+    "79398dd7e78a8998b6e58e380e7168d8766f1644",
     null,
     null,
     null,
@@ -139,7 +139,7 @@ class CljTomcatPagerdutyEventSpec extends Specification with EnrichJobSpec {
   override def appName = "clj-tomcat-pagerduty-event"
   sequential
   "A job which processes a Clojure-Tomcat file containing a PagerDuty POST raw event representing" +
-  " 1 valid completed call" should {
+    " 1 valid completed call" should {
     runEnrichJob(CljTomcatPagerdutyEventSpec.lines, "clj-tomcat", "2", true, List("geo"))
 
     "correctly output 1 completed call" in {

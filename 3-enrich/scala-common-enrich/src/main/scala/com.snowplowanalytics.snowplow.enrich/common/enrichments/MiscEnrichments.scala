@@ -85,6 +85,17 @@ object MiscEnrichments {
   val toTsvSafe: (String, String) => ValidatedString = (field, value) => CU.makeTsvSafe(value).success
 
   /**
+   * The X-Forwarded-For header can contain a comma-separated list of IPs especially if it has
+   * gone through multiple load balancers.
+   * Here we retrieve the first one as it is supposed to be the client one, c.f.
+   * https://en.m.wikipedia.org/wiki/X-Forwarded-For#Format
+   */
+  val extractIp: (String, String) => ValidatedString = (field, value) => {
+    val lastIp = Option(value).map(_.split("[,|, ]").head).orNull
+    CU.makeTsvSafe(lastIp).success
+  }
+
+  /**
    * Turn a list of custom contexts into a self-describing JSON
    *
    * @param derivedContexts

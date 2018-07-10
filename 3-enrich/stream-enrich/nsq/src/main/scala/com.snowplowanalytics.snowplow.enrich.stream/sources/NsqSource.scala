@@ -1,21 +1,21 @@
 /*
-* Copyright (c) 2013-2018 Snowplow Analytics Ltd.
-* All rights reserved.
-*
-* This program is licensed to you under the Apache License Version 2.0,
-* and you may not use this file except in compliance with the Apache
-* License Version 2.0.
-* You may obtain a copy of the Apache License Version 2.0 at
-* http://www.apache.org/licenses/LICENSE-2.0.
-*
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the Apache License Version 2.0 is distributed
-* on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
-* either express or implied.
-*
-* See the Apache License Version 2.0 for the specific language
-* governing permissions and limitations there under.
-*/
+ * Copyright (c) 2013-2018 Snowplow Analytics Ltd.
+ * All rights reserved.
+ *
+ * This program is licensed to you under the Apache License Version 2.0,
+ * and you may not use this file except in compliance with the Apache
+ * License Version 2.0.
+ * You may obtain a copy of the Apache License Version 2.0 at
+ * http://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the Apache License Version 2.0 is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied.
+ *
+ * See the Apache License Version 2.0 for the specific language
+ * governing permissions and limitations there under.
+ */
 
 package com.snowplowanalytics
 package snowplow
@@ -23,16 +23,16 @@ package enrich
 package stream
 package sources
 
-import com.snowplowanalytics.client.nsq.NSQConsumer
-import com.snowplowanalytics.client.nsq.lookup.DefaultNSQLookup
-import com.snowplowanalytics.client.nsq.NSQMessage
-import com.snowplowanalytics.client.nsq.NSQConfig
-import com.snowplowanalytics.client.nsq.callbacks.NSQMessageCallback
-import com.snowplowanalytics.client.nsq.callbacks.NSQErrorCallback
-import com.snowplowanalytics.client.nsq.exceptions.NSQException
 import scalaz._
 import Scalaz._
 
+import client.nsq.lookup.DefaultNSQLookup
+import client.nsq.{NSQConfig, NSQConsumer, NSQMessage, NSQProducer}
+import client.nsq.callbacks.NSQMessageCallback
+import client.nsq.callbacks.NSQErrorCallback
+import client.nsq.exceptions.NSQException
+
+import utils.emitPii
 import iglu.client.Resolver
 import common.enrichments.EnrichmentRegistry
 import model.{Nsq, StreamsConfig}
@@ -46,16 +46,46 @@ object NsqSource {
     igluResolver: Resolver,
     enrichmentRegistry: EnrichmentRegistry,
     tracker: Option[Tracker]
-  ): Validation[Throwable, NsqSource] = for {
-    nsqConfig <- config.sourceSink match {
-      case c: Nsq => c.success
-      case _ => new IllegalArgumentException("Configured source/sink is not Nsq").failure
-    }
-  } yield new NsqSource(igluResolver, enrichmentRegistry, tracker, config, nsqConfig)
+  ): Validation[Throwable, NsqSource] =
+    for {
+      nsqConfig <- config.sourceSink match {
+        case c: Nsq => c.success
+        case _      => new IllegalArgumentException("Configured source/sink is not Nsq").failure
+      }
+      goodProducer <- NsqSink
+        .validateAndCreateProducer(nsqConfig)
+        .validation
+      piiProducer <- (emitPii(enrichmentRegistry), config.out.pii) match {
+        case (true, Some(_)) =>
+          NsqSink.validateAndCreateProducer(nsqConfig).validation.map(Some(_))
+        case (false, Some(piiStreamName)) =>
+          new IllegalArgumentException(
+            s"PII was configured to not emit, but PII stream name was given as $piiStreamName").failure
+        case (true, None) =>
+          new IllegalArgumentException(
+            "PII was configured to emit, but no PII stream name was given").failure
+        case (false, None) => None.success
+      }
+      badProducer <- NsqSink
+        .validateAndCreateProducer(nsqConfig)
+        .validation
+    } yield
+      new NsqSource(
+        goodProducer,
+        piiProducer,
+        badProducer,
+        igluResolver,
+        enrichmentRegistry,
+        tracker,
+        config,
+        nsqConfig)
 }
 
 /** Source to read raw events from NSQ. */
 class NsqSource private (
+  goodProducer: NSQProducer,
+  piiProducer: Option[NSQProducer],
+  badProducer: NSQProducer,
   igluResolver: Resolver,
   enrichmentRegistry: EnrichmentRegistry,
   tracker: Option[Tracker],
@@ -66,10 +96,20 @@ class NsqSource private (
   override val MaxRecordSize = None
 
   override val threadLocalGoodSink: ThreadLocal[Sink] = new ThreadLocal[Sink] {
-    override def initialValue: Sink = new NsqSink(nsqConfig, config.out.enriched)
+    override def initialValue: Sink = new NsqSink(goodProducer, config.out.enriched)
   }
+
+  override val threadLocalPiiSink: Option[ThreadLocal[Sink]] = piiProducer.flatMap {
+    somePiiProducer =>
+      config.out.pii.map { piiTopicName =>
+        new ThreadLocal[Sink] {
+          override def initialValue: Sink = new NsqSink(somePiiProducer, piiTopicName)
+        }
+      }
+  }
+
   override val threadLocalBadSink: ThreadLocal[Sink] = new ThreadLocal[Sink] {
-    override def initialValue: Sink = new NsqSink(nsqConfig, config.out.bad)
+    override def initialValue: Sink = new NsqSink(badProducer, config.out.bad)
   }
 
   /** Consumer will be started to wait new message. */
@@ -79,7 +119,7 @@ class NsqSource private (
       override def message(msg: NSQMessage): Unit = {
         val bytes = msg.getMessage()
         enrichAndStoreEvents(List(bytes)) match {
-          case true => msg.finished()
+          case true  => msg.finished()
           case false => log.error(s"Error while enriching the event")
         }
       }
@@ -94,7 +134,12 @@ class NsqSource private (
     val lookup = new DefaultNSQLookup
     lookup.addLookupAddress(nsqConfig.lookupHost, nsqConfig.lookupPort)
     val consumer = new NSQConsumer(
-      lookup, config.in.raw, nsqConfig.rawChannel, nsqCallback, new NSQConfig(), errorCallback)
+      lookup,
+      config.in.raw,
+      nsqConfig.rawChannel,
+      nsqCallback,
+      new NSQConfig(),
+      errorCallback)
     consumer.start()
   }
 }

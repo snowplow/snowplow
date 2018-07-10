@@ -27,7 +27,7 @@ import scala.util.Try
 object model {
 
   sealed trait Credentials
-  case object NoCredentials extends Credentials
+  case object NoCredentials                                             extends Credentials
   final case class AWSCredentials(accessKey: String, secretKey: String) extends Credentials
 
   // Case classes necessary to the decoding of the configuration
@@ -39,7 +39,7 @@ object model {
     appName: String
   )
   final case class InConfig(raw: String)
-  final case class OutConfig(enriched: String, bad: String, partitionKey: String)
+  final case class OutConfig(enriched: String, pii: Option[String], bad: String, partitionKey: String)
   final case class KinesisBackoffPolicyConfig(minBackoff: Long, maxBackoff: Long)
   final case class GooglePubSubBackoffPolicyConfig(
     minBackoff: Long,
@@ -59,17 +59,18 @@ object model {
   ) extends SourceSinkConfig {
     val timestamp = initialTimestamp
       .toRight("An initial timestamp needs to be provided when choosing AT_TIMESTAMP")
-      .right.flatMap { s =>
+      .right
+      .flatMap { s =>
         val format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
         utils.fold(Try(format.parse(s)))(t => Left(t.getMessage), Right(_))
       }
     require(initialPosition != "AT_TIMESTAMP" || timestamp.isRight, timestamp.left.getOrElse(""))
 
+
     val streamEndpoint = customEndpoint.getOrElse(region match {
-      case cn@"cn-north-1" => s"https://kinesis.$cn.amazonaws.com.cn"
-      case _ => s"https://kinesis.$region.amazonaws.com"
+      case cn @ "cn-north-1" => s"https://kinesis.$cn.amazonaws.com.cn"
+      case _                 => s"https://kinesis.$region.amazonaws.com"
     })
-    }
   }
   final case class GooglePubSub(
     googleProjectId: String,

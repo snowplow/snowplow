@@ -37,7 +37,7 @@ object CljTomcatCallrailEventSpec {
     "clj-0.6.0-tom-0.0.4",
     etlVersion,
     null, // No user_id set
-    "255.255.x.x",
+    "79398dd7e78a8998b6e58e380e7168d8766f1644",
     null,
     null,
     null,
@@ -145,7 +145,7 @@ class CljTomcatCallrailEventSpec extends Specification with EnrichJobSpec {
   override def appName = "clj-tomcat-callrail-event"
   sequential
   "A job which processes a Clojure-Tomcat file containing a GET raw event representing 1 valid " +
-  "completed call" should {
+    "completed call" should {
     runEnrichJob(CljTomcatCallrailEventSpec.lines, "clj-tomcat", "2", true, List("geo"))
 
     "correctly output 1 completed call" in {

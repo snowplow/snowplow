@@ -36,7 +36,7 @@ object TransactionCfLineSpec {
     "clj-0.3.0-tom-0.0.2",
     etlVersion,
     null, // No user_id set
-    "x.x.x.x",
+    "f57fc380f09a03e4190ed4f5234fe14055b7b6ca",
     null, // Not set (legacy input line)
     "a279872d76480afb",
     "1",
@@ -82,14 +82,14 @@ object TransactionCfLineSpec {
     null, //
     null, //
     null, // Unstructured event field empty
-    "order-123",     // Transaction fields are set
+    "order-123", // Transaction fields are set
     "psychicbazaar", //
-    "8000",          //
-    "200",           //
-    "50",            //
-    "London",        //
-    "England",       //
-    "UK",            //
+    "8000", //
+    "200", //
+    "50", //
+    "London", //
+    "England", //
+    "UK", //
     null, // Transaction item fields empty
     null, //
     null, //
@@ -130,7 +130,7 @@ object TransactionCfLineSpec {
     "1080",
     null, // Not set (legacy input lines)
     null, //
-    null  //
+    null //
   )
 }
 
@@ -142,7 +142,12 @@ class TransactionCfLineSpec extends Specification with EnrichJobSpec {
   override def appName = "transaction-cf-lines"
   sequential
   "A job which processes a CloudFront file containing 1 valid transaction" should {
-    runEnrichJob(TransactionCfLineSpec.lines, "cloudfront", "4", true, List("geo", "connectionType"))
+    runEnrichJob(
+      TransactionCfLineSpec.lines,
+      "cloudfront",
+      "4",
+      true,
+      List("geo", "connectionType"))
 
     "correctly output 1 transaction" in {
       val Some(goods) = readPartFile(dirs.output)

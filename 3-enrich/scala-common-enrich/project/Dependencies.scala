@@ -39,11 +39,11 @@ object Dependencies {
     val commonsCodec     = "1.11"
     val yodaTime         = "2.2"
     val yodaConvert      = "1.2"
-    val useragent        = "1.20"
+    val useragent        = "1.21"
     val jacksonDatabind  = "2.2.3"
     val jsonValidator    = "2.2.3"
     val mavenArtifact    = "3.2.2"
-    val uaParser         = "1.3.0"
+    val uaParser         = "1.4.0"
     val postgresDriver   = "9.4.1208.jre7"
     val mysqlConnector   = "5.1.39"
     val jaywayJsonpath   = "2.4.0"
@@ -81,7 +81,7 @@ object Dependencies {
     val jacksonDatabind  = "com.fasterxml.jackson.core" %  "jackson-databind"          % V.jacksonDatabind
     val jsonValidator    = "com.github.fge"             %  "json-schema-validator"     % V.jsonValidator
     val mavenArtifact    = "org.apache.maven"           %  "maven-artifact"            % V.mavenArtifact
-    val uaParser         = "org.clojars.timewarrior"    %  "ua-parser"                 % V.uaParser
+    val uaParser         = "com.github.ua-parser"       %  "uap-java"                  % V.uaParser
     val postgresDriver   = "org.postgresql"             %  "postgresql"                % V.postgresDriver
     val mysqlConnector   = "mysql"                      %  "mysql-connector-java"      % V.mysqlConnector
     val jaywayJsonpath   = "com.jayway.jsonpath"        %  "json-path"                 % V.jaywayJsonpath
@@ -96,7 +96,7 @@ object Dependencies {
     val maxmindIplookups = "com.snowplowanalytics"      %% "scala-maxmind-iplookups"   % V.maxmindIplookups
     val json4sJackson    = "org.json4s"                 %% "json4s-jackson"            % V.json4s
     val json4sScalaz     = "org.json4s"                 %% "json4s-scalaz"             % V.json4s
-    val igluClient       = "com.snowplowanalytics"      %%  "iglu-scala-client"        % V.igluClient
+    val igluClient       = "com.snowplowanalytics"      %% "iglu-scala-client"         % V.igluClient
     val scalaUri         = "io.lemonlabs"               %% "scala-uri"                 % V.scalaUri
     val scalaWeather     = "com.snowplowanalytics"      %% "scala-weather"             % V.scalaWeather
     val scalaj           = "org.scalaj"                 %% "scalaj-http"               % V.scalaj

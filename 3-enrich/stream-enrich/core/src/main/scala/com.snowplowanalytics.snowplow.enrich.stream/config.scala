@@ -33,31 +33,36 @@ object config {
 
   trait FileConfigOptions { self: scopt.OptionParser[FileConfig] =>
 
-    val FilepathRegex = "^file:(.+)$".r
+    val FilepathRegex    = "^file:(.+)$".r
     private val regexMsg = "'file:[filename]'"
 
     def configOption(): Unit =
-      opt[File]("config").required().valueName("<filename>")
+      opt[File]("config")
+        .required()
+        .valueName("<filename>")
         .action((f: File, c: FileConfig) => c.copy(config = f))
         .validate(f =>
           if (f.exists) success
-          else failure(s"Configuration file $f does not exist")
-        )
+          else failure(s"Configuration file $f does not exist"))
     def localResolverOption(): Unit =
-      opt[String]("resolver").required().valueName("<resolver uri>")
+      opt[String]("resolver")
+        .required()
+        .valueName("<resolver uri>")
         .text(s"Iglu resolver file, $regexMsg")
         .action((r: String, c: FileConfig) => c.copy(resolver = r))
         .validate(_ match {
           case FilepathRegex(_) => success
-          case _ => failure(s"Resolver doesn't match accepted uris: $regexMsg")
+          case _                => failure(s"Resolver doesn't match accepted uris: $regexMsg")
         })
     def localEnrichmentsOption(): Unit =
-      opt[String]("enrichments").optional().valueName("<enrichment directory uri>")
+      opt[String]("enrichments")
+        .optional()
+        .valueName("<enrichment directory uri>")
         .text(s"Directory of enrichment configuration JSONs, $regexMsg")
         .action((e: String, c: FileConfig) => c.copy(enrichmentsDir = Some(e)))
         .validate(_ match {
           case FilepathRegex(_) => success
-          case _ => failure(s"Enrichments directory doesn't match accepted uris: $regexMsg")
+          case _                => failure(s"Enrichments directory doesn't match accepted uris: $regexMsg")
         })
     def forceIpLookupsDownloadOption(): Unit =
       opt[Unit]("force-ip-lookups-download")

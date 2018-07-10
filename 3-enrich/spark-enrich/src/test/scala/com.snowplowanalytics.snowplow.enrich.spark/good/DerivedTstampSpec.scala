@@ -37,7 +37,7 @@ object DerivedTstampSpec {
     "cloudfront",
     etlVersion,
     null, // No user_id set
-    "216.160.83.56",
+    "17803d07577023208861c69cbccbdfc0a041b06c",
     "1202972880",
     "81aa96d6d6ee6ad4",
     "1",
@@ -146,7 +146,7 @@ object DerivedTstampSpec {
     "2013-10-07 23:35:27.572",
     "4da6ee6d6d69aa18",
     "2013-10-07 23:35:27.100",
-    """{"schema":"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-1","data":[{"schema":"iglu:com.snowplowanalytics.snowplow/ua_parser_context/jsonschema/1-0-0","data":{"useragentFamily":"IE","useragentMajor":"7","useragentMinor":"0","useragentPatch":null,"useragentVersion":"IE 7.0","osFamily":"Windows XP","osMajor":null,"osMinor":null,"osPatch":null,"osPatchMinor":null,"osVersion":"Windows XP","deviceFamily":"Other"}},{"schema":"iglu:com.acme/app_id/jsonschema/1-0-0","data":{"appIdUpper":"PBZSITE"}}]}""",
+    """{"schema":"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-1","data":[{"schema":"iglu:com.snowplowanalytics.snowplow/ua_parser_context/jsonschema/1-0-0","data":{"useragentFamily":"IE","useragentMajor":"7","useragentMinor":"0","useragentPatch":null,"useragentVersion":"IE 7.0","osFamily":"Windows","osMajor":"XP","osMinor":null,"osPatch":null,"osPatchMinor":null,"osVersion":"Windows XP","deviceFamily":"Other"}},{"schema":"iglu:com.acme/app_id/jsonschema/1-0-0","data":{"appIdUpper":"PBZSITE"}}]}""",
     "75d0fc90-cef4-11e4-8830-0800200c9a66",
     "2013-10-07 23:35:29.999"
   )
@@ -163,7 +163,7 @@ class DerivedTstampSpec extends Specification with EnrichJobSpec {
   override def appName = "derive-tstamp"
   sequential
   "A job which processes a CloudFront file containing 1 valid page ping with campaign attribution" +
-  " fields" should {
+    " fields" should {
     runEnrichJob(DerivedTstampSpec.lines, "cloudfront", "1", false, List("geo"), false, true)
 
     "correctly output 1 page ping" in {

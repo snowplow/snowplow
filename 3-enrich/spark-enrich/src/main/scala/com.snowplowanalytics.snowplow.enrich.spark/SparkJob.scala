@@ -26,7 +26,8 @@ trait SparkJob {
 
   def main(args: Array[String]): Unit = {
     val config = sparkConfig()
-    val spark = SparkSession.builder()
+    val spark = SparkSession
+      .builder()
       .config(config)
       .getOrCreate()
     run(spark, args)

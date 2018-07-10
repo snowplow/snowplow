@@ -19,6 +19,8 @@ else
     exit 1
 fi
 
+echo "Deploying ${project} release: ${release}!"
+
 cd "${TRAVIS_BUILD_DIR}"
 
 export TRAVIS_BUILD_RELEASE_TAG="${release}"

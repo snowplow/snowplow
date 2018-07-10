@@ -53,10 +53,10 @@ class IpLookupsEnrichmentSpec extends Specification with DataTables with Validat
 
   def e1 =
     "SPEC NAME"               || "IP ADDRESS" | "EXPECTED LOCATION" |
-      "blank IP address"      !! "" ! Some(Failure("The address 127.0.0.1 is not in the database.")) |
-      "null IP address"       !! null ! Some(Failure("The address 127.0.0.1 is not in the database.")) |
-      "invalid IP address #1" !! "localhost" ! Some(Failure("The address 127.0.0.1 is not in the database.")) |
-      "invalid IP address #2" !! "hello" ! Some(Failure("hello: Name or service not known")) |
+      "blank IP address"      !! "" ! Some(Failure("AddressNotFoundException")) |
+      "null IP address"       !! null ! Some(Failure("AddressNotFoundException")) |
+      "invalid IP address #1" !! "localhost" ! Some(Failure("AddressNotFoundException")) |
+      "invalid IP address #2" !! "hello" ! Some(Failure("UnknownHostException")) |
       "valid IP address"      !! "175.16.199.0" !
         IpLocation( // Taken from scala-maxmind-geoip. See that test suite for other valid IP addresses
           countryCode = "CN",
@@ -70,7 +70,7 @@ class IpLookupsEnrichmentSpec extends Specification with DataTables with Validat
           metroCode   = None,
           regionName  = Some("Jilin Sheng")
         ).success.some |> { (_, ipAddress, expected) =>
-      config.extractIpInformation(ipAddress).ipLocation.map(_.leftMap(_.getMessage)) must_== expected
+      config.extractIpInformation(ipAddress).ipLocation.map(_.leftMap(_.getClass.getSimpleName)) must_== expected
     }
 
   def e2 = config.extractIpInformation("70.46.123.145").isp must_== "FDN Communications".success.some

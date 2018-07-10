@@ -69,7 +69,7 @@ trait CollectorRoute {
           }
         }
       }
-    } ~ corsRoute ~ healthRoute ~ crossDomainRoute ~ {
+    } ~ corsRoute ~ healthRoute ~ crossDomainRoute ~ rootRoute ~ {
       BeanRegistry.collectorBean.incrementFailedRequests()
       complete(HttpResponse(404, entity = "404 not found"))
     }
@@ -114,6 +114,12 @@ trait CollectorRoute {
     }
   }
 
+  private def rootRoute: Route = get {
+    pathSingleSlash {
+      complete(collectorService.rootResponse)
+    }
+  }
+
   private def incrementRequests(status: StatusCode): Unit = {
     if (List(StatusCodes.OK, StatusCodes.Found).contains(status)) {
       BeanRegistry.collectorBean.incrementSuccessfulRequests()
@@ -121,4 +127,5 @@ trait CollectorRoute {
       BeanRegistry.collectorBean.incrementFailedRequests()
     }
   }
+
 }

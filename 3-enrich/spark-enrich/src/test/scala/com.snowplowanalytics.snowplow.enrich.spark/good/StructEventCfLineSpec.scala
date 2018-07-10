@@ -36,7 +36,7 @@ object StructEventCfLineSpec {
     "cloudfront",
     etlVersion,
     null, // No user_id set
-    "216.160.x.x", // Anonymization and geo both work using &ip=
+    "b07686e3bae587b6885741a96c5fa39d1fb0abd6", // Anonymization and geo both work using &ip=
     "2876815413",
     "9795bd0203804cd1",
     "43",
@@ -76,11 +76,11 @@ object StructEventCfLineSpec {
     null, //
     null, //
     null, // No custom contexts
-    "ecomm",         // Structured event fields are set
+    "ecomm", // Structured event fields are set
     "add-to-basket", //
-    "Χαριτίνη",      // Check Unicode handling
-    "1",             //
-    "35708.23",      //
+    "Χαριτίνη", // Check Unicode handling
+    "1", //
+    "35708.23", //
     null, // Unstructured event field empty
     null, // Transaction fields empty
     null, //
