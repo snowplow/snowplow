@@ -15,7 +15,7 @@
 package com.snowplowanalytics.snowplow.collectors.scalastream
 
 import akka.http.scaladsl.model.{ContentType, HttpResponse, StatusCode, StatusCodes}
-import akka.http.scaladsl.model.headers.HttpCookiePair
+import akka.http.scaladsl.model.headers.{HttpCookie, HttpCookiePair}
 import akka.http.scaladsl.server.{Directive1, Route}
 import akka.http.scaladsl.server.Directives._
 
@@ -34,37 +34,70 @@ trait CollectorRoute {
     extractRequestContext.map(_.request.entity.contentType)
 
   def collectorRoute: Route =
-    cookieIfWanted(collectorService.cookieName) { reqCookie =>
-      val cookie = reqCookie.map(_.toCookie)
-      headers { (userAgent, refererURI, rawRequestURI) =>
-        val qs = queryString(rawRequestURI)
-        extractors { (host, ip, request) =>
-          // get the adapter vendor and version from the path
-          path(Segment / Segment) { (vendor, version) =>
-            val path = s"/$vendor/$version"
-            post {
-              extractContentType { ct =>
-                entity(as[String]) { body =>
-                  val (r, _) = collectorService.cookie(qs, Some(body),
-                      path, cookie, userAgent, refererURI, host, ip, request, false, Some(ct))
-                  incrementRequests(r.status)
-                  complete(r)
+    doNotTrack(collectorService.doNotTrackCookie) { dnt =>
+      cookieIfWanted(collectorService.cookieName) { reqCookie =>
+        val cookie = reqCookie.map(_.toCookie)
+        headers { (userAgent, refererURI, rawRequestURI) =>
+          val qs = queryString(rawRequestURI)
+          extractors { (host, ip, request) =>
+            // get the adapter vendor and version from the path
+            path(Segment / Segment) { (vendor, version) =>
+              val path = s"/$vendor/$version"
+              post {
+                extractContentType { ct =>
+                  entity(as[String]) { body =>
+                    val (r, _) = collectorService.cookie(
+                      qs,
+                      Some(body),
+                      path,
+                      cookie,
+                      userAgent,
+                      refererURI,
+                      host,
+                      ip,
+                      request,
+                      pixelExpected = false,
+                      doNotTrack = dnt,
+                      Some(ct))
+                    incrementRequests(r.status)
+                    complete(r)
+                  }
                 }
+              } ~
+              get {
+                val (r, _) = collectorService.cookie(
+                  qs,
+                  None,
+                  path,
+                  cookie,
+                  userAgent,
+                  refererURI,
+                  host,
+                  ip,
+                  request,
+                  pixelExpected = true,
+                  doNotTrack = dnt)
+                incrementRequests(r.status)
+                complete(r)
               }
             } ~
-            get {
-              val (r, _) = collectorService.cookie(
-                qs, None, path, cookie, userAgent, refererURI, host, ip, request, true)
-              incrementRequests(r.status)
-              complete(r)
-            }
-          } ~
-          path("""ice\.png""".r | "i".r) { path =>
-            get {
-              val (r,l) = collectorService.cookie(
-                qs, None, "/" + path, cookie, userAgent, refererURI, host, ip, request, true)
-              incrementRequests(r.status)
-              complete(r)
+            path("""ice\.png""".r | "i".r) { path =>
+              get {
+                val (r,l) = collectorService.cookie(
+                  qs,
+                  None,
+                  "/" + path,
+                  cookie,
+                  userAgent,
+                  refererURI,
+                  host,
+                  ip,
+                  request,
+                  pixelExpected = true,
+                  doNotTrack = dnt)
+                incrementRequests(r.status)
+                complete(r)
+              }
             }
           }
         }
@@ -95,6 +128,18 @@ trait CollectorRoute {
     case Some(n) => optionalCookie(n)
     case None => optionalHeaderValue(x => None)
   }
+
+  /**
+   * Directive to filter requests which contain a do not track cookie
+   * @param configCookie the configured do not track cookie to check against
+   */
+  def doNotTrack(configCookie: Option[HttpCookie]): Directive1[Boolean] =
+    cookieIfWanted(configCookie.map(_.name)).map { c =>
+      (c, configCookie) match {
+        case (Some(actual), Some(config)) => actual.value == config.value
+        case _ => false
+      }
+    }
 
   private def crossDomainRoute: Route = get {
     path("""crossdomain\.xml""".r) { path =>

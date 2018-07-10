@@ -52,6 +52,16 @@ collector {
     domain = "{{cookieDomain}}"
   }
 
+  # If you have a do not track cookie in place, the Scala Stream Collector can respect it by
+  # completely bypassing the processing of an incoming request carrying this cookie, the collector
+  # will simply reply by a 200 saying "do not track".
+  # The cookie name and value must match the configuration below.
+  doNotTrackCookie {
+    enabled = false
+    name = {{doNotTrackCookieName}}
+    value = {{doNotTrackCookieValue}}
+  }
+
   # When enabled and the cookie specified above is missing, performs a redirect to itself to check
   # if third-party cookies are blocked using the specified name. If they are indeed blocked,
   # fallbackNetworkId is used instead of generating a new random one.

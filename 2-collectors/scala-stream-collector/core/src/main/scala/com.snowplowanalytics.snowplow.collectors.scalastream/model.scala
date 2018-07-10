@@ -16,6 +16,8 @@ package com.snowplowanalytics.snowplow.collectors.scalastream
 
 import scala.concurrent.duration.FiniteDuration
 
+import akka.http.scaladsl.model.headers.HttpCookie
+
 import sinks.Sink
 
 package model {
@@ -48,6 +50,11 @@ package model {
     name: String,
     expiration: FiniteDuration,
     domain: Option[String]
+  )
+  final case class DoNotTrackCookieConfig(
+    enabled: Boolean,
+    name: String,
+    value: String
   )
   final case class CookieBounceConfig(
     enabled: Boolean,
@@ -108,12 +115,18 @@ package model {
     p3p: P3PConfig,
     crossDomain: CrossDomainConfig,
     cookie: CookieConfig,
+    doNotTrackCookie: DoNotTrackCookieConfig,
     cookieBounce: CookieBounceConfig,
     redirectMacro: RedirectMacroConfig,
     rootResponse: RootResponseConfig,
     streams: StreamsConfig
   ) {
     val cookieConfig = if (cookie.enabled) Some(cookie) else None
+    val doNotTrackHttpCookie =
+      if (doNotTrackCookie.enabled)
+        Some(HttpCookie(name = doNotTrackCookie.name, value = doNotTrackCookie.value))
+      else
+        None
 
     def cookieName = cookieConfig.map(_.name)
     def cookieDomain = cookieConfig.flatMap(_.domain)
