@@ -41,6 +41,7 @@ class CollectorRouteSpec extends Specification with Specs2RouteTest {
         contentType: Option[ContentType] = None
       ): (HttpResponse, List[Array[Byte]]) = (HttpResponse(200, entity = s"cookie"), List.empty)
       def cookieName: Option[String] = Some("name")
+      def doNotTrackCookie: Option[HttpCookie] = None
     }
   }
 
@@ -116,6 +117,32 @@ class CollectorRouteSpec extends Specification with Specs2RouteTest {
             complete(HttpResponse(200, entity = c.toString))
           } ~> check {
             responseAs[String] shouldEqual "None"
+          }
+      }
+    }
+
+    "have a directive checking for a do not track cookie" in {
+      "pass if the dnt cookie is not setup" in {
+        Get() ~> Cookie("abc" -> "123") ~> route.doNotTrack(None) {
+            complete(HttpResponse(200, entity = "passed"))
+          } ~> check {
+            responseAs[String] shouldEqual "passed"
+          }
+      }
+      "pass if the dnt cookie doesn't have the same value" in {
+        Get() ~> Cookie("abc" -> "123") ~>
+          route.doNotTrack(Some(HttpCookie(name = "abc", value = "345"))) {
+            complete(HttpResponse(200, entity = "passed"))
+          } ~> check {
+            responseAs[String] shouldEqual "passed"
+          }
+      }
+      "reject if there is a properly-valued dnt cookie" in {
+        Get() ~> Cookie("abc" -> "123") ~>
+          route.doNotTrack(Some(HttpCookie(name = "abc", value = "123"))) {
+            complete(HttpResponse(200, entity = "passed"))
+          } ~> check {
+            rejection shouldEqual DoNotTrackRejection
           }
       }
     }

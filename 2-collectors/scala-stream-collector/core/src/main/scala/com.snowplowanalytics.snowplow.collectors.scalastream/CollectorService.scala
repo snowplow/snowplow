@@ -53,6 +53,7 @@ trait Service {
     contentType: Option[ContentType] = None
   ): (HttpResponse, List[Array[Byte]])
   def cookieName: Option[String]
+  def doNotTrackCookie: Option[HttpCookie]
 }
 
 object CollectorService {
@@ -72,6 +73,7 @@ class CollectorService(
     config.streams.sink.getClass.getSimpleName.toLowerCase
 
   override val cookieName = config.cookieName
+  override val doNotTrackCookie = config.doNotTrackHttpCookie
 
   override def cookie(
     queryString: Option[String],
