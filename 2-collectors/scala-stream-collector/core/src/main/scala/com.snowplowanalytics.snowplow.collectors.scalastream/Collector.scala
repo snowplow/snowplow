@@ -20,6 +20,9 @@ import java.io.File
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.server.RejectionHandler
+import akka.http.scaladsl.model.HttpResponse
+import akka.http.scaladsl.server.Directives.complete
 import akka.stream.ActorMaterializer
 import com.typesafe.config.{ConfigFactory, Config}
 import org.slf4j.LoggerFactory
@@ -66,6 +69,11 @@ trait Collector {
     implicit val system = ActorSystem.create("scala-stream-collector", akkaConf)
     implicit val materializer = ActorMaterializer()
     implicit val executionContext = system.dispatcher
+    implicit val rejectionHandler = RejectionHandler.newBuilder()
+      .handle { case DoNotTrackRejection =>
+        complete(HttpResponse(entity = "do not track"))
+      }
+      .result()
 
     val route = new CollectorRoute {
       override def collectorService = new CollectorService(collectorConf, sinks)
