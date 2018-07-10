@@ -49,7 +49,7 @@ class CollectorServiceSpec extends Specification {
     "cookie" in {
       "attach p3p headers" in {
         val (r, l) = service.cookie(Some("nuid=12"), Some("b"), "p", None, None, None, "h",
-          RemoteAddress.Unknown, HttpRequest(), false)
+          RemoteAddress.Unknown, HttpRequest(), false, false)
         r.headers must have size 4
         r.headers must contain(RawHeader("P3P", "policyref=\"%s\", CP=\"%s\""
             .format("/w3c/p3p.xml", "NOI DSP COR NID PSA OUR IND COM NAV STA")))
@@ -57,16 +57,26 @@ class CollectorServiceSpec extends Specification {
         r.headers must contain(`Access-Control-Allow-Credentials`(true))
         l must have size 1
       }
+      "not store stuff and provide no cookie if do not track is on" in {
+        val (r, l) = service.cookie(Some("nuid=12"), Some("b"), "p", None, None, None, "h",
+          RemoteAddress.Unknown, HttpRequest(), false, true)
+        r.headers must have size 3
+        r.headers must contain(RawHeader("P3P", "policyref=\"%s\", CP=\"%s\""
+            .format("/w3c/p3p.xml", "NOI DSP COR NID PSA OUR IND COM NAV STA")))
+        r.headers must contain(`Access-Control-Allow-Origin`(HttpOriginRange.`*`))
+        r.headers must contain(`Access-Control-Allow-Credentials`(true))
+        l must have size 0
+      }
       "not store stuff if bouncing and provide a location header" in {
-        val (r, l) = bouncingService.cookie(
-          None, Some("b"), "p", None, None, None, "h", RemoteAddress.Unknown, HttpRequest(), true)
+        val (r, l) = bouncingService.cookie(None, Some("b"), "p", None, None, None, "h",
+          RemoteAddress.Unknown, HttpRequest(), true, false)
         r.headers must have size 5
         r.headers must contain(`Location`("/?bounce=true"))
         l must have size 0
       }
       "store stuff if having already bounced with the fallback nuid" in {
         val (r, l) = bouncingService.cookie(Some("bounce=true"), Some("b"), "p", None, None, None,
-          "h", RemoteAddress.Unknown, HttpRequest(), true)
+          "h", RemoteAddress.Unknown, HttpRequest(), true, false)
         r.headers must have size 4
         l must have size 1
         val newEvent = new CollectorPayload(
@@ -276,7 +286,7 @@ class CollectorServiceSpec extends Specification {
       "give back a cookie header with the appropriate configuration" in {
         val nuid = "nuid"
         val conf = CookieConfig(true, "name", 5.seconds, Some("domain"))
-        val Some(`Set-Cookie`(cookie)) = service.cookieHeader(Some(conf), nuid)
+        val Some(`Set-Cookie`(cookie)) = service.cookieHeader(Some(conf), nuid, false)
         cookie.name shouldEqual conf.name
         cookie.value shouldEqual nuid
         cookie.domain shouldEqual conf.domain
@@ -285,7 +295,12 @@ class CollectorServiceSpec extends Specification {
         (cookie.expires.get - DateTime.now.clicks).clicks must beCloseTo(conf.expiration.toMillis, 1000L)
       }
       "give back None if no configuration is given" in {
-        service.cookieHeader(None, "nuid") shouldEqual None
+        service.cookieHeader(None, "nuid", false) shouldEqual None
+      }
+      "give back None if doNoTrack is true" in {
+        val nuid = "nuid"
+        val conf = CookieConfig(true, "name", 5.seconds, Some("domain"))
+        service.cookieHeader(Some(conf), "nuid", true) shouldEqual None
       }
     }
 
