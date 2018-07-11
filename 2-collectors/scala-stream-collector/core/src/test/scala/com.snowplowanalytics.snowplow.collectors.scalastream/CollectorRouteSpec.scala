@@ -72,11 +72,24 @@ class CollectorRouteSpec extends Specification with Specs2RouteTest {
         responseAs[String] shouldEqual "cookie"
       }
     }
-    "respond to the pixel route with the cookie response" in {
+    "respond to the head cookie route with the cookie response" in {
+      Head("/p1/p2") ~> route.collectorRoute ~> check {
+        responseAs[String] shouldEqual "cookie"
+      }
+    }
+    "respond to the get pixel route with the cookie response" in {
       Get("/ice.png") ~> route.collectorRoute ~> check {
         responseAs[String] shouldEqual "cookie"
       }
       Get("/i") ~> route.collectorRoute ~> check {
+        responseAs[String] shouldEqual "cookie"
+      }
+    }
+    "respond to the head pixel route with the cookie response" in {
+      Head("/ice.png") ~> route.collectorRoute ~> check {
+        responseAs[String] shouldEqual "cookie"
+      }
+      Head("/i") ~> route.collectorRoute ~> check {
         responseAs[String] shouldEqual "cookie"
       }
     }
