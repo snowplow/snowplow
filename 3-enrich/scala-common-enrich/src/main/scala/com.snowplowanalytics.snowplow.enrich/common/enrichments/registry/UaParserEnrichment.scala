@@ -17,6 +17,10 @@ package enrichments
 package registry
 
 // Maven Artifact
+import java.io.{FileInputStream, InputStream}
+import java.net.URI
+
+import com.snowplowanalytics.snowplow.enrich.common.utils.ConversionUtils
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion
 
 // Scala
@@ -33,12 +37,14 @@ import ua_parser.Client
 
 // json4s
 import org.json4s._
+import org.json4s.DefaultFormats
 import org.json4s.JValue
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
 // Iglu
 import iglu.client.{SchemaCriterion, SchemaKey}
+import iglu.client.validation.ProcessingMessageMethods._
 import utils.ScalazJson4sUtils
 
 /**
@@ -46,11 +52,40 @@ import utils.ScalazJson4sUtils
  * from a JValue.
  */
 object UaParserEnrichmentConfig extends ParseableEnrichment {
+  implicit val formats = DefaultFormats
 
   val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "ua_parser_config", "jsonschema", 1, 0)
 
-  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[UaParserEnrichment.type] =
-    isParseable(config, schemaKey).map(_ => UaParserEnrichment)
+  private val localRulefile = "./ua-parser-rules.yml"
+
+  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[UaParserEnrichment] = {
+    val c = UaParserEnrichment(None)
+    isParseable(config, schemaKey).flatMap(conf => {
+      (for {
+        rules <- getCustomRules(conf)
+      } yield UaParserEnrichment(rules)).toValidationNel
+    })
+  }
+
+  private def getCustomRules(conf: JValue): ValidatedMessage[Option[(URI, String)]] =
+    if (ScalazJson4sUtils.fieldExists(conf, "parameters", "uri")) {
+      for {
+        uri    <- ScalazJson4sUtils.extract[String](conf, "parameters", "uri")
+        db     <- ScalazJson4sUtils.extract[String](conf, "parameters", "database")
+        source <- getUri(uri, db)
+      } yield (source, localRulefile).some
+    } else {
+      None.success
+    }
+
+  private def getUri(uri: String, database: String): ValidatedMessage[URI] =
+    ConversionUtils
+      .stringToUri(uri + (if (uri.endsWith("/")) "" else "/") + database)
+      .flatMap {
+        case Some(u) => u.success
+        case None    => "A valid URI to ua-parser regex file must be provided".fail
+      }
+      .toProcessingMessage
 }
 
 /**
@@ -58,9 +93,35 @@ object UaParserEnrichmentConfig extends ParseableEnrichment {
  *
  * Uses uap-java library to parse client attributes
  */
-case object UaParserEnrichment extends Enrichment {
+case class UaParserEnrichment(customRulefile: Option[(URI, String)]) extends Enrichment {
 
-  val uaParser = new Parser()
+  override val filesToCache: List[(URI, String)] =
+    customRulefile.map(List(_)).getOrElse(List.empty)
+
+  lazy val uaParser = {
+    def constructParser(input: Option[InputStream]) = input match {
+      case Some(is) =>
+        try {
+          new Parser(is)
+        } finally {
+          is.close()
+        }
+      case None => new Parser()
+    }
+
+    def tryWithCatch[T](a: => T): Validation[Throwable, T] =
+      try {
+        a.success
+      } catch {
+        case NonFatal(e) => e.failure
+      }
+
+    val parser = for {
+      input <- tryWithCatch(customRulefile.map(f => new FileInputStream(f._2)))
+      p     <- tryWithCatch(constructParser(input))
+    } yield p
+    parser.leftMap(e => s"Failed to initialize ua parser: [${e.getMessage}]")
+  }
 
   /*
    * Adds a period in front of a not-null version element
@@ -98,21 +159,28 @@ case object UaParserEnrichment extends Enrichment {
    * UserAgentEnrichment.
    *
    * @param useragent The useragent
-   *        String to extract from.
-   *        Should be encoded (i.e.
-   *        not previously decoded).
+   *                  String to extract from.
+   *                  Should be encoded (i.e.
+   *                  not previously decoded).
    * @return the json or
    *         the message of the
    *         exception, boxed in a
    *         Scalaz Validation
    */
-  def extractUserAgent(useragent: String): Validation[String, JsonAST.JObject] = {
+  def extractUserAgent(useragent: String): Validation[String, JsonAST.JObject] =
+    for {
+      parser <- uaParser
+      c <- try {
+        parser.parse(useragent).success
+      } catch {
+        case NonFatal(e) => s"Exception parsing useragent [${useragent}]: [${e.getMessage}]".fail
+      }
+    } yield assembleContext(c)
 
-    val c = try {
-      uaParser.parse(useragent)
-    } catch {
-      case NonFatal(e) => return "Exception parsing useragent [%s]: [%s]".format(useragent, e.getMessage).fail
-    }
+  /**
+   * Assembles ua_parser_context from a parsed user agent.
+   */
+  def assembleContext(c: Client): JsonAST.JObject = {
     // To display useragent version
     val useragentVersion = checkNull(c.userAgent.family) + prependSpace(c.userAgent.major) + prependDot(
       c.userAgent.minor) + prependDot(c.userAgent.patch)
@@ -121,22 +189,19 @@ case object UaParserEnrichment extends Enrichment {
     val osVersion = checkNull(c.os.family) + prependSpace(c.os.major) + prependDot(c.os.minor) + prependDot(c.os.patch) + prependDot(
       c.os.patchMinor)
 
-    val json =
-      (("schema" -> "iglu:com.snowplowanalytics.snowplow/ua_parser_context/jsonschema/1-0-0") ~
-        ("data" ->
-          ("useragentFamily"    -> c.userAgent.family) ~
-            ("useragentMajor"   -> c.userAgent.major) ~
-            ("useragentMinor"   -> c.userAgent.minor) ~
-            ("useragentPatch"   -> c.userAgent.patch) ~
-            ("useragentVersion" -> useragentVersion) ~
-            ("osFamily"         -> c.os.family) ~
-            ("osMajor"          -> c.os.major) ~
-            ("osMinor"          -> c.os.minor) ~
-            ("osPatch"          -> c.os.patch) ~
-            ("osPatchMinor"     -> c.os.patchMinor) ~
-            ("osVersion"        -> osVersion) ~
-            ("deviceFamily"     -> c.device.family)))
-
-    json.success
+    (("schema" -> "iglu:com.snowplowanalytics.snowplow/ua_parser_context/jsonschema/1-0-0") ~
+      ("data" ->
+        ("useragentFamily"    -> c.userAgent.family) ~
+          ("useragentMajor"   -> c.userAgent.major) ~
+          ("useragentMinor"   -> c.userAgent.minor) ~
+          ("useragentPatch"   -> c.userAgent.patch) ~
+          ("useragentVersion" -> useragentVersion) ~
+          ("osFamily"         -> c.os.family) ~
+          ("osMajor"          -> c.os.major) ~
+          ("osMinor"          -> c.os.minor) ~
+          ("osPatch"          -> c.os.patch) ~
+          ("osPatchMinor"     -> c.os.patchMinor) ~
+          ("osVersion"        -> osVersion) ~
+          ("deviceFamily"     -> c.device.family)))
   }
 }
