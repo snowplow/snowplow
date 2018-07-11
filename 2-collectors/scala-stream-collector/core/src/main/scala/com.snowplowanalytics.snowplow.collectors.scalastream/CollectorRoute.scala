@@ -64,7 +64,7 @@ trait CollectorRoute {
                   }
                 }
               } ~
-              get {
+              (get | head) {
                 val (r, _) = collectorService.cookie(
                   qs,
                   None,
@@ -82,7 +82,7 @@ trait CollectorRoute {
               }
             } ~
             path("""ice\.png""".r | "i".r) { path =>
-              get {
+              (get | head) {
                 val (r,l) = collectorService.cookie(
                   qs,
                   None,
