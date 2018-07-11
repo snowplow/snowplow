@@ -168,15 +168,6 @@ object EnrichJobConfig {
    * @param registry EnrichmentRegistry used to find the files that need caching
    * @return A list of URIs representing the files that need caching
    */
-  private def filesToCache(registry: EnrichmentRegistry): List[(URI, String)] = {
-    val ipLookupFiles = registry.getIpLookupsEnrichment match {
-      case Some(ipLookups) => ipLookups.dbsToCache
-      case None            => Nil
-    }
-    val iabFiles = registry.getIabEnrichment match {
-      case Some(iabEnrichment) => iabEnrichment.dbsToCache
-      case None                => Nil
-    }
-    ipLookupFiles ++ iabFiles
-  }
+  private def filesToCache(registry: EnrichmentRegistry): List[(URI, String)] =
+    registry.filesToCache
 }
