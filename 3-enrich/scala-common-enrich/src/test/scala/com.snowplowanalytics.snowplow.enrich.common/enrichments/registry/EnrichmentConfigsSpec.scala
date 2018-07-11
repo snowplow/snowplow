@@ -21,6 +21,9 @@ package registry
 import java.net.URI
 import java.lang.{Byte => JByte}
 
+import com.snowplowanalytics.iglu.client.SchemaCriterion
+import org.specs2.matcher.DataTables
+
 // Apache Commons Codec
 import org.apache.commons.codec.binary.Base64
 
@@ -45,7 +48,7 @@ import org.specs2.scalaz.ValidationMatchers
 /**
  * Tests enrichmentConfigs
  */
-class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
+class EnrichmentConfigsSpec extends Specification with ValidationMatchers with DataTables {
 
   "Parsing a valid anon_ip enrichment JSON" should {
     "successfully construct an AnonIpEnrichment case class" in {
@@ -188,19 +191,35 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
   }
 
   "Parsing a valid ua_parser_config enrichment JSON" should {
-    "successfully construct a UaParserEnrichment case object" in {
+    "successfully construct a UaParserEnrichment case class" in {
 
-      val uaParserEnrichmentJson = parse("""{
+      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "ua_parser_config", "jsonschema", "1-0-1")
+
+      val configWithDefaultRules = parse("""{
         "enabled": true,
         "parameters": {
         }
       }""")
 
-      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "ua_parser_config", "jsonschema", "1-0-0")
+      val externalUri             = "http://public-website.com/files/"
+      val database                = "myrules.yml"
+      val configWithExternalRules = parse(raw"""{
+        "enabled": true,
+        "parameters": {
+          "uri": "$externalUri",
+          "database": "$database"
+        }
+      }""")
 
-      val result = UaParserEnrichmentConfig.parse(uaParserEnrichmentJson, schemaKey)
-      result must beSuccessful(UaParserEnrichment)
-
+      "Configuration"           | "Custom Rules" |
+        configWithDefaultRules  !! None |
+        configWithExternalRules !! Some((new URI(externalUri + database), "./ua-parser-rules.yml")) |> {
+        (config, expected) =>
+          {
+            val result = UaParserEnrichmentConfig.parse(config, schemaKey)
+            result must beSuccessful(UaParserEnrichment(expected))
+          }
+      }
     }
   }
 
