@@ -156,7 +156,7 @@ case class IpLookupsEnrichment(
   }
 
   // Collect the cache paths to install
-  val dbsToCache: List[(URI, FinalPath)] =
+  override val filesToCache: List[(URI, FinalPath)] =
     (dbs._1 ++ dbs._2 ++ dbs._3 ++ dbs._4).collect {
       case (Some(uri), finalPath) => (uri, finalPath)
     }.toList
