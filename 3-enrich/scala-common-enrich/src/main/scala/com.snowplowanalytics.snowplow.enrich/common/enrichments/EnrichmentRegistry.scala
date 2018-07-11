@@ -268,8 +268,8 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    *
    * @return Option boxing the UaParserEnrichment instance
    */
-  def getUaParserEnrichment: Option[UaParserEnrichment.type] =
-    getEnrichment[UaParserEnrichment.type]("ua_parser_config")
+  def getUaParserEnrichment: Option[UaParserEnrichment] =
+    getEnrichment[UaParserEnrichment]("ua_parser_config")
 
   /**
    * Returns an Option boxing the JavascriptScriptEnrichment
