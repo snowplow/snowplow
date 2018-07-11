@@ -18,6 +18,8 @@ package enrichments
 package registry
 
 // Scalaz
+import java.net.URI
+
 import scalaz._
 import Scalaz._
 
@@ -37,7 +39,20 @@ import utils.ScalazJson4sUtils
 /**
  * Trait inherited by every enrichment config case class
  */
-trait Enrichment
+trait Enrichment {
+
+  /**
+   * Gets the list of files the enrichment requires cached locally.
+   * The default implementation returns an empty list; if an
+   * enrichment requires files, it must override this method.
+   *
+   * @return A list of pairs, where the first entry in the pair
+   * indicates the (remote) location of the source file and the
+   * second indicates the local path where the enrichment expects
+   * to find the file.
+   */
+  def filesToCache: List[(URI, String)] = List.empty
+}
 
 /**
  * Trait to hold helpers relating to enrichment config

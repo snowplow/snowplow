@@ -17,6 +17,8 @@ package common
 package enrichments
 
 // Scalaz
+import java.net.URI
+
 import scalaz._
 import Scalaz._
 
@@ -196,6 +198,15 @@ object EnrichmentRegistry {
  *        corresponding enrichment objects
  */
 case class EnrichmentRegistry(private val configs: EnrichmentMap) {
+
+  /**
+   * A list of all files required by enrichments in the registry.
+   * This is specified as a pair with the first element providing the
+   * source location of the file and the second indicating the expected
+   * local path.
+   */
+  val filesToCache: List[(URI, String)] =
+    configs.values.flatMap(_.filesToCache).toList
 
   /**
    * Returns an Option boxing the AnonIpEnrichment

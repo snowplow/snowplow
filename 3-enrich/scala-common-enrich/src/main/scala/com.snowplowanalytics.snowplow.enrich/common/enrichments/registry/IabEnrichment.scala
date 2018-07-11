@@ -169,7 +169,7 @@ case class IabEnrichment(
   }
 
   // Collect a cache of IAB files for local download
-  val dbsToCache: List[(URI, String)] =
+  override val filesToCache: List[(URI, String)] =
     (dbs._1 ++ dbs._2 ++ dbs._3).collect {
       case (Some(uri), path) => (uri, path)
     }.toList
