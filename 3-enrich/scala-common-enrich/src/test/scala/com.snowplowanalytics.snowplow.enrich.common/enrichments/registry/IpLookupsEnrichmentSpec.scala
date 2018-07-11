@@ -75,7 +75,7 @@ class IpLookupsEnrichmentSpec extends Specification with DataTables with Validat
 
   def e2 = config.extractIpInformation("70.46.123.145").isp must_== "FDN Communications".success.some
 
-  def e3 = config.dbsToCache must_== Nil
+  def e3 = config.filesToCache must_== Nil
 
   val configRemote = IpLookupsEnrichment(
     Some(("geo", new URI("http://public-website.com/files/GeoLite2-City.mmdb"), "GeoLite2-City.mmdb")),
@@ -85,7 +85,7 @@ class IpLookupsEnrichmentSpec extends Specification with DataTables with Validat
     false
   )
 
-  def e4 = configRemote.dbsToCache must_== List(
+  def e4 = configRemote.filesToCache must_== List(
     (new URI("http://public-website.com/files/GeoLite2-City.mmdb"), "./ip_geo"),
     (new URI("s3://private-bucket/files/GeoIP2-ISP.mmdb"), "./ip_isp")
   )

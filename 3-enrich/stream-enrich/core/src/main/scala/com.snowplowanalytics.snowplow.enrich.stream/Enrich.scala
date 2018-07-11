@@ -231,15 +231,10 @@ a  * @param creds optionally necessary credentials to download the resolver
     registry: EnrichmentRegistry,
     forceDownload: Boolean
   )(implicit creds: Credentials): ValidationNel[String, List[Int]] =
-    registry.getIpLookupsEnrichment
-      .map(_.dbsToCache)
-      .toList
-      .flatten
-      .map {
-        case (uri, path) =>
-          (
-            new java.net.URI(uri.toString.replaceAll("(?<!(http:|https:|s3:))//", "/")),
-            new File(path))
+    registry.filesToCache
+      .map { case (uri, path) =>
+        (new java.net.URI(uri.toString.replaceAll("(?<!(http:|https:|s3:))//", "/")),
+          new File(path))
       }
       .filter { case (_, targetFile) => forceDownload || targetFile.length == 0L }
       .map {

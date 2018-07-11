@@ -169,8 +169,5 @@ object EnrichJobConfig {
    * @return A list of URIs representing the files that need caching
    */
   private def filesToCache(registry: EnrichmentRegistry): List[(URI, String)] =
-    registry.getIpLookupsEnrichment match {
-      case Some(ipLookups) => ipLookups.dbsToCache
-      case None            => Nil
-    }
+    registry.filesToCache
 }
