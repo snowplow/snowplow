@@ -186,6 +186,7 @@ def run_emr(args):
         steps=steps,
         job_flow_role="EMR_EC2_DefaultRole",
         service_role="EMR_DefaultRole",
+        visible_to_all_users=True,
         api_params={
             'ReleaseLabel': 'emr-5.4.0',
             'Applications.member.1.Name': 'Spark',
@@ -218,6 +219,10 @@ if __name__ == "__main__":
         'resolver',
         type=str,
         help="Local path to Iglu resolver JSON configuration")
+    parser_run_emr.add_argument(
+        'log_path',
+        type=str,
+        help="S3 Log path")
     parser_run_emr.add_argument(
         '--since',
         required=False,
