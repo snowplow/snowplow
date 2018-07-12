@@ -30,15 +30,11 @@ import java.util.HashMap;
 import java.util.Collections;
 import java.util.Iterator;
 
-// Json
-import org.json.JSONException;
-import org.json.JSONTokener;
-import org.json.JSONObject;
-import org.json.JSONArray;
-
 // Apache URLEncodedUtils
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
+
+import com.snowplowanalytics.refererparser.scala.ParseReferersJson;
 
 /**
  * Java implementation of <a href="https://github.com/snowplow/referer-parser">Referer Parser</a>
@@ -50,21 +46,6 @@ public class Parser {
   private static final String REFERERS_JSON_PATH = "/referers.json";
   private Map<String,RefererLookup> referers;
 
-  /**
-   * Holds the structure of each referer
-   * in our lookup Map.
-   */
-  private static class RefererLookup {
-    public Medium medium;
-    public String source;
-    public List<String> parameters;
-
-    public RefererLookup(Medium medium, String source, List<String> parameters) {
-      this.medium = medium;
-      this.source = source;
-      this.parameters = parameters;
-    }
-  }
 
   /**
    * Construct our Parser object using the
@@ -75,7 +56,7 @@ public class Parser {
   }
 
   /**
-   * Construct our Parser object using a 
+   * Construct our Parser object using a
    * InputStream (in JSON format)
    *
    * @param referersJson The referers JSON
@@ -83,7 +64,7 @@ public class Parser {
    *        InputStream format
    */
   public Parser(InputStream referersStream) throws CorruptJsonException {
-    referers = loadReferers(referersStream);
+    referers = ParseReferersJson.loadReferers(referersStream);
   }
 
   /**
@@ -223,79 +204,5 @@ public class Parser {
       }
     }
     return null;
-  }
-
-  /**
-   * Builds the map of hosts to referers from the
-   * input JSON file.
-   *
-   * @param referersJson An InputStream containing the
-   *                     referers database in JSON format.
-   *
-   * @return a Map where the key is the hostname of each
-   *         referer and the value (RefererLookup)
-   *         contains all known info about this referer
-   */
-  private Map<String,RefererLookup> loadReferers(InputStream referersJson) throws JSONException, CorruptJsonException {
-    JSONTokener tok = new JSONTokener(referersJson);
-    JSONObject json = new JSONObject(tok);
-
-    // This will store all of our referers
-    Map<String,RefererLookup> referers = new HashMap<String,RefererLookup>();
-
-    // Outer loop is all referers under a given medium
-    Iterator<String> mediumKeys = json.keys();
-    while (mediumKeys.hasNext()) {
-      String mediumKey = mediumKeys.next();
-
-      Medium medium = Medium.fromString(mediumKey);
-      JSONObject referersObject = json.getJSONObject(mediumKey);
-
-      // Inner loop is individual referers
-      Iterator<String> sourceNames = referersObject.keys();
-      while (sourceNames.hasNext()) {
-        String sourceName = sourceNames.next();
-
-        JSONObject referer = referersObject.getJSONObject(sourceName);
-
-        List<String> parameters = null;
-        if (referer.has("parameters")) {
-          JSONArray parametersArray = referer.getJSONArray("parameters");
-
-          if (medium != Medium.SEARCH && medium != null) {
-            throw new CorruptJsonException("No parameters found for search referer '" + sourceName +"'");
-          }
-
-          parameters = new ArrayList<String>(parametersArray.length());
-          for (int i=0;i<parametersArray.length();i++) {
-            parameters.add(i, parametersArray.getString(i));
-          }
-        } else {
-          if (medium == Medium.SEARCH) {
-            throw new CorruptJsonException("Parameters not supported for non-search referer '" + sourceName + "'");
-          }
-        }
-
-        List<String> domains = null;
-        if (referer.has("domains")) {
-          JSONArray domainsArray = referer.getJSONArray("domains");
-          domains = new ArrayList<String>(domainsArray.length());
-          for (int i=0;i<domainsArray.length();i++) {
-            domains.add(i, domainsArray.getString(i));
-          }
-        } else {
-          throw new CorruptJsonException("No domains found for referer '" + sourceName + "'");
-        }
-
-        for (String domain : domains) {
-          if (referers.containsValue(domain)) {
-            throw new CorruptJsonException("Duplicate of domain '" + domain + "' found");
-          }
-          referers.put(domain, new RefererLookup(medium, sourceName, parameters));
-        }
-      }
-    }
-
-    return referers;
   }
 }

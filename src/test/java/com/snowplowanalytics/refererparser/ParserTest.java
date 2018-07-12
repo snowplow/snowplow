@@ -10,10 +10,6 @@ import java.net.URISyntaxException;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.json.JSONException;
-import org.json.JSONTokener;
-import org.json.JSONObject;
-import org.json.JSONArray;
 
 public class ParserTest {
 
@@ -25,22 +21,7 @@ public class ParserTest {
   }
 
   @Test
-  public void refererTests() throws MalformedURLException, JSONException {
-    JSONTokener tok = new JSONTokener( ParserTest.class.getResourceAsStream("/referer-tests.json"));
-    JSONArray root = new JSONArray(tok);
-    
-    for (int i = 0; i < root.length(); i++) {
-      JSONObject entry = (JSONObject) root.get(i);
-
-      Referer actual = parser.parse(new URL(entry.getString("uri")), "www.snowplowanalytics.com");
-      assertEquals(entry.getString("spec") + " medium", entry.getString("medium"), actual.medium.toString());
-      assertEquals(entry.getString("spec") + " source", entry.get("source"), actual.source);
-      assertEquals(entry.getString("spec") + " term", entry.get("term"), actual.term);
-    }
-  }
-  
-  @Test
-  public void basicTests() throws URISyntaxException, MalformedURLException, JSONException{
+  public void basicTests() throws URISyntaxException, MalformedURLException {
     //Test every signature.
     String u = "http://www.google.com/search?q=gateway+oracle+cards+denise+linn&hl=en&client=safari";
     String ref = "www.example.com";

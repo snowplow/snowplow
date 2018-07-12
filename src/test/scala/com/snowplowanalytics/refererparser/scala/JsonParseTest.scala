@@ -19,9 +19,11 @@ package com.snowplowanalytics.refererparser.scala
 // Scala
 import scala.io.Source._
 
-// json4s
-import org.json4s._
-import org.json4s.jackson.JsonMethods._
+// circe
+import io.circe._;
+import io.circe.parser._;
+import io.circe.syntax._;
+import io.circe.generic.semiauto._;
 
 // Specs2
 import org.specs2.mutable.Specification
@@ -29,41 +31,47 @@ import org.specs2.mutable.Specification
 // cats
 import cats.effect.IO
 
+case class TestCase(
+  spec: String,
+  uri: String,
+  medium: String,
+  source: Option[String],
+  term: Option[String],
+  known: Boolean
+)
+
 class JsonParseTest extends Specification {
+  implicit val testCaseDecoder: Decoder[TestCase] = deriveDecoder[TestCase]
 
   val testString = fromFile("src/test/resources/referer-tests.json").getLines.mkString
 
-  // Convert the JSON to a List of JObjects
-  val testJson = (parse(testString)) match {
-    case JArray(lst) => lst
-    case _ => throw new Exception("referer-tests.json is not an array - this should never happen")
+  // Convert the JSON to a List of TestCase
+  val eitherTests = for {
+    doc <- parse(testString)
+    lst <- doc.as[List[Json]]
+  } yield lst.map(_.as[TestCase] match {
+    case Right(success) => success
+    case Left(failure) => throw failure
+  })
+
+  val tests = eitherTests match {
+    case Right(success) => success
+    case Left(failure) => throw failure
   }
 
   val pageHost = "www.snowplowanalytics.com"
 
   val internalDomains = List("www.subdomain1.snowplowanalytics.com", "www.subdomain2.snowplowanalytics.com")
 
-  def getString(node: JValue, name: String): String =
-    (node \ name) match {
-      case JString(s) => s
-      case _ => throw new Exception("The value of field '%s' in referer-tests.json is not a string - this should never happen".format(name))
-  }
-
   "parse" should {
     "extract the expected details from referer with spec" in {
-      for (test <- testJson) yield {
-
-        Parser.parse[IO](getString(test, "uri"), pageHost, internalDomains).unsafeRunSync() shouldEqual
+      for (test <- tests) yield {
+        Parser.parse[IO](test.uri, pageHost, internalDomains).unsafeRunSync() shouldEqual
           Some(Referer(
-            Medium.withName(getString(test, "medium")),
-            (test \ "source") match {
-              case JString(s) => Some(s)
-              case _ => None
-            },
-            (test \ "term") match {
-              case JString(s) => Some(s)
-              case _ => None
-            }))
+            Medium.withName(test.medium),
+            test.source,
+            test.term
+          ))
       }
     }
   }
