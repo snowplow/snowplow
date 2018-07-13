@@ -40,8 +40,9 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
   toRawEvents should return a NEL containing one RawEvent if the line contains 19 fields   $e4
   toRawEvents should return a NEL containing one RawEvent if the line contains 23 fields   $e5
   toRawEvents should return a NEL containing one RawEvent if the line contains 24 fields   $e6
-  toRawEvents should return a Validation Failure if the line is the wrong length           $e7
-  toRawEvents should return a Validation Failure if the line contains an unparseable field $e8
+  toRawEvents should return a NEL containing one RawEvent if the line contains 26 fields   $e7
+  toRawEvents should return a Validation Failure if the line is the wrong length           $e8
+  toRawEvents should return a Validation Failure if the line contains an unparseable field $e9
   """
 
   implicit val resolver = SpecHelpers.IgluResolver
@@ -331,15 +332,64 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
   }
 
   def e7 = {
+
+    val input =
+      s"2013-10-07\t23:35:30\tc\t100\t255.255.255.255\tf\tg\th\ti\t$url\t$doubleEncodedUa\t$doubleEncodedQs\tm\tn\to\tp\tq\t90\t0.001\tr\ts\tt\tu\tHTTP/2.0\tProcessed\t12"
+
+    val payload = loader.toCollectorPayload(input)
+
+    val actual = payload.map(_.map(CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(_)))
+
+    val expectedJson =
+      s"""|{
+            |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
+            |"data":{
+              |"schema":"iglu:com.amazon.aws.cloudfront/wd_access_log/jsonschema/1-0-6",
+              |"data":{
+                |"dateTime":"2013-10-07T23:35:30Z",
+                |"xEdgeLocation":"c",
+                |"scBytes":100,
+                |"cIp":"255.255.255.255",
+                |"csMethod":"f",
+                |"csHost":"g",
+                |"csUriStem":"h",
+                |"scStatus":"i",
+                |"csReferer":"$url",
+                |"csUserAgent":"$unEncodedUa",
+                |"csUriQuery":"$singleEncodedQs",
+                |"csCookie":"m",
+                |"xEdgeResultType":"n",
+                |"xEdgeRequestId":"o",
+                |"xHostHeader":"p",
+                |"csProtocol":"q",
+                |"csBytes":90,
+                |"timeTaken":0.001,
+                |"xForwardedFor":"r",
+                |"sslProtocol":"s",
+                |"sslCipher":"t",
+                |"xEdgeResponseResultType":"u",
+                |"csProtocolVersion":"HTTP/2.0",
+                |"fleStatus":"Processed",
+                |"fleEncryptedFields":"12"
+              |}
+            |}
+          |}""".stripMargin.replaceAll("[\n\r]", "")
+
+    actual must beSuccessful(
+      Some(Success(NonEmptyList(
+        RawEvent(Shared.api, Expected.static ++ Map("ue_pr" -> expectedJson), None, Shared.source, Shared.context)))))
+  }
+
+  def e8 = {
     val params = toNameValuePairs()
     val payload =
       CollectorPayload(Shared.api, params, None, "2013-10-07\t23:35:30\tc\t\t".some, Shared.source, Shared.context)
     val actual = CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(payload)
 
-    actual must beFailing(NonEmptyList("Access log TSV line contained 5 fields, expected 12, 15, 18, 19, 23 or 24"))
+    actual must beFailing(NonEmptyList("Access log TSV line contained 5 fields, expected 12, 15, 18, 19, 23, 24 or 26"))
   }
 
-  def e8 = {
+  def e9 = {
     val params = toNameValuePairs()
     val payload =
       CollectorPayload(Shared.api,
