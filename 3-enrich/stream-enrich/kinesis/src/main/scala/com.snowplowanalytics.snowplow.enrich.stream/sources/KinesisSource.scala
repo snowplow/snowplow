@@ -40,7 +40,6 @@ import org.apache.thrift.TDeserializer
 import scalaz._
 import Scalaz._
 
-import utils.emitPii
 import common.enrichments.EnrichmentRegistry
 import iglu.client.Resolver
 import model.{Kinesis, StreamsConfig}
@@ -59,9 +58,10 @@ object KinesisSource {
       case c: Kinesis => c.success
       case _ => "Configured source/sink is not Kinesis".failure
     }
+    emitPii = utils.emitPii(enrichmentRegistry)
     _ <- (
       KinesisSink.validate(kinesisConfig, config.out.enriched).validation.leftMap(_.wrapNel) |@|
-      KinesisSink.validatePii(enrichmentRegistry, kinesisConfig, config.out.pii).validation.leftMap(_.wrapNel) |@|
+      utils.validatePii(emitPii, config.out.pii).validation.leftMap(_.wrapNel) |@|
       KinesisSink.validate(kinesisConfig, config.out.bad).validation.leftMap(_.wrapNel)) {
         (_, _, _) => ()
       }.leftMap(_.toList.mkString("\n"))
@@ -95,13 +95,16 @@ class KinesisSource private (
     override def initialValue: Sink =
       new KinesisSink(client, kinesisConfig.backoffPolicy, config.buffer, config.out.enriched, tracker)
   }
-  override val threadLocalPiiSink: Option[ThreadLocal[Sink]] = Option(emitPii(enrichmentRegistry))
-    .flatMap{ _  =>
-      config.out.pii.map { piiStreamName => new ThreadLocal[Sink] {
-        override def initialValue: Sink =
-          new KinesisSink(client, kinesisConfig.backoffPolicy, config.buffer, piiStreamName, tracker)
+  override val threadLocalPiiSink: Option[ThreadLocal[Sink]] = {
+    val emitPii = utils.emitPii(enrichmentRegistry)
+    utils.validatePii(emitPii, config.out.pii).toOption
+      .flatMap { _ =>
+        config.out.pii.map { piiStreamName => new ThreadLocal[Sink] {
+          override def initialValue: Sink =
+            new KinesisSink(client, kinesisConfig.backoffPolicy, config.buffer, piiStreamName, tracker)
+        } }
       }
-    }}
+  }
 
   override val threadLocalBadSink: ThreadLocal[Sink] = new ThreadLocal[Sink] {
     override def initialValue: Sink =
