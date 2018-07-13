@@ -32,7 +32,6 @@ import client.nsq.callbacks.NSQMessageCallback
 import client.nsq.callbacks.NSQErrorCallback
 import client.nsq.exceptions.NSQException
 
-import utils.emitPii
 import iglu.client.Resolver
 import common.enrichments.EnrichmentRegistry
 import model.{Nsq, StreamsConfig}
@@ -55,16 +54,12 @@ object NsqSource {
       goodProducer <- NsqSink
         .validateAndCreateProducer(nsqConfig)
         .validation
-      piiProducer <- (emitPii(enrichmentRegistry), config.out.pii) match {
-        case (true, Some(_)) =>
-          NsqSink.validateAndCreateProducer(nsqConfig).validation.map(Some(_))
-        case (false, Some(piiStreamName)) =>
-          new IllegalArgumentException(
-            s"PII was configured to not emit, but PII stream name was given as $piiStreamName").failure
-        case (true, None) =>
-          new IllegalArgumentException(
-            "PII was configured to emit, but no PII stream name was given").failure
-        case (false, None) => None.success
+      emitPii = utils.emitPii(enrichmentRegistry)
+      _ <- utils.validatePii(emitPii, config.out.pii).validation
+        .leftMap(new IllegalArgumentException(_))
+      piiProducer <- config.out.pii match {
+        case Some(_) => NsqSink.validateAndCreateProducer(nsqConfig).validation.map(Some(_))
+        case None => None.success
       }
       badProducer <- NsqSink
         .validateAndCreateProducer(nsqConfig)

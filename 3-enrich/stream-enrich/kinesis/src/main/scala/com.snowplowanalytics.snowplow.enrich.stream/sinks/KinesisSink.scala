@@ -39,8 +39,6 @@ import Scalaz._
 
 import model._
 import scalatracker.Tracker
-import utils.emitPii
-import common.enrichments.EnrichmentRegistry
 
 /** KinesisSink companion object with factory method */
 object KinesisSink {
@@ -56,14 +54,6 @@ object KinesisSink {
     _ <- streamExists(client, streamName).leftMap(_.getMessage)
       .ensure(s"Kinesis stream $streamName doesn't exist")(_ == true)
   } yield ()
-
-  def validatePii(enrichmentRegistry: EnrichmentRegistry, kinesisConfig: Kinesis, streamName: Option[String]): \/[String, Unit] =
-    (emitPii(enrichmentRegistry), streamName) match {
-        case (true, Some(piiStreamName)) => validate(kinesisConfig, piiStreamName)
-        case (false, Some(piiStreamName)) => s"PII was configured to not emit, but PII stream name was given as $piiStreamName".left
-        case (true, None) => "PII was configured to emit, but no PII stream name was given".left
-        case (false, None) => ().right
-    }
 
   /**
    * Check whether a Kinesis stream exists
