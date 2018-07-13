@@ -35,6 +35,6 @@ class ParseFuzzTest extends Specification with ScalaCheck {
 
   def e1 =
     prop { (refererUri: String, pageUri: String) =>
-      Parser.parse[IO](refererUri, pageUri).unsafeRunSync() must beAnInstanceOf[Parser.MaybeReferer]
+      Parser.parse[IO](refererUri, pageUri).unsafeRunSync() must beAnInstanceOf[Option[Referer]]
     }
 }

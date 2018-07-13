@@ -35,16 +35,4 @@ class NoRefererUriTest extends Specification {
       Parser.parse[IO]("", pageHost).unsafeRunSync() must beNone
     }
   }
-
-  "A null [String] referer URI" should {
-    "return no referal" in {
-      Parser.parse[IO](null.asInstanceOf[String], pageHost).unsafeRunSync() must beNone
-    }
-  }
-
-  "A null [URI] referer URI" should {
-    "return no referal" in {
-      Parser.parse[IO](null.asInstanceOf[URI], pageHost).unsafeRunSync() must beNone
-    }
-  }
 }

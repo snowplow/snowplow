@@ -1,0 +1,12 @@
+{
+    "search": {
+        "Example": {
+            "domains": [
+                "www.example.org"
+            ],
+            "parameters": [
+                "query"
+            ]
+        }
+    }
+}

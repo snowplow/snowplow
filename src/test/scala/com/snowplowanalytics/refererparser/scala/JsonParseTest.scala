@@ -64,14 +64,12 @@ class JsonParseTest extends Specification {
   val internalDomains = List("www.subdomain1.snowplowanalytics.com", "www.subdomain2.snowplowanalytics.com")
 
   "parse" should {
-    "extract the expected details from referer with spec" in {
+    s"extract the expected details from referer with spec" in {
       for (test <- tests) yield {
-        Parser.parse[IO](test.uri, pageHost, internalDomains).unsafeRunSync() shouldEqual
-          Some(Referer(
-            Medium.withName(test.medium),
-            test.source,
-            test.term
-          ))
+        val expected = Some(Referer(Medium.withName(test.medium), test.source, test.term))
+        val actual = Parser.parse[IO](test.uri, Some(pageHost), internalDomains).unsafeRunSync()
+
+        expected shouldEqual actual
       }
     }
   }

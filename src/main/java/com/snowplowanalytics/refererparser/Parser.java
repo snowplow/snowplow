@@ -121,8 +121,9 @@ public class Parser {
     if (host == null) return null; // Not a valid URL
     if (host.equals(pageHost)) return new Referer(Medium.INTERNAL, null, null);
     for (String s : internalDomains) {
-      if (s.trim().equals(host))
+      if (s.trim().equals(host)) {
         return new Referer(Medium.INTERNAL, null, null);
+      }
     }
 
     // Try to lookup our referer. First check with paths, then without.

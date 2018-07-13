@@ -29,11 +29,10 @@ class CorruptedRefererUriTest extends Specification {
 
   // Our data
   val refererUri = "http://bigcommerce%20wordpress%20plugin/"
-  val pageUri = null.asInstanceOf[String]
 
   "A corrupted referer URI" should {
     "return None, not throw an Exception" in {
-      Parser.parse[IO](refererUri,pageUri).unsafeRunSync() must beNone
+      Parser.parse[IO](refererUri).unsafeRunSync() must beNone
     }
   }
 }

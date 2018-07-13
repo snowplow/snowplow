@@ -16,6 +16,8 @@
 
 package com.snowplowanalytics.refererparser.scala
 
+import scala.io.Source
+
 // Java
 import java.net.URI
 
@@ -25,27 +27,18 @@ import org.specs2.mutable.Specification
 // Cats
 import cats.effect.IO
 
-class NoPageUriTest extends Specification {
+class CustomRefererJson extends Specification {
 
   // Our data
-  val refererUri = "http://www.google.com/search?q=gateway+oracle+cards+denise+linn&hl=en&client=safari"
-  val expected   = Some(Referer(Medium.Search, Some("Google"), Some("gateway oracle cards denise linn")))
+  val pageHost = "www.psychicbazaar.com"
 
-  "An empty page URI" should {
-    "not interfere with the referer parsing" in {
-      Parser.parse[IO](refererUri, "").unsafeRunSync() must_== expected
-    }
-  }
+  "Custom referer list" should {
+    "give correct referer" in {
+      val parser = new Parser(getClass.getResourceAsStream("/custom-referers.json"))
+      val expected = Some(Referer(Medium.Search, Some("Example"), Some("hello world")))
+      val actual = parser.parse[IO]("https://www.example.org/?query=hello+world").unsafeRunSync()
 
-  "No page URI" should {
-    "not interfere with the referer parsing" in {
-      Parser.parse[IO](refererUri).unsafeRunSync() must_== expected
-    }
-  }
-
-  "A page URI" should {
-    "not interfere with the referer parsing" in {
-      Parser.parse[IO](refererUri).unsafeRunSync() must_== expected
+      expected shouldEqual actual
     }
   }
 }
