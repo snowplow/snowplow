@@ -50,6 +50,16 @@ object SpecHelpers {
                     |"uri": "http://iglucentral.com"
                   |}
                 |}
+              |},
+              |{
+                |"name": "Ben Iglu",
+                |"priority": 0,
+                |"vendorPrefixes": [ "com.amazon.aws.cloudfront" ],
+                |"connection": {
+                  |"http": {
+                    |"uri": "http://ben-sp-test-registry.s3-website-eu-west-1.amazonaws.com"
+                  |}
+                |}
               |}
             |]
           |}
