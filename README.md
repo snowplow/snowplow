@@ -1,5 +1,8 @@
 # referer-parser Java/Scala library
 
+[![Build Status](https://travis-ci.org/snowplow-referer-parser/jvm-referer-parser.svg?branch=develop)](https://travis-ci.org/snowplow-referer-parser/jvm-referer-parser)
+[![codecov](https://codecov.io/gh/snowplow-referer-parser/jvm-referer-parser/branch/master/graph/badge.svg)](https://codecov.io/gh/snowplow-referer-parser/jvm-referer-parser)
+
 This is the Java and Scala implementation of [referer-parser][referer-parser], the library for extracting attribution data from referer _(sic)_ URLs.
 
 The implementation uses the shared 'database' of known referers found in [`referers.yml`][referers-yml].
@@ -115,7 +118,7 @@ limitations under the License.
 
 [snowplow]: https://github.com/snowplow/snowplow
 
-[referer-parser]: https://github.com/snowplow/referer-parser
+[referer-parser]: https://github.com/snowplow-referer-parser/referer-parser
 [referers-yml]: https://github.com/snowplow/referer-parser/blob/master/referers.yml
 
 [license]: http://www.apache.org/licenses/LICENSE-2.0
