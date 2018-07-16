@@ -5,7 +5,7 @@
 
 This is the Java and Scala implementation of [referer-parser][referer-parser], the library for extracting attribution data from referer _(sic)_ URLs.
 
-The implementation uses the shared 'database' of known referers found in [`referers.yml`][referers-yml].
+The implementation uses a JSON version of the shared 'database' of known referers found in [`referers.yml`][referers-yml].
 
 The Scala implementation is a core component of [Snowplow][snowplow], the open-source web-scale analytics platform powered by Hadoop, Hive and Redshift.
 
@@ -47,44 +47,54 @@ Add the following code into your `pow.xml` to be able to use this repository:
 
 ### Usage
 
-Use referer-parser in Scala like this:
+All effects within the Scala implementation are wrapped in `Sync` from [cats-effect][cats-effect].
 
 ```scala
+import com.snowplowanalytics.refererparser.scala.Parser
+import cats.effect.IO
+import java.net.URI
+
 val refererUrl = "http://www.google.com/search?q=gateway+oracle+cards+denise+linn&hl=en&client=safari"
 val pageUrl    = "http:/www.psychicbazaar.com/shop" // Our current URL
 
-import com.snowplowanalytics.refererparser.scala.Parser
-for (r <- Parser.parse(refererUrl, pageUrl)) {
-  println(r.medium)         // => "search"
-  for (s <- r.source) {
-    println(s)              // => "Google"
+// We can instantiate a new Parser instance which will load referers.json
+val parser = new Parser()
+val result = Parser.parse[IO](refererUrl, pageUrl).unsafeRunSync()
+result match {
+  case Some(result) => {
+    println(result.medium) // => "search"
+    println(result.source) // => Some("Google")
+    println(result.term)   // => Some("gateway oracle cards denise linn")
   }
-  for (t <- r.term) {
-    println(t)              // => "gateway oracle cards denise linn"
+  case None => {
+    println("Referer not in database")
   }
 }
-```
 
-You can also provide a list of domains which should be considered internal:
+// Alternatively calling parse on the companion object will lazily instantiate a new Parser
+// instance automatically
+println( Parser.parse[IO](refererUrl, pageUrl).unsafeRunSync() == result ) // => True
 
-```scala
-val refererUrl = "http://www.subdomain1.snowplowanalytics.com"
-val pageUrl = "http://www.snowplowanalytics.com"
-val internalDomains = List(
-  "www.subdomain1.snowplowanalytics.com", "www.subdomain2.snowplowanalytics.com"
+// You can also provide a list of domains which should be considered internal
+Parser.parse[IO](
+new URI("http://www.subdomain1.snowplowanalytics.com"),
+Some("http://www.snowplowanalytics.com"),
+List("www.subdomain1.snowplowanalytics.com", "www.subdomain2.snowplowanalytics.com")
+).unsafeRunSync() match {
+  case Some(result) => {
+    println(result.medium) // => "internal"
+    println(result.source) // => None
+    println(result.term)   // => None
+  }
+  case None => {
+    println("Referer not in database")
+  }
+}
+
+// A custom referers.json can be passed in as an InputStream
+val customParser = new Parser(
+  getClass.getResourceAsStream("custom-referers.json")
 )
-
-import com.snowplowanalytics.refererparser.scala.Parser
-
-for (r <- Parser.parse(refererUrl, pageUrl, internalDomains)) {
-  println(r.medium)         // => "internal"
-  for (s <- r.source) {
-    println(s)              // => null
-  }
-  for (t <- r.term) {
-    println(t)              // => null
-  }
-}
 ```
 
 ### Installation
@@ -119,6 +129,8 @@ limitations under the License.
 [snowplow]: https://github.com/snowplow/snowplow
 
 [referer-parser]: https://github.com/snowplow-referer-parser/referer-parser
-[referers-yml]: https://github.com/snowplow/referer-parser/blob/master/referers.yml
+[referers-yml]: https://github.com/snowplow-referer-parser/jvm-referer-parser/blob/master/referers.yml
+
+[cats-effect]: https://github.com/typelevel/cats-effect
 
 [license]: http://www.apache.org/licenses/LICENSE-2.0
