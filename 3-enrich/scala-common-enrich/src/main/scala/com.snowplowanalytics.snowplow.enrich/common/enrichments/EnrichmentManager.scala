@@ -265,6 +265,31 @@ object EnrichmentManager {
       }
     } yield unitSuccess).getOrElse(unitSuccess)
 
+    // Calculate the derived timestamp
+    val derivedTstamp = EE.getDerivedTimestamp(
+      Option(event.dvce_sent_tstamp),
+      Option(event.dvce_created_tstamp),
+      Option(event.collector_tstamp),
+      Option(event.true_tstamp)
+    ) match {
+      case Success(dt) => {
+        dt.foreach(event.derived_tstamp = _)
+        unitSuccess
+      }
+      case f => f
+    }
+
+    // Fetch IAB enrichment context (before anonymizing the IP address)
+    val iabContext = registry.getIabEnrichment match {
+      case Some(iab) =>
+        iab
+          .getIabContext(Option(event.useragent),
+                         Option(event.user_ipaddress),
+                         Option(event.derived_tstamp).map(EventEnrichments.fromTimestamp))
+          .map(_.some)
+      case None => None.success
+    }
+
     // To anonymize the IP address
     Option(event.user_ipaddress).map(ip =>
       event.user_ipaddress = registry.getAnonIpEnrichment match {
@@ -445,20 +470,6 @@ object EnrichmentManager {
         unitSuccess
       })
 
-    // Calculate the derived timestamp
-    val derivedTstamp = EE.getDerivedTimestamp(
-      Option(event.dvce_sent_tstamp),
-      Option(event.dvce_created_tstamp),
-      Option(event.collector_tstamp),
-      Option(event.true_tstamp)
-    ) match {
-      case Success(dt) => {
-        dt.foreach(event.derived_tstamp = _)
-        unitSuccess
-      }
-      case f => f
-    }
-
     // Execute the JavaScript scripting enrichment
     val jsScript = registry.getJavascriptScriptEnrichment match {
       case Some(jse) => jse.process(event)
@@ -498,6 +509,8 @@ object EnrichmentManager {
     val preparedDerivedContexts = List(uaParser).collect {
       case Success(Some(context)) => context
     } ++ List(weatherContext).collect {
+      case Success(Some(context)) => context
+    } ++ List(iabContext).collect {
       case Success(Some(context)) => context
     } ++ jsScript.getOrElse(Nil) ++ cookieExtractorContext ++ httpHeaderExtractorContext
 
@@ -539,7 +552,7 @@ object EnrichmentManager {
     }
 
     // Collect our errors on Failure, or return our event on Success
-    // Broken into two parts due to 12 argument limit on |@|
+    // Broken into three parts due to 12 argument limit on |@|
     val first =
       (useragent.toValidationNel |@|
         collectorTstamp.toValidationNel |@|
@@ -565,14 +578,20 @@ object EnrichmentManager {
         unstructEvent |@|
         apiRequestContexts |@|
         sqlQueryContexts |@|
-        extractSchema.toValidationNel |@|
-        weatherContext.toValidationNel) { (_, _, _, _, _, _, _, _, _, _, _, _) =>
+        extractSchema.toValidationNel) { (_, _, _, _, _, _, _, _, _, _, _) =>
         ()
       }
+
+    val third =
+      (weatherContext.toValidationNel |@|
+        iabContext.toValidationNel) { (_, _) =>
+        ()
+      }
+
     //This needs to happen last
     val last = piiTransform
 
-    (first |@| second |@| last) { (_, _, _) =>
+    (first |@| second |@| third |@| last) { (_, _, _, _) =>
       event
 
     }

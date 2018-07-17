@@ -381,6 +381,10 @@ object GoogleAnalyticsAdapter extends Adapter {
            ))
   )
 
+  // List of schemas for which we need to re attach the currency
+  private val compositeContextsWithCU: List[SchemaKey] =
+    compositeContextData.filter(_.translationTable.containsKey("cu")).map(_.schemaKey)
+
   // mechanism used to filter out composite contexts that might have been built unnecessarily
   // e.g. if the field cd is in the payload it can be a screen name or a custom dimension
   // it can only be a custom dimension if the field is in the form cd12 which maps to two fields:
@@ -455,7 +459,11 @@ object GoogleAnalyticsAdapter extends Adapter {
         val schemaVal      = lookupSchema(hitType.some, VendorName, unstructEventData.mapValues(_.schemaKey.toSchemaUri))
         val simpleContexts = buildContexts(params, contextData, fieldToSchemaMap)
         val compositeContexts =
-          buildCompositeContexts(params, compositeContextData, nrCompFieldsPerSchema, valueInFieldNameIndicator).validation
+          buildCompositeContexts(params,
+                                 compositeContextData,
+                                 compositeContextsWithCU,
+                                 nrCompFieldsPerSchema,
+                                 valueInFieldNameIndicator).validation
             .toValidationNel
 
         (translationTable |@| schemaVal |@| simpleContexts |@| compositeContexts) {
@@ -565,6 +573,7 @@ object GoogleAnalyticsAdapter extends Adapter {
    * @param originalParams original payload in key-value format
    * @param referenceTable list of context schemas containing composite fields and their
    * associated translations
+   * @param schemasWithCU list of schemas that contain a currency code field
    * @param nrCompFieldsPerSchema map containing the number of field values in the composite field
    * name. Used to filter out contexts that might have been erroneously built.
    * @param indicator indicator used to determine if a key-value has been extracted from the
@@ -574,19 +583,21 @@ object GoogleAnalyticsAdapter extends Adapter {
   private def buildCompositeContexts(
     originalParams: Map[String, String],
     referenceTable: List[MPData],
+    schemasWithCU: List[SchemaKey],
     nrCompFieldsPerSchema: Map[SchemaKey, Int],
     indicator: String
   ): \/[String, List[(SchemaKey, Map[String, FieldType])]] =
     for {
-      // composite params have digits in their key or are cu
+      // composite params have digits in their key
       composite <- originalParams
-        .filterKeys(k => k.exists(_.isDigit) || k == "cu")
+        .filterKeys(k => k.exists(_.isDigit))
         .right
-      brokenDown <- composite.toList.map {
-        case (k, v) if k == "cu" => Map(k -> v).right
-        case (k, v)              => breakDownCompField(k, v, indicator)
-      }.sequenceU
-      grouped = brokenDown.flatten.groupBy(_._1).mapValues(_.map(_._2))
+      brokenDown <- composite.toList.sorted.map { case (k, v) => breakDownCompField(k, v, indicator) }.sequenceU
+      partitioned = brokenDown.map(_.partition(_._1.startsWith(indicator))).unzip
+      // we additionally make sure we have a rectangular dataset
+      grouped = (partitioned._2 ++ removeConsecutiveDuplicates(partitioned._1)).flatten
+        .groupBy(_._1)
+        .mapValues(_.map(_._2))
       translated <- grouped
         .foldLeft(Map.empty[SchemaKey, Map[String, \/[String, Seq[FieldType]]]]) {
           case (m, (fieldName, values)) =>
@@ -604,14 +615,26 @@ object GoogleAnalyticsAdapter extends Adapter {
         }
         .map { case (k, v) => (k -> v.sequenceU) }
         .sequenceU
-      transposed = translated.mapValues { m =>
-        val values = transpose(m.values.map(_.toList).toList)
-        values.map(m.keys zip _).map(_.toMap)
+      // we need to reattach the currency code to the contexts which need it
+      transposed = translated.map {
+        case (k, m) =>
+          val values = transpose(m.values.map(_.toList).toList)
+          k -> (originalParams.get("cu") match {
+            case Some(currency) if schemasWithCU.contains(k) =>
+              values.map(m.keys zip _).map(l => ("currencyCode" -> StringType(currency) :: l.toList).toMap)
+            case _ =>
+              values.map(m.keys zip _).map(_.toMap)
+          })
       }
       // we need to filter out composite contexts which might have been built unnecessarily
       // eg due to ${indicator}pr being in 3 different schemas
+      // + 1/0 depending on the presence of currencyCode
       filtered = transposed
-        .map { case (k, vs) => k -> vs.filter(_.size > nrCompFieldsPerSchema(k)) }
+        .map {
+          case (k, vs) =>
+            val minSize = nrCompFieldsPerSchema(k)
+            k -> vs.filter(fs => fs.size > minSize + fs.get("currencyCode").foldMap(_ => 1))
+        }
         .filter(_._2.nonEmpty)
       flattened = filtered.toList.flatMap { case (k, vs) => vs.map(k -> _) }
     } yield flattened
@@ -677,6 +700,16 @@ object GoogleAnalyticsAdapter extends Adapter {
     val res = go(list, Nil, Nil)
     (res._2.reverse, res._3.reverse)
   }
+
+  /** Removes subsequent duplicates, e.g. List(1, 1, 2, 2, 3, 3, 1) becomes List(1, 2, 3, 1) */
+  private def removeConsecutiveDuplicates[T](list: List[T]): List[T] =
+    list
+      .foldLeft(List.empty[T]) {
+        case (h :: t, e) if e != h => e :: h :: t
+        case (Nil, e)              => e :: Nil
+        case (l, _)                => l
+      }
+      .reverse
 
   /** Transposes a list of lists, does not need to be rectangular unlike the stdlib's version. */
   private def transpose[T](l: List[List[T]]): List[List[T]] =

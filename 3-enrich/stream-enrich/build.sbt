@@ -17,6 +17,7 @@ lazy val commonDependencies = Seq(
   Dependencies.Libraries.config,
   Dependencies.Libraries.slf4j,
   Dependencies.Libraries.log4jOverSlf4j,
+  Dependencies.Libraries.jacksonDatabind,
   // Scala
   Dependencies.Libraries.scopt,
   Dependencies.Libraries.scalaz7,
@@ -35,7 +36,7 @@ lazy val commonDependencies = Seq(
 lazy val buildSettings = Seq(
   organization  :=  "com.snowplowanalytics",
   name          :=  "snowplow-stream-enrich",
-  version       :=  "0.17.0",
+  version       :=  "0.18.0",
   description   :=  "The streaming Snowplow Enrichment process",
   scalaVersion  :=  "2.11.11",
   scalacOptions :=  BuildSettings.compilerOptions,
@@ -72,8 +73,7 @@ lazy val kinesis = project
     Dependencies.Libraries.kinesisSdk,
     Dependencies.Libraries.s3Sdk,
     Dependencies.Libraries.dynamodbSdk,
-    Dependencies.Libraries.jacksonCbor,
-    Dependencies.Libraries.jacksonDatabind
+    Dependencies.Libraries.jacksonCbor
   ))
   .dependsOn(core)
 

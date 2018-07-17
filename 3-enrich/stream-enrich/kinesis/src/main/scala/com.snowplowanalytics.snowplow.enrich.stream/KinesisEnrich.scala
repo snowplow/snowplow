@@ -112,7 +112,7 @@ object KinesisEnrich extends Enrich {
           case FilepathRegex(_) | DynamoDBRegex(_, _, _) => success
           case _                                         => failure(s"Enrichments directory doesn't match accepted uris: $regexMsg")
         })
-      forceIpLookupsDownloadOption()
+      forceCachedFilesDownloadOption()
     }
 
   override def download(uri: URI, targetFile: File)(
