@@ -181,7 +181,7 @@ class KinesisSink(
    * @return whether to send the stored events to Kinesis
    */
   override def storeEnrichedEvents(events: List[(String, String)]): Boolean = {
-    val wrappedEvents = events.map(e => ByteBuffer.wrap(e._1.getBytes(UTF_8)) -> e._2)
+    val wrappedEvents = events.map(e => ByteBuffer.wrap(s"${e._1}\n".getBytes(UTF_8)) -> e._2)
     wrappedEvents.foreach(EventStorage.addEvent(_))
     if (!EventStorage.currentBatch.isEmpty && System.currentTimeMillis() > nextRequestTime) {
       nextRequestTime = System.currentTimeMillis() + TimeThreshold
