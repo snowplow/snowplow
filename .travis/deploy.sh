@@ -13,7 +13,7 @@ EOF
 
 cd $TRAVIS_BUILD_DIR
 
-project_version=$(sbt version -Dsbt.log.noformat=true | perl -ne 'print "$1\n" if /(\d+\.\d+\.\d+[^\r\n]*)/' | head -n 1 | tr -d '\n')
+project_version=$(sbt version -Dsbt.log.noformat=true | perl -ne 'print "$1\n" if /(\d+\.\d+\.\d+[^\r\n]*)/' | tail -n 1 | tr -d '\n')
 if [ "${project_version}" == "${tag_version}" ]; then
     sbt +publish
     sbt +bintraySyncMavenCentral

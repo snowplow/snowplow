@@ -12,13 +12,13 @@ val root = (project in file(".")).
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
 
     libraryDependencies ++= Seq(
-      "org.apache.httpcomponents" %  "httpclient"     % "4.5.3",
-      "org.typelevel"             %% "cats-effect"    % "0.10.1",
-      "io.circe"                  %% "circe-core"     % "0.9.3",
-      "io.circe"                  %% "circe-generic"  % "0.9.3",
-      "io.circe"                  %% "circe-parser"   % "0.9.3",
-      "org.specs2"                %% "specs2"         % specsVersion(scalaVersion.value) % "test",
-      "junit"                     %  "junit"          % "4.12"     % "test"
+      "org.typelevel"             %% "cats-effect"        % catsEffectVersion,
+      "io.circe"                  %% "circe-core"         % circeVersion,
+      "io.circe"                  %% "circe-generic"      % circeVersion,
+      "io.circe"                  %% "circe-parser"       % circeVersion,
+      "org.specs2"                %% "specs2-core"        % specs2Version       % "test",
+      "org.specs2"                %% "specs2-scalacheck"  % specs2Version       % "test",
+      "junit"                     %  "junit"              % junitVersion        % "test"
     ),
 
     addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), siteSubdirName in ScalaUnidoc),
@@ -33,8 +33,8 @@ val root = (project in file(".")).
 	bintrayRepository := "snowplow-maven",
 	pomIncludeRepository := { _ => false },
 	homepage := Some(url("http://snowplowanalytics.com")),
-	scmInfo := Some(ScmInfo(url("https://github.com/snowplow/scala-maxmind-iplookups"),
-      "scm:git@github.com:snowplow/scala-maxmind-iplookups.git")),
+	scmInfo := Some(ScmInfo(url("https://github.com/snowplow-referer-parser/jvm-referer-parser"),
+      "scm:git@github.com:snowplow-referer-parser/jvm-referer-parser.git")),
 	pomExtra := (
       <developers>
         <developer>
@@ -44,10 +44,9 @@ val root = (project in file(".")).
             <organizationUrl>http://snowplowanalytics.com</organizationUrl>
         </developer>
       </developers>)
-)
+  )
 
-
-def specsVersion(scalaVer: String) = scalaVer match {
-  case "2.11.12" => "3.7"
-  case "2.12.6" => "2.5"
-}
+val catsEffectVersion = "0.10.1"
+val circeVersion = "0.9.3"
+val specs2Version = "4.2.0"
+val junitVersion = "4.12"

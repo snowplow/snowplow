@@ -20,19 +20,18 @@ package com.snowplowanalytics.refererparser;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.lang.RuntimeException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Collections;
 import java.util.Iterator;
-
-// Apache URLEncodedUtils
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URLEncodedUtils;
 
 import com.snowplowanalytics.refererparser.scala.ParseReferersJson;
 
@@ -185,25 +184,28 @@ public class Parser {
   }
 
   private String extractSearchTerm(String query, List<String> possibleParameters) {
+    if (query == null) {
+      return null;
+    }
 
-    List<NameValuePair> params;
     try {
-      params = URLEncodedUtils.parse(new URI("http://localhost?" + query), "UTF-8");
-      // params = URLEncodedUtils.parse(query, Charset.forName("UTF-8")); because https://github.com/snowplow/referer-parser/issues/76
-    } catch (IllegalArgumentException iae) {
-      return null;
-    } catch (URISyntaxException use) { // For new URI
-      return null;
-    }
+      String[] pairs = query.split("&");
+      for (String pair : pairs) {
+        int splitIndex = pair.indexOf("=");
+        if (splitIndex<1) continue;
 
-    for (NameValuePair pair : params) {
-      final String name = pair.getName();
-      final String value = pair.getValue();
-
-      if (possibleParameters.contains(name)) {
-        return value;
+        String param = URLDecoder.decode(pair.substring(0, splitIndex), "UTF-8");
+        for (String searchParam : possibleParameters) {
+          if (searchParam.equals(param)) {
+            return URLDecoder.decode(pair.substring(splitIndex+1), "UTF-8");
+          }
+        }
       }
+    } catch (UnsupportedEncodingException e) {
+      // This should never happen
+      throw new RuntimeException("UTF-8 is not recognized as a valid encoding!");
     }
+
     return null;
   }
 }
