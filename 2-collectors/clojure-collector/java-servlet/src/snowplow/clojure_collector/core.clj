@@ -35,6 +35,7 @@
     cookies
     config/duration
     config/domain
+    config/path
     config/p3p-header
     pixel
     vendor

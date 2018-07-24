@@ -9,6 +9,7 @@ aws:
       assets: spha # DO NOT CHANGE unless you are hosting the jarfiles etc yourself in your own bucket
       jsonpath_assets: # If you have defined your own JSON Schemas, add the s3:// path to your own JSON Path files in your own bucket here
       log: s3://not-a-bucket
+      encrypted: false
       enriched:
         good: eg       # e.g. s3://my-out-bucket/enriched/good
         archive: ea    # Where to archive enriched events to, e.g. s3://my-out-bucket/enriched/archive

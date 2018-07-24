@@ -13,25 +13,20 @@
 ;;;; Copyright: Copyright (c) 2012-2013 Snowplow Analytics Ltd
 ;;;; License:   Apache License Version 2.0
 
-(require 'cemerick.pomegranate.aether)
-(cemerick.pomegranate.aether/register-wagon-factory!
-  "http" #(org.apache.maven.wagon.providers.http.HttpWagon.))
-
-(defproject snowplow/clojure-collector "2.0.0" ;; MUST also bump version in server.xml
+(defproject snowplow/clojure-collector "2.1.0" ;; MUST also bump version in server.xml
   :license {:name "Apache Version 2.0"
   :url "http://www.apache.org/licenses/LICENSE-2.0"}
   :description "A SnowPlow event collector written in Clojure. AWS Elastic Beanstalk compatible."
-  :dependencies     [[org.clojure/clojure "1.4.0"]
-                     [ring/ring-core "1.1.8"]
-                     [ring/ring-devel "1.1.8"]
-                     [compojure "1.1.3"]
-                     [metrics-clojure "0.9.2"]
-                     [metrics-clojure-ring "0.9.2"]
-                     [commons-codec/commons-codec "1.7"]]
+  :dependencies     [[org.clojure/clojure "1.9.0"]
+                     [ring/ring-core "1.6.3"]
+                     [ring/ring-devel "1.6.3"]
+                     [compojure "1.6.1"]
+                     [metrics-clojure "2.10.0"]
+                     [metrics-clojure-ring "2.10.0"]
+                     [commons-codec/commons-codec "1.11"]]
   ;; The jetty adapter is only used during development
-  :profiles         {:dev {:dependencies [[ring/ring-jetty-adapter "1.1.8"]]}}
+  :profiles         {:dev {:dependencies [[ring/ring-jetty-adapter "1.6.3"]]}}
   :war-resources-path   "war-resources"
-  :plugins          [[lein-ring "0.8.3"]
-                     [lein-beanstalk "0.2.6"]]
+  :plugins          [[lein-ring "0.12.4"]]
   :ring {:handler snowplow.clojure-collector.beanstalk/app}) ; .beanstalk -> .core if you don't need Beanstalk support
 

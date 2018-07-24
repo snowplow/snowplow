@@ -8,6 +8,7 @@ aws:
       assets: s3://snowplow-hosted-assets # DO NOT CHANGE unless you are hosting the jarfiles etc yourself in your own bucket
       jsonpath_assets: # If you have defined your own JSON Schemas, add the s3:// path to your own JSON Path files in your own bucket here
       log: ADD HERE
+      encrypted: false
       enriched:
         good: ADD HERE       # e.g. s3://my-out-bucket/enriched/good
         archive: ADD HERE    # Where to archive enriched events to, e.g. s3://my-archive-bucket/enriched
@@ -25,6 +26,7 @@ aws:
     placement: ADD HERE     # Set this if not running in VPC. Leave blank otherwise
     ec2_subnet_id: ADD HERE # Set this if running in VPC. Leave blank otherwise
     ec2_key_name: ADD HERE
+    security_configuration: ADD HERE # Specify your EMR security configuration if needed. Leave blank otherwise
     bootstrap: []           # Set this to specify custom boostrap actions. Leave empty otherwise
     software:
       hbase:                # Optional. To launch on cluster, provide version, "0.92.0", keep quotes. Leave empty otherwise.
@@ -67,3 +69,5 @@ monitoring:
     method: get
     app_id: ADD HERE # e.g. snowplow
     collector: ADD HERE # e.g. d3rkrsqld9gmqf.cloudfront.net
+    protocol: http
+    port: 80
