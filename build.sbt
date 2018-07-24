@@ -9,9 +9,14 @@ val root = (project in file(".")).
     description   := "Library for extracting marketing attribution data from referer URLs",
     scalaVersion  := "2.12.6",
     crossScalaVersions := Seq("2.11.12", "2.12.6"),
-    scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
+    scalacOptions := Seq(
+      "-deprecation",
+      "-encoding", "utf8",
+      "-Ypartial-unification"
+    ),
 
     libraryDependencies ++= Seq(
+      "org.typelevel"             %% "cats-core"          % catsCoreVersion,
       "org.typelevel"             %% "cats-effect"        % catsEffectVersion,
       "io.circe"                  %% "circe-core"         % circeVersion,
       "io.circe"                  %% "circe-generic"      % circeVersion,
@@ -46,6 +51,7 @@ val root = (project in file(".")).
       </developers>)
   )
 
+val catsCoreVersion = "1.1.0"
 val catsEffectVersion = "0.10.1"
 val circeVersion = "0.9.3"
 val specs2Version = "4.2.0"

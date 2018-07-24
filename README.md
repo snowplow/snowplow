@@ -9,48 +9,12 @@ The implementation uses a JSON version of the shared 'database' of known referer
 
 The Scala implementation is a core component of [Snowplow][snowplow], the open-source web-scale analytics platform.
 
-## Java
-
-### Usage
-
-Use referer-parser in Java like this:
-
-```java
-import com.snowplowanalytics.refererparser.Parser;
-
-...
-
-String refererUrl = "http://www.google.com/search?q=gateway+oracle+cards+denise+linn&hl=en&client=safari";
-String pageUrl    = "http:/www.psychicbazaar.com/shop" // Our current URL
-
-Parser refererParser = new Parser();
-Referer r = refererParser.parse(refererUrl, pageUrl);
-
-System.out.println(r.medium);     // => "search"
-System.out.println(r.source);     // => "Google"
-System.out.println(r.term);       // => "gateway oracle cards denise linn"
-```
-
-### Installation
-
-Add the following code into your `pom.xml` to be able to use this repository:
-
-```xml
-<dependency>
-    <groupId>com.snowplowanalytics</groupId>
-    <artifactId>referer-parser_2.11</artifactId>
-    <version>0.3.0</version>
-</dependency>
-```
-
-## Scala
-
 ### Usage
 
 All effects within the Scala implementation are wrapped in `Sync` from [cats-effect][cats-effect]. In these examples we use `IO`, but anything that implements `Sync` can be used.
 
 ```scala
-import com.snowplowanalytics.refererparser.scala.Parser
+import com.snowplowanalytics.refererparser.Parser
 import cats.effect.IO
 import java.net.URI
 
@@ -58,8 +22,8 @@ val refererUrl = "http://www.google.com/search?q=gateway+oracle+cards+denise+lin
 val pageUrl    = "http:/www.psychicbazaar.com/shop" // Our current URL
 
 // We can instantiate a new Parser instance which will load referers.json
-val parser = new Parser()
-val result = parser.parse[IO](refererUrl, pageUrl).unsafeRunSync()
+val parser = Parser.create[IO].unsafeRunSync()
+val result = parser.parse(refererUrl, pageUrl)
 result match {
   case Some(result) =>
     println(result.medium) // => "search"
@@ -69,16 +33,12 @@ result match {
     println("Referer not in database")
 }
 
-// Alternatively calling parse on the companion object will lazily instantiate a new Parser
-// instance automatically
-println( Parser.parse[IO](refererUrl, pageUrl).unsafeRunSync() == result ) // => True
-
-// You can also provide a list of domains which should be considered internal
-Parser.parse[IO](
+// You can provide a list of domains which should be considered internal
+Parser.parse(
     new URI("http://www.subdomain1.snowplowanalytics.com"),
     Some("http://www.snowplowanalytics.com"),
     List("www.subdomain1.snowplowanalytics.com", "www.subdomain2.snowplowanalytics.com")
-).unsafeRunSync() match {
+) match {
   case Some(result) =>
     println(result.medium) // => "internal"
     println(result.source) // => None
@@ -87,10 +47,10 @@ Parser.parse[IO](
     println("Referer not in database")
 }
 
-// A custom referers.json can be passed in as an InputStream
-val customParser = new Parser(
-  getClass.getResourceAsStream("custom-referers.json")
-)
+// A custom referers.json can be passed in as a Source
+val customParser = Parser.create[IO](
+  Source.fromResource("custom-referers.json")
+).unsafeRunSync()
 ```
 
 ### Installation

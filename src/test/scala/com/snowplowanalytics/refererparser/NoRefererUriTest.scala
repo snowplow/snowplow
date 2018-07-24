@@ -14,29 +14,27 @@
  * limitations under the License.
  */
 
-package com.snowplowanalytics.refererparser;
+package com.snowplowanalytics.refererparser
 
-/**
- * Enum for the types of referer
- * that we can detect - "medium"
- * in Google's language.
- *
- * @author Alex Dean (@alexatkeplar) <support at snowplowanalytics com>
- */
-public enum Medium {
-    UNKNOWN,
-    INTERNAL,
-    SEARCH,
-    SOCIAL,
-    EMAIL,
-    PAID;
+// Java
+import java.net.URI
 
-  static public Medium fromString(String medium) {
-    return Medium.valueOf(medium.toUpperCase());
-  }
+// Specs2
+import org.specs2.mutable.Specification
 
-  @Override
-  public String toString() {
-    return super.toString().toLowerCase();
+// Cats
+import cats.effect.IO
+
+class NoRefererUriTest extends Specification {
+
+  // Our data
+  val pageHost = "www.psychicbazaar.com"
+
+  val parser = Parser.create[IO].unsafeRunSync()
+
+  "An empty referer URI" should {
+    "return no referal" in {
+      parser.parse("", pageHost) must beNone
+    }
   }
 }

@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
-package com.snowplowanalytics.refererparser.scala
+package com.snowplowanalytics.refererparser
+
+// Java
+import java.net.URI
 
 // Scala
 import scala.io.Source._
@@ -60,14 +63,15 @@ class JsonParseTest extends Specification {
   }
 
   val pageHost = "www.snowplowanalytics.com"
-
   val internalDomains = List("www.subdomain1.snowplowanalytics.com", "www.subdomain2.snowplowanalytics.com")
+
+  val parser = Parser.create[IO].unsafeRunSync
 
   "parse" should {
     s"extract the expected details from referer with spec" in {
       for (test <- tests) yield {
         val expected = Some(Referer(Medium.withName(test.medium), test.source, test.term))
-        val actual = Parser.parse[IO](test.uri, Some(pageHost), internalDomains).unsafeRunSync()
+        val actual = parser.parse(new URI(test.uri), Some(pageHost), internalDomains)
 
         expected shouldEqual actual
       }

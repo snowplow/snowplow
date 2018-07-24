@@ -13,28 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.snowplowanalytics.refererparser
 
-package com.snowplowanalytics.refererparser.scala
+import Medium._
 
-// Java
-import java.net.URI
-
-// Specs2 & ScalaCheck
-import org.specs2.{Specification, ScalaCheck}
-import org.specs2.matcher.DataTables
-import org.scalacheck._
-import org.scalacheck.Arbitrary._
-
-// Cats
-import cats.effect.IO
-
-class ParseFuzzTest extends Specification with ScalaCheck {
-
-  def is =
-    "The parse function should work for any pair of referer and page Strings" ! e1
-
-  def e1 =
-    prop { (refererUri: String, pageUri: String) =>
-      Parser.parse[IO](refererUri, pageUri).unsafeRunSync() must beAnInstanceOf[Option[Referer]]
-    }
-}
+/**
+ * Referer
+ */
+case class Referer(medium: Medium, source: Option[String], term: Option[String])

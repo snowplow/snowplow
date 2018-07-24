@@ -13,22 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.snowplowanalytics.refererparser;
+package com.snowplowanalytics.refererparser
 
-import java.util.List;
+import Medium._
 
-/**
-* Holds the structure of each referer
-* in our lookup Map.
-*/
-public class RefererLookup {
-  public Medium medium;
-  public String source;
-  public List<String> parameters;
-
-  public RefererLookup(Medium medium, String source, List<String> parameters) {
-    this.medium = medium;
-    this.source = source;
-    this.parameters = parameters;
-  }
-}
+/*
+ * Hold the structure of a referer lookup
+ */
+case class RefererLookup(medium: Medium, source: String, parameters: List[String])

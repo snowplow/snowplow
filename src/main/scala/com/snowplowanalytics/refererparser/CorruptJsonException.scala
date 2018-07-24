@@ -13,26 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.snowplowanalytics.refererparser
 
-package com.snowplowanalytics.refererparser.scala
-
-// Java
-import java.net.URI
-
-// Specs2
-import org.specs2.mutable.Specification
-
-// Cats
-import cats.effect.IO
-
-class NoRefererUriTest extends Specification {
-
-  // Our data
-  val pageHost = "www.psychicbazaar.com"
-
-  "An empty referer URI" should {
-    "return no referal" in {
-      Parser.parse[IO]("", pageHost).unsafeRunSync() must beNone
-    }
-  }
-}
+class CorruptJsonException(private val message: String) extends Exception(message)

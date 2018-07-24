@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package com.snowplowanalytics.refererparser.scala
-
-import scala.io.Source
+package com.snowplowanalytics.refererparser
 
 // Java
 import java.net.URI
@@ -27,18 +25,16 @@ import org.specs2.mutable.Specification
 // Cats
 import cats.effect.IO
 
-class CustomRefererJson extends Specification {
+class CorruptedRefererUriTest extends Specification {
 
   // Our data
-  val pageHost = "www.psychicbazaar.com"
+  val refererUri = "http://bigcommerce%20wordpress%20plugin/"
 
-  "Custom referer list" should {
-    "give correct referer" in {
-      val parser = new Parser(getClass.getResourceAsStream("/custom-referers.json"))
-      val expected = Some(Referer(Medium.Search, Some("Example"), Some("hello world")))
-      val actual = parser.parse[IO]("https://www.example.org/?query=hello+world").unsafeRunSync()
+  val parser = Parser.create[IO].unsafeRunSync()
 
-      expected shouldEqual actual
+  "A corrupted referer URI" should {
+    "return None, not throw an Exception" in {
+      parser.parse(refererUri) must beNone
     }
   }
 }

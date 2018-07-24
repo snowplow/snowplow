@@ -13,11 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.snowplowanalytics.refererparser
 
-package com.snowplowanalytics.refererparser;
+/**
+ * Enumeration for supported mediums.
+ */
+object Medium extends Enumeration {
+  type Medium = Value
 
-public class CorruptJsonException extends Exception {
-	public CorruptJsonException(String message) {
-      super(message);
-    }
+  val Unknown  = Value("unknown")
+  val Search   = Value("search")
+  val Internal = Value("internal")
+  val Social   = Value("social")
+  val Email    = Value("email")
+  val Paid     = Value("paid")
+
+  def fromString(s: String): Option[Medium] = values.find(_.toString == s)
 }

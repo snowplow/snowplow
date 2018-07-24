@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.snowplowanalytics.refererparser.scala
+package com.snowplowanalytics.refererparser
 
 // Java
 import java.net.URI
@@ -35,12 +35,14 @@ class ParseArgTypesTest extends Specification {
 
   val expected = Some(Referer(Medium.Internal, None, None))
 
+  val parser = Parser.create[IO].unsafeRunSync()
+
   "parse " should {
     "work the same regardless of which argument types are used to call it" in {
-      Parser.parse[IO](refererUri, pageHost).unsafeRunSync() must_== expected
-      Parser.parse[IO](refererUri, pageURI).unsafeRunSync()  must_== expected
-      Parser.parse[IO](refererURI, pageHost).unsafeRunSync() must_== expected
-      Parser.parse[IO](refererURI, pageURI).unsafeRunSync()  must_== expected
+      parser.parse(refererUri, pageHost) must_== expected
+      parser.parse(refererUri, pageURI)  must_== expected
+      parser.parse(refererURI, pageHost) must_== expected
+      parser.parse(refererURI, pageURI)  must_== expected
     }
   }
 }

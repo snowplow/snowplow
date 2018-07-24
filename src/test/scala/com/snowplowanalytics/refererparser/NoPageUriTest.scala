@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.snowplowanalytics.refererparser.scala
+package com.snowplowanalytics.refererparser
 
 // Java
 import java.net.URI
@@ -31,21 +31,23 @@ class NoPageUriTest extends Specification {
   val refererUri = "http://www.google.com/search?q=gateway+oracle+cards+denise+linn&hl=en&client=safari"
   val expected   = Some(Referer(Medium.Search, Some("Google"), Some("gateway oracle cards denise linn")))
 
+  val parser = Parser.create[IO].unsafeRunSync()
+
   "An empty page URI" should {
     "not interfere with the referer parsing" in {
-      Parser.parse[IO](refererUri, "").unsafeRunSync() must_== expected
+      parser.parse(refererUri, "") must_== expected
     }
   }
 
   "No page URI" should {
     "not interfere with the referer parsing" in {
-      Parser.parse[IO](refererUri).unsafeRunSync() must_== expected
+      parser.parse(refererUri) must_== expected
     }
   }
 
   "A page URI" should {
     "not interfere with the referer parsing" in {
-      Parser.parse[IO](refererUri).unsafeRunSync() must_== expected
+      parser.parse(refererUri) must_== expected
     }
   }
 }
