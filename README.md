@@ -3,6 +3,7 @@
 [![Build Status][travis-image]][travis]
 [![Release][release-image]][releases]
 [![License][license-image]][license]
+[![Join the chat at https://gitter.im/snowplow/snowplow][gitter-image]][gitter]
 
 <img src="https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/snowplow-logo-large.png"
  alt="Snowplow logo" title="Snowplow" align="right" />
@@ -81,6 +82,9 @@ limitations under the License.
 
 [license-image]: http://img.shields.io/badge/license-Apache--2-blue.svg?style=flat
 [license]: http://www.apache.org/licenses/LICENSE-2.0
+
+[gitter-image]: https://badges.gitter.im/snowplow/snowplow.svg
+[gitter]: https://gitter.im/snowplow/snowplow?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
 
 [website]: http://snowplowanalytics.com
 [wiki]: https://github.com/snowplow/snowplow/wiki
