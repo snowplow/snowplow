@@ -1,0 +1,59 @@
+{
+	"schema": "iglu:com.snowplowanalytics.snowplow.enrichments/api_request_enrichment_config/jsonschema/1-0-0",
+
+	"data": {
+
+		"vendor": "com.snowplowanalytics.snowplow.enrichments",
+		"name": "api_request_enrichment_config",
+		"enabled": false,
+		"parameters": {
+			"inputs": [
+				{
+					"key": "user",
+					"pojo": {
+						"field": "user_id"
+					}
+				},
+				{
+					"key": "user",
+					"json": {
+						"field": "contexts",
+						"schemaCriterion": "iglu:com.snowplowanalytics.snowplow/client_session/jsonschema/1-*-*",
+						"jsonPath": "$.userId"
+					}
+				},
+				{
+					"key": "client",
+					"pojo": {
+						"field": "app_id"
+					}
+				}
+			],
+			"api": {
+				"http": {
+					"method": "GET",
+					"uri": "http://api.acme.com/users/{{client}}/{{user}}?format=json",
+					"timeout": 2000,
+					"authentication": {
+						"httpBasic": {
+							"username": "xxx",
+							"password": "yyy"
+						}
+					}
+				}
+			},
+			"outputs": [
+				{
+					"schema": "iglu:com.acme/user/jsonschema/1-0-0" ,
+					"json": {
+						"jsonPath": "$.record"
+					}
+				}
+			],
+			"cache": {
+				"size": 3000,
+				"ttl": 60
+			}
+		}
+	}
+}

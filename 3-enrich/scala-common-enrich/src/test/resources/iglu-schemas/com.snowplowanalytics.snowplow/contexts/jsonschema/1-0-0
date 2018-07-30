@@ -1,0 +1,32 @@
+{
+    "$schema": "http://iglucentral.com/schemas/com.snowplowanalytics.self-desc/schema/jsonschema/1-0-0#",
+    "description": "Schema for custom contexts",
+    "self": {
+        "vendor": "com.snowplowanalytics.snowplow",
+        "name": "contexts",
+        "format": "jsonschema",
+        "version": "1-0-0"
+    },
+
+    "type": "array",
+
+    "items": {
+
+        "type": "object",
+
+        "properties": {
+
+            "schema": {
+                "type": "string",
+                "pattern": "^iglu:[a-zA-Z0-9-_.]+/[a-zA-Z0-9-_]+/[a-zA-Z0-9-_]+/[0-9]+-[0-9]+-[0-9]+$"
+            },
+
+            "data": {}
+        },
+
+        "required": ["schema", "data"],
+        "additionalProperties": false
+    },
+
+    "minItems": 1
+}

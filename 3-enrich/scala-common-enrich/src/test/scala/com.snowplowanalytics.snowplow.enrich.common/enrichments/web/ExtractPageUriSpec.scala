@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -26,17 +26,13 @@ import org.specs2.scalaz.ValidationMatchers
 import scalaz._
 import Scalaz._
 
-// SnowPlow Utils
-import com.snowplowanalytics.util.Tap._
-
-class ExtractPageUriSpec extends Specification with DataTables with ValidationMatchers { def is =
-
-  "This is a specification to test the extractPageUri function"                                ^
-                                                                                              p^
-  "extractPageUri should return a None when no page URI provided"                              ! e1^
-  "extractPageUri should choose the URI from the tracker if it has one or two to choose from"  ! e2^
-  "extractPageUri will alas assume a browser-truncated page URL is a custom URL not an error"  ! e3^
-                                                                                               end
+class ExtractPageUriSpec extends Specification with DataTables with ValidationMatchers {
+  def is = s2"""
+  This is a specification to test the extractPageUri function
+  extractPageUri should return a None when no page URI provided                             $e1
+  extractPageUri should choose the URI from the tracker if it has one or two to choose from $e2
+  extractPageUri will alas assume a browser-truncated page URL is a custom URL not an error $e3
+  """
 
   // No URI
   def e1 =
@@ -44,17 +40,17 @@ class ExtractPageUriSpec extends Specification with DataTables with ValidationMa
 
   // Valid URI combinations
   val originalUri = "http://www.mysite.com/shop/session/_internal/checkout"
-  val customUri = "http://www.mysite.com/shop/checkout" // E.g. set by setCustomUrl in JS Tracker
+  val customUri   = "http://www.mysite.com/shop/checkout" // E.g. set by setCustomUrl in JS Tracker
   val originalURI = new URI(originalUri)
-  val customURI = new URI(customUri)
+  val customURI   = new URI(customUri)
 
   def e2 =
-    "SPEC NAME"                                       || "URI TAKEN FROM COLLECTOR'S REFERER" | "URI SENT BY TRACKER" | "EXPECTED URI"   |
-    "both URIs match (98% of the time)"               !! originalUri.some                     ! originalUri.some      ! originalURI.some |
-    "tracker didn't send URI (e.g. No-JS Tracker)"    !! originalUri.some                     ! None                  ! originalURI.some |
-    "collector didn't record the referer (rare)"      !! None                                 ! originalUri.some      ! originalURI.some |
-    "collector and tracker URIs differ - use tracker" !! originalUri.some                     ! customUri.some        ! customURI.some   |> {
-      
+    "SPEC NAME"                                         || "URI TAKEN FROM COLLECTOR'S REFERER" | "URI SENT BY TRACKER" | "EXPECTED URI" |
+      "both URIs match (98% of the time)"               !! originalUri.some                     ! originalUri.some      ! originalURI.some |
+      "tracker didn't send URI (e.g. No-JS Tracker)"    !! originalUri.some                     ! None                  ! originalURI.some |
+      "collector didn't record the referer (rare)"      !! None                                 ! originalUri.some      ! originalURI.some |
+      "collector and tracker URIs differ - use tracker" !! originalUri.some                     ! customUri.some        ! customURI.some |> {
+
       (_, fromReferer, fromTracker, expected) =>
         PageEnrichments.extractPageUri(fromReferer, fromTracker) must beSuccessful(expected)
     }

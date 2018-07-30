@@ -1,0 +1,12 @@
+{
+    "schema": "iglu:com.snowplowanalytics.snowplow.storage/elastic_config/jsonschema/1-0-0",
+    "data": {
+        "name": "Elasticsearch failed events storage",
+        "host": "ADD HERE",
+        "index": "ADD HERE",
+        "port": 9200,
+        "nodesWanOnly": false,
+        "type": "ADD HERE",
+        "purpose": "FAILED_EVENTS"
+    }
+}

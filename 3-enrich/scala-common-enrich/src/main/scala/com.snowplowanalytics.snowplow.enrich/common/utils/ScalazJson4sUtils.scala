@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -17,24 +17,19 @@ package common
 package utils
 
 // Scalaz
+import org.json4s.Formats
+
 import scalaz._
 import Scalaz._
 
 // json4s
-import org.json4s.{
-  DefaultFormats,
-  JValue,
-  JNothing,
-  MappingException
-}
+import org.json4s.{DefaultFormats, JNothing, JValue, MappingException}
 import org.json4s.JsonDSL._
 
 // Iglu
 import iglu.client.validation.ProcessingMessageMethods._
 
 object ScalazJson4sUtils {
-
-  implicit val formats = DefaultFormats
 
   /**
    * Returns a field of type A at the end of a
@@ -48,18 +43,22 @@ object ScalazJson4sUtils {
    * @return the list extracted from the JSON on
    *         success or an error String on failure
    */
-  def extract[A: Manifest](config: JValue, head: String, tail: String*): ValidatedMessage[A] = {
-    
+  def extract[A: Manifest](config: JValue, head: String, tail: String*)(
+    implicit json4sFormats: Formats): ValidatedMessage[A] = {
     val path = head +: tail
 
-    // This check is necessary because attempting to follow 
+    // This check is necessary because attempting to follow
     // an invalid path yields a JNothing, which would be
     // interpreted as an empty list if type A is List[String]
     if (fieldExists(config, head, tail: _*)) {
       try {
         path.foldLeft(config)(_ \ _).extract[A].success
       } catch {
-        case me: MappingException => s"Could not extract %s as %s from supplied JSON".format(path.mkString("."), manifest[A]).toProcessingMessage.fail
+        case me: MappingException =>
+          s"Could not extract %s as %s from supplied JSON due to: ${me.getMessage}"
+            .format(path.mkString("."), manifest[A])
+            .toProcessingMessage
+            .fail
       }
     } else s"JSON path %s not found".format(path.mkString(".")).toProcessingMessage.fail
   }
@@ -74,9 +73,9 @@ object ScalazJson4sUtils {
    *        JSON path
    * @return Whether the path is valid
    */
-  def fieldExists(config: JValue, head: String, tail: String*): Boolean = 
+  def fieldExists(config: JValue, head: String, tail: String*): Boolean =
     (head +: tail).foldLeft(config)(_ \ _) match {
       case JNothing => false
-      case s => true
+      case s        => true
     }
 }

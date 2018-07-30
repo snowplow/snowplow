@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2014-2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -28,10 +28,10 @@ import scalaz._
 import Scalaz._
 
 // json4s
-import org.json4s.JValue
+import org.json4s.{DefaultFormats, JValue}
 
 // Iglu
-import iglu.client.SchemaKey
+import iglu.client.{SchemaCriterion, SchemaKey}
 import iglu.client.validation.ProcessingMessageMethods._
 
 // Snowplow referer-parser
@@ -50,24 +50,25 @@ import utils.ScalazJson4sUtils
  */
 object RefererParserEnrichment extends ParseableEnrichment {
 
-  val supportedSchemaKey = SchemaKey("com.snowplowanalytics.snowplow", "referer_parser", "jsonschema", "1-0-0")
+  implicit val formats = DefaultFormats
+
+  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "referer_parser", "jsonschema", 1, 0)
 
   /**
    * Creates a RefererParserEnrichment instance from a JValue.
-   * 
+   *
    * @param config The referer_parser enrichment JSON
    * @param schemaKey The SchemaKey provided for the enrichment
-   *        Must be a supported SchemaKey for this enrichment   
+   *        Must be a supported SchemaKey for this enrichment
    * @return a configured RefererParserEnrichment instance
    */
-  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[RefererParserEnrichment] = {
-    isParseable(config, schemaKey).flatMap( conf => {
+  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[RefererParserEnrichment] =
+    isParseable(config, schemaKey).flatMap(conf => {
       (for {
-        param  <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "internalDomains")
-        enrich =  RefererParserEnrichment(param)
+        param <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "internalDomains")
+        enrich = RefererParserEnrichment(param)
       } yield enrich).toValidationNel
     })
-  }
 
 }
 
@@ -78,9 +79,7 @@ object RefererParserEnrichment extends ParseableEnrichment {
  */
 case class RefererParserEnrichment(
   domains: List[String]
-  ) extends Enrichment {
-
-  val version = new DefaultArtifactVersion("0.1.0")
+) extends Enrichment {
 
   /**
    * A Scalaz Lens to update the term within
@@ -91,7 +90,7 @@ case class RefererParserEnrichment(
   /**
    * Extract details about the referer (sic).
    *
-   * Uses the referer-parser library. 
+   * Uses the referer-parser library.
    *
    * @param uri The referer URI to extract
    *            referer details from
@@ -102,10 +101,9 @@ case class RefererParserEnrichment(
    * @return a Tuple3 containing referer medium,
    *         source and term, all Strings
    */
-  def extractRefererDetails(uri: URI, pageHost: String): Option[Referer] = {
+  def extractRefererDetails(uri: URI, pageHost: String): Option[Referer] =
     for {
       r <- RefererParser.parse(uri, pageHost, domains)
       t = r.term.flatMap(t => CU.fixTabsNewlines(t))
     } yield termLens.set(r, t)
-  }
 }

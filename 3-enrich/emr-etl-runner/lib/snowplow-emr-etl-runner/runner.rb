@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2012-2017 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,136 +10,230 @@
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 # Author::    Alex Dean (mailto:support@snowplowanalytics.com)
-# Copyright:: Copyright (c) 2012-2014 Snowplow Analytics Ltd
+# Copyright:: Copyright (c) 2012-2017 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
 require 'contracts'
-include Contracts
+require 'iglu-client'
+require 'json-schema'
 
 module Snowplow
   module EmrEtlRunner
     class Runner
 
-      # Supported options
-      @@collector_formats = Set.new(%w(cloudfront clj-tomcat))
-      @@skip_options = Set.new(%w(staging s3distcp emr enrich shred archive))
+      include Contracts
 
-      include Logging
+      # Supported options
+      @@storage_targets = Set.new(%w(redshift_config postgresql_config elastic_config amazon_dynamodb_config))
+
+      include Monitoring::Logging
+
+      # Decide what steps should be submitted to EMR job
+      Contract ArrayOf[String], Maybe[String], Maybe[String] => EmrSteps
+      def self.get_steps(skips, resume, enriched_stream)
+        {
+          :staging => (enriched_stream.nil? and resume.nil? and not skips.include?('staging')),
+          :enrich => (enriched_stream.nil? and (resume.nil? or resume == 'enrich') and not skips.include?('enrich')),
+          :staging_stream_enrich => ((not enriched_stream.nil? and resume.nil?) and not skips.include?('staging_stream_enrich')),
+          :shred => ((resume.nil? or [ 'enrich', 'shred' ].include?(resume)) and
+            not skips.include?('shred')),
+          :es => ((resume.nil? or [ 'enrich', 'shred', 'elasticsearch' ].include?(resume)) and
+            not skips.include?('elasticsearch')),
+          :archive_raw => (enriched_stream.nil? and (resume.nil? or [ 'enrich', 'shred', 'elasticsearch', 'archive_raw' ].include?(resume)) and 
+            not skips.include?('archive_raw')),
+          :rdb_load => ((resume.nil? or [ 'enrich', 'shred', 'elasticsearch', 'archive_raw', 'rdb_load' ].include?(resume)) and
+            not skips.include?('rdb_load')),
+          :consistency_check => ((resume.nil? or [ 'enrich', 'shred', 'elasticsearch', 'archive_raw', 'rdb_load', 'consistency_check' ].include?(resume)) and
+            not skips.include?('consistency_check')),
+          :load_manifest_check => ((resume.nil? or [ 'enrich', 'shred', 'elasticsearch', 'archive_raw', 'rdb_load'  ].include?(resume)) and
+            not skips.include?('load_manifest_check')),
+          :analyze => ((resume.nil? or [ 'enrich', 'shred', 'elasticsearch', 'archive_raw', 'rdb_load', 'consistency_check', 'load_manifest_check', 'analyze' ].include?(resume)) and
+            not skips.include?('analyze')),
+          :archive_enriched => ((resume.nil? or
+            [ 'enrich', 'shred', 'elasticsearch', 'archive_raw', 'rdb_load', 'consistency_check', 'analyze', 'archive_enriched' ].include?(resume)) and
+            not skips.include?('archive_enriched')),
+          :archive_shredded => (not skips.include?('archive_shredded'))
+        }
+      end
+
+
+      Contract HashOf[Symbol, Bool], ArrayOf[String] => RdbLoaderSteps
+      def self.get_rdbloader_steps(steps, inclusions)
+        s = {
+          :skip => [],
+          :include => []
+        }
+
+        if not steps[:analyze]
+          s[:skip] << "analyze"
+        end
+
+        if not steps[:consistency_check]
+          s[:skip] << "consistency_check"
+        end
+
+        if not steps[:load_manifest_check]
+          s[:skip] << "load_manifest_check"
+        end
+
+        if inclusions.include?("vacuum")
+          s[:include] << "vacuum"
+        end
+
+        s
+      end
 
       # Initialize the class.
-      Contract ArgsHash, ConfigHash, ArrayOf[String] => Runner
-      def initialize(args, config, enrichments_array)
+      Contract ArgsHash, ConfigHash, ArrayOf[String], String, ArrayOf[JsonFileHash] => Runner
+      def initialize(args, config, enrichments_array, resolver, targets_array)
 
         # Let's set our logging level immediately
-        Logging::set_level config[:logging][:level]
+        Monitoring::Logging::set_level config[:monitoring][:logging][:level]
 
         @args = args
-        @config = validate_and_coalesce(args, config)
+        @config = config
         @enrichments_array = enrichments_array
-        
+        @resolver_config = resolver
+        resolver_config_json = JSON.parse(@resolver_config, {:symbolize_names => true})
+        @resolver = Iglu::Resolver.parse(resolver_config_json)
+        @targets = group_targets(validate_targets(targets_array))
         self
       end
 
       # Our core flow
       Contract None => nil
       def run
+        steps = Runner.get_steps(@args[:skip], @args[:resume_from], @config[:aws][:s3][:buckets][:enriched][:stream])
 
-        # Now our core flow
-        unless @args[:skip].include?('staging')
-          unless S3Tasks.stage_logs_for_emr(@args, @config)
-            logger.info "No Snowplow logs to process since last run, exiting"
-            exit 0
+        archive_enriched = if not steps[:archive_enriched]
+          'skip'
+        elsif steps[:enrich] || steps[:staging_stream_enrich]
+          'pipeline'
+        else
+          'recover'
+        end
+
+        archive_shredded = if not steps[:archive_shredded]
+          'skip'
+        elsif steps[:shred]
+          'pipeline'
+        else
+          'recover'
+        end
+
+        lock = get_lock(@args[:lock], @args[:consul])
+        if not lock.nil?
+          lock.try_lock
+        end
+
+        # Keep relaunching the job until it succeeds or fails for a reason other than a bootstrap failure
+        tries_left = @config[:aws][:emr][:bootstrap_failure_tries]
+        rdbloader_steps = Runner.get_rdbloader_steps(steps, @args[:include])
+        while true
+          begin
+            tries_left -= 1
+            job = EmrJob.new(@args[:debug], steps[:staging], steps[:enrich], steps[:staging_stream_enrich], steps[:shred], steps[:es],
+              steps[:archive_raw], steps[:rdb_load], archive_enriched, archive_shredded, @config,
+              @enrichments_array, @resolver_config, @targets, rdbloader_steps)
+            job.run(@config)
+            break
+          rescue BootstrapFailureError => bfe
+            logger.warn "Job failed. #{tries_left} tries left..."
+            if tries_left > 0
+              # Random timeout between 0 and 10 minutes
+              bootstrap_timeout = rand(1..600)
+              logger.warn("Bootstrap failure detected, retrying in #{bootstrap_timeout} seconds...")
+              sleep(bootstrap_timeout)
+            else
+              raise
+            end
+          rescue DirectoryNotEmptyError, NoDataToProcessError => e
+            # unlock on no-op
+            if not lock.nil?
+              lock.unlock
+            end
+            raise e
           end
         end
 
-        unless @args[:skip].include?('emr')
-          enrich = not(@args[:skip].include?('enrich'))
-          shred = not(@args[:skip].include?('shred'))
-          s3distcp = not(@args[:skip].include?('s3distcp'))
-          job = EmrJob.new(@args[:debug], enrich, shred, s3distcp, @config, @enrichments_array)
-          job.run()
-        end
-
-        unless @args[:skip].include?('archive')
-          S3Tasks.archive_logs(@config)
+        if not lock.nil?
+          lock.unlock
         end
 
         logger.info "Completed successfully"
         nil
       end
 
-      # Adds trailing slashes to all non-nil bucket names in the hash
-      Contract BucketHash => BucketHash
-      def add_trailing_slashes(bucketsHash)
-        with_slashes_added = {}
-        for k0 in bucketsHash.keys
-          if bucketsHash[k0].class == ''.class
-            with_slashes_added[k0] = Sluice::Storage::trail_slash(bucketsHash[k0])
-          elsif bucketsHash[k0].class == {}.class
-            y = {}
-            for k1 in bucketsHash[k0].keys
-              y[k1] = bucketsHash[k0][k1].nil? ? nil : Sluice::Storage::trail_slash(bucketsHash[k0][k1])
-            end
-            with_slashes_added[k0] = y
+      def get_lock(path, consul)
+        if not path.nil?
+          if not consul.nil?
+            Lock::ConsulLock.new(consul, path)
           else
-            with_slashes_added[k0] = nil
+            Lock::FileLock.new(path)
           end
+        else
+          nil
         end
-
-        with_slashes_added
       end
 
-      # Validate our arguments against the configuration Hash
-      # Make updates to the configuration Hash based on the
-      # arguments
-      Contract ArgsHash, ConfigHash => ConfigHash
-      def validate_and_coalesce(args, config)
-
-        # Check our skip argument
-        args[:skip].each { |opt|
-          unless @@skip_options.include?(opt)
-            raise ConfigError, "Invalid option: skip can be 'staging', 'emr', 'enrich', 'shred' or 'archive', not '#{opt}'"
-          end
-        }
-
-        if args[:skip].include?('shred') and args[:skip].include?('enrich') and !args[:skip].include?('emr')
-          args[:skip] << 'emr'
+      # Adds trailing slashes to all non-nil bucket names in the hash
+      def self.add_trailing_slashes(bucketData)
+        if bucketData.class == ''.class
+          bucketData[-1].chr != '/' ? bucketData << '/' : bucketData
+        elsif bucketData.class == {}.class
+          bucketData.each {|k,v| add_trailing_slashes(v)}
+        elsif bucketData.class == [].class
+          bucketData.each {|b| add_trailing_slashes(b)}
         end
-
-        # Check that start is before end, if both set
-        if !args[:start].nil? and !args[:end].nil?
-          if args[:start] > args[:end]
-            raise ConfigError, "Invalid options: end date '#{_end}' is before start date '#{start}'"
-          end
-        end
-
-        # Validate the collector format
-        unless @@collector_formats.include?(config[:etl][:collector_format]) 
-          raise ConfigError, "collector_format '%s' not supported" % config[:etl][:collector_format]
-        end
-
-        # Currently we only support start/end times for the CloudFront collector format. See #120 for details
-        unless config[:etl][:collector_format] == 'cloudfront' or (args[:start].nil? and args[:end].nil?)
-          raise ConfigError, "--start and --end date arguments are only supported if collector_format is 'cloudfront'"
-        end
-
-        # We can't process enrich and process shred
-        unless args[:process_enrich_location].nil? or args[:process_shred_location].nil?
-          raise ConfigError, "Cannot process enrich and process shred, choose one"
-        end
-        unless args[:process_enrich_location].nil?
-          config[:s3][:buckets][:raw][:processing] = args[:process_enrich_location]
-        end
-        unless args[:process_shred_location].nil?
-          config[:s3][:buckets][:enriched][:good] = args[:process_shred_location]
-        end
-
-        # Add trailing slashes if needed to the non-nil buckets
-        config[:s3][:buckets] = add_trailing_slashes(config[:s3][:buckets])
-
-        config
       end
 
+      # Validate array of self-describing JSONs
+      Contract ArrayOf[JsonFileHash] => ArrayOf[Iglu::SelfDescribingJson]
+      def validate_targets(targets)
+        targets.map do |j|
+          begin
+            self_describing_json = Iglu::SelfDescribingJson.parse_json(j[:json])
+            self_describing_json.validate(@resolver)
+            j[:json] = self_describing_json
+            j
+          rescue JSON::ParserError, JSON::Schema::ValidationError => e
+            print "Error in [#{j[:file]}] "
+            puts e.message
+            throw e
+            abort("Shutting down")
+          end
+        end.map do |j|
+          target_schema = j[:json].schema
+          target = target_schema.name
+          unless @@storage_targets.include?(target)
+            print "Error in [#{j[:file]}] "
+            puts "EmrEtlRunner doesn't support storage target configuration [#{target}] (schema [#{target_schema.as_uri}])"
+            puts "Possible options are: #{@@storage_targets.to_a.join(', ')}"
+            abort("Shutting down")
+          end
+          j[:json]
+        end
+      end
+
+      # Build Hash with some storage target for each purpose
+      Contract ArrayOf[Iglu::SelfDescribingJson] => TargetsHash
+      def group_targets(targets)
+        empty_targets = { :DUPLICATE_TRACKING => nil, :FAILED_EVENTS => [], :ENRICHED_EVENTS => [] }
+
+        loaded_targets = targets.group_by { |t| t.data[:purpose] }.map { |purpose, targets|
+          if targets.length == 0 && purpose.to_sym == :DUPLICATE_TRACKING
+            [purpose.to_sym, nil]
+          elsif targets.length == 0
+            [purpose.to_sym, []]
+          elsif purpose.to_sym == :DUPLICATE_TRACKING
+            [purpose.to_sym, targets[0]]
+          else
+            [purpose.to_sym, targets]
+          end
+        }.to_h
+
+        empty_targets.merge(loaded_targets)
+      end
     end
   end
 end

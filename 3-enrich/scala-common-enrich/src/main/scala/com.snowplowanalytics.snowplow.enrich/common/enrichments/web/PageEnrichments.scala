@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -50,15 +50,35 @@ object PageEnrichments {
    *         error, wrapped in a
    *         Validation
    */
-  def extractPageUri(
-      fromReferer: Option[String],
-      fromTracker: Option[String]): Validation[String, Option[URI]] = {
-
+  def extractPageUri(fromReferer: Option[String], fromTracker: Option[String]): Validation[String, Option[URI]] =
     (fromReferer, fromTracker) match {
       case (Some(r), None)    => CU.stringToUri(r)
       case (None, Some(t))    => CU.stringToUri(t)
       case (Some(r), Some(t)) => CU.stringToUri(t) // Tracker URL takes precedence
       case (None, None)       => None.success // No page URI available. Not a failable offence
     }
-  }
+
+  /**
+   * Extract the referrer domain user ID and timestamp from the "_sp={{DUID}}.{{TSTAMP}}"
+   * portion of the querystring
+   *
+   * @param qsMap The querystring converted to a map
+   * @return Validation boxing a pair of optional strings corresponding to the two fields
+   */
+  def parseCrossDomain(qsMap: Map[String, String]): Validation[String, (Option[String], Option[String])] =
+    qsMap.get("_sp") match {
+      case Some("") => (None, None).success
+      case Some(sp) => {
+        val crossDomainElements = sp.split("\\.")
+
+        val duid = CU.makeTsvSafe(crossDomainElements(0)).some
+        val tstamp = crossDomainElements.lift(1) match {
+          case Some(spDtm) => EventEnrichments.extractTimestamp("sp_dtm", spDtm).map(_.some)
+          case None        => None.success
+        }
+
+        tstamp.map(duid -> _)
+      }
+      case None => (None -> None).success
+    }
 }

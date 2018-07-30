@@ -15,8 +15,9 @@
 
 (ns snowplow.clojure-collector.core
   "Core app handler"
-  (:use [compojure.core              :only [defroutes GET POST]]
+  (:use [compojure.core              :only [defroutes GET POST HEAD]]
         [ring.middleware.cookies     :only [wrap-cookies]]
+        [ring.middleware.params      :only [wrap-params]]
         [ring.middleware.reload      :only [wrap-reload]]
         [ring.middleware.stacktrace  :only [wrap-stacktrace]]
         [metrics.ring.expose         :only [expose-metrics-as-json]]
@@ -26,24 +27,40 @@
             [snowplow.clojure-collector.config     :as config]
             [snowplow.clojure-collector.middleware :as mware]))
 
-(defn- send-cookie-pixel-or-200'
-  "Wrapper for send-cookie-pixel-or-200,
+(defn- send-cookie-pixel-or-200-or-redirect'
+  "Wrapper for send-cookie-pixel-or-200-or-redirect,
    pulling in the configuration settings"
-  [cookies pixel]
-  (responses/send-cookie-pixel-or-200
+  [cookies pixel vendor params]
+  (responses/send-cookie-pixel-or-200-or-redirect
     cookies
     config/duration
     config/domain
     config/p3p-header
-    pixel))
+    pixel
+    vendor
+    params))
+
+(defn- send-cookie-pixel-or-200'
+  "Wrapper for send-cookie-pixel-or-200-or-redirect,
+   with nil vendor and empty params map"
+  [cookies pixel]
+  (send-cookie-pixel-or-200-or-redirect' cookies pixel nil {}))
+
+(def send-flash-crossdomain
+  "Send back the cross domain policy if configured, 404 otherwise"
+  (if (and config/cross-domain-policy-domain config/cross-domain-policy-secure)
+    (responses/send-flash-crossdomain config/cross-domain-policy-domain config/cross-domain-policy-secure)
+    responses/send-404))
 
 (defroutes routes
   "Our routes"
   (GET  "/i"                  {c :cookies} (send-cookie-pixel-or-200' c true))
   (GET  "/ice.png"            {c :cookies} (send-cookie-pixel-or-200' c true))  ; legacy name for i
-  (GET  "/:vendor/:version"   {c :cookies} (send-cookie-pixel-or-200' c true))  ; for tracker GET support
+  (GET  "/:vendor/:version"   {{v :vendor} :params, p :params, c :cookies} (send-cookie-pixel-or-200-or-redirect' c true v p))  ; for tracker GET support. Need params for potential redirect
   (POST "/:vendor/:version"   {c :cookies} (send-cookie-pixel-or-200' c false)) ; for tracker POST support, no pixel
+  (HEAD "/:vendor/:version"   request responses/send-200)                       ; for webhooks' own checks e.g. Mandrill
   (GET  "/healthcheck"        request responses/send-200)
+  (GET  "/crossdomain.xml"    request send-flash-crossdomain)                   ; for Flash cross-domain posting
   ;GET "/status"              available from expose-metrics-as-json, only in development env
   ;HEAD "/"                   available from beanstalk.clj
   (compojure.route/not-found  responses/send-404))
@@ -53,6 +70,7 @@
    See middleware.clj for details"
  (-> #'routes
    (wrap-cookies)
+   (wrap-params)
    (mware/wrap-if config/development? wrap-reload '(snowplow.clojure-collector.core snowplow.clojure-collector.middleware responses))
    (mware/wrap-if config/development? wrap-stacktrace)
    (mware/wrap-if config/production?  mware/wrap-failsafe)

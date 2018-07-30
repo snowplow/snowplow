@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2014-2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -17,14 +17,8 @@ package common
 package adapters
 package registry
 
-// Java
-import java.math.{BigInteger => JBigInteger}
-
 // Iglu
-import iglu.client.{
-  SchemaKey,
-  Resolver
-}
+import iglu.client.{Resolver, SchemaKey}
 
 // Scalaz
 import scalaz._
@@ -33,11 +27,6 @@ import Scalaz._
 // Joda-Time
 import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormat
-
-// json4s
-import org.json4s._
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
 
 // This project
 import loaders.CollectorPayload
@@ -63,9 +52,9 @@ object CallrailAdapter extends Adapter {
 
   // Create a simple formatter function
   private val CallrailFormatter: FormatterFunc = {
-    val bools = List("first_call", "answered")
-    val ints = List("duration")
-    val dateTimes: JU.DateTimeFields = Some(NonEmptyList("datetime"), CallrailDateTimeFormat)
+    val bools                        = List("first_call", "answered")
+    val ints                         = List("duration")
+    val dateTimes: JU.DateTimeFields = Some((NonEmptyList("datetime"), CallrailDateTimeFormat))
     buildFormatter(bools, ints, dateTimes)
   }
 
@@ -86,13 +75,14 @@ object CallrailAdapter extends Adapter {
     if (params.isEmpty) {
       "Querystring is empty: no CallRail event to process".failNel
     } else {
-      NonEmptyList(RawEvent(
-        api          = payload.api,
-        parameters   = toUnstructEventParams(TrackerVersion, params,
-                         SchemaUris.CallComplete, CallrailFormatter, "srv"),
-        contentType  = payload.contentType,
-        source       = payload.source,
-        context      = payload.context
+
+      NonEmptyList(
+        RawEvent(
+          api         = payload.api,
+          parameters  = toUnstructEventParams(TrackerVersion, params, SchemaUris.CallComplete, CallrailFormatter, "srv"),
+          contentType = payload.contentType,
+          source      = payload.source,
+          context     = payload.context
         )).success
     }
   }

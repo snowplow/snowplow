@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -22,10 +22,10 @@ import Scalaz._
  * Note that the SnowPlow ETL does **not**
  * use exceptions for control flow - it uses
  * Scalaz Validation and ValidationNel objects.
- * 
+ *
  * However two types of exception we do support
  * are:
- * 
+ *
  * 1. FatalEtlException - should always cause
  *    the ETL to die
  * 2. UnexpectedEtlException - ETL may die or
@@ -42,7 +42,7 @@ sealed class EtlException(msg: String) extends RuntimeException(msg)
  * for the exceptions below.
  */
 trait EtlExceptionConstructors[E <: EtlException] {
-	
+
   // Structured type lets us pass in
   // a factory to construct our E
   self: {
@@ -61,8 +61,8 @@ trait EtlExceptionConstructors[E <: EtlException] {
    *        error messages
    * @return a new EtlException of
    *         type E
-   */ 
-  def apply(errs: NonEmptyList[String]): E = 
+   */
+  def apply(errs: NonEmptyList[String]): E =
     apply(errs.list)
 
   /**
@@ -76,8 +76,8 @@ trait EtlExceptionConstructors[E <: EtlException] {
    *        error messages
    * @return a new EtlException of
    *         type E
-   */ 
-  def apply(errs: List[String]): E = 
+   */
+  def apply(errs: List[String]): E =
     fac(formatErrors(errs))
 
   /**
@@ -114,10 +114,10 @@ object FatalEtlException extends EtlExceptionConstructors[FatalEtlException] {
 // TODO: delete when Cascading FailureTrap supports exclusions
 object FatalEtlError {
 
-  def apply(errs: NonEmptyList[String]): FatalEtlError = 
+  def apply(errs: NonEmptyList[String]): FatalEtlError =
     apply(errs.list)
 
-  def apply(errs: List[String]): FatalEtlError = 
+  def apply(errs: List[String]): FatalEtlError =
     FatalEtlError(formatErrors(errs))
 
   private def formatErrors(errs: List[String]): String =

@@ -2,22 +2,22 @@
 
 ## Introduction
 
-The Clojure Collector is an event collector for [SnowPlow] [snowplow], written in Clojure. It sets a third-party cookie, allowing user tracking across domains. It is designed to be easy to setup on [Amazon Elastic Beanstalk] [elastic-beanstalk].
+The Clojure Collector is an event collector for [SnowPlow][snowplow], written in Clojure. It sets a third-party cookie, allowing user tracking across domains. It is designed to be easy to setup on [Amazon Elastic Beanstalk][elastic-beanstalk].
 
-The Clojure Collector relies on [Tomcat] [tomcat] for SnowPlow event logging, and is built on top of [Ring][ring] and [Compojure][compojure].
+The Clojure Collector relies on [Tomcat][tomcat] for SnowPlow event logging, and is built on top of [Ring][ring] and [Compojure][compojure].
 
 ## Find out more
 
 | Technical Docs              | Setup Guide           | Roadmap & Contributing               |
 |-----------------------------|-----------------------|--------------------------------------|
-| ![i1] [techdocs-image]      | ![i2] [setup-image]   | ![i3] [roadmap-image]                |
-| [Technical Docs] [techdocs] | [Setup Guide] [setup] | _coming soon_                        |
+| ![i1][techdocs-image]      | ![i2][setup-image]   | ![i3][roadmap-image]                |
+| [Technical Docs][techdocs] | [Setup Guide][setup] | _coming soon_                        |
 
 ## Copyright and license
 
 The Clojure Collector is copyright 2012-2013 Snowplow Analytics Ltd.
 
-Licensed under the [Apache License, Version 2.0] [license] (the "License");
+Licensed under the [Apache License, Version 2.0][license] (the "License");
 you may not use this software except in compliance with the License.
 
 Unless required by applicable law or agreed to in writing, software

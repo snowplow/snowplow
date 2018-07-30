@@ -2,26 +2,26 @@
 
 ## Introduction
 
-Snowplow::EmrEtlRunner is a Ruby application (built with [Bundler] [bundler]) to run Snowplow's Scalding-based Enrichment process on [Amazon Elastic MapReduce] [amazon-emr] with minimum fuss.
+Snowplow::EmrEtlRunner is a Ruby application (built with [Bundler][bundler]) to run Snowplow's Scalding-based Enrichment process on [Amazon Elastic MapReduce][amazon-emr] with minimum fuss.
 
 ## Find out more
 
 | Technical Docs              | Setup Guide           | Roadmap & Contributing               |         
 |-----------------------------|-----------------------|--------------------------------------|
-| ![i1] [techdocs-image]      | ![i2] [setup-image]   | ![i3] [roadmap-image]                |
-| [Technical Docs] [techdocs] | [Setup Guide] [setup] | _coming soon_                        |
+| ![i1][techdocs-image]      | ![i2][setup-image]   | ![i3][roadmap-image]                |
+| [Technical Docs][techdocs] | [Setup Guide][setup] | _coming soon_                        |
 
 ## Credits and thanks
 
-Snowplow::EmrEtlRunner was primarily developed by [Alex Dean] [alexanderdean] ([Snowplow Analytics] [snowplow-analytics]), with very substantial contributions from [Michael Tibben] [mtibben] ([99designs] [99designs]). Huge thanks Michael!
+Snowplow::EmrEtlRunner was primarily developed by [Alex Dean][alexanderdean] ([Snowplow Analytics][snowplow-analytics]), with very substantial contributions from [Michael Tibben][mtibben] ([99designs][99designs]). Huge thanks Michael!
 
-EmrEtlRunner in turn depends heavily on [Rob Slifka] [rslifka]'s excellent [Elasticity] [elasticity] Ruby gem, which provides programmatic access to Amazon EMR. Big thanks to Rob for writing Elasticity!
+EmrEtlRunner in turn depends heavily on [Rob Slifka][rslifka]'s excellent [Elasticity][elasticity] Ruby gem, which provides programmatic access to Amazon EMR. Big thanks to Rob for writing Elasticity!
 
 ## Copyright and license
 
 Snowplow::EmrEtlRunner is copyright 2012-2014 Snowplow Analytics Ltd.
 
-Licensed under the [Apache License, Version 2.0] [license] (the "License");
+Licensed under the [Apache License, Version 2.0][license] (the "License");
 you may not use this software except in compliance with the License.
 
 Unless required by applicable law or agreed to in writing, software

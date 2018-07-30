@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -18,6 +18,8 @@ package enrichments
 package registry
 
 // Scalaz
+import java.net.URI
+
 import scalaz._
 import Scalaz._
 
@@ -28,7 +30,7 @@ import org.apache.maven.artifact.versioning.DefaultArtifactVersion
 import org.json4s.JValue
 
 // Iglu
-import iglu.client.SchemaKey
+import iglu.client.{SchemaCriterion, SchemaKey}
 import iglu.client.validation.ProcessingMessageMethods._
 
 // This project
@@ -38,7 +40,18 @@ import utils.ScalazJson4sUtils
  * Trait inherited by every enrichment config case class
  */
 trait Enrichment {
-  val version: DefaultArtifactVersion
+
+  /**
+   * Gets the list of files the enrichment requires cached locally.
+   * The default implementation returns an empty list; if an
+   * enrichment requires files, it must override this method.
+   *
+   * @return A list of pairs, where the first entry in the pair
+   * indicates the (remote) location of the source file and the
+   * second indicates the local path where the enrichment expects
+   * to find the file.
+   */
+  def filesToCache: List[(URI, String)] = List.empty
 }
 
 /**
@@ -46,7 +59,7 @@ trait Enrichment {
  */
 trait ParseableEnrichment {
 
-  val supportedSchemaKey: SchemaKey
+  val supportedSchema: SchemaCriterion
 
   /**
    * Tests whether a JSON is parseable by a
@@ -57,13 +70,14 @@ trait ParseableEnrichment {
    *        to be checked
    * @return The JSON or an error message, boxed
    */
-  def isParseable(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[JValue] = {
-    if (schemaKey == supportedSchemaKey) {
+  def isParseable(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[JValue] =
+    if (supportedSchema matches schemaKey) {
       config.success
     } else {
-      ("Schema key %s is not supported. '%s' enrichments must have schema %s.")
-        .format(schemaKey, supportedSchemaKey.name, supportedSchemaKey)
-        .toProcessingMessage.fail.toValidationNel
+      ("Schema key %s is not supported. A '%s' enrichment must have schema '%s'.")
+        .format(schemaKey, supportedSchema.name, supportedSchema)
+        .toProcessingMessage
+        .fail
+        .toValidationNel
     }
-  }
 }

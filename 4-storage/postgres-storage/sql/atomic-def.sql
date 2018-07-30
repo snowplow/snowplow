@@ -1,4 +1,4 @@
--- Copyright (c) 2013 Snowplow Analytics Ltd. All rights reserved.
+-- Copyright (c) 2013-2015 Snowplow Analytics Ltd. All rights reserved.
 --
 -- This program is licensed to you under the Apache License Version 2.0,
 -- and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -9,11 +9,11 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.3.0
+-- Version:     0.7.0
 -- URL:         -
 --
--- Authors:     Yali Sassoon, Alex Dean
--- Copyright:   Copyright (c) 2013 Snowplow Analytics Ltd
+-- Authors:     Yali Sassoon, Alex Dean, Fred Blundun
+-- Copyright:   Copyright (c) 2013-2015 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
 CREATE SCHEMA "atomic";
@@ -23,12 +23,11 @@ CREATE TABLE "atomic"."events" (
 	"app_id" varchar(255),
 	"platform" varchar(255),
 	-- Date/time
-	"etl_tstamp" timestamp,                 -- Added in 0.3.0
+	"etl_tstamp" timestamp,
 	"collector_tstamp" timestamp NOT NULL,
-	"dvce_tstamp" timestamp,
+	"dvce_created_tstamp" timestamp,
 	-- Date/time
 	"event" varchar(128),
-	                                        -- Removed event_vendor in 0.3.0
 	"event_id" char(36) NOT NULL,
 	"txn_id" integer,
 	-- Versioning
@@ -38,9 +37,9 @@ CREATE TABLE "atomic"."events" (
 	"v_etl" varchar(100) NOT NULL,
 	-- User and visit
 	"user_id" varchar(255),
-	"user_ipaddress" varchar(19),
+	"user_ipaddress" varchar(45),
 	"user_fingerprint" varchar(50),
-	"domain_userid" varchar(16),
+	"domain_userid" varchar(36),
 	"domain_sessionidx" smallint,
 	"network_userid" varchar(38),
 	-- Location
@@ -50,12 +49,12 @@ CREATE TABLE "atomic"."events" (
 	"geo_zipcode" varchar(15),
 	"geo_latitude" double precision,
 	"geo_longitude" double precision,
-	"geo_region_name" varchar(100),         -- Added in 0.3.0
+	"geo_region_name" varchar(100),
 	-- IP lookups
-	"ip_isp" varchar(100),                  -- Added in 0.3.0
-	"ip_organization" varchar(100),         -- Added in 0.3.0
-	"ip_domain" varchar(100),               -- Added in 0.3.0
-	"ip_netspeed" varchar(100),             -- Added in 0.3.0
+	"ip_isp" varchar(100),
+	"ip_organization" varchar(100),
+	"ip_domain" varchar(100),
+	"ip_netspeed" varchar(100),
 	-- Page
 	"page_url" text,
 	"page_title" varchar(2000),
@@ -64,16 +63,16 @@ CREATE TABLE "atomic"."events" (
 	"page_urlscheme" varchar(16),
 	"page_urlhost" varchar(255),
 	"page_urlport" integer,
-	"page_urlpath" varchar(1000),
-	"page_urlquery" varchar(3000),
-	"page_urlfragment" varchar(255),
+	"page_urlpath" varchar(3000),
+	"page_urlquery" varchar(6000),
+	"page_urlfragment" varchar(3000),
 	-- Referrer URL components
 	"refr_urlscheme" varchar(16),
 	"refr_urlhost" varchar(255),
 	"refr_urlport" integer,
-	"refr_urlpath" varchar(1000),
-	"refr_urlquery" varchar(3000),
-	"refr_urlfragment" varchar(255),
+	"refr_urlpath" varchar(6000),
+	"refr_urlquery" varchar(6000),
+	"refr_urlfragment" varchar(3000),
 	-- Referrer details
 	"refr_medium" varchar(25),
 	"refr_source" varchar(50),
@@ -84,17 +83,12 @@ CREATE TABLE "atomic"."events" (
 	"mkt_term" varchar(255),
 	"mkt_content" varchar(500),
 	"mkt_campaign" varchar(255),
-	-- Custom contexts
-	"contexts" json,
 	-- Custom structured event
-	"se_category" varchar(255),
-	"se_action" varchar(255),
-	"se_label" varchar(255),
-	"se_property" varchar(255),
+	"se_category" varchar(1000),
+	"se_action" varchar(1000),
+	"se_label" varchar(1000),
+	"se_property" varchar(1000),
 	"se_value" double precision,
-	-- Custom unstructured event
-	                                        -- Removed ue_name in 0.3.0
-	"unstruct_event" json,                  -- Renamed ue_properties to unstruct_event in 0.3.0
 	-- Ecommerce
 	"tr_orderid" varchar(255),
 	"tr_affiliation" varchar(255),
@@ -151,7 +145,41 @@ CREATE TABLE "atomic"."events" (
 	"doc_charset" varchar(128),
 	"doc_width" integer,
 	"doc_height" integer,
-	PRIMARY KEY ("event_id")
+	-- Currency
+	"tr_currency" char(3),
+	"tr_total_base" decimal(18, 2),
+	"tr_tax_base" decimal(18, 2),
+	"tr_shipping_base" decimal(18, 2),
+	"ti_currency" char(3),
+	"ti_price_base" decimal(18, 2),
+	"base_currency" char(3),
+	-- Geolocation
+	"geo_timezone" varchar(64),
+	-- Click ID
+	"mkt_clickid" varchar(128),
+	"mkt_network" varchar(64),
+	-- ETL tags
+	"etl_tags" varchar(500),
+	-- Time event was sent
+	"dvce_sent_tstamp" timestamp,
+	-- Referer
+	"refr_domain_userid" varchar(36),
+	"refr_dvce_tstamp" timestamp,
+	-- Session ID
+	"domain_sessionid" char(36),
+	-- Derived timestamp
+	"derived_tstamp" timestamp,
+	-- Event schema
+	"event_vendor" varchar(1000),
+	"event_name" varchar(1000),
+	"event_format" varchar(128),
+	"event_version" varchar(128),
+	-- Event fingerprint
+	"event_fingerprint" varchar(128),
+	-- True timestamp
+	"true_tstamp" timestamp
 )
 WITH (OIDS=FALSE)
 ;
+
+COMMENT ON TABLE "atomic"."events" IS '0.7.0';

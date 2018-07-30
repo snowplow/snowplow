@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2014-2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -20,13 +20,6 @@ package registry
 // Java
 import java.net.URI
 
-// Scala
-import scala.collection.JavaConversions._
-import scala.reflect.BeanProperty
-
-// Utils
-import org.apache.http.client.utils.URLEncodedUtils
-
 // Maven Artifact
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion
 
@@ -35,17 +28,13 @@ import scalaz._
 import Scalaz._
 
 // json4s
-import org.json4s.JValue
+import org.json4s.{DefaultFormats, JValue}
 
-// Iglu
-import iglu.client.SchemaKey
+import iglu.client.{SchemaCriterion, SchemaKey}
 
 // This project
 import utils.{ConversionUtils => CU}
-import utils.MapTransformer.{
-  SourceMap,
-  TransformFunc
-}
+import utils.MapTransformer.{SourceMap, TransformFunc}
 import utils.ScalazJson4sUtils
 
 /**
@@ -54,29 +43,49 @@ import utils.ScalazJson4sUtils
  */
 object CampaignAttributionEnrichment extends ParseableEnrichment {
 
-  val supportedSchemaKey = SchemaKey("com.snowplowanalytics.snowplow", "campaign_attribution", "jsonschema", "1-0-0")
+  implicit val formats = DefaultFormats
+
+  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "campaign_attribution", "jsonschema", 1, 0)
+
+  val DefaultNetworkMap = Map(
+    "gclid"   -> "Google",
+    "msclkid" -> "Microsoft",
+    "dclid"   -> "DoubleClick"
+  )
 
   /**
    * Creates a CampaignAttributionEnrichment instance from a JValue.
-   * 
+   *
    * @param config The referer_parser enrichment JSON
    * @param schemaKey The SchemaKey provided for the enrichment
-   *        Must be a supported SchemaKey for this enrichment   
+   *        Must be a supported SchemaKey for this enrichment
    * @return a configured CampaignAttributionEnrichment instance
    */
-  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[CampaignAttributionEnrichment] = {
-    isParseable(config, schemaKey).flatMap( conf => {
+  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[CampaignAttributionEnrichment] =
+    isParseable(config, schemaKey).flatMap(conf => {
       (for {
-        medium    <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "fields", "mktMedium")
-        source    <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "fields", "mktSource")
-        term      <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "fields", "mktTerm")
-        content   <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "fields", "mktContent")
-        campaign  <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "fields", "mktCampaign")
+        medium   <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "fields", "mktMedium")
+        source   <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "fields", "mktSource")
+        term     <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "fields", "mktTerm")
+        content  <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "fields", "mktContent")
+        campaign <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "fields", "mktCampaign")
 
-        enrich =  CampaignAttributionEnrichment(medium, source, term, content, campaign)
+        customClickMap = ScalazJson4sUtils
+          .extract[Map[String, String]](config, "parameters", "fields", "mktClickId")
+          .fold(
+            // Assign empty Map on missing property for backwards compatibility with schema version 1-0-0
+            e => Map(),
+            s => s
+          )
+
+        enrich = CampaignAttributionEnrichment(medium,
+                                               source,
+                                               term,
+                                               content,
+                                               campaign,
+                                               (DefaultNetworkMap ++ customClickMap).toList)
       } yield enrich).toValidationNel
     })
-  }
 
 }
 
@@ -88,34 +97,37 @@ object CampaignAttributionEnrichment extends ParseableEnrichment {
  * @param term Campaign term
  * @param content Campaign content
  * @param campaign Campaign name
- *
+ * @param clickId Click ID
+ * @param network Advertising network
  */
 case class MarketingCampaign(
-  medium:   Option[String],
-  source:   Option[String],
-  term:     Option[String],
-  content:  Option[String],
-  campaign: Option[String]  
-  )
+  medium: Option[String],
+  source: Option[String],
+  term: Option[String],
+  content: Option[String],
+  campaign: Option[String],
+  clickId: Option[String],
+  network: Option[String]
+)
 
 /**
  * Config for a campaign_attribution enrichment
  *
- * @param mktMedium List of marketing medium parameters
- * @param mktSource List of marketing source parameters
- * @param mktTerm List of marketing term parameters
- * @param mktContent List of marketing content parameters
- * @param mktCampaign List of marketing campaign parameters
+ * @param mediumParameters List of marketing medium parameters
+ * @param sourceParameters List of marketing source parameters
+ * @param termParameters List of marketing term parameters
+ * @param contentParameters List of marketing content parameters
+ * @param campaignParameters List of marketing campaign parameters
+ * @param mktClick: Map of click ID parameters to networks
  */
 case class CampaignAttributionEnrichment(
-  mktMedium:   List[String],
-  mktSource:   List[String],
-  mktTerm:     List[String],
-  mktContent:  List[String],
-  mktCampaign: List[String]
-  ) extends Enrichment {
-
-  val version = new DefaultArtifactVersion("0.1.0")
+  mediumParameters: List[String],
+  sourceParameters: List[String],
+  termParameters: List[String],
+  contentParameters: List[String],
+  campaignParameters: List[String],
+  clickIdParameters: List[(String, String)]
+) extends Enrichment {
 
   /**
    * Find the first string in parameterList which is a key of
@@ -132,35 +144,25 @@ case class CampaignAttributionEnrichment(
   /**
    * Extract the marketing fields from a URL.
    *
-   * @param uri The URI to extract
+   * @param nvPairs The querystring to extract
    *        marketing fields from
-   * @param encoding The encoding of
-   *        the URI being parsed
    * @return the MarketingCampaign
    *         or an error message,
    *         boxed in a Scalaz
    *         Validation
    */
-  def extractMarketingFields(uri: URI, encoding: String): ValidationNel[String, MarketingCampaign] = {
+  def extractMarketingFields(nvPairs: SourceMap): ValidationNel[String, MarketingCampaign] = {
+    val medium   = getFirstParameter(mediumParameters, nvPairs)
+    val source   = getFirstParameter(sourceParameters, nvPairs)
+    val term     = getFirstParameter(termParameters, nvPairs)
+    val content  = getFirstParameter(contentParameters, nvPairs)
+    val campaign = getFirstParameter(campaignParameters, nvPairs)
 
-    val parameters = try {
-      URLEncodedUtils.parse(uri, encoding)
-    } catch {
-      case _ => return "Could not parse uri [%s]".format(uri).failNel[MarketingCampaign]
-    }
+    val (clickId, network) =
+      Unzip[Option].unzip(
+        clickIdParameters.find(pair => nvPairs.contains(pair._1)).map(pair => (nvPairs(pair._1), pair._2)))
 
-    // Querystring map
-    val sourceMap: SourceMap = parameters.map(p => (p.getName -> p.getValue)).toList.toMap
-
-    val decodeString: TransformFunc = CU.decodeString(encoding, _, _)
-
-    val medium = getFirstParameter(mktMedium, sourceMap)
-    val source = getFirstParameter(mktSource, sourceMap)
-    val term = getFirstParameter(mktTerm, sourceMap)
-    val content = getFirstParameter(mktContent, sourceMap)
-    val campaign = getFirstParameter(mktCampaign, sourceMap)
-
-    MarketingCampaign(medium, source, term, content, campaign).success.toValidationNel
-  }   
+    MarketingCampaign(medium, source, term, content, campaign, clickId, network).success.toValidationNel
+  }
 
 }

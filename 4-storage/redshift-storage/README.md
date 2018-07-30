@@ -2,7 +2,7 @@
 
 ## Introduction
 
-[Amazon Redshift] [redshift] is a fully-managed, Petabyte scale datawarehouse
+[Amazon Redshift][redshift] is a fully-managed, Petabyte scale datawarehouse
 provided by Amazon. It is an excellent location for storing SnowPlow data, as it
 enables you to plugin a wide variety of analytics tools directly onto SnowPlow data.
 
@@ -17,14 +17,14 @@ The contents of this folder are as follows:
 
 | Technical Docs              | Setup Guide           | Roadmap & Contributing               |         
 |-----------------------------|-----------------------|--------------------------------------|
-| ![i1] [techdocs-image]      | ![i2] [setup-image]   | ![i3] [roadmap-image]                |
-| [Technical Docs] [techdocs] | [Setup Guide] [setup] | _coming soon_                        |
+| ![i1][techdocs-image]      | ![i2][setup-image]   | ![i3][roadmap-image]                |
+| [Technical Docs][techdocs] | [Setup Guide][setup] | _coming soon_                        |
 
 ## Copyright and license
 
 redshift-storage is copyright 2012-2013 Snowplow Analytics Ltd.
 
-Licensed under the [Apache License, Version 2.0] [license] (the "License");
+Licensed under the [Apache License, Version 2.0][license] (the "License");
 you may not use this software except in compliance with the License.
 
 Unless required by applicable law or agreed to in writing, software

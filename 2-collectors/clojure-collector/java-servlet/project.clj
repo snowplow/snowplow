@@ -13,8 +13,12 @@
 ;;;; Copyright: Copyright (c) 2012-2013 Snowplow Analytics Ltd
 ;;;; License:   Apache License Version 2.0
 
-(defproject snowplow/clojure-collector "0.9.0" ;; MUST also bump version in server.xml
-  :license {:name "Apache Version 2.0" 
+(require 'cemerick.pomegranate.aether)
+(cemerick.pomegranate.aether/register-wagon-factory!
+  "http" #(org.apache.maven.wagon.providers.http.HttpWagon.))
+
+(defproject snowplow/clojure-collector "2.0.0" ;; MUST also bump version in server.xml
+  :license {:name "Apache Version 2.0"
   :url "http://www.apache.org/licenses/LICENSE-2.0"}
   :description "A SnowPlow event collector written in Clojure. AWS Elastic Beanstalk compatible."
   :dependencies     [[org.clojure/clojure "1.4.0"]
@@ -30,3 +34,4 @@
   :plugins          [[lein-ring "0.8.3"]
                      [lein-beanstalk "0.2.6"]]
   :ring {:handler snowplow.clojure-collector.beanstalk/app}) ; .beanstalk -> .core if you don't need Beanstalk support
+

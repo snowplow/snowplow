@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -37,6 +37,26 @@ class LoaderSpec extends Specification with DataTables with ValidationMatchers {
 
   import LoaderSpec._
 
+  "getLoader" should {
+
+    "return the CloudfrontLoader" in {
+      Loader.getLoader("cloudfront") must beSuccessful(CloudfrontLoader)
+    }
+
+    "return the CljTomcatLoader" in {
+      Loader.getLoader("clj-tomcat") must beSuccessful(CljTomcatLoader)
+    }
+
+    "return the ThriftLoader" in {
+      Loader.getLoader("thrift") must beSuccessful(ThriftLoader)
+    }
+
+    "return the NDJSON loader" in {
+      Loader.getLoader("ndjson/example.test/v1") must beSuccessful(NdjsonLoader("example.test/v1"))
+    }
+
+  }
+
   "extractGetPayload" should {
 
     val Encoding = "UTF-8"
@@ -44,13 +64,20 @@ class LoaderSpec extends Specification with DataTables with ValidationMatchers {
     // TODO: add more tests
     "return a Success-boxed NonEmptyList of NameValuePairs for a valid or empty querystring" in {
 
-      "SPEC NAME"                                   || "QUERYSTRING"                                                                         | "EXP. NEL"                                                                                                      |
-      "Simple querystring #1"                       !! "e=pv&dtm=1376487150616&tid=483686".some                                              ! toNameValuePairs("e" -> "pv", "dtm" -> "1376487150616", "tid" -> "483686")                                      |
-      "Simple querystring #2"                       !! "page=Celestial%2520Tarot%2520-%2520Psychic%2520Bazaar&vp=1097x482&ds=1097x1973".some ! toNameValuePairs("page" -> "Celestial%20Tarot%20-%20Psychic%20Bazaar", "vp" -> "1097x482", "ds" -> "1097x1973") |
-      "Superfluous ? ends up in first param's name" !! "?e=pv&dtm=1376487150616&tid=483686".some                                             ! toNameValuePairs("?e" -> "pv", "dtm" -> "1376487150616", "tid" -> "483686")                                     |
-      "Empty querystring"                           !! None                                                                                  ! toNameValuePairs()                                                                                              |> {
-
-        (_, qs, expected) => {
+      "SPEC NAME"               || "QUERYSTRING" | "EXP. NEL" |
+        "Simple querystring #1" !! "e=pv&dtm=1376487150616&tid=483686".some ! toNameValuePairs("e" -> "pv",
+                                                                                               "dtm" -> "1376487150616",
+                                                                                               "tid" -> "483686") |
+        "Simple querystring #2" !! "page=Celestial%2520Tarot%2520-%2520Psychic%2520Bazaar&vp=1097x482&ds=1097x1973".some ! toNameValuePairs(
+          "page" -> "Celestial%20Tarot%20-%20Psychic%20Bazaar",
+          "vp"   -> "1097x482",
+          "ds"   -> "1097x1973") |
+        "Superfluous ? ends up in first param's name" !! "?e=pv&dtm=1376487150616&tid=483686".some ! toNameValuePairs(
+          "?e"  -> "pv",
+          "dtm" -> "1376487150616",
+          "tid" -> "483686") |
+        "Empty querystring" !! None ! toNameValuePairs() |> { (_, qs, expected) =>
+        {
           loader.parseQuerystring(qs, Encoding) must beSuccessful(expected)
         }
       }

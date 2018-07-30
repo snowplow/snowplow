@@ -19,7 +19,7 @@ buildscript {
     }
 }
 
-version = '0.1.0'
+version = '0.2.0'
 
 configurations {
   provided
@@ -40,8 +40,8 @@ dependencies {
     compile 'commons-codec:commons-codec:1.5'
 
     // Tomcat dependencies
-    provided 'org.apache.tomcat:tomcat-catalina:7.0.29'
-    provided 'org.apache.tomcat:tomcat-coyote:7.0.29'
+    provided 'org.apache.tomcat:tomcat-catalina:8.0.15'
+    provided 'org.apache.tomcat:tomcat-coyote:8.0.15'
 
     // Declare the dependency for your favourite test framework you want to use in your tests.
     // TestNG is also supported by the Gradle Test task. Just change the

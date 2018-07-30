@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the
@@ -13,53 +13,94 @@
  * express or implied.  See the Apache License Version 2.0 for the specific
  * language governing permissions and limitations there under.
  */
+
+// SBT
 import sbt._
 import Keys._
+
+// Bintray plugin
+import bintray.BintrayPlugin._
+import bintray.BintrayKeys._
+
+// Scalafmt plugin
+import com.lucidchart.sbt.scalafmt.ScalafmtPlugin._
+import com.lucidchart.sbt.scalafmt.ScalafmtCorePlugin.autoImport._
 
 object BuildSettings {
 
   // Basic settings for our app
-  lazy val basicSettings = Seq[Setting[_]](
+  lazy val basicSettings = Seq(
     organization          :=  "com.snowplowanalytics",
-    version               :=  "0.8.0",
-    description           :=  "Common functionality for enriching raw Snowplow events",
-    scalaVersion          :=  "2.10.1",
-    scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8",
-                                  "-unchecked", "-feature",
-                                  "-target:jvm-1.7"),
+    scalaVersion          :=  "2.11.11",
+    scalacOptions         :=  compilerOptions,
     scalacOptions in Test :=  Seq("-Yrangepos"),
+    javacOptions          :=  javaCompilerOptions,
     resolvers             ++= Dependencies.resolutionRepos
   )
 
-  // Makes our SBT app settings available from within the ETL
-  lazy val scalifySettings = Seq(sourceGenerators in Compile <+= (sourceManaged in Compile, version, name, organization, scalaVersion) map { (d, v, n, o, sv) =>
-    val file = d / "settings.scala"
-    IO.write(file, """package com.snowplowanalytics.snowplow.enrich.common.generated
-      |object ProjectSettings {
-      |  val version = "%s"
-      |  val name = "%s"
-      |  val organization = "%s"
-      |  val scalaVersion = "%s"
-      |}
-      |""".stripMargin.format(v, n, o, sv))
-    Seq(file)
-  })
-
-  // For MaxMind support in the test suite
-  import Dependencies._
-
-  // Publish settings
-  // TODO: update with ivy credentials etc when we start using Nexus
-  lazy val publishSettings = Seq[Setting[_]](
-   
-    crossPaths := false,
-    publishTo <<= version { version =>
-      val basePath = "target/repo/%s".format {
-        if (version.trim.endsWith("SNAPSHOT")) "snapshots/" else "releases/"
-      }
-      Some(Resolver.file("Local Maven repository", file(basePath)) transactional())
-    }
+  lazy val compilerOptions = Seq(
+    "-deprecation",
+    "-encoding", "UTF-8",
+    "-feature",
+    "-language:existentials",
+    "-language:higherKinds",
+    "-language:implicitConversions",
+    "-unchecked",
+    "-Yno-adapted-args",
+    "-Ywarn-dead-code",
+    "-Ywarn-numeric-widen",
+    "-Xfuture",
+    "-Xlint"
   )
 
-  lazy val buildSettings = basicSettings ++ scalifySettings ++ publishSettings
+  lazy val javaCompilerOptions = Seq(
+    "-source", "1.8",
+    "-target", "1.8"
+  )
+
+  // Makes our SBT app settings available from within the ETL
+  lazy val scalifySettings = Seq(
+    sourceGenerators in Compile += Def.task {
+      val file = (sourceManaged in Compile).value / "settings.scala"
+      IO.write(file, """package com.snowplowanalytics.snowplow.enrich.common.generated
+        |object ProjectSettings {
+        |  val version = "%s"
+        |  val name = "%s"
+        |  val organization = "%s"
+        |  val scalaVersion = "%s"
+        |}
+        |""".stripMargin.format(version.value, name.value, organization.value, scalaVersion.value))
+      Seq(file)
+    }.taskValue
+  )
+
+  lazy val buildSettings = basicSettings ++ scalifySettings
+
+  lazy val publishSettings = bintraySettings ++ Seq(
+    publishMavenStyle := true,
+    publishArtifact := true,
+    publishArtifact in Test := false,
+    licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0.html")),
+    bintrayOrganization := Some("snowplow"),
+    bintrayRepository := "snowplow-maven",
+    pomIncludeRepository := { _ => false },
+    homepage := Some(url("http://snowplowanalytics.com")),
+    scmInfo := Some(ScmInfo(url("https://github.com/snowplow/snowplow"),
+      "scm:git@github.com:snowplow/snowplow.git")),
+    pomExtra := (
+      <developers>
+        <developer>
+          <name>Snowplow Analytics Ltd</name>
+          <email>support@snowplowanalytics.com</email>
+          <organization>Snowplow Analytics Ltd</organization>
+          <organizationUrl>http://snowplowanalytics.com</organizationUrl>
+        </developer>
+      </developers>)
+  )
+
+  lazy val formatting = Seq(
+    scalafmtConfig    := file(".scalafmt.conf"),
+    scalafmtOnCompile := true,
+    scalafmtVersion   := "1.3.0"
+  )
 }

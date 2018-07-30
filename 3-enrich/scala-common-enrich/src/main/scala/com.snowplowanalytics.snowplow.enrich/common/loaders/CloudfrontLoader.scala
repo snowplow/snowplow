@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -13,6 +13,10 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
+// Scala
+import scala.util.control.NonFatal
+import scala.util.matching.Regex
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -22,7 +26,9 @@ import org.apache.commons.lang3.StringUtils
 
 // Joda-Time
 import org.joda.time.DateTime
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
+
+// This project
+import utils.ConversionUtils.singleEncodePcts
 
 /**
  * The dedicated loader for events
@@ -48,37 +54,49 @@ object CloudfrontLoader extends Loader[String] {
   // The name of this collector
   private val CollectorName = "cloudfront"
 
-  // Define the regular expression for extracting the fields
-  // Adapted from Amazon's own cloudfront-loganalyzer.tgz
-  private val CfRegex = {
-    val w = "[\\s]+"   // Whitespace regex
-    val ow = "(?:" + w // Optional whitespace begins
-    
-    // Our regex follows
-    (   "([\\S]+)"  +   // Date          / date
-    w + "([\\S]+)"  +   // Time          / time
-    w + "([\\S]+)"  +   // EdgeLocation  / x-edge-location
-    w + "([\\S]+)"  +   // BytesSent     / sc-bytes
-    w + "([\\S]+)"  +   // IPAddress     / c-ip
-    w + "([\\S]+)"  +   // Operation     / cs-method
-    w + "([\\S]+)"  +   // Domain        / cs(Host)
-    w + "([\\S]+)"  +   // Object        / cs-uri-stem
-    w + "([\\S]+)"  +   // HttpStatus    / sc-status
-    w + "([\\S]+)"  +   // Referer       / cs(Referer)
-    w + "([\\S]+)"  +   // UserAgent     / cs(User Agent)
-    w + "([\\S]+)"  +   // Querystring   / cs-uri-query
-    ow + "[\\S]*"   +   // CookieHeader  / cs(Cookie)         added 12 Sep 2012 // TODO: why the *?
-    w +  "[\\S]+"   +   // ResultType    / x-edge-result-type added 12 Sep 2012
-    w +  "[\\S]+)?" +   // X-Amz-Cf-Id   / x-edge-request-id  added 12 Sep 2012
-    ow + "[\\S]+"   +   // XHostHeader   / x-host-header      added 21 Oct 2013
-    w +  "[\\S]+"   +   // CsProtocol    / cs-protocol        added 21 Oct 2013
-    w +  "[\\S]+)?" +   // CsBytes       / cs-bytes           added 21 Oct 2013
-    ow + "[\\S]+"   +   // TimeTaken     / time-taken         added 29 Apr 2014
-    w +      ".*)?").r  // Anything added in the future by Amazon  
-  }
+  private val originalFields = List(
+    "([\\S]+)", // Date          / date
+    "([\\S]+)", // Time          / time
+    "([\\S]+)", // EdgeLocation  / x-edge-location
+    "([\\S]+)", // BytesSent     / sc-bytes
+    "([\\S]+)", // IPAddress     / c-ip
+    "([\\S]+)", // Operation     / cs-method
+    "([\\S]+)", // Domain        / cs(Host)
+    "([\\S]+)", // Object        / cs-uri-stem
+    "([\\S]+)", // HttpStatus    / sc-status
+    "([\\S]+)", // Referer       / cs(Referer)
+    "([\\S]+)", // UserAgent     / cs(User Agent)
+    "([\\S]+)" // Querystring   / cs-uri-query
+  )
+  private val fields12Sep2012 = originalFields ++ List(
+    "[\\S]*", // CookieHeader  / cs(Cookie)         added 12 Sep 2012 // TODO: why the *?
+    "[\\S]+", // ResultType    / x-edge-result-type added 12 Sep 2012
+    "[\\S]+" // X-Amz-Cf-Id   / x-edge-request-id  added 12 Sep 2012
+  )
+  private val fields21Oct2013 = fields12Sep2012 ++ List(
+    "[\\S]+", // XHostHeader   / x-host-header      added 21 Oct 2013
+    "[\\S]+", // CsProtocol    / cs-protocol        added 21 Oct 2013
+    "[\\S]+" // CsBytes       / cs-bytes           added 21 Oct 2013
+  )
+  private val fields29Apr2014 = fields21Oct2013 ++ List(
+    "[\\S]+" // TimeTaken     / time-taken         added 29 Apr 2014
+  )
+  private val fields01Jul2014 = fields29Apr2014 ++ List(
+    "([\\S]+)", // ForwardedFor  / x-forwarded-for             added 01 Jul 2014
+    "[\\S]+", // SslProtocol   / ssl-protocol                added 01 Jul 2014
+    "[\\S]+", // SslCipher     / ssl-cipher                  added 01 Jul 2014
+    "[\\S]+" // EdgeResResult / x-edge-response-result-type added 01 Jul 2014
+  )
+
+  private val CfOriginalPlusAdditionalRegex = toRegex(originalFields, additionalFields = true)
+  private val CfOriginalRegex               = toRegex(originalFields)
+  private val Cf12Sep2012Regex              = toRegex(fields12Sep2012)
+  private val Cf21Oct2013Regex              = toRegex(fields21Oct2013)
+  private val Cf29Apr2014Regex              = toRegex(fields29Apr2014)
+  private val Cf01Jul2014Regex              = toRegex(fields01Jul2014, additionalFields = true)
 
   /**
-   * Converts the source string into a 
+   * Converts the source string into a
    * ValidatedMaybeCollectorPayload.
    *
    * @param line A line of data to convert
@@ -88,63 +106,32 @@ object CloudfrontLoader extends Loader[String] {
    *         in a Scalaz ValidatioNel.
    */
   def toCollectorPayload(line: String): ValidatedMaybeCollectorPayload = line match {
-    
+
     // 1. Header row
     case h if (h.startsWith("#Version:") || h.startsWith("#Fields:")) =>
       None.success
-    
+
     // 2. Not a GET request
-    case CfRegex(_, _, _, _, _, op, _, _, _, _, _, _) if op.toUpperCase != "GET" =>
+    case CfOriginalPlusAdditionalRegex(_, _, _, _, _, op, _, _, _, _, _, _) if op.toUpperCase != "GET" =>
       s"Only GET operations supported for CloudFront Collector, not ${op.toUpperCase}".failNel[Option[CollectorPayload]]
 
-    // 4. Row matches CloudFront format
-    case CfRegex(date,
-                 time,
-                 _,
-                 _,
-                 ip,
-                 _,
-                 _,
-                 objct,
-                 _,
-                 rfr,
-                 ua,
-                 qs) => {
+    // 3. Row matches original CloudFront format
+    case CfOriginalRegex(date, time, _, _, ip, _, _, objct, _, rfr, ua, qs) =>
+      CloudfrontLogLine(date, time, ip, objct, rfr, ua, qs).toValidatedMaybeCollectorPayload
 
-      // Validations, and let's strip double-encodings
-      val timestamp = toTimestamp(date, time)
-      val querystring = {
-        val q = toOption(singleEncodePcts(qs))
-        parseQuerystring(q, CollectorEncoding)
-      }
+    case Cf12Sep2012Regex(date, time, _, _, ip, _, _, objct, _, rfr, ua, qs) =>
+      CloudfrontLogLine(date, time, ip, objct, rfr, ua, qs).toValidatedMaybeCollectorPayload
 
-      // No validation (yet) on the below
-      val userAgent  = singleEncodePcts(ua)
-      val refr = singleEncodePcts(rfr)
-      val referer = toOption(refr) map toCleanUri
+    case Cf21Oct2013Regex(date, time, _, _, ip, _, _, objct, _, rfr, ua, qs) =>
+      CloudfrontLogLine(date, time, ip, objct, rfr, ua, qs).toValidatedMaybeCollectorPayload
 
-      val api = CollectorApi.parse(objct)
+    case Cf29Apr2014Regex(date, time, _, _, ip, _, _, objct, _, rfr, ua, qs) =>
+      CloudfrontLogLine(date, time, ip, objct, rfr, ua, qs).toValidatedMaybeCollectorPayload
 
-      (timestamp.toValidationNel |@| querystring.toValidationNel |@| api.toValidationNel) { (t, q, a) =>
-        CollectorPayload(
-          q,
-          CollectorName,
-          CollectorEncoding,
-          None, // No hostname for CloudFront
-          t,
-          toOption(ip),
-          toOption(userAgent),
-          referer,
-          Nil,  // No headers for CloudFront
-          None, // No collector-set user ID for CloudFront
-          a,    // API vendor/version
-          None, // No content type
-          None  // No request body
-        ).some
-      }
-    }
+    case Cf01Jul2014Regex(date, time, _, _, ip, _, _, objct, _, rfr, ua, qs, forwardedFor) =>
+      CloudfrontLogLine(date, time, ip, objct, rfr, ua, qs, forwardedFor).toValidatedMaybeCollectorPayload
 
-    // 3. Row not recognised
+    // 4. Row not recognised
     case _ => "Line does not match CloudFront header or data row formats".failNel[Option[CollectorPayload]]
   }
 
@@ -162,7 +149,10 @@ object CloudfrontLoader extends Loader[String] {
     try {
       DateTime.parse("%sT%s+00:00".format(date, time)).success // Construct a UTC ISO date from CloudFront date and time
     } catch {
-      case e => "Unexpected exception converting date [%s] and time [%s] to timestamp: [%s]".format(date, time, e.getMessage).fail
+      case NonFatal(e) =>
+        "Unexpected exception converting date [%s] and time [%s] to timestamp: [%s]"
+          .format(date, time, e.getMessage)
+          .fail
     }
 
   /**
@@ -176,59 +166,74 @@ object CloudfrontLoader extends Loader[String] {
   def toOption(field: String): Option[String] = Option(field) match {
     case Some("-") => None
     case Some("")  => None
-    case s => s // Leaves any other Some(x) or None as-is
+    case s         => s // Leaves any other Some(x) or None as-is
   }
 
   /**
    * 'Cleans' a string to make it parsable by
    * URLDecoder.decode.
-   * 
+   *
    * The '%' character seems to be appended to the
    * end of some URLs in the CloudFront logs, causing
    * Exceptions when using URLDecoder.decode. Perhaps
    * a CloudFront bug?
    *
-   * @param s The String to clean
+   * @param uri The String to clean
    * @return the cleaned string
    */
-  private[loaders] def toCleanUri(uri: String): String = 
+  private[loaders] def toCleanUri(uri: String): String =
     StringUtils.removeEnd(uri, "%")
 
-  /**
-   * On 17th August 2013, Amazon made an
-   * unannounced change to their CloudFront
-   * log format - they went from always encoding
-   * % characters, to only encoding % characters
-   * which were not previously encoded. For a
-   * full discussion of this see:
-   *
-   * https://forums.aws.amazon.com/thread.jspa?threadID=134017&tstart=0#
-   *
-   * On 14th September 2013, Amazon rolled out a further fix,
-   * from which point onwards all fields, including the
-   * referer and useragent, would have %s double-encoded.
-   *
-   * This causes issues, because the ETL process expects
-   * referers and useragents to be only single-encoded.
-   *
-   * This function turns a double-encoded percent (%) into
-   * a single-encoded one.
-   *
-   * Examples:
-   * 1. "page=Celestial%25Tarot"          -   no change (only single encoded)
-   * 2. "page=Dreaming%2520Way%2520Tarot" -> "page=Dreaming%20Way%20Tarot"
-   * 3. "loading 30%2525 complete"        -> "loading 30%25 complete"
-   *
-   * Limitation of this approach: %2588 is ambiguous. Is it a:
-   * a) A double-escaped caret "ˆ" (%2588 -> %88 -> ^), or:
-   * b) A single-escaped "%88" (%2588 -> %88)
-   *
-   * This code assumes it's a).
-   *
-   * @param str The String which potentially has double-encoded %s
-   * @return the String with %s now single-encoded
-   */
-  private[loaders] def singleEncodePcts(str: String): String =
-    str
-      .replaceAll("%25([0-9a-fA-F][0-9a-fA-F])", "%$1") // Decode %25XX to %XX
+  private def toRegex(fields: List[String], additionalFields: Boolean = false): Regex = {
+    val whitespaceRegex = "[\\s]+"
+    if (additionalFields)
+      fields.mkString("", whitespaceRegex, ".*").r
+    else
+      fields.mkString(whitespaceRegex).r
+  }
+
+  private case class CloudfrontLogLine(date: String,
+                                       time: String,
+                                       lastIp: String,
+                                       objct: String,
+                                       rfr: String,
+                                       ua: String,
+                                       qs: String,
+                                       forwardedFor: String = "-") {
+
+    def toValidatedMaybeCollectorPayload: ValidatedMaybeCollectorPayload = {
+      // Validations, and let's strip double-encodings
+      val timestamp = toTimestamp(date, time)
+      val querystring = {
+        val q = toOption(singleEncodePcts(qs))
+        parseQuerystring(q, CollectorEncoding)
+      }
+
+      // No validation (yet) on the below
+      val ip        = IpAddressExtractor.extractIpAddress(forwardedFor, lastIp)
+      val userAgent = singleEncodePcts(ua)
+      val refr      = singleEncodePcts(rfr)
+      val referer   = toOption(refr) map toCleanUri
+
+      val api = CollectorApi.parse(objct)
+
+      (timestamp.toValidationNel |@| querystring.toValidationNel |@| api.toValidationNel) { (t, q, a) =>
+        CollectorPayload(
+          q,
+          CollectorName,
+          CollectorEncoding,
+          None, // No hostname for CloudFront
+          Some(t),
+          toOption(ip),
+          toOption(userAgent),
+          referer,
+          Nil, // No headers for CloudFront
+          None, // No collector-set user ID for CloudFront
+          a, // API vendor/version
+          None, // No content type
+          None // No request body
+        ).some
+      }
+    }
+  }
 }

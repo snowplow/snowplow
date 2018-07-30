@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -22,11 +22,11 @@ import Scalaz._
 // Apache URLEncodedUtils
 import org.apache.http.NameValuePair
 
-// Scala MaxMind GeoIP
-import com.snowplowanalytics.maxmind.iplookups.IpLocation
-
 // JSON Schema
 import com.github.fge.jsonschema.core.report.ProcessingMessage
+
+// Iglu
+import com.snowplowanalytics.iglu.client.JsonSchemaPair
 
 // This project
 import common.loaders.CollectorPayload
@@ -116,12 +116,6 @@ package object common {
   type MaybeEnrichedEvent = Option[EnrichedEvent]
 
   /**
-   * Type alias for an `Option`-boxed
-   * `IpLocation`.
-   */
-  type MaybeIpLocation = Option[IpLocation]
-
-  /**
    * Type alias for either a `ValidationNel`
    * containing `String`s for `Failure`
    * or a CanonicalOutput for `Success`.
@@ -150,4 +144,15 @@ package object common {
    * Parameters inside of a raw event
    */
   type RawEventParameters = Map[String, String]
+
+  /**
+   * A (possibly empty) list of JsonSchemaPairs
+   */
+  type JsonSchemaPairs = List[JsonSchemaPair]
+
+  /**
+   * Type alias for either [[Throwable]] or successful value
+   * It has [[Monad]] instance unlike [[Validation]]
+   */
+  type ThrowableXor[+A] = Throwable \/ A
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the
@@ -13,51 +13,45 @@
  * express or implied.  See the Apache License Version 2.0 for the specific
  * language governing permissions and limitations there under.
  */
+
+// SBT
 import sbt._
 import Keys._
 
 object BuildSettings {
 
-  // Basic settings for our app
-  lazy val basicSettings = Seq[Setting[_]](
-    organization          :=  "Snowplow Analytics Ltd",
-    version               :=  "0.1.0",
-    description           :=  "Scala Stream Collector for Snowplow raw events",
-    scalaVersion          :=  "2.10.1",
-    scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8",
-                                  "-unchecked", "-feature"),
-    scalacOptions in Test :=  Seq("-Yrangepos"),
-    maxErrors             := 5,
-    // http://www.scala-sbt.org/0.13.0/docs/Detailed-Topics/Forking.html
-    fork in run           := true,
-    resolvers             ++= Dependencies.resolutionRepos
+  lazy val compilerOptions = Seq(
+    "-deprecation",
+    "-encoding", "UTF-8",
+    "-feature",
+    "-language:existentials",
+    "-language:higherKinds",
+    "-language:implicitConversions",
+    "-unchecked",
+    "-Yno-adapted-args",
+    "-Ywarn-dead-code",
+    "-Ywarn-numeric-widen",
+    "-Ywarn-unused-import",
+    "-Xfuture",
+    "-Xlint"
   )
 
-  // Makes our SBT app settings available from within the app
-  lazy val scalifySettings = Seq(sourceGenerators in Compile <+=
-      (sourceManaged in Compile, version, name, organization) map
-      { (d, v, n, o) =>
-    val file = d / "settings.scala"
-    IO.write(file, s"""package com.snowplowanalytics.snowplow.collectors.scalastream.generated
-      |object Settings {
-      |  val organization = "$o"
-      |  val version = "$v"
-      |  val name = "$n"
-      |  val shortName = "ssc"
-      |}
-      |""".stripMargin)
-    Seq(file)
-  })
+  lazy val javaCompilerOptions = Seq(
+    "-source", "1.8",
+    "-target", "1.8"
+  )
 
   // sbt-assembly settings for building an executable
-  import sbtassembly.Plugin._
-  import AssemblyKeys._
-  lazy val sbtAssemblySettings = assemblySettings ++ Seq(
-    // Executable jarfile
-    assemblyOption in assembly ~= { _.copy(prependShellScript = Some(defaultShellScript)) },
-    // Name it as an executable
-    jarName in assembly := { s"${name.value}-${version.value}" }
+  import sbtassembly.AssemblyPlugin.autoImport._
+  lazy val sbtAssemblySettings = Seq(
+    assemblyJarName in assembly := { s"${moduleName.value}-${version.value}.jar" },
+    // merge strategy for fixing netty conflict
+    assemblyMergeStrategy in assembly := {
+      case PathList("io", "netty", xs @ _*) => MergeStrategy.first
+      case x if x.endsWith("io.netty.versions.properties") => MergeStrategy.discard
+      case x =>
+        val oldStrategy = (assemblyMergeStrategy in assembly).value
+        oldStrategy(x)
+    }
   )
-
-  lazy val buildSettings = basicSettings ++ scalifySettings ++ sbtAssemblySettings
 }

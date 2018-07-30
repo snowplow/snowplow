@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -15,22 +15,25 @@ package snowplow
 package enrich
 package common
 
+// Java
+import java.io.{PrintWriter, StringWriter}
+
+// Joda
+import org.joda.time.DateTime
+
 // Iglu
 import iglu.client.Resolver
+
+// Scala
+import scala.util.control.NonFatal
 
 // Scalaz
 import scalaz._
 import Scalaz._
 
 // This project
-import adapters.{
-  RawEvent,
-  AdapterRegistry
-}
-import enrichments.{
-  EnrichmentRegistry,
-  EnrichmentManager
-}
+import adapters.{AdapterRegistry, RawEvent}
+import enrichments.{EnrichmentManager, EnrichmentRegistry}
 import outputs.EnrichedEvent
 
 /**
@@ -60,7 +63,11 @@ object EtlPipeline {
    *         flatMap, will include any validation errors
    *         contained within the ValidatedMaybeCanonicalInput
    */
-  def processEvents(registry: EnrichmentRegistry, etlVersion: String, etlTstamp: String, input: ValidatedMaybeCollectorPayload)(implicit resolver: Resolver): List[ValidatedEnrichedEvent] = {
+  def processEvents(
+    registry: EnrichmentRegistry,
+    etlVersion: String,
+    etlTstamp: DateTime,
+    input: ValidatedMaybeCollectorPayload)(implicit resolver: Resolver): List[ValidatedEnrichedEvent] = {
 
     def flattenToList[A](v: Validated[Option[Validated[NonEmptyList[Validated[A]]]]]): List[Validated[A]] = v match {
       case Success(Some(Success(nel))) => nel.toList
@@ -69,18 +76,29 @@ object EtlPipeline {
       case Success(None)               => Nil
     }
 
-    val e: Validated[Option[Validated[NonEmptyList[ValidatedEnrichedEvent]]]] =
-      for {
-        maybePayload  <- input
-      } yield for {
-        payload       <- maybePayload
-      } yield for {
-        events        <- AdapterRegistry.toRawEvents(payload)
-      } yield for {
-        event         <- events
-        enriched       = EnrichmentManager.enrichEvent(registry, etlVersion, etlTstamp, event)
-      } yield enriched
+    try {
+      val e: Validated[Option[Validated[NonEmptyList[ValidatedEnrichedEvent]]]] =
+        for {
+          maybePayload <- input
+        } yield
+          for {
+            payload <- maybePayload
+          } yield
+            for {
+              events <- AdapterRegistry.toRawEvents(payload)
+            } yield
+              for {
+                event <- events
+                enriched = EnrichmentManager.enrichEvent(registry, etlVersion, etlTstamp, event)
+              } yield enriched
 
-    flattenToList[EnrichedEvent](e)
+      flattenToList[EnrichedEvent](e)
+    } catch {
+      case NonFatal(nf) => {
+        val errorWriter = new StringWriter
+        nf.printStackTrace(new PrintWriter(errorWriter))
+        List(s"Unexpected error processing events: $errorWriter".failNel)
+      }
+    }
   }
 }

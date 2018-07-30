@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2014-2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -22,6 +22,7 @@ import Scalaz._
 
 // json4s
 import org.json4s.jackson.JsonMethods.parse
+import org.json4s.DefaultFormats
 
 // Specs2
 import org.specs2.mutable.Specification
@@ -31,8 +32,8 @@ import org.specs2.scalaz.ValidationMatchers
  * Tests ScalazJson4sUtils
  */
 class JsonExtractionSpec extends Specification with ValidationMatchers {
-
-  val testJson = parse("""{
+  implicit val formats = DefaultFormats
+  val testJson         = parse("""{
     "outer": "1",
     "inner": {
       "value": 2

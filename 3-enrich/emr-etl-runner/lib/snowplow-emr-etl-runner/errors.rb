@@ -25,12 +25,40 @@ module Snowplow
     class ConfigError < Error
     end
 
-    # Problem when running Amazon EMR (e.g. job failed) 
+    # Problem when running Amazon EMR (e.g. job failed)
     class EmrExecutionError < Error
+    end
+
+    # A bootstrap failure indicates the job can be safely retried
+    class BootstrapFailureError < EmrExecutionError
     end
 
     # Raised if a directory is not empty
     class DirectoryNotEmptyError < Error
+    end
+
+    # Raised if there is no data to process
+    # Not strictly an error, but used for control flow
+    class NoDataToProcessError < Error
+    end
+
+    # Raised if EMR/S3 has unexpected state
+    # Requires manual intervention
+    class UnexpectedStateError < Error
+    end
+
+    # Raised if the linter encountered an issue
+    class LinterError < Error
+      def initialize(message)
+        super(message)
+      end
+    end
+
+    # Raised if the lock is held
+    class LockHeldError < Error
+      def initialize(message)
+        super(message)
+      end
     end
   end
 end

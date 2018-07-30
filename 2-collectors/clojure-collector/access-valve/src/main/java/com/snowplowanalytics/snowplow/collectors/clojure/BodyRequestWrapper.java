@@ -20,6 +20,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 
 import javax.servlet.ServletInputStream;
+import javax.servlet.ReadListener;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 
@@ -120,7 +121,19 @@ public class BodyRequestWrapper extends HttpServletRequestWrapper {
             public int read()   
                 throws IOException {  
                 return byteArrayInputStream.read();  
-            }  
+            }
+            @Override
+            public boolean isFinished() {
+                return byteArrayInputStream.available() == 0;
+            }
+            @Override
+            public boolean isReady() {
+                return byteArrayInputStream.available() > 0;
+            }
+            @Override
+            public void setReadListener(ReadListener readListener) {
+                throw new UnsupportedOperationException("setReadListener");
+            }
         };  
         return inputStream;  
     }

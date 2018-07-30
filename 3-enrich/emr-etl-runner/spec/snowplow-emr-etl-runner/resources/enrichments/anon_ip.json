@@ -1,0 +1,13 @@
+{
+	"schema": "iglu:com.snowplowanalytics.snowplow/anon_ip/jsonschema/1-0-0",
+
+	"data": {
+
+		"name": "anon_ip",
+		"vendor": "com.snowplowanalytics.snowplow",
+		"enabled": true,
+		"parameters": {
+				"anonOctets": 1
+		}
+	}
+}

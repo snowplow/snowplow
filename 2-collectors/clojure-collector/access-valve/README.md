@@ -20,3 +20,7 @@ To build:
     $ git clone git@github.com:snowplow/tomcat-cf-access-log-valve.git
     $ cd tomcat-cf-access-log-valve
     $ gradle jar
+
+When you are ready to build an updated servlet:
+
+    $ gradle installFatJarInServlet

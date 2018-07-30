@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -20,6 +20,7 @@ import java.net.URI
 import org.apache.http.client.utils.URLEncodedUtils
 
 // Scala
+import scala.util.control.NonFatal
 import scala.collection.JavaConversions._
 
 // Scalaz
@@ -31,6 +32,9 @@ import Scalaz._
  * Contains factory methods.
  */
 object Loader {
+
+  private val TsvRegex    = "^tsv/(.*)$".r
+  private val NdjsonRegex = "^ndjson/(.*)$".r
 
   /**
    * Factory to return a CollectorLoader
@@ -45,10 +49,12 @@ object Loader {
    *         in a Scalaz Validation
    */
   def getLoader(collectorOrProtocol: String): Validation[String, Loader[_]] = collectorOrProtocol match {
-    case "cloudfront" => CloudfrontLoader.success
-    case "clj-tomcat" => CljTomcatLoader.success
-    case "thrift-raw" => ThriftLoader.success // Finally - a data protocol rather than a piece of software
-    case  c           => "[%s] is not a recognised Snowplow event collector".format(c).fail
+    case "cloudfront"   => CloudfrontLoader.success
+    case "clj-tomcat"   => CljTomcatLoader.success
+    case "thrift"       => ThriftLoader.success // Finally - a data protocol rather than a piece of software
+    case TsvRegex(f)    => TsvLoader(f).success
+    case NdjsonRegex(f) => NdjsonLoader(f).success
+    case c              => "[%s] is not a recognised Snowplow event collector".format(c).fail
   }
 }
 
@@ -57,11 +63,11 @@ object Loader {
  * abstract base class.
  */
 abstract class Loader[T] {
-  
+
   import CollectorPayload._
 
   /**
-   * Converts the source string into a 
+   * Converts the source string into a
    * CanonicalInput.
    *
    * TODO: need to change this to
@@ -79,7 +85,7 @@ abstract class Loader[T] {
    * Converts a querystring String
    * into a non-empty list of NameValuePairs.
    *
-   * Returns a non-empty list of 
+   * Returns a non-empty list of
    * NameValuePairs on Success, or a Failure
    * String.
    *
@@ -98,7 +104,10 @@ abstract class Loader[T] {
       try {
         URLEncodedUtils.parse(URI.create("http://localhost/?" + q), enc).toList.success
       } catch {
-        case e => "Exception extracting name-value pairs from querystring [%s] with encoding [%s]: [%s]".format(q, enc, e.getMessage).fail
+        case NonFatal(e) =>
+          "Exception extracting name-value pairs from querystring [%s] with encoding [%s]: [%s]"
+            .format(q, enc, e.getMessage)
+            .fail
       }
     }
     case None => Nil.success

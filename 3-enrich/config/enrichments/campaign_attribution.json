@@ -1,0 +1,20 @@
+{
+	"schema": "iglu:com.snowplowanalytics.snowplow/campaign_attribution/jsonschema/1-0-1",
+
+	"data": {
+
+		"name": "campaign_attribution",
+		"vendor": "com.snowplowanalytics.snowplow",
+		"enabled": true,
+		"parameters": {
+			"mapping": "static",
+			"fields": {
+				"mktMedium": ["utm_medium"],
+				"mktSource": ["utm_source"],
+				"mktTerm": ["utm_term"],
+				"mktContent": ["utm_content"],
+				"mktCampaign": ["utm_campaign"]
+			}
+		}
+	}
+}
