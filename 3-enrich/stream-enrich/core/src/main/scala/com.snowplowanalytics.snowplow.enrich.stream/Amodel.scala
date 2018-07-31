@@ -54,7 +54,8 @@ object model {
     maxRecords: Int,
     initialPosition: String,
     initialTimestamp: Option[String],
-    backoffPolicy: KinesisBackoffPolicyConfig
+    backoffPolicy: KinesisBackoffPolicyConfig,
+    customEndpoint: Option[String]
   ) extends SourceSinkConfig {
     val timestamp = initialTimestamp
       .toRight("An initial timestamp needs to be provided when choosing AT_TIMESTAMP")
@@ -65,10 +66,10 @@ object model {
       }
     require(initialPosition != "AT_TIMESTAMP" || timestamp.isRight, timestamp.left.getOrElse(""))
 
-    val streamEndpoint = region match {
+    val streamEndpoint = customEndpoint.getOrElse(region match {
       case cn @ "cn-north-1" => s"https://kinesis.$cn.amazonaws.com.cn"
       case _                 => s"https://kinesis.$region.amazonaws.com"
-    }
+    })
   }
   final case class GooglePubSub(
     googleProjectId: String,

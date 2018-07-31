@@ -15,11 +15,14 @@
 package com.snowplowanalytics.snowplow.collectors.scalastream
 
 import akka.http.scaladsl.model.{ContentType, HttpResponse, StatusCode, StatusCodes}
-import akka.http.scaladsl.model.headers.HttpCookiePair
-import akka.http.scaladsl.server.{Directive1, Route}
+import akka.http.scaladsl.model.headers.{HttpCookie, HttpCookiePair}
+import akka.http.scaladsl.server.{Directive0, Directive1, Route}
+import akka.http.javadsl.server.CustomRejection
 import akka.http.scaladsl.server.Directives._
 
 import monitoring.BeanRegistry
+
+object DoNotTrackRejection extends CustomRejection
 
 trait CollectorRoute {
   def collectorService: Service
@@ -34,42 +37,44 @@ trait CollectorRoute {
     extractRequestContext.map(_.request.entity.contentType)
 
   def collectorRoute: Route =
-    cookieIfWanted(collectorService.cookieName) { reqCookie =>
-      val cookie = reqCookie.map(_.toCookie)
-      headers { (userAgent, refererURI, rawRequestURI) =>
-        val qs = queryString(rawRequestURI)
-        extractors { (host, ip, request) =>
-          // get the adapter vendor and version from the path
-          path(Segment / Segment) { (vendor, version) =>
-            val path = s"/$vendor/$version"
-            post {
-              extractContentType { ct =>
-                entity(as[String]) { body =>
-                  val (r, _) = collectorService.cookie(qs, Some(body),
-                      path, cookie, userAgent, refererURI, host, ip, request, false, Some(ct))
-                  incrementRequests(r.status)
-                  complete(r)
+    doNotTrack(collectorService.doNotTrackCookie) {
+      cookieIfWanted(collectorService.cookieName) { reqCookie =>
+        val cookie = reqCookie.map(_.toCookie)
+        headers { (userAgent, refererURI, rawRequestURI) =>
+          val qs = queryString(rawRequestURI)
+          extractors { (host, ip, request) =>
+            // get the adapter vendor and version from the path
+            path(Segment / Segment) { (vendor, version) =>
+              val path = s"/$vendor/$version"
+              post {
+                extractContentType { ct =>
+                  entity(as[String]) { body =>
+                    val (r, _) = collectorService.cookie(qs, Some(body),
+                        path, cookie, userAgent, refererURI, host, ip, request, false, Some(ct))
+                    incrementRequests(r.status)
+                    complete(r)
+                  }
                 }
+              } ~
+              (get | head) {
+                val (r, _) = collectorService.cookie(
+                  qs, None, path, cookie, userAgent, refererURI, host, ip, request, true)
+                incrementRequests(r.status)
+                complete(r)
               }
             } ~
-            get {
-              val (r, _) = collectorService.cookie(
-                qs, None, path, cookie, userAgent, refererURI, host, ip, request, true)
-              incrementRequests(r.status)
-              complete(r)
-            }
-          } ~
-          path("""ice\.png""".r | "i".r) { path =>
-            get {
-              val (r,l) = collectorService.cookie(
-                qs, None, "/" + path, cookie, userAgent, refererURI, host, ip, request, true)
-              incrementRequests(r.status)
-              complete(r)
+            path("""ice\.png""".r | "i".r) { path =>
+              (get | head) {
+                val (r,l) = collectorService.cookie(
+                  qs, None, "/" + path, cookie, userAgent, refererURI, host, ip, request, true)
+                incrementRequests(r.status)
+                complete(r)
+              }
             }
           }
         }
       }
-    } ~ corsRoute ~ healthRoute ~ crossDomainRoute ~ {
+    } ~ corsRoute ~ healthRoute ~ crossDomainRoute ~ rootRoute ~ {
       BeanRegistry.collectorBean.incrementFailedRequests()
       complete(HttpResponse(404, entity = "404 not found"))
     }
@@ -96,6 +101,18 @@ trait CollectorRoute {
     case None => optionalHeaderValue(x => None)
   }
 
+  /**
+   * Directive to filter requests which contain a do not track cookie
+   * @param configCookie the configured do not track cookie to check against
+   */
+  def doNotTrack(configCookie: Option[HttpCookie]): Directive0 =
+    cookieIfWanted(configCookie.map(_.name)).require(c =>
+      (c, configCookie) match {
+        case (Some(actual), Some(config)) => actual.value != config.value
+        case _ => true
+      },
+    DoNotTrackRejection)
+
   private def crossDomainRoute: Route = get {
     path("""crossdomain\.xml""".r) { path =>
       complete(collectorService.flashCrossDomainPolicy)
@@ -114,6 +131,12 @@ trait CollectorRoute {
     }
   }
 
+  private def rootRoute: Route = get {
+    pathSingleSlash {
+      complete(collectorService.rootResponse)
+    }
+  }
+
   private def incrementRequests(status: StatusCode): Unit = {
     if (List(StatusCodes.OK, StatusCodes.Found).contains(status)) {
       BeanRegistry.collectorBean.incrementSuccessfulRequests()
@@ -121,4 +144,5 @@ trait CollectorRoute {
       BeanRegistry.collectorBean.incrementFailedRequests()
     }
   }
+
 }

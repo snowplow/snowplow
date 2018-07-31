@@ -32,7 +32,6 @@ import scalaz._
 import Scalaz._
 
 import common.enrichments.EnrichmentRegistry
-import utils.emitPii
 import iglu.client.Resolver
 import model.{Kafka, StreamsConfig}
 import scalatracker.Tracker
@@ -53,12 +52,14 @@ object KafkaSource {
     goodProducer <- KafkaSink
       .validateAndCreateProducer(kafkaConfig, config.buffer, config.out.enriched)
       .validation
-    piiProducer <- (emitPii(enrichmentRegistry), config.out.pii) match {
-        case (true, Some(piiStreamName)) => KafkaSink.validateAndCreateProducer(kafkaConfig, config.buffer, piiStreamName).validation.map(Some(_))
-        case (false, Some(piiStreamName)) => s"PII was configured to not emit, but PII stream name was given as $piiStreamName".failure
-        case (true, None) => "PII was configured to emit, but no PII stream name was given".failure
-        case (false, None) => None.success
-      }
+    emitPii = utils.emitPii(enrichmentRegistry)
+    _ <- utils.validatePii(emitPii, config.out.pii).validation
+    piiProducer <- config.out.pii match {
+      case Some(piiStreamName) =>
+        KafkaSink.validateAndCreateProducer(kafkaConfig, config.buffer, piiStreamName).validation
+          .map(Some(_))
+      case None => None.success
+    }
     badProducer <- KafkaSink
       .validateAndCreateProducer(kafkaConfig, config.buffer, config.out.bad)
       .validation
@@ -84,7 +85,7 @@ class KafkaSource private (
       new KafkaSink(goodProducer, config.out.enriched)
   }
 
-  override val threadLocalPiiSink: Option[ThreadLocal[Sink]] =  piiProducer.flatMap{ somePiiProducer => 
+  override val threadLocalPiiSink: Option[ThreadLocal[Sink]] = piiProducer.flatMap { somePiiProducer =>
   config.out.pii.map { piiTopicName =>  new ThreadLocal[Sink] {
     override def initialValue: Sink =
       new KafkaSink(somePiiProducer, piiTopicName)

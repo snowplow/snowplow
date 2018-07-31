@@ -3,6 +3,7 @@
 [![Build Status][travis-image]][travis]
 [![Release][release-image]][releases]
 [![License][license-image]][license]
+[![Join the chat at https://gitter.im/snowplow/snowplow][gitter-image]][gitter]
 
 <img src="https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/snowplow-logo-large.png"
  alt="Snowplow logo" title="Snowplow" align="right" />
@@ -34,14 +35,12 @@ To briefly explain these six sub-systems:
 
 ## Quickstart
 
-Assuming git, **[Vagrant][vagrant-install]** and **[VirtualBox][virtualbox-install]** installed:
+Assuming git and [SBT](https://www.scala-sbt.org/) installed:
 
 ```bash
- host$ git clone https://github.com/snowplow/snowplow.git
- host$ cd snowplow
- host$ vagrant up && vagrant ssh
-guest$ cd /vagrant/3-enrich/scala-common-enrich
-guest$ sbt test
+$ git clone https://github.com/snowplow/snowplow.git
+$ cd snowplow/3-enrich/scala-common-enrich
+$ sbt test
 ```
 
 ## Find out more
@@ -82,6 +81,9 @@ limitations under the License.
 [license-image]: http://img.shields.io/badge/license-Apache--2-blue.svg?style=flat
 [license]: http://www.apache.org/licenses/LICENSE-2.0
 
+[gitter-image]: https://badges.gitter.im/snowplow/snowplow.svg
+[gitter]: https://gitter.im/snowplow/snowplow?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+
 [website]: http://snowplowanalytics.com
 [wiki]: https://github.com/snowplow/snowplow/wiki
 [architecture-image]: https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/snowplow-architecture.png
@@ -95,9 +97,6 @@ limitations under the License.
 [collector-logs]: https://github.com/snowplow/snowplow/wiki/Collector-logging-formats
 [data-structure]: https://github.com/snowplow/snowplow/wiki/canonical-event-model
 [looker]: http://www.looker.com/
-
-[vagrant-install]: http://docs.vagrantup.com/v2/installation/index.html
-[virtualbox-install]: https://www.virtualbox.org/wiki/Downloads
 
 [techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
 [setup-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png

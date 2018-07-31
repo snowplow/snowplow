@@ -33,8 +33,8 @@ collector {
   # route.
   crossDomain {
     enabled = false
-    # Domain that is granted access, *.acme.com will match http://acme.com and http://sub.acme.com
-    domain = "*"
+    # Domains that are granted access, *.acme.com will match http://acme.com and http://sub.acme.com
+    domains = [ "*" ]
     # Whether to only grant access to HTTPS or both HTTPS and HTTP sources
     secure = true
   }
@@ -50,6 +50,16 @@ collector {
     # applications on the domain. Comment out this line to tie cookies to
     # the collector's full domain
     domain = "{{cookieDomain}}"
+  }
+
+  # If you have a do not track cookie in place, the Scala Stream Collector can respect it by
+  # completely bypassing the processing of an incoming request carrying this cookie, the collector
+  # will simply reply by a 200 saying "do not track".
+  # The cookie name and value must match the configuration below.
+  doNotTrackCookie {
+    enabled = false
+    name = {{doNotTrackCookieName}}
+    value = {{doNotTrackCookieValue}}
   }
 
   # When enabled and the cookie specified above is missing, performs a redirect to itself to check
@@ -77,6 +87,20 @@ collector {
     placeholder = "[TOKEN]"
   }
 
+  # Customize response handling for requests for the root path ("/").
+  # Useful if you need to redirect to web content or privacy policies regarding the use of this collector.
+  rootResponse {
+    enabled = false
+    statusCode = 302
+    # Optional, defaults to empty map
+    headers = {
+        Location = "https://127.0.0.1/",
+        X-Custom = "something"
+    }
+    # Optional, defaults to empty string
+    body = "302, redirecting"
+  }
+
   streams {
     # Events which have successfully been collected will be stored in the good stream/topic
     good = {{good}}
@@ -97,6 +121,10 @@ collector {
 
       # Region where the streams are located
       region = {{kinesisRegion}}
+
+      ## Optional endpoint url configuration to override aws kinesis endpoints,
+      ## this can be used to specify local endpoints when using localstack
+      # customEndpoint = {{kinesisEndpoint}}
 
       # Thread pool size for Kinesis API requests
       threadPoolSize = 10
