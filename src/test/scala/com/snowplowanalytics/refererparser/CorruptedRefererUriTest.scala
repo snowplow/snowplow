@@ -30,7 +30,12 @@ class CorruptedRefererUriTest extends Specification {
   // Our data
   val refererUri = "http://bigcommerce%20wordpress%20plugin/"
 
-  val parser = Parser.create[IO].unsafeRunSync()
+  val parser = Parser.create[IO](
+    getClass.getResource("/referers.json").getPath
+  ).unsafeRunSync() match {
+    case Right(p) => p
+    case Left(f) => throw f
+  }
 
   "A corrupted referer URI" should {
     "return None, not throw an Exception" in {

@@ -1,6 +1,7 @@
 # referer-parser Java/Scala library
 
 [![Build Status](https://travis-ci.org/snowplow-referer-parser/jvm-referer-parser.svg?branch=develop)](https://travis-ci.org/snowplow-referer-parser/jvm-referer-parser)
+[![Join the chat at https://gitter.im/snowplow-referer-parser/referer-parser](https://badges.gitter.im/snowplow-referer-parser/referer-parser.svg)](https://gitter.im/snowplow-referer-parser/referer-parser?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![codecov](https://codecov.io/gh/snowplow-referer-parser/jvm-referer-parser/branch/master/graph/badge.svg)](https://codecov.io/gh/snowplow-referer-parser/jvm-referer-parser)
 
 This is the Java and Scala implementation of [referer-parser][referer-parser], the library for extracting attribution data from referer _(sic)_ URLs.
@@ -21,37 +22,43 @@ import java.net.URI
 val refererUrl = "http://www.google.com/search?q=gateway+oracle+cards+denise+linn&hl=en&client=safari"
 val pageUrl    = "http:/www.psychicbazaar.com/shop" // Our current URL
 
-// We can instantiate a new Parser instance which will load referers.json
-val parser = Parser.create[IO].unsafeRunSync()
-val result = parser.parse(refererUrl, pageUrl)
-result match {
-  case Some(result) =>
-    println(result.medium) // => "search"
-    println(result.source) // => Some("Google")
-    println(result.term)   // => Some("gateway oracle cards denise linn")
-  case None =>
-    println("Referer not in database")
+val referersJsonPath = "/opt/referers/referers.json"
+
+// We can instantiate a new Parser instance with a path to referers.json
+val parser: Parser = Parser.create[IO](referersJsonPath).unsafeRunSync() match {
+  case Right(parser) => parser
+  case Left(failure) => // ...handle exception
+}
+
+val result: Option[Referer] = parser.parse(refererUrl, pageUrl)
+for (r <- result) {
+  println(r.medium) // => "search"
+  println(r.source) // => Some("Google")
+  println(r.term)   // => Some("gateway oracle cards denise linn")
 }
 
 // You can provide a list of domains which should be considered internal
-Parser.parse(
-    new URI("http://www.subdomain1.snowplowanalytics.com"),
-    Some("http://www.snowplowanalytics.com"),
-    List("www.subdomain1.snowplowanalytics.com", "www.subdomain2.snowplowanalytics.com")
-) match {
-  case Some(result) =>
-    println(result.medium) // => "internal"
-    println(result.source) // => None
-    println(result.term)   // => None
-  case None =>
-    println("Referer not in database")
+val result: Option[Referer] = Parser.parse(
+  new URI("http://www.subdomain1.snowplowanalytics.com"),
+  Some("http://www.snowplowanalytics.com"),
+  List("www.subdomain1.snowplowanalytics.com", "www.subdomain2.snowplowanalytics.com")
+)
+for (r <- result) {
+  println(r.medium) // => "internal"
+  println(r.source) // => None
+  println(r.term)   // => None
 }
 
-// A custom referers.json can be passed in as a Source
-val customParser = Parser.create[IO](
-  Source.fromResource("custom-referers.json")
-).unsafeRunSync()
+// Various overloads are available for common cases, for instance
+parser.parse("https://www.bing.com/search?q=snowplow")
+// is equivelent to
+parser.parse(new URL("https://www.bing.com/search?q=snowplow"), None, Nil)
 ```
+
+More examples can be seen in [ParseTest.scala][parsertest-scala]. See [Parser.scala][parser-scala] for all overloads.
+
+[parsetest-scala]: src/test/scala/com/snowplowanalytics/refererparser/ParseTest.scala
+[parse-scala]: src/main/scala/com/snowplowanalytics/refererparser/Parser.scala
 
 ### Installation
 

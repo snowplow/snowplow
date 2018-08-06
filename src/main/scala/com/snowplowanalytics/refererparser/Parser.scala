@@ -37,15 +37,9 @@ import Medium._
  * referer URL.
  */
 object Parser {
-  def create[F[_]: Sync]: F[Parser] =
-    ParseReferersJson.loadJsonFromResources.map(_ match {
-      case Right(referers) => new Parser(referers)
-      case Left(failure) => throw failure
-    })
-
-  def create[F[_]: Sync](source: Source): F[Either[Exception, Parser]] =
-    (Sync[F].delay { source.mkString }).map(rawJson =>
-        ParseReferersJson.loadJsonFromString(rawJson).map(referers => new Parser(referers)))
+  def create[F[_]: Sync](filePath: String): F[Either[Exception, Parser]] =
+    Sync[F].delay { Source.fromFile(filePath).mkString }.map(rawJson =>
+        ParseReferers.loadJsonFromString(rawJson).map(referers => new Parser(referers)))
 }
 
 /**
@@ -93,10 +87,9 @@ class Parser private (referers: Map[String, RefererLookup]) {
     val path = refererUri.getPath
     val query = Option(refererUri.getQuery)
 
-    if (
-      (scheme == "http" || scheme == "https") &&
-       host != null && path != null
-    ) {
+    val validUri = (scheme == "http" || scheme == "https") && host != null && path != null
+
+    if (validUri) {
       if ( // Check for internal domains
         pageHost.map(_.equals(host)).getOrElse(false) ||
         internalDomains.map(_.trim()).contains(host)

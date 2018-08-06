@@ -35,7 +35,12 @@ class ParseArgTypesTest extends Specification {
 
   val expected = Some(Referer(Medium.Internal, None, None))
 
-  val parser = Parser.create[IO].unsafeRunSync()
+  val parser = Parser.create[IO](
+    getClass.getResource("/referers.json").getPath
+  ).unsafeRunSync() match {
+    case Right(p) => p
+    case Left(f) => throw f
+  }
 
   "parse " should {
     "work the same regardless of which argument types are used to call it" in {

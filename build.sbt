@@ -11,7 +11,17 @@ val root = (project in file(".")).
     crossScalaVersions := Seq("2.11.12", "2.12.6"),
     scalacOptions := Seq(
       "-deprecation",
-      "-encoding", "utf8",
+      "-encoding", "UTF-8",
+      "-feature",
+      "-language:existentials",
+      "-language:higherKinds",
+      "-language:implicitConversions",
+      "-unchecked",
+      "-Yno-adapted-args",
+      "-Ywarn-dead-code",
+      "-Ywarn-numeric-widen",
+      "-Xfuture",
+      "-Xlint",
       "-Ypartial-unification"
     ),
 
@@ -22,8 +32,7 @@ val root = (project in file(".")).
       "io.circe"                  %% "circe-generic"      % circeVersion,
       "io.circe"                  %% "circe-parser"       % circeVersion,
       "org.specs2"                %% "specs2-core"        % specs2Version       % "test",
-      "org.specs2"                %% "specs2-scalacheck"  % specs2Version       % "test",
-      "junit"                     %  "junit"              % junitVersion        % "test"
+      "org.specs2"                %% "specs2-scalacheck"  % specs2Version       % "test"
     ),
 
     addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), siteSubdirName in ScalaUnidoc),
@@ -55,4 +64,3 @@ val catsCoreVersion = "1.1.0"
 val catsEffectVersion = "0.10.1"
 val circeVersion = "0.9.3"
 val specs2Version = "4.2.0"
-val junitVersion = "4.12"

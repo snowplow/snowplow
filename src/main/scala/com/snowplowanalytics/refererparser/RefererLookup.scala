@@ -20,4 +20,4 @@ import Medium._
 /*
  * Hold the structure of a referer lookup
  */
-case class RefererLookup(medium: Medium, source: String, parameters: List[String])
+final case class RefererLookup(medium: Medium, source: String, parameters: List[String])

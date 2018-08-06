@@ -15,4 +15,4 @@
  */
 package com.snowplowanalytics.refererparser
 
-class CorruptJsonException(private val message: String) extends Exception(message)
+final case class CorruptJsonException(private val message: String) extends Exception(message)

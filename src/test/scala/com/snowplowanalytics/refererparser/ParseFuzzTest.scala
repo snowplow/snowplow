@@ -30,7 +30,12 @@ import cats.effect.IO
 
 class ParseFuzzTest extends Specification with ScalaCheck {
 
-  val parser = Parser.create[IO].unsafeRunSync()
+  val parser = Parser.create[IO](
+    getClass.getResource("/referers.json").getPath
+  ).unsafeRunSync() match {
+    case Right(p) => p
+    case Left(f) => throw f
+  }
 
   def is =
     "The parse function should work for any pair of referer and page Strings" ! e1

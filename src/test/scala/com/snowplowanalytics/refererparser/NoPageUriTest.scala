@@ -31,7 +31,12 @@ class NoPageUriTest extends Specification {
   val refererUri = "http://www.google.com/search?q=gateway+oracle+cards+denise+linn&hl=en&client=safari"
   val expected   = Some(Referer(Medium.Search, Some("Google"), Some("gateway oracle cards denise linn")))
 
-  val parser = Parser.create[IO].unsafeRunSync()
+  val parser = Parser.create[IO](
+    getClass.getResource("/referers.json").getPath
+  ).unsafeRunSync() match {
+    case Right(p) => p
+    case Left(f) => throw f
+  }
 
   "An empty page URI" should {
     "not interfere with the referer parsing" in {

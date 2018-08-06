@@ -18,4 +18,5 @@ after_success:
 - bash <(curl -s https://codecov.io/bash)
 env:
   global:
+    - SONA_USER=snowplow
     secure: nXd+ZqfS1rvesKgjJvytuq8FfpyrcmN70r1lmGbjgSvsgcItIRAJ29yfb5SOTmtiLmHdKLyR680moeMlwbB+hWRFT/dPF36Mi1zQFuPHkXMo5g/F+WRDAbB7sBqneXg5Iu7auH8UZIk2qHR+cCXPTcRrw0CF+hgXuCFv5EBJvOFSdNkNkMIkpcWK/0mYNw+6sqdPCfgjA+qZknq3TvTPhwVKyzjffEJFk/jrQ12/s4Twy2wR9kz001yz97iE7N2Tb14fTGLId9DwhziahVb6EFSW/GlWZsI4BA5HNjpqmROvyPt66Kb9akG9Wmkng/sxG6SLRxLt8JmBzLvHXyynn+5Y57GRZ9EMuyknEXHU+05tgUoMqSyRa54i/3FyJMSXZH7ZaCGYQM2D8OGW22gdCes8NxFc/+tBZ+J3h7UgpeX3CaiXLg2n+FSwkuAbhNvyN/C5qqdWyDcMpsU+etVQ+hktmQ/sVzxSyAeG/VLe7prejTKzXVz9nP13xaNpvPvGRwD22idF9seur4GEPd5P6yhpu29t7dmuzsxCkZl8GjjOBwxfRE0UCjXA1WKypzrpHkd6BkU6WvaEnbtoOqv5eVD27sBdRoz8ZyAuG/erMx7NQTUYgAbGNo/YMpvj2DdnjOnU1vOO49GACfEbSyIB5vfy8H7qVDTUAlYpgbj/1wQ=

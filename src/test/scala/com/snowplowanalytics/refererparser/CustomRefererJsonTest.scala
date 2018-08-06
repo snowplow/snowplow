@@ -27,14 +27,13 @@ import org.specs2.mutable.Specification
 // Cats
 import cats.effect.IO
 
-class CustomRefererJson extends Specification {
-
-  // Our data
-  val pageHost = "www.psychicbazaar.com"
+class CustomRefererJsonTest extends Specification {
 
   "Custom referer list" should {
     "give correct referer" in {
-      val parser = Parser.create[IO](Source.fromResource("custom-referers.json")).unsafeRunSync() match {
+      val customReferersPath = getClass.getResource("/custom-referers.json").getPath
+
+      val parser = Parser.create[IO](customReferersPath).unsafeRunSync() match {
         case Right(parser) => parser
         case Left(failure) => throw failure
       }

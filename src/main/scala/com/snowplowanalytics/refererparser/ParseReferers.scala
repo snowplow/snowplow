@@ -35,15 +35,15 @@ import Medium._
 /**
  * Handles loading and storing referers
  */
-private[refererparser] object ParseReferersJson {
-  case class RefererEntry(
+private[refererparser] object ParseReferers {
+  final case class RefererEntry(
     medium: Medium,
     source: String,
     domains: List[String],
     parameters: Option[List[String]]
   )
 
-  case class JsonEntry(
+  final case class JsonEntry(
     domains: List[String],
     parameters: Option[List[String]]
   )
@@ -52,24 +52,21 @@ private[refererparser] object ParseReferersJson {
 
   private val ReferersJsonPath = "referers.json"
 
-  def loadJsonFromResources[F[_]: Sync]: F[Either[Exception, Map[String, RefererLookup]]] =
-    Sync[F].map(Sync[F].delay { Source.fromResource(ReferersJsonPath).mkString })(loadJsonFromString(_))
-
   def loadJsonFromString(rawJson: String): Either[Exception, Map[String, RefererLookup]] =
     parse(rawJson).flatMap(loadJson)
 
   def loadJson(doc: Json): Either[Exception, Map[String, RefererLookup]] =
-    parseReferersJson(doc.hcursor).map(parsed => {
-      parsed.foldLeft(Map.empty[String, RefererLookup])((map, mediumEntries) => {
+    parseReferersJson(doc.hcursor).map { parsed =>
+      parsed.foldLeft(Map.empty[String, RefererLookup]) { (map, mediumEntries) =>
         val (medium, entries) = mediumEntries
-        entries.foldLeft(map)((mapInner, sourceEntry) => {
+        entries.foldLeft(map) { (mapInner, sourceEntry) =>
           val (source, entry) = sourceEntry
-          mapInner.++(entry.domains.map(domain =>
+          mapInner ++ entry.domains.map(domain =>
             domain -> RefererLookup(medium, source, entry.parameters.getOrElse(Nil))
-          ))
-        })
-      })
-    })
+          )
+        }
+      }
+    }
 
   private def parseReferersJson(c: ACursor): Either[Exception, Map[Medium, Map[String, JsonEntry]]] =
     for {
@@ -83,5 +80,5 @@ private[refererparser] object ParseReferersJson {
     } yield mediumEntries.toMap
   
   private def someOrExcept[A](opt: Option[A], message: String): Either[Exception, A] =
-    opt.map(Right(_)).getOrElse(Left(new CorruptJsonException(message)))
+    opt.toRight(CorruptJsonException(message))
 }

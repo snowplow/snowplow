@@ -30,7 +30,12 @@ class ParseTest extends Specification with DataTables { def is =
 
   "This is a specification to test the parse function"
 
-  val parser = Parser.create[IO].unsafeRunSync()
+  val parser = Parser.create[IO](
+    getClass.getResource("/referers.json").getPath
+  ).unsafeRunSync() match {
+    case Right(p) => p
+    case Left(f) => throw f
+  }
 
   // Aliases
   val pageHost = "www.snowplowanalytics.com"

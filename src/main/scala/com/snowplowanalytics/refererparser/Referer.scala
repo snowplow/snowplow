@@ -20,4 +20,4 @@ import Medium._
 /**
  * Referer
  */
-case class Referer(medium: Medium, source: Option[String], term: Option[String])
+final case class Referer(medium: Medium, source: Option[String], term: Option[String])

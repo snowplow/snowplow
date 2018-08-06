@@ -30,7 +30,12 @@ class NoRefererUriTest extends Specification {
   // Our data
   val pageHost = "www.psychicbazaar.com"
 
-  val parser = Parser.create[IO].unsafeRunSync()
+  val parser = Parser.create[IO](
+    getClass.getResource("/referers.json").getPath
+  ).unsafeRunSync() match {
+    case Right(p) => p
+    case Left(f) => throw f
+  }
 
   "An empty referer URI" should {
     "return no referal" in {

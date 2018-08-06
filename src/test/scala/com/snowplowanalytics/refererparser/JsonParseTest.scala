@@ -23,10 +23,10 @@ import java.net.URI
 import scala.io.Source._
 
 // circe
-import io.circe._;
-import io.circe.parser._;
-import io.circe.syntax._;
-import io.circe.generic.semiauto._;
+import io.circe._
+import io.circe.parser._
+import io.circe.syntax._
+import io.circe.generic.semiauto._
 
 // Specs2
 import org.specs2.mutable.Specification
@@ -65,7 +65,12 @@ class JsonParseTest extends Specification {
   val pageHost = "www.snowplowanalytics.com"
   val internalDomains = List("www.subdomain1.snowplowanalytics.com", "www.subdomain2.snowplowanalytics.com")
 
-  val parser = Parser.create[IO].unsafeRunSync
+  val parser = Parser.create[IO](
+    getClass.getResource("/referers.json").getPath
+  ).unsafeRunSync() match {
+    case Right(p) => p
+    case Left(f) => throw f
+  }
 
   "parse" should {
     s"extract the expected details from referer with spec" in {
