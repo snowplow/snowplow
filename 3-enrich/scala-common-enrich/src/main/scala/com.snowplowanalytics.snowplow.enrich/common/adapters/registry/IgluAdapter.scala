@@ -201,24 +201,34 @@ object IgluAdapter extends Adapter {
   private[registry] def jsonBodyToEvent(payload: CollectorPayload,
                                         body: String,
                                         schemaUri: String,
-                                        params: Map[String, String]): ValidatedRawEvents =
+                                        params: Map[String, String]): ValidatedRawEvents = {
+    def buildRawEvent(e: JValue): RawEvent =
+      RawEvent(
+        api         = payload.api,
+        parameters  = toUnstructEventParams(TrackerVersion, (params - "schema"), schemaUri, e, "app"),
+        contentType = payload.contentType,
+        source      = payload.source,
+        context     = payload.context
+      )
+
     parseJsonSafe(body) match {
-      case Success(parsed) => {
-        if (parsed.children.isEmpty) {
-          s"$VendorName event failed json sanity check: has no key-value pairs".failNel
-        } else {
-          NonEmptyList(
-            RawEvent(
-              api         = payload.api,
-              parameters  = toUnstructEventParams(TrackerVersion, (params - "schema"), schemaUri, parsed, "app"),
-              contentType = payload.contentType,
-              source      = payload.source,
-              context     = payload.context
-            )).success
+      case Success(parsed) =>
+        parsed match {
+          case a: JArray =>
+            a.arr match {
+              case h :: t => (NonEmptyList(buildRawEvent(h)) :::> t.map(buildRawEvent)).success
+              case Nil    => s"$VendorName event failed json sanity check: array of events cannot be empty".failNel
+            }
+          case _ =>
+            if (parsed.children.isEmpty) {
+              s"$VendorName event failed json sanity check: has no key-value pairs".failNel
+            } else {
+              NonEmptyList(buildRawEvent(parsed)).success
+            }
         }
-      }
       case Failure(err) => err.fail
     }
+  }
 
   /**
    * Converts a form body payload into a single validated event
