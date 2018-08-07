@@ -52,6 +52,8 @@ class IgluAdapterSpec extends Specification with DataTables with ValidationMatch
   toRawEvents should return a Validation Failure if sd-json is found but content type is not supported                   $e13
   toRawEvents should return a Validation Failure if body is found but content type is not supported                      $e14
   toRawEvents should return a NEL containing one RawEvent if a querystring is found in the POST body                     $e15
+  toRawEvents should return a NEL with RawEvents if the schema is in the qs and the body contains an array               $e16
+  toRawEvents should return a Validation Failure if the schema is in the qs and the body contains an empty array         $e17
   """
 
   implicit val resolver = SpecHelpers.IgluResolver
@@ -399,5 +401,46 @@ class IgluAdapterSpec extends Specification with DataTables with ValidationMatch
     )
 
     actual must beSuccessful(NonEmptyList(expected))
+  }
+
+  def e16 = {
+    val params = toNameValuePairs(
+      "schema"     -> "iglu:com.acme/campaign/jsonschema/1-0-1",
+      "some_param" -> "foo",
+      "p"          -> "mob"
+    )
+    val jsonStr = """[{"key":"value", "everwets":"processed"},{"key":"value", "everwets":"processed"}]"""
+    val payload =
+      CollectorPayload(Shared.api, params, "application/json".some, jsonStr.some, Shared.cljSource, Shared.context)
+    val actual = IgluAdapter.toRawEvents(payload)
+
+    val expected = RawEvent(
+      Shared.api,
+      Map(
+        "tv"    -> "com.snowplowanalytics.iglu-v1",
+        "e"     -> "ue",
+        "p"     -> "mob",
+        "ue_pr" -> """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.acme/campaign/jsonschema/1-0-1","data":{"key":"value","everwets":"processed"}}}"""
+      ),
+      "application/json".some,
+      Shared.cljSource,
+      Shared.context
+    )
+
+    actual must beSuccessful(NonEmptyList(expected, expected))
+  }
+
+  def e17 = {
+    val params = toNameValuePairs(
+      "schema"     -> "iglu:com.acme/campaign/jsonschema/1-0-1",
+      "some_param" -> "foo",
+      "p"          -> "mob"
+    )
+    val jsonStr = """[]"""
+    val payload =
+      CollectorPayload(Shared.api, params, "application/json".some, jsonStr.some, Shared.cljSource, Shared.context)
+    val actual = IgluAdapter.toRawEvents(payload)
+
+    actual must beFailing(NonEmptyList("Iglu event failed json sanity check: array of events cannot be empty"))
   }
 }
