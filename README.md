@@ -5,7 +5,7 @@
 [![License][license-image]][license]
 [![Join the chat at https://gitter.im/snowplow/snowplow][gitter-image]][gitter]
 
-<img src="https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/snowplow-logo-large.png"
+<img src="https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/snowplow-new-logo-large.png"
  alt="Snowplow logo" title="Snowplow" align="right" />
 
 Snowplow is an enterprise-strength marketing and product analytics platform. It does three things:
