@@ -59,28 +59,31 @@ module Snowplow
 
     private
 
-      def list_object_names_impl(client, bucket, prefix, key_filter, max_keys = 50, token = nil)
-        response = list_objects(client, bucket, prefix, max_keys, token)
-        filtered = response.contents
-          .select { |c| key_filter[c.key] }
-          .map { |c| c.key }
-        if response.is_truncated
-          filtered + list_object_names_impl(
-            client, bucket, prefix, key_filter, max_keys, response.next_continuation_token)
-        else
-          filtered
+      def list_object_names_impl(client, bucket, prefix, key_filter, max_keys = 50)
+        continuation_token = nil
+        filtered = []
+        loop do
+          response = list_objects(client, bucket, prefix, max_keys, continuation_token)
+          filtered = filtered + response.contents
+            .select { |c| key_filter[c.key] }
+            .map { |c| c.key }
+          continuation_token = response.next_continuation_token
+          break unless response.is_truncated
         end
+        filtered
       end
 
-      def empty_impl(client, bucket, prefix, key_filter, max_keys = 50, token = nil)
-        response = list_objects(client, bucket, prefix, max_keys, token)
-        filtered = response.contents.select { |c| key_filter[c.key] }
+      def empty_impl(client, bucket, prefix, key_filter, max_keys = 50)
+        continuation_token = nil
+        filtered = []
+        loop do
+          response = list_objects(client, bucket, prefix, max_keys, continuation_token)
+          filtered = response.contents.select { |c| key_filter[c.key] }
+          continuation_token = response.next_continuation_token
+          break unless filtered.empty? and response.is_truncated
+        end
         if filtered.empty?
-          if response.is_truncated
-            empty_impl(client, bucket, prefix, key_filter, max_keys, response.next_continuation_token)
-          else
-            true
-          end
+          true
         else
           false
         end
