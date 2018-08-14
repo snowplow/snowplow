@@ -29,7 +29,7 @@ If you see an issue you would like to work on, please let us know in the issue! 
 not doubling the amount of work.
 
 If you don't know where to start contributing, you can look at
-[the issues labeled `good first issue`](https://github.com/snowplow-referer-parser/jvm-referer-parser/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22).
+[the issues labeled `good first issue`](https://github.com/snowplow-referer-parser/scala-referer-parser/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22).
 
 ## Pull requests
 

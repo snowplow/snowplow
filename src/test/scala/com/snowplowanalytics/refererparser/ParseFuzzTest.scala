@@ -16,13 +16,8 @@
 
 package com.snowplowanalytics.refererparser
 
-// Java
-import java.net.URI
-
 // Specs2 & ScalaCheck
 import org.specs2.{Specification, ScalaCheck}
-import org.specs2.matcher.DataTables
-import org.scalacheck._
 import org.scalacheck.Arbitrary._
 
 // Cats

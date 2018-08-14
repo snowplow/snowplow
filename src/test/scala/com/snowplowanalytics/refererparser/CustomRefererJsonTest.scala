@@ -16,11 +16,6 @@
 
 package com.snowplowanalytics.refererparser
 
-import scala.io.Source
-
-// Java
-import java.net.URI
-
 // Specs2
 import org.specs2.mutable.Specification
 
@@ -37,7 +32,7 @@ class CustomRefererJsonTest extends Specification {
         case Right(parser) => parser
         case Left(failure) => throw failure
       }
-      val expected = Some(Referer(Medium.Search, Some("Example"), Some("hello world")))
+      val expected = Some(SearchReferer("Example", Some("hello world")))
       val actual = parser.parse("https://www.example.org/?query=hello+world")
 
       expected shouldEqual actual

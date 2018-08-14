@@ -16,9 +16,6 @@
 
 package com.snowplowanalytics.refererparser
 
-// Java
-import java.net.URI
-
 // Specs2
 import org.specs2.mutable.Specification
 
@@ -29,7 +26,7 @@ class CorruptedRefererQuerystringTest extends Specification {
 
   // Our data
   val refererUri = "http://www.google.com/search?q=Psychic+Bazaar&sugexp=chrome,mod=3&sourceid=chrome&ie=UTF-8"
-  val expected   = Some(Referer(Medium.Search, Some("Google"), Some("Psychic Bazaar")))
+  val expected   = Some(SearchReferer("Google", Some("Psychic Bazaar")))
 
   val parser = Parser.create[IO](
     getClass.getResource("/referers.json").getPath

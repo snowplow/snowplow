@@ -21,16 +21,7 @@ import io.circe.generic.semiauto._
 import io.circe.parser._
 
 // Cats
-import cats.effect.Sync
-//import cats.syntax._
 import cats.implicits._
-import cats.Traverse
-
-import scala.collection.immutable.HashMap
-import scala.collection.JavaConverters
-import scala.io.Source
-
-import Medium._
 
 /**
  * Handles loading and storing referers
@@ -49,8 +40,6 @@ private[refererparser] object ParseReferers {
   )
 
   implicit val jsonEntryDecoder = deriveDecoder[JsonEntry]
-
-  private val ReferersJsonPath = "referers.json"
 
   def loadJsonFromString(rawJson: String): Either[Exception, Map[String, RefererLookup]] =
     parse(rawJson).flatMap(loadJson)

@@ -25,7 +25,6 @@ import scala.io.Source._
 // circe
 import io.circe._
 import io.circe.parser._
-import io.circe.syntax._
 import io.circe.generic.semiauto._
 
 // Specs2
@@ -75,7 +74,15 @@ class JsonParseTest extends Specification {
   "parse" should {
     s"extract the expected details from referer with spec" in {
       for (test <- tests) yield {
-        val expected = Some(Referer(Medium.withName(test.medium), test.source, test.term))
+        val expected = Medium.fromString(test.medium) match {
+          case Some(UnknownMedium)  => Some(UnknownReferer)
+          case Some(SearchMedium)   => Some(SearchReferer(test.source.get, test.term))
+          case Some(InternalMedium) => Some(InternalReferer)
+          case Some(SocialMedium)   => Some(SocialReferer(test.source.get))
+          case Some(EmailMedium)    => Some(EmailReferer(test.source.get))
+          case Some(PaidMedium)     => Some(PaidReferer(test.source.get))
+          case _                    => throw new Exception(s"Bad medium: ${test.medium}")
+        }
         val actual = parser.parse(new URI(test.uri), Some(pageHost), internalDomains)
 
         expected shouldEqual actual

@@ -18,15 +18,30 @@ package com.snowplowanalytics.refererparser
 /**
  * Enumeration for supported mediums.
  */
-object Medium extends Enumeration {
-  type Medium = Value
+private[refererparser] sealed abstract class Medium(val value: String)
 
-  val Unknown  = Value("unknown")
-  val Search   = Value("search")
-  val Internal = Value("internal")
-  val Social   = Value("social")
-  val Email    = Value("email")
-  val Paid     = Value("paid")
+private[refererparser] object Medium {
+  def fromString(s: String): Option[Medium] = s match {
+    case UnknownMedium.value   => Some(UnknownMedium)
+    case SearchMedium.value    => Some(SearchMedium)
+    case InternalMedium.value  => Some(InternalMedium)
+    case SocialMedium.value    => Some(SocialMedium)
+    case EmailMedium.value     => Some(EmailMedium)
+    case PaidMedium.value      => Some(PaidMedium)
+    case _                     => None
+  }
 
-  def fromString(s: String): Option[Medium] = values.find(_.toString == s)
+  val Unknown = UnknownMedium
+  val Search = SearchMedium
+  val Internal = InternalMedium
+  val Social = SocialMedium
+  val Email = EmailMedium
+  val Paid = PaidMedium
 }
+
+private[refererparser] final case object UnknownMedium extends Medium("unknown")
+private[refererparser] final case object SearchMedium extends Medium("search")
+private[refererparser] final case object InternalMedium extends Medium("internal")
+private[refererparser] final case object SocialMedium extends Medium("social")
+private[refererparser] final case object EmailMedium extends Medium("email")
+private[refererparser] final case object PaidMedium extends Medium("paid")

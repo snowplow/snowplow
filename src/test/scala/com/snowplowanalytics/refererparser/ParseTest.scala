@@ -16,9 +16,6 @@
 
 package com.snowplowanalytics.refererparser
 
-// Java
-import java.net.URI
-
 // Specs2
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
@@ -72,7 +69,7 @@ class ParseTest extends Specification with DataTables { def is =
     "Internal HTTP"        !! "http://www.snowplowanalytics.com/about/team"                                                     ! Medium.Internal  ! None                ! None                                     |
     "Internal HTTPS"       !! "https://www.snowplowanalytics.com/account/profile"                                               ! Medium.Internal  ! None                ! None                                     |> {
       (_, refererUri, medium, source, term) =>
-        parser.parse(refererUri, pageHost) must_== Some(Referer(medium, source, term))
+        parser.parse(refererUri, pageHost) must_== Some(genExpected(medium, source, term))
     }
 
   // Unknown referer URI
@@ -84,7 +81,7 @@ class ParseTest extends Specification with DataTables { def is =
     "Unknown referer #4"            !! "http://seaqueen.wordpress.com/"                          ! None             |
     "Non-search Yahoo! site"        !! "http://finance.yahoo.com"                                ! Some("Yahoo!")   |> {
       (_, refererUri, refererSource) =>
-        parser.parse(refererUri, pageHost) must_== Some(Referer(Medium.Unknown, refererSource, None))
+        parser.parse(refererUri, pageHost) must_== Some(UnknownReferer)
     }
 
   // Unavoidable false positives
@@ -97,6 +94,15 @@ class ParseTest extends Specification with DataTables { def is =
     "Non-search Google Drive link" !! "http://www.google.com/url?q=http://www.whatismyreferer.com/&sa=D&usg=ALhdy2_qs3arPmg7E_e2aBkj6K0gHLa5rQ" ! Medium.Search ! Some("Google") ! Some("http://www.whatismyreferer.com/") |> {
      // ^ Sadly indistinguishable from a search link
       (_, refererUri, medium, source, term) =>
-        parser.parse(refererUri, pageHost) must_== Some(Referer(medium, source, term))
+        parser.parse(refererUri, pageHost) must_== Some(genExpected(medium, source, term))
     }
+
+  def genExpected(medium: Medium, source: Option[String], term: Option[String]) = medium match {
+    case UnknownMedium  => UnknownReferer
+    case SearchMedium   => SearchReferer(source.get, term)
+    case InternalMedium => InternalReferer
+    case SocialMedium   => SocialReferer(source.get)
+    case EmailMedium    => EmailReferer(source.get)
+    case PaidMedium     => PaidReferer(source.get)
+  }
 }

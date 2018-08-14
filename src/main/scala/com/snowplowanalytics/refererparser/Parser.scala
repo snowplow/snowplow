@@ -16,16 +16,13 @@
 package com.snowplowanalytics.refererparser
 
 // Java
-import java.net.{URI, URISyntaxException, URLDecoder}
-import java.io.InputStream
+import java.net.{URI, URLDecoder}
 
 // Scala
-import scala.collection.JavaConversions._
 import scala.io.Source
 
 // Cats
-import cats.Monoid
-import cats.effect.{Sync, IO}
+import cats.effect.Sync
 import cats.syntax.all._
 
 import Medium._
@@ -94,15 +91,20 @@ class Parser private (referers: Map[String, RefererLookup]) {
         pageHost.map(_.equals(host)).getOrElse(false) ||
         internalDomains.map(_.trim()).contains(host)
       ) {
-        Some(Referer(Internal, None, None))
+        Some(InternalReferer)
       } else {
         Some(lookupReferer(host, path).map(lookup => {
-          val term = lookup.medium match {
-            case Search => query.flatMap(q => extractSearchTerm(q, lookup.parameters))
-            case _ => None
+          lookup.medium match {
+            case UnknownMedium => UnknownReferer
+            case SearchMedium => SearchReferer(
+              lookup.source,
+              query.flatMap(q => extractSearchTerm(q, lookup.parameters)))
+            case InternalMedium => InternalReferer
+            case SocialMedium => SocialReferer(lookup.source)
+            case EmailMedium => EmailReferer(lookup.source)
+            case PaidMedium => PaidReferer(lookup.source)
           }
-          Referer(lookup.medium, Some(lookup.source), term)
-        }).getOrElse(Referer(Unknown, None, None)))
+        }).getOrElse(UnknownReferer))
       }
     } else {
       None
@@ -113,14 +115,14 @@ class Parser private (referers: Map[String, RefererLookup]) {
     extractQueryParams(query).find(p => possibleParameters.contains(p._1)).map(_._2)
 
   private def extractQueryParams(query: String): List[(String, String)] =
-    query.split("&").toList.map(pair => {
+    query.split("&").toList.map { pair =>
       val equalsIndex = pair.indexOf("=")
       if (equalsIndex > 0) {
         (decodeUriPart(pair.substring(0, equalsIndex)), decodeUriPart(pair.substring(equalsIndex+1)))
       } else {
         (decodeUriPart(pair), "")
       }
-    })
+    }
 
   private def decodeUriPart(part: String): String = URLDecoder.decode(part, "UTF-8")
 

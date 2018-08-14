@@ -16,9 +16,6 @@
 
 package com.snowplowanalytics.refererparser
 
-// Java
-import java.net.URI
-
 // Specs2
 import org.specs2.mutable.Specification
 

@@ -3,7 +3,7 @@ import com.typesafe.sbt.SbtGit.GitKeys._
 val root = (project in file(".")).
   enablePlugins(ScalaUnidocPlugin, GhpagesPlugin).
   settings(
-    name          := "referer-parser",
+    name          := "scala-referer-parser",
     organization  := "com.snowplowanalytics",
     version       := "0.3.0",
     description   := "Library for extracting marketing attribution data from referer URLs",
@@ -36,7 +36,7 @@ val root = (project in file(".")).
     ),
 
     addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), siteSubdirName in ScalaUnidoc),
-    gitRemoteRepo := "https://github.com/snowplow-referer-parser/jvm-referer-parser.git",
+    gitRemoteRepo := "https://github.com/snowplow-referer-parser/scala-referer-parser.git",
     siteSubdirName := "",
 
     publishMavenStyle := true,
@@ -47,8 +47,8 @@ val root = (project in file(".")).
 	bintrayRepository := "snowplow-maven",
 	pomIncludeRepository := { _ => false },
 	homepage := Some(url("http://snowplowanalytics.com")),
-	scmInfo := Some(ScmInfo(url("https://github.com/snowplow-referer-parser/jvm-referer-parser"),
-      "scm:git@github.com:snowplow-referer-parser/jvm-referer-parser.git")),
+	scmInfo := Some(ScmInfo(url("https://github.com/snowplow-referer-parser/scala-referer-parser"),
+      "scm:git@github.com:snowplow-referer-parser/scala-referer-parser.git")),
 	pomExtra := (
       <developers>
         <developer>

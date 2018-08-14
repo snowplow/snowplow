@@ -33,7 +33,7 @@ class ParseArgTypesTest extends Specification {
   val pageURI = new URI("http://www.psychicbazaar.com/catalog/pendula/lo-scarabeo-silver-cone-pendulum")
   val pageHost = pageURI.getHost
 
-  val expected = Some(Referer(Medium.Internal, None, None))
+  val expected = Some(InternalReferer)
 
   val parser = Parser.create[IO](
     getClass.getResource("/referers.json").getPath
