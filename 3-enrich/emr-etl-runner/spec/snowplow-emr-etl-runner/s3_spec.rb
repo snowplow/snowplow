@@ -54,15 +54,27 @@ describe S3 do
     end
   end
 
-  describe '#list_object_names' do
+  describe '#last_object_name' do
     it 'should take a client, a location and a filter argument' do
-      expect(subject).to respond_to(:list_object_names).with(3).argument
+      expect(subject).to respond_to(:last_object_name).with(3).argument
     end
 
     it 'should filter file names based on the filter' do
       s3.stub_responses(:list_objects_v2, { contents: [{ key: 'abc' }, { key: 'defg' }]})
-      expect(subject.list_object_names(s3, 's3://bucket/prefix', lambda { |k| k.length == 3}))
-        .to eq(['abc'])
+      expect(subject.last_object_name(s3, 's3://bucket/prefix', lambda { |k| k.length == 3}))
+        .to eq('abc')
+    end
+
+    it 'should retrieve the alphabetically file names based on the filter' do
+      s3.stub_responses(:list_objects_v2, { contents: [{ key: 'abc' }, { key: 'defg' }]})
+      expect(subject.last_object_name(s3, 's3://bucket/prefix', lambda { |k| k.length >= 0}))
+        .to eq('defg')
+    end
+
+    it 'should be the empty string if there is nothing' do
+      s3.stub_responses(:list_objects_v2, { contents: []})
+      expect(subject.last_object_name(s3, 's3://bucket/prefix', lambda { |k| k.length >= 0}))
+        .to eq('')
     end
 
   end
