@@ -593,7 +593,7 @@ module Snowplow
           archive_shredded_step = get_archive_step(csbs[:good], csbs[:archive], run_id, s3_endpoint, ": Shredded S3 -> Shredded Archive S3", encrypted)
           @jobflow.add_step(archive_shredded_step)
         elsif archive_shredded == 'recover'
-          latest_run_id = get_latest_run_id(s3, csbs[:good])
+          latest_run_id = get_latest_run_id(s3, csbs[:good], 'atomic-events')
           archive_shredded_step = get_archive_step(csbs[:good], csbs[:archive], latest_run_id, s3_endpoint, ": Shredded S3 -> S3 Shredded Archive", encrypted)
           @jobflow.add_step(archive_shredded_step)
         else    # skip
@@ -798,21 +798,26 @@ module Snowplow
       end
 
       # List bucket (enriched:good or shredded:good) and return latest run folder
-      # Assuming, there's usually just one folder
       #
       # Parameters:
       # +s3+:: AWS S3 client
       # +s3_path+:: Full S3 path to folder
-      def get_latest_run_id(s3, s3_path)
+      # +suffix+:: Suffix to check for emptiness, atomic-events in case of shredded:good
+      def get_latest_run_id(s3, s3_path, suffix = '')
         run_id_regex = /.*\/run=((\d|-)+)\/.*/
-        folders = list_object_names(s3, s3_path,
+        folder = last_object_name(s3, s3_path,
             lambda { |k| !(k =~ /\$folder\$$/) and !k[run_id_regex, 1].nil? })
-          .map { |k| k[run_id_regex, 1] }
-        if folders.empty?
+        run_id = folder[run_id_regex, 1]
+        if run_id.nil?
           logger.error "No run folders in [#{s3_path}] found"
           raise UnexpectedStateError, "No run folders in [#{s3_path}] found"
         else
-          folders.first
+          path = File.join(s3_path, "run=#{run_id}", suffix)
+          if empty?(s3, path)
+            raise NoDataToProcessError, "Cannot archive #{path}, no data found"
+          else
+            run_id
+          end
         end
       end
 

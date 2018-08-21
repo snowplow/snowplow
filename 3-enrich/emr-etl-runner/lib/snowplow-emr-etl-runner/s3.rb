@@ -36,15 +36,15 @@ module Snowplow
         empty_impl(client, bucket, prefix, key_filter)
       end
 
-      # List all object names satisfying a key filter.
+      # Retrieve the alphabetically last object name satisfying a key filter.
       #
       # Parameters:
       # +client+:: S3 client
       # +location+:: S3 url of the folder to list the object names for
       # +key_filter+:: filter to apply on the keys
-      def list_object_names(client, location, key_filter)
+      def last_object_name(client, location, key_filter)
         bucket, prefix = parse_bucket_prefix(location)
-        list_object_names_impl(client, bucket, prefix, key_filter)
+        last_object_name_impl(client, bucket, prefix, key_filter)
       end
 
       # Extract the bucket and prefix from an S3 url.
@@ -59,28 +59,36 @@ module Snowplow
 
     private
 
-      def list_object_names_impl(client, bucket, prefix, key_filter, max_keys = 50, token = nil)
-        response = list_objects(client, bucket, prefix, max_keys, token)
-        filtered = response.contents
-          .select { |c| key_filter[c.key] }
-          .map { |c| c.key }
-        if response.is_truncated
-          filtered + list_object_names_impl(
-            client, bucket, prefix, key_filter, max_keys, response.next_continuation_token)
-        else
-          filtered
+      def last_object_name_impl(client, bucket, prefix, key_filter, max_keys = 50)
+        continuation_token = nil
+        last = ""
+        loop do
+          response = list_objects(client, bucket, prefix, max_keys, continuation_token)
+          new_last = response.contents
+            .select { |c| key_filter[c.key] }
+            .map { |c| c.key }
+            .sort
+            .last
+          if not new_last.nil? and new_last > last
+            last = new_last
+          end
+          continuation_token = response.next_continuation_token
+          break unless response.is_truncated
         end
+        last
       end
 
-      def empty_impl(client, bucket, prefix, key_filter, max_keys = 50, token = nil)
-        response = list_objects(client, bucket, prefix, max_keys, token)
-        filtered = response.contents.select { |c| key_filter[c.key] }
+      def empty_impl(client, bucket, prefix, key_filter, max_keys = 50)
+        continuation_token = nil
+        filtered = []
+        loop do
+          response = list_objects(client, bucket, prefix, max_keys, continuation_token)
+          filtered = response.contents.select { |c| key_filter[c.key] }
+          continuation_token = response.next_continuation_token
+          break unless filtered.empty? and response.is_truncated
+        end
         if filtered.empty?
-          if response.is_truncated
-            empty_impl(client, bucket, prefix, key_filter, max_keys, response.next_continuation_token)
-          else
-            true
-          end
+          true
         else
           false
         end

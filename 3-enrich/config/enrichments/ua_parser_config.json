@@ -1,11 +1,14 @@
 {
-	"schema": "iglu:com.snowplowanalytics.snowplow/ua_parser_config/jsonschema/1-0-0",
+    "schema": "iglu:com.snowplowanalytics.snowplow/ua_parser_config/jsonschema/1-0-1",
 
-	"data": {
+    "data": {
 
-		"vendor": "com.snowplowanalytics.snowplow",
-		"name": "ua_parser_config",
-		"enabled": true,
-		"parameters": {}
-	}
+        "vendor": "com.snowplowanalytics.snowplow",
+        "name": "ua_parser_config",
+        "enabled": true,
+        "parameters": {
+            "database": "regexes-latest.yaml",
+            "uri": "s3://snowplow-hosted-assets/third-party/ua-parser/"
+        }
+    }
 }

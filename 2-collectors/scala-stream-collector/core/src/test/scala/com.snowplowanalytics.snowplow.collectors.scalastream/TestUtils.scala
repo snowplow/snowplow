@@ -23,10 +23,12 @@ object TestUtils {
     interface = "0.0.0.0",
     port = 8080,
     p3p = P3PConfig("/w3c/p3p.xml", "NOI DSP COR NID PSA OUR IND COM NAV STA"),
-    CrossDomainConfig(enabled = true, "*", secure = false),
+    CrossDomainConfig(enabled = true, List("*"), secure = false),
     cookie = CookieConfig(true, "sp", 365.days, None),
+    doNotTrackCookie = DoNotTrackCookieConfig(false, "abc", "123"),
     cookieBounce = CookieBounceConfig(false, "bounce", "new-nuid", None),
     redirectMacro = RedirectMacroConfig(false, None),
+    rootResponse = RootResponseConfig(false, 404),
     streams = StreamsConfig(
       good = "good",
       bad = "bad",
@@ -35,9 +37,10 @@ object TestUtils {
         region = "us-east-1",
         threadPoolSize = 12,
         aws = AWSConfig("cpf", "cpf"),
-        backoffPolicy = KinesisBackoffPolicyConfig(3000L, 60000L)
+        backoffPolicy = KinesisBackoffPolicyConfig(3000L, 60000L),
+        customEndpoint = None
       ),
-      buffer = BufferConfig(4000000, 500, 60000)
+      buffer = BufferConfig(4000000L, 500L, 60000L)
     )
   )
 }

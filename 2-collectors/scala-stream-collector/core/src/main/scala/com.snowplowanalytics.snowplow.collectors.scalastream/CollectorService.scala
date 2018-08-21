@@ -38,6 +38,7 @@ import utils.SplitBatch
 trait Service {
   def preflightResponse(req: HttpRequest): HttpResponse
   def flashCrossDomainPolicy: HttpResponse
+  def rootResponse: HttpResponse
   def cookie(
     queryString: Option[String],
     body: Option[String],
@@ -49,9 +50,11 @@ trait Service {
     ip: RemoteAddress,
     request: HttpRequest,
     pixelExpected: Boolean,
+    doNotTrack: Boolean,
     contentType: Option[ContentType] = None
   ): (HttpResponse, List[Array[Byte]])
   def cookieName: Option[String]
+  def doNotTrackCookie: Option[HttpCookie]
 }
 
 object CollectorService {
@@ -71,6 +74,7 @@ class CollectorService(
     config.streams.sink.getClass.getSimpleName.toLowerCase
 
   override val cookieName = config.cookieName
+  override val doNotTrackCookie = config.doNotTrackHttpCookie
 
   override def cookie(
     queryString: Option[String],
@@ -83,6 +87,7 @@ class CollectorService(
     ip: RemoteAddress,
     request: HttpRequest,
     pixelExpected: Boolean,
+    doNotTrack: Boolean,
     contentType: Option[ContentType] = None
   ): (HttpResponse, List[Array[Byte]]) = {
     val queryParams = Uri.Query(queryString).toMap
@@ -105,14 +110,14 @@ class CollectorService(
     val event = buildEvent(
       queryString, body, path, userAgent, refererUri, hostname, ipAddress, request, nuid, ct)
     // we don't store events in case we're bouncing
-    val sinkResponses = if (!bounce) sinkEvent(event, partitionKey) else Nil
+    val sinkResponses = if (!bounce && !doNotTrack) sinkEvent(event, partitionKey) else Nil
 
     val headers = bounceLocationHeader(
       queryParams,
       request,
       config.cookieBounce,
       bounce) ++
-      cookieHeader(config.cookieConfig, nuid) ++
+      cookieHeader(config.cookieConfig, nuid, doNotTrack) ++
       List(
         RawHeader("P3P", "policyref=\"%s\", CP=\"%s\"".format(config.p3p.policyRef, config.p3p.CP)),
         accessControlAllowOriginHeader(request),
@@ -146,10 +151,22 @@ class CollectorService(
     if (config.enabled) {
       HttpResponse(entity = HttpEntity(
         contentType = ContentType(MediaTypes.`text/xml`, HttpCharsets.`ISO-8859-1`),
-        string = s"""<?xml version=\"1.0\"?>\n<cross-domain-policy>
-                    |  <allow-access-from domain=\"${config.domain}\" secure=\"${config.secure}\" />
-                    |</cross-domain-policy>""".stripMargin
+        string = """<?xml version="1.0"?>""" + "\n<cross-domain-policy>\n" +
+          config.domains.map(d => s"""  <allow-access-from domain=\"$d\" secure=\"${config.secure}\" />""").mkString("\n") +
+          "\n</cross-domain-policy>"
       ))
+    } else {
+      HttpResponse(404, entity = "404 not found")
+    }
+
+
+  override def rootResponse: HttpResponse =
+    rootResponse(config.rootResponse)
+
+  def rootResponse(c: RootResponseConfig): HttpResponse =
+    if (c.enabled) {
+      val rawHeaders = c.headers.map { case (k, v) => RawHeader(k, v) }.toList
+      HttpResponse(c.statusCode, rawHeaders, HttpEntity(c.body))
     } else {
       HttpResponse(404, entity = "404 not found")
     }
@@ -255,21 +272,27 @@ class CollectorService(
    * Builds a cookie header with the network user id as value.
    * @param cookieConfig cookie configuration extracted from the collector configuration
    * @param networkUserId value of the cookie
+   * @param doNotTrack whether do not track is enabled or not
    * @return the build cookie wrapped in a header
    */
   def cookieHeader(
     cookieConfig: Option[CookieConfig],
-    networkUserId: String
+    networkUserId: String,
+    doNotTrack: Boolean
   ): Option[HttpHeader] =
-    cookieConfig.map { config =>
-      val responseCookie = HttpCookie(
-        name    = config.name,
-        value   = networkUserId,
-        expires = Some(DateTime.now + config.expiration.toMillis),
-        domain  = config.domain,
-        path    = Some("/")
-      )
-      `Set-Cookie`(responseCookie)
+    if (doNotTrack) {
+      None
+    } else {
+      cookieConfig.map { config =>
+        val responseCookie = HttpCookie(
+          name    = config.name,
+          value   = networkUserId,
+          expires = Some(DateTime.now + config.expiration.toMillis),
+          domain  = config.domain,
+          path    = Some("/")
+        )
+        `Set-Cookie`(responseCookie)
+      }
     }
 
   /** Build a location header redirecting to itself to check if third-party cookies are blocked. */

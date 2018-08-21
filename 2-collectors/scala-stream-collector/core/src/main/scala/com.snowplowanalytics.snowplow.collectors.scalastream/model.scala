@@ -16,6 +16,8 @@ package com.snowplowanalytics.snowplow.collectors.scalastream
 
 import scala.concurrent.duration.FiniteDuration
 
+import akka.http.scaladsl.model.headers.HttpCookie
+
 import sinks.Sink
 
 package model {
@@ -49,6 +51,11 @@ package model {
     expiration: FiniteDuration,
     domain: Option[String]
   )
+  final case class DoNotTrackCookieConfig(
+    enabled: Boolean,
+    name: String,
+    value: String
+  )
   final case class CookieBounceConfig(
     enabled: Boolean,
     name: String,
@@ -59,8 +66,14 @@ package model {
     enabled: Boolean,
     placeholder: Option[String]
   )
+  final case class RootResponseConfig(
+    enabled: Boolean,
+    statusCode: Int,
+    headers: Map[String, String] = Map.empty[String, String],
+    body: String = ""
+  )
   final case class P3PConfig(policyRef: String, CP: String)
-  final case class CrossDomainConfig(enabled: Boolean, domain: String, secure: Boolean)
+  final case class CrossDomainConfig(enabled: Boolean, domains: List[String], secure: Boolean)
   final case class KinesisBackoffPolicyConfig(minBackoff: Long, maxBackoff: Long)
   final case class GooglePubSubBackoffPolicyConfig(
     minBackoff: Long,
@@ -74,12 +87,13 @@ package model {
     region: String,
     threadPoolSize: Int,
     aws: AWSConfig,
-    backoffPolicy: KinesisBackoffPolicyConfig
+    backoffPolicy: KinesisBackoffPolicyConfig,
+    customEndpoint: Option[String]
   ) extends SinkConfig {
-    val endpoint = region match {
+    val endpoint = customEndpoint.getOrElse(region match {
       case cn@"cn-north-1" => s"https://kinesis.$cn.amazonaws.com.cn"
       case _ => s"https://kinesis.$region.amazonaws.com"
-    }
+    })
   }
   final case class GooglePubSub(
     googleProjectId: String,
@@ -88,7 +102,7 @@ package model {
   final case class Kafka(brokers: String, retries: Int) extends SinkConfig
   final case class Nsq(host: String, port: Int) extends SinkConfig
   case object Stdout extends SinkConfig
-  final case class BufferConfig(byteLimit: Int, recordLimit: Int, timeLimit: Long)
+  final case class BufferConfig(byteLimit: Long, recordLimit: Long, timeLimit: Long)
   final case class StreamsConfig(
     good: String,
     bad: String,
@@ -102,11 +116,18 @@ package model {
     p3p: P3PConfig,
     crossDomain: CrossDomainConfig,
     cookie: CookieConfig,
+    doNotTrackCookie: DoNotTrackCookieConfig,
     cookieBounce: CookieBounceConfig,
     redirectMacro: RedirectMacroConfig,
+    rootResponse: RootResponseConfig,
     streams: StreamsConfig
   ) {
     val cookieConfig = if (cookie.enabled) Some(cookie) else None
+    val doNotTrackHttpCookie =
+      if (doNotTrackCookie.enabled)
+        Some(HttpCookie(name = doNotTrackCookie.name, value = doNotTrackCookie.value))
+      else
+        None
 
     def cookieName = cookieConfig.map(_.name)
     def cookieDomain = cookieConfig.flatMap(_.domain)

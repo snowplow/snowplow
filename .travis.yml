@@ -1,6 +1,6 @@
 language: scala
 scala:
-  - 2.11.11
+  - 2.11.12
 jdk:
   - oraclejdk8
 before_script:
@@ -42,7 +42,7 @@ env:
   # AWS_DEPLOY_SECRET_ACCESS_KEY
   - secure: MS/z9K5eYhtdh1aRNHNgnKQqxVAByZh7nkIh2uVMA01m90HPXUqOgdoVL2RVCiEqcodotC0gEDANHLRgxBe+uWALdT+RP5LLTF/AyhkPObtlLjhxLDxkFvuA5CulsjaAU/c8Cwcn3PXnpymImJyWR2+dE38PVHfTxzc+yVhv/Hg=
   matrix:
-  - TEST_DIR=2-collectors/scala-stream-collector
+  - TEST_DIR=2-collectors/scala-stream-collector/
   - TEST_DIR=3-enrich/scala-common-enrich/
   - TEST_DIR=3-enrich/spark-enrich/
   - TEST_DIR=3-enrich/stream-enrich/

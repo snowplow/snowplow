@@ -26,6 +26,7 @@ class CollectorRouteSpec extends Specification with Specs2RouteTest {
       def preflightResponse(req: HttpRequest): HttpResponse =
         HttpResponse(200, entity = "preflight response")
       def flashCrossDomainPolicy: HttpResponse = HttpResponse(200, entity = "flash cross domain")
+      def rootResponse: HttpResponse = HttpResponse(200, entity = "200 collector root")
       def cookie(
         queryString: Option[String],
         body: Option[String],
@@ -37,9 +38,11 @@ class CollectorRouteSpec extends Specification with Specs2RouteTest {
         ip: RemoteAddress,
         request: HttpRequest,
         pixelExpected: Boolean,
+        doNotTrack: Boolean,
         contentType: Option[ContentType] = None
       ): (HttpResponse, List[Array[Byte]]) = (HttpResponse(200, entity = s"cookie"), List.empty)
       def cookieName: Option[String] = Some("name")
+      def doNotTrackCookie: Option[HttpCookie] = None
     }
   }
 
@@ -69,12 +72,30 @@ class CollectorRouteSpec extends Specification with Specs2RouteTest {
         responseAs[String] shouldEqual "cookie"
       }
     }
-    "respond to the pixel route with the cookie response" in {
+    "respond to the head cookie route with the cookie response" in {
+      Head("/p1/p2") ~> route.collectorRoute ~> check {
+        responseAs[String] shouldEqual "cookie"
+      }
+    }
+    "respond to the get pixel route with the cookie response" in {
       Get("/ice.png") ~> route.collectorRoute ~> check {
         responseAs[String] shouldEqual "cookie"
       }
       Get("/i") ~> route.collectorRoute ~> check {
         responseAs[String] shouldEqual "cookie"
+      }
+    }
+    "respond to the head pixel route with the cookie response" in {
+      Head("/ice.png") ~> route.collectorRoute ~> check {
+        responseAs[String] shouldEqual "cookie"
+      }
+      Head("/i") ~> route.collectorRoute ~> check {
+        responseAs[String] shouldEqual "cookie"
+      }
+    }
+    "respond to customizable root requests" in {
+      Get("/") ~> route.collectorRoute ~> check {
+        responseAs[String] shouldEqual "200 collector root"
       }
     }
     "respond to anything else with a not found" in {
@@ -110,6 +131,32 @@ class CollectorRouteSpec extends Specification with Specs2RouteTest {
             complete(HttpResponse(200, entity = c.toString))
           } ~> check {
             responseAs[String] shouldEqual "None"
+          }
+      }
+    }
+
+    "have a directive checking for a do not track cookie" in {
+      "return false if the dnt cookie is not setup" in {
+        Get() ~> Cookie("abc" -> "123") ~> route.doNotTrack(None) { dnt =>
+          complete(dnt.toString)
+        } ~> check {
+          responseAs[String] shouldEqual "false"
+        }
+      }
+      "return false if the dnt cookie doesn't have the same value compared to configuration" in {
+        Get() ~> Cookie("abc" -> "123") ~>
+          route.doNotTrack(Some(HttpCookie(name = "abc", value = "345"))) { dnt =>
+            complete(dnt.toString)
+          } ~> check {
+            responseAs[String] shouldEqual "false"
+          }
+      }
+      "return true if there is a properly-valued dnt cookie" in {
+        Get() ~> Cookie("abc" -> "123") ~>
+          route.doNotTrack(Some(HttpCookie(name = "abc", value = "123"))) { dnt =>
+            complete(dnt.toString)
+          } ~> check {
+            responseAs[String] shouldEqual "true"
           }
       }
     }

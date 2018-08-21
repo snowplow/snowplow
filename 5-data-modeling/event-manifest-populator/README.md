@@ -41,14 +41,11 @@ Optionally, you can also pass following options:
 
 ## Building
 
-Assuming git, **[Vagrant][vagrant-install]** and **[VirtualBox][virtualbox-install]** installed:
+Assuming [SBT](https://www.scala-sbt.org/) installed:
 
 ```bash
-host$ git clone https://github.com/snowplow/snowplow.git
-host$ cd snowplow
-host$ vagrant up && vagrant ssh
-guest$ cd /vagrant/5-data-modeling/event-manifest-populator
-guest$ sbt assembly
+$ cd 5-data-modeling/event-manifest-populator
+$ sbt assembly
 ```
 
 ## Copyright and License
@@ -73,8 +70,5 @@ limitations under the License.
 [shredding]: https://github.com/snowplow/snowplow/wiki/Shredding
 
 [dynamodb-config]: https://github.com/snowplow/snowplow/wiki/Configuring-storage-targets#dynamodb
-
-[vagrant-install]: http://docs.vagrantup.com/v2/installation/index.html
-[virtualbox-install]: https://www.virtualbox.org/wiki/Downloads
 
 [license]: http://www.apache.org/licenses/LICENSE-2.0
