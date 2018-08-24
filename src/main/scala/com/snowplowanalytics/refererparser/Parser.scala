@@ -25,8 +25,6 @@ import scala.io.Source
 import cats.effect.Sync
 import cats.syntax.all._
 
-import Medium._
-
 /**
  * Parser object - contains one-time initialization
  * of the JSON database of referers, and parse()

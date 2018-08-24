@@ -15,8 +15,6 @@
  */
 package com.snowplowanalytics.refererparser
 
-import Medium._
-
 /*
  * Hold the structure of a referer lookup
  */
