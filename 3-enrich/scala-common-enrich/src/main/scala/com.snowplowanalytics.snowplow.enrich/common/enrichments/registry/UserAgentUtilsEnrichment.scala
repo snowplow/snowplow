@@ -26,6 +26,9 @@ import scala.util.control.NonFatal
 import scalaz._
 import Scalaz._
 
+// Logging
+import org.slf4j.LoggerFactory
+
 // UserAgentUtils
 import eu.bitwalker.useragentutils._
 
@@ -41,10 +44,15 @@ import utils.ScalazJson4sUtils
 object UserAgentUtilsEnrichmentConfig extends ParseableEnrichment {
 
   val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "user_agent_utils_config", "jsonschema", 1, 0)
+  private val log             = LoggerFactory.getLogger(getClass())
 
   // Creates a UserAgentUtilsEnrichment instance from a JValue
-  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[UserAgentUtilsEnrichment.type] =
+  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[UserAgentUtilsEnrichment.type] = {
+    log.warn(
+      s"user_agent_utils enrichment is deprecated. Please visit here for more information: " +
+        s"https://github.com/snowplow/snowplow/wiki/user-agent-utils-enrichment")
     isParseable(config, schemaKey).map(_ => UserAgentUtilsEnrichment)
+  }
 }
 
 /**
