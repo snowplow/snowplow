@@ -52,7 +52,7 @@ lazy val allSettings = buildSettings ++
 
 lazy val root = project.in(file("."))
   .settings(buildSettings)
-  .aggregate(core, kinesis, pubsub, kafka, nsq, stdin, integrationTests)
+  .aggregate(core, kinesis, kafka, nsq, stdin, integrationTests)
 
 lazy val core = project
   .settings(moduleName := "snowplow-stream-enrich")
@@ -74,15 +74,6 @@ lazy val kinesis = project
     Dependencies.Libraries.s3Sdk,
     Dependencies.Libraries.dynamodbSdk,
     Dependencies.Libraries.jacksonCbor
-  ))
-  .dependsOn(core)
-
-lazy val pubsub = project
-  .settings(moduleName := "snowplow-stream-enrich-google-pubsub")
-  .settings(allSettings)
-  .settings(libraryDependencies ++= Seq(
-    Dependencies.Libraries.pubsub,
-    Dependencies.Libraries.datastore
   ))
   .dependsOn(core)
 
