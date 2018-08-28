@@ -41,12 +41,6 @@ object model {
   final case class InConfig(raw: String)
   final case class OutConfig(enriched: String, pii: Option[String], bad: String, partitionKey: String)
   final case class KinesisBackoffPolicyConfig(minBackoff: Long, maxBackoff: Long)
-  final case class GooglePubSubBackoffPolicyConfig(
-    minBackoff: Long,
-    maxBackoff: Long,
-    totalBackoff: Long,
-    multiplier: Double
-  )
   sealed trait SourceSinkConfig
   final case class Kinesis(
     region: String,
@@ -71,11 +65,6 @@ object model {
       case _                 => s"https://kinesis.$region.amazonaws.com"
     })
   }
-  final case class GooglePubSub(
-    googleProjectId: String,
-    backoffPolicy: GooglePubSubBackoffPolicyConfig,
-    threadPoolSize: Int
-  ) extends SourceSinkConfig
   final case class Kafka(brokers: String, retries: Int) extends SourceSinkConfig
   final case class Nsq(
     rawChannel: String,

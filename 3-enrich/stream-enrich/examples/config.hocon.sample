@@ -49,7 +49,6 @@ enrich {
       # Sources / sinks currently supported are:
       # 'kinesis' for reading Thrift-serialized records and writing enriched and bad events to a
       # Kinesis stream
-      # 'googlepubsub' for reading / writing to a Google PubSub topic
       # 'kafka' for reading / writing to a Kafka topic
       # 'nsq' for reading / writing to a Nsq topic
       # 'stdin' for reading from stdin and writing to stdout and stderr
@@ -92,19 +91,6 @@ enrich {
         minBackoff = {{enrichStreamsOutMinBackoff}}
         maxBackoff = {{enrichStreamsOutMaxBackoff}}
       }
-
-      # Or Google PubSub
-      #googleProjectId = my-project-id
-      ## Size of the subscriber thread pool
-      #threadPoolSize = 4
-      ## Minimum, maximum and total backoff periods, in milliseconds
-      ## and multiplier between two backoffs
-      #backoffPolicy {
-      #  minBackoff = {{enrichStreamsOutMinBackoff}}
-      #  maxBackoff = {{enrichStreamsOutMaxBackoff}}
-      #  totalBackoff = {{enrichStreamsOutTotalBackoff}} # must be >= 10000
-      #  multiplier = {{enrichStreamsOutTotalBackoff}}
-      #}
 
       # Or Kafka (Comment out for other types)
       brokers = "{{kafkaBrokers}}"
