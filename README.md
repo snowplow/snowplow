@@ -12,7 +12,7 @@ Snowplow is an enterprise-strength marketing and product analytics platform. It 
 
 1. Identifies your users, and tracks the way they engage with your website or application
 2. Stores your users' behavioural data in a scalable "event data warehouse" you control: in Amazon S3 and (optionally) Amazon Redshift or Postgres
-3. Lets you leverage the biggest range of tools to analyze that data, including big data tools (e.g. Spark) via EMR or more traditional tools e.g. Looker, Mode, Superset, Re:dash to analyze that behavioural data
+3. Lets you leverage the biggest range of tools to analyze that data, including big data tools (e.g. Spark) via EMR or more traditional tools e.g. Looker, [Holistics](https://holistics.io), Mode, Superset, Re:dash to analyze that behavioural data
 
 **To find out more, please check out the [Snowplow website][website] and the [Snowplow wiki][wiki].**
 
