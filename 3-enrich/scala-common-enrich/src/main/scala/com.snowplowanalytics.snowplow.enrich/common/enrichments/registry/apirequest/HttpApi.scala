@@ -19,12 +19,16 @@ package apirequest
 // Java
 import java.net.URLEncoder
 
+// json4s
+import org.json4s.DefaultFormats
+import org.json4s.jackson.Serialization
+
 // Scalaz
 import scalaz._
 import Scalaz._
 
 // This project
-import utils.HttpClient
+import com.snowplowanalytics.snowplow.enrich.common.utils.HttpClient
 
 /**
  * API client able to make HTTP requests
@@ -51,12 +55,12 @@ case class HttpApi(method: String, uri: String, timeout: Int, authentication: Au
    * Primary API method, taking kv-context derived from event (POJO and contexts),
    * generating request and sending it
    *
-   * @param client HTTP client to perform request
    * @param url URL to query
+   * @param body optional request body
    * @return self-describing JSON ready to be attached to event contexts
    */
-  def perform(url: String): Validation[Throwable, String] = {
-    val req = HttpClient.buildRequest(url, authUser = authUser, authPassword = authPassword, method)
+  def perform(url: String, body: Option[String] = None): Validation[Throwable, String] = {
+    val req = HttpClient.buildRequest(url, authUser = authUser, authPassword = authPassword, body, method)
     HttpClient.getBody(req)
   }
 
@@ -73,6 +77,19 @@ case class HttpApi(method: String, uri: String, timeout: Int, authentication: Au
     val url            = encodedContext.toList.foldLeft(uri)(replace)
     everythingMatched(url).option(url)
   }
+
+  /**
+   * Build request data body when the method supports this
+   *
+   * @param context key-value context
+   * @return Some body data if method supports body,
+   *         None if method does not support body
+   */
+  private[apirequest] def buildBody(context: Map[String, String]): Option[String] =
+    method match {
+      case "POST" | "PUT" => Some(Serialization.write(context)(DefaultFormats))
+      case "GET"          => None
+    }
 }
 
 object HttpApi {

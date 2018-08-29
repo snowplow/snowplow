@@ -19,21 +19,24 @@ package apirequest
 // Maven Artifact
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion
 
+// Java
+import java.util.UUID
+
 // Scalaz
 import scalaz._
 import Scalaz._
 
 // json4s
-import org.json4s._
 import org.json4s.JsonDSL._
+import org.json4s._
 import org.json4s.jackson.JsonMethods.fromJsonNode
 
 // Iglu
 import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
 
 // This project
-import outputs.EnrichedEvent
-import utils.{HttpClient, ScalazJson4sUtils}
+import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
+import com.snowplowanalytics.snowplow.enrich.common.utils.ScalazJson4sUtils
 
 /**
  * Lets us create an ApiRequestEnrichmentConfig from a JValue
@@ -115,7 +118,8 @@ case class ApiRequestEnrichment(inputs: List[Input], api: HttpApi, outputs: List
       templateContext <- validInputs.toList
       url             <- api.buildUrl(templateContext).toList
       output          <- outputs
-    } yield cachedOrRequest(url, output).leftMap(_.toString)
+      body = api.buildBody(templateContext)
+    } yield cachedOrRequest(url, body, output).leftMap(_.toString)
     result.sequenceU
   }
 
@@ -126,14 +130,16 @@ case class ApiRequestEnrichment(inputs: List[Input], api: HttpApi, outputs: List
    * @param output currently processing output
    * @return validated JObject, in case of success ready to be attached to derived contexts
    */
-  private[apirequest] def cachedOrRequest(url: String, output: Output): Validation[Throwable, JObject] = {
-    val value = cache.get(url) match {
+  private[apirequest] def cachedOrRequest(url: String,
+                                          body: Option[String],
+                                          output: Output): Validation[Throwable, JObject] = {
+    val key = cacheKey(url, body)
+    val value = cache.get(key) match {
       case Some(cachedResponse) => cachedResponse
-      case None => {
-        val json = api.perform(url).flatMap(output.parse)
-        cache.put(url, json)
+      case None =>
+        val json = api.perform(url, body).flatMap(output.parse)
+        cache.put(key, json)
         json
-      }
     }
     value.flatMap(output.extract).map(output.describeJson)
   }
@@ -159,4 +165,16 @@ object ApiRequestEnrichment {
         val data = fromJsonNode(node)
         ("schema" -> uri) ~ ("data" -> data \ "data")
     }
+
+  /**
+   * Creates an UUID based on url and optional body.
+   *
+   * @param url URL to query
+   * @param body optional request body
+   * @return UUID that identifies of the request.
+   */
+  def cacheKey(url: String, body: Option[String]): String = {
+    val contentKey = url + body.getOrElse("")
+    UUID.nameUUIDFromBytes(contentKey.getBytes).toString
+  }
 }
