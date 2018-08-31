@@ -53,6 +53,14 @@ import sinks._
 
 object Source {
 
+  val PiiEventName      = "pii_transformation"
+  val PiiEventVendor    = "com.snowplowanalytics.snowplow"
+  val PiiEventFormat    = "jsonschema"
+  val PiiEventVersion   = "1-0-0"
+  val PiiEventPlatform  = "srv"
+  val ContextsSchema    = "iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0"
+  val ParentEventSchema = "iglu:com.snowplowanalytics.snowplow/parent_event/jsonschema/1-0-0"
+
   /**
    * If a bad row JSON is too big, reduce it's size
    * @param value Bad row JSON which is too large
@@ -110,11 +118,7 @@ abstract class Source(
 
   implicit val resolver: Resolver = igluResolver
   private val formatter           = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS")
-  private val PII_EVENT_NAME      = "pii_transformation"
-  private val PII_EVENT_VENDOR    = "com.snowplowanalytics.snowplow"
-  private val PII_EVENT_FORMAT    = "jsonschema"
-  private val PII_EVENT_VERSION   = "1-0-0"
-  private val PII_EVENT_PLATFORM  = "srv"
+
   def getPiiEvent(event: EnrichedEvent): Option[EnrichedEvent] =
     Option(event.pii)
       .filter(_.nonEmpty)
@@ -122,27 +126,28 @@ abstract class Source(
         val ee = new EnrichedEvent
         ee.unstruct_event = event.pii
         ee.app_id = event.app_id
-        ee.platform = PII_EVENT_PLATFORM
+        ee.platform = Source.PiiEventPlatform
         ee.etl_tstamp = event.etl_tstamp
         ee.collector_tstamp = event.collector_tstamp
-        ee.event = PII_EVENT_NAME
+        ee.event = Source.PiiEventName
         ee.event_id = UUID.randomUUID().toString
         ee.derived_tstamp = formatter.print(DateTime.now(DateTimeZone.UTC))
         ee.true_tstamp = ee.derived_tstamp
-        ee.event_vendor = PII_EVENT_VENDOR
-        ee.event_format = PII_EVENT_FORMAT
-        ee.event_name = PII_EVENT_NAME
-        ee.event_version = PII_EVENT_VERSION
+        ee.event_vendor = Source.PiiEventVendor
+        ee.event_format = Source.PiiEventFormat
+        ee.event_name = Source.PiiEventName
+        ee.event_version = Source.PiiEventVersion
         ee.contexts = getContextParentEvent(event.event_id)
         ee.v_etl =
           s"stream-enrich-${generated.BuildInfo.version}-common-${generated.BuildInfo.commonEnrichVersion}"
         ee
       }
-  private val CONTEXTS_SCHEMA = "iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0"
+
   def getContextParentEvent(eventId: String): String = {
     implicit val json4sFormats = DefaultFormats
-    write(("schema" -> CONTEXTS_SCHEMA) ~ ("data" -> List(
-      ("schema" -> "com.snowplowanalytics.snowplow/parent_event/jsonschema/1-0-0") ~ ("data" -> ("parentEventId" -> eventId)))))
+
+    write(("schema" -> Source.ContextsSchema) ~ ("data" -> List(
+      ("schema" -> Source.ParentEventSchema) ~ ("data" -> ("parentEventId" -> eventId)))))
   }
 
   val threadLocalGoodSink: ThreadLocal[Sink]

@@ -111,6 +111,15 @@
         (send-cookie-pixel cookies headers)
         (send-cookie-200 cookies headers)))))
 
+(defn send-preflight-response
+  "Respond to CORS request with an appropriate Access-Control-Allow-Origin header"
+  [headers]
+  (let [origin-header (get headers "origin" "*")]
+    {:status 200
+     :headers {"Access-Control-Allow-Origin" origin-header
+      "Access-Control-Allow-Crendentials" "true"
+      "Access-Control-Allow-Headers" "Content-Type"}}))
+
 (def send-404
   "Respond with a 404"
   {:status  404

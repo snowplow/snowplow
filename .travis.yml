@@ -41,11 +41,16 @@ env:
   - secure: MENlO4xyvwqcbhtG1FByx/Q2ZFYEgy/8AZiuZcP/QgJiwkL7+3WJjKLYQrL/nhxPOSMiknxOynRAF2EB154UdvGJ+txshFGIerE3mIQmHYdvQCLeHfLi8Ql556ePjviEF6mhPnChC50XZf+kI7tfaUXSyR9nrJt0Tmu3N/EMI4s=
   # AWS_DEPLOY_SECRET_ACCESS_KEY
   - secure: MS/z9K5eYhtdh1aRNHNgnKQqxVAByZh7nkIh2uVMA01m90HPXUqOgdoVL2RVCiEqcodotC0gEDANHLRgxBe+uWALdT+RP5LLTF/AyhkPObtlLjhxLDxkFvuA5CulsjaAU/c8Cwcn3PXnpymImJyWR2+dE38PVHfTxzc+yVhv/Hg=
+  # BINTRAY_SNOWPLOW_DOCKER_USER
+  - secure: Pav87F57y6QVUs5/NMiH8sTa3u7UmCeQIgtLIRJprj4CFN6yBqnVXxF8VJ5ozVUikgJlEf4L7KagX+MTyxImId017/4In4A2vxql0wCT2R4qZ4pu4zEWF1gYm+ZqRB9llPrm85CjI5j1MYslrb4aglyi4l3iITksDI6RUXrHazM=
+  # BINTRAY_SNOWPLOW_DOCKER_API_KEY
+  - secure: LXoplmEfqUpjSD95jwOIysCJBn43OgUaZDvncX+a9LSGpSv8EenvJSdzVKEpywYPGdt0jAi/cKMRYMDjtms+DW4TXWkm+2qHGcWLG2SBiKJyQe486zNCdU/JpP24wXZ4FV+iK8d8oE9kSLi+Pi+hZvD9p1BKBTXP8IYpjoIYsP8=
   matrix:
   - TEST_DIR=2-collectors/scala-stream-collector/
   - TEST_DIR=3-enrich/scala-common-enrich/
   - TEST_DIR=3-enrich/spark-enrich/
   - TEST_DIR=3-enrich/stream-enrich/
+  - TEST_DIR=3-enrich/beam-enrich/
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install leiningen
@@ -61,6 +66,7 @@ before_install:
 addons:
   postgresql: '9.3'
 services:
+  - docker
   - postgresql
 before_deploy:
   - pip install --user release-manager==0.3.0
@@ -92,6 +98,12 @@ deploy:
     on:
       tags: true
       condition: '$([[ "$TEST_DIR" == "3-enrich/spark-enrich/" ]] && .travis/is_release_tag.sh spark_enrich $TRAVIS_TAG && [ $? -eq 0 ] && echo "Deploying")'
+  - provider: script
+    script: ./.travis/deploy.sh beam_enrich $TRAVIS_TAG && ./.travis/deploy_docker.sh $TRAVIS_TAG
+    skip_cleanup: true
+    on:
+      tags: true
+      condition: '"$(.travis/is_release_tag.sh beam_enrich $TRAVIS_TAG)" == "" && $? == 0 && $TEST_DIR = 3-enrich/beam-enrich/'
   - provider: script
     script: ./.travis/deploy.sh hadoop_event_recovery $TRAVIS_TAG
     skip_cleanup: true
