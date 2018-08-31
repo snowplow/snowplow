@@ -33,7 +33,7 @@ class EnrichWithLocalFileSpec extends PipelineSpec {
     "unstruct",
     "tracker_version",
     "ssc-0.13.0-stdout$",
-    s"beam-enrich-${generated.BuildInfo.version}",
+    s"beam-enrich-${generated.BuildInfo.version}-common-${generated.BuildInfo.sceVersion}",
     "37.228.225.32",
     "10d96bc7-e400-4b29-8a41-6911ad00ee98",
     "IE",
@@ -58,19 +58,19 @@ class EnrichWithLocalFileSpec extends PipelineSpec {
     )
 
     JobTest[Enrich.type]
-      .args("--job-name=j", "--input=in", "--output=out", "--bad=bad",
+      .args("--job-name=j", "--raw=in", "--enriched=out", "--bad=bad",
         "--resolver=" + Paths.get(getClass.getResource("/iglu_resolver.json").toURI()),
-        "--enrichments=" + Paths.get(getClass.getResource("/enrichments").toURI()))
+        "--enrichments=" + Paths.get(getClass.getResource("/ip_lookups").toURI()))
       .input(PubsubIO("in"), raw.map(Base64.decodeBase64))
       .distCache(DistCacheIO("http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoLite2-City.mmdb"),
         List(Right("./ip_geo")))
-      .output(PubsubIO[String]("out"))(_ should satisfy { c: Iterable[String] =>
-        c.size == 1 && expected.forall(c.head.contains)
+      .output(PubsubIO[String]("out"))(_ should satisfySingleValue { c: String =>
+        expected.forall(c.contains)
       })
       .output(PubsubIO[String]("bad"))(_ should beEmpty)
       .distribution(Enrich.enrichedEventSizeDistribution) { d =>
         d.getCount() shouldBe 1
-        d.getMin() shouldBe 681
+        d.getMin() shouldBe 676
         d.getMin() shouldBe d.getMax()
         d.getMin() shouldBe d.getSum()
         d.getMin() shouldBe d.getMean()

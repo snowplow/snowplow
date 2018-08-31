@@ -18,15 +18,20 @@ package beam
 
 import java.io.File
 import java.net.URI
-import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path, Paths}
+import java.util.UUID
 
 import scala.util.Try
 
+import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.format.DateTimeFormat
 import org.json4s.{JObject, JValue}
+import org.json4s.JsonDSL._
+import org.json4s.jackson.Serialization.write
 import scalaz._
 
+import common.enrichments.EnrichmentRegistry
 import common.outputs.{EnrichedEvent, BadRow}
 import iglu.client.validation.ProcessingMessageMethods._
 import singleton._
@@ -36,10 +41,50 @@ object utils {
   /** Format an [[EnrichedEvent]] as a TSV. */
   def tabSeparatedEnrichedEvent(enrichedEvent: EnrichedEvent): String =
     enrichedEvent.getClass.getDeclaredFields
+    .filterNot(_.getName.equals("pii"))
     .map { field =>
       field.setAccessible(true)
       Option(field.get(enrichedEvent)).getOrElse("")
     }.mkString("\t")
+
+  private val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS")
+  private implicit val formats = org.json4s.DefaultFormats
+  /** Creates a PII event from the pii field of an existing event. */
+  def getPiiEvent(event: EnrichedEvent): Option[EnrichedEvent] =
+    Option(event.pii)
+      .filter(_.nonEmpty)
+      .map { piiStr =>
+        val ee = new EnrichedEvent
+        ee.unstruct_event = event.pii
+        ee.app_id = event.app_id
+        ee.platform = "srv"
+        ee.etl_tstamp = event.etl_tstamp
+        ee.collector_tstamp = event.collector_tstamp
+        ee.event = "pii_transformation"
+        ee.event_id = UUID.randomUUID().toString
+        ee.derived_tstamp = formatter.print(DateTime.now(DateTimeZone.UTC))
+        ee.true_tstamp = ee.derived_tstamp
+        ee.event_vendor = "com.snowplowanalytics.snowplow"
+        ee.event_format = "jsonschema"
+        ee.event_name = "pii_transformation"
+        ee.event_version = "1-0-0"
+        ee.v_etl = s"beam-enrich-${generated.BuildInfo.version}-common-${generated.BuildInfo.sceVersion}"
+        ee.contexts = write(getContextParentEvent(ee.event_id))
+        ee
+      }
+
+  private def getContextParentEvent(eventId: String): JValue =
+    ("schema" -> "iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0") ~
+      ("data" -> List(
+        ("schema" -> "iglu:com.snowplowanalytics.snowplow/parent_event/jsonschema/1-0-0") ~
+          ("data" -> ("parentEventId" -> eventId))))
+
+  /** Determine if we have to emit pii transformation events. */
+  def emitPii(registry: EnrichmentRegistry): Boolean =
+    registry.getPiiPseudonymizerEnrichment.map(_.emitIdentificationEvent).getOrElse(false)
+
+  // We want to take one-tenth of the payload characters and one character can take up to 4 bytes
+  private val ReductionFactor = 4 * 10
 
   /**
    * Truncate an oversized formatted enriched event into a [[BadRow]].
@@ -49,7 +94,7 @@ object utils {
    * @return a [[BadRow]] containing a the truncated enriched event (10 times less than the max size)
    */
   def resizeEnrichedEvent(enrichedEvent: String, bytesSize: Int, maxBytesSize: Int): BadRow =
-    BadRow(enrichedEvent.take(maxBytesSize / (4 * 10)), NonEmptyList(
+    BadRow(enrichedEvent.take(maxBytesSize / ReductionFactor), NonEmptyList(
       s"Size of enriched event ($bytesSize) is greater than allowed maximum ($maxBytesSize)"))
 
   /**
@@ -63,15 +108,14 @@ object utils {
     if (size >= maxBytesSize) {
       val msg = s"Size of bad row ($size) is greater than allowed maximum size ($maxBytesSize)"
       badRow.copy(
-        line = badRow.line.take(maxBytesSize / (4 * 10)),
+        line = badRow.line.take(maxBytesSize / ReductionFactor),
         errors = msg.toProcessingMessage <:: badRow.errors
       )
     } else badRow
   }
 
   /** Get the size of a string in bytes. */
-  def getStringSize(string: String): Int =
-    ByteBuffer.wrap(string.getBytes(UTF_8)).capacity
+  def getStringSize(string: String): Int = string.getBytes(UTF_8).size
 
   /** Measure the time spent in a block of code in milliseconds. */
   def timeMs[A](call: => A): (A, Long) = {
@@ -89,12 +133,12 @@ object utils {
    */
   def createSymLink(file: File, symLink: String): Either[String, Path] = {
     val symLinkPath = Paths.get(symLink)
-    if (Files.notExists(symLinkPath)) {
+    if (!Files.exists(symLinkPath)) {
       Try(Files.createSymbolicLink(symLinkPath, file.toPath)) match {
         case scala.util.Success(p) => Right(p)
         case scala.util.Failure(t) => Left(s"Symlink can't be created: ${t.getMessage}")
       }
-    } else Left(s"Symlink $symLinkPath already exists")
+    } else Left(s"A file at path $symLinkPath already exists")
   }
 
   /**

@@ -33,7 +33,7 @@ import Tests._
 
 lazy val commonSettings = Defaults.coreDefaultSettings ++ Seq(
   organization  := "com.snowplowanalytics",
-  version       := "0.1.0-SNAPSHOT",
+  version       := "0.1.0",
   scalaVersion  := "2.11.12",
   javacOptions  ++= Seq("-source", "1.8", "-target", "1.8"),
   scalacOptions ++= compilerOptions,
@@ -66,7 +66,7 @@ dockerBaseImage := "snowplow-docker-registry.bintray.io/snowplow/base-debian:0.1
 maintainer in Docker := "Snowplow Analytics Ltd. <support@snowplowanalytics.com>"
 daemonUser in Docker := "snowplow"
 
-lazy val scioVersion = "0.5.7"
+lazy val scioVersion = "0.6.0"
 lazy val beamVersion = "2.5.0"
 lazy val sceVersion = "0.35.0"
 lazy val scalaMacrosVersion = "2.1.0"

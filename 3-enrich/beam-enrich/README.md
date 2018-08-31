@@ -39,9 +39,10 @@ Once unzipped the artifact can be run as follows:
   --streaming=true \
   --zone=europe-west2-a \
   --gcpTempLocation=gs://location/ \
-  --input=projects/project/subscriptions/raw-topic-subscription \
-  --output=projects/project/topics/enriched-topic \
+  --raw=projects/project/subscriptions/raw-topic-subscription \
+  --enriched=projects/project/topics/enriched-topic \
   --bad=projects/project/topics/bad-topic \
+  --pii=projects/project/topics/pii-topic \ #OPTIONAL
   --resolver=iglu_resolver.json \
   --enrichments=enrichments/
 ```
@@ -69,9 +70,10 @@ docker run \
   --streaming=true \
   --zone=europe-west2-a \
   --gcpTempLocation=gs://location/ \
-  --input=projects/project/subscriptions/raw-topic-subscription \
-  --output=projects/project/topics/enriched-topic \
+  --raw=projects/project/subscriptions/raw-topic-subscription \
+  --enriched=projects/project/topics/enriched-topic \
   --bad=projects/project/topics/bad-topic \
+  --pii=projects/project/topics/pii-topic \ #OPTIONAL
   --resolver=/snowplow/config/iglu_resolver.json \
   --enrichments=/snowplow/config/enrichments/
 ```
@@ -126,6 +128,13 @@ simply run:
 sbt repl/run
 ```
 
+## Find out more
+
+| Technical Docs              | Setup Guide           |
+|-----------------------------|-----------------------|
+| ![i1][techdocs-image]       | ![i2][setup-image]    |
+| [Technical Docs][techdocs]  | [Setup Guide][setup]  |
+
 ## Copyright and license
 
 Copyright 2018-2018 Snowplow Analytics Ltd.
@@ -144,3 +153,8 @@ limitations under the License.
 [common-enrich]: https://github.com/snowplow/snowplow/tree/master/3-enrich/scala-common-enrich
 
 [license]: http://www.apache.org/licenses/LICENSE-2.0
+
+[techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
+[setup-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png
+[techdocs]: https://github.com/snowplow/snowplow/wiki/Beam-Enrich
+[setup]: https://github.com/snowplow/snowplow/wiki/setting-up-beam-enrich
