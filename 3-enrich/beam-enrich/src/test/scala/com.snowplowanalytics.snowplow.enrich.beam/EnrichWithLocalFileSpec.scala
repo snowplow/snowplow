@@ -33,7 +33,7 @@ class EnrichWithLocalFileSpec extends PipelineSpec {
     "unstruct",
     "tracker_version",
     "ssc-0.13.0-stdout$",
-    s"beam-enrich-${generated.BuildInfo.version}",
+    s"beam-enrich-${generated.BuildInfo.version}-common-${generated.BuildInfo.sceVersion}",
     "37.228.225.32",
     "10d96bc7-e400-4b29-8a41-6911ad00ee98",
     "IE",
@@ -60,7 +60,7 @@ class EnrichWithLocalFileSpec extends PipelineSpec {
     JobTest[Enrich.type]
       .args("--job-name=j", "--input=in", "--output=out", "--bad=bad",
         "--resolver=" + Paths.get(getClass.getResource("/iglu_resolver.json").toURI()),
-        "--enrichments=" + Paths.get(getClass.getResource("/enrichments").toURI()))
+        "--enrichments=" + Paths.get(getClass.getResource("/ip_lookups").toURI()))
       .input(PubsubIO("in"), raw.map(Base64.decodeBase64))
       .distCache(DistCacheIO("http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoLite2-City.mmdb"),
         List(Right("./ip_geo")))
@@ -70,7 +70,7 @@ class EnrichWithLocalFileSpec extends PipelineSpec {
       .output(PubsubIO[String]("bad"))(_ should beEmpty)
       .distribution(Enrich.enrichedEventSizeDistribution) { d =>
         d.getCount() shouldBe 1
-        d.getMin() shouldBe 681
+        d.getMin() shouldBe 694
         d.getMin() shouldBe d.getMax()
         d.getMin() shouldBe d.getSum()
         d.getMin() shouldBe d.getMean()

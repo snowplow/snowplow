@@ -66,12 +66,17 @@ class ConfigSpec extends FreeSpec {
       "which succeeds otherwise" in {
         EnrichConfig(Args(
           Array("--job-name=j", "--input=i", "--output=o", "--bad=b", "--resolver=r"))) shouldEqual
-          Success(EnrichConfig("j", "i", "o", "b", "r", None))
+          Success(EnrichConfig("j", "i", "o", "b", None, "r", None))
       }
       "which succeeds if --enrichments is present" in {
         val args = Args(Array(
           "--job-name=j", "--input=i", "--output=o", "--bad=b", "--resolver=r", "--enrichments=e"))
-        EnrichConfig(args) shouldEqual Success(EnrichConfig("j", "i", "o", "b", "r", Some("e")))
+        EnrichConfig(args) shouldEqual Success(EnrichConfig("j", "i", "o", "b", None, "r", Some("e")))
+      }
+      "which succeeds if --pii is present" in {
+        val args = Args(Array(
+          "--job-name=j", "--input=i", "--output=o", "--bad=b", "--pii=p", "--resolver=r"))
+        EnrichConfig(args) shouldEqual Success(EnrichConfig("j", "i", "o", "b", Some("p"), "r", None))
       }
     }
 

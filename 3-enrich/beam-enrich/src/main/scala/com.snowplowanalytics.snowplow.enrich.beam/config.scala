@@ -39,6 +39,7 @@ object config {
     input: String,
     output: String,
     bad: String,
+    pii: Option[String],
     resolver: String,
     enrichments: Option[String]
   )
@@ -49,13 +50,14 @@ object config {
         case RequiredConfiguration(key, _) => args.optional(key).toSuccess(s"Missing `$key` argument").toValidationNel
       }.sequenceU.leftMap(_.toList.mkString("\n"))
       List(jobName, input, output, bad, resolver) = l
-    } yield EnrichConfig(jobName, input, output, bad, resolver, args.optional("enrichments"))
+    } yield EnrichConfig(jobName, input, output, bad, args.optional("pii"), resolver, args.optional("enrichments"))
 
     private val configurations = List(
       RequiredConfiguration("job-name", "Name of the Dataflow job that will be launched"),
       RequiredConfiguration("input", "Name of the subscription to the input topic projects/{project}/subscriptions/{subscription}"),
       RequiredConfiguration("output", "Name of the output topic projects/{project}/topics/{topic}"),
       RequiredConfiguration("bad", "Name of the bad topic projects/{project}/topics/{topic}"),
+      OptionalConfiguration("pii", "Name of the pii topic projects/{project}/topics/{topic}"),
       RequiredConfiguration("resolver", "Path to the resolver file"),
       OptionalConfiguration("enrichments", "Path to the directory containing the enrichment files")
     )
@@ -81,6 +83,7 @@ object config {
     input: String,
     output: String,
     bad: String,
+    pii: Option[String],
     resolver: JValue,
     enrichmentRegistry: JObject
   )

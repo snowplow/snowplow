@@ -21,12 +21,18 @@ import java.net.URI
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path, Paths}
+import java.util.UUID
 
 import scala.util.Try
 
+import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.format.DateTimeFormat
 import org.json4s.{JObject, JValue}
+import org.json4s.JsonDSL._
+import org.json4s.jackson.Serialization.write
 import scalaz._
 
+import common.enrichments.EnrichmentRegistry
 import common.outputs.{EnrichedEvent, BadRow}
 import iglu.client.validation.ProcessingMessageMethods._
 import singleton._
@@ -36,10 +42,46 @@ object utils {
   /** Format an [[EnrichedEvent]] as a TSV. */
   def tabSeparatedEnrichedEvent(enrichedEvent: EnrichedEvent): String =
     enrichedEvent.getClass.getDeclaredFields
+    .filterNot(_.getName.equals("pii"))
     .map { field =>
       field.setAccessible(true)
       Option(field.get(enrichedEvent)).getOrElse("")
     }.mkString("\t")
+
+  private val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS")
+  private implicit val formats = org.json4s.DefaultFormats
+  /** Creates a PII event from the pii field of an existing event. */
+  def getPiiEvent(event: EnrichedEvent): Option[EnrichedEvent] =
+    Option(event.pii)
+      .filter(_.nonEmpty)
+      .map { piiStr =>
+        val ee = new EnrichedEvent
+        ee.unstruct_event = event.pii
+        ee.app_id = event.app_id
+        ee.platform = "srv"
+        ee.etl_tstamp = event.etl_tstamp
+        ee.collector_tstamp = event.collector_tstamp
+        ee.event = "pii_transformation"
+        ee.event_id = UUID.randomUUID().toString
+        ee.derived_tstamp = formatter.print(DateTime.now(DateTimeZone.UTC))
+        ee.true_tstamp = ee.derived_tstamp
+        ee.event_vendor = "com.snowplowanalytics.snowplow"
+        ee.event_format = "jsonschema"
+        ee.event_name = "pii_transformation"
+        ee.event_version = "1-0-0"
+        ee.v_etl = s"beam-enrich-${generated.BuildInfo.version}-common-${generated.BuildInfo.sceVersion}"
+        ee.contexts = write(getContextParentEvent(ee.event_id))
+        ee
+      }
+
+  private def getContextParentEvent(eventId: String): JValue =
+    ("schema" -> "iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0") ~
+      ("data" -> List(
+        ("schema" -> "iglu:com.snowplowanalytics.snowplow/parent_event/jsonschema/1-0-0") ~
+          ("data" -> ("parentEventId" -> eventId))))
+
+  def emitPii(registry: EnrichmentRegistry): Boolean =
+    registry.getPiiPseudonymizerEnrichment.map(_.emitIdentificationEvent).getOrElse(false)
 
   /**
    * Truncate an oversized formatted enriched event into a [[BadRow]].

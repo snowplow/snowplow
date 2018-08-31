@@ -59,11 +59,18 @@ object Enrich {
       _ = sc.setJobName(config.jobName)
       _ <- checkTopicExists(sc, config.output)
       _ <- checkTopicExists(sc, config.bad)
+      _ <- config.pii.map(checkTopicExists(sc, _)).getOrElse(().success)
       resolverJson <- parseResolver(config.resolver)
       resolver <- Resolver.parse(resolverJson).leftMap(_.toList.mkString("\n"))
-      enrichmentRegistryJson <- parseEnrichmentRegistry(config.enrichments)(resolver)
+      registryJson <- parseEnrichmentRegistry(config.enrichments)(resolver)
+      registry <- EnrichmentRegistry.parse(registryJson, false)(resolver).leftMap(_.toList.mkString("\n"))
+      _ <- if (emitPii(registry) && config.pii.isEmpty) {
+        "A pii topic needs to be used in order to use the pii enrichment".failure
+      } else {
+        ().success
+      }
     } yield ParsedEnrichConfig(
-      config.input, config.output, config.bad, resolverJson, enrichmentRegistryJson)
+      config.input, config.output, config.bad, config.pii, resolverJson, registryJson)
 
     parsedConfig match {
       case Failure(e) =>
@@ -93,7 +100,7 @@ object Enrich {
       .flatten.withName("enriched-flattened")
 
     val (successes, failures) = enriched.partition(_.isSuccess)
-    val (tooBigSuccesses, properlySizedsuccesses) = successes
+    val (tooBigSuccesses, properlySizedSuccesses) = successes
       .collect { case Success(enrichedEvent) =>
         getEnrichedEventMetrics(enrichedEvent)
           .foreach(ScioMetrics.counter(MetricsNamespace, _).inc())
@@ -103,15 +110,43 @@ object Enrich {
         (formattedEnrichedEvent, size)
       }.withName("enriched-successes")
       .partition(_._2 >= MaxRecordSize)
-    properlySizedsuccesses.withName("undersized-enriched-successes")
+    properlySizedSuccesses.withName("undersized-enriched-successes")
       .map(_._1).withName("enriched-good")
       .saveAsPubsub(config.output)
+
+    val resolver = ResolverSingleton.get(config.resolver)
+    val registry = EnrichmentRegistrySingleton.get(config.enrichmentRegistry)(resolver)
+    val piis = if (emitPii(registry)) {
+      val (tooBigPiis, properlySizedPiis) = successes
+        .collect { case Success(enrichedEvent) =>
+          getPiiEvent(enrichedEvent)
+            .map(tabSeparatedEnrichedEvent)
+            .map(formatted => (formatted, getStringSize(formatted)))
+        }
+        .flatten.withName("pii-successes")
+        .partition(_._2 >= MaxRecordSize)
+      Some((tooBigPiis, properlySizedPiis))
+    } else {
+      None
+    }
+
+    (piis |@| config.pii) { (piis, pii) =>
+      val properlySizedPiis = piis._2
+      properlySizedPiis.withName("undersized-pii-successes")
+        .map(_._1).withName("pii-good")
+        .saveAsPubsub(pii)
+    }
 
     val failureCollection: SCollection[BadRow] =
       failures.collect { case Failure(badRow) => resizeBadRow(badRow, MaxRecordSize) }
         .withName("bad-rows") ++
       tooBigSuccesses.withName("oversized-enriched-successes")
-        .map { case (event, size) => resizeEnrichedEvent(event, size, MaxRecordSize) }
+        .map { case (event, size) => resizeEnrichedEvent(event, size, MaxRecordSize) } ++
+      (piis |@| config.pii) { (piis, pii) =>
+        val tooBigPiis = piis._1
+        tooBigPiis.withName("oversized-pii-successes")
+          .map { case (event, size) => resizeEnrichedEvent(event, size, MaxRecordSize) }
+      }.getOrElse(sc.parallelize(List.empty))
     failureCollection.withName("all-bad-rows")
       .map(_.toCompactJson).withName("enriched-bad")
       .saveAsPubsub(config.bad)
@@ -127,7 +162,7 @@ object Enrich {
     val collectorPayload = ThriftLoader.toCollectorPayload(data)
     val processedEvents = EtlPipeline.processEvents(
       enrichmentRegistry,
-      s"beam-enrich-${generated.BuildInfo.version}",
+      s"beam-enrich-${generated.BuildInfo.version}-common-${generated.BuildInfo.sceVersion}",
       new DateTime(System.currentTimeMillis),
       collectorPayload
     )

@@ -42,6 +42,7 @@ Once unzipped the artifact can be run as follows:
   --input=projects/project/subscriptions/raw-topic-subscription \
   --output=projects/project/topics/enriched-topic \
   --bad=projects/project/topics/bad-topic \
+  --pii=projects/project/topics/pii-topic \ #OPTIONAL
   --resolver=iglu_resolver.json \
   --enrichments=enrichments/
 ```
@@ -72,6 +73,7 @@ docker run \
   --input=projects/project/subscriptions/raw-topic-subscription \
   --output=projects/project/topics/enriched-topic \
   --bad=projects/project/topics/bad-topic \
+  --pii=projects/project/topics/pii-topic \ #OPTIONAL
   --resolver=/snowplow/config/iglu_resolver.json \
   --enrichments=/snowplow/config/enrichments/
 ```
