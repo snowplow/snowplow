@@ -1,3 +1,21 @@
+Release 110 Valle dei Templi (2018-09-07)
+-----------------------------------------
+Beam Enrich: implement a barebone port of Stream Enrich (#3735)
+Beam Enrich: support enrichments relying on local files (#3736)
+Beam Enrich: add support for the PII enrichment (#3888)
+Beam Enrich: add metrics (#3737)
+Beam Enrich: build Docker image (#3815)
+Beam Enrich: add README (#3773)
+Beam Enrich: add CI/CD (#3757)
+Stream Enrich: bump to 0.19.1 (#3889)
+Stream Enrich: remove GCP module (#3865)
+Stream Enrich: fix parent event context in PII events (#3886)
+Clojure Collector: bump to 2.1.1 (#3879)
+Clojure Collector: update CORS configuration (#3875)
+Clojure Collector: extend copyright notice to 2018 (#3891)
+Common: add Bintray Docker registry credentials to .travis.yml (#3814)
+Common: remove Vagrantfile (#3877)
+
 Release 109 Lambaesis (2018-08-21)
 ----------------------------------
 Scala Stream Collector: bump to 0.14.0 (#3862)

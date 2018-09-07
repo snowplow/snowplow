@@ -28,8 +28,6 @@ object Dependencies {
     // Java
     val awsSdk               = "1.11.290"
     val kinesisClient        = "1.9.0"
-    val pubsub               = "0.37.0-beta"
-    val datastore            = "1.19.0"
     val kafkaClients         = "1.0.1"
     val nsqClient            = "1.2.0"
     val jackson              = "2.9.3"
@@ -58,8 +56,6 @@ object Dependencies {
     val dynamodbSdk          = "com.amazonaws"                    %  "aws-java-sdk-dynamodb"     % V.awsSdk
     val s3Sdk                = "com.amazonaws"                    %  "aws-java-sdk-s3"           % V.awsSdk
     val kinesisClient        = "com.amazonaws"                    %  "amazon-kinesis-client"     % V.kinesisClient
-    val pubsub               = "com.google.cloud"                 %  "google-cloud-pubsub"       % V.pubsub
-    val datastore            = "com.google.cloud"                 %  "google-cloud-datastore"    % V.datastore
     val kafkaClients         = "org.apache.kafka"                 %  "kafka-clients"             % V.kafkaClients
     val nsqClient            = "com.snowplowanalytics"            %  "nsq-java-client"           % V.nsqClient
     val jacksonCbor          = "com.fasterxml.jackson.dataformat" %  "jackson-dataformat-cbor"   % V.jackson

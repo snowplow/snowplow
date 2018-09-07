@@ -1,4 +1,4 @@
-;;;; Copyright (c) 2012-2013 Snowplow Analytics Ltd. All rights reserved.
+;;;; Copyright (c) 2012-2018 Snowplow Analytics Ltd. All rights reserved.
 ;;;;
 ;;;; This program is licensed to you under the Apache License Version 2.0,
 ;;;; and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,12 +10,12 @@
 ;;;; See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 ;;;; Author:    Alex Dean (mailto:support@snowplowanalytics.com)
-;;;; Copyright: Copyright (c) 2012-2013 Snowplow Analytics Ltd
+;;;; Copyright: Copyright (c) 2012-2018 Snowplow Analytics Ltd
 ;;;; License:   Apache License Version 2.0
 
 (ns snowplow.clojure-collector.core
   "Core app handler"
-  (:use [compojure.core              :only [defroutes GET POST HEAD]]
+  (:use [compojure.core              :only [defroutes GET POST HEAD OPTIONS]]
         [ring.middleware.cookies     :only [wrap-cookies]]
         [ring.middleware.params      :only [wrap-params]]
         [ring.middleware.reload      :only [wrap-reload]]
@@ -55,16 +55,15 @@
 
 (defroutes routes
   "Our routes"
-  (GET  "/i"                  {c :cookies} (send-cookie-pixel-or-200' c true))
-  (GET  "/ice.png"            {c :cookies} (send-cookie-pixel-or-200' c true))  ; legacy name for i
-  (GET  "/:vendor/:version"   {{v :vendor} :params, p :params, c :cookies} (send-cookie-pixel-or-200-or-redirect' c true v p))  ; for tracker GET support. Need params for potential redirect
-  (POST "/:vendor/:version"   {c :cookies} (send-cookie-pixel-or-200' c false)) ; for tracker POST support, no pixel
-  (HEAD "/:vendor/:version"   request responses/send-200)                       ; for webhooks' own checks e.g. Mandrill
-  (GET  "/healthcheck"        request responses/send-200)
-  (GET  "/crossdomain.xml"    request send-flash-crossdomain)                   ; for Flash cross-domain posting
-  ;GET "/status"              available from expose-metrics-as-json, only in development env
-  ;HEAD "/"                   available from beanstalk.clj
-  (compojure.route/not-found  responses/send-404))
+  (GET     "/i"                {c :cookies} (send-cookie-pixel-or-200' c true))
+  (GET     "/ice.png"          {c :cookies} (send-cookie-pixel-or-200' c true))  ; legacy name for i
+  (GET     "/:vendor/:version" {{v :vendor} :params, p :params, c :cookies} (send-cookie-pixel-or-200-or-redirect' c true v p))  ; for tracker GET support. Need params for potential redirect
+  (POST    "/:vendor/:version" {c :cookies} (send-cookie-pixel-or-200' c false)) ; for tracker POST support, no pixel
+  (OPTIONS "/:vendor/:version" [:as {hs :headers}] (responses/send-preflight-response hs)) ; for CORS requests
+  (HEAD    "/:vendor/:version" request responses/send-200)                       ; for webhooks' own checks e.g. Mandrill
+  (GET     "/healthcheck"      request responses/send-200)
+  (GET     "/crossdomain.xml"  request send-flash-crossdomain)                   ; for Flash cross-domain posting
+  (compojure.route/not-found   responses/send-404))
 
 (def app
   "Our routes plus selected wraps.
