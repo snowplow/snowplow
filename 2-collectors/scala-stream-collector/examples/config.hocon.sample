@@ -55,7 +55,8 @@ collector {
   # If you have a do not track cookie in place, the Scala Stream Collector can respect it by
   # completely bypassing the processing of an incoming request carrying this cookie, the collector
   # will simply reply by a 200 saying "do not track".
-  # The cookie name and value must match the configuration below.
+  # The cookie name and value must match the configuration below, where the names of the cookies must
+  # match entirely and the value could be a regular expression.
   doNotTrackCookie {
     enabled = false
     name = {{doNotTrackCookieName}}
