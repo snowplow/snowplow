@@ -14,10 +14,6 @@
  */
 package com.snowplowanalytics.snowplow.collectors.scalastream
 
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers._
-import akka.http.scaladsl.testkit.Specs2RouteTest
-import akka.http.scaladsl.server.Directives._
 import org.specs2.mutable.Specification
 
 class CollectorRouteSpec extends Specification with Specs2RouteTest {
@@ -158,6 +154,14 @@ class CollectorRouteSpec extends Specification with Specs2RouteTest {
           } ~> check {
             responseAs[String] shouldEqual "true"
           }
+      }
+      "return true if there is a properly-valued dnt cookie that matches a regex value" in {
+        Get() ~> Cookie("abc" -> s"deleted-${System.currentTimeMillis()}") ~>
+          route.doNotTrack(Some(HttpCookie(name = "abc", value = "deleted-[0-9]+"))) { dnt =>
+            complete(dnt.toString)
+          } ~> check {
+          responseAs[String] shouldEqual "true"
+        }
       }
     }
   }

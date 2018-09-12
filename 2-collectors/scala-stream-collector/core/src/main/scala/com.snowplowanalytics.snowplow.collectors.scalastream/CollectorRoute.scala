@@ -136,7 +136,7 @@ trait CollectorRoute {
   def doNotTrack(configCookie: Option[HttpCookie]): Directive1[Boolean] =
     cookieIfWanted(configCookie.map(_.name)).map { c =>
       (c, configCookie) match {
-        case (Some(actual), Some(config)) => actual.value == config.value
+        case (Some(actual), Some(config)) => config.value.r.pattern.matcher(actual.value).matches()
         case _ => false
       }
     }
