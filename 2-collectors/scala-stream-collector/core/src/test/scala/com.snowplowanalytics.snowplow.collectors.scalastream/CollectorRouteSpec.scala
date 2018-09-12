@@ -14,6 +14,10 @@
  */
 package com.snowplowanalytics.snowplow.collectors.scalastream
 
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.headers._
+import akka.http.scaladsl.testkit.Specs2RouteTest
+import akka.http.scaladsl.server.Directives._
 import org.specs2.mutable.Specification
 
 class CollectorRouteSpec extends Specification with Specs2RouteTest {
