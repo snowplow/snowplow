@@ -18,6 +18,7 @@ import akka.http.scaladsl.model.{ContentType, HttpResponse, StatusCode, StatusCo
 import akka.http.scaladsl.model.headers.{HttpCookie, HttpCookiePair}
 import akka.http.scaladsl.server.{Directive1, Route}
 import akka.http.scaladsl.server.Directives._
+import com.snowplowanalytics.snowplow.collectors.scalastream.model.DntCookieMatcher
 
 import monitoring.BeanRegistry
 
@@ -131,12 +132,12 @@ trait CollectorRoute {
 
   /**
    * Directive to filter requests which contain a do not track cookie
-   * @param configCookie the configured do not track cookie to check against
+   * @param cookieMatcher the configured do not track cookie to check against
    */
-  def doNotTrack(configCookie: Option[HttpCookie]): Directive1[Boolean] =
-    cookieIfWanted(configCookie.map(_.name)).map { c =>
-      (c, configCookie) match {
-        case (Some(actual), Some(config)) => config.value.r.pattern.matcher(actual.value).matches()
+  def doNotTrack(cookieMatcher: Option[DntCookieMatcher]): Directive1[Boolean] =
+    cookieIfWanted(cookieMatcher.map(_.name)).map { c =>
+      (c, cookieMatcher) match {
+        case (Some(actual), Some(config)) => config.matches(actual)
         case _ => false
       }
     }

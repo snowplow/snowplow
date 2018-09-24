@@ -54,7 +54,7 @@ trait Service {
     contentType: Option[ContentType] = None
   ): (HttpResponse, List[Array[Byte]])
   def cookieName: Option[String]
-  def doNotTrackCookie: Option[HttpCookie]
+  def doNotTrackCookie: Option[DntCookieMatcher]
 }
 
 object CollectorService {

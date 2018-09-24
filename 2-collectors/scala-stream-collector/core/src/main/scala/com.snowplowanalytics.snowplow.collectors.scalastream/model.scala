@@ -17,6 +17,7 @@ package com.snowplowanalytics.snowplow.collectors.scalastream
 import scala.concurrent.duration.FiniteDuration
 
 import akka.http.scaladsl.model.headers.HttpCookie
+import akka.http.scaladsl.model.headers.HttpCookiePair
 
 import sinks.Sink
 
@@ -56,6 +57,12 @@ package model {
     name: String,
     value: String
   )
+  final case class DntCookieMatcher(name: String, value: String) {
+    private val pattern = value.r.pattern
+    def matches(httpCookiePair: HttpCookiePair): Boolean ={
+      pattern.matcher(httpCookiePair.value).matches()
+    }
+  }
   final case class CookieBounceConfig(
     enabled: Boolean,
     name: String,
@@ -125,7 +132,7 @@ package model {
     val cookieConfig = if (cookie.enabled) Some(cookie) else None
     val doNotTrackHttpCookie =
       if (doNotTrackCookie.enabled)
-        Some(HttpCookie(name = doNotTrackCookie.name, value = doNotTrackCookie.value))
+        Some(DntCookieMatcher(name = doNotTrackCookie.name, value = doNotTrackCookie.value))
       else
         None
 
