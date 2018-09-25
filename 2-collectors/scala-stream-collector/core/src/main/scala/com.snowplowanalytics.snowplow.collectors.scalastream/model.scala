@@ -59,9 +59,7 @@ package model {
   )
   final case class DntCookieMatcher(name: String, value: String) {
     private val pattern = value.r.pattern
-    def matches(httpCookiePair: HttpCookiePair): Boolean ={
-      pattern.matcher(httpCookiePair.value).matches()
-    }
+    def matches(httpCookiePair: HttpCookiePair): Boolean = pattern.matcher(httpCookiePair.value).matches()
   }
   final case class CookieBounceConfig(
     enabled: Boolean,
