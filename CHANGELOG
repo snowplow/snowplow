@@ -1,3 +1,10 @@
+Release 111 Selinunte (2018-10-02)
+----------------------------------
+Clojure Collector: bump to 2.1.2 (#3900)
+Clojure Collector: extend access control headers to all types of requests (#3899)
+Common: remove Stream Enrich PubSub deployment (#3893)
+Common: fix Spark Enrich version in R109 CHANGELOG entry (#3895)
+
 Release 110 Valle dei Templi (2018-09-07)
 -----------------------------------------
 Beam Enrich: implement a barebone port of Stream Enrich (#3735)
