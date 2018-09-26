@@ -41,7 +41,7 @@ Stream Enrich: allow overriding of the kinesis endpoint url in the configuration
 Stream Enrich: decorrelate the need for a pii stream and the pii enrichment (#3828)
 Stream Enrich: bump SBT to 1.1.6 (#3841)
 Stream Enrich: fix configuration example (#3820)
-Spark Enrich: bump to 1.1.6.0 (#3874)
+Spark Enrich: bump to 1.16.0 (#3874)
 Spark Enrich: bump scala-common-enrich to 0.35.0 (closes #3869)
 Spark Enrich: bump SBT Assembly to 0.14.7 (#3844)
 Spark Enrich: bump SBT to 1.1.6 (#3843)
