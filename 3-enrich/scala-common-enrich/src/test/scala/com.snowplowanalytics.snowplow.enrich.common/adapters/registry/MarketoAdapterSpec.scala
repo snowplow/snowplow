@@ -61,7 +61,7 @@ class MarketoAdapterSpec extends Specification with DataTables with ValidationMa
 
   def e1 = {
     val bodyStr =
-      """{"name": "webhook for A", "step": 6, "campaign": {"id": 160, "name": "avengers assemble"}, "lead": {"acquisition_date": "2010-11-11 11:11:11", "black_listed": false, "first_name": "the hulk", "updated_at": "", "created_at": "2018-06-16 11:23:58"}, "company": {"name": "iron man", "notes": "the something dog leapt over the lazy fox"}, "campaign": {"id": 987, "name": "triggered event"}, "datetime": "2018-03-07 14:28:16"}"""
+      """{"name": "webhook for A", "step": 6, "campaign": {"id": 160, "name": "avengers assemble"}, "lead": {"acquisition_date": "2010-11-11 11:11:11", "black_listed": false, "first_name": "the hulk", "updated_at": "", "created_at": "2018-06-16 11:23:58", "last_interesting_moment_date": "2018-09-26 20:26:40"}, "company": {"name": "iron man", "notes": "the something dog leapt over the lazy fox"}, "campaign": {"id": 987, "name": "triggered event"}, "datetime": "2018-03-07 14:28:16"}"""
     val payload = CollectorPayload(Shared.api, Nil, ContentType.some, bodyStr.some, Shared.cljSource, Shared.context)
     val expected = NonEmptyList(
       RawEvent(
@@ -70,7 +70,7 @@ class MarketoAdapterSpec extends Specification with DataTables with ValidationMa
           "tv"    -> "com.marketo-v1",
           "e"     -> "ue",
           "p"     -> "srv",
-          "ue_pr" -> """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.marketo/event/jsonschema/1-0-0","data":{"name":"webhook for A","step":6,"campaign":{"id":160,"name":"avengers assemble"},"lead":{"acquisition_date":"2010-11-11T11:11:11.000Z","black_listed":false,"first_name":"the hulk","updated_at":"","created_at":"2018-06-16T11:23:58.000Z"},"company":{"name":"iron man","notes":"the something dog leapt over the lazy fox"},"campaign":{"id":987,"name":"triggered event"},"datetime":"2018-03-07T14:28:16.000Z"}}}"""
+          "ue_pr" -> """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.marketo/event/jsonschema/2-0-0","data":{"name":"webhook for A","step":6,"campaign":{"id":160,"name":"avengers assemble"},"lead":{"acquisition_date":"2010-11-11T11:11:11.000Z","black_listed":false,"first_name":"the hulk","updated_at":"","created_at":"2018-06-16T11:23:58.000Z","last_interesting_moment_date":"2018-09-26T20:26:40.000Z"},"company":{"name":"iron man","notes":"the something dog leapt over the lazy fox"},"campaign":{"id":987,"name":"triggered event"},"datetime":"2018-03-07T14:28:16.000Z"}}}"""
         ),
         ContentType.some,
         Shared.cljSource,

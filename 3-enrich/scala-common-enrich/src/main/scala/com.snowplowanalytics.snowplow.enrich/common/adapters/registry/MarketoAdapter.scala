@@ -55,7 +55,7 @@ object MarketoAdapter extends Adapter {
 
   // Schemas for reverse-engineering a Snowplow unstructured event
   private val EventSchemaMap = Map(
-    "event" -> SchemaKey("com.marketo", "event", "jsonschema", "1-0-0").toSchemaUri
+    "event" -> SchemaKey("com.marketo", "event", "jsonschema", "2-0-0").toSchemaUri
   )
 
   // Datetime format used by Marketo
@@ -93,6 +93,8 @@ object MarketoAdapter extends Adapter {
           ("updated_at", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
         case ("datetime", JString(value)) =>
           ("datetime", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
+        case ("last_interesting_moment_date", JString(value)) =>
+          ("last_interesting_moment_date", JString(JU.toJsonSchemaDateTime(value, MarketoDateTimeFormat)))
       }
       // The payload doesn't contain a "type" field so we're constraining the eventType to be of type "event"
       eventType = Some("event")
