@@ -88,11 +88,12 @@ class CollectorServiceSpec extends Specification {
 
     "preflightResponse" in {
       "return a response appropriate to cors preflight options requests" in {
-        service.preflightResponse(HttpRequest()) shouldEqual HttpResponse()
+        service.preflightResponse(HttpRequest(), CORSConfig(-1.seconds)) shouldEqual HttpResponse()
           .withHeaders(List(
             `Access-Control-Allow-Origin`(HttpOriginRange.`*`),
             `Access-Control-Allow-Credentials`(true),
-            `Access-Control-Allow-Headers`("Content-Type")
+            `Access-Control-Allow-Headers`("Content-Type"),
+            `Access-Control-Max-Age`(-1)
           ))
       }
     }

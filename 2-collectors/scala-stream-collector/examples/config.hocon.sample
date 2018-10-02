@@ -102,6 +102,13 @@ collector {
     body = "302, redirecting"
   }
 
+  # Configuration related to CORS preflight requests
+  cors {
+    # The Access-Control-Max-Age response header indicates how long the results of a preflight
+    # request can be cached. -1 seconds disables the cache. Chromium max is 10m, Firefox is 24h.
+    accessControlMaxAge = 5 seconds
+  }
+
   streams {
     # Events which have successfully been collected will be stored in the good stream/topic
     good = {{good}}

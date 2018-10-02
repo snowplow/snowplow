@@ -78,6 +78,7 @@ package model {
   )
   final case class P3PConfig(policyRef: String, CP: String)
   final case class CrossDomainConfig(enabled: Boolean, domains: List[String], secure: Boolean)
+  final case class CORSConfig(accessControlMaxAge: FiniteDuration)
   final case class KinesisBackoffPolicyConfig(minBackoff: Long, maxBackoff: Long)
   final case class GooglePubSubBackoffPolicyConfig(
     minBackoff: Long,
@@ -129,6 +130,7 @@ package model {
     cookieBounce: CookieBounceConfig,
     redirectMacro: RedirectMacroConfig,
     rootResponse: RootResponseConfig,
+    cors: CORSConfig,
     streams: StreamsConfig,
     prometheusMetrics: PrometheusMetricsConfig
   ) {

@@ -29,6 +29,7 @@ object TestUtils {
     cookieBounce = CookieBounceConfig(false, "bounce", "new-nuid", None),
     redirectMacro = RedirectMacroConfig(false, None),
     rootResponse = RootResponseConfig(false, 404),
+    cors = CORSConfig(-1.seconds),
     streams = StreamsConfig(
       good = "good",
       bad = "bad",
