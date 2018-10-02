@@ -136,11 +136,15 @@ class CollectorService(
    * @return Response granting permissions to make the actual request
    */
   override def preflightResponse(request: HttpRequest): HttpResponse =
+    preflightResponse(request, config.cors)
+
+  def preflightResponse(request: HttpRequest, corsConfig: CORSConfig): HttpResponse =
     HttpResponse()
       .withHeaders(List(
         accessControlAllowOriginHeader(request),
         `Access-Control-Allow-Credentials`(true),
-        `Access-Control-Allow-Headers`("Content-Type")
+        `Access-Control-Allow-Headers`("Content-Type"),
+        `Access-Control-Max-Age`(corsConfig.accessControlMaxAge.toSeconds)
       ))
 
   override def flashCrossDomainPolicy: HttpResponse =
