@@ -140,7 +140,8 @@ class CollectorService(
       .withHeaders(List(
         accessControlAllowOriginHeader(request),
         `Access-Control-Allow-Credentials`(true),
-        `Access-Control-Allow-Headers`("Content-Type")
+        `Access-Control-Allow-Headers`("Content-Type"),
+        `Access-Control-Max-Age`(config.accessControlMaxAge)
       ))
 
   override def flashCrossDomainPolicy: HttpResponse =

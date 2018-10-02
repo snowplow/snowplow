@@ -113,6 +113,7 @@ package model {
   final case class CollectorConfig(
     interface: String,
     port: Int,
+    accessControlMaxAge: Int,
     p3p: P3PConfig,
     crossDomain: CrossDomainConfig,
     cookie: CookieConfig,
