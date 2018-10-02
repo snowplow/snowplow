@@ -30,9 +30,10 @@
 (defn- send-cookie-pixel-or-200-or-redirect'
   "Wrapper for send-cookie-pixel-or-200-or-redirect,
    pulling in the configuration settings"
-  [cookies pixel vendor params]
+  [cookies headers pixel vendor params]
   (responses/send-cookie-pixel-or-200-or-redirect
     cookies
+    headers
     config/duration
     config/domain
     config/path
@@ -44,8 +45,8 @@
 (defn- send-cookie-pixel-or-200'
   "Wrapper for send-cookie-pixel-or-200-or-redirect,
    with nil vendor and empty params map"
-  [cookies pixel]
-  (send-cookie-pixel-or-200-or-redirect' cookies pixel nil {}))
+  [cookies headers pixel]
+  (send-cookie-pixel-or-200-or-redirect' cookies headers pixel nil {}))
 
 (def send-flash-crossdomain
   "Send back the cross domain policy if configured, 404 otherwise"
@@ -55,11 +56,11 @@
 
 (defroutes routes
   "Our routes"
-  (GET     "/i"                {c :cookies} (send-cookie-pixel-or-200' c true))
-  (GET     "/ice.png"          {c :cookies} (send-cookie-pixel-or-200' c true))  ; legacy name for i
-  (GET     "/:vendor/:version" {{v :vendor} :params, p :params, c :cookies} (send-cookie-pixel-or-200-or-redirect' c true v p))  ; for tracker GET support. Need params for potential redirect
-  (POST    "/:vendor/:version" {c :cookies} (send-cookie-pixel-or-200' c false)) ; for tracker POST support, no pixel
-  (OPTIONS "/:vendor/:version" [:as {hs :headers}] (responses/send-preflight-response hs)) ; for CORS requests
+  (GET     "/i"                {c :cookies, hs :headers} (send-cookie-pixel-or-200' c hs true))
+  (GET     "/ice.png"          {c :cookies, hs :headers} (send-cookie-pixel-or-200' c hs true))  ; legacy name for i
+  (GET     "/:vendor/:version" {{v :vendor} :params, p :params, c :cookies, hs :headers} (send-cookie-pixel-or-200-or-redirect' c hs true v p))  ; for tracker GET support. Need params for potential redirect
+  (POST    "/:vendor/:version" {c :cookies, hs :headers} (send-cookie-pixel-or-200' c hs false)) ; for tracker POST support, no pixel
+  (OPTIONS "/:vendor/:version" {hs :headers} (responses/send-preflight-response hs)) ; for CORS requests
   (HEAD    "/:vendor/:version" request responses/send-200)                       ; for webhooks' own checks e.g. Mandrill
   (GET     "/healthcheck"      request responses/send-200)
   (GET     "/crossdomain.xml"  request send-flash-crossdomain)                   ; for Flash cross-domain posting
