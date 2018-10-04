@@ -58,6 +58,9 @@ object AdapterRegistry {
     val HubSpot         = "com.hubspot"
   }
 
+  //TODO make the following less of a hack
+  private val remoteAdapters = RemoteAdapters.createFromConfigFile(System.getProperty("remoteAdapterConfig"))
+
   /**
    * Router to determine which adapter we use
    * to convert the CollectorPayload into
@@ -94,7 +97,11 @@ object AdapterRegistry {
       case (Vendor.Vero, "v1")                  => VeroAdapter.toRawEvents(payload)
       case (Vendor.HubSpot, "v1")               => HubSpotAdapter.toRawEvents(payload)
       case _ =>
-        s"Payload with vendor ${payload.api.vendor} and version ${payload.api.version} not supported by this version of Scala Common Enrich".failNel
+        val remote = remoteAdapters.get((payload.api.vendor, payload.api.version))
+        if (remote.isDefined)
+          remote.get.toRawEvents(payload)
+        else
+          s"Payload with vendor ${payload.api.vendor} and version ${payload.api.version} not supported by this version of Scala Common Enrich".failNel
     }
 
 }

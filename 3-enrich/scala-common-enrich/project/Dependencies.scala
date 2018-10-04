@@ -48,6 +48,7 @@ object Dependencies {
     val mysqlConnector   = "5.1.39"
     val jaywayJsonpath   = "2.4.0"
     val iabClient        = "0.1.0"
+    val typesafeConfig   = "1.3.3"
     // Scala
     val scalaz7          = "7.0.9"
     val snowplowRawEvent = "0.1.0"
@@ -62,6 +63,7 @@ object Dependencies {
     val scalaj           = "2.3.0"
     val gatlingJsonpath  = "0.6.4"
     val scalaUri         = "0.5.0"
+    val sttp             = "1.5.4"
     // Scala (test only)
     val specs2           = "2.3.13"
     val scalazSpecs2     = "0.2"
@@ -87,6 +89,7 @@ object Dependencies {
     val mysqlConnector   = "mysql"                      %  "mysql-connector-java"          % V.mysqlConnector
     val jaywayJsonpath   = "com.jayway.jsonpath"        %  "json-path"                     % V.jaywayJsonpath
     val iabClient        = "com.snowplowanalytics"      %  "iab-spiders-and-robots-client" % V.iabClient
+    val typesafeConfig   = "com.typesafe"               %  "config"                        % V.typesafeConfig
 
     // Scala
     val scalaForex       = "com.snowplowanalytics"      %% "scala-forex"                   % V.scalaForex
@@ -103,6 +106,7 @@ object Dependencies {
     val scalaWeather     = "com.snowplowanalytics"      %% "scala-weather"                 % V.scalaWeather
     val scalaj           = "org.scalaj"                 %% "scalaj-http"                   % V.scalaj
     val gatlingJsonpath  = "io.gatling"                 %% "jsonpath"                      % V.gatlingJsonpath
+    val sttp             = "com.softwaremill.sttp"      %% "core"                          % V.sttp
     // Scala (test only)
     val specs2           = "org.specs2"                 %% "specs2"                        % V.specs2         % "test"
     val scalazSpecs2     = "org.typelevel"              %% "scalaz-specs2"                 % V.scalazSpecs2   % "test"
