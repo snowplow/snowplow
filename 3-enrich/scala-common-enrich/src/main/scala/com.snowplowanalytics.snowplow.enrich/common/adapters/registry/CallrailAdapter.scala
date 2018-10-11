@@ -44,7 +44,7 @@ object CallrailAdapter extends Adapter {
 
   // Schemas for reverse-engineering a Snowplow unstructured event
   private object SchemaUris {
-    val CallComplete = SchemaKey("com.callrail", "call_complete", "jsonschema", "1-0-0").toSchemaUri
+    val CallComplete = SchemaKey("com.callrail", "call_complete", "jsonschema", "1-0-2").toSchemaUri
   }
 
   // Datetime format used by CallRail (as we will need to massage)
