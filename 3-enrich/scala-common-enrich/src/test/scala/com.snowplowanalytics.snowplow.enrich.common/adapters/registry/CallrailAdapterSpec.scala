@@ -106,7 +106,7 @@ class CallrailAdapterSpec extends Specification with DataTables with ValidationM
       """|{
             |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
             |"data":{
-              |"schema":"iglu:com.callrail/call_complete/jsonschema/1-0-0",
+              |"schema":"iglu:com.callrail/call_complete/jsonschema/1-0-2",
               |"data":{
                 |"duration":247,
                 |"utm_source":null,
