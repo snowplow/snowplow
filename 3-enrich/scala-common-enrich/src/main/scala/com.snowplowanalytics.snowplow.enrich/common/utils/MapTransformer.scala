@@ -73,7 +73,7 @@ object MapTransformer {
   type SourceMap = Map[Key, Value]
 
   // Our map for transforming data
-  type TransformMap = Map[Key, Tuple2[TransformFunc, _]]
+  type TransformMap = Map[Key, (TransformFunc, _)]
 
   // All of the setter methods on this object
   type SettersMap = Map[Key, Method]

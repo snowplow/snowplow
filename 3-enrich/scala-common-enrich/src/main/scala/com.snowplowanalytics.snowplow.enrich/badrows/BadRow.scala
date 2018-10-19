@@ -80,7 +80,6 @@ object BadRow {
       deriveEncoder[EnrichmentError]
   }
 
-  import IgluParseError._
   import IgluResolverError._
 
   /**

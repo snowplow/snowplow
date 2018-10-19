@@ -18,24 +18,29 @@ import com.snowplowanalytics.iglu.client.repositories.{HttpRepositoryRef, Reposi
 
 import com.snowplowanalytics.snowplow.enrich.badrows.BadRow
 import com.snowplowanalytics.snowplow.enrich.badrows.BadRowPayload.{CollectorMeta, RawEvent}
-import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
 import com.snowplowanalytics.snowplow.enrich.common.loaders._
 import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
+import com.snowplowanalytics.snowplow.enrich.common.enrichments.{EnrichmentManager, EnrichmentRegistry}
 
-object Enricher {
+object EtlPipelineStructured {
+  type Error[A]    = Either[BadRow.TrackerProtocolViolation, A]
+  type ErrorStr[A] = ValidatedNel[String, A]
   val resolver = Resolver(
     10,
     HttpRepositoryRef(RepositoryRefConfig("Iglu Central", 1, List("com.snowplow")), "http://iglucentral.com", None))
   val enrichmentRegistry = EnrichmentRegistry(Map.empty)
   val loader             = CljTomcatLoader
 
-  def process(line: String) = {
+  /** Transform collector's line into two (possibly empty) lists of bad rows and enriched events */
+  def process(registry: EnrichmentRegistry, etlVersion: String, etlTstamp: DateTime, line: String)(
+    implicit resolver: Resolver): (List[BadRow], List[EnrichedEvent]) = {
     val result: Either[BadRow.FormatViolation, (List[BadRow], List[EnrichedEvent])] = for {
       // First two steps are equal to EnrichPseudoCode.parseRawPayload
       collectorPayload <- middleware(loader.toCollectorPayload(line), line)
       (trackerViolations, rawEvents)        = splitCollectorPayload(collectorPayload).separate
-      (schemaInvalidations, validRawEvents) = rawEvents.map(validate).separate
-      (enrichFailures, enrichedEvents)      = validRawEvents.map(enrich).separate
+      (schemaInvalidations, validRawEvents) = rawEvents.map(validate(resolver)).separate
+      enrichRow                             = enrich(resolver, registry, etlVersion, etlTstamp)(_)
+      (enrichFailures, enrichedEvents)      = validRawEvents.map(enrichRow).separate
     } yield (trackerViolations ++ schemaInvalidations ++ enrichFailures, enrichedEvents)
 
     result match {
@@ -43,8 +48,6 @@ object Enricher {
       case Right(badAndGood)     => badAndGood
     }
   }
-
-  case class RawEventPayload(event: Map[String, String], meta: CollectorMeta)
 
   /** Confirm that CollectorPayload contains valid POST, should be part of toCollectorPayload */
   def middleware(payload: common.Validated[Option[CollectorPayload]],
@@ -86,18 +89,20 @@ object Enricher {
 
   }
 
-  def validate(rawEvent: RawEvent): Either[BadRow.SchemaInvalidation, RawEvent] = ???
-
-  /**
-   * Split single payload into individual events with collector metadata attached
+  /** Split single payload into individual events with collector metadata attached
    * Individual events still can have a lot of violations discovered downstream
    */
   def splitCollectorPayload(payload: Option[CollectorPayload]): List[Error[RawEvent]] =
     payload match {
       // POST
       case Some(p @ CollectorPayload.TrackerPayload(api, qs, _, Some(body), source, context)) =>
-        val data   = body.toData.getOrElse(throw new RuntimeException("middleware")).data
-        val events = extractEvents(data, CollectorMeta.fromPayload(p))
+        val data = body.toData.getOrElse(throw new RuntimeException("middleware")).data
+        val events = data.asArray match {
+          case Some(jsonArray) =>
+            jsonArray.map(extractEvent(_, CollectorMeta.fromPayload(p))).toList
+          case None =>
+            throw new RuntimeException("middleware")
+        }
         Nested(events).map(raw => RawEvent(CollectorMeta(api, source, context), raw)).value
       // GET
       case Some(CollectorPayload.TrackerPayload(api, _, _, None, source, context)) =>
@@ -109,20 +114,18 @@ object Enricher {
         Nil
     }
 
-  type Error[A]    = Either[BadRow.TrackerProtocolViolation, A]
-  type ErrorStr[A] = ValidatedNel[String, A]
-
-  def enrich(event: RawEvent): Either[BadRow.EnrichmentFailure, EnrichedEvent] =
+  def validate(resolver: Resolver)(rawEvent: RawEvent): Either[BadRow.SchemaInvalidation, RawEvent] =
     ???
 
-  def extractEvents(json: Json, meta: CollectorMeta): List[Error[Map[String, String]]] =
-    json.asArray match {
-      case Some(jsonArray) =>
-        jsonArray.map(extractEvent(_, meta)).toList
-      case None =>
-        throw new RuntimeException("middleware")
+  def enrich(resolver: Resolver, registry: EnrichmentRegistry, etlVersion: String, etlTstamp: DateTime)(
+    event: RawEvent): Either[BadRow.EnrichmentFailure, EnrichedEvent] =
+    EnrichmentManager.enrichEvent(registry, etlVersion, etlTstamp, event.toSnowplowRawEvent)(resolver) match {
+      case scalaz.Success(e) => e.asRight
+      case scalaz.Failure(errors) =>
+        BadRow.EnrichmentFailure(event, catsNEL(errors).map(enrichmentError), etlVersion).asLeft
     }
 
+  /** Extract single event from Tracker POST payload */
   def extractEvent[A](json: Json, meta: CollectorMeta): Error[Map[String, String]] =
     json.asObject match {
       case Some(jsonObject) =>
@@ -150,6 +153,9 @@ object Enricher {
                                     "enrich")
           .asLeft
     }
+
+  def enrichmentError(message: String): BadRow.EnrichmentError =
+    BadRow.EnrichmentError("unkown", message)
 
   def catsNEL[A](list: scalaz.NonEmptyList[A]) =
     cats.data.NonEmptyList.fromListUnsafe(list.list)
