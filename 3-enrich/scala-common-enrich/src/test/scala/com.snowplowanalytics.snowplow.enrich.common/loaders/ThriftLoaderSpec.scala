@@ -166,7 +166,7 @@ class ThriftLoaderSpec extends Specification with DataTables with ValidationMatc
 
           val canonicalEvent = ThriftLoader.toCollectorPayload(Base64.decodeBase64(raw))
 
-          val expected = CollectorPayload(
+          val expected = TrackerPayload(
             api         = Expected.api,
             querystring = payload,
             body        = None,

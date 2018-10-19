@@ -17,6 +17,8 @@ package loaders
 import scalaz._
 import Scalaz._
 
+import CollectorPayload._
+
 /**
  * Loader for TSVs
  */
@@ -29,7 +31,7 @@ case class TsvLoader(adapter: String) extends Loader[String] {
    * @return either a set of validation errors or an Option-boxed
    *         CanonicalInput object, wrapped in a Scalaz ValidationNel.
    */
-  def toCollectorPayload(line: String): ValidatedMaybeCollectorPayload =
+  def toCollectorPayload(line: String): Validated[Option[CollectorPayload]] =
     // Throw away the first two lines of Cloudfront web distribution access logs
     if (line.startsWith("#Version:") || line.startsWith("#Fields:")) {
       None.success
@@ -37,22 +39,24 @@ case class TsvLoader(adapter: String) extends Loader[String] {
       CollectorApi
         .parse(adapter)
         .map(
-          CollectorPayload(
-            Nil,
-            "tsv",
-            "UTF-8",
-            None,
-            None,
-            None,
-            None,
-            None,
-            Nil,
-            None,
-            _,
-            None,
-            Some(line)
-          ).some
-        )
+          api =>
+            CollectorPayload
+              .legacyText(
+                Nil,
+                "tsv",
+                "UTF-8",
+                None,
+                None,
+                None,
+                None,
+                None,
+                Nil,
+                None,
+                api,
+                None,
+                line
+              )
+              .some)
         .toValidationNel
     }
 }

@@ -19,14 +19,12 @@ package registry
 package snowplow
 
 // Iglu
+import com.snowplowanalytics.snowplow.enrich.common.loaders.CollectorPayload
 import iglu.client.Resolver
 
 // Scalaz
 import scalaz._
 import Scalaz._
-
-// This project
-import loaders.CollectorPayload
 
 /**
  * Version 1 of the Tracker Protocol is GET only.

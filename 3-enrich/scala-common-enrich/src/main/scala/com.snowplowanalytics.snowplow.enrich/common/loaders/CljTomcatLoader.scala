@@ -19,6 +19,7 @@ import Scalaz._
 
 // This project
 import utils.ConversionUtils
+import loaders.CollectorPayload._
 
 /**
  * The dedicated loader for events collected by
@@ -62,42 +63,25 @@ object CljTomcatLoader extends Loader[String] {
       w          + "([\\S]+)?)?$").r // PostBody      /                    POST support
   }
 
-  /**
-   * Converts the source string into a
-   * ValidatedMaybeCollectorPayload.
-   *
-   * @param line A line of data to convert
-   * @return either a set of validation
-   *         errors or an Option-boxed
-   *         CanonicalInput object, wrapped
-   *         in a Scalaz ValidatioNel.
-   */
-  def toCollectorPayload(line: String): ValidatedMaybeCollectorPayload = {
+  def build(qs: String,
+            date: String,
+            time: String,
+            ip: String,
+            ua: String,
+            refr: String,
+            objct: String,
+            ct: Option[String],
+            bdy: Option[String]): Validated[Option[TrackerPayload]] = {
+    val querystring = parseQuerystring(CloudfrontLoader.toOption(qs), CollectorEncoding)
+    val timestamp   = CloudfrontLoader.toTimestamp(date, time)
+    val contentType = ct.map(ConversionUtils.decodeString(CollectorEncoding, "Content type", _)).sequenceU
+    val body        = bdy.map(ConversionUtils.decodeBase64Json).sequenceU
+    val api         = CollectorApi.parse(objct)
 
-    def build(qs: String,
-              date: String,
-              time: String,
-              ip: String,
-              ua: String,
-              refr: String,
-              objct: String,
-              ct: Option[String],
-              bdy: Option[String]): ValidatedMaybeCollectorPayload = {
-      val querystring = parseQuerystring(CloudfrontLoader.toOption(qs), CollectorEncoding)
-      val timestamp   = CloudfrontLoader.toTimestamp(date, time)
-      val contentType = (for {
-        enc <- ct
-        raw = ConversionUtils.decodeString(CollectorEncoding, "Content type", enc)
-      } yield raw).sequenceU
-      val body = (for {
-        b64 <- bdy
-        raw = ConversionUtils.decodeBase64Url("Body", b64)
-      } yield raw).sequenceU
-      val api = CollectorApi.parse(objct)
-
-      (timestamp.toValidationNel |@| querystring.toValidationNel |@| api.toValidationNel |@| contentType.toValidationNel |@| body.toValidationNel) {
-        (t, q, a, c, b) =>
-          CollectorPayload(
+    (timestamp.toValidationNel |@| querystring.toValidationNel |@| api.toValidationNel |@| contentType.toValidationNel |@| body.toValidationNel) {
+      (t, q, a, c, b) =>
+        CollectorPayload
+          .legacyTracker(
             q,
             CollectorName,
             CollectorEncoding,
@@ -111,10 +95,21 @@ object CljTomcatLoader extends Loader[String] {
             a, // API vendor and version
             c, // We may have content type
             b // We may have request body
-          ).some
-      }
+          )
+          .some
     }
+  }
 
+  /**
+   * Converts the source row into a collector-agnostic payload
+   *
+   * @param line A line of data to convert
+   * @return either a set of validation
+   *         errors or an Option-boxed
+   *         CanonicalInput object, wrapped
+   *         in a Scalaz ValidatioNel.
+   */
+  def toCollectorPayload(line: String): Validated[Option[CollectorPayload]] =
     line match {
       // A. For a request, to CljTomcat collector <= v0.6.0
       case CljTomcatRegex(date, time, _, _, ip, _, _, objct, _, refr, ua, qs, null, null) =>
@@ -136,7 +131,7 @@ object CljTomcatLoader extends Loader[String] {
       // C.1 Not a POST request
       case CljTomcatRegex(_, _, _, _, _, op, _, _, _, _, _, _, _, _) if op.toUpperCase != "POST" =>
         s"Operation must be POST, not ${op.toUpperCase}, if request content type and/or body are provided"
-          .failNel[Option[CollectorPayload]]
+          .failNel[Option[TrackerPayload]]
 
       // C.2 A POST, let's check we can discern API format
       // TODO: we should check for nulls/"-"s for ct and body below
@@ -145,7 +140,6 @@ object CljTomcatLoader extends Loader[String] {
 
       // D. Row not recognised
       case _ =>
-        "Line does not match raw event format for Clojure Collector".failNel[Option[CollectorPayload]]
+        "Line does not match raw event format for Clojure Collector".failNel[Option[TrackerPayload]]
     }
-  }
 }

@@ -39,7 +39,11 @@ import com.fasterxml.jackson.core.JsonParseException
 
 // This project
 import loaders.CollectorPayload
+import loaders.CollectorPayload._
 import utils.{JsonUtils => JU}
+
+import com.snowplowanalytics.iglu.core.SelfDescribingData
+import com.snowplowanalytics.iglu.core.circe.implicits._
 
 /**
  * Transforms a collector payload which either:
@@ -66,25 +70,26 @@ object IgluAdapter extends Adapter {
    * Currently we only support a single event Iglu-compatible
    * self-describing event passed in on the querystring.
    *
-   * @param payload The CollectorPaylod containing one or more
+   * @param payload The CollectorPayload containing one or more
    *        raw events as collected by a Snowplow collector
    * @param resolver (implicit) The Iglu resolver used for
    *        schema lookup and validation. Not used
    * @return a Validation boxing either a NEL of RawEvents on
    *         Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = {
+  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
+    payload match {
+      case p: TrackerPayload => // Technically it is a webhook
+        val params = toMap(payload.querystring)
+        (params.get("schema"), p.body, payload.contentType) match {
+          case (_, Some(_), None)                    => s"$VendorName event failed: ContentType must be set for a POST payload".failNel
+          case (None, Some(body), Some(contentType)) => payloadSdJsonToEvent(payload, body, contentType, params)
+          case (Some(schemaUri), Some(_), Some(_))   => payloadToEventWithSchema(p, schemaUri, params)
+          case (Some(schemaUri), None, _)            => payloadToEventWithSchema(p, schemaUri, params)
+          case (_, _, _)                             => s"$VendorName event failed: is not a sd-json or a valid GET or POST request".failNel
+        }
 
-    val params = toMap(payload.querystring)
-
-    (params.get("schema"), payload.body, payload.contentType) match {
-      case (_, Some(body), None)                            => s"$VendorName event failed: ContentType must be set for a POST payload".failNel
-      case (None, Some(body), Some(contentType))            => payloadSdJsonToEvent(payload, body, contentType, params)
-      case (Some(schemaUri), Some(body), Some(contentType)) => payloadToEventWithSchema(payload, schemaUri, params)
-      case (Some(schemaUri), None, _)                       => payloadToEventWithSchema(payload, schemaUri, params)
-      case (_, _, _)                                        => s"$VendorName event failed: is not a sd-json or a valid GET or POST request".failNel
     }
-  }
 
   // --- SelfDescribingJson Payloads
 
@@ -99,7 +104,7 @@ object IgluAdapter extends Adapter {
    * @param params The raw map of params from the querystring.
    */
   private[registry] def payloadSdJsonToEvent(payload: CollectorPayload,
-                                             body: String,
+                                             body: io.circe.Json,
                                              contentType: String,
                                              params: Map[String, String]): ValidatedRawEvents =
     contentType match {
@@ -112,42 +117,26 @@ object IgluAdapter extends Adapter {
    * Processes a potential SelfDescribingJson into a
    * validated raw-event.
    *
-   * @param payload The CollectorPaylod containing one or more
+   * @param payload The CollectorPayload containing one or more
    *        raw events as collected by a Snowplow collector
    * @param body The extracted body string
    * @param params The raw map of params from the querystring.
    */
   private[registry] def sdJsonBodyToEvent(payload: CollectorPayload,
-                                          body: String,
-                                          params: Map[String, String]): ValidatedRawEvents = {
-
-    implicit val formats = org.json4s.DefaultFormats
-
-    parseJsonSafe(body) match {
-      case Success(parsed) => {
-        ((parsed \ "schema").extractOpt[String], (parsed \ "data").extractOpt[JObject]) match {
-          case (Some(schemaUri), Some(data)) => {
-            SchemaKey.parse(schemaUri) match {
-              case Failure(procMsg) => procMsg.getMessage.failNel
-              case Success(_) => {
-                NonEmptyList(
-                  RawEvent(
-                    api         = payload.api,
-                    parameters  = toUnstructEventParams(TrackerVersion, params, schemaUri, data, "app"),
-                    contentType = payload.contentType,
-                    source      = payload.source,
-                    context     = payload.context
-                  )).success
-              }
-            }
-          }
-          case (None, _) => s"$VendorName event failed: detected SelfDescribingJson but schema key is missing".failNel
-          case (_, None) => s"$VendorName event failed: detected SelfDescribingJson but data key is missing".failNel
-        }
-      }
-      case Failure(err) => err.fail
+                                          body: io.circe.Json,
+                                          params: Map[String, String]): ValidatedRawEvents =
+    body.toData match {
+      case Some(SelfDescribingData(schema, data)) =>
+        NonEmptyList(
+          RawEvent(
+            api         = payload.api,
+            parameters  = toUnstructEventParams(TrackerVersion, params, schema.toSchemaUri, data, "app"),
+            contentType = payload.contentType,
+            source      = payload.source,
+            context     = payload.context
+          )).success
+      case None => s"$VendorName event failed: detected SelfDescribingJson but schema key is missing".failNel
     }
-  }
 
   // --- Payloads with the Schema in the Query-String
 
@@ -160,31 +149,29 @@ object IgluAdapter extends Adapter {
    * @param schemaUri The schema-uri found
    * @param params The raw map of params from the querystring.
    */
-  private[registry] def payloadToEventWithSchema(payload: CollectorPayload,
+  private[registry] def payloadToEventWithSchema(payload: TrackerPayload,
                                                  schemaUri: String,
                                                  params: Map[String, String]): ValidatedRawEvents =
     SchemaKey.parse(schemaUri) match {
       case Failure(procMsg) => procMsg.getMessage.failNel
       case Success(_) =>
         (payload.body, payload.contentType) match {
-          case (None, _) => {
+          case (None, _) =>
             NonEmptyList(
               RawEvent(
                 api         = payload.api,
-                parameters  = toUnstructEventParams(TrackerVersion, (params - "schema"), schemaUri, IgluFormatter, "app"),
+                parameters  = toUnstructEventParams(TrackerVersion, params - "schema", schemaUri, IgluFormatter, "app"),
                 contentType = payload.contentType,
                 source      = payload.source,
                 context     = payload.context
               )).success
-          }
-          case (Some(body), Some(contentType)) => {
+          case (Some(body), Some(contentType)) =>
             contentType match {
               case "application/json"                  => jsonBodyToEvent(payload, body, schemaUri, params)
               case "application/json; charset=utf-8"   => jsonBodyToEvent(payload, body, schemaUri, params)
               case "application/x-www-form-urlencoded" => formBodyToEvent(payload, body, schemaUri, params)
               case _                                   => "Content type not supported".failNel
             }
-          }
           case (_, None) => "Content type has not been specified".failNel
         }
     }
@@ -198,35 +185,24 @@ object IgluAdapter extends Adapter {
    * @param params The query string parameters
    * @return a single validated event
    */
-  private[registry] def jsonBodyToEvent(payload: CollectorPayload,
-                                        body: String,
+  private[registry] def jsonBodyToEvent(payload: TrackerPayload,
+                                        body: io.circe.Json,
                                         schemaUri: String,
                                         params: Map[String, String]): ValidatedRawEvents = {
-    def buildRawEvent(e: JValue): RawEvent =
+    def buildRawEvent(e: io.circe.Json): RawEvent =
       RawEvent(
         api         = payload.api,
-        parameters  = toUnstructEventParams(TrackerVersion, (params - "schema"), schemaUri, e, "app"),
+        parameters  = toUnstructEventParams(TrackerVersion, params - "schema", schemaUri, e, "app"),
         contentType = payload.contentType,
         source      = payload.source,
         context     = payload.context
       )
 
-    parseJsonSafe(body) match {
-      case Success(parsed) =>
-        parsed match {
-          case a: JArray =>
-            a.arr match {
-              case h :: t => (NonEmptyList(buildRawEvent(h)) :::> t.map(buildRawEvent)).success
-              case Nil    => s"$VendorName event failed json sanity check: array of events cannot be empty".failNel
-            }
-          case _ =>
-            if (parsed.children.isEmpty) {
-              s"$VendorName event failed json sanity check: has no key-value pairs".failNel
-            } else {
-              NonEmptyList(buildRawEvent(parsed)).success
-            }
-        }
-      case Failure(err) => err.fail
+    body.asArray match {
+      case Some(v) if v.isEmpty =>
+        s"$VendorName event failed json sanity check: array of events cannot be empty".failNel
+      case Some(array) =>
+        (NonEmptyList(buildRawEvent(array.head)) :::> array.tail.toList.map(buildRawEvent)).success
     }
   }
 
@@ -240,8 +216,8 @@ object IgluAdapter extends Adapter {
    * @param params The query string parameters
    * @return a single validated event
    */
-  private[registry] def formBodyToEvent(payload: CollectorPayload,
-                                        body: String,
+  private[registry] def formBodyToEvent(payload: TrackerPayload,
+                                        body: io.circe.Json,
                                         schemaUri: String,
                                         params: Map[String, String]): ValidatedRawEvents =
     try {
@@ -252,7 +228,7 @@ object IgluAdapter extends Adapter {
       NonEmptyList(
         RawEvent(
           api         = payload.api,
-          parameters  = toUnstructEventParams(TrackerVersion, (params - "schema"), schemaUri, event, "srv"),
+          parameters  = toUnstructEventParams(TrackerVersion, params - "schema", schemaUri, event, "srv"),
           contentType = payload.contentType,
           source      = payload.source,
           context     = payload.context

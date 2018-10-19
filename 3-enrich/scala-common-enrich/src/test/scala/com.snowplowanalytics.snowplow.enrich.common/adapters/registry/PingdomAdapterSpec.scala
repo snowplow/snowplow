@@ -28,7 +28,7 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.scalaz.JsonScalaz._
 
 // Snowplow
-import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import loaders.{CollectorApi, CollectorContext, TrackerPayload, CollectorSource}
 import utils.ConversionUtils
 import SpecHelpers._
 
@@ -95,7 +95,7 @@ class PingdomAdapterSpec extends Specification with DataTables with ValidationMa
       "p"       -> "apps",
       "message" -> """{"check": "1421338", "checkname": "Webhooks_Test", "host": "7eef51c2.ngrok.com", "action": "assign", "incidentid": 3, "description": "down"}"""
     )
-    val payload = CollectorPayload(Shared.api, querystring, None, None, Shared.cljSource, Shared.context)
+    val payload = TrackerPayload(Shared.api, querystring, None, None, Shared.cljSource, Shared.context)
     val expected = RawEvent(
       Shared.api,
       Map(
@@ -112,14 +112,14 @@ class PingdomAdapterSpec extends Specification with DataTables with ValidationMa
   }
 
   def e6 = {
-    val payload  = CollectorPayload(Shared.api, Nil, None, None, Shared.cljSource, Shared.context)
+    val payload  = TrackerPayload(Shared.api, Nil, None, None, Shared.cljSource, Shared.context)
     val expected = "Pingdom payload querystring is empty: nothing to process"
     PingdomAdapter.toRawEvents(payload) must beFailing(NonEmptyList(expected))
   }
 
   def e7 = {
     val querystring = toNameValuePairs("p" -> "apps")
-    val payload     = CollectorPayload(Shared.api, querystring, None, None, Shared.cljSource, Shared.context)
+    val payload     = TrackerPayload(Shared.api, querystring, None, None, Shared.cljSource, Shared.context)
     val expected    = "Pingdom payload querystring does not have 'message' as a key: no event to process"
     PingdomAdapter.toRawEvents(payload) must beFailing(NonEmptyList(expected))
   }

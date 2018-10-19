@@ -15,6 +15,7 @@ package snowplow.enrich.common
 package loaders
 
 // Apache URLEncodedUtils
+import com.snowplowanalytics.snowplow.enrich.common.utils.{ConversionUtils, JsonUtils}
 import org.apache.http.NameValuePair
 
 // Joda-Time
@@ -61,7 +62,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
   def toCollectorPayload(line: Array[Byte]): ValidatedMaybeCollectorPayload =
     try {
 
-      var schema = new SchemaSniffer
+      val schema = new SchemaSniffer
 
       this.synchronized {
         thriftDeserializer.deserialize(
@@ -88,7 +89,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
     } catch {
       // TODO: Check for deserialization errors.
       case e: Throwable =>
-        s"Error deserializing raw event: ${e.getMessage}".failNel[Option[CollectorPayload]]
+        s"Error deserializing raw event: ${e.getMessage}".failNel[Option[CollectorPayload.TrackerPayload]]
     }
 
   /**
@@ -104,7 +105,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
    */
   private def convertSchema1(line: Array[Byte]): ValidatedMaybeCollectorPayload = {
 
-    var collectorPayload = new CollectorPayload1
+    val collectorPayload = new CollectorPayload1
     this.synchronized {
       thriftDeserializer.deserialize(
         collectorPayload,
@@ -121,6 +122,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
     val userAgent     = Option(collectorPayload.userAgent)
     val refererUri    = Option(collectorPayload.refererUri)
     val networkUserId = Option(collectorPayload.networkUserId)
+    val body          = Option(collectorPayload.body).traverseU(ConversionUtils.decodeBase64Json)
 
     val headers = Option(collectorPayload.headers).map(_.toList).getOrElse(Nil)
 
@@ -128,26 +130,28 @@ object ThriftLoader extends Loader[Array[Byte]] {
 
     val api = Option(collectorPayload.path) match {
       case None    => "Request does not contain a path".fail
-      case Some(p) => CollectorApi.parse(p)
+      case Some(p) => CollectorPayload.CollectorApi.parse(p)
     }
 
-    (querystring.toValidationNel |@|
-      api.toValidationNel) { (q: List[NameValuePair], a: CollectorApi) =>
-      CollectorPayload(
-        q,
-        collectorPayload.collector,
-        collectorPayload.encoding,
-        hostname,
-        Some(new DateTime(collectorPayload.timestamp, DateTimeZone.UTC)),
-        ip,
-        userAgent,
-        refererUri,
-        headers,
-        networkUserId,
-        a,
-        Option(collectorPayload.contentType),
-        Option(collectorPayload.body)
-      ).some
+    (querystring.toValidationNel |@| api.toValidationNel |@| body.toValidationNel) {
+      (q: List[NameValuePair], a: CollectorPayload.CollectorApi, b: Option[io.circe.Json]) =>
+        CollectorPayload
+          .legacyTracker(
+            q,
+            collectorPayload.collector,
+            collectorPayload.encoding,
+            hostname,
+            Some(new DateTime(collectorPayload.timestamp, DateTimeZone.UTC)),
+            ip,
+            userAgent,
+            refererUri,
+            headers,
+            networkUserId,
+            a,
+            Option(collectorPayload.contentType),
+            b
+          )
+          .some
     }
   }
 
@@ -187,9 +191,9 @@ object ThriftLoader extends Loader[Array[Byte]] {
 
     val ip = IpAddressExtractor.extractIpAddress(headers, snowplowRawEvent.ipAddress).some // Required
 
-    (querystring.toValidationNel) map { (q: List[NameValuePair]) =>
+    querystring.toValidationNel map { q: List[NameValuePair] =>
       Some(
-        CollectorPayload(
+        CollectorPayload.legacyTracker(
           q,
           snowplowRawEvent.collector,
           snowplowRawEvent.encoding,
@@ -200,7 +204,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
           refererUri,
           headers,
           networkUserId,
-          CollectorApi.SnowplowTp1, // No way of storing API vendor/version in Thrift yet, assume Snowplow TP1
+          CollectorPayload.CollectorApi.SnowplowTp1, // No way of storing API vendor/version in Thrift yet, assume Snowplow TP1
           None, // No way of storing content type in Thrift yet
           None // No way of storing request body in Thrift yet
         )

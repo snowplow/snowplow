@@ -28,7 +28,7 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.scalaz.JsonScalaz._
 
 // Snowplow
-import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import loaders.{CollectorApi, CollectorContext, TrackerPayload, CollectorSource}
 
 import utils.ConversionUtils
 import SpecHelpers._
@@ -125,7 +125,7 @@ class UnbounceAdapterSpec extends Specification with DataTables with ValidationM
 
   def e2 = {
     val params  = toNameValuePairs("schema" -> "iglu:com.unbounce/test/jsonschema/1-0-0")
-    val payload = CollectorPayload(Shared.api, params, ContentType.some, None, Shared.cljSource, Shared.context)
+    val payload = TrackerPayload(Shared.api, params, ContentType.some, None, Shared.cljSource, Shared.context)
     UnbounceAdapter.toRawEvents(payload) must beFailing(
       NonEmptyList("Request body is empty: no Unbounce events to process"))
   }

@@ -43,6 +43,11 @@ lazy val root = project
       Dependencies.Libraries.mysqlConnector,
       Dependencies.Libraries.jaywayJsonpath,
       Dependencies.Libraries.iabClient,
+      // Bad rows
+      Dependencies.Libraries.circeGeneric,
+      Dependencies.Libraries.circeJawn,
+      Dependencies.Libraries.circeLiteral,
+      Dependencies.Libraries.igluCoreCirce,
       // Scala
       Dependencies.Libraries.scalaz7,
       Dependencies.Libraries.snowplowRawEvent,

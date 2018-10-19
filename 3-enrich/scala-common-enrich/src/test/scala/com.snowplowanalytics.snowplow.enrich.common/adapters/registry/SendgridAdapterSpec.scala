@@ -25,7 +25,7 @@ import scalaz._
 import com.snowplowanalytics.snowplow.enrich.common.loaders.{
   CollectorApi,
   CollectorContext,
-  CollectorPayload,
+  TrackerPayload,
   CollectorSource
 }
 
@@ -226,7 +226,7 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
     }
 
     "reject empty bodies" in {
-      val invalidpayload = CollectorPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
+      val invalidpayload = TrackerPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
       val toBeRejected   = SendgridAdapter.toRawEvents(invalidpayload)
 
       toBeRejected must beFailing

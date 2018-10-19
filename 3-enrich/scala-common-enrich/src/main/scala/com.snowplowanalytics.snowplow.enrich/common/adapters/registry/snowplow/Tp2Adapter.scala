@@ -21,6 +21,8 @@ package snowplow
 // Java
 import java.util.Map.{Entry => JMapEntry}
 
+import com.snowplowanalytics.snowplow.enrich.common.loaders.CollectorPayload
+
 // Jackson
 import com.fasterxml.jackson.databind.JsonNode
 
@@ -36,7 +38,7 @@ import scalaz._
 import Scalaz._
 
 // This project
-import loaders.CollectorPayload
+import loaders.CollectorPayload.TrackerPayload
 import utils.{JsonUtils => JU}
 
 /**
@@ -70,20 +72,19 @@ object Tp2Adapter extends Adapter {
 
     // Verify: body + content type set; content type matches expected; body contains expected JSON Schema; body passes schema validation
     val validatedParamsNel: Validated[NonEmptyList[RawEventParameters]] =
-      (payload.body, payload.contentType) match {
-        case (None, _) if qsParams.isEmpty =>
+      payload match {
+        case TrackerPayload(_, qs, None, _, _, _) if qs.isEmpty =>
           s"Request body and querystring parameters empty, expected at least one populated".failNel
-        case (_, Some(ct)) if !ContentTypes.list.contains(ct) =>
+        case TrackerPayload(_, _, Some(ct), _, _, _) if !ContentTypes.list.contains(ct) =>
           s"Content type of ${ct} provided, expected one of: ${ContentTypes.str}".failNel
-        case (Some(_), None) =>
+        case TrackerPayload(_, _, None, Some(_), _, _) =>
           s"Request body provided but content type empty, expected one of: ${ContentTypes.str}".failNel
-        case (None, Some(ct)) => s"Content type of ${ct} provided but request body empty".failNel
-        case (None, None)     => NonEmptyList(qsParams).success
-        case (Some(bdy), Some(_)) => // Build our NEL of parameters
-          for {
-            json <- extractAndValidateJson("Body", PayloadDataSchema, bdy)
-            nel  <- toParametersNel(json, qsParams)
-          } yield nel
+        case TrackerPayload(_, _, Some(ct), None, _, _) =>
+          s"Content type of ${ct} provided but request body empty".failNel
+        case TrackerPayload(_, _, None, None, _, _) =>
+          NonEmptyList(qsParams).success
+        case TrackerPayload(_, _, Some(_), Some(bdy), _, _) =>
+          toParametersNel(bdy, qsParams)
       }
 
     // Validated NEL of parameters -> Validated NEL of raw events

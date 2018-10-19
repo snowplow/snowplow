@@ -13,7 +13,6 @@
 package com.snowplowanalytics.snowplow.enrich.common.loaders
 
 import com.snowplowanalytics.snowplow.enrich.common.ValidatedMaybeCollectorPayload
-import org.joda.time.{DateTime, DateTimeZone}
 
 // Scalaz
 import scalaz._
@@ -45,34 +44,36 @@ case class NdjsonLoader(adapter: String) extends Loader[String] {
 
       if (line.replaceAll("\r?\n", "").isEmpty) {
         Success(None)
-      } else if (line.split("\r?\n").size > 1) {
+      } else if (line.split("\r?\n").length > 1) {
         "Too many lines! Expected single line".failNel
       } else {
         parse(line)
-        CollectorApi
+        CollectorPayload.CollectorApi
           .parse(adapter)
           .map(
-            CollectorPayload(
-              Nil,
-              CollectorName,
-              CollectorEncoding,
-              None,
-              None,
-              None,
-              None,
-              None,
-              Nil,
-              None,
-              _,
-              None,
-              Some(line)
-            ).some
+            CollectorPayload
+              .legacyText(
+                Nil,
+                CollectorName,
+                CollectorEncoding,
+                None,
+                None,
+                None,
+                None,
+                None,
+                Nil,
+                None,
+                _,
+                None,
+                line
+              )
+              .some
           )
           .toValidationNel
       }
 
     } catch {
-      case e: JsonParseException => "Unparsable JSON".failNel
+      case _: JsonParseException => "Unparsable JSON".failNel
     }
 
 }

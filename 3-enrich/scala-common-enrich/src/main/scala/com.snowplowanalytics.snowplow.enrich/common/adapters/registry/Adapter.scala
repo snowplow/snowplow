@@ -18,7 +18,7 @@ package adapters
 package registry
 
 // Apache URLEncodedUtils
-import com.snowplowanalytics.snowplow.enrich.common.adapters.registry.MandrillAdapter._
+import com.snowplowanalytics.snowplow.enrich.common.loaders.CollectorPayload
 import org.apache.http.NameValuePair
 import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.format.DateTimeFormat
@@ -37,7 +37,6 @@ import org.json4s.jackson.JsonMethods._
 import com.fasterxml.jackson.core.JsonParseException
 
 // This project
-import loaders.CollectorPayload
 import utils.{JsonUtils => JU}
 
 // errors
@@ -141,7 +140,7 @@ trait Adapter {
    */
   // TODO: can this become private?
   protected[registry] def toMap(parameters: List[NameValuePair]): Map[String, String] =
-    parameters.map(p => (p.getName -> p.getValue)).toList.toMap
+    parameters.map(p => p.getName -> p.getValue).toMap
 
   /**
    * Convenience function to build a simple formatter
@@ -160,10 +159,8 @@ trait Adapter {
   protected[registry] def buildFormatter(bools: List[String]          = Nil,
                                          ints: List[String]           = Nil,
                                          dateTimes: JU.DateTimeFields = None): FormatterFunc = {
-    (parameters: RawEventParameters) =>
-      for {
-        p <- parameters.toList
-      } yield JU.toJField(p._1, p._2, bools, ints, dateTimes)
+    parameters: RawEventParameters =>
+      parameters.toList.map { case (k, v) => JU.toJField(k, v, bools, ints, dateTimes) }
   }
 
   /**

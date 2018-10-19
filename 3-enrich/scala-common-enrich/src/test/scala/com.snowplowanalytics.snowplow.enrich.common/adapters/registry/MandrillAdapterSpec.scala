@@ -25,7 +25,7 @@ import Scalaz._
 import org.json4s._
 
 // Snowplow
-import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import loaders.{CollectorApi, CollectorContext, TrackerPayload, CollectorSource}
 
 // Specs2
 import org.specs2.{ScalaCheck, Specification}
@@ -212,7 +212,7 @@ class MandrillAdapterSpec extends Specification with DataTables with ValidationM
   }
 
   def e6 = {
-    val payload = CollectorPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
+    val payload = TrackerPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
     MandrillAdapter.toRawEvents(payload) must beFailing(
       NonEmptyList("Request body is empty: no Mandrill events to process"))
   }

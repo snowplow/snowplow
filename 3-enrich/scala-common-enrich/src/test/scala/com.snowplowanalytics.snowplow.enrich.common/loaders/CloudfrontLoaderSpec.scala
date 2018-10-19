@@ -228,7 +228,7 @@ class CloudfrontLoaderSpec extends Specification with DataTables with Validation
           val canonicalEvent = CloudfrontLoader
             .toCollectorPayload(raw)
 
-          val expected = CollectorPayload(
+          val expected = TrackerPayload(
             api         = Expected.api,
             querystring = payload,
             body        = None,

@@ -32,7 +32,7 @@ import loaders.{
   CollectorApi,
   CollectorSource,
   CollectorContext,
-  CollectorPayload
+  TrackerPayload
 }
 import utils.ConversionUtils
 import SpecHelpers._
@@ -116,7 +116,7 @@ class PagerdutyAdapterSpec extends Specification with DataTables with Validation
   }
 
   def e8 = {
-    val payload = CollectorPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
+    val payload = TrackerPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
     PagerdutyAdapter.toRawEvents(payload) must beFailing(NonEmptyList("Request body is empty: no PagerDuty events to process"))
   }
 

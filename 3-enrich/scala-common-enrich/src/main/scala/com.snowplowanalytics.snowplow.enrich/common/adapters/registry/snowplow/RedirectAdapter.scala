@@ -20,10 +20,10 @@ package snowplow
 
 // Jackson
 import com.fasterxml.jackson.databind.JsonNode
+import com.snowplowanalytics.snowplow.enrich.common.loaders.CollectorPayload
 
 // Iglu
-import iglu.client.{Resolver, SchemaCriterion, SchemaKey}
-import iglu.client.validation.ValidatableJsonMethods._
+import iglu.client.{Resolver, SchemaKey}
 
 // Scalaz
 import scalaz._
@@ -35,7 +35,6 @@ import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
 // This project
-import loaders.CollectorPayload
 import utils.{JsonUtils       => JU}
 import utils.{ConversionUtils => CU}
 

@@ -66,6 +66,14 @@ object ConversionUtils {
                            query: Option[String],
                            fragment: Option[String])
 
+  def decodeBase64Json(encoded: String): Validation[String, io.circe.Json] =
+    try {
+      val string = new String(java.util.Base64.getDecoder.decode(encoded.getBytes))
+      io.circe.jawn.parse(string).fold(_.toString.failure, _.success)
+    } catch {
+      case NonFatal(_) => "Not a base64 body".failure[io.circe.Json]
+    }
+
   /**
    * Explodes a URI into its 6 components
    * pieces. Simple code but we use it

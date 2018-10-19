@@ -28,7 +28,7 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.scalaz.JsonScalaz._
 
 // Snowplow
-import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import loaders.{CollectorApi, CollectorContext, TrackerPayload, CollectorSource}
 import utils.ConversionUtils
 import SpecHelpers._
 
@@ -251,7 +251,7 @@ class VeroAdapterSpec extends Specification with DataTables with ValidationMatch
     }
 
   def e10 = {
-    val payload = CollectorPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
+    val payload = TrackerPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
     VeroAdapter.toRawEvents(payload) must beFailing(NonEmptyList("Request body is empty: no Vero event to process"))
   }
 }

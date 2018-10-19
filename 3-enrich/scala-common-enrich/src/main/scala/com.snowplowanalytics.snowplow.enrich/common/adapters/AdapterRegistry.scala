@@ -76,21 +76,8 @@ object AdapterRegistry {
       case (Vendor.Snowplow, "tp2")             => SpTp2Adapter.toRawEvents(payload)
       case (Vendor.Redirect, "tp2")             => SpRedirectAdapter.toRawEvents(payload)
       case (Vendor.Iglu, "v1")                  => IgluAdapter.toRawEvents(payload)
-      case (Vendor.Callrail, "v1")              => CallrailAdapter.toRawEvents(payload)
       case (Vendor.Cloudfront, "wd_access_log") => CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(payload)
-      case (Vendor.Mailchimp, "v1")             => MailchimpAdapter.toRawEvents(payload)
-      case (Vendor.Mailgun, "v1")               => MailgunAdapter.toRawEvents(payload)
       case (Vendor.GoogleAnalytics, "v1")       => GoogleAnalyticsAdapter.toRawEvents(payload)
-      case (Vendor.Mandrill, "v1")              => MandrillAdapter.toRawEvents(payload)
-      case (Vendor.Olark, "v1")                 => OlarkAdapter.toRawEvents(payload)
-      case (Vendor.Pagerduty, "v1")             => PagerdutyAdapter.toRawEvents(payload)
-      case (Vendor.Pingdom, "v1")               => PingdomAdapter.toRawEvents(payload)
-      case (Vendor.Sendgrid, "v3")              => SendgridAdapter.toRawEvents(payload)
-      case (Vendor.StatusGator, "v1")           => StatusGatorAdapter.toRawEvents(payload)
-      case (Vendor.Unbounce, "v1")              => UnbounceAdapter.toRawEvents(payload)
-      case (Vendor.UrbanAirship, "v1")          => UrbanAirshipAdapter.toRawEvents(payload)
-      case (Vendor.Marketo, "v1")               => MarketoAdapter.toRawEvents(payload)
-      case (Vendor.Vero, "v1")                  => VeroAdapter.toRawEvents(payload)
       case _ =>
         s"Payload with vendor ${payload.api.vendor} and version ${payload.api.version} not supported by this version of Scala Common Enrich".failNel
     }

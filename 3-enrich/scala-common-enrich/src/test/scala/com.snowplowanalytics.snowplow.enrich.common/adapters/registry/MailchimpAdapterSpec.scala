@@ -32,7 +32,7 @@ import loaders.{
   CollectorApi,
   CollectorSource,
   CollectorContext,
-  CollectorPayload
+  TrackerPayload
 }
 import utils.ConversionUtils
 import SpecHelpers._
@@ -228,7 +228,7 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
   }
 
   def e11 = {
-    val payload = CollectorPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
+    val payload = TrackerPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
     val actual = MailchimpAdapter.toRawEvents(payload)
     actual must beFailing(NonEmptyList("Request body is empty: no MailChimp event to process"))
   }

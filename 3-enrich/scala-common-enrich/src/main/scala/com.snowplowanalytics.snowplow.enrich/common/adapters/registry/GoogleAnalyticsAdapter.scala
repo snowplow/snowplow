@@ -18,6 +18,8 @@ package registry
 
 // Java
 import java.net.URI
+
+import com.snowplowanalytics.snowplow.enrich.common.loaders._
 import org.apache.http.client.utils.URLEncodedUtils
 
 // Scala
@@ -36,8 +38,8 @@ import org.json4s.jackson.JsonMethods._
 import iglu.client.{Resolver, SchemaKey}
 
 // This project
-import loaders.CollectorPayload
 import utils.ConversionUtils._
+import CollectorPayload._
 
 /**
  * Transforms a collector payload which conforms to a known version of the Google Analytics
@@ -431,21 +433,30 @@ object GoogleAnalyticsAdapter extends Adapter {
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
-    (for {
-      body      <- payload.body
-      rawEvents <- body.lines.map(parsePayload(_, payload)).toList.toNel
-    } yield rawEvents) match {
-      case Some(rawEvents) => rawEvents.sequenceU
-      case None            => s"Request body is empty: no $VendorName events to process".failNel
+    payload match {
+      case CollectorPayload.WebhookPayload(api, _, contentType, body, source, context) =>
+        val events = for {
+          rawEvents <- body.lines.map(line => parsePayload(line, api, contentType, source, context)).toList.toNel
+        } yield rawEvents
+        events match {
+          case Some(rawEvents) => rawEvents.sequenceU
+          case None            => s"Request body is empty: no $VendorName events to process".failureNel
+        }
+      case _ => "Unknown payload".failureNel
+
     }
 
   /**
    * Parses one Google Analytics payload.
    * @param bodyPart part of the payload's body corresponding to one Google Analytics payload
-   * @param payload original CollectorPayload
+   * @param payload original CollectorPayload   // TODO: should be just CollectorMeta
    * @return a Validation boxing either a RawEvent or a NEL of Failure Strings
    */
-  private def parsePayload(bodyPart: String, payload: CollectorPayload): ValidationNel[String, RawEvent] = {
+  private def parsePayload(bodyPart: String,
+                           api: CollectorApi,
+                           contentType: Option[String],
+                           source: CollectorSource,
+                           context: CollectorContext): ValidationNel[String, RawEvent] = {
     val params = toMap(URLEncodedUtils.parse(URI.create(s"http://localhost/?$bodyPart"), "UTF-8").toList)
     params.get("t") match {
       case None          => s"No $VendorName t parameter provided: cannot determine hit type".failNel
@@ -483,13 +494,14 @@ object GoogleAnalyticsAdapter extends Adapter {
             translatePayload(params, trTable)
               .map { e =>
                 val unstructEvent = compact(toUnstructEvent(buildJson(schema, e)))
+                val parameters = contextParam ++ mappings ++
+                  Map("e" -> "ue", "ue_pr" -> unstructEvent, "tv" -> Protocol, "p" -> "srv")
                 RawEvent(
-                  api = payload.api,
-                  parameters = contextParam ++ mappings ++
-                    Map("e" -> "ue", "ue_pr" -> unstructEvent, "tv" -> Protocol, "p" -> "srv"),
-                  contentType = payload.contentType,
-                  source      = payload.source,
-                  context     = payload.context
+                  api         = api,
+                  parameters  = parameters,
+                  contentType = contentType,
+                  source      = source,
+                  context     = context
                 )
               }
         }.flatMap(identity)

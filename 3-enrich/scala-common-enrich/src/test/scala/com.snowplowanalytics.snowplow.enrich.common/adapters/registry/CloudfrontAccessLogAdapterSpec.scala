@@ -22,7 +22,7 @@ import scalaz._
 import Scalaz._
 
 // Snowplow
-import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource, TsvLoader}
+import loaders.{CollectorApi, CollectorContext, TrackerPayload, CollectorSource, TsvLoader}
 import utils.ConversionUtils
 import SpecHelpers._
 

@@ -28,7 +28,7 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.scalaz.JsonScalaz._
 
 // Snowplow
-import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import loaders.{CollectorApi, CollectorContext, TrackerPayload, CollectorSource}
 
 import utils.ConversionUtils
 import SpecHelpers._
@@ -199,7 +199,7 @@ class OlarkAdapterSpec extends Specification with DataTables with ValidationMatc
   }
 
   def e3 = {
-    val payload = CollectorPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
+    val payload = TrackerPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
     OlarkAdapter.toRawEvents(payload) must beFailing(NonEmptyList("Request body is empty: no Olark events to process"))
   }
 

@@ -47,7 +47,7 @@ object JsonUtils {
 
   type DateTimeFields = Option[Tuple2[NonEmptyList[String], DateTimeFormatter]]
 
-  private lazy val Mapper = new ObjectMapper
+  lazy val Mapper = new ObjectMapper
 
   // Defines the maximalist JSON Schema-compatible date-time format
   private val JsonSchemaDateTimeFormat =
@@ -111,12 +111,7 @@ object JsonUtils {
    *         String.
    */
   private[utils] def integerToJValue(str: String): JValue =
-    try {
-      JInt(new JBigInteger(str))
-    } catch {
-      case nfe: NumberFormatException =>
-        JString(str)
-    }
+    try { JInt(new JBigInteger(str)) } catch { case _: NumberFormatException => JString(str) }
 
   /**
    * Reformats a non-standard date-time into a format

@@ -48,6 +48,9 @@ object Dependencies {
     val mysqlConnector   = "5.1.39"
     val jaywayJsonpath   = "2.4.0"
     val iabClient        = "0.1.0"
+    // Bad rows
+    val circe            = "0.9.0"
+    val igluCore         = "0.3.0"
     // Scala
     val scalaz7          = "7.0.9"
     val snowplowRawEvent = "0.1.0"
@@ -87,6 +90,12 @@ object Dependencies {
     val mysqlConnector   = "mysql"                      %  "mysql-connector-java"          % V.mysqlConnector
     val jaywayJsonpath   = "com.jayway.jsonpath"        %  "json-path"                     % V.jaywayJsonpath
     val iabClient        = "com.snowplowanalytics"      %  "iab-spiders-and-robots-client" % V.iabClient
+
+    // Bad rows
+    val circeGeneric     = "io.circe"              %% "circe-generic"            % V.circe
+    val circeJawn        = "io.circe"              %% "circe-jawn"               % V.circe
+    val circeLiteral     = "io.circe"              %% "circe-literal"            % V.circe          % "test"
+    val igluCoreCirce    = "com.snowplowanalytics" %% "iglu-core-circe"          % V.igluCore
 
     // Scala
     val scalaForex       = "com.snowplowanalytics"      %% "scala-forex"                   % V.scalaForex

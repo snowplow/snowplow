@@ -10,7 +10,8 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common
+package com.snowplowanalytics.snowplow.enrich
+package common
 package loaders
 
 // Java
@@ -42,11 +43,8 @@ object Loader {
    * identifier (e.g. "cloudfront" or
    * "clj-tomcat").
    *
-   * @param collector Identifier for the
-   *        event collector
-   * @return a CollectorLoader object, or
-   *         an an error message, boxed
-   *         in a Scalaz Validation
+   * @param collectorOrProtocol Identifier for the event collector
+   * @return a CollectorLoader object, or an an error message
    */
   def getLoader(collectorOrProtocol: String): Validation[String, Loader[_]] = collectorOrProtocol match {
     case "cloudfront"   => CloudfrontLoader.success
@@ -54,8 +52,10 @@ object Loader {
     case "thrift"       => ThriftLoader.success // Finally - a data protocol rather than a piece of software
     case TsvRegex(f)    => TsvLoader(f).success
     case NdjsonRegex(f) => NdjsonLoader(f).success
-    case c              => "[%s] is not a recognised Snowplow event collector".format(c).fail
+    case c              => s"[$c] is not a recognised Snowplow event collector".failure
   }
+
+  case class RawPayload()
 }
 
 /**
@@ -64,7 +64,10 @@ object Loader {
  */
 abstract class Loader[T] {
 
-  import CollectorPayload._
+  import badrows.BadRow.FormatViolation
+  import Loader._
+
+  def parseRawPayload(line: String): Either[FormatViolation, RawPayload] = ???
 
   /**
    * Converts the source string into a
@@ -79,7 +82,7 @@ abstract class Loader[T] {
    *         boxed, or None if no input was
    *         extractable.
    */
-  def toCollectorPayload(line: T): ValidatedMaybeCollectorPayload
+  def toCollectorPayload(line: T): Validated[Option[CollectorPayload]]
 
   /**
    * Converts a querystring String

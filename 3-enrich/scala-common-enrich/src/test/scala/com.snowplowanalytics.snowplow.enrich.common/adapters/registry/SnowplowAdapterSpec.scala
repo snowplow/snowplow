@@ -23,7 +23,7 @@ import scalaz._
 import Scalaz._
 
 // Snowplow
-import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import loaders.{CollectorApi, CollectorContext, TrackerPayload, CollectorSource}
 import utils.{ConversionUtils => CU}
 import SpecHelpers._
 
@@ -80,20 +80,20 @@ class SnowplowAdapterSpec extends Specification with DataTables with ValidationM
 
   def e1 = {
     val payload =
-      CollectorPayload(Snowplow.Tp1, toNameValuePairs("aid" -> "test"), None, None, Shared.source, Shared.context)
+      TrackerPayload(Snowplow.Tp1, toNameValuePairs("aid" -> "test"), None, None, Shared.source, Shared.context)
     val actual = Tp1Adapter.toRawEvents(payload)
     actual must beSuccessful(
       NonEmptyList(RawEvent(Snowplow.Tp1, Map("aid" -> "test"), None, Shared.source, Shared.context)))
   }
 
   def e2 = {
-    val payload = CollectorPayload(Snowplow.Tp1, Nil, None, None, Shared.source, Shared.context)
+    val payload = TrackerPayload(Snowplow.Tp1, Nil, None, None, Shared.source, Shared.context)
     val actual  = Tp1Adapter.toRawEvents(payload)
     actual must beFailing(NonEmptyList("Querystring is empty: no raw event to process"))
   }
 
   def e3 = {
-    val payload = CollectorPayload(Snowplow.Tp2,
+    val payload = TrackerPayload(Snowplow.Tp2,
                                    toNameValuePairs("aid" -> "tp2", "e" -> "se"),
                                    None,
                                    None,
@@ -268,7 +268,7 @@ class SnowplowAdapterSpec extends Specification with DataTables with ValidationM
     }
 
   def e11 = {
-    val payload = CollectorPayload(
+    val payload = TrackerPayload(
       Snowplow.Tp2,
       toNameValuePairs("u" -> "https://github.com/snowplow/snowplow", "cx" -> "dGVzdHRlc3R0ZXN0"),
       None,
@@ -293,7 +293,7 @@ class SnowplowAdapterSpec extends Specification with DataTables with ValidationM
   }
 
   def e12 = {
-    val payload = CollectorPayload(
+    val payload = TrackerPayload(
       Snowplow.Tp2,
       toNameValuePairs("u" -> "https://github.com/snowplow/snowplow", "e" -> "se", "aid" -> "ads"),
       None,
@@ -318,7 +318,7 @@ class SnowplowAdapterSpec extends Specification with DataTables with ValidationM
   }
 
   def e13 = {
-    val payload = CollectorPayload(
+    val payload = TrackerPayload(
       Snowplow.Tp2,
       toNameValuePairs("u" -> "https://github.com/snowplow/snowplow", "e" -> "se", "aid" -> "ads", "co" -> ""),
       None,
@@ -343,7 +343,7 @@ class SnowplowAdapterSpec extends Specification with DataTables with ValidationM
   }
 
   def e14 = {
-    val payload = CollectorPayload(
+    val payload = TrackerPayload(
       Snowplow.Tp2,
       toNameValuePairs(
         "u"  -> "https://github.com/snowplow/snowplow",
@@ -372,7 +372,7 @@ class SnowplowAdapterSpec extends Specification with DataTables with ValidationM
   }
 
   def e15 = {
-    val payload = CollectorPayload(
+    val payload = TrackerPayload(
       Snowplow.Tp2,
       toNameValuePairs(
         "u" -> "https://github.com/snowplow/snowplow",
@@ -404,20 +404,20 @@ class SnowplowAdapterSpec extends Specification with DataTables with ValidationM
   }
 
   def e16 = {
-    val payload = CollectorPayload(Snowplow.Tp2, Nil, None, None, Shared.source, Shared.context)
+    val payload = TrackerPayload(Snowplow.Tp2, Nil, None, None, Shared.source, Shared.context)
     val actual  = RedirectAdapter.toRawEvents(payload)
     actual must beFailing(NonEmptyList("Querystring is empty: cannot be a valid URI redirect"))
   }
 
   def e17 = {
     val payload =
-      CollectorPayload(Snowplow.Tp2, toNameValuePairs("aid" -> "test"), None, None, Shared.source, Shared.context)
+      TrackerPayload(Snowplow.Tp2, toNameValuePairs("aid" -> "test"), None, None, Shared.source, Shared.context)
     val actual = RedirectAdapter.toRawEvents(payload)
     actual must beFailing(NonEmptyList("Querystring does not contain u parameter: not a valid URI redirect"))
   }
 
   def e18 = {
-    val payload = CollectorPayload(
+    val payload = TrackerPayload(
       Snowplow.Tp2,
       toNameValuePairs("u" -> "https://github.com/snowplow/snowplow", "e" -> "se", "co" -> """{[-"""),
       None,
@@ -430,7 +430,7 @@ class SnowplowAdapterSpec extends Specification with DataTables with ValidationM
   }
 
   def e19 = {
-    val payload = CollectorPayload(
+    val payload = TrackerPayload(
       Snowplow.Tp2,
       toNameValuePairs("u" -> "https://github.com/snowplow/snowplow", "e" -> "se", "cx" -> "¢¢¢"),
       None,

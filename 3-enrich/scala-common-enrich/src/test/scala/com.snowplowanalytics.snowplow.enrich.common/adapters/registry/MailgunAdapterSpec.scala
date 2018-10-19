@@ -28,7 +28,7 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.scalaz.JsonScalaz._
 
 // Snowplow
-import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import loaders.{CollectorApi, CollectorContext, TrackerPayload, CollectorSource}
 
 import utils.ConversionUtils
 import SpecHelpers._
@@ -268,7 +268,7 @@ class MailgunAdapterSpec extends Specification with DataTables with ValidationMa
     MailgunAdapter.toRawEvents(payload) must beSuccessful(expected)
   }
   def e6 = {
-    val payload = CollectorPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
+    val payload = TrackerPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
     MailgunAdapter.toRawEvents(payload) must beFailing(
       NonEmptyList("Request body is empty: no Mailgun events to process"))
   }

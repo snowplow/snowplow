@@ -47,6 +47,7 @@ object BuildSettings {
     "-language:implicitConversions",
     "-unchecked",
     "-Yno-adapted-args",
+    "-Ypartial-unification",
     "-Ywarn-dead-code",
     "-Ywarn-numeric-widen",
     "-Xfuture",

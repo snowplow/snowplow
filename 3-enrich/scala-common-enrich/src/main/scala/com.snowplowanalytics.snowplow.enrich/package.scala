@@ -15,6 +15,9 @@ package com.snowplowanalytics.snowplow.enrich
 // Java
 import java.lang.{Integer => JInteger}
 
+import com.snowplowanalytics.snowplow.enrich.common.loaders.CollectorPayload
+import com.snowplowanalytics.snowplow.enrich.common.utils.JsonUtils
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -22,14 +25,17 @@ import Scalaz._
 // Apache URLEncodedUtils
 import org.apache.http.NameValuePair
 
+import io.circe.Json
+import io.circe.jawn.parse
+
 // JSON Schema
 import com.github.fge.jsonschema.core.report.ProcessingMessage
+import com.fasterxml.jackson.databind.JsonNode
 
 // Iglu
 import com.snowplowanalytics.iglu.client.JsonSchemaPair
 
 // This project
-import common.loaders.CollectorPayload
 import common.adapters.RawEvent
 import common.outputs.EnrichedEvent
 import common.enrichments.registry.Enrichment
@@ -155,4 +161,14 @@ package object common {
    * It has [[Monad]] instance unlike [[Validation]]
    */
   type ThrowableXor[+A] = Throwable \/ A
+
+  implicit def circeConvert(json: JsonNode): Json =
+    parse(JsonUtils.Mapper.writer().writeValueAsString(json)).fold(throw _, identity)
+
+  implicit def jacksonConvert(json: Json): JsonNode =
+    JsonUtils.Mapper.reader().readTree(json.noSpaces)
+
+  implicit def json4sConvert(json: Json): org.json4s.JValue =
+    org.json4s.jackson.JsonMethods.fromJsonNode(jacksonConvert(json))
+
 }

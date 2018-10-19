@@ -30,7 +30,7 @@ import org.joda.time.DateTime
 import org.apache.commons.codec.digest.DigestUtils
 
 // Snowplow
-import common.loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import common.loaders.{CollectorApi, CollectorContext, TrackerPayload, CollectorSource}
 import common.outputs.EnrichedEvent
 import utils.TestResourcesRepositoryRef
 import common.SpecHelpers.toNameValuePairs
@@ -64,7 +64,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
     val context =
       CollectorContext(Some(DateTime.parse("2017-07-14T03:39:39.000+00:00")), Some("127.0.0.1"), None, None, Nil, None)
     val source = CollectorSource("clj-tomcat", "UTF-8", None)
-    val collectorPayload = CollectorPayload(
+    val collectorPayload = TrackerPayload(
       CollectorApi("com.snowplowanalytics.snowplow", "tp2"),
       toNameValuePairs(
         "e"   -> "se",

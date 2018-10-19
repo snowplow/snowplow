@@ -29,6 +29,7 @@ import org.joda.time.DateTime
 
 // This project
 import utils.ConversionUtils.singleEncodePcts
+import loaders.CollectorPayload._
 
 /**
  * The dedicated loader for events
@@ -113,7 +114,7 @@ object CloudfrontLoader extends Loader[String] {
 
     // 2. Not a GET request
     case CfOriginalPlusAdditionalRegex(_, _, _, _, _, op, _, _, _, _, _, _) if op.toUpperCase != "GET" =>
-      s"Only GET operations supported for CloudFront Collector, not ${op.toUpperCase}".failNel[Option[CollectorPayload]]
+      s"Only GET operations supported for CloudFront Collector, not ${op.toUpperCase}".failNel[Option[TrackerPayload]]
 
     // 3. Row matches original CloudFront format
     case CfOriginalRegex(date, time, _, _, ip, _, _, objct, _, rfr, ua, qs) =>
@@ -132,7 +133,7 @@ object CloudfrontLoader extends Loader[String] {
       CloudfrontLogLine(date, time, ip, objct, rfr, ua, qs, forwardedFor).toValidatedMaybeCollectorPayload
 
     // 4. Row not recognised
-    case _ => "Line does not match CloudFront header or data row formats".failNel[Option[CollectorPayload]]
+    case _ => "Line does not match CloudFront header or data row formats".failNel[Option[TrackerPayload]]
   }
 
   /**
@@ -218,21 +219,23 @@ object CloudfrontLoader extends Loader[String] {
       val api = CollectorApi.parse(objct)
 
       (timestamp.toValidationNel |@| querystring.toValidationNel |@| api.toValidationNel) { (t, q, a) =>
-        CollectorPayload(
-          q,
-          CollectorName,
-          CollectorEncoding,
-          None, // No hostname for CloudFront
-          Some(t),
-          toOption(ip),
-          toOption(userAgent),
-          referer,
-          Nil, // No headers for CloudFront
-          None, // No collector-set user ID for CloudFront
-          a, // API vendor/version
-          None, // No content type
-          None // No request body
-        ).some
+        CollectorPayload
+          .legacyTracker(
+            q,
+            CollectorName,
+            CollectorEncoding,
+            None, // No hostname for CloudFront
+            Some(t),
+            toOption(ip),
+            toOption(userAgent),
+            referer,
+            Nil, // No headers for CloudFront
+            None, // No collector-set user ID for CloudFront
+            a, // API vendor/version
+            None, // No content type
+            None // No request body
+          )
+          .some
       }
     }
   }

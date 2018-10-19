@@ -14,7 +14,7 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 
 // This project
-import loaders.{CollectorApi, CollectorContext, CollectorSource}
+import loaders.CollectorPayload._
 
 /**
  * The canonical input format for the ETL

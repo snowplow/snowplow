@@ -28,7 +28,7 @@ import org.specs2.matcher.DataTables
 import org.specs2.scalaz.{DisjunctionMatchers, ValidationMatchers}
 
 // Snowplow
-import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import loaders.{CollectorApi, CollectorContext, TrackerPayload, CollectorSource}
 import GoogleAnalyticsAdapter._
 
 class GoogleAnalyticsAdapterSpec
@@ -77,7 +77,7 @@ class GoogleAnalyticsAdapterSpec
     |}""".stripMargin.replaceAll("[\n\r]", "")
 
   def e1 = {
-    val payload = CollectorPayload(api, Nil, None, None, source, context)
+    val payload = TrackerPayload(api, Nil, None, None, source, context)
     val actual  = toRawEvents(payload)
     actual must beFailing(NonEmptyList("Request body is empty: no GoogleAnalytics events to process"))
   }

@@ -22,7 +22,7 @@ import scalaz._
 import Scalaz._
 
 // Snowplow
-import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import loaders.{CollectorApi, CollectorContext, TrackerPayload, CollectorSource}
 import SpecHelpers._
 
 // Specs2
@@ -99,7 +99,7 @@ class CallrailAdapterSpec extends Specification with DataTables with ValidationM
       "cv"             -> "clj-0.6.0-tom-0.0.4",
       "nuid"           -> "-"
     )
-    val payload = CollectorPayload(Shared.api, params, None, None, Shared.source, Shared.context)
+    val payload = TrackerPayload(Shared.api, params, None, None, Shared.source, Shared.context)
     val actual  = CallrailAdapter.toRawEvents(payload)
 
     val expectedJson =
@@ -158,7 +158,7 @@ class CallrailAdapterSpec extends Specification with DataTables with ValidationM
 
   def e2 = {
     val params  = toNameValuePairs()
-    val payload = CollectorPayload(Shared.api, params, None, None, Shared.source, Shared.context)
+    val payload = TrackerPayload(Shared.api, params, None, None, Shared.source, Shared.context)
     val actual  = CallrailAdapter.toRawEvents(payload)
 
     actual must beFailing(NonEmptyList("Querystring is empty: no CallRail event to process"))

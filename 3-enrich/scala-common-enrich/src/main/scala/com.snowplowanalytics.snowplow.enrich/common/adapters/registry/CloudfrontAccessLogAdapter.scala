@@ -18,7 +18,7 @@ package adapters
 package registry
 
 // Iglu
-import iglu.client.{Resolver, SchemaKey}
+import iglu.client.Resolver
 
 // Scala
 import scala.util.control.NonFatal
@@ -35,7 +35,8 @@ import org.json4s._
 import org.json4s.JsonDSL._
 
 // This project
-import loaders.{CollectorContext, CollectorPayload}
+import loaders.CollectorPayload
+import loaders.CollectorPayload.CollectorContext
 import utils.ConversionUtils
 
 /**
@@ -90,9 +91,9 @@ object CloudfrontAccessLogAdapter {
      * @return a validation boxing either a NEL of raw events or a NEL of failure strings
      */
     def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
-      payload.body match {
-        case Some(p) => {
-          val fields = p.split("\t", -1)
+      payload match {
+        case CollectorPayload.WebhookPayload(api, _, contentType, body, source, _) =>
+          val fields = body.split("\t", -1)
           val schemaVersion = fields.size match {
             case 12 => "1-0-0".successNel // Before 12 Sep 2012
             case 15 => "1-0-1".successNel // 12 Sep 2012
@@ -180,16 +181,15 @@ object CloudfrontAccessLogAdapter {
               )
               NonEmptyList(
                 RawEvent(
-                  api         = payload.api,
+                  api         = api,
                   parameters  = parameters,
-                  contentType = payload.contentType,
-                  source      = payload.source,
+                  contentType = contentType,
+                  source      = source,
                   context     = CollectorContext(tstamp, ip, userAgent, None, Nil, None)
                 ))
             }
           }
-        }
-        case None => "Cloudfront TSV has no body - this should be impossible".failNel
+        case _ => "Cloudfront TSV has no body - this should be impossible".failNel
       }
 
     /**

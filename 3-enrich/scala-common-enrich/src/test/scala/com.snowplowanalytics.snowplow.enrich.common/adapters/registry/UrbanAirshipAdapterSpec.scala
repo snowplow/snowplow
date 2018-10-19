@@ -16,7 +16,7 @@ import com.snowplowanalytics.snowplow.enrich.common.SpecHelpers
 import com.snowplowanalytics.snowplow.enrich.common.loaders.{
   CollectorApi,
   CollectorContext,
-  CollectorPayload,
+  TrackerPayload,
   CollectorSource
 }
 import org.joda.time.DateTime

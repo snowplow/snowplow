@@ -25,7 +25,7 @@ import Scalaz._
 import org.json4s._
 
 // Snowplow
-import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import loaders.{CollectorApi, CollectorContext, TrackerPayload, CollectorSource}
 import utils.ConversionUtils
 import SpecHelpers._
 
@@ -90,7 +90,7 @@ class IgluAdapterSpec extends Specification with DataTables with ValidationMatch
       "tracking_id"    -> "",
       "ad_unit"        -> ""
     )
-    val payload = CollectorPayload(Shared.api, params, None, None, Shared.cfSource, Shared.context)
+    val payload = TrackerPayload(Shared.api, params, None, None, Shared.cfSource, Shared.context)
     val actual  = IgluAdapter.toRawEvents(payload)
 
     val expectedJson =
@@ -124,7 +124,7 @@ class IgluAdapterSpec extends Specification with DataTables with ValidationMatch
       "ad_unit"     -> "UN-11-b",
       "aid"         -> "webhooks"
     )
-    val payload = CollectorPayload(Shared.api, params, None, None, Shared.cfSource, Shared.context)
+    val payload = TrackerPayload(Shared.api, params, None, None, Shared.cfSource, Shared.context)
     val actual  = IgluAdapter.toRawEvents(payload)
 
     val expectedMap = {
@@ -164,7 +164,7 @@ class IgluAdapterSpec extends Specification with DataTables with ValidationMatch
       "cv"          -> "clj-0.5.0-tom-0.0.4",
       "nuid"        -> ""
     )
-    val payload = CollectorPayload(Shared.api, params, None, None, Shared.cljSource, Shared.context)
+    val payload = TrackerPayload(Shared.api, params, None, None, Shared.cljSource, Shared.context)
     val actual  = IgluAdapter.toRawEvents(payload)
 
     val expectedMap = {
@@ -201,7 +201,7 @@ class IgluAdapterSpec extends Specification with DataTables with ValidationMatch
       "name"   -> "download",
       "p"      -> "mob"
     )
-    val payload = CollectorPayload(Shared.api, params, None, None, Shared.cfSource, Shared.context)
+    val payload = TrackerPayload(Shared.api, params, None, None, Shared.cfSource, Shared.context)
     val actual  = IgluAdapter.toRawEvents(payload)
 
     val expectedJson =
@@ -227,7 +227,7 @@ class IgluAdapterSpec extends Specification with DataTables with ValidationMatch
 
   def e5 = {
     val params  = toNameValuePairs()
-    val payload = CollectorPayload(Shared.api, params, None, None, Shared.cfSource, Shared.context)
+    val payload = TrackerPayload(Shared.api, params, None, None, Shared.cfSource, Shared.context)
     val actual  = IgluAdapter.toRawEvents(payload)
 
     actual must beFailing(NonEmptyList("Iglu event failed: is not a sd-json or a valid GET or POST request"))
@@ -238,7 +238,7 @@ class IgluAdapterSpec extends Specification with DataTables with ValidationMatch
       "some_param" -> "foo",
       "p"          -> "mob"
     )
-    val payload = CollectorPayload(Shared.api, params, None, None, Shared.cfSource, Shared.context)
+    val payload = TrackerPayload(Shared.api, params, None, None, Shared.cfSource, Shared.context)
     val actual  = IgluAdapter.toRawEvents(payload)
 
     actual must beFailing(NonEmptyList("Iglu event failed: is not a sd-json or a valid GET or POST request"))
@@ -248,7 +248,7 @@ class IgluAdapterSpec extends Specification with DataTables with ValidationMatch
     val params = toNameValuePairs(
       "schema" -> "iglooooooo://blah"
     )
-    val payload = CollectorPayload(Shared.api, params, None, None, Shared.cfSource, Shared.context)
+    val payload = TrackerPayload(Shared.api, params, None, None, Shared.cfSource, Shared.context)
     val actual  = IgluAdapter.toRawEvents(payload)
 
     actual must beFailing(NonEmptyList("iglooooooo://blah is not a valid Iglu-format schema URI"))

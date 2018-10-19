@@ -34,7 +34,7 @@ import org.json4s.jackson.JsonMethods._
 
 // Snowplow
 import SpecHelpers._
-import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import loaders.{CollectorApi, CollectorContext, TrackerPayload, CollectorSource}
 
 // Specs2
 import org.specs2.{ScalaCheck, Specification}
@@ -61,7 +61,7 @@ class AdapterSpec extends Specification with DataTables with ValidationMatchers 
   implicit val resolver = SpecHelpers.IgluResolver
 
   object BaseAdapter extends Adapter {
-    def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver) = "Base".failNel
+    def toRawEvents(payload: TrackerPayload)(implicit resolver: Resolver) = "Base".failNel
   }
 
   object Shared {
