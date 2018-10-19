@@ -25,7 +25,7 @@ import com.snowplowanalytics.iglu.core.circe.instances._
 
 import BadRow._
 
-sealed trait BadRow {
+sealed trait BadRow extends Product with Serializable {
 
   /** Everything necessary to recover/fix event(s) */
   def payload: BadRowPayload

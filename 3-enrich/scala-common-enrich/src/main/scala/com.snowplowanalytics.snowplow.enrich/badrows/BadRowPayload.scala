@@ -1,7 +1,9 @@
-package com.snowplowanalytics.snowplow.enrich.badrows
+package com.snowplowanalytics.snowplow.enrich
+package badrows
 
-import java.time.Instant
 import java.util.Base64
+
+import common.adapters.{RawEvent => SnowplowRawEvent}
 
 import com.snowplowanalytics.snowplow.enrich.common.loaders.CollectorPayload
 import com.snowplowanalytics.snowplow.enrich.common.loaders.CollectorPayload.{
@@ -13,8 +15,8 @@ import io.circe.{Encoder, Json, JsonObject}
 
 sealed trait BadRowPayload {
   def asLine: String = this match {
-    case BadRowPayload.RawCollectorBadRowPayload(metadata, rawEvent) =>
-      new String(Base64.getEncoder.encode((metadata.asTsv ++ "\t" ++ rawEvent).getBytes))
+    case BadRowPayload.RawCollectorBadRowPayload(_, rawEvent) =>
+      new String(Base64.getEncoder.encode(rawEvent.getBytes))
     case BadRowPayload.RawEvent(metadata, event) =>
       val eventJson = Json.fromJsonObject(JsonObject.fromMap(event.mapValues(Json.fromString))).noSpaces
       new String(Base64.getEncoder.encode((metadata.asTsv ++ "\t" ++ eventJson).getBytes))
@@ -46,15 +48,21 @@ object BadRowPayload {
 
   // RawPayload -> SingleEvent ->
 
-  /** Possibly completely invalid payload, anything passed by collector (POST-TSV/GET/anything) */
-  case class RawCollectorBadRowPayload(metadata: CollectorMeta, rawEvent: String) extends BadRowPayload
+  /** Possibly completely invalid payload, anything passed by collector (POST-TSV/GET/anything)
+   * In case `metadata` is None, it is even not a collector's line
+   */
+  case class RawCollectorBadRowPayload(metadata: Option[CollectorMeta], rawEvent: String) extends BadRowPayload
 
   /** Single *invalid* entity that couldn't be transformed to `SingleEvent`
    * Intermediate format, exists only for bad rows */
   case class RawEventBadRowPayload(metadata: CollectorMeta, payload: Json) extends BadRowPayload
 
   /** Valid Snowplow event ready for enrichment */
-  case class RawEvent(metadata: CollectorMeta, event: Map[String, String]) extends BadRowPayload
+  case class RawEvent(meta: CollectorMeta, event: Map[String, String]) extends BadRowPayload {
+    /* Isomorphic */
+    def toSnowplowRawEvent: SnowplowRawEvent =
+      SnowplowRawEvent(meta.api, event, None, meta.source, meta.context)
+  }
 
   /** Post enrichment failure (JSON or TSV) */
   case class Enriched(data: String) extends BadRowPayload

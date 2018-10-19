@@ -2,73 +2,91 @@ package com.snowplowanalytics.snowplow.enrich
 
 import io.circe.Json
 import org.joda.time.DateTime
-import cats.data.{Validated, ValidatedNel}
-import cats.data.Nested
-import cats.data.NonEmptyList
+
+import cats.data._
 import cats.syntax.either._
 import cats.syntax.alternative._
 import cats.syntax.traverse._
 import cats.syntax.functor._
 import cats.instances.either._
 import cats.instances.list._
+
 import com.snowplowanalytics.iglu.client.Resolver
 import com.snowplowanalytics.iglu.core.SelfDescribingData
 import com.snowplowanalytics.iglu.core.circe.implicits._
 import com.snowplowanalytics.iglu.client.repositories.{HttpRepositoryRef, RepositoryRefConfig}
-import com.snowplowanalytics.snowplow.enrich.badrows.BadRow.TrackerProtocolViolation
+
+import com.snowplowanalytics.snowplow.enrich.badrows.BadRow
 import com.snowplowanalytics.snowplow.enrich.badrows.BadRowPayload.{CollectorMeta, RawEvent}
-import com.snowplowanalytics.snowplow.enrich.common.{EtlPipeline, ValidatedEnrichedEvent}
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
 import com.snowplowanalytics.snowplow.enrich.common.loaders._
+import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
 
 object Enricher {
-  def catsNEL[A](list: scalaz.NonEmptyList[A]) =
-    cats.data.NonEmptyList.fromListUnsafe(list.list)
-
   val resolver = Resolver(
     10,
     HttpRepositoryRef(RepositoryRefConfig("Iglu Central", 1, List("com.snowplow")), "http://iglucentral.com", None))
   val enrichmentRegistry = EnrichmentRegistry(Map.empty)
-  val now                = DateTime.now()
   val loader             = CljTomcatLoader
 
-  def parse(line: String): List[ValidatedEnrichedEvent] = {
-    val payload = loader.toCollectorPayload(line) // This is our parseRawCollectorPayload
-    val events  = EtlPipeline.processEvents(enrichmentRegistry, "badrows-test", now, payload)(resolver)
-
-    val z = for {
+  def process(line: String) = {
+    val result: Either[BadRow.FormatViolation, (List[BadRow], List[EnrichedEvent])] = for {
       // First two steps are equal to EnrichPseudoCode.parseRawPayload
-      collectorPayload <- loader.toCollectorPayload(line).fold(e => catsNEL(e).asLeft, _.asRight)
-      _                <- middleware(collectorPayload)
-      // Extracting valid raw events
-      (trackerViolations, rawEvents) = splitCollectorPayload(collectorPayload).separate
-      //
-      (snowplowViolations, snowplowPayloads) = rawEvents.map(parseSnowplowPayload).separate
-    } yield (trackerViolations, ???)
-    events
+      collectorPayload <- middleware(loader.toCollectorPayload(line), line)
+      (trackerViolations, rawEvents)        = splitCollectorPayload(collectorPayload).separate
+      (schemaInvalidations, validRawEvents) = rawEvents.map(validate).separate
+      (enrichFailures, enrichedEvents)      = validRawEvents.map(enrich).separate
+    } yield (trackerViolations ++ schemaInvalidations ++ enrichFailures, enrichedEvents)
+
+    result match {
+      case Left(formatViolation) => (List(formatViolation), List.empty)
+      case Right(badAndGood)     => badAndGood
+    }
   }
 
   case class RawEventPayload(event: Map[String, String], meta: CollectorMeta)
 
-  /** Confirm that CollectorPayload contains valid POST */
-  def middleware(payload: Option[CollectorPayload]) =
-    payload match {
-      case Some(CollectorPayload.TrackerPayload(api, qs, contentType, Some(body), source, context)) =>
+  /** Confirm that CollectorPayload contains valid POST, should be part of toCollectorPayload */
+  def middleware(payload: common.Validated[Option[CollectorPayload]],
+                 line: String): Either[BadRow.FormatViolation, Option[CollectorPayload]] = {
+    val fixed = payload.fold(e => catsNEL(e).asLeft, _.asRight)
+    fixed match {
+      case Right(p @ Some(CollectorPayload.TrackerPayload(_, _, _, Some(body), _, _))) =>
         body.toData match {
           case Some(SelfDescribingData(key, _)) if key.vendor == "post_payload" =>
-            Right(payload)
+            Right(p)
           case Some(SelfDescribingData(key, _)) =>
-            Left(NonEmptyList.of(s"Unknown schema ${key.toSchemaUri}"))
+            BadRow
+              .FormatViolation(badrows.BadRowPayload.RawCollectorBadRowPayload(None, line),
+                               s"Unknown schema ${key.toSchemaUri}",
+                               "enricher")
+              .asLeft
           case None =>
-            Left(NonEmptyList.of(s"Not a valid self-describing payload"))
+            BadRow
+              .FormatViolation(badrows.BadRowPayload.RawCollectorBadRowPayload(None, line),
+                               s"Not a valid self-describing payload",
+                               "enricher")
+              .asLeft
         }
       // GET
-      case Some(CollectorPayload.TrackerPayload(api, qs, contentType, None, source, context)) =>
-        Right(payload)
+      case Right(p @ Some(CollectorPayload.TrackerPayload(api, qs, contentType, None, source, context))) =>
+        Right(p)
       // Webhook
-      case Some(CollectorPayload.WebhookPayload(api, qs, contentType, body, source, context)) =>
-        Right(payload)
+      case Right(p @ Some(CollectorPayload.WebhookPayload(api, qs, contentType, body, source, context))) =>
+        Right(p)
+      case Right(None) =>
+        None.asRight
+      case Left(errors) =>
+        BadRow
+          .FormatViolation(badrows.BadRowPayload.RawCollectorBadRowPayload(None, line),
+                           errors.toList.mkString(","),
+                           "enricher")
+          .asLeft
     }
+
+  }
+
+  def validate(rawEvent: RawEvent): Either[BadRow.SchemaInvalidation, RawEvent] = ???
 
   /**
    * Split single payload into individual events with collector metadata attached
@@ -77,23 +95,25 @@ object Enricher {
   def splitCollectorPayload(payload: Option[CollectorPayload]): List[Error[RawEvent]] =
     payload match {
       // POST
-      case Some(p @ CollectorPayload.TrackerPayload(api, qs, contentType, Some(body), source, context)) =>
+      case Some(p @ CollectorPayload.TrackerPayload(api, qs, _, Some(body), source, context)) =>
         val data   = body.toData.getOrElse(throw new RuntimeException("middleware")).data
         val events = extractEvents(data, CollectorMeta.fromPayload(p))
         Nested(events).map(raw => RawEvent(CollectorMeta(api, source, context), raw)).value
       // GET
-      case Some(CollectorPayload.TrackerPayload(api, qs, contentType, None, source, context)) =>
+      case Some(CollectorPayload.TrackerPayload(api, _, _, None, source, context)) =>
         ???
       // Webhook
-      case Some(CollectorPayload.WebhookPayload(api, qs, contentType, body, source, context)) =>
+      case Some(CollectorPayload.WebhookPayload(api, _, contentType, body, source, context)) =>
         ???
-
+      case None =>
+        Nil
     }
 
-  type Error[A]    = Either[TrackerProtocolViolation, A]
+  type Error[A]    = Either[BadRow.TrackerProtocolViolation, A]
   type ErrorStr[A] = ValidatedNel[String, A]
 
-  def parseSnowplowPayload(event: RawEvent): Either[String, RawEvent] = ???
+  def enrich(event: RawEvent): Either[BadRow.EnrichmentFailure, EnrichedEvent] =
+    ???
 
   def extractEvents(json: Json, meta: CollectorMeta): List[Error[Map[String, String]]] =
     json.asArray match {
@@ -117,13 +137,21 @@ object Enricher {
         fields.map(_.toMap) match {
           case Validated.Valid(raw) => raw.asRight
           case Validated.Invalid(errors) =>
-            TrackerProtocolViolation(badrows.BadRowPayload.RawEventBadRowPayload(meta, json),
-                                     errors.toList.mkString(", "),
-                                     "enrich").asLeft
+            BadRow
+              .TrackerProtocolViolation(badrows.BadRowPayload.RawEventBadRowPayload(meta, json),
+                                        errors.toList.mkString(", "),
+                                        "enricher")
+              .asLeft
         }
       case None =>
-        TrackerProtocolViolation(badrows.BadRowPayload.RawEventBadRowPayload(meta, json),
-                                 "Payload is not a JSON object",
-                                 "enrich").asLeft
+        BadRow
+          .TrackerProtocolViolation(badrows.BadRowPayload.RawEventBadRowPayload(meta, json),
+                                    "Payload is not a JSON object",
+                                    "enrich")
+          .asLeft
     }
+
+  def catsNEL[A](list: scalaz.NonEmptyList[A]) =
+    cats.data.NonEmptyList.fromListUnsafe(list.list)
+
 }
