@@ -10,9 +10,11 @@ import cats.syntax.traverse._
 import cats.syntax.functor._
 import cats.instances.either._
 import cats.instances.list._
+import cats.instances.option._
 
 import com.snowplowanalytics.iglu.client.Resolver
-import com.snowplowanalytics.iglu.core.SelfDescribingData
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer, SelfDescribingData}
+import com.snowplowanalytics.iglu.core.typeclasses.ToData
 import com.snowplowanalytics.iglu.core.circe.implicits._
 import com.snowplowanalytics.iglu.client.repositories.{HttpRepositoryRef, RepositoryRefConfig}
 
@@ -114,8 +116,51 @@ object EtlPipelineStructured {
         Nil
     }
 
-  def validate(resolver: Resolver)(rawEvent: RawEvent): Either[BadRow.SchemaInvalidation, RawEvent] =
+  def validate(resolver: Resolver)(rawEvent: RawEvent): Either[BadRow.SchemaInvalidation, RawEvent] = {
+    val contexts = rawEvent.event.get("cx").map(decodeJson).traverse(getUnstructEvent(_))
+    val unstructEvent =
+      rawEvent.event.get("ue_px").map(decodeJson).traverse(getContexts).map(_.sequence.unite)
+    val schema = resolver.lookupSchema()
+
     ???
+  }
+
+  def decodeJson(encoded: String) = {
+    val decoded = new String(java.util.Base64.getDecoder.decode(encoded))
+    val json    = io.circe.jawn.parse(decoded).getOrElse(throw new RuntimeException("Should be valid JSON"))
+    json.toData match {
+      case Some(data) => data
+      case None       => throw new RuntimeException("Should be self-describing JSON already")
+    }
+  }
+
+  def getUnstructEvent[A: ToData](json: SelfDescribingData[A]) = json.schema match {
+    case SchemaKey("com.snowplowanalytics.snowplow", "unstruct_event", "jsonschema", SchemaVer.Full(1, _, _)) =>
+      json.data.toData match {
+        case Some(data) => data.asRight
+        case None       => "unstruct_event does not contain self-descibing JSON".asLeft
+      }
+    case other => s"Unknown key $other".asLeft
+  }
+
+  def getContexts(contexts: SelfDescribingData[Json]): Either[String, List[SelfDescribingData[Json]]] =
+    contexts.schema match {
+      case SchemaKey("com.snowplowanalytics.snowplo", "contexts", "jsonschema", SchemaVer.Full(1, _, _)) =>
+        contexts.data.asArray match {
+          case Some(contexts) =>
+            contexts.toList.traverse { ctx =>
+              ctx.toData match {
+                case Some(data) => Validated.validNel(data)
+                case None       => Validated.invalidNel("Not self-describing JSON in contexts")
+              }
+            } match {
+              case Validated.Valid(ctxs)     => ctxs.asRight
+              case Validated.Invalid(errors) => errors.toList.mkString(", ").asLeft
+            }
+          case None => "contexts does not contain array".asLeft
+        }
+      case other => s"Unknown key $other".asLeft
+    }
 
   def enrich(resolver: Resolver, registry: EnrichmentRegistry, etlVersion: String, etlTstamp: DateTime)(
     event: RawEvent): Either[BadRow.EnrichmentFailure, EnrichedEvent] =
@@ -159,5 +204,16 @@ object EtlPipelineStructured {
 
   def catsNEL[A](list: scalaz.NonEmptyList[A]) =
     cats.data.NonEmptyList.fromListUnsafe(list.list)
+
+  implicit class JsonValidation(data: SelfDescribingData[Json]) {
+    import com.snowplowanalytics.iglu.client.validation.ValidatableJValue.validate
+    def validateWith(resolver: Resolver) = {
+      val schema = resolver.lookupSchema(data.schema.toSchemaUri).fold(e => catsNEL(e).asLeft, _.asRight)
+      validate(s)
+
+      ???
+
+    }
+  }
 
 }
