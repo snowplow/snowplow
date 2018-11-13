@@ -110,6 +110,7 @@ package model {
     sink: SinkConfig,
     buffer: BufferConfig
   )
+  final case class MetricsConfig(enabled: Boolean)
   final case class CollectorConfig(
     interface: String,
     port: Int,
@@ -120,7 +121,8 @@ package model {
     cookieBounce: CookieBounceConfig,
     redirectMacro: RedirectMacroConfig,
     rootResponse: RootResponseConfig,
-    streams: StreamsConfig
+    streams: StreamsConfig,
+    metrics: MetricsConfig
   ) {
     val cookieConfig = if (cookie.enabled) Some(cookie) else None
     val doNotTrackHttpCookie =

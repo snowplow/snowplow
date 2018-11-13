@@ -180,6 +180,14 @@ collector {
       timeLimit = {{bufferTimeThreshold}}
     }
   }
+
+  # Configuration of prometheus http metrics
+  metrics {
+    # If metrics are enabled then all requests will be logged as prometheus metics
+    # and '/metrics' endpoint will return the report about the requests
+    enabled = false
+  }
+
 }
 
 # Akka has a variety of possible configuration options defined at
@@ -205,3 +213,5 @@ akka {
     }
   }
 }
+
+

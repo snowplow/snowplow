@@ -19,6 +19,8 @@ lazy val commonDependencies = Seq(
   Dependencies.Libraries.slf4j,
   Dependencies.Libraries.log4jOverSlf4j,
   Dependencies.Libraries.config,
+  Dependencies.Libraries.prometheus,
+  Dependencies.Libraries.prometheus_common,
   // Scala
   Dependencies.Libraries.scopt,
   Dependencies.Libraries.scalaz7,

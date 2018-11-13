@@ -3,3 +3,6 @@ project/project
 target
 
 src/main/resources/application.conf
+
+.idea/
+*.iml
