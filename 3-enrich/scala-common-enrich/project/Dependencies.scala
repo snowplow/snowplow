@@ -88,6 +88,9 @@ object Dependencies {
     val jaywayJsonpath   = "com.jayway.jsonpath"        %  "json-path"                     % V.jaywayJsonpath
     val iabClient        = "com.snowplowanalytics"      %  "iab-spiders-and-robots-client" % V.iabClient
 
+    // Hackathon
+    val pubSub           = "com.google.cloud"           % "google-cloud-pubsub"            % "1.51.0"
+
     // Scala
     val scalaForex       = "com.snowplowanalytics"      %% "scala-forex"                   % V.scalaForex
     val scalaz7          = "org.scalaz"                 %% "scalaz-core"                   % V.scalaz7

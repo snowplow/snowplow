@@ -36,7 +36,7 @@ import registry._
  */
 object AdapterRegistry {
 
-  private object Vendor {
+  object Vendor {
     val Snowplow        = "com.snowplowanalytics.snowplow"
     val Redirect        = "r"
     val Iglu            = "com.snowplowanalytics.iglu"
