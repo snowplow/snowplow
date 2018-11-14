@@ -18,7 +18,6 @@ import java.nio.file.{Path, Paths}
 
 import com.spotify.scio.ScioMetrics
 import com.spotify.scio.testing._
-import org.apache.commons.codec.binary.Base64
 
 class EnrichPiiSpec extends PipelineSpec {
 
@@ -99,7 +98,7 @@ class EnrichPiiSpec extends PipelineSpec {
       .args("--job-name=j", "--raw=in", "--enriched=out", "--bad=bad", "--pii=pii",
         "--resolver=" + Paths.get(getClass.getResource("/iglu_resolver.json").toURI()),
         "--enrichments=" + Paths.get(getClass.getResource("/pii").toURI()))
-      .input(PubsubIO("in"), raw.map(Base64.decodeBase64))
+      .input(PubsubIO("in"), raw.map(SpecHelpers.decode))
       .distCache(DistCacheIO(""), List.empty[Either[String, Path]])
       .output(PubsubIO[String]("out"))(_ should satisfySingleValue { c: String =>
         expected.forall(c.contains)

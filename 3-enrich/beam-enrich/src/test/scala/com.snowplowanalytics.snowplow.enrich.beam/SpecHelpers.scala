@@ -53,6 +53,10 @@ object SpecHelpers {
     r => r
   )
 
+  def decode(base64: String): (Array[Byte], Map[String, String]) =
+    (java.util.Base64.getDecoder.decode(base64), Map.empty)
+
+
   val enrichmentConfig = """
     {
       "schema": "iglu:com.snowplowanalytics.snowplow/anon_ip/jsonschema/1-0-0",

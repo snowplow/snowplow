@@ -33,7 +33,7 @@ import Tests._
 
 lazy val commonSettings = Defaults.coreDefaultSettings ++ Seq(
   organization  := "com.snowplowanalytics",
-  version       := "0.1.0",
+  version       := "0.2.0-rc1",
   scalaVersion  := "2.11.12",
   javacOptions  ++= Seq("-source", "1.8", "-target", "1.8"),
   scalacOptions ++= compilerOptions,
@@ -66,9 +66,9 @@ dockerBaseImage := "snowplow-docker-registry.bintray.io/snowplow/base-debian:0.1
 maintainer in Docker := "Snowplow Analytics Ltd. <support@snowplowanalytics.com>"
 daemonUser in Docker := "snowplow"
 
-lazy val scioVersion = "0.6.0"
-lazy val beamVersion = "2.5.0"
-lazy val sceVersion = "0.35.0"
+lazy val scioVersion = "0.6.1"
+lazy val beamVersion = "2.6.0"
+lazy val sceVersion = "0.36.0-M4"
 lazy val scalaMacrosVersion = "2.1.0"
 lazy val slf4jVersion = "1.7.25"
 lazy val scalatestVersion = "3.0.5"
@@ -81,6 +81,7 @@ lazy val root: Project = Project(
   description := "Streaming enrich job written using SCIO",
   buildInfoKeys := Seq[BuildInfoKey](organization, name, version, "sceVersion" -> sceVersion),
   buildInfoPackage := "com.snowplowanalytics.snowplow.enrich.beam.generated",
+  mainClass in Compile := Some("com.snowplowanalytics.snowplow.enrich.beam.Enrich"),
   libraryDependencies ++= Seq(
     "com.spotify" %% "scio-core" % scioVersion,
     "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion,

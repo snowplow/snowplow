@@ -85,7 +85,7 @@ class EnrichSpec extends PipelineSpec {
     JobTest[Enrich.type]
       .args("--job-name=j", "--raw=in", "--enriched=out", "--bad=bad",
         "--resolver=" + Paths.get(getClass.getResource("/iglu_resolver.json").toURI()))
-      .input(PubsubIO("in"), raw.map(Base64.decodeBase64))
+      .input(PubsubIO("in"), raw.map(SpecHelpers.decode))
       .distCache(DistCacheIO(""), List.empty[Either[String, Path]])
       .output(PubsubIO[String]("out"))(_ should satisfySingleValue { c: String =>
         expected.forall(c.contains)

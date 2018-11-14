@@ -32,7 +32,7 @@ import Scalaz._
 
 import common.EtlPipeline
 import common.enrichments.EnrichmentRegistry
-import common.loaders.ThriftLoader
+import common.loaders.PubSubLoader
 import common.outputs.{EnrichedEvent, BadRow}
 import config._
 import iglu.client.Resolver
@@ -42,10 +42,14 @@ import utils._
 /** Enrich job using the Beam API through SCIO */
 object Enrich {
 
+  type RawStream = SCollection[(Array[Byte], Map[String, String])]
+
   private val logger = LoggerFactory.getLogger(this.getClass)
   // the maximum record size in Google PubSub is 10Mb
   private val MaxRecordSize = 10000000
   private val MetricsNamespace = "snowplow"
+
+  import scala.concurrent.ExecutionContext.global
 
   val enrichedEventSizeDistribution =
     ScioMetrics.distribution(MetricsNamespace, "enriched_event_size_bytes")
@@ -86,7 +90,7 @@ object Enrich {
     val cachedFiles: DistCache[List[Either[String, String]]] =
       buildDistCache(sc, config.resolver, config.enrichmentRegistry)
 
-    val raw: SCollection[Array[Byte]] = sc.pubsubSubscription(config.raw).withName("raw")
+    val raw: RawStream = sc.pubsubSubscriptionWithAttributes(config.raw).withName("raw")
     val enriched: SCollection[Validation[BadRow, EnrichedEvent]] =
       enrichEvents(raw, config.resolver, config.enrichmentRegistry, cachedFiles)
 
@@ -127,16 +131,16 @@ object Enrich {
    * @param cachedFiles list of files to cache
    */
   private def enrichEvents(
-    raw: SCollection[Array[Byte]],
+    raw: RawStream,
     resolver: JValue,
     enrichmentRegistry: JObject,
     cachedFiles: DistCache[List[Either[String, String]]]
   ): SCollection[Validation[BadRow, EnrichedEvent]]= raw
-    .map { rawEvent =>
+    .map { case (rawEvent, attributes) =>
       cachedFiles()
       implicit val r = ResolverSingleton.get(resolver)
       val (enriched, time) = timeMs {
-        enrich(rawEvent, EnrichmentRegistrySingleton.get(enrichmentRegistry))
+        enrich(rawEvent, attributes, EnrichmentRegistrySingleton.get(enrichmentRegistry))
       }
       timeToEnrichDistribution.update(time)
       enriched
@@ -196,11 +200,14 @@ object Enrich {
   /**
    * Enrich a collector payload into a list of [[EnrichedEvent]].
    * @param data serialized collector payload
+   * @param attributes set of fields added by PubSub
    * @return a list of either [[EnrichedEvent]] or [[BadRow]]
    */
-  private def enrich(data: Array[Byte], enrichmentRegistry: EnrichmentRegistry)(
+  private def enrich(data: Array[Byte],
+                     attributes: Map[String, String],
+                     enrichmentRegistry: EnrichmentRegistry)(
       implicit r: Resolver): List[Validation[BadRow, EnrichedEvent]] = {
-    val collectorPayload = ThriftLoader.toCollectorPayload(data)
+    val collectorPayload = PubSubLoader.toCollectorPayload((data, attributes))
     val processedEvents = EtlPipeline.processEvents(
       enrichmentRegistry,
       s"beam-enrich-${generated.BuildInfo.version}",
@@ -254,6 +261,7 @@ object Enrich {
       PubSubAdmin.topic(sc.options.as(classOf[PubsubOptions]), topicName) match {
         case scala.util.Success(_) => ().success
         case scala.util.Failure(e) =>
+          e.printStackTrace()
           s"Output topic $topicName couldn't be retrieved: ${e.getMessage}".failure
       }
     }
