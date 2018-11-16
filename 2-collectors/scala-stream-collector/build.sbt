@@ -19,6 +19,8 @@ lazy val commonDependencies = Seq(
   Dependencies.Libraries.slf4j,
   Dependencies.Libraries.log4jOverSlf4j,
   Dependencies.Libraries.config,
+  Dependencies.Libraries.prometheus,
+  Dependencies.Libraries.prometheus_common,
   // Scala
   Dependencies.Libraries.scopt,
   Dependencies.Libraries.scalaz7,
@@ -36,7 +38,7 @@ lazy val commonDependencies = Seq(
 lazy val buildSettings = Seq(
   organization  :=  "com.snowplowanalytics",
   name          :=  "snowplow-stream-collector",
-  version       :=  "0.14.0",
+  version       :=  "0.14.1",
   description   :=  "Scala Stream Collector for Snowplow raw events",
   scalaVersion  :=  "2.11.11",
   scalacOptions :=  BuildSettings.compilerOptions,

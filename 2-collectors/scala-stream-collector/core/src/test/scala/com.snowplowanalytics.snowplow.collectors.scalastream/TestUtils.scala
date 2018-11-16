@@ -41,6 +41,7 @@ object TestUtils {
         customEndpoint = None
       ),
       buffer = BufferConfig(4000000L, 500L, 60000L)
-    )
+    ),
+    metrics = MetricsConfig(false, None)
   )
 }
