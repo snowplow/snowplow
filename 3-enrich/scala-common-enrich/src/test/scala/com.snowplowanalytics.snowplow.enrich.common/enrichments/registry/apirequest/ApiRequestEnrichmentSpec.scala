@@ -74,8 +74,7 @@ class ApiRequestEnrichmentSpec extends Specification with ValidationMatchers wit
                 name    = "client_session",
                 format  = "jsonschema",
                 version = "1-0-1"),
-      JsonMethods.asJsonNode(parseJson(
-        """|{
+      JsonMethods.asJsonNode(parseJson("""|{
            |    "data": {
            |        "userId": "some-fancy-user-session-id",
            |        "sessionId": "42c8a55b-c0c2-4749-b9ac-09bb0d17d000",
@@ -142,8 +141,7 @@ class ApiRequestEnrichmentSpec extends Specification with ValidationMatchers wit
 
     ApiRequestEnrichmentConfig.parse(configuration, SCHEMA_KEY) must beSuccessful(config)
 
-    val user = parseJson(
-      """|{
+    val user = parseJson("""|{
          |    "schema": "iglu:com.acme/user/jsonschema/1-0-0",
          |    "data": {
          |      "name": "Fancy User",
@@ -275,13 +273,18 @@ class ApiRequestEnrichmentSpec extends Specification with ValidationMatchers wit
   def e4 = {
     val inputs = List(
       Input(key = "user", pojo = Some(PojoInput("user_id")), json = None),
-      Input(key  = "userSession", pojo = None, json = Some(
-        JsonInput("contexts", "iglu:com.snowplowanalytics.snowplow/client_session/jsonschema/1-*-*", "$.userId"))),
+      Input(
+        key  = "userSession",
+        pojo = None,
+        json = Some(
+          JsonInput("contexts", "iglu:com.snowplowanalytics.snowplow/client_session/jsonschema/1-*-*", "$.userId"))),
       Input(key = "client", pojo = Some(PojoInput("app_id")), json = None)
     )
 
-    val api = HttpApi(method = "POST", uri = "http://api.acme.com/users?format=json", timeout = 1000,
-      authentication = Authentication(Some(HttpBasic(Some("xxx"), None))))
+    val api = HttpApi(method = "POST",
+                      uri            = "http://api.acme.com/users?format=json",
+                      timeout        = 1000,
+                      authentication = Authentication(Some(HttpBasic(Some("xxx"), None))))
     val apiSpy = spy(api)
     val output = Output(schema = "iglu:com.acme/user/jsonschema/1-0-0", json = Some(JsonOutput("$.record")))
     val cache  = Cache(size = 3000, ttl = 60)
@@ -297,8 +300,7 @@ class ApiRequestEnrichmentSpec extends Specification with ValidationMatchers wit
                 name    = "client_session",
                 format  = "jsonschema",
                 version = "1-0-1"),
-      JsonMethods.asJsonNode(parseJson(
-        """|{
+      JsonMethods.asJsonNode(parseJson("""|{
            |    "data": {
            |        "userId": "some-fancy-user-session-id",
            |        "sessionId": "42c8a55b-c0c2-4749-b9ac-09bb0d17d000",
@@ -365,8 +367,7 @@ class ApiRequestEnrichmentSpec extends Specification with ValidationMatchers wit
 
     ApiRequestEnrichmentConfig.parse(configuration, SCHEMA_KEY) must beSuccessful(config)
 
-    val user = parseJson(
-      """|{
+    val user = parseJson("""|{
          |    "schema": "iglu:com.acme/user/jsonschema/1-0-0",
          |    "data": {
          |      "name": "Fancy User",

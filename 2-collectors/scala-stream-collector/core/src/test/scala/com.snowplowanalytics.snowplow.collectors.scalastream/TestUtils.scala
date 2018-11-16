@@ -14,9 +14,9 @@
  */
 package com.snowplowanalytics.snowplow.collectors.scalastream
 
-import scala.concurrent.duration._
+import com.snowplowanalytics.snowplow.collectors.scalastream.model._
 
-import model._
+import scala.concurrent.duration._
 
 object TestUtils {
   val testConf = CollectorConfig(
@@ -41,6 +41,7 @@ object TestUtils {
         customEndpoint = None
       ),
       buffer = BufferConfig(4000000L, 500L, 60000L)
-    )
+    ),
+    prometheusMetrics = PrometheusMetricsConfig(false, None)
   )
 }

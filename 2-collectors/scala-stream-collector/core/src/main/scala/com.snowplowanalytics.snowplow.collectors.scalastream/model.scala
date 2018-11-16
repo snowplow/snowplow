@@ -16,7 +16,6 @@ package com.snowplowanalytics.snowplow.collectors.scalastream
 
 import scala.concurrent.duration.FiniteDuration
 
-import akka.http.scaladsl.model.headers.HttpCookie
 import akka.http.scaladsl.model.headers.HttpCookiePair
 
 import sinks.Sink
@@ -115,6 +114,10 @@ package model {
     sink: SinkConfig,
     buffer: BufferConfig
   )
+  final case class PrometheusMetricsConfig(
+    enabled: Boolean,
+    durationBucketsInSeconds: Option[List[Double]]
+  )
   final case class CollectorConfig(
     interface: String,
     port: Int,
@@ -125,7 +128,8 @@ package model {
     cookieBounce: CookieBounceConfig,
     redirectMacro: RedirectMacroConfig,
     rootResponse: RootResponseConfig,
-    streams: StreamsConfig
+    streams: StreamsConfig,
+    prometheusMetrics: PrometheusMetricsConfig
   ) {
     val cookieConfig = if (cookie.enabled) Some(cookie) else None
     val doNotTrackHttpCookie =
