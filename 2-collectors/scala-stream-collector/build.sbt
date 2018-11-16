@@ -19,6 +19,8 @@ lazy val commonDependencies = Seq(
   Dependencies.Libraries.slf4j,
   Dependencies.Libraries.log4jOverSlf4j,
   Dependencies.Libraries.config,
+  Dependencies.Libraries.prometheus,
+  Dependencies.Libraries.prometheusCommon,
   // Scala
   Dependencies.Libraries.scopt,
   Dependencies.Libraries.scalaz7,
@@ -60,7 +62,7 @@ lazy val core = project
   .settings(libraryDependencies ++= commonDependencies)
   .enablePlugins(BuildInfoPlugin)
   .settings(
-    buildInfoKeys := Seq[BuildInfoKey](organization, name, version, "shortName" -> "ssc"),
+    buildInfoKeys := Seq[BuildInfoKey](organization, name, version, "shortName" -> "ssc", scalaVersion),
     buildInfoPackage := "com.snowplowanalytics.snowplow.collectors.scalastream.generated"
   )
 

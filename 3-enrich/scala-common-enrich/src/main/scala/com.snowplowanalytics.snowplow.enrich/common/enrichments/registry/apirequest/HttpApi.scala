@@ -88,7 +88,7 @@ case class HttpApi(method: String, uri: String, timeout: Int, authentication: Au
   private[apirequest] def buildBody(context: Map[String, String]): Option[String] =
     method match {
       case "POST" | "PUT" => Some(Serialization.write(context)(DefaultFormats))
-      case "GET"          => None
+      case "GET" => None
     }
 }
 
