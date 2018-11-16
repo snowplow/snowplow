@@ -38,7 +38,7 @@ class CacheSpec extends Specification with ValidationMatchers with Mockito {
 
   def e1 = {
     val cache = Cache(3, 2)
-    val key = ApiRequestEnrichment.cacheKey(url = "http://api.acme.com/url", body = None)
+    val key   = ApiRequestEnrichment.cacheKey(url = "http://api.acme.com/url", body = None)
 
     cache.put(key, JInt(42).success)
     cache.put(key, JInt(52).success)
@@ -49,7 +49,7 @@ class CacheSpec extends Specification with ValidationMatchers with Mockito {
 
   def e2 = {
     val cache = Cache(3, 2)
-    val key = ApiRequestEnrichment.cacheKey(url = "http://api.acme.com/url", body = None)
+    val key   = ApiRequestEnrichment.cacheKey(url = "http://api.acme.com/url", body = None)
     cache.put(key, JInt(42).success)
     Thread.sleep(3000)
     cache.get(key) must beNone and (cache.actualLoad must beEqualTo(0))
@@ -57,7 +57,7 @@ class CacheSpec extends Specification with ValidationMatchers with Mockito {
 
   def e3 = {
     val cache = Cache(2, 2)
-    val key1 = ApiRequestEnrichment.cacheKey(url = "http://api.acme.com/url1", body = None)
+    val key1  = ApiRequestEnrichment.cacheKey(url = "http://api.acme.com/url1", body = None)
     cache.put(key1, JInt(32).success)
 
     val key2 = ApiRequestEnrichment.cacheKey(url = "http://api.acme.com/url2", body = None)
@@ -71,7 +71,7 @@ class CacheSpec extends Specification with ValidationMatchers with Mockito {
 
   def e4 = {
     val cache = Cache(3, 2)
-    val key = ApiRequestEnrichment.cacheKey(url = "http://api.acme.com/url", body = Some("""{"value":"42"}"""))
+    val key   = ApiRequestEnrichment.cacheKey(url = "http://api.acme.com/url", body = Some("""{"value":"42"}"""))
 
     cache.put(key, JInt(33).success)
     cache.put(key, JInt(42).success)
