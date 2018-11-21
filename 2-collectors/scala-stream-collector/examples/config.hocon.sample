@@ -182,8 +182,8 @@ collector {
   }
 
   # Configuration of prometheus http metrics
-  metrics {
-    # If metrics are enabled then all requests will be logged as prometheus metics
+  prometheusMetrics {
+    # If metrics are enabled then all requests will be logged as prometheus metrics
     # and '/metrics' endpoint will return the report about the requests
     enabled = false
     # Custom buckets for http_request_duration_seconds_bucket duration metric

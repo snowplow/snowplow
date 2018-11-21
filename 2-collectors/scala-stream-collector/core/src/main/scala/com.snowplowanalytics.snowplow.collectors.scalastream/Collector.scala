@@ -72,7 +72,7 @@ trait Collector {
       override def collectorService = new CollectorService(collectorConf, sinks)
     }
 
-    val prometheusMetricsService = new PrometheusMetricsService(collectorConf.metrics)
+    val prometheusMetricsService = new PrometheusMetricsService(collectorConf.prometheusMetrics)
 
     val metricsRoute = new MetricsRoute {
       override def metricsService: MetricsService = prometheusMetricsService
@@ -83,7 +83,8 @@ trait Collector {
     }
 
     val routes =
-      if (collectorConf.metrics.enabled) metricsRoute.metricsRoute ~ metricsDirectives.logRequest(collectorRoute.collectorRoute)
+      if (collectorConf.prometheusMetrics.enabled)
+        metricsRoute.metricsRoute ~ metricsDirectives.logRequest(collectorRoute.collectorRoute)
       else collectorRoute.collectorRoute
 
     Http().bindAndHandle(routes, collectorConf.interface, collectorConf.port)

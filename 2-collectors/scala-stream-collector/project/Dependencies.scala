@@ -57,7 +57,7 @@ object Dependencies {
     val log4jOverSlf4j       = "org.slf4j"             %  "log4j-over-slf4j"       % V.slf4j
     val config               = "com.typesafe"          %  "config"                 % V.config
     val prometheus           = "io.prometheus"         %  "simpleclient"           % V.prometheus
-    val prometheus_common    = "io.prometheus"         %  "simpleclient_common"    % V.prometheus
+    val prometheusCommon     = "io.prometheus"         %  "simpleclient_common"    % V.prometheus
 
     // Scala
     val snowplowCommonEnrich = "com.snowplowanalytics" %% "snowplow-common-enrich" % V.snowplowCommonEnrich

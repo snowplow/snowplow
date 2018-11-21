@@ -1,11 +1,26 @@
+/*
+ * Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
+ *
+ * This program is licensed to you under the Apache License Version 2.0, and
+ * you may not use this file except in compliance with the Apache License
+ * Version 2.0.  You may obtain a copy of the Apache License Version 2.0 at
+ * http://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the Apache License Version 2.0 is distributed on an "AS
+ * IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+ * implied.  See the Apache License Version 2.0 for the specific language
+ * governing permissions and limitations there under.
+ */
 package com.snowplowanalytics.snowplow.collectors.scalastream.metrics
 
 import java.time.Duration
 
 import akka.http.scaladsl.model.{HttpMethod, StatusCode, Uri}
+import com.snowplowanalytics.snowplow.collectors.scalastream.generated.BuildInfo
 import com.snowplowanalytics.snowplow.collectors.scalastream.metrics.PrometheusMetricsService.Metrics._
 import com.snowplowanalytics.snowplow.collectors.scalastream.metrics.PrometheusMetricsService.NanosecondsInSecond
-import com.snowplowanalytics.snowplow.collectors.scalastream.model.MetricsConfig
+import com.snowplowanalytics.snowplow.collectors.scalastream.model.PrometheusMetricsConfig
 import io.prometheus.client.exporter.common.TextFormat
 import io.prometheus.client.{CollectorRegistry, Counter, Gauge, Histogram}
 import org.apache.commons.io.output.StringBuilderWriter
@@ -18,7 +33,7 @@ trait MetricsService {
 
 }
 
-class PrometheusMetricsService(metricsConfig: MetricsConfig) extends MetricsService {
+class PrometheusMetricsService(metricsConfig: PrometheusMetricsConfig) extends MetricsService {
 
   private val registry = new CollectorRegistry
   private val requestCounter: Counter =
@@ -29,11 +44,11 @@ class PrometheusMetricsService(metricsConfig: MetricsConfig) extends MetricsServ
       .map(buckets => requestDurationHistogramBuilder.buckets(buckets: _*).register(registry))
       .getOrElse(requestDurationHistogramBuilder.register(registry))
 
-  private val applicationVersionGauge = Gauge.build("service_version", "Java, scala versions and runnable name")
-    .labelNames("java_version", "scala_version", "runnable")
+  private val applicationVersionGauge = Gauge.build("service_version", "Java, scala versions and collector version")
+    .labelNames("java_version", "scala_version", "version")
     .register(registry)
 
-  applicationVersionGauge.labels(StaticMetrics.javaVersion, StaticMetrics.scalaVersion, StaticMetrics.runnableName).set(1)
+  applicationVersionGauge.labels(StaticMetrics.javaVersion, StaticMetrics.scalaVersion, BuildInfo.version).set(1)
 
   override def observeRequest(method: HttpMethod, uri: Uri, status: StatusCode, duration: Duration): Unit = {
     val path = uri.path.toString
