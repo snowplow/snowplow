@@ -25,6 +25,10 @@ import io.prometheus.client.exporter.common.TextFormat
 import io.prometheus.client.{CollectorRegistry, Counter, Gauge, Histogram}
 import org.apache.commons.io.output.StringBuilderWriter
 
+/**
+  * Service which is used to keep track of processed http requests
+  * and report generation based on collected statistics
+  */
 trait MetricsService {
 
   def observeRequest(method: HttpMethod, uri: Uri, status: StatusCode, duration: Duration): Unit
@@ -33,6 +37,11 @@ trait MetricsService {
 
 }
 
+/**
+  * Implementation of [[com.snowplowanalytics.snowplow.collectors.scalastream.metrics.MetricsService]]
+  * which uses [[https://prometheus.io/]] data format for storing metrics and report generation
+  * @param metricsConfig Configuration of metrics format
+  */
 class PrometheusMetricsService(metricsConfig: PrometheusMetricsConfig) extends MetricsService {
 
   private val registry = new CollectorRegistry

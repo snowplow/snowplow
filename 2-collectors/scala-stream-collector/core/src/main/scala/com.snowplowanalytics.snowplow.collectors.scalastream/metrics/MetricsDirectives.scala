@@ -22,8 +22,16 @@ import akka.http.scaladsl.server.directives.BasicDirectives.extractRequestContex
 
 trait MetricsDirectives {
 
+  /**
+    * Service which is used to keep track of processed http requests.
+    * One of the implementations [[com.snowplowanalytics.snowplow.collectors.scalastream.metrics.PrometheusMetricsService]]
+    */
   def metricsService: MetricsService
 
+  /**
+    * Directive that calculates http request duration and logs this information into
+    * [[com.snowplowanalytics.snowplow.collectors.scalastream.metrics.MetricsService]]
+    */
   val logRequest: Directive0 =
     extractRequestContext.flatMap { ctx =>
       val startTime = LocalDateTime.now()
