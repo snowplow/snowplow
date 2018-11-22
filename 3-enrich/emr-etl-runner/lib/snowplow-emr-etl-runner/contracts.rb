@@ -43,7 +43,9 @@ module Snowplow
       :include => Maybe[ArrayOf[String]],
       :lock => Maybe[String],
       :consul => Maybe[String],
-      :ignore_lock_on_start => Maybe[Bool]
+      :ignore_lock_on_start => Maybe[Bool],
+      :use_persistent_jobflow => Maybe[Bool],
+      :persistent_jobflow_duration => Maybe[String]
       })
 
     # The Hash containing the buckets field from the configuration YAML

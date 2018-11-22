@@ -93,6 +93,9 @@ rescue runner::LinterError => e
 rescue runner::LockHeldError => e
   puts "#{e.message}"
   exit 17
+rescue runner::EmrClusterStateError => e
+  puts "#{e.message}"
+  exit 18
 # Special retval so rest of pipeline knows not to continue
 rescue runner::NoDataToProcessError => e
   puts "No logs to process: #{e.message}"

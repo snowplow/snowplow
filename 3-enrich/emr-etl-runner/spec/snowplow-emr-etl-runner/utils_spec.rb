@@ -185,4 +185,10 @@ describe Utils do
       expect(subject.glob_path('p/*')).to eq('p/*')
     end
   end
+
+  describe '#parse_duration' do
+    it 'should successfully convert weeks, days, hours and minutes into seconds correctly' do
+      expect(subject.parse_duration("1w 5d 3h 13m")).to eq(1048380)
+    end
+  end
 end
