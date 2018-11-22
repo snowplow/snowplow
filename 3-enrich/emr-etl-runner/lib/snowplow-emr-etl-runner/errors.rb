@@ -29,6 +29,10 @@ module Snowplow
     class EmrExecutionError < Error
     end
 
+    # Problem when discovering Amazon EMR JobFlow (e.g. multiple job-flows discovered with the same name)
+    class EmrDiscoveryError < Error
+    end
+
     # A bootstrap failure indicates the job can be safely retried
     class BootstrapFailureError < EmrExecutionError
     end
