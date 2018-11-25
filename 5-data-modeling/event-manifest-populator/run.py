@@ -45,8 +45,10 @@ def split_full_path(path):
         path = path.lstrip('s3://')
     elif path.startswith('s3n://'):
         path = path.lstrip('s3n://')
+    elif path.startswith('s3a://'):
+        path = path.lstrip('s3a://')
     else:
-        raise ValueError("S3 path should start with s3:// or s3n:// prefix")
+        raise ValueError("S3 path should start with s3:// or s3n:// or s3a:// prefix")
     parts = path.split('/')
     bucket = parts[0]
     path = '/'.join(parts[1:])
