@@ -62,7 +62,7 @@ lazy val core = project
   .settings(libraryDependencies ++= commonDependencies)
   .enablePlugins(BuildInfoPlugin)
   .settings(
-    buildInfoKeys := Seq[BuildInfoKey](organization, name, version, "shortName" -> "ssc"),
+    buildInfoKeys := Seq[BuildInfoKey](organization, name, version, "shortName" -> "ssc", scalaVersion),
     buildInfoPackage := "com.snowplowanalytics.snowplow.collectors.scalastream.generated"
   )
 

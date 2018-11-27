@@ -57,7 +57,7 @@ class PrometheusMetricsService(metricsConfig: PrometheusMetricsConfig) extends M
     .labelNames("java_version", "scala_version", "version")
     .register(registry)
 
-  applicationVersionGauge.labels(StaticMetrics.javaVersion, StaticMetrics.scalaVersion, BuildInfo.version).set(1)
+  applicationVersionGauge.labels(System.getProperty("java.version"), BuildInfo.scalaVersion, BuildInfo.version).set(1)
 
   override def observeRequest(method: HttpMethod, uri: Uri, status: StatusCode, duration: Duration): Unit = {
     val path = uri.path.toString
