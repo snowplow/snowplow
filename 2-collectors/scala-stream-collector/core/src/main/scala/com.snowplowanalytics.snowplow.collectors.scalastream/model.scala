@@ -14,10 +14,11 @@
  */
 package com.snowplowanalytics.snowplow.collectors.scalastream
 
-import akka.http.scaladsl.model.headers.HttpCookie
-import com.snowplowanalytics.snowplow.collectors.scalastream.sinks.Sink
-
 import scala.concurrent.duration.FiniteDuration
+
+import akka.http.scaladsl.model.headers.HttpCookie
+
+import sinks.Sink
 
 package model {
 
