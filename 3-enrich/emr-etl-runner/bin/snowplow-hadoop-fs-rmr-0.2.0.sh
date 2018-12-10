@@ -15,10 +15,14 @@
 # Copyright:: Copyright (c) 2012-2018 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
-# Removes recursively a folder on HDFS
-hadoop fs -test -d $1
-if [ $? == 0 ]; then
-  hadoop fs -rm -r -skipTrash $1
-else
-  echo "Directory $1 does not exist"
-fi
+# Recursively removes a list of directories on HDFS
+for i in "${@}"
+do
+    hadoop fs -test -d ${i}
+    if [ $? == 0 ]; then
+        echo "Removing directory ${i} ..."
+        hadoop fs -rm -r -skipTrash ${i}
+    else
+        echo "Directory ${i} does not exist"
+    fi
+done
