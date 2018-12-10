@@ -157,6 +157,12 @@ module Snowplow
         csbe = config[:aws][:s3][:buckets][:enriched]
         csbs = config[:aws][:s3][:buckets][:shredded]
 
+        # Clear HDFS if persistent jobflow has been found
+        if found_persistent_jobflow
+          submit_jobflow_step(get_rmr_step([ENRICH_STEP_INPUT, ENRICH_STEP_OUTPUT, SHRED_STEP_OUTPUT], standard_assets_bucket, "Empty Snowplow HDFS"), use_persistent_jobflow)
+          submit_jobflow_step(get_hdfs_expunge_step, use_persistent_jobflow)
+        end
+
         # staging
         if staging
           unless empty?(s3, csbr[:processing])
@@ -481,7 +487,7 @@ module Snowplow
           # If we enriched, we free some space on HDFS by deleting the raw events
           # otherwise we need to copy the enriched events back to HDFS
           if enrich
-            submit_jobflow_step(get_rmr_step(ENRICH_STEP_INPUT, standard_assets_bucket), use_persistent_jobflow)
+            submit_jobflow_step(get_rmr_step([ENRICH_STEP_INPUT], standard_assets_bucket, "Empty Raw HDFS"), use_persistent_jobflow)
           else
             src_pattern = if stream_enrich_mode then STREAM_ENRICH_REGEXP else PARTFILE_REGEXP end
 
@@ -1141,11 +1147,18 @@ module Snowplow
           (!(jobflow.cluster_status.last_state_change_reason =~ bootstrap_failure_indicator).nil?)
       end
 
-      Contract String, String => Elasticity::CustomJarStep
-      def get_rmr_step(location, bucket)
+      Contract ArrayOf[String], String, String => Elasticity::CustomJarStep
+      def get_rmr_step(locations, bucket, description)
         step = Elasticity::CustomJarStep.new("s3://#{@jobflow.region}.elasticmapreduce/libs/script-runner/script-runner.jar")
-        step.arguments = ["#{bucket}common/emr/snowplow-hadoop-fs-rmr-0.1.0.sh", location]
-        step.name << ": Empty Raw HDFS"
+        step.arguments = ["#{bucket}common/emr/snowplow-hadoop-fs-rmr-0.2.0.sh"] + locations
+        step.name << ": #{description}"
+        step
+      end
+
+      def get_hdfs_expunge_step
+        step = Elasticity::CustomJarStep.new("command-runner.jar")
+        step.arguments = %W(hdfs dfs -expunge)
+        step.name << ": Empty HDFS trash"
         step
       end
 
