@@ -689,7 +689,7 @@ module Snowplow
           Monitoring::Snowplow.instance.track_job_started(@jobflow)
         end
 
-        status = wait_for()
+        status = wait_for
 
         if status.successful or status.rdb_loader_failure or status.rdb_loader_cancellation
           log_level = if status.successful
@@ -964,7 +964,7 @@ module Snowplow
       # Returns true if the jobflow completed without error,
       # false otherwise.
       Contract None => JobResult
-      def wait_for()
+      def wait_for
 
         success = false
         bootstrap_failure = false
@@ -990,7 +990,7 @@ module Snowplow
               break
             else
               # Sleep a while before we check again
-              sleep(120)
+              sleep(30)
             end
 
           rescue SocketError => se
