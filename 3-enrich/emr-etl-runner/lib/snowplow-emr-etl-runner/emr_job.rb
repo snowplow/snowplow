@@ -58,8 +58,8 @@ module Snowplow
       include Snowplow::EmrEtlRunner::EMR
 
       # Initializes our wrapper for the Amazon EMR client.
-      Contract Bool, Bool, Bool, Bool, Bool, Bool, Bool, Bool, ArchiveStep, ArchiveStep, ConfigHash, ArrayOf[String], String, TargetsHash, RdbLoaderSteps, Bool => EmrJob
-      def initialize(debug, staging, enrich, staging_stream_enrich, shred, es, archive_raw, rdb_load, archive_enriched, archive_shredded, config, enrichments_array, resolver, targets, rdbloader_steps, use_persistent_jobflow)
+      Contract Bool, Bool, Bool, Bool, Bool, Bool, Bool, Bool, ArchiveStep, ArchiveStep, ConfigHash, ArrayOf[String], String, TargetsHash, RdbLoaderSteps, Bool, String => EmrJob
+      def initialize(debug, staging, enrich, staging_stream_enrich, shred, es, archive_raw, rdb_load, archive_enriched, archive_shredded, config, enrichments_array, resolver, targets, rdbloader_steps, use_persistent_jobflow, persistent_jobflow_duration)
 
         logger.debug "Initializing EMR jobflow"
 
@@ -99,6 +99,9 @@ module Snowplow
         end
 
         # Create a job flow
+        @use_persistent_jobflow = use_persistent_jobflow
+        @persistent_jobflow_duration_s = parse_duration(persistent_jobflow_duration)
+
         found_persistent_jobflow = false
         if use_persistent_jobflow
           emr = Elasticity::EMR.new(:region => config[:aws][:emr][:region])
@@ -717,6 +720,13 @@ module Snowplow
             Monitoring::Snowplow.instance.track_job_failed(@jobflow)
           end
           raise EmrExecutionError, get_failure_details(jobflow_id)
+        end
+
+        if @use_persistent_jobflow and
+            @persistent_jobflow_duration_s > 0 and
+            @jobflow.cluster_status.created_at + @persistent_jobflow_duration_s < @run_tstamp
+          logger.debug "EMR jobflow has expired and will be shutdown."
+          @jobflow.shutdown
         end
 
         nil

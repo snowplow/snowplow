@@ -59,6 +59,7 @@ module Snowplow
           :include => [],
           :ignore_lock_on_start => false,
           :use_persistent_jobflow => false,
+          :persistent_jobflow_duration => "0m",
         }
 
         commands = {
@@ -77,6 +78,7 @@ module Snowplow
             opts.on('--ignore-lock-on-start', 'ignore the lock if it is set when starting') { |config| options[:ignore_lock_on_start] = true }
             opts.on('--consul ADDRESS', 'address to the Consul server') { |config| options[:consul] = config }
             opts.on('--use-persistent-jobflow', 'discovers and uses a persistent cluster for steps') { |config| options[:use_persistent_jobflow] = true }
+            opts.on('--persistent-jobflow-duration DURATION', 'the length of time a persistent cluster can run for before being terminated (e.g. 1d12h)') { |config| options[:persistent_jobflow_duration] = config }
           end,
           'generate emr-config' => OptionParser.new do |opts|
             opts.banner = 'Usage: generate emr-config [options]'
@@ -190,6 +192,7 @@ module Snowplow
           :ignore_lock_on_start => options[:ignore_lock_on_start],
           :consul => options[:consul],
           :use_persistent_jobflow => options[:use_persistent_jobflow],
+          :persistent_jobflow_duration => options[:persistent_jobflow_duration],
         }
 
         summary = optparse.to_s

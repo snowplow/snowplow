@@ -206,6 +206,24 @@ module Snowplow
         path.end_with?('/*') ? path : "#{path}/*"
       end
 
+      DURATION_TOKENS = {
+          "m" => (60),
+          "h" => (60 * 60),
+          "d" => (60 * 60 * 24),
+          "w" => (60 * 60 * 24 * 7)
+      }
+
+      # Converts a duration string into a seconds integer
+      # e.g. 5h 10m is converted into 18600
+      Contract String => Integer
+      def parse_duration(input)
+        time = 0
+        input.scan(/(\d+)(\w)/).each do |amount, measure|
+          time += amount.to_i * DURATION_TOKENS[measure]
+        end
+        time
+      end
+
     end
   end
 end
