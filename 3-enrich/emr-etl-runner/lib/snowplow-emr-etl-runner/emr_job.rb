@@ -160,6 +160,8 @@ module Snowplow
         csbe = config[:aws][:s3][:buckets][:enriched]
         csbs = config[:aws][:s3][:buckets][:shredded]
 
+        @pending_jobflow_steps = []
+
         # Clear HDFS if persistent jobflow has been found
         if found_persistent_jobflow
           submit_jobflow_step(get_rmr_step([ENRICH_STEP_INPUT, ENRICH_STEP_OUTPUT, SHRED_STEP_OUTPUT], standard_assets_bucket, "Empty Snowplow HDFS"), use_persistent_jobflow)
@@ -678,6 +680,10 @@ module Snowplow
 
         snowplow_tracking_enabled = ! config[:monitoring][:snowplow].nil?
 
+        @pending_jobflow_steps.each do |jobflow_step|
+          @jobflow.add_step(jobflow_step)
+        end
+
         jobflow_id = @jobflow.jobflow_id
         if jobflow_id.nil?
           jobflow_id = @jobflow.run
@@ -794,8 +800,7 @@ module Snowplow
         if use_persistent_jobflow
           jobflow_step.action_on_failure = "CANCEL_AND_WAIT"
         end
-
-        @jobflow.add_step(jobflow_step)
+        @pending_jobflow_steps << jobflow_step
       end
 
       # Build an Elasticity RDB Loader step.
