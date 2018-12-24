@@ -29,6 +29,10 @@ module Snowplow
     class EmrExecutionError < Error
     end
 
+    # Problem when discovering Amazon EMR JobFlow (e.g. cluster is RUNNING rather than WAITING)
+    class EmrClusterStateError < Error
+    end
+
     # Problem when discovering Amazon EMR JobFlow (e.g. multiple job-flows discovered with the same name)
     class EmrDiscoveryError < Error
     end

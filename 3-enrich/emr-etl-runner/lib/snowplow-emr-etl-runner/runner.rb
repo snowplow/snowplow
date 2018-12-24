@@ -147,7 +147,7 @@ module Snowplow
             else
               raise
             end
-          rescue DirectoryNotEmptyError, NoDataToProcessError => e
+          rescue DirectoryNotEmptyError, NoDataToProcessError, EmrClusterStateError => e
             # unlock on no-op
             if not lock.nil?
               lock.unlock

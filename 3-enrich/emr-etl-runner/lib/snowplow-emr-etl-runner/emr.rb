@@ -52,7 +52,7 @@ module Snowplow
         when 1
           emr_cluster = emr_clusters.first
           if emr_cluster['Status']['State'] == "RUNNING"
-            raise EmrDiscoveryError, "EMR Cluster must be in WAITING state before new job steps can be submitted - found #{emr_cluster['Status']['State']}"
+            raise EmrClusterStateError, "EMR Cluster must be in WAITING state before new job steps can be submitted - found #{emr_cluster['Status']['State']}"
           end
           return emr_cluster['Id']
         else
