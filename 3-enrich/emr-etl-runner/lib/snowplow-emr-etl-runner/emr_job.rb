@@ -692,7 +692,7 @@ module Snowplow
 
         if snowplow_tracking_enabled
           Monitoring::Snowplow.parameterize(config)
-          Monitoring::Snowplow.instance.track_job_started(@jobflow)
+          Monitoring::Snowplow.instance.track_job_started(jobflow_id, @jobflow.cluster_status, cluster_step_status_for_run(@jobflow))
         end
 
         status = wait_for
@@ -712,18 +712,18 @@ module Snowplow
         if status.successful
           logger.debug "EMR jobflow #{jobflow_id} completed successfully."
           if snowplow_tracking_enabled
-            Monitoring::Snowplow.instance.track_job_succeeded(@jobflow)
+            Monitoring::Snowplow.instance.track_job_succeeded(jobflow_id, @jobflow.cluster_status, cluster_step_status_for_run(@jobflow))
           end
 
         elsif status.bootstrap_failure
           if snowplow_tracking_enabled
-            Monitoring::Snowplow.instance.track_job_failed(@jobflow)
+            Monitoring::Snowplow.instance.track_job_failed(jobflow_id, @jobflow.cluster_status, cluster_step_status_for_run(@jobflow))
           end
           raise BootstrapFailureError, get_failure_details(jobflow_id)
 
         else
           if snowplow_tracking_enabled
-            Monitoring::Snowplow.instance.track_job_failed(@jobflow)
+            Monitoring::Snowplow.instance.track_job_failed(jobflow_id, @jobflow.cluster_status, cluster_step_status_for_run(@jobflow))
           end
           raise EmrExecutionError, get_failure_details(jobflow_id)
         end
