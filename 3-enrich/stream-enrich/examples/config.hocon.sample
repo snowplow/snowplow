@@ -96,6 +96,31 @@ enrich {
       brokers = "{{kafkaBrokers}}"
       # Number of retries to perform before giving up on sending a record
       retries = 0
+      # The kafka producer has a variety of possible configuration options defined at
+      # https://kafka.apache.org/documentation/#producerconfigs
+      # Some values are set to other values from this config by default:
+      # "bootstrap.servers" -> brokers
+      # retries             -> retries
+      # "buffer.memory"     -> buffer.byteLimit
+      # "linger.ms"         -> buffer.timeLimit
+      #producerConf {
+      #  acks = all
+      #  "key.serializer"     = "org.apache.kafka.common.serialization.StringSerializer"
+      #  "value.serializer"   = "org.apache.kafka.common.serialization.StringSerializer"
+      #}
+      # The kafka consumer has a variety of possible configuration options defined at
+      # https://kafka.apache.org/documentation/#consumerconfigs
+      # Some values are set to other values from this config by default:
+      # "bootstrap.servers" -> brokers
+      # "group.id"          -> appName
+      #consumerConf {
+      #  "enable.auto.commit" = true
+      #  "auto.commit.interval.ms" = 1000
+      #  "auto.offset.reset"  = earliest
+      #  "session.timeout.ms" = 30000
+      #  "key.deserializer"   = "org.apache.kafka.common.serialization.StringDeserializer"
+      #  "value.deserializer" = "org.apache.kafka.common.serialization.ByteArrayDeserializer"
+      #}
 
       # Or NSQ
       ## Channel name for nsq source

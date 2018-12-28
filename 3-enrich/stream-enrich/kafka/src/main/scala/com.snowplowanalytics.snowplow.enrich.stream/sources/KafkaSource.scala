@@ -119,6 +119,7 @@ class KafkaSource private (
     brokers: String,
     groupId: String): KafkaConsumer[String, Array[Byte]] = {
     val properties = createProperties(brokers, groupId)
+    properties.putAll(kafkaConfig.consumerConf.getOrElse(Map()).asJava)
     new KafkaConsumer[String, Array[Byte]](properties)
   }
 
