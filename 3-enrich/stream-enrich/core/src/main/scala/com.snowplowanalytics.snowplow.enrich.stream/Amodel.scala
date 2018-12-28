@@ -68,7 +68,8 @@ object model {
   final case class Kafka(
     brokers: String,
     retries: Int,
-    consumerConf: Option[Map[String,String]]
+    consumerConf: Option[Map[String,String]],
+    producerConf: Option[Map[String,String]]
   ) extends SourceSinkConfig
   final case class Nsq(
     rawChannel: String,
