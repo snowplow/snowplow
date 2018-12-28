@@ -17,8 +17,8 @@ package sinks
 import java.util.Properties
 
 import org.apache.kafka.clients.producer._
-
 import model._
+import scala.collection.JavaConverters._
 
 /**
  * Kafka Sink for the Scala collector
@@ -54,6 +54,8 @@ class KafkaSink(
       "org.apache.kafka.common.serialization.StringSerializer")
     props.put("value.serializer",
       "org.apache.kafka.common.serialization.ByteArraySerializer")
+
+    props.putAll(kafkaConfig.producerConf.getOrElse(Map()).asJava)
 
     new KafkaProducer[String, Array[Byte]](props)
   }
