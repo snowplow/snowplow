@@ -65,7 +65,12 @@ object model {
       case _                 => s"https://kinesis.$region.amazonaws.com"
     })
   }
-  final case class Kafka(brokers: String, retries: Int) extends SourceSinkConfig
+  final case class Kafka(
+    brokers: String,
+    retries: Int,
+    consumerConf: Option[Map[String,String]],
+    producerConf: Option[Map[String,String]]
+  ) extends SourceSinkConfig
   final case class Nsq(
     rawChannel: String,
     host: String,
