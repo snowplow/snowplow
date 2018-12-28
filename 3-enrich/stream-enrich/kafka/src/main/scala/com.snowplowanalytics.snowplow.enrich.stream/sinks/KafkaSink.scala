@@ -22,6 +22,8 @@ package sinks
 
 import java.util.Properties
 
+import scala.collection.JavaConverters._
+
 import org.apache.kafka.clients.producer._
 
 import scalaz._
@@ -47,6 +49,7 @@ object KafkaSink {
     bufferConfig: BufferConfig
   ): KafkaProducer[String, String] = {
     val properties = createProperties(kafkaConfig, bufferConfig)
+    properties.putAll(kafkaConfig.producerConf.getOrElse(Map()).asJava)
     new KafkaProducer[String, String](properties)
   }
 

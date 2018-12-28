@@ -157,7 +157,7 @@ object SpecHelpers {
       streams = StreamsConfig(
         InConfig("raw"),
         OutConfig("enriched", Some("pii"), "bad", "partitionkey"),
-        Kafka("brokers", 1),
+        Kafka("brokers", 1, None, None),
         BufferConfig(1000L, 100L, 1200L),
         "appName"
       ),
