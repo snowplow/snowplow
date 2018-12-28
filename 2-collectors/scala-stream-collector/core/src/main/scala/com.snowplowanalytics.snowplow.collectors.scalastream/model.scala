@@ -103,7 +103,11 @@ package model {
     googleProjectId: String,
     backoffPolicy: GooglePubSubBackoffPolicyConfig
   ) extends SinkConfig
-  final case class Kafka(brokers: String, retries: Int) extends SinkConfig
+  final case class Kafka(
+    brokers: String,
+    retries: Int,
+    producerConf: Option[Map[String,String]]
+  ) extends SinkConfig
   final case class Nsq(host: String, port: Int) extends SinkConfig
   case object Stdout extends SinkConfig
   final case class BufferConfig(byteLimit: Long, recordLimit: Long, timeLimit: Long)
