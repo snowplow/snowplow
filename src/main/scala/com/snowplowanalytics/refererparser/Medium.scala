@@ -18,9 +18,9 @@ package com.snowplowanalytics.refererparser
 /**
  * Enumeration for supported mediums.
  */
-private[refererparser] sealed abstract class Medium(val value: String)
+sealed abstract class Medium(val value: String)
 
-private[refererparser] object Medium {
+object Medium {
   def fromString(s: String): Option[Medium] = s match {
     case UnknownMedium.value   => Some(UnknownMedium)
     case SearchMedium.value    => Some(SearchMedium)
@@ -39,9 +39,9 @@ private[refererparser] object Medium {
   val Paid = PaidMedium
 }
 
-private[refererparser] final case object UnknownMedium extends Medium("unknown")
-private[refererparser] final case object SearchMedium extends Medium("search")
-private[refererparser] final case object InternalMedium extends Medium("internal")
-private[refererparser] final case object SocialMedium extends Medium("social")
-private[refererparser] final case object EmailMedium extends Medium("email")
-private[refererparser] final case object PaidMedium extends Medium("paid")
+case object UnknownMedium extends Medium("unknown")
+case object SearchMedium extends Medium("search")
+case object InternalMedium extends Medium("internal")
+case object SocialMedium extends Medium("social")
+case object EmailMedium extends Medium("email")
+case object PaidMedium extends Medium("paid")
