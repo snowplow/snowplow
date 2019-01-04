@@ -18,10 +18,10 @@ import sbt._
 
 object Dependencies {
   object V {
-    val catsEffect = "0.10.1"
     val circe = "0.10.0"
     val specs2 = "4.2.0"
     val catsCore   = "1.5.0"
+    val catsEffect = "1.1.0"
   }
 
   object Libraries {

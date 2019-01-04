@@ -11,8 +11,8 @@ val root = (project in file(".")).
 
     libraryDependencies ++= Seq(
       Dependencies.Libraries.catsCore,
-      Dependencies.Libraries.catsEffect,
       Dependencies.Libraries.circeCore,
+      Dependencies.Libraries.catsEffect,
       Dependencies.Libraries.circeGeneric,
       Dependencies.Libraries.circeParser,
       Dependencies.Libraries.specs2Core,
