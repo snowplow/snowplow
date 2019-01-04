@@ -13,24 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import sbt._
 
 object Dependencies {
   object V {
-    val specs2 = "4.2.0"
     val catsCore   = "1.5.0"
     val catsEffect = "1.1.0"
     val circe      = "0.11.0"
+    val specs2     = "4.3.6"
   }
 
   object Libraries {
-    val catsCore          = "org.typelevel"             %% "cats-core"          % V.catsCore
-    val catsEffect        = "org.typelevel"             %% "cats-effect"        % V.catsEffect
-    val circeCore         = "io.circe"                  %% "circe-core"         % V.circe
-    val circeGeneric      = "io.circe"                  %% "circe-generic"      % V.circe
-    val circeParser       = "io.circe"                  %% "circe-parser"       % V.circe
-    val specs2Core        = "org.specs2"                %% "specs2-core"        % V.specs2       % "test"
-    val specs2Scalacheck  = "org.specs2"                %% "specs2-scalacheck"  % V.specs2       % "test"
+    val catsCore         = "org.typelevel" %% "cats-core"         % V.catsCore
+    val catsEffect       = "org.typelevel" %% "cats-effect"       % V.catsEffect
+    val circeCore        = "io.circe"      %% "circe-core"        % V.circe
+    val circeGeneric     = "io.circe"      %% "circe-generic"     % V.circe
+    val circeParser      = "io.circe"      %% "circe-parser"      % V.circe
+    val specs2Core       = "org.specs2"    %% "specs2-core"       % V.specs2 % "test"
+    val specs2Scalacheck = "org.specs2"    %% "specs2-scalacheck" % V.specs2 % "test"
   }
 }
