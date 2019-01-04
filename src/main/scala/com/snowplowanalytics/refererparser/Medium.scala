@@ -22,26 +22,26 @@ sealed abstract class Medium(val value: String)
 
 object Medium {
   def fromString(s: String): Option[Medium] = s match {
-    case UnknownMedium.value   => Some(UnknownMedium)
-    case SearchMedium.value    => Some(SearchMedium)
-    case InternalMedium.value  => Some(InternalMedium)
-    case SocialMedium.value    => Some(SocialMedium)
-    case EmailMedium.value     => Some(EmailMedium)
-    case PaidMedium.value      => Some(PaidMedium)
-    case _                     => None
+    case UnknownMedium.value  => Some(UnknownMedium)
+    case SearchMedium.value   => Some(SearchMedium)
+    case InternalMedium.value => Some(InternalMedium)
+    case SocialMedium.value   => Some(SocialMedium)
+    case EmailMedium.value    => Some(EmailMedium)
+    case PaidMedium.value     => Some(PaidMedium)
+    case _                    => None
   }
 
-  val Unknown = UnknownMedium
-  val Search = SearchMedium
+  val Unknown  = UnknownMedium
+  val Search   = SearchMedium
   val Internal = InternalMedium
-  val Social = SocialMedium
-  val Email = EmailMedium
-  val Paid = PaidMedium
+  val Social   = SocialMedium
+  val Email    = EmailMedium
+  val Paid     = PaidMedium
 }
 
-case object UnknownMedium extends Medium("unknown")
-case object SearchMedium extends Medium("search")
+case object UnknownMedium  extends Medium("unknown")
+case object SearchMedium   extends Medium("search")
 case object InternalMedium extends Medium("internal")
-case object SocialMedium extends Medium("social")
-case object EmailMedium extends Medium("email")
-case object PaidMedium extends Medium("paid")
+case object SocialMedium   extends Medium("social")
+case object EmailMedium    extends Medium("email")
+case object PaidMedium     extends Medium("paid")

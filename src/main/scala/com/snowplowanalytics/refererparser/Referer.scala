@@ -20,10 +20,10 @@ package com.snowplowanalytics.refererparser
  *  UnknownReferer, SearchReferer, InternalReferer, SocialReferer, EmailReferer,
  *  or PaidReferer.
  */
-sealed abstract trait Referer
-final case object UnknownReferer                                        extends Referer
-final case class SearchReferer  (source: String, term: Option[String])  extends Referer
-final case object InternalReferer                                       extends Referer
-final case class SocialReferer  (source: String)                        extends Referer
-final case class EmailReferer   (source: String)                        extends Referer
-final case class PaidReferer    (source: String)                        extends Referer
+sealed trait Referer
+case object UnknownReferer                                           extends Referer
+final case class SearchReferer(source: String, term: Option[String]) extends Referer
+case object InternalReferer                                          extends Referer
+final case class SocialReferer(source: String)                       extends Referer
+final case class EmailReferer(source: String)                        extends Referer
+final case class PaidReferer(source: String)                         extends Referer

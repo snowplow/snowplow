@@ -39,7 +39,7 @@ private[refererparser] object ParseReferers {
     parameters: Option[List[String]]
   )
 
-  implicit val jsonEntryDecoder = deriveDecoder[JsonEntry]
+  implicit val jsonEntryDecoder: Decoder[JsonEntry] = deriveDecoder[JsonEntry]
 
   def loadJsonFromString(rawJson: String): Either[Exception, Map[String, RefererLookup]] =
     parse(rawJson).flatMap(loadJson)
@@ -51,23 +51,26 @@ private[refererparser] object ParseReferers {
         entries.foldLeft(map) { (mapInner, sourceEntry) =>
           val (source, entry) = sourceEntry
           mapInner ++ entry.domains.map(domain =>
-            domain -> RefererLookup(medium, source, entry.parameters.getOrElse(Nil))
-          )
+            domain -> RefererLookup(medium, source, entry.parameters.getOrElse(Nil)))
         }
       }
     }
 
-  private def parseReferersJson(c: ACursor): Either[Exception, Map[Medium, Map[String, JsonEntry]]] =
+  private def parseReferersJson(
+    c: ACursor): Either[Exception, Map[Medium, Map[String, JsonEntry]]] =
     for {
       mediumKeys <- someOrExcept(c.keys, "Referers json must be an object")
-      mediumEntries <- mediumKeys.toList.map(k => for {
-        medium <- someOrExcept(Medium.fromString(k), s"Unrecognized medium: '$k'")
-        sourceNames <- someOrExcept(c.downField(k).keys, s"Medium '$k' not an object")
-        sourceEntriesJson = sourceNames.map(mediumName => c.downField(k).downField(mediumName))
-        sourceEntries <- sourceEntriesJson.map(_.as[JsonEntry]).toList.sequence
-      } yield medium -> ((sourceNames zip sourceEntries).toMap)).sequence
+      mediumEntries <- mediumKeys.toList
+        .map(k =>
+          for {
+            medium      <- someOrExcept(Medium.fromString(k), s"Unrecognized medium: '$k'")
+            sourceNames <- someOrExcept(c.downField(k).keys, s"Medium '$k' not an object")
+            sourceEntriesJson = sourceNames.map(mediumName => c.downField(k).downField(mediumName))
+            sourceEntries <- sourceEntriesJson.map(_.as[JsonEntry]).toList.sequence
+          } yield medium -> (sourceNames zip sourceEntries).toMap)
+        .sequence
     } yield mediumEntries.toMap
-  
+
   private def someOrExcept[A](opt: Option[A], message: String): Either[Exception, A] =
     opt.toRight(CorruptJsonException(message))
 }

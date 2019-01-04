@@ -5,7 +5,7 @@ scala:
 jdk:
 - oraclejdk8
 script:
-- sbt coverage test coverageReport
+- sbt scalafmtCheck coverage test coverageReport
 deploy:
   skip_cleanup: true
   provider: script

@@ -33,7 +33,9 @@ import cats.syntax.all._
  */
 object Parser {
   def create[F[_]: Sync](filePath: String): F[Either[Exception, Parser]] =
-    Sync[F].delay { Source.fromFile(filePath).mkString }.map(rawJson =>
+    Sync[F]
+      .delay { Source.fromFile(filePath).mkString }
+      .map(rawJson =>
         ParseReferers.loadJsonFromString(rawJson).map(referers => new Parser(referers)))
 }
 
@@ -78,31 +80,34 @@ class Parser private (referers: Map[String, RefererLookup]) {
     internalDomains: List[String]
   ): Option[Referer] = {
     val scheme = refererUri.getScheme
-    val host = refererUri.getHost
-    val path = refererUri.getPath
-    val query = Option(refererUri.getQuery)
+    val host   = refererUri.getHost
+    val path   = refererUri.getPath
+    val query  = Option(refererUri.getQuery)
 
     val validUri = (scheme == "http" || scheme == "https") && host != null && path != null
 
     if (validUri) {
-      if ( // Check for internal domains
-        pageHost.map(_.equals(host)).getOrElse(false) ||
-        internalDomains.map(_.trim()).contains(host)
-      ) {
+      if (// Check for internal domains
+        pageHost.exists(_.equals(host)) ||
+        internalDomains.map(_.trim()).contains(host)) {
         Some(InternalReferer)
       } else {
-        Some(lookupReferer(host, path).map(lookup => {
-          lookup.medium match {
-            case UnknownMedium => UnknownReferer
-            case SearchMedium => SearchReferer(
-              lookup.source,
-              query.flatMap(q => extractSearchTerm(q, lookup.parameters)))
-            case InternalMedium => InternalReferer
-            case SocialMedium => SocialReferer(lookup.source)
-            case EmailMedium => EmailReferer(lookup.source)
-            case PaidMedium => PaidReferer(lookup.source)
-          }
-        }).getOrElse(UnknownReferer))
+        Some(
+          lookupReferer(host, path)
+            .map(lookup => {
+              lookup.medium match {
+                case UnknownMedium => UnknownReferer
+                case SearchMedium =>
+                  SearchReferer(
+                    lookup.source,
+                    query.flatMap(q => extractSearchTerm(q, lookup.parameters)))
+                case InternalMedium => InternalReferer
+                case SocialMedium   => SocialReferer(lookup.source)
+                case EmailMedium    => EmailReferer(lookup.source)
+                case PaidMedium     => PaidReferer(lookup.source)
+              }
+            })
+            .getOrElse(UnknownReferer))
       }
     } else {
       None
@@ -116,7 +121,9 @@ class Parser private (referers: Map[String, RefererLookup]) {
     query.split("&").toList.map { pair =>
       val equalsIndex = pair.indexOf("=")
       if (equalsIndex > 0) {
-        (decodeUriPart(pair.substring(0, equalsIndex)), decodeUriPart(pair.substring(equalsIndex+1)))
+        (
+          decodeUriPart(pair.substring(0, equalsIndex)),
+          decodeUriPart(pair.substring(equalsIndex + 1)))
       } else {
         (decodeUriPart(pair), "")
       }
@@ -125,18 +132,18 @@ class Parser private (referers: Map[String, RefererLookup]) {
   private def decodeUriPart(part: String): String = URLDecoder.decode(part, "UTF-8")
 
   /**
-   * Determine 
+   * Determine
    */
   private def lookupReferer(refererHost: String, refererPath: String): Option[RefererLookup] = {
     val hosts = hostsToTry(refererHost)
     val paths = pathsToTry(refererPath)
 
     val results: Stream[RefererLookup] = for {
-      path <- paths.toStream
-      host <- hosts.toStream
+      path   <- paths.toStream
+      host   <- hosts.toStream
       result <- referers.get(host + path).toStream
     } yield result
-    
+
     // Since streams are lazy we don't calculate past the first element
     results.headOption
   }
@@ -146,8 +153,11 @@ class Parser private (referers: Map[String, RefererLookup]) {
    * For instance, hostsToTry("www.google.com") == List("www.google.com", "google.com", "com")
    */
   private def hostsToTry(refererHost: String): List[String] = {
-    refererHost.split("\\.").toList
-      .scanRight("")((part, full) => s"$part.$full").init
+    refererHost
+      .split("\\.")
+      .toList
+      .scanRight("")((part, full) => s"$part.$full")
+      .init
       .map(s => s.substring(0, s.length - 1))
   }
 
@@ -156,9 +166,9 @@ class Parser private (referers: Map[String, RefererLookup]) {
    * For instance, pathsToTry("google.com/images/1/2/3") == List("/images/1/2/3", "/images", "")
    */
   private def pathsToTry(refererPath: String): List[String] = {
-    refererPath.split("/").toList.filter(_ != "").headOption match {
+    refererPath.split("/").find(_ != "") match {
       case Some(p) => List(refererPath, "/" + p, "")
-      case None => List("")
+      case None    => List("")
     }
   }
 }
