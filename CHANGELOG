@@ -1,3 +1,15 @@
+Version 0.5.0 (2019-01-08)
+--------------------------
+Make the Medium enumeration public (#47)
+Bump Scala to 2.12.8 (#54)
+Bump cats-effect to 1.1.0 (#40)
+Bump cats-core to 1.5.0 (#39)
+Bump circe to 0.11.0 (#52)
+Bump circe to 0.10.0 (#41)
+Bump specs2 to 4.3.6 (#53)
+Enforce scalafmt (#51)
+Change codecov badge to point to the develop branch (#37)
+
 Version 0.4.0 (2018-08-30)
 --------------------------
 Move parsing code to Scala and remove Java support (#29)

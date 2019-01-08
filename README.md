@@ -65,7 +65,7 @@ More examples can be seen in [ParseTest.scala][parsetest-scala]. See [Parser.sca
 Add this to your SBT config:
 
 ```scala
-val refererParser = "com.snowplowanalytics" %% "referer-parser" % "0.4.0"
+val refererParser = "com.snowplowanalytics" %% "referer-parser" % "0.5.0"
 ```
 
 ## Contributing
