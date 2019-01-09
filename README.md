@@ -1,7 +1,7 @@
 # referer-parser Scala library
 
 [![Build Status](https://travis-ci.org/snowplow-referer-parser/scala-referer-parser.svg?branch=develop)](https://travis-ci.org/snowplow-referer-parser/scala-referer-parser)
-[![Join the chat at https://gitter.im/snowplow-referer-parser/referer-parser](https://badges.gitter.im/snowplow-referer-parser/referer-parser.svg)](https://gitter.im/snowplow-referer-parser/referer-parser?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Gitter](https://badges.gitter.im/snowplow-referer-parser/scala-referer-parser.svg)](https://gitter.im/snowplow-referer-parser/scala-referer-parser?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=body_badge)
 [![codecov](https://codecov.io/gh/snowplow-referer-parser/scala-referer-parser/branch/develop/graph/badge.svg)](https://codecov.io/gh/snowplow-referer-parser/scala-referer-parser)
 
 This is the Scala implementation of [referer-parser][referer-parser], the library for extracting attribution data from referer _(sic)_ URLs.
