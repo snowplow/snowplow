@@ -9,11 +9,11 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.7.0
+-- Version:     0.7.1
 -- URL:         -
 --
--- Authors:     Yali Sassoon, Alex Dean, Fred Blundun
--- Copyright:   Copyright (c) 2013-2015 Snowplow Analytics Ltd
+-- Authors:     Yali Sassoon, Alex Dean, Fred Blundun, Mike Robins
+-- Copyright:   Copyright (c) 2013-2018 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
 CREATE SCHEMA "atomic";
@@ -44,7 +44,7 @@ CREATE TABLE "atomic"."events" (
 	"network_userid" varchar(38),
 	-- Location
 	"geo_country" char(2),
-	"geo_region" char(2),
+	"geo_region" char(3),
 	"geo_city" varchar(75),
 	"geo_zipcode" varchar(15),
 	"geo_latitude" double precision,
@@ -182,4 +182,4 @@ CREATE TABLE "atomic"."events" (
 WITH (OIDS=FALSE)
 ;
 
-COMMENT ON TABLE "atomic"."events" IS '0.7.0';
+COMMENT ON TABLE "atomic"."events" IS '0.7.1';
