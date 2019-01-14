@@ -9,10 +9,10 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.10.0
+-- Version:     0.11.0
 -- URL:         -
 --
--- Authors:     Yali Sassoon, Alex Dean, Peter van Wesep, Fred Blundun, Konstantinos Servis
+-- Authors:     Yali Sassoon, Alex Dean, Peter van Wesep, Fred Blundun, Konstantinos Servis, Mike Robins
 -- Copyright:   Copyright (c) 2013-2018 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
@@ -46,7 +46,7 @@ CREATE TABLE atomic.events (
 	network_userid varchar(128) encode ZSTD,
 	-- Location
 	geo_country char(2) encode ZSTD,
-	geo_region char(2) encode ZSTD,
+	geo_region char(3) encode ZSTD,
 	geo_city varchar(75) encode ZSTD,
 	geo_zipcode varchar(15) encode ZSTD,
 	geo_latitude double precision encode ZSTD,
@@ -192,10 +192,10 @@ CREATE TABLE atomic.events (
 	-- True timestamp
 	true_tstamp timestamp encode ZSTD,
 
-	CONSTRAINT event_id_0100_pk PRIMARY KEY(event_id)
+	CONSTRAINT event_id_0110_pk PRIMARY KEY(event_id)
 )
 DISTSTYLE KEY
 DISTKEY (event_id)
 SORTKEY (collector_tstamp);
 
-COMMENT ON TABLE "atomic"."events" IS '0.10.0';
+COMMENT ON TABLE "atomic"."events" IS '0.11.0';
