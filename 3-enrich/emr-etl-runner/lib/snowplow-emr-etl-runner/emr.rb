@@ -16,6 +16,7 @@
 require 'contracts'
 require 'pathname'
 require 'uri'
+require 'rest-client'
 
 module Snowplow
   module EmrEtlRunner
@@ -58,10 +59,17 @@ module Snowplow
 
       def list_clusters(client, marker)
         options = {
-            states: ["WAITING", "RUNNING"],
+          states: ["WAITING", "RUNNING"],
         }
         options[:marker] = marker unless marker.nil?
-        client.list_clusters(options)
+        begin
+          retries ||= 0
+          client.list_clusters(options)
+        rescue RestClient::RequestTimeout
+          retries += 1
+          sleep(2 ** retries * 0.1)
+          retry if retries < 3
+        end
       end
 
     end
