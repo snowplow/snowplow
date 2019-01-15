@@ -23,6 +23,7 @@ require 'contracts'
 require 'iglu-client'
 require 'securerandom'
 require 'tempfile'
+require 'rest-client'
 
 # Ruby class to execute Snowplow's Hive jobs against Amazon EMR
 # using Elasticity (https://github.com/rslifka/elasticity).
@@ -681,12 +682,27 @@ module Snowplow
         snowplow_tracking_enabled = ! config[:monitoring][:snowplow].nil?
 
         @pending_jobflow_steps.each do |jobflow_step|
-          @jobflow.add_step(jobflow_step)
+          begin
+            retries || = 0
+            # if the job flow is already running this triggers an HTTP call
+            @jobflow.add_step(jobflow_step)
+          rescue RestClient::RequestTimeout
+            retries += 1
+            sleep(2 ** retries * 0.1)
+            retry if retries < 3
+          end
         end
 
         jobflow_id = @jobflow.jobflow_id
         if jobflow_id.nil?
-          jobflow_id = @jobflow.run
+          begin
+            retries || = 0
+            jobflow_id = @jobflow.run
+          rescue RestClient::RequestTimeout
+            retries += 1
+            sleep(2 ** retries * 0.1)
+            retry if retries < 3
+          end
         end
         logger.debug "EMR jobflow #{jobflow_id} started, waiting for jobflow to complete..."
 
