@@ -23,6 +23,19 @@ module Snowplow
 
     C = Contracts
 
+    def Contract.failure_callback(data)
+      msg = failure_msg(data)
+        .gsub(/access_key_id=>".+?(?=")/, 'access_key_id=>"redacted')
+        .gsub(/secret_access_key=>".+?(?=")/, 'secret_access_key=>"redacted')
+      if data[:return_value]
+        # this failed on the return contract
+        fail ReturnContractError.new(msg, data)
+      else
+        # this failed for a param contract
+        fail data[:contracts].failure_exception.new(msg, data)
+      end
+    end
+
     CompressionFormat = lambda { |s| %w(NONE GZIP).include?(s) }
     VolumeTypes = lambda { |s| %w(standard gp2 io1).include?(s) }
     PositiveInt = lambda { |i| i.is_a?(Integer) && i > 0 }
