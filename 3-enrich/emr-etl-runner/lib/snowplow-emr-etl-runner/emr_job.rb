@@ -36,6 +36,9 @@ module Snowplow
       # Constants
       JAVA_PACKAGE = "com.snowplowanalytics.snowplow"
       PARTFILE_REGEXP = ".*part-.*"
+      PARTFILE_GROUPBY_REGEXP = ".*(part-)\\d+-(.*)"
+      ATOMIC_EVENTS_PARTFILE_GROUPBY_REGEXP = ".*\/atomic-events\/(part-)\\d+-(.*)"
+      SHREDDED_TYPES_PARTFILE_GROUPBY_REGEXP = ".*\/shredded-types\/vendor=(.+)\/name=(.+)\/.+\/version=(.+)\/(part-)\\d+-(.*)"
       STREAM_ENRICH_REGEXP = ".*\.gz"
       SUCCESS_REGEXP = ".*_SUCCESS"
       STANDARD_HOSTED_ASSETS = "s3://snowplow-hosted-assets"
@@ -421,10 +424,11 @@ module Snowplow
           # We need to copy our enriched events from HDFS back to S3
           copy_to_s3_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
           copy_to_s3_step.arguments = [
-            "--src"        , ENRICH_STEP_OUTPUT,
-            "--dest"       , enrich_final_output,
-            "--srcPattern" , PARTFILE_REGEXP,
-            "--s3Endpoint" , s3_endpoint
+            "--src"       , ENRICH_STEP_OUTPUT,
+            "--dest"      , enrich_final_output,
+            "--groupBy"   , PARTFILE_GROUPBY_REGEXP,
+            "--targetSize", "24",
+            "--s3Endpoint", s3_endpoint
           ] + output_codec
           if encrypted
             copy_to_s3_step.arguments = copy_to_s3_step.arguments + [ '--s3ServerSideEncryption' ]
@@ -552,18 +556,50 @@ module Snowplow
           submit_jobflow_step(shred_step, use_persistent_jobflow)
 
           # We need to copy our shredded types from HDFS back to S3
-          copy_to_s3_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
-          copy_to_s3_step.arguments = [
-            "--src"        , SHRED_STEP_OUTPUT,
-            "--dest"       , shred_final_output,
-            "--srcPattern" , PARTFILE_REGEXP,
-            "--s3Endpoint" , s3_endpoint
-          ] + output_codec
-          if encrypted
-            copy_to_s3_step.arguments = copy_to_s3_step.arguments + [ '--s3ServerSideEncryption' ]
+          # Whether to combine the files outputted by the shred step
+          consolidate_shredded_output = config[:aws][:s3][:consolidate_shredded_output]
+          if consolidate_shredded_output
+            copy_atomic_events_to_s3_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
+            copy_atomic_events_to_s3_step.arguments = [
+              "--src"       , SHRED_STEP_OUTPUT,
+              "--dest"      , shred_final_output,
+              "--groupBy"   , ATOMIC_EVENTS_PARTFILE_GROUPBY_REGEXP,
+              "--targetSize", "24",
+              "--s3Endpoint", s3_endpoint
+            ] + output_codec
+            if encrypted
+              copy_atomic_events_to_s3_step.arguments = copy_atomic_events_to_s3_step.arguments + [ '--s3ServerSideEncryption' ]
+            end
+            copy_atomic_events_to_s3_step.name = "[shred] s3-dist-cp: Shredded atomic events HDFS -> S3"
+            submit_jobflow_step(copy_atomic_events_to_s3_step, use_persistent_jobflow)
+
+            copy_shredded_types_to_s3_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
+            copy_shredded_types_to_s3_step.arguments = [
+              "--src"       , SHRED_STEP_OUTPUT,
+              "--dest"      , shred_final_output,
+              "--groupBy"   , SHREDDED_TYPES_PARTFILE_GROUPBY_REGEXP,
+              "--targetSize", "24",
+              "--s3Endpoint", s3_endpoint
+            ] + output_codec
+            if encrypted
+              copy_shredded_types_to_s3_step.arguments = copy_shredded_types_to_s3_step.arguments + [ '--s3ServerSideEncryption' ]
+            end
+            copy_shredded_types_to_s3_step.name = "[shred] s3-dist-cp: Shredded types HDFS -> S3"
+            submit_jobflow_step(copy_shredded_types_to_s3_step, use_persistent_jobflow)
+          else
+            copy_to_s3_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
+            copy_to_s3_step.arguments = [
+              "--src"       , SHRED_STEP_OUTPUT,
+              "--dest"      , shred_final_output,
+              "--srcPattern", PARTFILE_REGEXP,
+              "--s3Endpoint", s3_endpoint
+            ] + output_codec
+            if encrypted
+              copy_to_s3_step.arguments = copy_to_s3_step.arguments + [ '--s3ServerSideEncryption' ]
+            end
+            copy_to_s3_step.name = "[shred] s3-dist-cp: Shredded HDFS -> S3"
+            submit_jobflow_step(copy_to_s3_step, use_persistent_jobflow)
           end
-          copy_to_s3_step.name << ": Shredded HDFS -> S3"
-          submit_jobflow_step(copy_to_s3_step, use_persistent_jobflow)
 
           copy_success_file_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
           copy_success_file_step.arguments = [

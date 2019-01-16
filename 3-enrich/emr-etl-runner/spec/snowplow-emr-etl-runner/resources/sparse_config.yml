@@ -25,6 +25,7 @@ aws:
         bad: sb       # e.g. s3://my-out-bucket/shredded/bad
         errors:      # Leave blank unless :continue_on_unexpected_error: set to true below
         archive: sa    # Not required for Postgres currently
+    consolidate_shredded_output: false
   emr:
     ami_version: 4.7.0      # Don't change this
     region: eu-west-1        # Always set this
