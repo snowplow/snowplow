@@ -36,6 +36,7 @@ module Snowplow
       # Constants
       JAVA_PACKAGE = "com.snowplowanalytics.snowplow"
       PARTFILE_REGEXP = ".*part-.*"
+      PARTFILE_GROUPBY_REGEXP = ".*(part-)\\d+-(.*)"
       STREAM_ENRICH_REGEXP = ".*\.gz"
       SUCCESS_REGEXP = ".*_SUCCESS"
       STANDARD_HOSTED_ASSETS = "s3://snowplow-hosted-assets"
@@ -421,10 +422,11 @@ module Snowplow
           # We need to copy our enriched events from HDFS back to S3
           copy_to_s3_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
           copy_to_s3_step.arguments = [
-            "--src"        , ENRICH_STEP_OUTPUT,
-            "--dest"       , enrich_final_output,
-            "--srcPattern" , PARTFILE_REGEXP,
-            "--s3Endpoint" , s3_endpoint
+            "--src"       , ENRICH_STEP_OUTPUT,
+            "--dest"      , enrich_final_output,
+            "--groupBy"   , PARTFILE_GROUPBY_REGEXP,
+            "--targetSize", "128",
+            "--s3Endpoint", s3_endpoint
           ] + output_codec
           if encrypted
             copy_to_s3_step.arguments = copy_to_s3_step.arguments + [ '--s3ServerSideEncryption' ]
@@ -554,10 +556,11 @@ module Snowplow
           # We need to copy our shredded types from HDFS back to S3
           copy_to_s3_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
           copy_to_s3_step.arguments = [
-            "--src"        , SHRED_STEP_OUTPUT,
-            "--dest"       , shred_final_output,
-            "--srcPattern" , PARTFILE_REGEXP,
-            "--s3Endpoint" , s3_endpoint
+            "--src"       , SHRED_STEP_OUTPUT,
+            "--dest"      , shred_final_output,
+            "--groupBy"   , PARTFILE_GROUPBY_REGEXP,
+            "--targetSize", "128",
+            "--s3Endpoint", s3_endpoint
           ] + output_codec
           if encrypted
             copy_to_s3_step.arguments = copy_to_s3_step.arguments + [ '--s3ServerSideEncryption' ]
