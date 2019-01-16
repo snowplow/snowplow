@@ -101,7 +101,14 @@ module Snowplow
           max_keys: max_keys,
         }
         options[:continuation_token] = token if !token.nil?
-        client.list_objects_v2(options)
+        begin
+          retries ||= 0
+          client.list_objects_v2(options)
+        rescue AWS::S3::Errors::InternalError
+          retries += 1
+          sleep(2 ** retries * 0.1)
+          retry if retries < 3
+        end
       end
 
     end
