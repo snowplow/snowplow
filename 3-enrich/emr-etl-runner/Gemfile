@@ -20,13 +20,14 @@ ruby "2.3.1"
 # built with Bundler, so we add in the
 # RubyGems it requires here.
 gem "contracts", "~> 0.9", "<= 0.11"
-gem "elasticity", "~> 6.0.12"
+gem "elasticity", "~> 6.0.14"
 gem "avro", "~> 1.8.1"
 gem "awrence", "~> 0.1.0"
 gem "snowplow-tracker", "~> 0.5.2"
 gem "iglu-ruby-client", ">= 0.1.0"
 gem "aws-sdk-s3", "~> 1"
 gem "diplomat", "~> 2.0.1"
+gem "rest-client", "~> 1.0"
 
 group :development do
   gem "rspec", "~> 3.5.0"
