@@ -683,7 +683,7 @@ module Snowplow
 
         @pending_jobflow_steps.each do |jobflow_step|
           begin
-            retries || = 0
+            retries ||= 0
             # if the job flow is already running this triggers an HTTP call
             @jobflow.add_step(jobflow_step)
           rescue RestClient::RequestTimeout
@@ -696,7 +696,7 @@ module Snowplow
         jobflow_id = @jobflow.jobflow_id
         if jobflow_id.nil?
           begin
-            retries || = 0
+            retries ||= 0
             jobflow_id = @jobflow.run
           rescue RestClient::RequestTimeout
             retries += 1
