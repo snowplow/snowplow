@@ -157,6 +157,8 @@ module Snowplow
         @jobflow.master_instance_type = config[:aws][:emr][:jobflow][:master_instance_type]
         @jobflow.slave_instance_type  = config[:aws][:emr][:jobflow][:core_instance_type]
 
+        @jobflow.timeout = 120
+
         s3_endpoint = get_s3_endpoint(config[:aws][:s3][:region])
         csbr = config[:aws][:s3][:buckets][:raw]
         csbe = config[:aws][:s3][:buckets][:enriched]
