@@ -427,7 +427,7 @@ module Snowplow
             "--src"       , ENRICH_STEP_OUTPUT,
             "--dest"      , enrich_final_output,
             "--groupBy"   , PARTFILE_GROUPBY_REGEXP,
-            "--targetSize", "128",
+            "--targetSize", "24",
             "--s3Endpoint", s3_endpoint
           ] + output_codec
           if encrypted
@@ -561,7 +561,7 @@ module Snowplow
             "--src"       , SHRED_STEP_OUTPUT,
             "--dest"      , shred_final_output,
             "--groupBy"   , PARTFILE_GROUPBY_REGEXP,
-            "--targetSize", "128",
+            "--targetSize", "24",
             "--s3Endpoint", s3_endpoint
           ] + output_codec
           if encrypted
