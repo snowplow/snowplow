@@ -20,6 +20,14 @@ set -e
 source ~/.rvm/scripts/rvm
 
 rvm use --default jruby-9.1.6.0
+
+git clone https://github.com/benfradet/elasticity
+cd elasticity
+git checkout request
+gem build elasticity
+gem install elasticity
+cd ..
+
 bundle install
 echo 'Running RSpec'
 rspec
