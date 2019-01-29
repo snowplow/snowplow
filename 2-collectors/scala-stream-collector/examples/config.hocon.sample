@@ -20,7 +20,9 @@
 collector {
   # The collector runs as a web service specified on the following interface and port.
   interface = "0.0.0.0"
-  port = {{collectorPort}}
+  interface = ${?COLLECTOR_INTERFACE}
+  port = "{{collectorPort}}"
+  port = ${?COLLECTOR_PORT}
 
   # Configure the P3P policy header.
   p3p {
@@ -34,22 +36,29 @@ collector {
   crossDomain {
     enabled = false
     # Domains that are granted access, *.acme.com will match http://acme.com and http://sub.acme.com
+    enabled = ${?COLLECTOR_CROSS_DOMAIN_ENABLED}
     domains = [ "*" ]
+    domains = [ ${?COLLECTOR_CROSS_DOMAIN_DOMAIN} ]
     # Whether to only grant access to HTTPS or both HTTPS and HTTP sources
     secure = true
+    secure = ${?COLLECTOR_CROSS_DOMAIN_SECURE}
   }
 
   # The collector returns a cookie to clients for user identification
   # with the following domain and expiration.
   cookie {
     enabled = true
-    expiration = {{cookieExpiration}} # e.g. "365 days"
+    enabled = ${?COLLECTOR_COOKIE_ENABLED}
+    expiration = "{{cookieExpiration}}" # e.g. "365 days"
+    expiration = ${?COLLECTOR_COOKIE_EXPIRATION}
     # Network cookie name
-    name = {{collectorCookieName}}
+    name = "{{collectorCookieName}}"
+    name = ${?COLLECTOR_COOKIE_NAME}
     # The domain is optional and will make the cookie accessible to other
     # applications on the domain. Comment out this line to tie cookies to
     # the collector's full domain
     domain = "{{cookieDomain}}"
+    domain = ${?COLLECTOR_COOKIE_DOMAIN}
   }
 
   # If you have a do not track cookie in place, the Scala Stream Collector can respect it by
@@ -58,8 +67,11 @@ collector {
   # The cookie name and value must match the configuration below.
   doNotTrackCookie {
     enabled = false
-    name = {{doNotTrackCookieName}}
-    value = {{doNotTrackCookieValue}}
+    enabled = ${?COLLECTOR_DO_NOT_TRACK_COOKIE_ENABLED}
+    name = "{{doNotTrackCookieName}}"
+    name = ${?COLLECTOR_DO_NOT_TRACK_COOKIE_NAME}
+    value = "{{doNotTrackCookieValue}}"
+    value = ${?COLLECTOR_DO_NOT_TRACK_COOKIE_VALUE}
   }
 
   # When enabled and the cookie specified above is missing, performs a redirect to itself to check
@@ -67,15 +79,19 @@ collector {
   # fallbackNetworkId is used instead of generating a new random one.
   cookieBounce {
     enabled = false
+    enabled = ${?COLLECTOR_COOKIE_BOUNCE_ENABLED}
     # The name of the request parameter which will be used on redirects checking that third-party
     # cookies work.
     name = "n3pc"
+    name = ${?COLLECTOR_COOKIE_BOUNCE_NAME}
     # Network user id to fallback to when third-party cookies are blocked.
     fallbackNetworkUserId = "00000000-0000-4000-A000-000000000000"
+    fallbackNetworkUserId = ${?COLLECTOR_COOKIE_BOUNCE_FALLBACK_NETWORK_USER_ID}
     # Optionally, specify the name of the header containing the originating protocol for use in the
     # bounce redirect location. Use this if behind a load balancer that performs SSL termination.
     # The value of this header must be http or https. Example, if behind an AWS Classic ELB.
     forwardedProtocolHeader = "X-Forwarded-Proto"
+    forwardedProtocolHeader = ${?COLLECTOR_COOKIE_BOUNCE_FORWARDED_PROTOCOL_HEADER}
   }
 
   # When enabled, the redirect url passed via the `u` query parameter is scanned for a placeholder
@@ -83,34 +99,43 @@ collector {
   # specified, the default value is `${SP_NUID}`.
   redirectMacro {
     enabled = false
+    enabled = ${?COLLECTOR_REDIRECT_MACRO_ENABLED}
     # Optional custom placeholder token (defaults to the literal `${SP_NUID}`)
     placeholder = "[TOKEN]"
+    placeholder = ${?COLLECTOR_REDIRECT_REDIRECT_MACRO_PLACEHOLDER}
   }
 
   # Customize response handling for requests for the root path ("/").
   # Useful if you need to redirect to web content or privacy policies regarding the use of this collector.
   rootResponse {
     enabled = false
+    enabled = ${?COLLECTOR_ROOT_RESPONSE_ENABLED}
     statusCode = 302
+    statusCode = ${?COLLECTOR_ROOT_STATUS_CODE}
     # Optional, defaults to empty map
     headers = {
-        Location = "https://127.0.0.1/",
-        X-Custom = "something"
+      Location = "https://127.0.0.1/",
+      Location = ${?COLLECTOR_ROOT_RESPONSE_HEADERS_LOCATION},
+      X-Custom = "something"
     }
     # Optional, defaults to empty string
     body = "302, redirecting"
+    body = ${?COLLECTOR_ROOT_RESPONSE_BODY}
   }
 
   streams {
     # Events which have successfully been collected will be stored in the good stream/topic
-    good = {{good}}
+    good = "{{good}}"
+    good = ${?COLLECTOR_STREAMS_GOOD}
 
     # Events that are too big (w.r.t Kinesis 1MB limit) will be stored in the bad stream/topic
-    bad = {{bad}}
+    bad = "{{bad}}"
+    bad = ${?COLLECTOR_STREAMS_BAD}
 
     # Whether to use the incoming event's ip as the partition key for the good stream/topic
     # Note: Nsq does not make use of partition key.
     useIpAddressAsPartitionKey = false
+    useIpAddressAsPartitionKey = ${?COLLECTOR_STREAMS_USE_IP_ADDRESS_AS_PARTITION_KEY}
 
     # Enable the chosen sink by uncommenting the appropriate configuration
     sink {
@@ -118,16 +143,20 @@ collector {
       # To use stdout, comment or remove everything in the "collector.streams.sink" section except
       # "enabled" which should be set to "stdout".
       enabled = kinesis
+      enabled = ${?COLLECTOR_STREAMS_SINK_ENABLED}
 
       # Region where the streams are located
-      region = {{kinesisRegion}}
+      region = "{{kinesisRegion}}"
+      region = ${?COLLECTOR_STREAMS_SINK_REGION}
 
       ## Optional endpoint url configuration to override aws kinesis endpoints,
       ## this can be used to specify local endpoints when using localstack
       # customEndpoint = {{kinesisEndpoint}}
+      # customEndpoint = ${?COLLECTOR_STREAMS_SINK_CUSTOM_ENDPOINT}
 
       # Thread pool size for Kinesis API requests
       threadPoolSize = 10
+      threadPoolSize = ${?COLLECTOR_STREAMS_SINK_THREAD_POOL_SIZE}
 
       # The following are used to authenticate for the Amazon Kinesis sink.
       # If both are set to 'default', the default provider chain is used
@@ -135,14 +164,18 @@ collector {
       # If both are set to 'iam', use AWS IAM Roles to provision credentials.
       # If both are set to 'env', use environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
       aws {
-        accessKey = iam
-        secretKey = iam
+        accessKey = "iam"
+        accessKey = ${?COLLECTOR_STREAMS_SINK_AWS_ACCESS_KEY}
+        secretKey = "iam"
+        secretKey = ${?COLLECTOR_STREAMS_SINK_AWS_SECRET_KEY}
       }
 
       # Minimum and maximum backoff periods, in milliseconds
       backoffPolicy {
-        minBackoff = {{minBackoffMillis}}
-        maxBackoff = {{maxBackoffMillis}}
+        minBackoff = "{{minBackoffMillis}}"
+        minBackoff = ${?COLLECTOR_STREAMS_SINK_MIN_BACKOFF}
+        maxBackoff = "{{maxBackoffMillis}}"
+        maxBackoff = ${?COLLECTOR_STREAMS_SINK_MAX_BACKOFF}
       }
 
       # Or Google Pubsub
@@ -175,9 +208,12 @@ collector {
     # - the combined size of the stored records reaches byte-limit or
     # - the time in milliseconds since the buffer was last emptied reaches time-limit
     buffer {
-      byteLimit = {{bufferByteThreshold}}
-      recordLimit = {{bufferRecordThreshold}} # Not supported by Kafka; will be ignored
-      timeLimit = {{bufferTimeThreshold}}
+      byteLimit = "{{bufferByteThreshold}}"
+      byteLimit = ${?COLLECTOR_STREAMS_BUFFER_BYTE_LIMIT}
+      recordLimit = "{{bufferRecordThreshold}}" # Not supported by Kafka; will be ignored
+      recordLimit = ${?COLLECTOR_STREAMS_BUFFER_RECORD_LIMIT}
+      timeLimit = "{{bufferTimeThreshold}}"
+      timeLimit = ${?COLLECTOR_STREAMS_BUFFER_TIME_LIMIT}
     }
   }
 }
@@ -186,7 +222,9 @@ collector {
 # http://doc.akka.io/docs/akka/current/scala/general/configuration.html
 akka {
   loglevel = DEBUG # 'OFF' for no logging, 'DEBUG' for all logging.
+  loglevel = ${?AKKA_LOGLEVEL}
   loggers = ["akka.event.slf4j.Slf4jLogger"]
+  loggers = [${?AKKA_LOGGERS}]
 
   # akka-http is the server the Stream collector uses and has configurable options defined at
   # http://doc.akka.io/docs/akka-http/current/scala/http/configuration.html
@@ -195,13 +233,17 @@ akka {
     # should be set. By default, this is disabled, and enabling it
     # adds the 'Remote-Address' header to every request automatically.
     remote-address-header = on
+    remote-address-header = ${?AKKA_HTTP_SERVER_REMOTE_ADDRESS_HEADER}
 
     raw-request-uri-header = on
+    raw-request-uri-header = ${?AKKA_HTTP_SERVER_RAW_REQUEST_URI_HEADER}
 
     # Define the maximum request length (the default is 2048)
     parsing {
       max-uri-length = 32768
+      max-uri-lenght = ${?AKKA_HTTP_SERVER_PARSING_MAX_URI_LENGHT}
       uri-parsing-mode = relaxed
+      uri-parsing-mode = ${?AKKA_HTTP_SERVER_PARSING_URI_PARSING_MODE}
     }
   }
 }
