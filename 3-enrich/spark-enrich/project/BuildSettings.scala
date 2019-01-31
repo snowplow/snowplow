@@ -14,6 +14,7 @@
  */
 import sbt._
 import Keys._
+import sbtbuildinfo.BuildInfoKey
 
 // Scalafmt plugin
 import com.lucidchart.sbt.scalafmt.ScalafmtPlugin._
@@ -24,6 +25,9 @@ object BuildSettings {
   // Basic settings for our app
   lazy val basicSettings = Seq(
     organization  := "com.snowplowanalytics",
+    name := "snowplow-spark-enrich",
+    version := "1.16.0",
+    description := "The Snowplow Spark Enrichment process",
     scalaVersion  := "2.11.11",
     scalacOptions := compilerOptions,
     javacOptions  := javaCompilerOptions,
@@ -51,24 +55,14 @@ object BuildSettings {
     "-target", "1.8"
   )
 
-  // Makes our SBT app settings available from within the ETL
-  lazy val scalifySettings = Seq(
-    sourceGenerators in Compile += Def.task {
-      val file = (sourceManaged in Compile).value / "settings.scala"
-      IO.write(file, """package com.snowplowanalytics.snowplow.enrich.spark.generated
-        |object ProjectSettings {
-        |  val version = "%s"
-        |  val name = "%s"
-        |  val organization = "%s"
-        |  val scalaVersion = "%s"
-        |  val commonEnrichVersion = "%s"
-        |}
-        |""".stripMargin.format(version.value, name.value, organization.value, scalaVersion.value, Dependencies.V.commonEnrich))
-      Seq(file)
-    }.taskValue
+  lazy val buildInfoSettings = Seq [BuildInfoKey](
+    organization,
+    name,
+    version,
+    "commonEnrichVersion" -> Dependencies.V.commonEnrich
   )
 
-  lazy val buildSettings = basicSettings ++ scalifySettings
+  lazy val buildInfoPackage = "com.snowplowanalytics.snowplow.enrich.spark.generated"
 
   // sbt-assembly settings for building a fat jar
   import sbtassembly.AssemblyPlugin.autoImport._

@@ -14,13 +14,14 @@
  */
 lazy val root = project
   .in(file("."))
+  .enablePlugins(BuildInfoPlugin)
   .settings(
     name := "snowplow-spark-enrich",
     version := "1.16.0",
     description := "The Snowplow Spark Enrichment process"
   )
   .settings(BuildSettings.formatting)
-  .settings(BuildSettings.buildSettings)
+  .settings(BuildSettings.basicSettings)
   .settings(BuildSettings.sbtAssemblySettings)
   .settings(
     libraryDependencies ++= Seq(
@@ -41,6 +42,10 @@ lazy val root = project
       Dependencies.Libraries.snowplowRawEvent,
       Dependencies.Libraries.collectorPayload
     )
+  )
+  .settings(
+    buildInfoKeys := BuildSettings.buildInfoSettings,
+    buildInfoPackage := BuildSettings.buildInfoPackage
   )
 
 shellPrompt := { _ =>
