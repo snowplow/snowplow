@@ -65,7 +65,7 @@ object EnrichJobSpec {
   }
 
   val etlVersion =
-    s"spark-${generated.ProjectSettings.version}-common-${generated.ProjectSettings.commonEnrichVersion}"
+    s"spark-${generated.BuildInfo.version}-common-${generated.BuildInfo.commonEnrichVersion}"
 
   val etlTimestamp = "2001-09-09 01:46:40.000"
 
