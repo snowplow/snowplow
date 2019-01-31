@@ -90,7 +90,7 @@ object EnrichJob extends SparkJob {
 
   def apply(spark: SparkSession, args: Array[String]) = new EnrichJob(spark, args)
 
-  val etlVersion = s"spark-${generated.ProjectSettings.version}"
+  val etlVersion = s"spark-${generated.BuildInfo.version}"
 
   /**
    * Project our Failures into a List of Nel of strings.
