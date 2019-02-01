@@ -32,7 +32,7 @@ object Dependencies {
     val elephantBird     = "4.14"
     val geoip2           = "2.5.0"
     // Scala
-    val spark            = "2.2.0"
+    val spark            = "2.3.2"
     val scalaz7          = "7.0.9"
     val scopt            = "3.5.0"
     val commonEnrich     = "0.35.0"
