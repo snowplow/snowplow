@@ -723,9 +723,9 @@ module Snowplow
             retries ||= 0
             # if the job flow is already running this triggers an HTTP call
             @jobflow.add_step(jobflow_step)
-          rescue RestClient::RequestTimeout
+          rescue Elasticity::ThrottlingException, RestClient::RequestTimeout, RestClient::InternalServerError, RestClient::ServiceUnavailable, RestClient::SSLCertificateNotVerified
             retries += 1
-            sleep(2 ** retries * 0.1)
+            sleep(2 ** retries * 1)
             retry if retries < 3
           end
         end
