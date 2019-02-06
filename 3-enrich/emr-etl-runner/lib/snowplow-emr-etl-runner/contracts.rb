@@ -102,7 +102,8 @@ module Snowplow
         :secret_access_key => String,
         :s3 => ({
           :region => String,
-          :buckets => BucketHash
+          :buckets => BucketHash,
+          :consolidate_shredded_output => Bool
           }),
         :emr => ({
           :ami_version => String,
