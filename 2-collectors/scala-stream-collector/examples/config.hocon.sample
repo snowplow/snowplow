@@ -21,7 +21,7 @@ collector {
   # The collector runs as a web service specified on the following interface and port.
   interface = "0.0.0.0"
   interface = ${?COLLECTOR_INTERFACE}
-  port = "{{collectorPort}}"
+  port = {{collectorPort}}
   port = ${?COLLECTOR_PORT}
 
   # Configure the P3P policy header.
@@ -49,15 +49,15 @@ collector {
   cookie {
     enabled = true
     enabled = ${?COLLECTOR_COOKIE_ENABLED}
-    expiration = "{{cookieExpiration}}" # e.g. "365 days"
+    expiration = {{cookieExpiration}} # e.g. "365 days"
     expiration = ${?COLLECTOR_COOKIE_EXPIRATION}
     # Network cookie name
-    name = "{{collectorCookieName}}"
+    name = {{collectorCookieName}}
     name = ${?COLLECTOR_COOKIE_NAME}
     # The domain is optional and will make the cookie accessible to other
     # applications on the domain. Comment out this line to tie cookies to
     # the collector's full domain
-    domain = "{{cookieDomain}}"
+    domain = {{cookieDomain}}
     domain = ${?COLLECTOR_COOKIE_DOMAIN}
   }
 
@@ -68,9 +68,9 @@ collector {
   doNotTrackCookie {
     enabled = false
     enabled = ${?COLLECTOR_DO_NOT_TRACK_COOKIE_ENABLED}
-    name = "{{doNotTrackCookieName}}"
+    name = {{doNotTrackCookieName}}
     name = ${?COLLECTOR_DO_NOT_TRACK_COOKIE_NAME}
-    value = "{{doNotTrackCookieValue}}"
+    value = {{doNotTrackCookieValue}}
     value = ${?COLLECTOR_DO_NOT_TRACK_COOKIE_VALUE}
   }
 
@@ -125,11 +125,11 @@ collector {
 
   streams {
     # Events which have successfully been collected will be stored in the good stream/topic
-    good = "{{good}}"
+    good = {{good}}
     good = ${?COLLECTOR_STREAMS_GOOD}
 
     # Events that are too big (w.r.t Kinesis 1MB limit) will be stored in the bad stream/topic
-    bad = "{{bad}}"
+    bad = {{bad}}
     bad = ${?COLLECTOR_STREAMS_BAD}
 
     # Whether to use the incoming event's ip as the partition key for the good stream/topic
@@ -146,7 +146,7 @@ collector {
       enabled = ${?COLLECTOR_STREAMS_SINK_ENABLED}
 
       # Region where the streams are located
-      region = "{{kinesisRegion}}"
+      region = {{kinesisRegion}}
       region = ${?COLLECTOR_STREAMS_SINK_REGION}
 
       ## Optional endpoint url configuration to override aws kinesis endpoints,
@@ -172,9 +172,9 @@ collector {
 
       # Minimum and maximum backoff periods, in milliseconds
       backoffPolicy {
-        minBackoff = "{{minBackoffMillis}}"
+        minBackoff = {{minBackoffMillis}}
         minBackoff = ${?COLLECTOR_STREAMS_SINK_MIN_BACKOFF}
-        maxBackoff = "{{maxBackoffMillis}}"
+        maxBackoff = {{maxBackoffMillis}}
         maxBackoff = ${?COLLECTOR_STREAMS_SINK_MAX_BACKOFF}
       }
 
@@ -190,13 +190,13 @@ collector {
       #}
 
       # Or Kafka
-      #brokers = "{{kafkaBrokers}}"
+      #brokers = {{kafkaBrokers}}
       ## Number of retries to perform before giving up on sending a record
       #retries = 0
 
       # Or NSQ
       ## Host name for nsqd
-      #host = "{{nsqHost}}"
+      #host = {{nsqHost}}
       ## TCP port for nsqd, 4150 by default
       #port = {{nsqdPort}}
     }
@@ -208,11 +208,11 @@ collector {
     # - the combined size of the stored records reaches byte-limit or
     # - the time in milliseconds since the buffer was last emptied reaches time-limit
     buffer {
-      byteLimit = "{{bufferByteThreshold}}"
+      byteLimit = {{bufferByteThreshold}}
       byteLimit = ${?COLLECTOR_STREAMS_BUFFER_BYTE_LIMIT}
-      recordLimit = "{{bufferRecordThreshold}}" # Not supported by Kafka; will be ignored
+      recordLimit = {{bufferRecordThreshold}} # Not supported by Kafka; will be ignored
       recordLimit = ${?COLLECTOR_STREAMS_BUFFER_RECORD_LIMIT}
-      timeLimit = "{{bufferTimeThreshold}}"
+      timeLimit = {{bufferTimeThreshold}}
       timeLimit = ${?COLLECTOR_STREAMS_BUFFER_TIME_LIMIT}
     }
   }
