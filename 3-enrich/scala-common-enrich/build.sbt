@@ -25,6 +25,7 @@ lazy val root = project
   .settings(BuildSettings.formatting)
   .settings(BuildSettings.buildSettings)
   .settings(BuildSettings.publishSettings)
+  .settings(parallelExecution in Test := false)
   .settings(
     libraryDependencies ++= Seq(
       // Java
