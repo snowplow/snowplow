@@ -92,3 +92,9 @@ lazy val stdout = project
   .settings(moduleName := "snowplow-stream-collector-stdout")
   .settings(allSettings)
   .dependsOn(core)
+
+lazy val eventhub = project
+  .settings(moduleName := "snowplow-stream-collector-eventhub")
+  .settings(allSettings)
+  .settings(libraryDependencies ++= Seq(Dependencies.Libraries.eventHub))
+  .dependsOn(core)

@@ -28,6 +28,7 @@ object Dependencies {
     val pubsub               = "0.37.0-beta"
     val kafka                = "1.0.1"
     val nsqClient            = "1.2.0"
+    val eventHub             = "2.4.0"
     val yodaTime             = "2.9.9"
     val slf4j                = "1.7.5"
     val config               = "1.3.1"
@@ -51,6 +52,7 @@ object Dependencies {
     val pubsub               = "com.google.cloud"      %  "google-cloud-pubsub"    % V.pubsub
     val kafkaClients         = "org.apache.kafka"      %  "kafka-clients"          % V.kafka
     val nsqClient            = "com.snowplowanalytics" %  "nsq-java-client"        % V.nsqClient
+    val eventHub             = "com.microsoft.azure"   %   "azure-eventhubs-eph"   % V.eventHub
     val yodaTime             = "joda-time"             %  "joda-time"              % V.yodaTime
     val slf4j                = "org.slf4j"             %  "slf4j-simple"           % V.slf4j
     val log4jOverSlf4j       = "org.slf4j"             %  "log4j-over-slf4j"       % V.slf4j
