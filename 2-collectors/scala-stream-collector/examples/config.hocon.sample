@@ -114,7 +114,7 @@ collector {
 
     # Enable the chosen sink by uncommenting the appropriate configuration
     sink {
-      # Choose between kinesis, googlepubsub, kafka, nsq, or stdout.
+      # Choose between kinesis, googlepubsub, kafka, nsq, stdout or eventhub.
       # To use stdout, comment or remove everything in the "collector.streams.sink" section except
       # "enabled" which should be set to "stdout".
       enabled = kinesis
@@ -166,6 +166,16 @@ collector {
       #host = "{{nsqHost}}"
       ## TCP port for nsqd, 4150 by default
       #port = {{nsqdPort}}
+
+      # Or EventHub
+      domainName = "servicebus.windows.net"
+
+      eventHubKeys {
+        goodAccessKeyName = ""
+        goodAccessKey = ""
+        badAccessKeyName = ""
+        badAccessKey = ""
+      }
     }
 
     # Incoming events are stored in a buffer before being sent to Kinesis/Kafka.
