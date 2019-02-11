@@ -57,6 +57,7 @@ lazy val root = project
       Dependencies.Libraries.scalaUri,
       Dependencies.Libraries.scalaForex,
       Dependencies.Libraries.scalaWeather,
+      Dependencies.Libraries.openCage,
       Dependencies.Libraries.scalaj,
       Dependencies.Libraries.gatlingJsonpath,
       // Scala (test only)

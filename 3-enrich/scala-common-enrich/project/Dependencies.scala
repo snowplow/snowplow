@@ -68,6 +68,7 @@ object Dependencies {
     val scalaCheck       = "1.10.0"
     val scaldingArgs     = "0.13.0"
     val mockito          = "1.10.19"
+    val openCage         = "1.1.0"
   }
 
   object Libraries {
@@ -101,6 +102,7 @@ object Dependencies {
     val igluClient       = "com.snowplowanalytics"      %%  "iglu-scala-client"            % V.igluClient
     val scalaUri         = "io.lemonlabs"               %% "scala-uri"                     % V.scalaUri
     val scalaWeather     = "com.snowplowanalytics"      %% "scala-weather"                 % V.scalaWeather
+    val openCage         = "com.opencagedata"           %% "scala-opencage-geocoder"       % V.openCage
     val scalaj           = "org.scalaj"                 %% "scalaj-http"                   % V.scalaj
     val gatlingJsonpath  = "io.gatling"                 %% "jsonpath"                      % V.gatlingJsonpath
     // Scala (test only)
