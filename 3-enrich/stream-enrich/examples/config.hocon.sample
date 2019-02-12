@@ -21,15 +21,19 @@ enrich {
     in {
       # Stream/topic where the raw events to be enriched are located
       raw = {{streamsInRaw}}
+      raw = ${?ENRICH_STREAMS_IN_RAW}
     }
 
     out {
       # Stream/topic where the events that were successfully enriched will end up
       enriched = {{outEnriched}}
+      enriched = ${?ENRICH_STREAMS_OUT_ENRICHED}
       # Stream/topic where the event that failed enrichment will be stored
       bad = {{outBad}}
+      bad = ${?ENRICH_STREAMS_OUT_BAD}
       # Stream/topic where the pii tranformation events will end up
       pii = {{outPii}}
+      pii = ${?ENRICH_STREAMS_OUT_PII}
 
       # How the output stream/topic will be partitioned.
       # Possible partition keys are: event_id, event_fingerprint, domain_userid, network_userid,
@@ -39,6 +43,7 @@ enrich {
       # Otherwise, the partition key will be a random UUID.
       # Note: Nsq does not make use of partition key.
       partitionKey = {{partitionKeyName}}
+      partitionKey = ${?ENRICH_STREAMS_OUT_PARTITION_KEY}
     }
 
     # Configuration shown is for Kafka, to use another uncomment the appropriate configuration
@@ -53,13 +58,16 @@ enrich {
       # 'nsq' for reading / writing to a Nsq topic
       # 'stdin' for reading from stdin and writing to stdout and stderr
       enabled =  {{sinkType}}
+      enabled =  ${?ENRICH_STREAMS_SOURCE_SINK_ENABLED}
 
       # Region where the streams are located (AWS region, pertinent to kinesis sink/source type)
       # region = {{region}}
+      # region = ${?ENRICH_STREAMS_SOURCE_SINK_REGION}
 
       ## Optional endpoint url configuration to override aws kinesis endpoints,
       ## this can be used to specify local endpoints when using localstack
       # customEndpoint = {{kinesisEndpoint}}
+      # customEndpoint = ${?ENRICH_STREAMS_SOURCE_SINK_CUSTOM_ENDPOINT}
 
       # AWS credentials
       # If both are set to 'default', use the default AWS credentials provider chain.
@@ -67,11 +75,14 @@ enrich {
       # If both are set to 'env', use env variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
       # aws {
       #   accessKey = iam
+      #   accessKey = ${?ENRICH_STREAMS_SOURCE_SINK_AWS_ACCESS_KEY}
       #   secretKey = iam
+      #   secretKey = ${?ENRICH_STREAMS_SOURCE_SINK_AWS_SECRET_KEY}
       # }
 
       # Maximum number of records to get from Kinesis per call to GetRecords
       # maxRecords = 10000
+      # maxRecords = ${?ENRICH_MAX_RECORDS}
 
       # LATEST: most recent data.
       # TRIM_HORIZON: oldest available data.
@@ -79,17 +90,21 @@ enrich {
       # Note: This only effects the first run of this application on a stream.
       # (pertinent to kinesis source type)
       # initialPosition = TRIM_HORIZON
+      # initialPosition = ${?ENRICH_STREAMS_SOURCE_SINK_INITIAL_POSITION}
 
       # Need to be specified when initial-position is "AT_TIMESTAMP".
       # Timestamp format need to be in "yyyy-MM-ddTHH:mm:ssZ".
       # Ex: "2017-05-17T10:00:00Z"
       # Note: Time need to specified in UTC.
       initialTimestamp = "{{initialTimestamp}}"
+      initialTimestamp = ${?ENRICH_STREAMS_SOURCE_SINK_INITIAL_TIMESTAMP}
 
       # Minimum and maximum backoff periods, in milliseconds
       backoffPolicy {
         minBackoff = {{enrichStreamsOutMinBackoff}}
+        minBackoff = ${?ENRICH_STREAMS_SOURCE_SINK_BACKOFF_POLICY_MIN_BACKOFF}
         maxBackoff = {{enrichStreamsOutMaxBackoff}}
+        maxBackoff = ${?ENRICH_STREAMS_SOURCE_SINK_BACKOFF_POLICY_MAX_BACKOFF}
       }
 
       # Or Kafka (Comment out for other types)
@@ -146,23 +161,31 @@ enrich {
     #   a new event enters the buffer
     buffer {
       byteLimit = {{bufferByteThreshold}}
+      byteLimit = ${?ENRICH_STREAMS_BUFFER_BYTE_LIMIT}
       recordLimit = {{bufferRecordThreshold}} # Not supported by Kafka; will be ignored
+      recordLimit = ${?ENRICH_STREAMS_BUFFER_RECORD_LIMIT}
       timeLimit = {{bufferTimeThreshold}}
+      timeLimit = ${?ENRICH_STREAMS_BUFFER_TIME_LIMIT}
     }
 
     # Used for a DynamoDB table to maintain stream state.
     # Used as the Kafka consumer group ID.
     # Used as the Google PubSub subscription name.
     appName = "{{appName}}"
+    appName = ${?ENRICH_STREAMS_APP_NAME}
   }
 
   # Optional section for tracking endpoints
   monitoring {
     snowplow {
       collectorUri = "{{collectorUri}}"
+      collectorUri = ${?ENRICH_MONITORING_COLLECTOR_URI}
       collectorPort = 80
+      collectorPort = ${?ENRICH_MONITORING_COLLECTOR_PORT}
       appId = {{enrichAppName}}
+      appId = ${?ENRICH_MONITORING_APP_ID}
       method = GET
+      method = ${?ENRICH_MONITORING_METHOD}
     }
   }
 }
