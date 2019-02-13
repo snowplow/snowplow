@@ -228,7 +228,8 @@ object EnrichJobSpec {
   private val igluCentralConfig = {
     val encoder = new Base64(true)
     new String(
-      encoder.encode("""|{
+      encoder.encode(
+        """|{
         |"schema": "iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-0",
         |"data": {
           |"cacheSize": 500,
@@ -240,6 +241,16 @@ object EnrichJobSpec {
             |"connection": {
               |"http": {
                 |"uri": "http://iglucentral.com"
+              |}
+            |}
+          |},
+          |{
+            |"name": "tmp",
+            |"priority": 0,
+            |"vendorPrefixes": [ "com.snowplowanalytics" ],
+            |"connection": {
+              |"http": {
+                |"uri": "http://iglucentral-dev.com.s3-website-us-east-1.amazonaws.com/release/r101"
               |}
             |}
           |}
