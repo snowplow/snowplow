@@ -14,7 +14,7 @@ package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
 import com.snowplowanalytics.snowplow.enrich.common.ValidatedNelMessage
 import com.snowplowanalytics.snowplow.enrich.common.utils.ScalazJson4sUtils
-import com.opencagedata.geocoder.{OpenCageClient, OpenCageResponse, OpencageClientError, TimeoutError}
+import com.opencagedata.geocoder._
 import com.twitter.util.SynchronizedLruMap
 import org.json4s.JValue
 
@@ -95,12 +95,19 @@ case class OpenCageEnrichment(apiKey: String, cacheSize: Int, geoPrecision: Int,
   private def getGeocoding(latitude: Option[JFloat], longitude: Option[JFloat]): Validation[String, JObject] =
     (latitude, longitude) match {
       case (Some(lat), Some(lon)) =>
-        getCachedOrRequest(lat, lon).flatMap { geocoding =>
-          // TODO. Fix hardcoding variable
-          JObject(List(("aux", JString("Hola")))).success
-        }
+        for {
+          request             <- getCachedOrRequest(lat, lon)
+          transformedLocation <- transformLocation(request)
+          obj                 <- transformedLocationToJValue(transformedLocation)
+        } yield obj
 
       case _ => s"One of the required event fields missing. latitude $latitude, longitude: $longitude".fail
+    }
+
+  private def transformedLocationToJValue(location: TransformedLocation): Validation[String, JObject] =
+    Extraction.decompose(location) match {
+      case obj: JObject => obj.success
+      case _            => s"Couldn't transform location object $location into JSON".fail // Shouldn't ever happen
     }
 
   /**
@@ -121,7 +128,23 @@ case class OpenCageEnrichment(apiKey: String, cacheSize: Int, geoPrecision: Int,
   private def addSchema(context: JObject): JObject =
     ("schema", schemaUri) ~ (("data", context))
 
+  /**
+   * Apply all necessary transformations from `com.opencagedata.geocoder.OpenCageResponse` to `TransformedLocation`
+   * for further JSON Object decomposition
+   *
+   * @param origin original OpenCageResponse object
+   * @return transformed Location
+   */
+  private[enrichments] def transformLocation(origin: OpenCageResponse): Validation[String, TransformedLocation] =
+    origin.results.headOption
+      .flatMap { result: parts.Result =>
+        result.formattedAddress map TransformedLocation
+      }
+      .toSuccess("Empty list of results although the call went OK")
+
 }
+
+private[enrichments] case class TransformedLocation(address: String)
 
 case class OpencageCache(
   client: OpenCageClient,
