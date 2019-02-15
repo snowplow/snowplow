@@ -494,6 +494,16 @@ object EnrichmentManager {
       case None => Nil
     }
 
+    // Fetch opencage locations
+    val openCageContext = registry.getOpenCageEnrichment match {
+      case Some(oce) => {
+        oce
+          .getGeoCodingContext(Option(event.geo_latitude), Option(event.geo_longitude))
+          .map(_.some)
+      }
+      case None => None.success
+    }
+
     // Fetch weather context
     val weatherContext = registry.getWeatherEnrichment match {
       case Some(we) => {
@@ -507,6 +517,8 @@ object EnrichmentManager {
 
     // Assemble array of contexts prepared by built-in enrichments
     val preparedDerivedContexts = List(uaParser).collect {
+      case Success(Some(context)) => context
+    } ++ List(openCageContext).collect {
       case Success(Some(context)) => context
     } ++ List(weatherContext).collect {
       case Success(Some(context)) => context

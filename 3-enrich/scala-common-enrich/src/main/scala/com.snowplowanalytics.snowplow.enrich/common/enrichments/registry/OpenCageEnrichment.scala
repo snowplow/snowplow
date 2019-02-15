@@ -11,15 +11,14 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
+import com.opencagedata.geocoder._
 import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
 import com.snowplowanalytics.snowplow.enrich.common.ValidatedNelMessage
 import com.snowplowanalytics.snowplow.enrich.common.utils.ScalazJson4sUtils
-import com.opencagedata.geocoder._
 import com.twitter.util.SynchronizedLruMap
-import org.json4s.JValue
 
-import scala.concurrent.duration._
 import scala.concurrent.Await
+import scala.concurrent.duration._
 import scala.util.Try
 import scala.util.control.NonFatal
 
@@ -27,13 +26,12 @@ import scala.util.control.NonFatal
 import java.lang.{Float => JFloat}
 
 // Scalaz
+import scalaz.Scalaz._
 import scalaz._
-import Scalaz._
 
 // json4s
-import org.json4s.{DefaultFormats, JObject, JString, JValue}
-import org.json4s.Extraction
 import org.json4s.JsonDSL._
+import org.json4s.{DefaultFormats, Extraction, JObject, JValue}
 
 /**
  * Companion object. Lets us create an OpenCageEnrichment instance from a JValue
@@ -45,14 +43,14 @@ object OpenCageEnrichmentConfig extends ParseableEnrichment {
     SchemaCriterion("com.snowplowanalytics.snowplow.enrichments", "opencage_enrichment_config", "jsonschema", 1, 0)
 
   def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[OpenCageEnrichment] =
-    isParseable(config, schemaKey).flatMap { conf =>
+    isParseable(config, schemaKey).flatMap { _ =>
       {
         (for {
-          apiKey       <- ScalazJson4sUtils.extract[String](config, "parameters", "apiKey")
-          cacheSize    <- ScalazJson4sUtils.extract[Int](config, "parameters", "cacheSize")
-          geoPrecision <- ScalazJson4sUtils.extract[Int](config, "parameters", "geoPrecision")
-          timeout      <- ScalazJson4sUtils.extract[Int](config, "parameters", "timeout")
-        } yield OpenCageEnrichment(apiKey, cacheSize, geoPrecision, timeout)).toValidationNel
+          apiKey    <- ScalazJson4sUtils.extract[String](config, "parameters", "apiKey")
+          cacheSize <- ScalazJson4sUtils.extract[Int](config, "parameters", "cacheSize")
+          scale     <- ScalazJson4sUtils.extract[Int](config, "parameters", "scale")
+          timeout   <- ScalazJson4sUtils.extract[Int](config, "parameters", "timeout")
+        } yield OpenCageEnrichment(apiKey, cacheSize, scale, timeout)).toValidationNel
       }
     }
 }
@@ -61,15 +59,21 @@ object OpenCageEnrichmentConfig extends ParseableEnrichment {
  * Contains location enrichment based on geo coordinates and time
  *
  * @param apiKey OpenCage's API key
+ * @param cacheSize amount of locations with prefetched geolocation info
+ * @param scale Number of decimals to keep from coordinates. Above 6 is useless
+ * @param timeout Number of seconds to wait for OpenCage API to respond
  */
-case class OpenCageEnrichment(apiKey: String, cacheSize: Int, geoPrecision: Int, timeout: Int) extends Enrichment {
+case class OpenCageEnrichment(apiKey: String, cacheSize: Int, scale: Int, timeout: Int) extends Enrichment {
+
+  type Geocode = parts.Result
+
   private lazy val client = new OpenCageClient(apiKey)
 
   private val schemaUri = "iglu:com.opencagedata/geocoder/jsonschema/1-0-0"
 
-  private implicit val formats = DefaultFormats
+  private implicit val formats: DefaultFormats.type = DefaultFormats
 
-  protected val cache = OpencageCache(client, cacheSize, geoPrecision, timeout)
+  protected val cache = OpencageCache(client, cacheSize, scale, timeout)
 
   /**
    * Get textual description of a location for a specific event
@@ -96,15 +100,15 @@ case class OpenCageEnrichment(apiKey: String, cacheSize: Int, geoPrecision: Int,
     (latitude, longitude) match {
       case (Some(lat), Some(lon)) =>
         for {
-          request             <- getCachedOrRequest(lat, lon)
-          transformedLocation <- transformLocation(request)
-          obj                 <- transformedLocationToJValue(transformedLocation)
+          request <- getCachedOrRequest(lat, lon)
+          geocode <- obtainGeocode(request)
+          obj     <- geocode2JValue(geocode)
         } yield obj
 
       case _ => s"One of the required event fields missing. latitude $latitude, longitude: $longitude".fail
     }
 
-  private def transformedLocationToJValue(location: TransformedLocation): Validation[String, JObject] =
+  private def geocode2JValue(location: Geocode): Validation[String, JObject] =
     Extraction.decompose(location) match {
       case obj: JObject => obj.success
       case _            => s"Couldn't transform location object $location into JSON".fail // Shouldn't ever happen
@@ -129,17 +133,14 @@ case class OpenCageEnrichment(apiKey: String, cacheSize: Int, geoPrecision: Int,
     ("schema", schemaUri) ~ (("data", context))
 
   /**
-   * Apply all necessary transformations from `com.opencagedata.geocoder.OpenCageResponse` to `TransformedLocation`
+   * From `com.opencagedata.geocoder.OpenCageResponse` obtain the most relevant result
    * for further JSON Object decomposition
    *
    * @param origin original OpenCageResponse object
-   * @return transformed Location
+   * @return Most relevant Geocode location
    */
-  private[enrichments] def transformLocation(origin: OpenCageResponse): Validation[String, TransformedLocation] =
+  private[enrichments] def obtainGeocode(origin: OpenCageResponse): Validation[String, Geocode] =
     origin.results.headOption
-      .flatMap { result: parts.Result =>
-        result.formattedAddress map TransformedLocation
-      }
       .toSuccess("Empty list of results although the call went OK")
 
 }
@@ -149,7 +150,7 @@ private[enrichments] case class TransformedLocation(address: String)
 case class OpencageCache(
   client: OpenCageClient,
   cacheSize: Int, // Size of the LRU cache
-  geoPrecision: Int, // nth part of one to round geocoordinates
+  scale: Int, // numbers of decimals to keep from latitudes and longitudes
   timeout: Int // Number of seconds we wait for a response from Opencage
 ) {
 
@@ -182,7 +183,7 @@ case class OpencageCache(
     CacheKey(roundCoordinate(latitude), roundCoordinate(longitude))
 
   /**
-   * Round coordinate by `geoPrecision`
+   * Truncate coordinates at position scale
    * Scale value to tenths to prevent values to be long like 1.333334
    *
    * @param coordinate latitude or longitude
@@ -190,7 +191,7 @@ case class OpencageCache(
    */
   def roundCoordinate(coordinate: Float): Float =
     BigDecimal
-      .decimal(Math.round(coordinate * geoPrecision) / geoPrecision.toFloat)
-      .setScale(1, BigDecimal.RoundingMode.HALF_UP)
+      .decimal(coordinate)
+      .setScale(this.scale, BigDecimal.RoundingMode.DOWN)
       .toFloat
 }

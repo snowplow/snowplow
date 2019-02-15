@@ -43,7 +43,7 @@ class OpenCageEnrichmentSpec extends Specification {
     val context    = enrichment.getGeoCodingContext(Option(ValidPosition.lat), Option(ValidPosition.lon))
     context.toEither must beRight.like {
       case location: JObject => {
-        val city = (location \ "data" \ "address").extract[String]
+        val city = (location \ "data" \ "formattedAddress").extract[String]
         city must contain("Barcelona, Spain")
       }
     }

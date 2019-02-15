@@ -88,7 +88,6 @@ object WeatherEnrichmentConfig extends ParseableEnrichment {
  */
 case class WeatherEnrichment(apiKey: String, cacheSize: Int, geoPrecision: Int, apiHost: String, timeout: Int)
     extends Enrichment {
-
   private lazy val client = OwmCacheClient(apiKey, cacheSize, geoPrecision, apiHost, timeout)
 
   private val schemaUri = "iglu:org.openweathermap/weather/jsonschema/1-0-0"

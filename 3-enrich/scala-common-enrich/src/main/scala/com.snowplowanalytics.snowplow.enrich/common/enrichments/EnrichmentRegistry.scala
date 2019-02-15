@@ -50,6 +50,8 @@ import registry.{
   IpLookupsEnrichment,
   JavascriptScriptEnrichment,
   JavascriptScriptEnrichmentConfig,
+  OpenCageEnrichment,
+  OpenCageEnrichmentConfig,
   RefererParserEnrichment,
   UaParserEnrichment,
   UaParserEnrichmentConfig,
@@ -165,6 +167,8 @@ object EnrichmentRegistry {
             CookieExtractorEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "http_header_extractor_config") {
             HttpHeaderExtractorEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+          } else if (nm == "opencage_enrichment_config") {
+            OpenCageEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "weather_enrichment_config") {
             WeatherEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "api_request_enrichment_config") {
@@ -306,6 +310,15 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    */
   def getHttpHeaderExtractorEnrichment: Option[HttpHeaderExtractorEnrichment] =
     getEnrichment[HttpHeaderExtractorEnrichment]("http_header_extractor_config")
+
+  /**
+   * Returns an Option boxing the WeatherEnrichment
+   * config value if present, or None if not
+   *
+   * @return Option boxing the WeatherEnrichment instance
+   */
+  def getOpenCageEnrichment: Option[OpenCageEnrichment] =
+    getEnrichment[OpenCageEnrichment]("opencage_enrichment_config")
 
   /**
    * Returns an Option boxing the WeatherEnrichment
