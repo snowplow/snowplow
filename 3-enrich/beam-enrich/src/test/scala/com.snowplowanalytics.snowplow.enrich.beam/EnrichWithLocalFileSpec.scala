@@ -70,7 +70,7 @@ class EnrichWithLocalFileSpec extends PipelineSpec {
       .output(PubsubIO[String]("bad"))(_ should beEmpty)
       .distribution(Enrich.enrichedEventSizeDistribution) { d =>
         d.getCount() shouldBe 1
-        d.getMin() shouldBe 676
+        d.getMin() shouldBe 683
         d.getMin() shouldBe d.getMax()
         d.getMin() shouldBe d.getSum()
         d.getMin() shouldBe d.getMean()
