@@ -54,7 +54,7 @@ aws:
     additional_info:        # Optional JSON string for selecting additional features
 enrich:
   versions:
-    spark_enrich: 1.16.0 # Version of the Spark Enrichment process
+    spark_enrich: 1.17.0 # Version of the Spark Enrichment process
   output_compression: GZIP # Stream mode supports only GZIP
 storage:
   versions:
