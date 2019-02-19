@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2017 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,7 +10,7 @@
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 # Author::    Alex Dean (mailto:support@snowplowanalytics.com)
-# Copyright:: Copyright (c) 2012-2015 Snowplow Analytics Ltd
+# Copyright:: Copyright (c) 2012-2019 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
 require 'contracts'
@@ -22,6 +22,19 @@ module Snowplow
     include Contracts
 
     C = Contracts
+
+    def Contract.failure_callback(data)
+      msg = failure_msg(data)
+        .gsub(/access_key_id=>".+?(?=")/, 'access_key_id=>"redacted')
+        .gsub(/secret_access_key=>".+?(?=")/, 'secret_access_key=>"redacted')
+      if data[:return_value]
+        # this failed on the return contract
+        fail ReturnContractError.new(msg, data)
+      else
+        # this failed for a param contract
+        fail data[:contracts].failure_exception.new(msg, data)
+      end
+    end
 
     CompressionFormat = lambda { |s| %w(NONE GZIP).include?(s) }
     VolumeTypes = lambda { |s| %w(standard gp2 io1).include?(s) }
@@ -43,7 +56,9 @@ module Snowplow
       :include => Maybe[ArrayOf[String]],
       :lock => Maybe[String],
       :consul => Maybe[String],
-      :ignore_lock_on_start => Maybe[Bool]
+      :ignore_lock_on_start => Maybe[Bool],
+      :use_persistent_jobflow => Maybe[Bool],
+      :persistent_jobflow_duration => Maybe[String]
       })
 
     # The Hash containing the buckets field from the configuration YAML
@@ -87,7 +102,8 @@ module Snowplow
         :secret_access_key => String,
         :s3 => ({
           :region => String,
-          :buckets => BucketHash
+          :buckets => BucketHash,
+          :consolidate_shredded_output => Bool
           }),
         :emr => ({
           :ami_version => String,

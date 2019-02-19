@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2017 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,7 +10,7 @@
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 # Author::    Alex Dean (mailto:support@snowplowanalytics.com)
-# Copyright:: Copyright (c) 2012-2015 Snowplow Analytics Ltd
+# Copyright:: Copyright (c) 2012-2019 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
 # Ruby 1.9.2 onwards doesn't add . into $LOAD_PATH by default - use require_relative instead
@@ -22,6 +22,7 @@ require_relative 'snowplow-emr-etl-runner/monitoring/snowplow'
 require_relative 'snowplow-emr-etl-runner/cli'
 require_relative 'snowplow-emr-etl-runner/job_result'
 require_relative 'snowplow-emr-etl-runner/s3'
+require_relative 'snowplow-emr-etl-runner/emr'
 require_relative 'snowplow-emr-etl-runner/emr_job'
 require_relative 'snowplow-emr-etl-runner/lock/lock'
 require_relative 'snowplow-emr-etl-runner/lock/file_lock'
@@ -36,6 +37,6 @@ require_relative 'snowplow-emr-etl-runner/linter'
 module Snowplow
   module EmrEtlRunner
     NAME    = "snowplow-emr-etl-runner"
-    VERSION = "0.33.1"
+    VERSION = "0.34.0"
   end
 end

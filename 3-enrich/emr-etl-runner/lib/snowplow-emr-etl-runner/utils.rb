@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2017 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,7 +10,7 @@
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 # Author::    Ben Fradet (mailto:support@snowplowanalytics.com)
-# Copyright:: Copyright (c) 2012-2017 Snowplow Analytics Ltd
+# Copyright:: Copyright (c) 2012-2019 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
 require 'contracts'
@@ -204,6 +204,24 @@ module Snowplow
       def glob_path(path)
         path = path.chomp('/')
         path.end_with?('/*') ? path : "#{path}/*"
+      end
+
+      DURATION_TOKENS = {
+          "m" => (60),
+          "h" => (60 * 60),
+          "d" => (60 * 60 * 24),
+          "w" => (60 * 60 * 24 * 7)
+      }
+
+      # Converts a duration string into a seconds integer
+      # e.g. 5h 10m is converted into 18600
+      Contract String => Integer
+      def parse_duration(input)
+        time = 0
+        input.scan(/(\d+)(\w)/).each do |amount, measure|
+          time += amount.to_i * DURATION_TOKENS[measure]
+        end
+        time
       end
 
     end

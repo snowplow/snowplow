@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2017 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,7 +10,7 @@
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 # Author::    Alex Dean (mailto:support@snowplowanalytics.com)
-# Copyright:: Copyright (c) 2012-2017 Snowplow Analytics Ltd
+# Copyright:: Copyright (c) 2012-2019 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
 require 'contracts'
@@ -134,7 +134,7 @@ module Snowplow
             tries_left -= 1
             job = EmrJob.new(@args[:debug], steps[:staging], steps[:enrich], steps[:staging_stream_enrich], steps[:shred], steps[:es],
               steps[:archive_raw], steps[:rdb_load], archive_enriched, archive_shredded, @config,
-              @enrichments_array, @resolver_config, @targets, rdbloader_steps)
+              @enrichments_array, @resolver_config, @targets, rdbloader_steps, @args[:use_persistent_jobflow], @args[:persistent_jobflow_duration])
             job.run(@config)
             break
           rescue BootstrapFailureError => bfe
@@ -147,7 +147,7 @@ module Snowplow
             else
               raise
             end
-          rescue DirectoryNotEmptyError, NoDataToProcessError => e
+          rescue DirectoryNotEmptyError, NoDataToProcessError, EmrClusterStateError => e
             # unlock on no-op
             if not lock.nil?
               lock.unlock

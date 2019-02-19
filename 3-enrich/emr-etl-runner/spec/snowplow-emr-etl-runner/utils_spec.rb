@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2017 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,7 +10,7 @@
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 # Author::    Ben Fradet (mailto:support@snowplowanalytics.com)
-# Copyright:: Copyright (c) 2012-2017 Snowplow Analytics Ltd
+# Copyright:: Copyright (c) 2012-2019 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
 require 'spec_helper'
@@ -183,6 +183,12 @@ describe Utils do
 
     it 'should do nothing if the path already ends with /*' do
       expect(subject.glob_path('p/*')).to eq('p/*')
+    end
+  end
+
+  describe '#parse_duration' do
+    it 'should successfully convert weeks, days, hours and minutes into seconds correctly' do
+      expect(subject.parse_duration("1w 5d 3h 13m")).to eq(1048380)
     end
   end
 end

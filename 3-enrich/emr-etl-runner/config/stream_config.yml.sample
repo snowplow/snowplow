@@ -18,6 +18,7 @@ aws:
         bad: ADD HERE        # e.g. s3://my-out-bucket/shredded/bad
         errors: ADD HERE     # Leave blank unless :continue_on_unexpected_error: set to true below
         archive: ADD HERE    # Where to archive shredded events to, e.g. s3://my-archive-bucket/shredded
+    consolidate_shredded_output: false # Whether to combine files when copying from hdfs to s3
   emr:
     ami_version: 5.9.0
     region: ADD HERE        # Always set this

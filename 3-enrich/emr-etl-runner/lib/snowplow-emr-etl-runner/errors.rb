@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,7 +10,7 @@
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 # Author::    Alex Dean (mailto:support@snowplowanalytics.com)
-# Copyright:: Copyright (c) 2012-2014 Snowplow Analytics Ltd
+# Copyright:: Copyright (c) 2012-2019 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
 # All errors
@@ -27,6 +27,14 @@ module Snowplow
 
     # Problem when running Amazon EMR (e.g. job failed)
     class EmrExecutionError < Error
+    end
+
+    # Problem when discovering Amazon EMR JobFlow (e.g. cluster is RUNNING rather than WAITING)
+    class EmrClusterStateError < Error
+    end
+
+    # Problem when discovering Amazon EMR JobFlow (e.g. multiple job-flows discovered with the same name)
+    class EmrDiscoveryError < Error
     end
 
     # A bootstrap failure indicates the job can be safely retried

@@ -36,7 +36,7 @@ GEM
     docile (1.1.5)
     domain_name (0.5.20170404)
       unf (>= 0.0.5, < 1.0.0)
-    elasticity (6.0.12)
+    elasticity (6.0.14)
       fog-aws (~> 1.0)
       rest-client (~> 1.0)
       unf (~> 0.1)
@@ -127,8 +127,9 @@ DEPENDENCIES
   contracts (~> 0.9, <= 0.11)
   coveralls
   diplomat (~> 2.0.1)
-  elasticity (~> 6.0.12)
+  elasticity (~> 6.0.14)
   iglu-ruby-client (>= 0.1.0)
+  rest-client (~> 1.0)
   rspec (~> 3.5.0)
   snowplow-tracker (~> 0.5.2)
   warbler

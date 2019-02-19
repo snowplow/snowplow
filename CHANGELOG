@@ -1,3 +1,22 @@
+Release 112 Baalbek (2019-02-19)
+--------------------------------
+EmrEtlRunner: bump to 0.34.0 (#3935)
+EmrEtlRunner: add support for running steps on a persistent EMR cluster (#3930)
+EmrEtlRunner: recover from request timeout (#3943)
+EmrEtlRunner: set timeout to 120 seconds (#3949)
+EmrEtlRunner: leverage compaction steps when copying to S3 (#3940)
+EmrEtlRunner: recover from S3 internal errors (#3950)
+EmrEtlRunner: rename EMR steps (#3925)
+EmrEtlRunner: scrub credentials from stderr (#2815)
+EmrEtlRunner: bump elasticity to 6.0.14 (#3948)
+EmrEtlRunner: extend copyright notice to 2019 (#3978)
+Clojure Collector: bump to 2.1.3 (#3947)
+Clojure Collector: add ebextension to increase the number of file descriptors to 65536 (#3876)
+Clojure Collector: extend copyright notice to 2019 (#3979)
+Redshift: widen geo_region to 3 characters (#3822)
+Postgres: widen geo_region to 3 characters (#3946)
+Event Manifest Populator: support s3a uri scheme (#3870)
+
 Release 111 Selinunte (2018-10-02)
 ----------------------------------
 Clojure Collector: bump to 2.1.2 (#3900)

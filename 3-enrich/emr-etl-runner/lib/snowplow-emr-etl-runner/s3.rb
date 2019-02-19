@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2018 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,7 +10,7 @@
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 # Author::    Ben Fradet (mailto:support@snowplowanalytics.com)
-# Copyright:: Copyright (c) 2012-2018 Snowplow Analytics Ltd
+# Copyright:: Copyright (c) 2012-2019 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
 require 'aws-sdk-s3'
@@ -101,7 +101,14 @@ module Snowplow
           max_keys: max_keys,
         }
         options[:continuation_token] = token if !token.nil?
-        client.list_objects_v2(options)
+        begin
+          retries ||= 0
+          client.list_objects_v2(options)
+        rescue AWS::S3::Errors::InternalError
+          retries += 1
+          sleep(2 ** retries * 0.1)
+          retry if retries < 3
+        end
       end
 
     end
