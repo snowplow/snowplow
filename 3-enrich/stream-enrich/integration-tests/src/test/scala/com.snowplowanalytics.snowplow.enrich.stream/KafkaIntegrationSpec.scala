@@ -33,8 +33,6 @@ import java.util.Properties
 // Scala libraries
 import org.apache.kafka.clients.consumer.{ConsumerRecords, KafkaConsumer}
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
-import io.bfil.kafka.specs2.DefaultKafkaPorts
-import io.bfil.kafka.specs2.EmbeddedKafkaContext
 
 // Specs2
 import org.specs2.matcher.{TraversableMatchers, TryMatchers}
@@ -49,9 +47,7 @@ import common.enrichments.EnrichmentRegistry
  * See PiiEmitSpec for an example of how to use it
  */
 trait KafkaIntegrationSpec
-    extends EmbeddedKafkaContext
-    with DefaultKafkaPorts
-    with TryMatchers
+    extends TryMatchers
     with TraversableMatchers {
 
   import KafkaIntegrationSpecValues._
@@ -73,17 +69,18 @@ trait KafkaIntegrationSpec
   }
 
   def producerTimeoutSec: Int
-  def inputProduced: Try[Unit] = Try { Await.result(produce, Duration(s"$producerTimeoutSec sec")) }
-  val testKafkaPropertiesProducer = {
+  def inputProduced(address: String): Try[Unit] =
+    Try { Await.result(produce(address: String), Duration(s"$producerTimeoutSec sec")) }
+  def testKafkaPropertiesProducer(address: String) = {
       val props = new Properties()
-      props.put("bootstrap.servers", kafkaHost)
+      props.put("bootstrap.servers", address)
       props.put("client.id", "producer-george")
       props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer")
       props.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer")
       props
     }
-  def produce: Future[Unit] = Future {
-    val testProducer = new KafkaProducer[String, Array[Byte]](testKafkaPropertiesProducer)
+  def produce(address: String): Future[Unit] = Future {
+    val testProducer = new KafkaProducer[String, Array[Byte]](testKafkaPropertiesProducer(address))
     val events = inputGood
     events.foreach { r =>
       testProducer.send(new ProducerRecord(testGoodIn, "key", r))
@@ -96,12 +93,12 @@ trait KafkaIntegrationSpec
 
   val POLL_TIME_MSEC = 100L
 
-  def getRecords(topic: String, expectedRecords: Int, timeoutSec: Int): Future[List[String]] =
+  def getRecords(topic: String, expectedRecords: Int, timeoutSec: Int, address: String): Future[List[String]] =
     Future {
       val started = System.currentTimeMillis
       val testKafkaPropertiesConsumer = {
         val props = new Properties()
-        props.put("bootstrap.servers", kafkaHost)
+        props.put("bootstrap.servers", address)
         props.put("auto.offset.reset", "earliest")
         props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer")
         props
@@ -115,21 +112,22 @@ trait KafkaIntegrationSpec
       while (((System.currentTimeMillis - started) / 1000 < timeoutSec - 1) && records.size < expectedRecords) {
         records = records ++ getListOfRecords(testConsumerPii.poll(POLL_TIME_MSEC))
       }
+      testConsumerPii.close()
       records
     }
 
   def consumerExecutionTimeoutSec: Int
-  def producedBadRecords: Future[List[String]] =
-    getRecords(testBad, expectedBad, consumerExecutionTimeoutSec)
-  def producedGoodRecords: Future[List[String]] =
-    getRecords(testGood, expectedGood, consumerExecutionTimeoutSec)
-  def producedPiiRecords: Future[List[String]] =
-    getRecords(testPii, expectedPii, consumerExecutionTimeoutSec)
-  def allResults: Future[(List[String], List[String], List[String])] =
+  def producedBadRecords(address: String): Future[List[String]] =
+    getRecords(testBad, expectedBad, consumerExecutionTimeoutSec, address)
+  def producedGoodRecords(address: String): Future[List[String]] =
+    getRecords(testGood, expectedGood, consumerExecutionTimeoutSec, address)
+  def producedPiiRecords(address: String): Future[List[String]] =
+    getRecords(testPii, expectedPii, consumerExecutionTimeoutSec, address)
+  def allResults(address: String): Future[(List[String], List[String], List[String])] =
     for {
-      good <- producedGoodRecords
-      bad  <- producedBadRecords
-      pii  <- producedPiiRecords
+      good <- producedGoodRecords(address)
+      bad  <- producedBadRecords(address)
+      pii  <- producedPiiRecords(address)
     } yield (good, bad, pii)
 
 }
@@ -137,6 +135,5 @@ trait KafkaIntegrationSpec
 object KafkaIntegrationSpecValues {
   val (testGoodIn, testGood, testBad, testPii) =
     ("testGoodIn", "testEnrichedGood", "testEnrichedBad", "testEnrichedUglyPii")
-  val kafkaHost = "127.0.0.1:9092"
 }
 
