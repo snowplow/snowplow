@@ -41,18 +41,31 @@ import com.hubspot.jinjava.Jinjava
 import good._
 import model.{StreamsConfig, SourceSinkConfig}
 
-class PiiEmitSpec extends Specification with FutureMatchers {
+class PiiEmitSpec
+  extends Specification with FutureMatchers with KafkaIntegrationSpec with BeforeAfterAll {
+
+  var ktu: KafkaTestUtils = _
+  override def beforeAll(): Unit = {
+    ktu = new KafkaTestUtils
+    ktu.setup()
+    ktu.createTopics(kafkaTopics.toList: _*)
+  }
+  override def afterAll(): Unit = {
+    if (ktu != null) {
+      ktu = null
+    }
+  }
 
   import KafkaIntegrationSpecValues._
 
-  val configValues = Map(
+  def configValues = Map(
     "sinkType" -> "kafka",
     "streamsInRaw" -> s"$testGoodIn",
     "outEnriched" -> s"$testGood",
     "outPii" -> s"$testPii",
     "outBad" -> s"$testBad",
     "partitionKeyName" -> "\"\"",
-    "kafkaBrokers" -> s"$kafkaHost",
+    "kafkaBrokers" -> ktu.brokerAddress,
     "bufferTimeThreshold" -> "1",
     "bufferRecordThreshold" -> "1",
     "bufferByteThreshold" -> "100000",
@@ -79,9 +92,29 @@ class PiiEmitSpec extends Specification with FutureMatchers {
 
   private def decode(s: String): Array[Byte] = Base64.decodeBase64(s)
 
+  // Input
+  override val inputGood = List(
+    decode(PagePingWithContextSpec.raw),
+    decode(PageViewWithContextSpec.raw),
+    decode(StructEventSpec.raw),
+    decode(StructEventWithContextSpec.raw),
+    decode(TransactionItemSpec.raw),
+    decode(TransactionSpec.raw)
+  )
+  // Expected output counts
+  override val (expectedGood, expectedBad, expectedPii) = (inputGood.size, 0, inputGood.size)
+
+  // Timeout for the producer
+  override val producerTimeoutSec = 5
+
+  // Timeout for all the consumers (good, bad, and pii) (running in parallel)
+  // You may want to adjust this if you are doing lots of slow work in the app
+  // Ordinarily the consumers return in less than 1 sec
+  override val consumerExecutionTimeoutSec = 15
+
   "Pii" should {
-    "emit all events" in new KafkaIntegrationSpec {
-      implicit private def hint[T]: ProductHint[T] =
+    "emit all events" in {
+      implicit def hint[T]: ProductHint[T] =
         ProductHint[T](ConfigFieldMapping(CamelCase, CamelCase))
       implicit val sourceSinkConfigHint = new FieldCoproductHint[SourceSinkConfig]("enabled")
 
@@ -95,29 +128,9 @@ class PiiEmitSpec extends Specification with FutureMatchers {
         SpecHelpers.resolver,
         SpecHelpers.enrichmentRegistry,
         None)
+      inputProduced(ktu.brokerAddress) aka "sending input" must beSuccessfulTry
 
-      // Input
-      override val inputGood = List(
-        decode(PagePingWithContextSpec.raw),
-        decode(PageViewWithContextSpec.raw),
-        decode(StructEventSpec.raw),
-        decode(StructEventWithContextSpec.raw),
-        decode(TransactionItemSpec.raw),
-        decode(TransactionSpec.raw)
-      )
-      // Expected output counts
-      override val (expectedGood, expectedBad, expectedPii) = (inputGood.size, 0, inputGood.size)
-
-      // Timeout for the producer
-      override val producerTimeoutSec = 5
-      inputProduced aka "sending input" must beSuccessfulTry
-
-      // Timeout for all the consumers (good, bad, and pii) (running in parallel)
-      // You may want to adjust this if you are doing lots of slow work in the app
-      // Ordinarily the consumers return in less than 1 sec
-      override val consumerExecutionTimeoutSec = 15
-
-      private def spaceJoinResult(expected: List[StringOrRegex]) =
+      def spaceJoinResult(expected: List[StringOrRegex]) =
         expected
           .flatMap({
             case JustRegex(r) => Some(r.toString)
@@ -151,7 +164,7 @@ class PiiEmitSpec extends Specification with FutureMatchers {
             (pii aka "pii result list" must containMatch(spaceJoinResult(TransactionSpec.pii)))
         }
       }
-      allResults must expectedMatcher.await(
+      allResults(ktu.brokerAddress) must expectedMatcher.await(
         retries = 0,
         timeout = FiniteDuration(consumerExecutionTimeoutSec.toLong, TimeUnit.SECONDS))
     }
