@@ -102,7 +102,7 @@ lazy val integrationTests = project.in(file("./integration-tests"))
   .settings(BuildSettings.addExampleConfToTestCp)
   .settings(libraryDependencies ++= Seq(
     // Test
-    Dependencies.Libraries.embeddedKafka,
+    Dependencies.Libraries.kafka,
     Dependencies.Libraries.jinJava
   ))
   .dependsOn(core % "test->test", kafka % "test->compile")
