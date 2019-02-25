@@ -17,7 +17,7 @@ Scala Common Enrich is designed to be used within a "host" enrichment process. T
 
 ## Copyright and license
 
-Scala Common Enrich is copyright 2012-2018 Snowplow Analytics Ltd.
+Scala Common Enrich is copyright 2012-2019 Snowplow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0][license] (the "License");
 you may not use this software except in compliance with the License.
