@@ -41,7 +41,7 @@ If you get errors reported in some tests, run those tests individually with `tes
 
 ## Copyright and license
 
-Copyright 2012-2017 Snowplow Analytics Ltd.
+Copyright 2012-2019 Snowplow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0][license] (the "License");
 you may not use this software except in compliance with the License.
