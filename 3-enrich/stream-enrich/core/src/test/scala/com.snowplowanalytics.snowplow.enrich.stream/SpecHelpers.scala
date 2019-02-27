@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2019 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
  * you may not use this file except in compliance with the Apache License
@@ -157,7 +157,7 @@ object SpecHelpers {
       streams = StreamsConfig(
         InConfig("raw"),
         OutConfig("enriched", Some("pii"), "bad", "partitionkey"),
-        Kafka("brokers", 1),
+        Kafka("brokers", 1, None, None),
         BufferConfig(1000L, 100L, 1200L),
         "appName"
       ),

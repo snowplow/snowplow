@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -106,7 +106,7 @@ class CallrailAdapterSpec extends Specification with DataTables with ValidationM
       """|{
             |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
             |"data":{
-              |"schema":"iglu:com.callrail/call_complete/jsonschema/1-0-0",
+              |"schema":"iglu:com.callrail/call_complete/jsonschema/1-0-2",
               |"data":{
                 |"duration":247,
                 |"utm_source":null,

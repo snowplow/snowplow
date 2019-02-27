@@ -787,7 +787,14 @@ module Snowplow
             @persistent_jobflow_duration_s > 0 and
             @jobflow.cluster_status.created_at + @persistent_jobflow_duration_s < @run_tstamp
           logger.debug "EMR jobflow has expired and will be shutdown."
-          @jobflow.shutdown
+          begin
+            retries ||= 0
+            @jobflow.shutdown
+          rescue Elasticity::ThrottlingException, RestClient::RequestTimeout, RestClient::InternalServerError, RestClient::ServiceUnavailable, RestClient::SSLCertificateNotVerified
+            retries += 1
+            sleep(2 ** retries * 1)
+            retry if retries < 3
+          end
         end
 
         nil
@@ -1098,7 +1105,15 @@ module Snowplow
       def get_failure_details(jobflow_id)
 
         cluster_step_status = cluster_step_status_for_run(@jobflow)
-        cluster_status = @jobflow.cluster_status
+        cluster_status =
+          begin
+            retries ||= 0
+            @jobflow.cluster_status
+          rescue Elasticity::ThrottlingException, RestClient::RequestTimeout, RestClient::InternalServerError, RestClient::ServiceUnavailable, RestClient::SSLCertificateNotVerified
+            retries += 1
+            sleep(2 ** retries * 1)
+            retry if retries < 3
+          end
 
         [
           "EMR jobflow #{jobflow_id} failed, check Amazon EMR console and Hadoop logs for details (help: https://github.com/snowplow/snowplow/wiki/Troubleshooting-jobs-on-Elastic-MapReduce). Data files not archived.",
@@ -1190,9 +1205,16 @@ module Snowplow
       # Parameters:
       # +jobflow+:: The jobflow to extract steps from
       def cluster_step_status_for_run(jobflow)
-        jobflow.cluster_step_status
+        begin
+          retries ||= 0
+          jobflow.cluster_step_status
             .select { |a| a.created_at >= @run_tstamp }
             .sort_by { |a| a.created_at }
+        rescue Elasticity::ThrottlingException, RestClient::RequestTimeout, RestClient::InternalServerError, RestClient::ServiceUnavailable, RestClient::SSLCertificateNotVerified
+          retries += 1
+          sleep(2 ** retries * 1)
+          retry if retries < 3
+        end
       end
 
       # Returns true if the jobflow failed at a rdb loader step

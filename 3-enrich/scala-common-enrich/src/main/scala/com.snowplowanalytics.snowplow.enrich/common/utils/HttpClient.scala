@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -13,6 +13,8 @@
 package com.snowplowanalytics.snowplow.enrich
 package common
 package utils
+
+import scalaj.http.HttpRequest
 
 import scala.util.control.NonFatal
 
@@ -46,6 +48,7 @@ object HttpClient {
    * @param uri full URI to request
    * @param authUser optional username for basic auth
    * @param authPassword optional password for basic auth
+   * @param body optional request body
    * @param method HTTP method
    * @return HTTP request
    */
@@ -53,13 +56,20 @@ object HttpClient {
     uri: String,
     authUser: Option[String],
     authPassword: Option[String],
+    body: Option[String],
     method: String = "GET"
   ): HttpRequest = {
-    val req = Http(uri).method(method)
-    if (authUser.isDefined || authPassword.isDefined) {
-      req.auth(authUser.getOrElse(""), authPassword.getOrElse(""))
-    } else {
-      req
-    }
+    val req: HttpRequest = Http(uri).method(method)
+    req.maybeAuth(authUser, authPassword).maybePostData(body)
+  }
+
+  implicit class RichHttpRequest(request: HttpRequest) {
+
+    def maybeAuth(user: Option[String], password: Option[String]): HttpRequest =
+      if (user.isDefined || password.isDefined) request.auth(user.getOrElse(""), password.getOrElse(""))
+      else request
+
+    def maybePostData(body: Option[String]): HttpRequest =
+      body.map(data => request.postData(data).header("content-type", "application/json")).getOrElse(request)
   }
 }

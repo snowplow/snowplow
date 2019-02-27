@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2019 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
  * you may not use this file except in compliance with the Apache License
@@ -19,6 +19,8 @@ lazy val commonDependencies = Seq(
   Dependencies.Libraries.slf4j,
   Dependencies.Libraries.log4jOverSlf4j,
   Dependencies.Libraries.config,
+  Dependencies.Libraries.prometheus,
+  Dependencies.Libraries.prometheusCommon,
   // Scala
   Dependencies.Libraries.scopt,
   Dependencies.Libraries.scalaz7,
@@ -36,7 +38,7 @@ lazy val commonDependencies = Seq(
 lazy val buildSettings = Seq(
   organization  :=  "com.snowplowanalytics",
   name          :=  "snowplow-stream-collector",
-  version       :=  "0.14.0",
+  version       :=  "0.15.0",
   description   :=  "Scala Stream Collector for Snowplow raw events",
   scalaVersion  :=  "2.11.11",
   scalacOptions :=  BuildSettings.compilerOptions,
@@ -60,7 +62,7 @@ lazy val core = project
   .settings(libraryDependencies ++= commonDependencies)
   .enablePlugins(BuildInfoPlugin)
   .settings(
-    buildInfoKeys := Seq[BuildInfoKey](organization, name, version, "shortName" -> "ssc"),
+    buildInfoKeys := Seq[BuildInfoKey](organization, name, version, "shortName" -> "ssc", scalaVersion),
     buildInfoPackage := "com.snowplowanalytics.snowplow.collectors.scalastream.generated"
   )
 

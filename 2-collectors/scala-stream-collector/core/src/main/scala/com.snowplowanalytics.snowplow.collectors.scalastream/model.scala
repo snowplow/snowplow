@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2019 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
  * you may not use this file except in compliance with the Apache License
@@ -16,7 +16,7 @@ package com.snowplowanalytics.snowplow.collectors.scalastream
 
 import scala.concurrent.duration.FiniteDuration
 
-import akka.http.scaladsl.model.headers.HttpCookie
+import akka.http.scaladsl.model.headers.HttpCookiePair
 
 import sinks.Sink
 
@@ -56,6 +56,10 @@ package model {
     name: String,
     value: String
   )
+  final case class DntCookieMatcher(name: String, value: String) {
+    private val pattern = value.r.pattern
+    def matches(httpCookiePair: HttpCookiePair): Boolean = pattern.matcher(httpCookiePair.value).matches()
+  }
   final case class CookieBounceConfig(
     enabled: Boolean,
     name: String,
@@ -74,6 +78,7 @@ package model {
   )
   final case class P3PConfig(policyRef: String, CP: String)
   final case class CrossDomainConfig(enabled: Boolean, domains: List[String], secure: Boolean)
+  final case class CORSConfig(accessControlMaxAge: FiniteDuration)
   final case class KinesisBackoffPolicyConfig(minBackoff: Long, maxBackoff: Long)
   final case class GooglePubSubBackoffPolicyConfig(
     minBackoff: Long,
@@ -99,7 +104,11 @@ package model {
     googleProjectId: String,
     backoffPolicy: GooglePubSubBackoffPolicyConfig
   ) extends SinkConfig
-  final case class Kafka(brokers: String, retries: Int) extends SinkConfig
+  final case class Kafka(
+    brokers: String,
+    retries: Int,
+    producerConf: Option[Map[String,String]]
+  ) extends SinkConfig
   final case class Nsq(host: String, port: Int) extends SinkConfig
   case object Stdout extends SinkConfig
   final case class BufferConfig(byteLimit: Long, recordLimit: Long, timeLimit: Long)
@@ -109,6 +118,10 @@ package model {
     useIpAddressAsPartitionKey: Boolean,
     sink: SinkConfig,
     buffer: BufferConfig
+  )
+  final case class PrometheusMetricsConfig(
+    enabled: Boolean,
+    durationBucketsInSeconds: Option[List[Double]]
   )
   final case class CollectorConfig(
     interface: String,
@@ -120,12 +133,14 @@ package model {
     cookieBounce: CookieBounceConfig,
     redirectMacro: RedirectMacroConfig,
     rootResponse: RootResponseConfig,
-    streams: StreamsConfig
+    cors: CORSConfig,
+    streams: StreamsConfig,
+    prometheusMetrics: PrometheusMetricsConfig
   ) {
     val cookieConfig = if (cookie.enabled) Some(cookie) else None
     val doNotTrackHttpCookie =
       if (doNotTrackCookie.enabled)
-        Some(HttpCookie(name = doNotTrackCookie.name, value = doNotTrackCookie.value))
+        Some(DntCookieMatcher(name = doNotTrackCookie.name, value = doNotTrackCookie.value))
       else
         None
 

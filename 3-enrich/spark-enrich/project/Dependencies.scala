@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -35,7 +35,7 @@ object Dependencies {
     val spark            = "2.2.0"
     val scalaz7          = "7.0.9"
     val scopt            = "3.5.0"
-    val commonEnrich     = "0.35.0"
+    val commonEnrich     = "0.36.0"
     val igluClient       = "0.5.0"
     // Scala (test only)
     val specs2           = "2.3.13"

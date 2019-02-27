@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2014-2019 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
  * you may not use this file except in compliance with the Apache License
@@ -14,9 +14,9 @@
  */
 package com.snowplowanalytics.snowplow.collectors.scalastream
 
-import scala.concurrent.duration._
+import com.snowplowanalytics.snowplow.collectors.scalastream.model._
 
-import model._
+import scala.concurrent.duration._
 
 object TestUtils {
   val testConf = CollectorConfig(
@@ -29,6 +29,7 @@ object TestUtils {
     cookieBounce = CookieBounceConfig(false, "bounce", "new-nuid", None),
     redirectMacro = RedirectMacroConfig(false, None),
     rootResponse = RootResponseConfig(false, 404),
+    cors = CORSConfig(-1.seconds),
     streams = StreamsConfig(
       good = "good",
       bad = "bad",
@@ -41,6 +42,7 @@ object TestUtils {
         customEndpoint = None
       ),
       buffer = BufferConfig(4000000L, 500L, 60000L)
-    )
+    ),
+    prometheusMetrics = PrometheusMetricsConfig(false, None)
   )
 }

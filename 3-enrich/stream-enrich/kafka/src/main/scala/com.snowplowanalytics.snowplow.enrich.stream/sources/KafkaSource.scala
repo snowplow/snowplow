@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 Snowplow Analytics Ltd.
+ * Copyright (c) 2013-2019 Snowplow Analytics Ltd.
  * All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
@@ -119,6 +119,7 @@ class KafkaSource private (
     brokers: String,
     groupId: String): KafkaConsumer[String, Array[Byte]] = {
     val properties = createProperties(brokers, groupId)
+    properties.putAll(kafkaConfig.consumerConf.getOrElse(Map()).asJava)
     new KafkaConsumer[String, Array[Byte]](properties)
   }
 

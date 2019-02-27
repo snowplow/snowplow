@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2019 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -17,8 +17,8 @@ package sinks
 import java.util.Properties
 
 import org.apache.kafka.clients.producer._
-
 import model._
+import scala.collection.JavaConverters._
 
 /**
  * Kafka Sink for the Scala collector
@@ -54,6 +54,8 @@ class KafkaSink(
       "org.apache.kafka.common.serialization.StringSerializer")
     props.put("value.serializer",
       "org.apache.kafka.common.serialization.ByteArraySerializer")
+
+    props.putAll(kafkaConfig.producerConf.getOrElse(Map()).asJava)
 
     new KafkaProducer[String, Array[Byte]](props)
   }
