@@ -65,7 +65,11 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
       "event":"processed",
       "category":"cat facts",
       "sg_event_id":"sZROwMGMagFgnOEmSdvhig==",
-      "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0"
+      "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0",
+      "marketing_campaign_id":12345,
+      "marketing_campaign_name":"campaign name",
+      "marketing_campaign_version":"B",
+      "marketing_campaign_split_id":13471
    },
    {
       "email":"example@test.com",
@@ -75,6 +79,10 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
       "category":"cat facts",
       "sg_event_id":"jWmZXTZbtHTV2-S47asrww==",
       "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0",
+      "marketing_campaign_id":12345,
+      "marketing_campaign_name":"campaign name",
+      "marketing_campaign_version":"B",
+      "marketing_campaign_split_id":13471,
       "response":"400 try again later",
       "attempt":"5"
    },
@@ -86,6 +94,10 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
       "category":"cat facts",
       "sg_event_id":"cikAODhD-ffTphZ7xixsRw==",
       "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0",
+      "marketing_campaign_id":12345,
+      "marketing_campaign_name":"campaign name",
+      "marketing_campaign_version":"B",
+      "marketing_campaign_split_id":13471,
       "response":"250 OK"
    },
    {
@@ -96,6 +108,10 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
       "category":"cat facts",
       "sg_event_id":"VGRrZCh-qMkOaAmuxcFujA==",
       "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0",
+      "marketing_campaign_id":12345,
+      "marketing_campaign_name":"campaign name",
+      "marketing_campaign_version":"B",
+      "marketing_campaign_split_id":13471,
       "useragent":"Mozilla/4.0 (compatible; MSIE 6.1; Windows XP; .NET CLR 1.1.4322; .NET CLR 2.0.50727)",
       "ip":"255.255.255.255"
    },
@@ -107,6 +123,10 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
       "category":"cat facts",
       "sg_event_id":"QjGWYpcksoD31aVQAONfAg==",
       "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0",
+      "marketing_campaign_id":12345,
+      "marketing_campaign_name":"campaign name",
+      "marketing_campaign_version":"B",
+      "marketing_campaign_split_id":13471,
       "useragent":"Mozilla/4.0 (compatible; MSIE 6.1; Windows XP; .NET CLR 1.1.4322; .NET CLR 2.0.50727)",
       "ip":"255.255.255.255",
       "url":"http://www.sendgrid.com/"
@@ -119,6 +139,10 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
       "category":"cat facts",
       "sg_event_id":"PQmsSRnaTMVde4mu4TUgTQ==",
       "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0",
+      "marketing_campaign_id":12345,
+      "marketing_campaign_name":"campaign name",
+      "marketing_campaign_version":"B",
+      "marketing_campaign_split_id":13471,
       "reason":"500 unknown recipient",
       "status":"5.0.0"
    },
@@ -130,6 +154,10 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
       "category":"cat facts",
       "sg_event_id":"BP0-vnv2BjDPzwaldo-XVg==",
       "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0",
+      "marketing_campaign_id":12345,
+      "marketing_campaign_name":"campaign name",
+      "marketing_campaign_version":"B",
+      "marketing_campaign_split_id":13471,
       "reason":"Bounced Address",
       "status":"5.0.0"
    },
@@ -140,7 +168,11 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
       "event":"spamreport",
       "category":"cat facts",
       "sg_event_id":"ApWZolLiPe04wm5jAhFifA==",
-      "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0"
+      "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0",
+      "marketing_campaign_id":12345,
+      "marketing_campaign_name":"campaign name",
+      "marketing_campaign_version":"B",
+      "marketing_campaign_split_id":13471
    },
    {
       "email":"example@test.com",
@@ -149,7 +181,11 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
       "event":"unsubscribe",
       "category":"cat facts",
       "sg_event_id":"HoBsy5C1Tcoc1dJNsy5SfA==",
-      "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0"
+      "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0",
+      "marketing_campaign_id":12345,
+      "marketing_campaign_name":"campaign name",
+      "marketing_campaign_version":"B",
+      "marketing_campaign_split_id":13471
    },
    {
       "email":"example@test.com",
@@ -159,6 +195,10 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
       "category":"cat facts",
       "sg_event_id":"hew55AFBIgLbd33pcviQTQ==",
       "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0",
+      "marketing_campaign_id":12345,
+      "marketing_campaign_name":"campaign name",
+      "marketing_campaign_version":"B",
+      "marketing_campaign_split_id":13471,
       "useragent":"Mozilla/4.0 (compatible; MSIE 6.1; Windows XP; .NET CLR 1.1.4322; .NET CLR 2.0.50727)",
       "ip":"255.255.255.255",
       "url":"http://www.sendgrid.com/",
@@ -172,6 +212,10 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
       "category":"cat facts",
       "sg_event_id":"TDlqEy7cUfKLVMY3EAVCag==",
       "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0",
+      "marketing_campaign_id":12345,
+      "marketing_campaign_name":"campaign name",
+      "marketing_campaign_version":"B",
+      "marketing_campaign_split_id":13471,
       "useragent":"Mozilla/4.0 (compatible; MSIE 6.1; Windows XP; .NET CLR 1.1.4322; .NET CLR 2.0.50727)",
       "ip":"255.255.255.255",
       "url":"http://www.sendgrid.com/",
@@ -347,7 +391,11 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
            "event": "processed",
            "category": "cat facts",
            "sg_event_id": "sZROwMGMagFgnOEmSdvhig==",
-           "sg_message_id": "14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0"
+           "sg_message_id": "14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0",
+           "marketing_campaign_id":12345,
+           "marketing_campaign_name":"campaign name",
+           "marketing_campaign_version":"B",
+           "marketing_campaign_split_id":13471
           }
       ]"""
 
@@ -359,14 +407,18 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
           parse("""{
               "schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
               "data":{
-                "schema":"iglu:com.sendgrid/processed/jsonschema/1-0-0",
+                "schema":"iglu:com.sendgrid/processed/jsonschema/2-0-0",
                 "data":{
                      "email": "example@test.com",
                      "timestamp": "2015-11-03T11:20:15.000Z",
                      "smtp-id": "\u003c14c5d75ce93.dfd.64b469@ismtpd-555\u003e",
                      "category": "cat facts",
                      "sg_event_id": "sZROwMGMagFgnOEmSdvhig==",
-                     "sg_message_id": "14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0"
+                     "sg_message_id": "14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0",
+                     "marketing_campaign_id":12345,
+                     "marketing_campaign_name":"campaign name",
+                     "marketing_campaign_version":"B",
+                     "marketing_campaign_split_id":13471
                   }
                 }
               }
