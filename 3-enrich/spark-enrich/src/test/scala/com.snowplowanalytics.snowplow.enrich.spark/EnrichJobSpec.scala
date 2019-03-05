@@ -243,16 +243,6 @@ object EnrichJobSpec {
                 |"uri": "http://iglucentral.com"
               |}
             |}
-          |},
-          |{
-            |"name": "Iglu Central YAUAA enrichment",
-            |"priority": 1,
-            |"vendorPrefixes": [ "com.snowplowanalytics" ],
-            |"connection": {
-              |"http": {
-                |"uri": "http://iglucentral-dev.com.s3-website-us-east-1.amazonaws.com/yauaa_enrichment"
-              |}
-            |}
           |}
           |]
         |}
