@@ -80,7 +80,7 @@ class ParseTest extends Specification with DataTables { def is =
     "Unknown referer #3"            !! "http://www.spyfu.com/domain.aspx?d=3897225171967988459"  ! None             |
     "Unknown referer #4"            !! "http://seaqueen.wordpress.com/"                          ! None             |
     "Non-search Yahoo! site"        !! "http://finance.yahoo.com"                                ! Some("Yahoo!")   |> {
-      (_, refererUri, refererSource) =>
+      (_, refererUri, _) =>
         parser.parse(refererUri, pageHost) must_== Some(UnknownReferer)
     }
 

@@ -1,14 +1,14 @@
 val root = (project in file(".")).
   enablePlugins(ScalaUnidocPlugin, GhpagesPlugin).
   settings(
-    name          := "scala-referer-parser",
-    organization  := "com.snowplowanalytics",
-    version       := "0.5.0",
-    description   := "Library for extracting marketing attribution data from referer URLs",
-    scalaVersion  := "2.12.8",
+    name := "scala-referer-parser",
+    organization := "com.snowplowanalytics",
+    version := "0.5.0",
+    description := "Library for extracting marketing attribution data from referer URLs",
+    scalaVersion := "2.12.8",
     crossScalaVersions := Seq("2.11.12", "2.12.8"),
-    scalacOptions := BuildSettings.compilerOptions,
-
+    javacOptions := BuildSettings.javaCompilerOptions,
+    scalaFmtOnCompile := true,
     libraryDependencies ++= Seq(
       Dependencies.Libraries.catsCore,
       Dependencies.Libraries.circeCore,

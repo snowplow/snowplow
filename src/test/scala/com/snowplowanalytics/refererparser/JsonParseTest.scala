@@ -16,22 +16,15 @@
 
 package com.snowplowanalytics.refererparser
 
-// Java
 import java.net.URI
 
-// Scala
 import scala.io.Source._
 
-// circe
+import cats.effect.IO
 import io.circe._
 import io.circe.parser._
 import io.circe.generic.semiauto._
-
-// Specs2
 import org.specs2.mutable.Specification
-
-// cats
-import cats.effect.IO
 
 case class TestCase(
   spec: String,

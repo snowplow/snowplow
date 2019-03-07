@@ -15,13 +15,10 @@
  */
 package com.snowplowanalytics.refererparser
 
-// Java
 import java.net.{URI, URLDecoder}
 
-// Scala
 import scala.io.Source
 
-// Cats
 import cats.effect.Sync
 import cats.syntax.all._
 

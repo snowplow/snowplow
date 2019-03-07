@@ -16,12 +16,9 @@
 
 package com.snowplowanalytics.refererparser
 
-// Specs2 & ScalaCheck
+import cats.effect.IO
 import org.specs2.{Specification, ScalaCheck}
 import org.scalacheck.Arbitrary._
-
-// Cats
-import cats.effect.IO
 
 class ParseFuzzTest extends Specification with ScalaCheck {
 

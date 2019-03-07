@@ -15,17 +15,12 @@
  */
 package com.snowplowanalytics.refererparser
 
-// Json
+import cats.implicits._
 import io.circe._
 import io.circe.generic.semiauto._
 import io.circe.parser._
 
-// Cats
-import cats.implicits._
-
-/**
- * Handles loading and storing referers
- */
+/** Handles loading and storing referers */
 private[refererparser] object ParseReferers {
   final case class RefererEntry(
     medium: Medium,

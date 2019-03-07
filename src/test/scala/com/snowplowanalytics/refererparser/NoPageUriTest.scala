@@ -16,11 +16,8 @@
 
 package com.snowplowanalytics.refererparser
 
-// Specs2
-import org.specs2.mutable.Specification
-
-// Cats
 import cats.effect.IO
+import org.specs2.mutable.Specification
 
 class NoPageUriTest extends Specification {
 
