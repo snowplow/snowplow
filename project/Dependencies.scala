@@ -29,7 +29,7 @@ object Dependencies {
     val circeCore        = "io.circe"      %% "circe-core"        % V.circe
     val circeGeneric     = "io.circe"      %% "circe-generic"     % V.circe
     val circeParser      = "io.circe"      %% "circe-parser"      % V.circe
-    val specs2Core       = "org.specs2"    %% "specs2-core"       % V.specs2 % "test"
-    val specs2Scalacheck = "org.specs2"    %% "specs2-scalacheck" % V.specs2 % "test"
+    val specs2Core       = "org.specs2"    %% "specs2-core"       % V.specs2 % Test
+    val specs2Scalacheck = "org.specs2"    %% "specs2-scalacheck" % V.specs2 % Test
   }
 }
