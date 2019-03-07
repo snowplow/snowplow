@@ -20,23 +20,17 @@ import org.specs2.mutable.Specification
 
 class CorruptedRefererQuerystringTest extends Specification {
 
-  // Our data
-  val refererUri =
-    "http://www.google.com/search?q=Psychic+Bazaar&sugexp=chrome,mod=3&sourceid=chrome&ie=UTF-8"
-  val expected = Some(SearchReferer("Google", Some("Psychic Bazaar")))
-
-  val parser = Parser
-    .create[IO](
-      getClass.getResource("/referers.json").getPath
-    )
-    .unsafeRunSync() match {
-    case Right(p) => p
-    case Left(f)  => throw f
-  }
+  val resource   = getClass.getResource("/referers.json").getPath
+  val ioParser   = Parser.create[IO](resource).unsafeRunSync().fold(throw _, identity)
+  val evalParser = Parser.unsafeCreate(resource).value.fold(throw _, identity)
 
   "A corrupted referer querystring" should {
     "identify the search engine but not the search term" in {
-      parser.parse(refererUri, "") must_== expected
+      val refererUri =
+        "http://www.google.com/search?q=Psychic+Bazaar&sugexp=chrome,mod=3&sourceid=chrome&ie=UTF-8"
+      val expected = Some(SearchReferer("Google", Some("Psychic Bazaar")))
+      ioParser.parse(refererUri, "") must_== expected
+      evalParser.parse(refererUri, "") must_== expected
     }
   }
 }

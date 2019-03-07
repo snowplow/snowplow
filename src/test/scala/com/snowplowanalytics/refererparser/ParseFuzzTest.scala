@@ -21,20 +21,16 @@ import org.scalacheck.Arbitrary._
 
 class ParseFuzzTest extends Specification with ScalaCheck {
 
-  val parser = Parser
-    .create[IO](
-      getClass.getResource("/referers.json").getPath
-    )
-    .unsafeRunSync() match {
-    case Right(p) => p
-    case Left(f)  => throw f
-  }
+  val resource   = getClass.getResource("/referers.json").getPath
+  val ioParser   = Parser.create[IO](resource).unsafeRunSync().fold(throw _, identity)
+  val evalParser = Parser.unsafeCreate(resource).value.fold(throw _, identity)
 
   def is =
     "The parse function should work for any pair of referer and page Strings" ! e1
 
   def e1 =
     prop { (refererUri: String, pageUri: String) =>
-      parser.parse(refererUri, pageUri) must beAnInstanceOf[Option[Referer]]
+      ioParser.parse(refererUri, pageUri) must beAnInstanceOf[Option[Referer]]
+      evalParser.parse(refererUri, pageUri) must beAnInstanceOf[Option[Referer]]
     }
 }

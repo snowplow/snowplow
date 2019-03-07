@@ -20,21 +20,15 @@ import org.specs2.mutable.Specification
 
 class CorruptedRefererUriTest extends Specification {
 
-  // Our data
-  val refererUri = "http://bigcommerce%20wordpress%20plugin/"
-
-  val parser = Parser
-    .create[IO](
-      getClass.getResource("/referers.json").getPath
-    )
-    .unsafeRunSync() match {
-    case Right(p) => p
-    case Left(f)  => throw f
-  }
+  val resource   = getClass.getResource("/referers.json").getPath
+  val ioParser   = Parser.create[IO](resource).unsafeRunSync().fold(throw _, identity)
+  val evalParser = Parser.unsafeCreate(resource).value.fold(throw _, identity)
 
   "A corrupted referer URI" should {
     "return None, not throw an Exception" in {
-      parser.parse(refererUri) must beNone
+      val refererUri = "http://bigcommerce%20wordpress%20plugin/"
+      ioParser.parse(refererUri) must beNone
+      evalParser.parse(refererUri) must beNone
     }
   }
 }

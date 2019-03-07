@@ -20,35 +20,32 @@ import org.specs2.mutable.Specification
 
 class NoPageUriTest extends Specification {
 
-  // Our data
   val refererUri =
     "http://www.google.com/search?q=gateway+oracle+cards+denise+linn&hl=en&client=safari"
   val expected = Some(SearchReferer("Google", Some("gateway oracle cards denise linn")))
 
-  val parser = Parser
-    .create[IO](
-      getClass.getResource("/referers.json").getPath
-    )
-    .unsafeRunSync() match {
-    case Right(p) => p
-    case Left(f)  => throw f
-  }
+  val resource   = getClass.getResource("/referers.json").getPath
+  val ioParser   = Parser.create[IO](resource).unsafeRunSync().fold(throw _, identity)
+  val evalParser = Parser.unsafeCreate(resource).value.fold(throw _, identity)
 
   "An empty page URI" should {
     "not interfere with the referer parsing" in {
-      parser.parse(refererUri, "") must_== expected
+      ioParser.parse(refererUri, "") must_== expected
+      evalParser.parse(refererUri, "") must_== expected
     }
   }
 
   "No page URI" should {
     "not interfere with the referer parsing" in {
-      parser.parse(refererUri) must_== expected
+      ioParser.parse(refererUri) must_== expected
+      evalParser.parse(refererUri) must_== expected
     }
   }
 
   "A page URI" should {
     "not interfere with the referer parsing" in {
-      parser.parse(refererUri) must_== expected
+      ioParser.parse(refererUri) must_== expected
+      evalParser.parse(refererUri) must_== expected
     }
   }
 }

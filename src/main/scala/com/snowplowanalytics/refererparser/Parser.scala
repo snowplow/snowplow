@@ -19,14 +19,14 @@ import java.net.{URI, URLDecoder}
 
 import scala.io.Source
 
+import cats.Eval
 import cats.effect.Sync
-import cats.syntax.all._
+import cats.syntax.either._
+import cats.syntax.functor._
 
 /**
- * Parser object - contains one-time initialization
- * of the JSON database of referers, and parse()
- * methods to generate a Referer object from a
- * referer URL.
+ * Parser object - contains one-time initialization of the JSON database of referers, and parse()
+ * methods to generate a Referer object from a referer URL.
  */
 object Parser {
   def create[F[_]: Sync](filePath: String): F[Either[Exception, Parser]] =
@@ -34,12 +34,14 @@ object Parser {
       .delay { Source.fromFile(filePath).mkString }
       .map(rawJson =>
         ParseReferers.loadJsonFromString(rawJson).map(referers => new Parser(referers)))
+
+  def unsafeCreate(filePath: String): Eval[Either[Exception, Parser]] =
+    Eval
+      .later { Source.fromFile(filePath).mkString }
+      .map(rawJson =>
+        ParseReferers.loadJsonFromString(rawJson).map(referers => new Parser(referers)))
 }
 
-/**
- * Parser class - Scala version of Java Parser, with
- * everything wrapped in Sync
- */
 class Parser private (referers: Map[String, RefererLookup]) {
 
   private def toUri(uri: String): Option[URI] = {
@@ -67,10 +69,7 @@ class Parser private (referers: Map[String, RefererLookup]) {
   def parse(refererUri: String, pageUri: URI): Option[Referer] =
     toUri(refererUri).flatMap(uri => parse(uri, Some(pageUri.getHost), Nil))
 
-  /**
-   * Parses a `refererUri` URI to return
-   * either Some Referer, or None.
-   */
+  /** Parses a `refererUri` URI to return either Some Referer, or None. */
   def parse(
     refererUri: URI,
     pageHost: Option[String],
@@ -128,9 +127,6 @@ class Parser private (referers: Map[String, RefererLookup]) {
 
   private def decodeUriPart(part: String): String = URLDecoder.decode(part, "UTF-8")
 
-  /**
-   * Determine
-   */
   private def lookupReferer(refererHost: String, refererPath: String): Option[RefererLookup] = {
     val hosts = hostsToTry(refererHost)
     val paths = pathsToTry(refererPath)
@@ -149,14 +145,13 @@ class Parser private (referers: Map[String, RefererLookup]) {
    * Splits a full hostname into possible hosts to lookup.
    * For instance, hostsToTry("www.google.com") == List("www.google.com", "google.com", "com")
    */
-  private def hostsToTry(refererHost: String): List[String] = {
+  private def hostsToTry(refererHost: String): List[String] =
     refererHost
       .split("\\.")
       .toList
       .scanRight("")((part, full) => s"$part.$full")
       .init
       .map(s => s.substring(0, s.length - 1))
-  }
 
   /**
    * Splits a full path into possible paths to try. Inlcludes full path, no path and first path level.

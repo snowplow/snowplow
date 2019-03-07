@@ -16,23 +16,17 @@
 
 package com.snowplowanalytics.refererparser
 
-// Specs2
+import cats.effect.IO
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
-
-// Cats
-import cats.effect.IO
 
 class ParseTest extends Specification with DataTables { def is =
 
   "This is a specification to test the parse function"
 
-  val parser = Parser.create[IO](
-    getClass.getResource("/referers.json").getPath
-  ).unsafeRunSync() match {
-    case Right(p) => p
-    case Left(f) => throw f
-  }
+  val resource = getClass.getResource("/referers.json").getPath
+  val ioParser = Parser.create[IO](resource).unsafeRunSync().fold(throw _, identity)
+  val evalParser = Parser.unsafeCreate(resource).value.fold(throw _, identity)
 
   // Aliases
   val pageHost = "www.snowplowanalytics.com"
@@ -69,7 +63,8 @@ class ParseTest extends Specification with DataTables { def is =
     "Internal HTTP"        !! "http://www.snowplowanalytics.com/about/team"                                                     ! Medium.Internal  ! None                ! None                                     |
     "Internal HTTPS"       !! "https://www.snowplowanalytics.com/account/profile"                                               ! Medium.Internal  ! None                ! None                                     |> {
       (_, refererUri, medium, source, term) =>
-        parser.parse(refererUri, pageHost) must_== Some(genExpected(medium, source, term))
+        ioParser.parse(refererUri, pageHost) must_== Some(genExpected(medium, source, term))
+        evalParser.parse(refererUri, pageHost) must_== Some(genExpected(medium, source, term))
     }
 
   // Unknown referer URI
@@ -81,7 +76,8 @@ class ParseTest extends Specification with DataTables { def is =
     "Unknown referer #4"            !! "http://seaqueen.wordpress.com/"                          ! None             |
     "Non-search Yahoo! site"        !! "http://finance.yahoo.com"                                ! Some("Yahoo!")   |> {
       (_, refererUri, _) =>
-        parser.parse(refererUri, pageHost) must_== Some(UnknownReferer)
+        ioParser.parse(refererUri, pageHost) must_== Some(UnknownReferer)
+        evalParser.parse(refererUri, pageHost) must_== Some(UnknownReferer)
     }
 
   // Unavoidable false positives
@@ -94,7 +90,8 @@ class ParseTest extends Specification with DataTables { def is =
     "Non-search Google Drive link" !! "http://www.google.com/url?q=http://www.whatismyreferer.com/&sa=D&usg=ALhdy2_qs3arPmg7E_e2aBkj6K0gHLa5rQ" ! Medium.Search ! Some("Google") ! Some("http://www.whatismyreferer.com/") |> {
      // ^ Sadly indistinguishable from a search link
       (_, refererUri, medium, source, term) =>
-        parser.parse(refererUri, pageHost) must_== Some(genExpected(medium, source, term))
+        ioParser.parse(refererUri, pageHost) must_== Some(genExpected(medium, source, term))
+        evalParser.parse(refererUri, pageHost) must_== Some(genExpected(medium, source, term))
     }
 
   def genExpected(medium: Medium, source: Option[String], term: Option[String]) = medium match {

@@ -58,14 +58,9 @@ class JsonParseTest extends Specification {
   val internalDomains =
     List("www.subdomain1.snowplowanalytics.com", "www.subdomain2.snowplowanalytics.com")
 
-  val parser = Parser
-    .create[IO](
-      getClass.getResource("/referers.json").getPath
-    )
-    .unsafeRunSync() match {
-    case Right(p) => p
-    case Left(f)  => throw f
-  }
+  val resource   = getClass.getResource("/referers.json").getPath
+  val ioParser   = Parser.create[IO](resource).unsafeRunSync().fold(throw _, identity)
+  val evalParser = Parser.unsafeCreate(resource).value.fold(throw _, identity)
 
   "parse" should {
     s"extract the expected details from referer with spec" in {
@@ -79,9 +74,11 @@ class JsonParseTest extends Specification {
           case Some(PaidMedium)     => Some(PaidReferer(test.source.get))
           case _                    => throw new Exception(s"Bad medium: ${test.medium}")
         }
-        val actual = parser.parse(new URI(test.uri), Some(pageHost), internalDomains)
+        val ioActual   = ioParser.parse(new URI(test.uri), Some(pageHost), internalDomains)
+        val evalActual = evalParser.parse(new URI(test.uri), Some(pageHost), internalDomains)
 
-        expected shouldEqual actual
+        expected shouldEqual ioActual
+        expected shouldEqual evalActual
       }
     }
   }

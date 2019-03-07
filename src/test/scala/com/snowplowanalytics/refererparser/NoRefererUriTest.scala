@@ -20,21 +20,15 @@ import org.specs2.mutable.Specification
 
 class NoRefererUriTest extends Specification {
 
-  // Our data
-  val pageHost = "www.psychicbazaar.com"
-
-  val parser = Parser
-    .create[IO](
-      getClass.getResource("/referers.json").getPath
-    )
-    .unsafeRunSync() match {
-    case Right(p) => p
-    case Left(f)  => throw f
-  }
+  val resource   = getClass.getResource("/referers.json").getPath
+  val ioParser   = Parser.create[IO](resource).unsafeRunSync().fold(throw _, identity)
+  val evalParser = Parser.unsafeCreate(resource).value.fold(throw _, identity)
 
   "An empty referer URI" should {
     "return no referal" in {
-      parser.parse("", pageHost) must beNone
+      val pageHost = "www.psychicbazaar.com"
+      ioParser.parse("", pageHost) must beNone
+      evalParser.parse("", pageHost) must beNone
     }
   }
 }
