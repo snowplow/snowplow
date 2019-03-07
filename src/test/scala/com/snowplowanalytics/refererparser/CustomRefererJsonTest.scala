@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.snowplowanalytics.refererparser
 
 import cats.effect.IO
@@ -30,7 +29,7 @@ class CustomRefererJsonTest extends Specification {
         case Left(failure) => throw failure
       }
       val expected = Some(SearchReferer("Example", Some("hello world")))
-      val actual = parser.parse("https://www.example.org/?query=hello+world")
+      val actual   = parser.parse("https://www.example.org/?query=hello+world")
 
       expected shouldEqual actual
     }

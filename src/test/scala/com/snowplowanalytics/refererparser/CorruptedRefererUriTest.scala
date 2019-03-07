@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.snowplowanalytics.refererparser
 
 import cats.effect.IO
@@ -24,11 +23,13 @@ class CorruptedRefererUriTest extends Specification {
   // Our data
   val refererUri = "http://bigcommerce%20wordpress%20plugin/"
 
-  val parser = Parser.create[IO](
-    getClass.getResource("/referers.json").getPath
-  ).unsafeRunSync() match {
+  val parser = Parser
+    .create[IO](
+      getClass.getResource("/referers.json").getPath
+    )
+    .unsafeRunSync() match {
     case Right(p) => p
-    case Left(f) => throw f
+    case Left(f)  => throw f
   }
 
   "A corrupted referer URI" should {

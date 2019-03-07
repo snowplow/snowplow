@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.snowplowanalytics.refererparser
 
 import cats.effect.IO
@@ -22,14 +21,17 @@ import org.specs2.mutable.Specification
 class NoPageUriTest extends Specification {
 
   // Our data
-  val refererUri = "http://www.google.com/search?q=gateway+oracle+cards+denise+linn&hl=en&client=safari"
-  val expected   = Some(SearchReferer("Google", Some("gateway oracle cards denise linn")))
+  val refererUri =
+    "http://www.google.com/search?q=gateway+oracle+cards+denise+linn&hl=en&client=safari"
+  val expected = Some(SearchReferer("Google", Some("gateway oracle cards denise linn")))
 
-  val parser = Parser.create[IO](
-    getClass.getResource("/referers.json").getPath
-  ).unsafeRunSync() match {
+  val parser = Parser
+    .create[IO](
+      getClass.getResource("/referers.json").getPath
+    )
+    .unsafeRunSync() match {
     case Right(p) => p
-    case Left(f) => throw f
+    case Left(f)  => throw f
   }
 
   "An empty page URI" should {

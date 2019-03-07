@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.snowplowanalytics.refererparser
 
 import java.net.URI
@@ -44,24 +43,28 @@ class JsonParseTest extends Specification {
   val eitherTests = for {
     doc <- parse(testString)
     lst <- doc.as[List[Json]]
-  } yield lst.map(_.as[TestCase] match {
-    case Right(success) => success
-    case Left(failure) => throw failure
-  })
+  } yield
+    lst.map(_.as[TestCase] match {
+      case Right(success) => success
+      case Left(failure)  => throw failure
+    })
 
   val tests = eitherTests match {
     case Right(success) => success
-    case Left(failure) => throw failure
+    case Left(failure)  => throw failure
   }
 
   val pageHost = "www.snowplowanalytics.com"
-  val internalDomains = List("www.subdomain1.snowplowanalytics.com", "www.subdomain2.snowplowanalytics.com")
+  val internalDomains =
+    List("www.subdomain1.snowplowanalytics.com", "www.subdomain2.snowplowanalytics.com")
 
-  val parser = Parser.create[IO](
-    getClass.getResource("/referers.json").getPath
-  ).unsafeRunSync() match {
+  val parser = Parser
+    .create[IO](
+      getClass.getResource("/referers.json").getPath
+    )
+    .unsafeRunSync() match {
     case Right(p) => p
-    case Left(f) => throw f
+    case Left(f)  => throw f
   }
 
   "parse" should {

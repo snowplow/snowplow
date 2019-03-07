@@ -8,7 +8,7 @@ val root = (project in file(".")).
     scalaVersion := "2.12.8",
     crossScalaVersions := Seq("2.11.12", "2.12.8"),
     javacOptions := BuildSettings.javaCompilerOptions,
-    scalaFmtOnCompile := true,
+    scalafmtOnCompile := true,
     libraryDependencies ++= Seq(
       Dependencies.Libraries.catsCore,
       Dependencies.Libraries.circeCore,

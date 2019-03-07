@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.snowplowanalytics.refererparser
 
 import cats.effect.IO
@@ -24,11 +23,13 @@ class NoRefererUriTest extends Specification {
   // Our data
   val pageHost = "www.psychicbazaar.com"
 
-  val parser = Parser.create[IO](
-    getClass.getResource("/referers.json").getPath
-  ).unsafeRunSync() match {
+  val parser = Parser
+    .create[IO](
+      getClass.getResource("/referers.json").getPath
+    )
+    .unsafeRunSync() match {
     case Right(p) => p
-    case Left(f) => throw f
+    case Left(f)  => throw f
   }
 
   "An empty referer URI" should {

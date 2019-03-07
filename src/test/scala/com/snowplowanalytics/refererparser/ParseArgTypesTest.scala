@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.snowplowanalytics.refererparser
 
 // Java
@@ -27,24 +26,27 @@ class ParseArgTypesTest extends Specification {
   // Aliases
   val refererUri = "http://www.psychicbazaar.com/catalog/pendula"
   val refererURI = new URI(refererUri)
-  val pageURI = new URI("http://www.psychicbazaar.com/catalog/pendula/lo-scarabeo-silver-cone-pendulum")
+  val pageURI = new URI(
+    "http://www.psychicbazaar.com/catalog/pendula/lo-scarabeo-silver-cone-pendulum")
   val pageHost = pageURI.getHost
 
   val expected = Some(InternalReferer)
 
-  val parser = Parser.create[IO](
-    getClass.getResource("/referers.json").getPath
-  ).unsafeRunSync() match {
+  val parser = Parser
+    .create[IO](
+      getClass.getResource("/referers.json").getPath
+    )
+    .unsafeRunSync() match {
     case Right(p) => p
-    case Left(f) => throw f
+    case Left(f)  => throw f
   }
 
   "parse " should {
     "work the same regardless of which argument types are used to call it" in {
       parser.parse(refererUri, pageHost) must_== expected
-      parser.parse(refererUri, pageURI)  must_== expected
+      parser.parse(refererUri, pageURI) must_== expected
       parser.parse(refererURI, pageHost) must_== expected
-      parser.parse(refererURI, pageURI)  must_== expected
+      parser.parse(refererURI, pageURI) must_== expected
     }
   }
 }
