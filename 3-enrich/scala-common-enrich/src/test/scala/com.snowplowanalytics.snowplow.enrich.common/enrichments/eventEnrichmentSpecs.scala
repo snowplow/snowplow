@@ -10,19 +10,13 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common
-package enrichments
+package com.snowplowanalytics.snowplow.enrich.common.enrichments
 
-// Specs2
+import org.joda.time.DateTime
+import org.joda.time.DateTimeZone
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
-
-// Joda
-import org.joda.time.DateTime
-import org.joda.time.DateTimeZone
-
-// Scalaz
 import scalaz._
 import Scalaz._
 
@@ -76,10 +70,10 @@ class ExtractEventTypeSpec extends Specification with DataTables with Validation
     }
 
   def e4 =
-    "SPEC NAME"  || "INPUT VAL"               | "EXPECTED OUTPUT" |
-      "Not long" !! ("f", "v")                ! "Field [f]: [v] is not in the expected format (ms since epoch)".fail |
-      "Too long" !! ("f", "1111111111111111") ! "Field [f]: [1111111111111111] is formatted as [37179-09-17 07:18:31.111] which isn't Redshift-compatible".fail |
-      "Valid ts" !! ("f", "1")                ! "1970-01-01 00:00:00.001".success |> { (_, input, expected) =>
+    "SPEC NAME" || "INPUT VAL" | "EXPECTED OUTPUT" |
+      "Not long" !! (("f", "v")) ! "Field [f]: [v] is not in the expected format (ms since epoch)".fail |
+      "Too long" !! (("f", "1111111111111111")) ! "Field [f]: [1111111111111111] is formatted as [37179-09-17 07:18:31.111] which isn't Redshift-compatible".fail |
+      "Valid ts" !! (("f", "1")) ! "1970-01-01 00:00:00.001".success |> { (_, input, expected) =>
       EventEnrichments.extractTimestamp(input._1, input._2) must_== (expected)
     }
 }

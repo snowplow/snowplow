@@ -32,25 +32,8 @@ object BuildSettings {
   lazy val basicSettings = Seq(
     organization          :=  "com.snowplowanalytics",
     scalaVersion          :=  "2.11.11",
-    scalacOptions         :=  compilerOptions,
-    scalacOptions in Test :=  Seq("-Yrangepos"),
     javacOptions          :=  javaCompilerOptions,
     resolvers             ++= Dependencies.resolutionRepos
-  )
-
-  lazy val compilerOptions = Seq(
-    "-deprecation",
-    "-encoding", "UTF-8",
-    "-feature",
-    "-language:existentials",
-    "-language:higherKinds",
-    "-language:implicitConversions",
-    "-unchecked",
-    "-Yno-adapted-args",
-    "-Ywarn-dead-code",
-    "-Ywarn-numeric-widen",
-    "-Xfuture",
-    "-Xlint"
   )
 
   lazy val javaCompilerOptions = Seq(

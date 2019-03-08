@@ -10,28 +10,17 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 
-// Java
 import java.io.{PrintWriter, StringWriter}
 
-// Joda
-import org.joda.time.DateTime
-
-// Iglu
-import iglu.client.Resolver
-
-// Scala
 import scala.util.control.NonFatal
 
-// Scalaz
+import com.snowplowanalytics.iglu.client.Resolver
+import org.joda.time.DateTime
 import scalaz._
 import Scalaz._
 
-// This project
 import adapters.AdapterRegistry
 import enrichments.{EnrichmentManager, EnrichmentRegistry}
 import outputs.EnrichedEvent
@@ -73,9 +62,9 @@ object EtlPipeline {
 
     def flattenToList[A](v: Validated[Option[Validated[NonEmptyList[Validated[A]]]]]): List[Validated[A]] = v match {
       case Success(Some(Success(nel))) => nel.toList
-      case Success(Some(Failure(f)))   => List(f.fail)
-      case Failure(f)                  => List(f.fail)
-      case Success(None)               => Nil
+      case Success(Some(Failure(f))) => List(f.fail)
+      case Failure(f) => List(f.fail)
+      case Success(None) => Nil
     }
 
     try {

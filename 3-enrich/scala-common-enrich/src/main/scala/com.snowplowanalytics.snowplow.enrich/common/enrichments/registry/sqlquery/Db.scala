@@ -13,16 +13,12 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry.sqlquery
 
-// Scala
-import scala.collection.immutable.IntMap
-
-// Java
 import java.sql._
 
-// json4s
+import scala.collection.immutable.IntMap
+
 import org.json4s.MappingException
 
-// This library
 import Input.ExtractedValue
 
 /**
@@ -45,7 +41,7 @@ case class Db(postgresql: Option[PostgresqlDb] = None, mysql: Option[MysqlDb] = 
   }
 
   /**
-   * Create [[PreparedStatement]] and fill all its placeholders
+   * Create PreparedStatement and fill all its placeholders
    * This function expects `placeholderMap` contains exact same amount of placeholders
    * as `sql`, otherwise it will result in error downstream
    *
@@ -68,9 +64,7 @@ case class Db(postgresql: Option[PostgresqlDb] = None, mysql: Option[MysqlDb] = 
   def getPlaceholderCount(sql: String): ThrowableXor[Int] =
     realDb.createEmptyStatement(sql).flatMap(realDb.getPlaceholderCount)
 
-  /**
-   * Execute [[PreparedStatement]]
-   */
+  /** Execute PreparedStatement */
   def execute(preparedStatement: PreparedStatement): ThrowableXor[ResultSet] =
     realDb.execute(preparedStatement)
 }

@@ -13,20 +13,14 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 
-// Scalaz
 import scalaz._
 import Scalaz._
-
-// json4s
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
-// This project
-import utils.{ConversionUtils => CU}
-
-// Get our project settings
 import generated.ProjectSettings
+import utils.{ConversionUtils => CU}
 
 /**
  * Miscellaneous enrichments which don't fit into
@@ -61,15 +55,15 @@ object MiscEnrichments {
    */
   val extractPlatform: (String, String) => ValidatedString = (field, platform) => {
     platform match {
-      case "web"  => "web".success // Web, including Mobile Web
-      case "iot"  => "iot".success // Internet of Things (e.g. Arduino tracker)
-      case "app"  => "app".success // General App
-      case "mob"  => "mob".success // Mobile / Tablet
-      case "pc"   => "pc".success // Desktop / Laptop / Netbook
+      case "web" => "web".success // Web, including Mobile Web
+      case "iot" => "iot".success // Internet of Things (e.g. Arduino tracker)
+      case "app" => "app".success // General App
+      case "mob" => "mob".success // Mobile / Tablet
+      case "pc" => "pc".success // Desktop / Laptop / Netbook
       case "cnsl" => "cnsl".success // Games Console
-      case "tv"   => "tv".success // Connected TV
-      case "srv"  => "srv".success // Server-side App
-      case p      => "Field [%s]: [%s] is not a supported tracking platform".format(field, p).fail
+      case "tv" => "tv".success // Connected TV
+      case "srv" => "srv".success // Server-side App
+      case p => "Field [%s]: [%s] is not a supported tracking platform".format(field, p).fail
     }
   }
 

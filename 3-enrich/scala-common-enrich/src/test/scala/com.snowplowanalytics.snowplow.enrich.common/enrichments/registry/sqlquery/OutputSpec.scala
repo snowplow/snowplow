@@ -10,19 +10,14 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common
-package enrichments.registry.sqlquery
-
-// json4s
-import org.json4s._
+package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.sqlquery
 
 import java.sql.Date
 
-// specs2
+import org.joda.time.DateTime
+import org.json4s._
 import org.specs2.Specification
 import org.specs2.scalaz.ValidationMatchers
-
-import org.joda.time.DateTime
 
 class OutputSpec extends Specification with ValidationMatchers {
   def is = s2"""

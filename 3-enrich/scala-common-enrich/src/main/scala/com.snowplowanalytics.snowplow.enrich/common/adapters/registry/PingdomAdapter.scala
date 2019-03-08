@@ -10,34 +10,19 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-// Java
 import org.apache.http.NameValuePair
 
-// Scala
-import scala.util.matching.Regex
-
-// Scalaz
+import com.fasterxml.jackson.core.JsonParseException
+import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
 import scalaz._
 import Scalaz._
-
-// Jackson
-import com.fasterxml.jackson.core.JsonParseException
-
-// json4s
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 
-// Iglu
-import iglu.client.{Resolver, SchemaKey}
-
-// This project
 import loaders.CollectorPayload
 import utils.{JsonUtils => JU}
 
@@ -60,8 +45,8 @@ object PingdomAdapter extends Adapter {
 
   // Schemas for reverse-engineering a Snowplow unstructured event
   private val EventSchemaMap = Map(
-    "assign"          -> SchemaKey("com.pingdom", "incident_assign", "jsonschema", "1-0-0").toSchemaUri,
-    "notify_user"     -> SchemaKey("com.pingdom", "incident_notify_user", "jsonschema", "1-0-0").toSchemaUri,
+    "assign" -> SchemaKey("com.pingdom", "incident_assign", "jsonschema", "1-0-0").toSchemaUri,
+    "notify_user" -> SchemaKey("com.pingdom", "incident_notify_user", "jsonschema", "1-0-0").toSchemaUri,
     "notify_of_close" -> SchemaKey("com.pingdom", "incident_notify_of_close", "jsonschema", "1-0-0").toSchemaUri
   )
 
@@ -100,14 +85,14 @@ object PingdomAdapter extends Adapter {
                   }
                 } yield {
                   val formattedEvent = reformatParameters(parsedEvent)
-                  val qsParams       = s - "message"
+                  val qsParams = s - "message"
                   NonEmptyList(
                     RawEvent(
-                      api         = payload.api,
-                      parameters  = toUnstructEventParams(TrackerVersion, qsParams, schema, formattedEvent, "srv"),
+                      api = payload.api,
+                      parameters = toUnstructEventParams(TrackerVersion, qsParams, schema, formattedEvent, "srv"),
                       contentType = payload.contentType,
-                      source      = payload.source,
-                      context     = payload.context
+                      source = payload.source,
+                      context = payload.context
                     ))
                 }
               }
@@ -155,8 +140,8 @@ object PingdomAdapter extends Adapter {
       } yield f
 
     (successes, failures) match {
-      case (s :: ss, Nil) => (s :: ss).toMap.successNel   // No Failures collected.
-      case (_, f :: fs)   => NonEmptyList(f, fs: _*).fail // Some Failures, return only those.
+      case (s :: ss, Nil) => (s :: ss).toMap.successNel // No Failures collected.
+      case (_, f :: fs) => NonEmptyList(f, fs: _*).fail // Some Failures, return only those.
       case (Nil, Nil) =>
         "Empty parameters list was passed - should never happen: empty querystring is not being caught".failNel
     }
@@ -192,6 +177,6 @@ object PingdomAdapter extends Adapter {
   private[registry] def reformatParameters(json: JValue): JValue =
     (json \ "action").extractOpt[String] match {
       case Some(eventType) => json removeField { _ == JField("action", JString(eventType)) }
-      case None            => json
+      case None => json
     }
 }

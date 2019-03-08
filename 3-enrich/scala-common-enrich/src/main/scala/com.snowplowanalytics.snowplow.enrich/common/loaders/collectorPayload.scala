@@ -10,18 +10,12 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common
-package loaders
+package com.snowplowanalytics.snowplow.enrich.common.loaders
 
-// Scalaz
+import org.apache.http.NameValuePair
+import org.joda.time.DateTime
 import scalaz._
 import Scalaz._
-
-// Apache URLEncodedUtils
-import org.apache.http.NameValuePair
-
-// Joda-Time
-import org.joda.time.DateTime
 
 object CollectorPayload {
 
@@ -30,27 +24,29 @@ object CollectorPayload {
    * tp1 (where no API vendor or version provided
    * as well as Snowplow).
    */
-  def apply(querystring: List[NameValuePair],
-            sourceName: String,
-            sourceEncoding: String,
-            sourceHostname: Option[String],
-            contextTimestamp: Option[DateTime],
-            contextIpAddress: Option[String],
-            contextUseragent: Option[String],
-            contextRefererUri: Option[String],
-            contextHeaders: List[String],
-            contextUserId: Option[String],
-            api: CollectorApi,
-            contentType: Option[String],
-            body: Option[String]): CollectorPayload = {
+  def apply(
+    querystring: List[NameValuePair],
+    sourceName: String,
+    sourceEncoding: String,
+    sourceHostname: Option[String],
+    contextTimestamp: Option[DateTime],
+    contextIpAddress: Option[String],
+    contextUseragent: Option[String],
+    contextRefererUri: Option[String],
+    contextHeaders: List[String],
+    contextUserId: Option[String],
+    api: CollectorApi,
+    contentType: Option[String],
+    body: Option[String]): CollectorPayload = {
 
     val source = CollectorSource(sourceName, sourceEncoding, sourceHostname)
-    val context = CollectorContext(contextTimestamp,
-                                   contextIpAddress,
-                                   contextUseragent,
-                                   contextRefererUri,
-                                   contextHeaders,
-                                   contextUserId)
+    val context = CollectorContext(
+      contextTimestamp,
+      contextIpAddress,
+      contextUseragent,
+      contextRefererUri,
+      contextHeaders,
+      contextUserId)
 
     CollectorPayload(api, querystring, contentType, body, source, context)
   }
@@ -78,7 +74,7 @@ object CollectorApi {
    *         CollectorApi or a Failure String.
    */
   def parse(path: String): Validation[String, CollectorApi] = path match {
-    case ApiPathRegex(vnd, ver)  => CollectorApi(vnd, ver).success
+    case ApiPathRegex(vnd, ver) => CollectorApi(vnd, ver).success
     case _ if isIceRequest(path) => SnowplowTp1.success
     case _ =>
       s"Request path ${path} does not match (/)vendor/version(/) pattern nor is a legacy /i(ce.png) request".fail

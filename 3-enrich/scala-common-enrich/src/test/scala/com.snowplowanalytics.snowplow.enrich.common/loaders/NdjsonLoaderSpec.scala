@@ -14,9 +14,7 @@ package com.snowplowanalytics.snowplow.enrich.common.loaders
 
 import org.specs2.mutable.Specification
 import org.specs2.scalaz.ValidationMatchers
-
 import scalaz._
-import Scalaz._
 
 class NdjsonLoaderSpec extends Specification with ValidationMatchers {
 

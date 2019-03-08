@@ -1,27 +1,29 @@
-package com.snowplowanalytics
-package snowplow.enrich.common.utils
+/*
+ * Copyright (c) 2014-2019 Snowplow Analytics Ltd. All rights reserved.
+ *
+ * This program is licensed to you under the Apache License Version 2.0,
+ * and you may not use this file except in compliance with the Apache License Version 2.0.
+ * You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the Apache License Version 2.0 is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
+ */
+package com.snowplowanalytics.snowplow.enrich.common.utils
 
-// Java
 import java.io.IOException
 
-// Scala
 import scala.util.control.NonFatal
 
-// Jackson
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.JsonNode
 import com.github.fge.jackson.JsonLoader
-
-// Scalaz
-import scalaz.Scalaz._
-
-//Snowplow
+import com.snowplowanalytics.iglu.client.{SchemaKey, Validated}
 import com.snowplowanalytics.iglu.client.repositories.{RepositoryRef, RepositoryRefConfig}
-import com.snowplowanalytics.iglu.client.{SchemaKey, Validated, utils, validation}
-
-// Iglu
-import iglu.client.utils.{ValidationExceptions => VE}
-import iglu.client.validation.ProcessingMessageMethods._
+import com.snowplowanalytics.iglu.client.utils.{ValidationExceptions => VE}
+import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
+import scalaz.Scalaz._
 
 /**
  * Iglu repository ref that looks up a schema in test resources.

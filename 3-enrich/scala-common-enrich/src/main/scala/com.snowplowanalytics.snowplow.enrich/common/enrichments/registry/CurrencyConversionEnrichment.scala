@@ -10,49 +10,22 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
-package enrichments
-package registry
+package com.snowplowanalytics.snowplow.enrich.common
+package enrichments.registry
 
-// Java
 import java.net.UnknownHostException
 
-// Maven Artifact
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion
-
-// Scala
 import scala.util.control.NonFatal
 
-// Scalaz
+import com.snowplowanalytics.forex.oerclient._
+import com.snowplowanalytics.forex.{Forex, ForexConfig}
+import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
+import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
+import org.joda.time.DateTime
+import org.json4s.{DefaultFormats, JValue}
 import scalaz._
 import Scalaz._
 
-// json4s
-import org.json4s.{DefaultFormats, JValue}
-
-// Iglu
-import iglu.client.{SchemaCriterion, SchemaKey}
-import iglu.client.validation.ProcessingMessageMethods._
-
-// Joda-Time
-import org.joda.time.DateTime
-
-// Scala-Forex
-import com.snowplowanalytics.forex.oerclient.{
-  AccountType,
-  DeveloperAccount,
-  EnterpriseAccount,
-  OerClientConfig,
-  OerResponseError,
-  UnlimitedAccount
-}
-import com.snowplowanalytics.forex.{Forex, ForexConfig}
-
-// This project
-import common.utils.ConversionUtils
 import utils.ScalazJson4sUtils
 
 /**
@@ -70,12 +43,12 @@ object CurrencyConversionEnrichmentConfig extends ParseableEnrichment {
   def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[CurrencyConversionEnrichment] =
     isParseable(config, schemaKey).flatMap(conf => {
       (for {
-        apiKey       <- ScalazJson4sUtils.extract[String](config, "parameters", "apiKey")
+        apiKey <- ScalazJson4sUtils.extract[String](config, "parameters", "apiKey")
         baseCurrency <- ScalazJson4sUtils.extract[String](config, "parameters", "baseCurrency")
         accountType <- (ScalazJson4sUtils.extract[String](config, "parameters", "accountType") match {
-          case Success("DEVELOPER")  => DeveloperAccount.success
+          case Success("DEVELOPER") => DeveloperAccount.success
           case Success("ENTERPRISE") => EnterpriseAccount.success
-          case Success("UNLIMITED")  => UnlimitedAccount.success
+          case Success("UNLIMITED") => UnlimitedAccount.success
 
           // Should never happen (prevented by schema validation)
           case Success(s) =>
@@ -108,9 +81,10 @@ case class CurrencyConversionEnrichment(accountType: AccountType, apiKey: String
    * @return None.success if the inputs were not both defined,
    *         otherwise Validation[Option[_]] boxing the result of the conversion
    */
-  private def performConversion(initialCurrency: Option[String],
-                                value: Option[Double],
-                                tstamp: DateTime): Validation[String, Option[String]] =
+  private def performConversion(
+    initialCurrency: Option[String],
+    value: Option[Double],
+    tstamp: DateTime): Validation[String, Option[String]] =
     (initialCurrency, value) match {
       case (Some(ic), Some(v)) =>
         fx.convert(v, ic).to(baseCurrency).at(tstamp) match {
@@ -135,28 +109,29 @@ case class CurrencyConversionEnrichment(accountType: AccountType, apiKey: String
    * @param collectorTstamp Collector timestamp
    * @return Validation[Tuple] containing all input amounts converted to the base currency
    */
-  def convertCurrencies(trCurrency: Option[String],
-                        trTotal: Option[Double],
-                        trTax: Option[Double],
-                        trShipping: Option[Double],
-                        tiCurrency: Option[String],
-                        tiPrice: Option[Double],
-                        collectorTstamp: Option[DateTime])
+  def convertCurrencies(
+    trCurrency: Option[String],
+    trTotal: Option[Double],
+    trTax: Option[Double],
+    trShipping: Option[Double],
+    tiCurrency: Option[String],
+    tiPrice: Option[Double],
+    collectorTstamp: Option[DateTime])
     : ValidationNel[String, (Option[String], Option[String], Option[String], Option[String])] =
     collectorTstamp match {
       case Some(tstamp) =>
         try {
           val newCurrencyTr = performConversion(trCurrency, trTotal, tstamp)
           val newCurrencyTi = performConversion(tiCurrency, tiPrice, tstamp)
-          val newTrTax      = performConversion(trCurrency, trTax, tstamp)
+          val newTrTax = performConversion(trCurrency, trTax, tstamp)
           val newTrShipping = performConversion(trCurrency, trShipping, tstamp)
           (newCurrencyTr.toValidationNel |@| newTrTax.toValidationNel |@| newTrShipping.toValidationNel |@| newCurrencyTi.toValidationNel) {
             (_, _, _, _)
           }
         } catch {
           case e: NoSuchElementException => "Base currency [%s] not supported: [%s]".format(baseCurrency, e).failNel
-          case f: UnknownHostException   => "Could not connect to Open Exchange Rates: [%s]".format(f).failNel
-          case NonFatal(g)               => "Unexpected exception converting currency: [%s]".format(g).failNel
+          case f: UnknownHostException => "Could not connect to Open Exchange Rates: [%s]".format(f).failNel
+          case NonFatal(g) => "Unexpected exception converting currency: [%s]".format(g).failNel
         }
       case None => "Collector timestamp missing".failNel // This should never happen
     }

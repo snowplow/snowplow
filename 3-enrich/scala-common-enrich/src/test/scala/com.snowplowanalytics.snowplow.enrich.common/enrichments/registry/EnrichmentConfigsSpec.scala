@@ -10,44 +10,18 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
-package enrichments
-package registry
+package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
-// Java
 import java.net.URI
-import java.lang.{Byte => JByte}
 
-import com.snowplowanalytics.iglu.client.SchemaCriterion
-import org.specs2.matcher.DataTables
-
-// Apache Commons Codec
-import org.apache.commons.codec.binary.Base64
-
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// json4s
-import org.json4s.jackson.JsonMethods.parse
-
-// Iglu
-import com.snowplowanalytics.iglu.client.SchemaKey
-import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
-
-// Scala-Forex
 import com.snowplowanalytics.forex.oerclient.DeveloperAccount
-
-// Specs2
+import com.snowplowanalytics.iglu.client.SchemaKey
+import org.apache.commons.codec.binary.Base64
+import org.json4s.jackson.JsonMethods.parse
+import org.specs2.matcher.DataTables
 import org.specs2.mutable.Specification
 import org.specs2.scalaz.ValidationMatchers
 
-/**
- * Tests enrichmentConfigs
- */
 class EnrichmentConfigsSpec extends Specification with ValidationMatchers with DataTables {
 
   "Parsing a valid anon_ip enrichment JSON" should {
@@ -107,12 +81,12 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers with D
       val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "ip_lookups", "jsonschema", "2-0-0")
 
       val expected = IpLookupsEnrichment(
-        Some("geo",
+        Some(("geo",
              new URI("http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoIP2-City.mmdb"),
-             "GeoIP2-City.mmdb"),
-        Some("isp",
+             "GeoIP2-City.mmdb")),
+        Some(("isp",
              new URI("http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoIP2-ISP.mmdb"),
-             "GeoIP2-ISP.mmdb"),
+             "GeoIP2-ISP.mmdb")),
         None,
         None,
         true

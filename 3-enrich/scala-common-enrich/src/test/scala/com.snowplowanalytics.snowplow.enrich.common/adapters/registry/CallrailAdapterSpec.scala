@@ -14,21 +14,15 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-// Joda-Time
 import org.joda.time.DateTime
-
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// Snowplow
-import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
-import SpecHelpers._
-
-// Specs2
 import org.specs2.{ScalaCheck, Specification}
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
+import scalaz._
+import Scalaz._
+
+import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import SpecHelpers._
 
 class CallrailAdapterSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck {
   def is = s2"""

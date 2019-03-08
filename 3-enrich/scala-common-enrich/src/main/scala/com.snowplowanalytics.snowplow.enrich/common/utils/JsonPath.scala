@@ -12,16 +12,11 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.utils
 
-// Scalaz
+import io.gatling.jsonpath.{JsonPath => GatlingJsonPath}
 import scalaz._
 import Scalaz._
-
-// Json4s
 import org.json4s._
 import org.json4s.jackson.JsonMethods.mapper
-
-// Gatling JsonPath
-import io.gatling.jsonpath.{JsonPath => GatlingJsonPath}
 
 /**
  * Wrapper for `io.gatling.jsonpath` for `json4s` and `scalaz`
@@ -40,7 +35,7 @@ object JsonPath {
   def convertToJValue(json: JValue): Validation[String, Object] =
     json match {
       case JNothing => "JSONPath error: Nothing was given".failure
-      case other    => json4sMapper.convertValue(other, classOf[Object]).success
+      case other => json4sMapper.convertValue(other, classOf[Object]).success
     }
 
   /**
@@ -53,7 +48,7 @@ object JsonPath {
     def json4sQuery(json: JValue): List[JValue] =
       convertToJValue(json) match {
         case Success(pojo) => jsonPath.query(pojo).map(anyToJValue).toList
-        case Failure(_)    => Nil
+        case Failure(_) => Nil
       }
   }
 
@@ -66,7 +61,7 @@ object JsonPath {
     convertToJValue(json).flatMap { pojo =>
       GatlingJsonPath.query(jsonPath, pojo) match {
         case Right(iterator) => iterator.map(anyToJValue).toList.success
-        case Left(error)     => error.reason.fail
+        case Left(error) => error.reason.fail
       }
     }
 
@@ -74,22 +69,22 @@ object JsonPath {
    * Precompile JsonPath query
    *
    * @param query JsonPath query as a string
-   * @return valid [[JsonPath]] object either error message
+   * @return valid JsonPath object either error message
    */
   def compileQuery(query: String): Validation[String, GatlingJsonPath] =
     GatlingJsonPath.compile(query).leftMap(_.reason).disjunction.validation
 
   /**
    * Wrap list of values into JSON array if several values present
-   * Use in conjunction with `query`. [[JNothing]] will represent absent value
+   * Use in conjunction with `query`. JNothing will represent absent value
    *
    * @param values list of JSON values
    * @return array if there's >1 values in list
    */
   def wrapArray(values: List[JValue]): JValue = values match {
-    case Nil        => JNothing
+    case Nil => JNothing
     case one :: Nil => one
-    case many       => JArray(many)
+    case many => JArray(many)
   }
 
   /**

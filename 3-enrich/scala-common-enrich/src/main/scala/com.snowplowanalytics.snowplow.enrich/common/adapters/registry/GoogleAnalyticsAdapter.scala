@@ -11,31 +11,23 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 
-package com.snowplowanalytics
-package snowplow.enrich.common
+package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-// Java
 import java.net.URI
-import org.apache.http.client.utils.URLEncodedUtils
+import java.nio.charset.StandardCharsets.UTF_8
 
-// Scala
 import scala.collection.JavaConversions._
 
-// Scalaz
+import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
+import org.apache.http.client.utils.URLEncodedUtils
 import scalaz._
 import Scalaz._
-
-// json4s
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
-// Iglu
-import iglu.client.{Resolver, SchemaKey}
-
-// This project
 import loaders.CollectorPayload
 import utils.ConversionUtils._
 
@@ -46,13 +38,13 @@ import utils.ConversionUtils._
 object GoogleAnalyticsAdapter extends Adapter {
 
   // for failure messages
-  private val VendorName      = "GoogleAnalytics"
-  private val GaVendor        = "com.google.analytics"
-  private val Vendor          = s"$GaVendor.measurement-protocol"
+  private val VendorName = "GoogleAnalytics"
+  private val GaVendor = "com.google.analytics"
+  private val Vendor = s"$GaVendor.measurement-protocol"
   private val ProtocolVersion = "v1"
-  private val Protocol        = s"$Vendor-$ProtocolVersion"
-  private val Format          = "jsonschema"
-  private val SchemaVersion   = "1-0-0"
+  private val Protocol = s"$Vendor-$ProtocolVersion"
+  private val Format = "jsonschema"
+  private val SchemaVersion = "1-0-0"
 
   private val PageViewHitType = "pageview"
 
@@ -84,9 +76,9 @@ object GoogleAnalyticsAdapter extends Adapter {
   final case class BooleanType(b: Boolean) extends FieldType
   implicit val fieldTypeJson4s: FieldType => JValue = (f: FieldType) =>
     f match {
-      case StringType(s)  => JString(s)
-      case IntType(i)     => JInt(i)
-      case DoubleType(f)  => JDouble(f)
+      case StringType(s) => JString(s)
+      case IntType(i) => JInt(i)
+      case DoubleType(f) => JDouble(f)
       case BooleanType(b) => JBool(b)
   }
 
@@ -113,8 +105,9 @@ object GoogleAnalyticsAdapter extends Adapter {
         "dt" -> idTranslation("documentTitle")
       )
     ),
-    "screenview" -> MPData(SchemaKey(Vendor, "screen_view", Format, SchemaVersion),
-                           Map("cd" -> idTranslation("screenName"))),
+    "screenview" -> MPData(
+      SchemaKey(Vendor, "screen_view", Format, SchemaVersion),
+      Map("cd" -> idTranslation("screenName"))),
     "event" -> MPData(
       SchemaKey(Vendor, "event", Format, SchemaVersion),
       Map(
@@ -127,13 +120,13 @@ object GoogleAnalyticsAdapter extends Adapter {
     "transaction" -> MPData(
       SchemaKey(Vendor, "transaction", Format, SchemaVersion),
       Map(
-        "ti"  -> idTranslation("id"),
-        "ta"  -> idTranslation("affiliation"),
-        "tr"  -> twoDecimalsTranslation("revenue"),
-        "ts"  -> twoDecimalsTranslation("shipping"),
-        "tt"  -> twoDecimalsTranslation("tax"),
+        "ti" -> idTranslation("id"),
+        "ta" -> idTranslation("affiliation"),
+        "tr" -> twoDecimalsTranslation("revenue"),
+        "ts" -> twoDecimalsTranslation("shipping"),
+        "tt" -> twoDecimalsTranslation("tax"),
         "tcc" -> idTranslation("couponCode"),
-        "cu"  -> idTranslation("currencyCode")
+        "cu" -> idTranslation("currencyCode")
       )
     ),
     "item" -> MPData(
@@ -186,45 +179,47 @@ object GoogleAnalyticsAdapter extends Adapter {
   private val contextData: Map[SchemaKey, Map[String, KVTranslation]] = {
     // pageview can be a context too
     val ct = unstructEventData(PageViewHitType) :: List(
-      MPData(SchemaKey(GaVendor, "undocumented", Format, SchemaVersion),
-             List("a", "jid", "gjid").map(e => e -> idTranslation(e)).toMap),
+      MPData(
+        SchemaKey(GaVendor, "undocumented", Format, SchemaVersion),
+        List("a", "jid", "gjid").map(e => e -> idTranslation(e)).toMap),
       MPData(
         SchemaKey(GaVendor, "private", Format, SchemaVersion),
         (List("_v", "_u", "_gid").map(e => e -> idTranslation(e.tail)) ++
-          List("_s", "_r").map(e        => e -> intTranslation(e.tail))).toMap
+          List("_s", "_r").map(e => e -> intTranslation(e.tail))).toMap
       ),
       MPData(
         SchemaKey(Vendor, "general", Format, SchemaVersion),
         Map(
-          "v"   -> idTranslation("protocolVersion"),
+          "v" -> idTranslation("protocolVersion"),
           "tid" -> idTranslation("trackingId"),
           "aip" -> booleanTranslation("anonymizeIp"),
-          "ds"  -> idTranslation("dataSource"),
-          "qt"  -> intTranslation("queueTime"),
-          "z"   -> idTranslation("cacheBuster")
+          "ds" -> idTranslation("dataSource"),
+          "qt" -> intTranslation("queueTime"),
+          "z" -> idTranslation("cacheBuster")
         )
       ),
-      MPData(SchemaKey(Vendor, "user", Format, SchemaVersion),
-             Map("cid" -> idTranslation("clientId"), "uid" -> idTranslation("userId"))),
+      MPData(
+        SchemaKey(Vendor, "user", Format, SchemaVersion),
+        Map("cid" -> idTranslation("clientId"), "uid" -> idTranslation("userId"))),
       MPData(
         SchemaKey(Vendor, "session", Format, SchemaVersion),
         Map(
-          "sc"    -> idTranslation("sessionControl"),
-          "uip"   -> idTranslation("ipOverride"),
-          "ua"    -> idTranslation("userAgentOverride"),
+          "sc" -> idTranslation("sessionControl"),
+          "uip" -> idTranslation("ipOverride"),
+          "ua" -> idTranslation("userAgentOverride"),
           "geoid" -> idTranslation("geographicalOverride")
         )
       ),
       MPData(
         SchemaKey(Vendor, "traffic_source", Format, SchemaVersion),
         Map(
-          "dr"    -> idTranslation("documentReferrer"),
-          "cn"    -> idTranslation("campaignName"),
-          "cs"    -> idTranslation("campaignSource"),
-          "cm"    -> idTranslation("campaignMedium"),
-          "ck"    -> idTranslation("campaignKeyword"),
-          "cc"    -> idTranslation("campaignContent"),
-          "ci"    -> idTranslation("campaignId"),
+          "dr" -> idTranslation("documentReferrer"),
+          "cn" -> idTranslation("campaignName"),
+          "cs" -> idTranslation("campaignSource"),
+          "cm" -> idTranslation("campaignMedium"),
+          "ck" -> idTranslation("campaignKeyword"),
+          "cc" -> idTranslation("campaignContent"),
+          "ci" -> idTranslation("campaignId"),
           "gclid" -> idTranslation("googleAdwordsId"),
           "dclid" -> idTranslation("googleDisplayAdsId")
         )
@@ -245,27 +240,30 @@ object GoogleAnalyticsAdapter extends Adapter {
       MPData(
         SchemaKey(Vendor, "app", Format, SchemaVersion),
         Map(
-          "an"   -> idTranslation("name"),
-          "aid"  -> idTranslation("id"),
-          "av"   -> idTranslation("version"),
+          "an" -> idTranslation("name"),
+          "aid" -> idTranslation("id"),
+          "av" -> idTranslation("version"),
           "aiid" -> idTranslation("installerId")
         )
       ),
       MPData(
         SchemaKey(Vendor, "product_action", Format, SchemaVersion),
         Map(
-          "pa"  -> idTranslation("productAction"),
+          "pa" -> idTranslation("productAction"),
           "pal" -> idTranslation("productActionList"),
           "cos" -> intTranslation("checkoutStep"),
           "col" -> idTranslation("checkoutStepOption")
         )
       ),
-      MPData(SchemaKey(Vendor, "content_experiment", Format, SchemaVersion),
-             Map("xid" -> idTranslation("id"), "xvar" -> idTranslation("variant"))),
-      MPData(SchemaKey(Vendor, "hit", Format, SchemaVersion),
-             Map("t" -> idTranslation("type"), "ni" -> booleanTranslation("nonInteractionHit"))),
-      MPData(SchemaKey(Vendor, "promotion_action", Format, SchemaVersion),
-             Map("promoa" -> idTranslation("promotionAction")))
+      MPData(
+        SchemaKey(Vendor, "content_experiment", Format, SchemaVersion),
+        Map("xid" -> idTranslation("id"), "xvar" -> idTranslation("variant"))),
+      MPData(
+        SchemaKey(Vendor, "hit", Format, SchemaVersion),
+        Map("t" -> idTranslation("type"), "ni" -> booleanTranslation("nonInteractionHit"))),
+      MPData(
+        SchemaKey(Vendor, "promotion_action", Format, SchemaVersion),
+        Map("promoa" -> idTranslation("promotionAction")))
     )
     ct.map(d => d.schemaKey -> d.translationTable).toMap
   }
@@ -282,103 +280,104 @@ object GoogleAnalyticsAdapter extends Adapter {
       SchemaKey(Vendor, "product", Format, SchemaVersion),
       Map(
         s"${valueInFieldNameIndicator}pr" -> intTranslation("index"),
-        "prid"                            -> idTranslation("sku"),
-        "prnm"                            -> idTranslation("name"),
-        "prbr"                            -> idTranslation("brand"),
-        "prca"                            -> idTranslation("category"),
-        "prva"                            -> idTranslation("variant"),
-        "prpr"                            -> twoDecimalsTranslation("price"),
-        "prqt"                            -> intTranslation("quantity"),
-        "prcc"                            -> idTranslation("couponCode"),
-        "prps"                            -> intTranslation("position"),
-        "cu"                              -> idTranslation("currencyCode")
+        "prid" -> idTranslation("sku"),
+        "prnm" -> idTranslation("name"),
+        "prbr" -> idTranslation("brand"),
+        "prca" -> idTranslation("category"),
+        "prva" -> idTranslation("variant"),
+        "prpr" -> twoDecimalsTranslation("price"),
+        "prqt" -> intTranslation("quantity"),
+        "prcc" -> idTranslation("couponCode"),
+        "prps" -> intTranslation("position"),
+        "cu" -> idTranslation("currencyCode")
       )
     ),
     MPData(
       SchemaKey(Vendor, "product_custom_dimension", Format, SchemaVersion),
       Map(
         s"${valueInFieldNameIndicator}prcd" -> intTranslation("productIndex"),
-        s"${valueInFieldNameIndicator}cd"   -> intTranslation("dimensionIndex"),
-        "prcd"                              -> idTranslation("value")
+        s"${valueInFieldNameIndicator}cd" -> intTranslation("dimensionIndex"),
+        "prcd" -> idTranslation("value")
       )
     ),
     MPData(
       SchemaKey(Vendor, "product_custom_metric", Format, SchemaVersion),
       Map(
         s"${valueInFieldNameIndicator}prcm" -> intTranslation("productIndex"),
-        s"${valueInFieldNameIndicator}cm"   -> intTranslation("metricIndex"),
-        "prcm"                              -> intTranslation("value")
+        s"${valueInFieldNameIndicator}cm" -> intTranslation("metricIndex"),
+        "prcm" -> intTranslation("value")
       )
     ),
     MPData(
       SchemaKey(Vendor, "product_impression_list", Format, SchemaVersion),
       Map(
         s"${valueInFieldNameIndicator}il" -> intTranslation("index"),
-        "ilnm"                            -> idTranslation("name")
+        "ilnm" -> idTranslation("name")
       )
     ),
     MPData(
       SchemaKey(Vendor, "product_impression", Format, SchemaVersion),
       Map(
         s"${valueInFieldNameIndicator}ilpi" -> intTranslation("listIndex"),
-        s"${valueInFieldNameIndicator}pi"   -> intTranslation("productIndex"),
-        "ilpiid"                            -> idTranslation("sku"),
-        "ilpinm"                            -> idTranslation("name"),
-        "ilpibr"                            -> idTranslation("brand"),
-        "ilpica"                            -> idTranslation("category"),
-        "ilpiva"                            -> idTranslation("variant"),
-        "ilpips"                            -> intTranslation("position"),
-        "ilpipr"                            -> twoDecimalsTranslation("price"),
-        "cu"                                -> idTranslation("currencyCode")
+        s"${valueInFieldNameIndicator}pi" -> intTranslation("productIndex"),
+        "ilpiid" -> idTranslation("sku"),
+        "ilpinm" -> idTranslation("name"),
+        "ilpibr" -> idTranslation("brand"),
+        "ilpica" -> idTranslation("category"),
+        "ilpiva" -> idTranslation("variant"),
+        "ilpips" -> intTranslation("position"),
+        "ilpipr" -> twoDecimalsTranslation("price"),
+        "cu" -> idTranslation("currencyCode")
       )
     ),
     MPData(
       SchemaKey(Vendor, "product_impression_custom_dimension", Format, SchemaVersion),
       Map(
         s"${valueInFieldNameIndicator}ilpicd" -> intTranslation("listIndex"),
-        s"${valueInFieldNameIndicator}picd"   -> intTranslation("productIndex"),
-        s"${valueInFieldNameIndicator}cd"     -> intTranslation("customDimensionIndex"),
-        "ilpicd"                              -> idTranslation("value")
+        s"${valueInFieldNameIndicator}picd" -> intTranslation("productIndex"),
+        s"${valueInFieldNameIndicator}cd" -> intTranslation("customDimensionIndex"),
+        "ilpicd" -> idTranslation("value")
       )
     ),
     MPData(
       SchemaKey(Vendor, "product_impression_custom_metric", Format, SchemaVersion),
       Map(
         s"${valueInFieldNameIndicator}ilpicm" -> intTranslation("listIndex"),
-        s"${valueInFieldNameIndicator}picm"   -> intTranslation("productIndex"),
-        s"${valueInFieldNameIndicator}cm"     -> intTranslation("customMetricIndex"),
-        "ilpicm"                              -> intTranslation("value")
+        s"${valueInFieldNameIndicator}picm" -> intTranslation("productIndex"),
+        s"${valueInFieldNameIndicator}cm" -> intTranslation("customMetricIndex"),
+        "ilpicm" -> intTranslation("value")
       )
     ),
     MPData(
       SchemaKey(Vendor, "promotion", Format, SchemaVersion),
       Map(
         s"${valueInFieldNameIndicator}promo" -> intTranslation("index"),
-        "promoid"                            -> idTranslation("id"),
-        "promonm"                            -> idTranslation("name"),
-        "promocr"                            -> idTranslation("creative"),
-        "promops"                            -> idTranslation("position")
+        "promoid" -> idTranslation("id"),
+        "promonm" -> idTranslation("name"),
+        "promocr" -> idTranslation("creative"),
+        "promops" -> idTranslation("position")
       )
     ),
     MPData(
       SchemaKey(Vendor, "custom_dimension", Format, SchemaVersion),
       Map(
         s"${valueInFieldNameIndicator}cd" -> intTranslation("index"),
-        "cd"                              -> idTranslation("value")
+        "cd" -> idTranslation("value")
       )
     ),
     MPData(
       SchemaKey(Vendor, "custom_metric", Format, SchemaVersion),
       Map(
         s"${valueInFieldNameIndicator}cm" -> intTranslation("index"),
-        "cm"                              -> doubleTranslation("value")
+        "cm" -> doubleTranslation("value")
       )
     ),
-    MPData(SchemaKey(Vendor, "content_group", Format, SchemaVersion),
-           Map(
-             s"${valueInFieldNameIndicator}cg" -> intTranslation("index"),
-             "cg"                              -> idTranslation("value")
-           ))
+    MPData(
+      SchemaKey(Vendor, "content_group", Format, SchemaVersion),
+      Map(
+        s"${valueInFieldNameIndicator}cg" -> intTranslation("index"),
+        "cg" -> idTranslation("value")
+      ))
   )
 
   // List of schemas for which we need to re attach the currency
@@ -401,25 +400,25 @@ object GoogleAnalyticsAdapter extends Adapter {
   private val directMappings: (String => Map[String, String]) = (hitType: String) =>
     Map(
       "uip" -> "ip",
-      "dr"  -> "refr",
-      "de"  -> "cs",
-      "sd"  -> "cd",
-      "ul"  -> "lang",
-      "je"  -> "f_java",
-      "dl"  -> "url",
-      "dt"  -> "page",
-      "ti"  -> (if (hitType == "transaction") "tr_id" else "ti_id"),
-      "ta"  -> "tr_af",
-      "tr"  -> "tr_tt",
-      "ts"  -> "tr_sh",
-      "tt"  -> "tr_tx",
-      "in"  -> "ti_nm",
-      "ip"  -> "ti_pr",
-      "iq"  -> "ti_qu",
-      "ic"  -> "ti_sk",
-      "iv"  -> "ti_ca",
-      "cu"  -> (if (hitType == "transaction") "tr_cu" else "ti_cu"),
-      "ua"  -> "ua"
+      "dr" -> "refr",
+      "de" -> "cs",
+      "sd" -> "cd",
+      "ul" -> "lang",
+      "je" -> "f_java",
+      "dl" -> "url",
+      "dt" -> "page",
+      "ti" -> (if (hitType == "transaction") "tr_id" else "ti_id"),
+      "ta" -> "tr_af",
+      "tr" -> "tr_tt",
+      "ts" -> "tr_sh",
+      "tt" -> "tr_tx",
+      "in" -> "ti_nm",
+      "ip" -> "ti_pr",
+      "iq" -> "ti_qu",
+      "ic" -> "ti_sk",
+      "iv" -> "ti_ca",
+      "cu" -> (if (hitType == "transaction") "tr_cu" else "ti_cu"),
+      "ua" -> "ua"
   )
 
   /**
@@ -432,11 +431,11 @@ object GoogleAnalyticsAdapter extends Adapter {
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
     (for {
-      body      <- payload.body
+      body <- payload.body
       rawEvents <- body.lines.map(parsePayload(_, payload)).toList.toNel
     } yield rawEvents) match {
       case Some(rawEvents) => rawEvents.sequenceU
-      case None            => s"Request body is empty: no $VendorName events to process".failNel
+      case None => s"Request body is empty: no $VendorName events to process".failNel
     }
 
   /**
@@ -446,9 +445,9 @@ object GoogleAnalyticsAdapter extends Adapter {
    * @return a Validation boxing either a RawEvent or a NEL of Failure Strings
    */
   private def parsePayload(bodyPart: String, payload: CollectorPayload): ValidationNel[String, RawEvent] = {
-    val params = toMap(URLEncodedUtils.parse(URI.create(s"http://localhost/?$bodyPart"), "UTF-8").toList)
+    val params = toMap(URLEncodedUtils.parse(URI.create(s"http://localhost/?$bodyPart"), UTF_8).toList)
     params.get("t") match {
-      case None          => s"No $VendorName t parameter provided: cannot determine hit type".failNel
+      case None => s"No $VendorName t parameter provided: cannot determine hit type".failNel
       case Some(hitType) =>
         // direct mappings
         val mappings = translatePayload(params, directMappings(hitType))
@@ -456,14 +455,15 @@ object GoogleAnalyticsAdapter extends Adapter {
           .get(hitType)
           .map(_.translationTable)
           .toSuccess(s"No matching $VendorName hit type for hit type $hitType".wrapNel)
-        val schemaVal      = lookupSchema(hitType.some, VendorName, unstructEventData.mapValues(_.schemaKey.toSchemaUri))
+        val schemaVal = lookupSchema(hitType.some, VendorName, unstructEventData.mapValues(_.schemaKey.toSchemaUri))
         val simpleContexts = buildContexts(params, contextData, fieldToSchemaMap)
         val compositeContexts =
-          buildCompositeContexts(params,
-                                 compositeContextData,
-                                 compositeContextsWithCU,
-                                 nrCompFieldsPerSchema,
-                                 valueInFieldNameIndicator).validation
+          buildCompositeContexts(
+            params,
+            compositeContextData,
+            compositeContextsWithCU,
+            nrCompFieldsPerSchema,
+            valueInFieldNameIndicator).validation
             .toValidationNel
 
         (translationTable |@| schemaVal |@| simpleContexts |@| compositeContexts) {
@@ -488,8 +488,8 @@ object GoogleAnalyticsAdapter extends Adapter {
                   parameters = contextParam ++ mappings ++
                     Map("e" -> "ue", "ue_pr" -> unstructEvent, "tv" -> Protocol, "p" -> "srv"),
                   contentType = payload.contentType,
-                  source      = payload.source,
-                  context     = payload.context
+                  source = payload.source,
+                  context = payload.context
                 )
               }
         }.flatMap(identity)
@@ -684,7 +684,7 @@ object GoogleAnalyticsAdapter extends Adapter {
   private[registry] def breakDownCompField(fieldName: String): \/[String, (List[String], List[String])] =
     fieldName match {
       case compositeFieldRegex(grps @ _*) => splitEvenOdd(grps.toList.filter(_.nonEmpty)).right
-      case s if s.isEmpty                 => "Cannot parse empty composite field name".left
+      case s if s.isEmpty => "Cannot parse empty composite field name".left
       case _ =>
         (s"Cannot parse field name $fieldName, " +
           s"it doesn't conform to the expected composite field regex: $compositeFieldRegex").left
@@ -694,8 +694,8 @@ object GoogleAnalyticsAdapter extends Adapter {
   private def splitEvenOdd[T](list: List[T]): (List[T], List[T]) = {
     def go(l: List[T], even: List[T], odd: List[T]): (List[T], List[T], List[T]) = l match {
       case h1 :: h2 :: t => go(t, h1 :: even, h2 :: odd)
-      case h :: Nil      => (Nil, h :: even, odd)
-      case Nil           => (Nil, even, odd)
+      case h :: Nil => (Nil, h :: even, odd)
+      case Nil => (Nil, even, odd)
     }
     val res = go(list, Nil, Nil)
     (res._2.reverse, res._3.reverse)
@@ -706,15 +706,15 @@ object GoogleAnalyticsAdapter extends Adapter {
     list
       .foldLeft(List.empty[T]) {
         case (h :: t, e) if e != h => e :: h :: t
-        case (Nil, e)              => e :: Nil
-        case (l, _)                => l
+        case (Nil, e) => e :: Nil
+        case (l, _) => l
       }
       .reverse
 
   /** Transposes a list of lists, does not need to be rectangular unlike the stdlib's version. */
   private def transpose[T](l: List[List[T]]): List[List[T]] =
     l.flatMap(_.headOption) match {
-      case Nil  => Nil
+      case Nil => Nil
       case head => head :: transpose(l.collect { case _ :: tail => tail })
     }
 

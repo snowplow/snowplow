@@ -10,22 +10,15 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 package snowplow
 
-// Iglu
-import iglu.client.Resolver
-
-// Scalaz
+import com.snowplowanalytics.iglu.client.Resolver
 import scalaz._
 import Scalaz._
 
-// This project
 import loaders.CollectorPayload
 
 /**
@@ -54,11 +47,11 @@ object Tp1Adapter extends Adapter {
     } else {
       NonEmptyList(
         RawEvent(
-          api         = payload.api,
-          parameters  = params,
+          api = payload.api,
+          parameters = params,
           contentType = payload.contentType,
-          source      = payload.source,
-          context     = payload.context
+          source = payload.source,
+          context = payload.context
         )).success
     }
   }

@@ -12,15 +12,9 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.enrichments.web
 
-// Java
-import java.net.URI
-
-// Specs2 & Scalaz-Specs2
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
-
-// Scalaz
 import scalaz._
 import Scalaz._
 

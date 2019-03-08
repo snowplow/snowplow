@@ -10,32 +10,16 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
-package enrichments
-package registry
+package com.snowplowanalytics.snowplow.enrich.common
+package enrichments.registry
 
-// Maven Artifact
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion
-
-// Apache Commons
+import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
+import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
 import org.apache.commons.codec.digest.DigestUtils
-
-// Scalaz
 import scalaz._
 import Scalaz._
-
-// json4s
 import org.json4s._
-import org.json4s.jackson.JsonMethods
 
-// Iglu
-import iglu.client.{SchemaCriterion, SchemaKey}
-import iglu.client.validation.ProcessingMessageMethods._
-
-// This project
 import utils.ScalazJson4sUtils
 
 /**
@@ -60,8 +44,8 @@ object EventFingerprintEnrichmentConfig extends ParseableEnrichment {
     isParseable(config, schemaKey).flatMap(conf => {
       (for {
         excludedParameters <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "excludeParameters")
-        algorithmName      <- ScalazJson4sUtils.extract[String](config, "parameters", "hashAlgorithm")
-        algorithm          <- getAlgorithm(algorithmName)
+        algorithmName <- ScalazJson4sUtils.extract[String](config, "parameters", "hashAlgorithm")
+        algorithm <- getAlgorithm(algorithmName)
       } yield EventFingerprintEnrichment(algorithm, excludedParameters)).toValidationNel
     })
 
