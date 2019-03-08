@@ -11,25 +11,17 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich.common
-package enrichments
-package registry
-package apirequest
+package enrichments.registry.apirequest
 
-// json4s
+import com.snowplowanalytics.iglu.client.{JsonSchemaPair, SchemaKey}
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.{parseJson, prettyJson}
 import org.json4s.jackson.JsonMethods.asJsonNode
-
-// specs2
 import org.specs2.Specification
 import org.specs2.scalaz.ValidationMatchers
 import org.specs2.matcher.Matcher
 
-// Iglu
-import com.snowplowanalytics.iglu.client.{JsonSchemaPair, SchemaKey}
-
-// This project
 import outputs.EnrichedEvent
 
 object ApiRequestEnrichmentIntegrationTest {
@@ -47,7 +39,9 @@ object ApiRequestEnrichmentIntegrationTest {
   def createPair(key: SchemaKey, validJson: String): JsonSchemaPair = {
     val hierarchy = parseJson(
       s"""{"rootId":null,"rootTstamp":null,"refRoot":"events","refTree":["events","${key.name}"],"refParent":"events"}""")
-    (key, asJsonNode(("data", parseJson(validJson)) ~ ("hierarchy", hierarchy) ~ ("schema", key.toJValue)))
+    (key, asJsonNode(("data", parseJson(validJson)) ~
+      (("hierarchy", hierarchy)) ~
+      (("schema", key.toJValue))))
   }
 }
 

@@ -10,24 +10,18 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich
-package common.enrichments.registry.sqlquery
+package com.snowplowanalytics.snowplow.enrich.common
+package enrichments.registry.sqlquery
 
-// json4s
+import com.snowplowanalytics.iglu.client.{JsonSchemaPair, SchemaKey}
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.parseJson
 import org.json4s.jackson.JsonMethods.asJsonNode
-
-// specs2
 import org.specs2.Specification
 import org.specs2.scalaz.ValidationMatchers
 
-// Iglu
-import com.snowplowanalytics.iglu.client.{JsonSchemaPair, SchemaKey}
-
-// This library
-import common.outputs.EnrichedEvent
+import outputs.EnrichedEvent
 
 object SqlQueryEnrichmentIntegrationTest {
   def continuousIntegration: Boolean = sys.env.get("CI") match {
@@ -46,11 +40,13 @@ object SqlQueryEnrichmentIntegrationTest {
   def createPair(key: SchemaKey, validJson: String): JsonSchemaPair = {
     val hierarchy = parseJson(
       s"""{"rootId":null,"rootTstamp":null,"refRoot":"events","refTree":["events","${key.name}"],"refParent":"events"}""")
-    (key, asJsonNode(("data", parseJson(validJson)) ~ ("hierarchy", hierarchy) ~ ("schema", key.toJValue)))
+    (key, asJsonNode(("data", parseJson(validJson)) ~
+      (("hierarchy", hierarchy)) ~
+      (("schema", key.toJValue))))
   }
 
   def createDerived(key: SchemaKey, validJson: String): JObject =
-    ("schema", key.toSchemaUri) ~ ("data", parseJson(validJson))
+    (("schema", key.toSchemaUri)) ~ (("data", parseJson(validJson)))
 }
 
 import SqlQueryEnrichmentIntegrationTest._

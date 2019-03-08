@@ -10,31 +10,15 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
-package enrichments
-package registry
+package com.snowplowanalytics.snowplow.enrich.common
+package enrichments.registry
 
-// Java
-import java.net.URI
-
-// Maven Artifact
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion
-
-// Scalaz
+import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
+import org.json4s.{DefaultFormats, JValue}
 import scalaz._
 import Scalaz._
 
-// json4s
-import org.json4s.{DefaultFormats, JValue}
-
-import iglu.client.{SchemaCriterion, SchemaKey}
-
-// This project
-import utils.{ConversionUtils => CU}
-import utils.MapTransformer.{SourceMap, TransformFunc}
+import utils.MapTransformer.SourceMap
 import utils.ScalazJson4sUtils
 
 /**
@@ -48,9 +32,9 @@ object CampaignAttributionEnrichment extends ParseableEnrichment {
   val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "campaign_attribution", "jsonschema", 1, 0)
 
   val DefaultNetworkMap = Map(
-    "gclid"   -> "Google",
+    "gclid" -> "Google",
     "msclkid" -> "Microsoft",
-    "dclid"   -> "DoubleClick"
+    "dclid" -> "DoubleClick"
   )
 
   /**
@@ -64,10 +48,10 @@ object CampaignAttributionEnrichment extends ParseableEnrichment {
   def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[CampaignAttributionEnrichment] =
     isParseable(config, schemaKey).flatMap(conf => {
       (for {
-        medium   <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "fields", "mktMedium")
-        source   <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "fields", "mktSource")
-        term     <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "fields", "mktTerm")
-        content  <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "fields", "mktContent")
+        medium <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "fields", "mktMedium")
+        source <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "fields", "mktSource")
+        term <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "fields", "mktTerm")
+        content <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "fields", "mktContent")
         campaign <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "fields", "mktCampaign")
 
         customClickMap = ScalazJson4sUtils
@@ -78,12 +62,13 @@ object CampaignAttributionEnrichment extends ParseableEnrichment {
             s => s
           )
 
-        enrich = CampaignAttributionEnrichment(medium,
-                                               source,
-                                               term,
-                                               content,
-                                               campaign,
-                                               (DefaultNetworkMap ++ customClickMap).toList)
+        enrich = CampaignAttributionEnrichment(
+          medium,
+          source,
+          term,
+          content,
+          campaign,
+          (DefaultNetworkMap ++ customClickMap).toList)
       } yield enrich).toValidationNel
     })
 
@@ -152,10 +137,10 @@ case class CampaignAttributionEnrichment(
    *         Validation
    */
   def extractMarketingFields(nvPairs: SourceMap): ValidationNel[String, MarketingCampaign] = {
-    val medium   = getFirstParameter(mediumParameters, nvPairs)
-    val source   = getFirstParameter(sourceParameters, nvPairs)
-    val term     = getFirstParameter(termParameters, nvPairs)
-    val content  = getFirstParameter(contentParameters, nvPairs)
+    val medium = getFirstParameter(mediumParameters, nvPairs)
+    val source = getFirstParameter(sourceParameters, nvPairs)
+    val term = getFirstParameter(termParameters, nvPairs)
+    val content = getFirstParameter(contentParameters, nvPairs)
     val campaign = getFirstParameter(campaignParameters, nvPairs)
 
     val (clickId, network) =

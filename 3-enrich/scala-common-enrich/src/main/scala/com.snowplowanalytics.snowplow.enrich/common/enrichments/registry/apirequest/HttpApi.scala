@@ -10,25 +10,17 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich
-package common
-package enrichments
-package registry
-package apirequest
+package com.snowplowanalytics.snowplow.enrich.common
+package enrichments.registry.apirequest
 
-// Java
 import java.net.URLEncoder
 
-// json4s
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization
-
-// Scalaz
 import scalaz._
 import Scalaz._
 
-// This project
-import com.snowplowanalytics.snowplow.enrich.common.utils.HttpClient
+import utils.HttpClient
 
 /**
  * API client able to make HTTP requests
@@ -43,12 +35,12 @@ case class HttpApi(method: String, uri: String, timeout: Int, authentication: Au
 
   private val authUser = for {
     httpBasic <- authentication.httpBasic
-    user      <- httpBasic.username
+    user <- httpBasic.username
   } yield user
 
   private val authPassword = for {
     httpBasic <- authentication.httpBasic
-    password  <- httpBasic.password
+    password <- httpBasic.password
   } yield password
 
   /**
@@ -74,7 +66,7 @@ case class HttpApi(method: String, uri: String, timeout: Int, authentication: Au
    */
   private[apirequest] def buildUrl(context: Map[String, String]): Option[String] = {
     val encodedContext = context.map { case (k, v) => (k, URLEncoder.encode(v, "UTF-8")) }
-    val url            = encodedContext.toList.foldLeft(uri)(replace)
+    val url = encodedContext.toList.foldLeft(uri)(replace)
     everythingMatched(url).option(url)
   }
 

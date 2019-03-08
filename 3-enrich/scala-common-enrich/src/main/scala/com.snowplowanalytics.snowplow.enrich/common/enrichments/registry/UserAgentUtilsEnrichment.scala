@@ -9,42 +9,22 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
-package enrichments
-package registry
+package com.snowplowanalytics.snowplow.enrich.common
+package enrichments.registry
 
-// Maven Artifact
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion
-
-// Scala
 import scala.util.control.NonFatal
 
-// Scalaz
+import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
+import eu.bitwalker.useragentutils._
+import org.json4s.JValue
+import org.slf4j.LoggerFactory
 import scalaz._
 import Scalaz._
-
-// Logging
-import org.slf4j.LoggerFactory
-
-// UserAgentUtils
-import eu.bitwalker.useragentutils._
-
-// json4s
-import org.json4s.JValue
-
-// Iglu
-import iglu.client.{SchemaCriterion, SchemaKey}
-
-// This project
-import utils.ScalazJson4sUtils
 
 object UserAgentUtilsEnrichmentConfig extends ParseableEnrichment {
 
   val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "user_agent_utils_config", "jsonschema", 1, 0)
-  private val log     = LoggerFactory.getLogger(getClass())
+  private val log = LoggerFactory.getLogger(getClass())
 
   // Creates a UserAgentUtilsEnrichment instance from a JValue
   def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[UserAgentUtilsEnrichment.type] = {
@@ -64,23 +44,25 @@ object UserAgentUtilsEnrichmentConfig extends ParseableEnrichment {
  * http://stackoverflow.com/questions/17270003/why-are-classes-inside-scala-package-objects-dispreferred
  */
 case class ClientAttributes(
-                            // Browser
-                            browserName: String,
-                            browserFamily: String,
-                            browserVersion: Option[String],
-                            browserType: String,
-                            browserRenderEngine: String,
-                            // OS the browser is running on
-                            osName: String,
-                            osFamily: String,
-                            osManufacturer: String,
-                            // Hardware the OS is running on
-                            deviceType: String,
-                            deviceIsMobile: Boolean)
+  // Browser
+  browserName: String,
+  browserFamily: String,
+  browserVersion: Option[String],
+  browserType: String,
+  browserRenderEngine: String,
+  // OS the browser is running on
+  osName: String,
+  osFamily: String,
+  osManufacturer: String,
+  // Hardware the OS is running on
+  deviceType: String,
+  deviceIsMobile: Boolean)
 
 // Object and a case object with the same name
 
 case object UserAgentUtilsEnrichment extends Enrichment {
+
+  private val mobileDeviceTypes = Set(DeviceType.MOBILE, DeviceType.TABLET, DeviceType.WEARABLE)
 
   /**
    * Extracts the client attributes
@@ -102,20 +84,20 @@ case object UserAgentUtilsEnrichment extends Enrichment {
   def extractClientAttributes(useragent: String): Validation[String, ClientAttributes] =
     try {
       val ua = UserAgent.parseUserAgentString(useragent)
-      val b  = ua.getBrowser
-      val v  = Option(ua.getBrowserVersion)
+      val b = ua.getBrowser
+      val v = Option(ua.getBrowserVersion)
       val os = ua.getOperatingSystem
       ClientAttributes(
-        browserName         = b.getName,
-        browserFamily       = b.getGroup.getName,
-        browserVersion      = v map { _.getVersion },
-        browserType         = b.getBrowserType.getName,
+        browserName = b.getName,
+        browserFamily = b.getGroup.getName,
+        browserVersion = v map { _.getVersion },
+        browserType = b.getBrowserType.getName,
         browserRenderEngine = b.getRenderingEngine.toString,
-        osName              = os.getName,
-        osFamily            = os.getGroup.getName,
-        osManufacturer      = os.getManufacturer.getName,
-        deviceType          = os.getDeviceType.getName,
-        deviceIsMobile      = os.isMobileDevice
+        osName = os.getName,
+        osFamily = os.getGroup.getName,
+        osManufacturer = os.getManufacturer.getName,
+        deviceType = os.getDeviceType.getName,
+        deviceIsMobile = mobileDeviceTypes.contains(os.getDeviceType)
       ).success
     } catch {
       case NonFatal(e) => "Exception parsing useragent [%s]: [%s]".format(useragent, e.getMessage).fail

@@ -10,40 +10,21 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
-package enrichments
-package registry
+package com.snowplowanalytics.snowplow.enrich.common
+package enrichments.registry
 
-// Scripting
-import org.mozilla.javascript._
-
-// Maven Artifact
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion
-
-// Jackson
-import org.codehaus.jackson.JsonParseException
-
-// Scala
 import scala.util.control.NonFatal
 
-// Scalaz
+import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
+import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
+import org.mozilla.javascript._
 import scalaz._
 import Scalaz._
-
-// json4s
 import org.json4s._
 import org.json4s.jackson.JsonMethods
 
-// Iglu
-import iglu.client.{SchemaCriterion, SchemaKey}
-import iglu.client.validation.ProcessingMessageMethods._
-
-// This project
 import outputs.EnrichedEvent
-import utils.{ScalazJson4sUtils, ConversionUtils, JsonUtils => JU}
+import utils.{ConversionUtils, ScalazJson4sUtils}
 
 /**
  * Lets us create a JavascriptScriptEnrichment from a JValue.
@@ -66,8 +47,8 @@ object JavascriptScriptEnrichmentConfig extends ParseableEnrichment {
   def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[JavascriptScriptEnrichment] =
     isParseable(config, schemaKey).flatMap(conf => {
       (for {
-        encoded  <- ScalazJson4sUtils.extract[String](config, "parameters", "script")
-        raw      <- ConversionUtils.decodeBase64Url("script", encoded).toProcessingMessage // TODO: shouldn't be URL-safe
+        encoded <- ScalazJson4sUtils.extract[String](config, "parameters", "script")
+        raw <- ConversionUtils.decodeBase64Url("script", encoded).toProcessingMessage // TODO: shouldn't be URL-safe
         compiled <- JavascriptScriptEnrichment.compile(raw).toProcessingMessage
         enrich = JavascriptScriptEnrichment(compiled)
       } yield enrich).toValidationNel
@@ -82,8 +63,8 @@ object JavascriptScriptEnrichment {
 
   object Variables {
     private val prefix = "$snowplow31337" // To avoid collisions
-    val In             = s"${prefix}In"
-    val Out            = s"${prefix}Out"
+    val In = s"${prefix}In"
+    val Out = s"${prefix}Out"
   }
 
   /**
@@ -134,7 +115,7 @@ object JavascriptScriptEnrichment {
   implicit val formats = DefaultFormats
   private[registry] def process(script: Script, event: EnrichedEvent): Validation[String, List[JObject]] = {
 
-    val cx    = Context.enter()
+    val cx = Context.enter()
     val scope = cx.initStandardObjects
 
     try {
@@ -156,7 +137,7 @@ object JavascriptScriptEnrichment {
         try {
           JsonMethods.parse(obj.asInstanceOf[String]) match {
             case JArray(elements) => failFastCast(List[JObject](), elements).success
-            case _                => s"JavaScript script must return an Array; got [${obj}]".fail
+            case _ => s"JavaScript script must return an Array; got [${obj}]".fail
           }
         } catch {
           case NonFatal(nf) =>

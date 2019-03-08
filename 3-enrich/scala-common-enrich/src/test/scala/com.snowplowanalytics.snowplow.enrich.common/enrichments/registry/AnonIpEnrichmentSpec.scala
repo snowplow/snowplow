@@ -10,17 +10,11 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common
-package enrichments
-package registry
+package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
-// Specs2
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
 
-/**
- * Tests the anonymzeIp function
- */
 class AnonIpEnrichmentSpec extends Specification with DataTables {
 
   def is = s2"Anonymizing 0-4 octets across a variety of IP addresses should work $e1"

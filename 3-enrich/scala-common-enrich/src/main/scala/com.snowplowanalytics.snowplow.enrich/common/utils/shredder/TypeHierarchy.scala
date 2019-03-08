@@ -10,23 +10,11 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich
-package common
-package utils
-package shredder
+package com.snowplowanalytics.snowplow.enrich.common.utils.shredder
 
-// Jackson
-import com.github.fge.jackson.JacksonUtils
 import com.fasterxml.jackson.databind.JsonNode
-
-// Scala
-import scala.collection.JavaConversions._
-
-// Scalaz
+import com.github.fge.jackson.JacksonUtils
 import scalaz._
-import Scalaz._
-
-// json4s
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
@@ -66,11 +54,11 @@ case class TypeHierarchy(
    * @return the TypeHierarchy as a json4s JValue
    */
   def toJValue: JValue =
-    ("rootId"       -> rootId) ~
+    ("rootId" -> rootId) ~
       ("rootTstamp" -> rootTstamp) ~
-      ("refRoot"    -> refRoot) ~
-      ("refTree"    -> refTree) ~
-      ("refParent"  -> refParent)
+      ("refRoot" -> refRoot) ~
+      ("refTree" -> refTree) ~
+      ("refParent" -> refParent)
 
   /**
    * Completes a partial TypeHierarchy with
@@ -93,7 +81,7 @@ case class TypeHierarchy(
     Lens.lensu((ph, rt) => {
       val full = ph.refTree ++ rt
       ph.copy(
-        refTree   = full,
+        refTree = full,
         refParent = secondTail(full)
       )
     }, _.refTree)
@@ -108,8 +96,8 @@ case class TypeHierarchy(
    */
   private def secondTail[A](ls: List[A]): A = ls match {
     case h :: _ :: Nil => h
-    case _ :: tail     => secondTail(tail)
-    case _             => throw new NoSuchElementException
+    case _ :: tail => secondTail(tail)
+    case _ => throw new NoSuchElementException
   }
 
 }

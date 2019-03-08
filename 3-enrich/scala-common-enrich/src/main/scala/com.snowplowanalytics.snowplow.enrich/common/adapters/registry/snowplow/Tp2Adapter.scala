@@ -10,32 +10,21 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 package snowplow
 
-// Java
 import java.util.Map.{Entry => JMapEntry}
 
-// Jackson
-import com.fasterxml.jackson.databind.JsonNode
-
-// Scala
 import scala.collection.JavaConversions._
 
-// Iglu
-import iglu.client.{Resolver, SchemaCriterion}
-import iglu.client.validation.ValidatableJsonMethods._
-
-// Scalaz
+import com.snowplowanalytics.iglu.client.{Resolver, SchemaCriterion}
+import com.snowplowanalytics.iglu.client.validation.ValidatableJsonMethods._
+import com.fasterxml.jackson.databind.JsonNode
 import scalaz._
 import Scalaz._
 
-// This project
 import loaders.CollectorPayload
 import utils.{JsonUtils => JU}
 
@@ -48,7 +37,7 @@ object Tp2Adapter extends Adapter {
   // Expected content types for a request body
   private object ContentTypes {
     val list = List("application/json", "application/json; charset=utf-8", "application/json; charset=UTF-8")
-    val str  = list.mkString(", ")
+    val str = list.mkString(", ")
   }
 
   // Request body expected to validate against this JSON Schema
@@ -78,11 +67,11 @@ object Tp2Adapter extends Adapter {
         case (Some(_), None) =>
           s"Request body provided but content type empty, expected one of: ${ContentTypes.str}".failNel
         case (None, Some(ct)) => s"Content type of ${ct} provided but request body empty".failNel
-        case (None, None)     => NonEmptyList(qsParams).success
+        case (None, None) => NonEmptyList(qsParams).success
         case (Some(bdy), Some(_)) => // Build our NEL of parameters
           for {
             json <- extractAndValidateJson("Body", PayloadDataSchema, bdy)
-            nel  <- toParametersNel(json, qsParams)
+            nel <- toParametersNel(json, qsParams)
           } yield nel
       }
 
@@ -112,8 +101,9 @@ object Tp2Adapter extends Adapter {
    * @return a NEL of Map[String, String] parameters
    *         on Succeess, a NEL of Strings on Failure
    */
-  private def toParametersNel(instance: JsonNode,
-                              mergeWith: RawEventParameters): Validated[NonEmptyList[RawEventParameters]] = {
+  private def toParametersNel(
+    instance: JsonNode,
+    mergeWith: RawEventParameters): Validated[NonEmptyList[RawEventParameters]] = {
 
     val events: List[List[Validation[String, (String, String)]]] = for {
       event <- instance.iterator.toList
@@ -156,7 +146,7 @@ object Tp2Adapter extends Adapter {
    *
    */
   private def toParameter(entry: JMapEntry[String, JsonNode]): Validation[String, Tuple2[String, String]] = {
-    val key      = entry.getKey
+    val key = entry.getKey
     val rawValue = entry.getValue
 
     Option(rawValue.textValue) match {

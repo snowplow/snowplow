@@ -10,34 +10,25 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 
-// Joda
+import java.nio.charset.Charset
+
+import com.snowplowanalytics.iglu.client.Resolver
 import org.joda.time.DateTime
-
-// Iglu
-import iglu.client.Resolver
-
-// Scalaz
 import scalaz._
 import Scalaz._
 
-// This project
 import adapters.RawEvent
-import outputs.EnrichedEvent
-
+import enrichments.{EventEnrichments => EE}
+import enrichments.{MiscEnrichments => ME}
+import enrichments.{ClientEnrichments => CE}
+import enrichments.web.{PageEnrichments => WPE}
 import utils.{ConversionUtils => CU, JsonUtils => JU}
 import utils.MapTransformer._
 import utils.shredder.Shredder
-
-import enrichments.{EventEnrichments  => EE}
-import enrichments.{MiscEnrichments   => ME}
-import enrichments.{ClientEnrichments => CE}
-import web.{PageEnrichments           => WPE}
+import outputs.EnrichedEvent
 
 /**
  * A module to hold our enrichment process.
@@ -68,7 +59,7 @@ object EnrichmentManager {
     implicit resolver: Resolver): ValidatedEnrichedEvent = {
     // Placeholders for where the Success value doesn't matter.
     // Useful when you're updating large (>22 field) POSOs.
-    val unitSuccess    = ().success[String]
+    val unitSuccess = ().success[String]
     val unitSuccessNel = ().successNel[String]
 
     // 1. Enrichments not expected to fail
@@ -77,10 +68,10 @@ object EnrichmentManager {
     // with the fields which cannot error
     val event = {
       val e = new EnrichedEvent()
-      e.event_id       = EE.generateEventId // May be updated later if we have an `eid` parameter
-      e.v_collector    = raw.source.name // May be updated later if we have a `cv` parameter
-      e.v_etl          = ME.etlVersion(hostEtlVersion)
-      e.etl_tstamp     = EE.toTimestamp(etlTstamp)
+      e.event_id = EE.generateEventId // May be updated later if we have an `eid` parameter
+      e.v_collector = raw.source.name // May be updated later if we have a `cv` parameter
+      e.v_etl = ME.etlVersion(hostEtlVersion)
+      e.etl_tstamp = EE.toTimestamp(etlTstamp)
       e.network_userid = raw.context.userId.orNull // May be updated later by 'nuid'
       e.user_ipaddress = ME.extractIp("user_ipaddress", raw.context.ipAddress.orNull).toOption.orNull // May be updated later by 'ip'
       e
@@ -102,7 +93,7 @@ object EnrichmentManager {
     // May be updated later if we have a `ua` parameter
     val useragent = raw.context.useragent match {
       case Some(ua) =>
-        val u = CU.decodeString(raw.source.encoding, "useragent", ua)
+        val u = CU.decodeString(Charset.forName(raw.source.encoding), "useragent", ua)
         u.flatMap { ua =>
           event.useragent = ua
           ua.success
@@ -220,18 +211,18 @@ object EnrichmentManager {
     val pageUri = WPE.extractPageUri(raw.context.refererUri, Option(event.page_url))
     for {
       uri <- pageUri
-      u   <- uri
+      u <- uri
     } {
       // Update the page_url
       event.page_url = u.toString
 
       // Set the URL components
       val components = CU.explodeUri(u)
-      event.page_urlscheme   = components.scheme
-      event.page_urlhost     = components.host
-      event.page_urlport     = components.port
-      event.page_urlpath     = components.path.orNull
-      event.page_urlquery    = components.query.orNull
+      event.page_urlscheme = components.scheme
+      event.page_urlhost = components.host
+      event.page_urlport = components.port
+      event.page_urlpath = components.path.orNull
+      event.page_urlquery = components.query.orNull
       event.page_urlfragment = components.fragment.orNull
     }
 
@@ -240,18 +231,18 @@ object EnrichmentManager {
     // c.f. https://github.com/snowplow/snowplow/issues/351
     val geoLocation = (for {
       enrichment <- registry.getIpLookupsEnrichment
-      ip         <- Option(event.user_ipaddress)
+      ip <- Option(event.user_ipaddress)
       result = {
         val ipLookupResult = enrichment.extractIpInformation(ip)
         ipLookupResult.ipLocation.foreach(_.foreach { loc =>
-          event.geo_country     = loc.countryCode
-          event.geo_region      = loc.region.orNull
-          event.geo_city        = loc.city.orNull
-          event.geo_zipcode     = loc.postalCode.orNull
-          event.geo_latitude    = loc.latitude
-          event.geo_longitude   = loc.longitude
+          event.geo_country = loc.countryCode
+          event.geo_region = loc.region.orNull
+          event.geo_city = loc.city.orNull
+          event.geo_zipcode = loc.postalCode.orNull
+          event.geo_latitude = loc.latitude
+          event.geo_longitude = loc.longitude
           event.geo_region_name = loc.regionName.orNull
-          event.geo_timezone    = loc.timezone.orNull
+          event.geo_timezone = loc.timezone.orNull
         })
         ipLookupResult.isp.foreach(_.foreach { i =>
           event.ip_isp = i
@@ -290,9 +281,11 @@ object EnrichmentManager {
         event.user_ipaddress match {
           case IPv4Regex(ipv4) if !List(null, "", s"\0").contains(event.useragent) =>
             iab
-              .getIabContext(Option(event.useragent),
-                             Option(ipv4),
-                             Option(event.derived_tstamp).map(EventEnrichments.fromTimestamp))
+              .getIabContext(
+                Option(event.useragent),
+                Option(ipv4),
+                Option(event.derived_tstamp).map(EventEnrichments.fromTimestamp)
+              )
               .map(_.some)
           case _ => None.success
         }
@@ -303,7 +296,7 @@ object EnrichmentManager {
     Option(event.user_ipaddress).map(ip =>
       event.user_ipaddress = registry.getAnonIpEnrichment match {
         case Some(anon) => anon.anonymizeIp(ip)
-        case None       => ip
+        case None => ip
     })
 
     // Parse the useragent using user-agent-utils
@@ -314,16 +307,16 @@ object EnrichmentManager {
             case Some(ua) =>
               val ca = uap.extractClientAttributes(ua)
               ca.flatMap(c => {
-                event.br_name   = c.browserName
+                event.br_name = c.browserName
                 event.br_family = c.browserFamily
                 c.browserVersion.map(bv => event.br_version = bv)
-                event.br_type         = c.browserType
+                event.br_type = c.browserType
                 event.br_renderengine = c.browserRenderEngine
-                event.os_name         = c.osName
-                event.os_family       = c.osFamily
+                event.os_name = c.osName
+                event.os_family = c.osFamily
                 event.os_manufacturer = c.osManufacturer
-                event.dvce_type       = c.deviceType
-                event.dvce_ismobile   = CU.booleanToJByte(c.deviceIsMobile)
+                event.dvce_type = c.deviceType
+                event.dvce_ismobile = CU.booleanToJByte(c.deviceIsMobile)
                 c.success
               })
               ca
@@ -340,7 +333,7 @@ object EnrichmentManager {
         case Some(uap) => {
           Option(event.useragent) match {
             case Some(ua) => uap.extractUserAgent(ua).map(_.some)
-            case None     => None.success // No fields updated
+            case None => None.success // No fields updated
           }
         }
         case None => None.success
@@ -354,25 +347,26 @@ object EnrichmentManager {
           event.base_currency = currency.baseCurrency
           // Note that stringToMaybeDouble is applied to either-valid-or-null event POJO
           // properties, so we don't expect any of these four vals to be a Failure
-          val trTax      = CU.stringToMaybeDouble("tr_tx", event.tr_tax).toValidationNel
-          val tiPrice    = CU.stringToMaybeDouble("ti_pr", event.ti_price).toValidationNel
-          val trTotal    = CU.stringToMaybeDouble("tr_tt", event.tr_total).toValidationNel
+          val trTax = CU.stringToMaybeDouble("tr_tx", event.tr_tax).toValidationNel
+          val tiPrice = CU.stringToMaybeDouble("ti_pr", event.ti_price).toValidationNel
+          val trTotal = CU.stringToMaybeDouble("tr_tt", event.tr_total).toValidationNel
           val trShipping = CU.stringToMaybeDouble("tr_sh", event.tr_shipping).toValidationNel
           val convertedCu = ((trTotal |@| trTax |@| trShipping |@| tiPrice) {
-            currency.convertCurrencies(Option(event.tr_currency),
-                                       _,
-                                       _,
-                                       _,
-                                       Option(event.ti_currency),
-                                       _,
-                                       raw.context.timestamp)
+            currency.convertCurrencies(
+              Option(event.tr_currency),
+              _,
+              _,
+              _,
+              Option(event.ti_currency),
+              _,
+              raw.context.timestamp)
           }).flatMap(x => x)
 
           for ((total, tax, shipping, price) <- convertedCu.toOption) {
-            event.tr_total_base    = total.orNull
-            event.tr_tax_base      = tax.orNull
+            event.tr_total_base = total.orNull
+            event.tr_tax_base = tax.orNull
             event.tr_shipping_base = shipping.orNull
-            event.ti_price_base    = price.orNull
+            event.ti_price_base = price.orNull
           }
 
           convertedCu
@@ -385,16 +379,16 @@ object EnrichmentManager {
     val refererUri = CU.stringToUri(event.page_referrer)
     for {
       uri <- refererUri
-      u   <- uri
+      u <- uri
     } {
 
       // Set the URL components
       val components = CU.explodeUri(u)
-      event.refr_urlscheme   = components.scheme
-      event.refr_urlhost     = components.host
-      event.refr_urlport     = components.port
-      event.refr_urlpath     = components.path.orNull
-      event.refr_urlquery    = components.query.orNull
+      event.refr_urlscheme = components.scheme
+      event.refr_urlhost = components.host
+      event.refr_urlport = components.port
+      event.refr_urlpath = components.path.orNull
+      event.refr_urlquery = components.query.orNull
       event.refr_urlfragment = components.fragment.orNull
 
       // Set the referrer details
@@ -403,7 +397,7 @@ object EnrichmentManager {
           for (refr <- rp.extractRefererDetails(u, event.page_urlhost)) {
             event.refr_medium = CU.makeTsvSafe(refr.medium.toString)
             event.refr_source = CU.makeTsvSafe(refr.source.orNull)
-            event.refr_term   = CU.makeTsvSafe(refr.term.orNull)
+            event.refr_term = CU.makeTsvSafe(refr.term.orNull)
           }
         }
         case None => unitSuccess
@@ -412,8 +406,9 @@ object EnrichmentManager {
 
     // Parse the page URI's querystring
     val pageQsMap = pageUri match {
-      case Success(Some(u)) => CU.extractQuerystring(u, raw.source.encoding).map(_.some)
-      case _                => Success(None)
+      case Success(Some(u)) =>
+        CU.extractQuerystring(u, Charset.forName(raw.source.encoding)).map(_.some)
+      case _ => Success(None)
     }
 
     // Marketing attribution
@@ -423,13 +418,13 @@ object EnrichmentManager {
           case Some(ce) =>
             ce.extractMarketingFields(qsMap)
               .flatMap(cmp => {
-                event.mkt_medium   = CU.makeTsvSafe(cmp.medium.orNull)
-                event.mkt_source   = CU.makeTsvSafe(cmp.source.orNull)
-                event.mkt_term     = CU.makeTsvSafe(cmp.term.orNull)
-                event.mkt_content  = CU.makeTsvSafe(cmp.content.orNull)
+                event.mkt_medium = CU.makeTsvSafe(cmp.medium.orNull)
+                event.mkt_source = CU.makeTsvSafe(cmp.source.orNull)
+                event.mkt_term = CU.makeTsvSafe(cmp.term.orNull)
+                event.mkt_content = CU.makeTsvSafe(cmp.content.orNull)
                 event.mkt_campaign = CU.makeTsvSafe(cmp.campaign.orNull)
-                event.mkt_clickid  = CU.makeTsvSafe(cmp.clickId.orNull)
-                event.mkt_network  = CU.makeTsvSafe(cmp.network.orNull)
+                event.mkt_clickid = CU.makeTsvSafe(cmp.clickId.orNull)
+                event.mkt_network = CU.makeTsvSafe(cmp.network.orNull)
                 cmp.success
               })
           case None => unitSuccessNel
@@ -443,7 +438,7 @@ object EnrichmentManager {
         val crossDomainParseResult = WPE.parseCrossDomain(qsMap)
         for ((maybeRefrDomainUserid, maybeRefrDvceTstamp) <- crossDomainParseResult.toOption) {
           maybeRefrDomainUserid.foreach(event.refr_domain_userid = _: String)
-          maybeRefrDvceTstamp.foreach(event.refr_dvce_tstamp     = _: String)
+          maybeRefrDvceTstamp.foreach(event.refr_dvce_tstamp = _: String)
         }
         crossDomainParseResult
       }
@@ -453,7 +448,7 @@ object EnrichmentManager {
     // This enrichment cannot fail
     (registry.getEventFingerprintEnrichment match {
       case Some(efe) => event.event_fingerprint = efe.getEventFingerprint(sourceMap)
-      case _         => ()
+      case _ => ()
     })
 
     // Validate custom contexts
@@ -465,16 +460,16 @@ object EnrichmentManager {
     // Validate unstructured event
     val unstructEvent = Shredder.extractAndValidateUnstructEvent(event) match {
       case Failure(msgs) => msgs.map(_.toString).fail
-      case Success(ue)   => ue.success
+      case Success(ue) => ue.success
     }
 
     // Extract the event vendor/name/format/version
     val extractSchema = SchemaEnrichment
       .extractSchema(event)
       .map(schemaKey => {
-        event.event_vendor  = schemaKey.vendor
-        event.event_name    = schemaKey.name
-        event.event_format  = schemaKey.format
+        event.event_vendor = schemaKey.vendor
+        event.event_name = schemaKey.name
+        event.event_format = schemaKey.format
         event.event_version = schemaKey.version
         unitSuccess
       })
@@ -482,7 +477,7 @@ object EnrichmentManager {
     // Execute the JavaScript scripting enrichment
     val jsScript = registry.getJavascriptScriptEnrichment match {
       case Some(jse) => jse.process(event)
-      case None      => Nil.success
+      case None => Nil.success
     }
 
     // Execute cookie extractor enrichment
@@ -506,9 +501,10 @@ object EnrichmentManager {
     // Fetch weather context
     val weatherContext = registry.getWeatherEnrichment match {
       case Some(we) => {
-        we.getWeatherContext(Option(event.geo_latitude),
-                             Option(event.geo_longitude),
-                             Option(event.derived_tstamp).map(EventEnrichments.fromTimestamp))
+        we.getWeatherContext(
+            Option(event.geo_latitude),
+            Option(event.geo_longitude),
+            Option(event.derived_tstamp).map(EventEnrichments.fromTimestamp))
           .map(_.some)
       }
       case None => None.success
@@ -568,7 +564,7 @@ object EnrichmentManager {
 
     val piiTransform = registry.getPiiPseudonymizerEnrichment match {
       case Some(enrichment) => enrichment.transformer(event).success
-      case None             => Nil.success
+      case None => Nil.success
     }
 
     // Collect our errors on Failure, or return our event on Success

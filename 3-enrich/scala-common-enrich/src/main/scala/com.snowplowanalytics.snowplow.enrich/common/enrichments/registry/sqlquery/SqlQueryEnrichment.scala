@@ -14,25 +14,15 @@ package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry
 package sqlquery
 
-// Maven Artifact
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion
-
-// Scala
 import scala.collection.immutable.IntMap
 
-// Scalaz
+import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
 import scalaz._
 import Scalaz._
-
-// json4s
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods.fromJsonNode
 
-// Iglu
-import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
-
-// This project
 import outputs.EnrichedEvent
 import utils.ScalazJson4sUtils
 
@@ -58,10 +48,10 @@ object SqlQueryEnrichmentConfig extends ParseableEnrichment {
     isParseable(config, schemaKey).flatMap(conf => {
       (for {
         inputs <- ScalazJson4sUtils.extract[List[Input]](config, "parameters", "inputs")
-        db     <- ScalazJson4sUtils.extract[Db](config, "parameters", "database")
-        query  <- ScalazJson4sUtils.extract[Query](config, "parameters", "query")
+        db <- ScalazJson4sUtils.extract[Db](config, "parameters", "database")
+        query <- ScalazJson4sUtils.extract[Query](config, "parameters", "query")
         output <- ScalazJson4sUtils.extract[Output](config, "parameters", "output")
-        cache  <- ScalazJson4sUtils.extract[Cache](config, "parameters", "cache")
+        cache <- ScalazJson4sUtils.extract[Cache](config, "parameters", "cache")
       } yield SqlQueryEnrichment(inputs, db, query, output, cache)).toValidationNel
     })
 }
@@ -90,7 +80,7 @@ case class SqlQueryEnrichment(inputs: List[Input], db: Db, query: Query, output:
   ): ValidationNel[String, List[JObject]] = {
 
     val jsonCustomContexts = transformRawPairs(customContexts)
-    val jsonUnstructEvent  = transformRawPairs(unstructEvent).headOption
+    val jsonUnstructEvent = transformRawPairs(unstructEvent).headOption
 
     val placeholderMap: Validated[Input.PlaceholderMap] =
       Input
@@ -100,13 +90,13 @@ case class SqlQueryEnrichment(inputs: List[Input], db: Db, query: Query, output:
 
     placeholderMap match {
       case Success(Some(intMap)) => get(intMap).leftMap(_.toString).validation.toValidationNel
-      case Success(None)         => Nil.successNel
-      case Failure(err)          => err.map(_.toString).failure
+      case Success(None) => Nil.successNel
+      case Failure(err) => err.map(_.toString).failure
     }
   }
 
   /**
-   * Get contexts from [[cache]] or perform query if nothing found
+   * Get contexts from cache or perform query if nothing found
    * and put result into cache
    *
    * @param intMap IntMap of extracted values
@@ -130,14 +120,14 @@ case class SqlQueryEnrichment(inputs: List[Input], db: Db, query: Query, output:
    */
   def query(intMap: IntMap[Input.ExtractedValue]): ThrowableXor[List[JObject]] =
     for {
-      sqlQuery  <- db.createStatement(query.sql, intMap)
+      sqlQuery <- db.createStatement(query.sql, intMap)
       resultSet <- db.execute(sqlQuery)
-      context   <- output.convert(resultSet)
+      context <- output.convert(resultSet)
     } yield context
 
   /**
    * Transform [[Input.PlaceholderMap]] to None if not enough input values were extracted
-   * This prevents [[db]] from start building a statement while not failing event enrichment
+   * This prevents db from start building a statement while not failing event enrichment
    *
    * @param placeholderMap some IntMap with extracted values or None if it is known
    *                       already that not all values were extracted
@@ -147,19 +137,19 @@ case class SqlQueryEnrichment(inputs: List[Input], db: Db, query: Query, output:
     getPlaceholderCount.map { placeholderCount =>
       placeholderMap match {
         case Some(intMap) if intMap.keys.size == placeholderCount => Some(intMap)
-        case _                                                    => None
+        case _ => None
       }
     }
 
   /**
-   * Stored amount of ?-signs in [[query.sql]]
+   * Stored amount of ?-signs in query.sql
    * Initialized once
    */
   private var lastPlaceholderCount: Validation[Throwable, Int] =
     InvalidStateException("SQL Query Enrichment: placeholderCount hasn't been initialized").failure
 
   /**
-   * If [[lastPlaceholderCount]] is successful return it
+   * If lastPlaceholderCount is successful return it
    * If it's unsucessfult - try to count save result for future use
    */
   def getPlaceholderCount: ValidationNel[String, Int] = lastPlaceholderCount match {
@@ -180,7 +170,7 @@ object SqlQueryEnrichment {
 
   /**
    * Transform pairs of schema and node obtained from [[utils.shredder.Shredder]]
-   * into list of regular self-describing [[JObject]] representing custom context
+   * into list of regular self-describing JObject representing custom context
    * or unstructured event.
    * If node isn't Self-describing (doesn't contain data key)
    * it will be filtered out.
@@ -191,11 +181,11 @@ object SqlQueryEnrichment {
   def transformRawPairs(pairs: JsonSchemaPairs): List[JObject] =
     pairs.flatMap {
       case (schema, node) =>
-        val uri  = schema.toSchemaUri
+        val uri = schema.toSchemaUri
         val data = fromJsonNode(node)
         data \ "data" match {
           case JNothing => Nil
-          case json     => (("schema" -> uri) ~ ("data" -> json): JObject) :: Nil
+          case json => (("schema" -> uri) ~ ("data" -> json): JObject) :: Nil
         }
     }
 }

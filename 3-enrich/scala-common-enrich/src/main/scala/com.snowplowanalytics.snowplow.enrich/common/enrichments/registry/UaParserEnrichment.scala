@@ -9,43 +9,26 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
-package enrichments
-package registry
+package com.snowplowanalytics.snowplow.enrich.common
+package enrichments.registry
 
-// Maven Artifact
 import java.io.{FileInputStream, InputStream}
 import java.net.URI
 
-import com.snowplowanalytics.snowplow.enrich.common.utils.ConversionUtils
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion
-
-// Scala
 import scala.util.control.NonFatal
 
-// Scalaz
+import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
+import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
 import scalaz._
 import Scalaz._
-
-// ua-parser
-import ua_parser.Parser
-import ua_parser.Client
-import ua_parser.Client
-
-// json4s
 import org.json4s._
 import org.json4s.DefaultFormats
 import org.json4s.JValue
 import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
+import ua_parser.Parser
+import ua_parser.Client
 
-// Iglu
-import iglu.client.{SchemaCriterion, SchemaKey}
-import iglu.client.validation.ProcessingMessageMethods._
-import utils.ScalazJson4sUtils
+import utils.{ConversionUtils, ScalazJson4sUtils}
 
 /**
  * Companion object. Lets us create a UaParserEnrichment
@@ -70,8 +53,8 @@ object UaParserEnrichmentConfig extends ParseableEnrichment {
   private def getCustomRules(conf: JValue): ValidatedMessage[Option[(URI, String)]] =
     if (ScalazJson4sUtils.fieldExists(conf, "parameters", "uri")) {
       for {
-        uri    <- ScalazJson4sUtils.extract[String](conf, "parameters", "uri")
-        db     <- ScalazJson4sUtils.extract[String](conf, "parameters", "database")
+        uri <- ScalazJson4sUtils.extract[String](conf, "parameters", "uri")
+        db <- ScalazJson4sUtils.extract[String](conf, "parameters", "database")
         source <- getUri(uri, db)
       } yield (source, localRulefile).some
     } else {
@@ -83,7 +66,7 @@ object UaParserEnrichmentConfig extends ParseableEnrichment {
       .stringToUri(uri + (if (uri.endsWith("/")) "" else "/") + database)
       .flatMap {
         case Some(u) => u.success
-        case None    => "A valid URI to ua-parser regex file must be provided".fail
+        case None => "A valid URI to ua-parser regex file must be provided".fail
       }
       .toProcessingMessage
 }
@@ -118,7 +101,7 @@ case class UaParserEnrichment(customRulefile: Option[(URI, String)]) extends Enr
 
     val parser = for {
       input <- tryWithCatch(customRulefile.map(f => new FileInputStream(f._2)))
-      p     <- tryWithCatch(constructParser(input))
+      p <- tryWithCatch(constructParser(input))
     } yield p
     parser.leftMap(e => s"Failed to initialize ua parser: [${e.getMessage}]")
   }
@@ -191,17 +174,17 @@ case class UaParserEnrichment(customRulefile: Option[(URI, String)]) extends Enr
 
     (("schema" -> "iglu:com.snowplowanalytics.snowplow/ua_parser_context/jsonschema/1-0-0") ~
       ("data" ->
-        ("useragentFamily"    -> c.userAgent.family) ~
-          ("useragentMajor"   -> c.userAgent.major) ~
-          ("useragentMinor"   -> c.userAgent.minor) ~
-          ("useragentPatch"   -> c.userAgent.patch) ~
+        ("useragentFamily" -> c.userAgent.family) ~
+          ("useragentMajor" -> c.userAgent.major) ~
+          ("useragentMinor" -> c.userAgent.minor) ~
+          ("useragentPatch" -> c.userAgent.patch) ~
           ("useragentVersion" -> useragentVersion) ~
-          ("osFamily"         -> c.os.family) ~
-          ("osMajor"          -> c.os.major) ~
-          ("osMinor"          -> c.os.minor) ~
-          ("osPatch"          -> c.os.patch) ~
-          ("osPatchMinor"     -> c.os.patchMinor) ~
-          ("osVersion"        -> osVersion) ~
-          ("deviceFamily"     -> c.device.family)))
+          ("osFamily" -> c.os.family) ~
+          ("osMajor" -> c.os.major) ~
+          ("osMinor" -> c.os.minor) ~
+          ("osPatch" -> c.os.patch) ~
+          ("osPatchMinor" -> c.os.patchMinor) ~
+          ("osVersion" -> osVersion) ~
+          ("deviceFamily" -> c.device.family)))
   }
 }

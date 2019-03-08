@@ -13,17 +13,15 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
-// Scalaz
-import scalaz._
-import Scalaz._
+import java.nio.charset.StandardCharsets.UTF_8
 
-// Snowplow
-import SpecHelpers._
-
-// Specs2
 import org.specs2.mutable.Specification
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
+import scalaz._
+import Scalaz._
+
+import SpecHelpers._
 
 object LoaderSpec {
 
@@ -59,7 +57,7 @@ class LoaderSpec extends Specification with DataTables with ValidationMatchers {
 
   "extractGetPayload" should {
 
-    val Encoding = "UTF-8"
+    val Encoding = UTF_8
 
     // TODO: add more tests
     "return a Success-boxed NonEmptyList of NameValuePairs for a valid or empty querystring" in {

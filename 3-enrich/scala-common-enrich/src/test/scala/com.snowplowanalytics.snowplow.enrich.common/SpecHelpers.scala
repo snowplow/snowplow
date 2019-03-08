@@ -10,24 +10,13 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 
-// Apache URLEncodedUtils
+import com.snowplowanalytics.iglu.client.Resolver
 import org.apache.http.NameValuePair
 import org.apache.http.message.BasicNameValuePair
 
-// Iglu Scala Client
-import iglu.client.Resolver
-
-// This project
 import utils.JsonUtils
-
-// Scalaz
-import scalaz._
-import Scalaz._
 
 object SpecHelpers {
 

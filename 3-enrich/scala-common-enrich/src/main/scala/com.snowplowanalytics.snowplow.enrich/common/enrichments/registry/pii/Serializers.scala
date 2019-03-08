@@ -10,17 +10,11 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow.enrich
-package common.enrichments.registry
-package pii
+package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.pii
 
-// Json4s
 import org.json4s.JsonDSL._
 import org.json4s.Extraction.decompose
-import org.json4s.{CustomSerializer, JObject, JString, MappingException}
-
-// Scalaz
+import org.json4s.{CustomSerializer, JObject, MappingException}
 import scalaz._
 import Scalaz._
 
@@ -59,8 +53,8 @@ private[pii] final class PiiModifiedFieldsSerializer
       ({
         case jo: JObject =>
           implicit val json4sFormats = formats
-          val fields                 = (jo \ "data" \ "pii").extract[List[ModifiedField]]
-          val strategy               = (jo \ "data" \ "strategy").extract[PiiStrategy]
+          val fields = (jo \ "data" \ "pii").extract[List[ModifiedField]]
+          val strategy = (jo \ "data" \ "strategy").extract[PiiStrategy]
           PiiModifiedFields(fields, strategy)
       }, {
         case pmf: PiiModifiedFields =>

@@ -12,9 +12,7 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common
 
-// Scalaz
 import scalaz._
-import Scalaz._
 
 /**
  * The parent for our ETL-specific exceptions

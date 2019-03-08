@@ -13,11 +13,11 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
-// Scalaz
+import java.nio.charset.StandardCharsets.UTF_8
+
 import scalaz._
 import Scalaz._
 
-// This project
 import utils.ConversionUtils
 
 /**
@@ -30,7 +30,7 @@ import utils.ConversionUtils
 object CljTomcatLoader extends Loader[String] {
 
   // The encoding used on these logs
-  private val CollectorEncoding = "UTF-8"
+  private val CollectorEncoding = UTF_8
 
   // The name of this collector
   private val CollectorName = "clj-tomcat"
@@ -39,27 +39,27 @@ object CljTomcatLoader extends Loader[String] {
   // Adapted and evolved from the Clojure Collector's
   // regular expression
   private val CljTomcatRegex = {
-    val w  = "[\\s]+" // Whitespace regex
+    val w = "[\\s]+" // Whitespace regex
     val ow = "(?:" + w // Non-capturing optional whitespace begins
 
     // Our regex follows. Try debuggex.com if it doesn't make sense
     ("^([\\S]+)" + // Date          / date
-      w          + "([\\S]+)" + // Time          / time
-      w          + "(-)" + // -             / x-edge-location    added for consistency with CloudFront
-      w          + "([\\S]+)" + // BytesSent     / sc-bytes
-      w          + "([\\S]+)" + // IPAddress     / c-ip
-      w          + "([\\S]+)" + // Operation     / cs-method
-      w          + "([\\S]+)" + // Domain        / cs(Host)
-      w          + "([\\S]+)" + // Object        / cs-uri-stem
-      w          + "([\\S]+)" + // HttpStatus    / sc-status
-      w          + "([\\S]+)" + // Referer       / cs(Referer)
-      w          + "([\\S]+)" + // UserAgent     / cs(User Agent)
-      w          + "([\\S]+)" + // Querystring   / cs-uri-query
-      ow         + "-" + // -             / cs(Cookie)         added for consistency with CloudFront
-      w          + "-" + // -             / x-edge-result-type added for consistency with CloudFront
-      w          + "-)?" + // -             / x-edge-request-id  added for consistency with CloudFront
-      ow         + "([\\S]+)?" + // ContentType   /                    POST support
-      w          + "([\\S]+)?)?$").r // PostBody      /                    POST support
+      w + "([\\S]+)" + // Time          / time
+      w + "(-)" + // -             / x-edge-location    added for consistency with CloudFront
+      w + "([\\S]+)" + // BytesSent     / sc-bytes
+      w + "([\\S]+)" + // IPAddress     / c-ip
+      w + "([\\S]+)" + // Operation     / cs-method
+      w + "([\\S]+)" + // Domain        / cs(Host)
+      w + "([\\S]+)" + // Object        / cs-uri-stem
+      w + "([\\S]+)" + // HttpStatus    / sc-status
+      w + "([\\S]+)" + // Referer       / cs(Referer)
+      w + "([\\S]+)" + // UserAgent     / cs(User Agent)
+      w + "([\\S]+)" + // Querystring   / cs-uri-query
+      ow + "-" + // -             / cs(Cookie)         added for consistency with CloudFront
+      w + "-" + // -             / x-edge-result-type added for consistency with CloudFront
+      w + "-)?" + // -             / x-edge-request-id  added for consistency with CloudFront
+      ow + "([\\S]+)?" + // ContentType   /                    POST support
+      w + "([\\S]+)?)?$").r // PostBody      /                    POST support
   }
 
   /**
@@ -74,17 +74,18 @@ object CljTomcatLoader extends Loader[String] {
    */
   def toCollectorPayload(line: String): ValidatedMaybeCollectorPayload = {
 
-    def build(qs: String,
-              date: String,
-              time: String,
-              ip: String,
-              ua: String,
-              refr: String,
-              objct: String,
-              ct: Option[String],
-              bdy: Option[String]): ValidatedMaybeCollectorPayload = {
+    def build(
+      qs: String,
+      date: String,
+      time: String,
+      ip: String,
+      ua: String,
+      refr: String,
+      objct: String,
+      ct: Option[String],
+      bdy: Option[String]): ValidatedMaybeCollectorPayload = {
       val querystring = parseQuerystring(CloudfrontLoader.toOption(qs), CollectorEncoding)
-      val timestamp   = CloudfrontLoader.toTimestamp(date, time)
+      val timestamp = CloudfrontLoader.toTimestamp(date, time)
       val contentType = (for {
         enc <- ct
         raw = ConversionUtils.decodeString(CollectorEncoding, "Content type", enc)
@@ -100,7 +101,7 @@ object CljTomcatLoader extends Loader[String] {
           CollectorPayload(
             q,
             CollectorName,
-            CollectorEncoding,
+            CollectorEncoding.toString,
             None, // No hostname for CljTomcat
             Some(t),
             CloudfrontLoader.toOption(ip),

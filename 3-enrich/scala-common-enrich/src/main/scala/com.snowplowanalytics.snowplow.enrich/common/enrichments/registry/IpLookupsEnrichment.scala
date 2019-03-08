@@ -10,40 +10,20 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
-package enrichments
-package registry
+package com.snowplowanalytics.snowplow.enrich.common
+package enrichments.registry
 
-// Java
 import java.net.URI
 
-// Maven Artifact
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion
-
-// Scala
-import scala.util.control.NonFatal
-
-// Scalaz
+import com.snowplowanalytics.maxmind.iplookups.IpLookups
+import com.snowplowanalytics.maxmind.iplookups.model.IpLookupResult
+import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
+import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
+import org.json4s.{DefaultFormats, JValue}
 import scalaz._
 import Scalaz._
 
-// json4s
-import org.json4s.{DefaultFormats, JValue}
-
-// Iglu
-import iglu.client.{SchemaCriterion, SchemaKey}
-import iglu.client.validation.ProcessingMessageMethods._
-
-// Scala MaxMind GeoIP
-import maxmind.iplookups.IpLookups
-import maxmind.iplookups.model.IpLookupResult
-
-// This project
-import common.utils.ConversionUtils
-import utils.ScalazJson4sUtils
+import utils.{ConversionUtils, ScalazJson4sUtils}
 
 /**
  * Companion object. Lets us create an IpLookupsEnrichment
@@ -52,7 +32,7 @@ import utils.ScalazJson4sUtils
 object IpLookupsEnrichment extends ParseableEnrichment {
 
   implicit val formats = DefaultFormats
-  val supportedSchema  = SchemaCriterion("com.snowplowanalytics.snowplow", "ip_lookups", "jsonschema", 2, 0)
+  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "ip_lookups", "jsonschema", 2, 0)
 
   /**
    * Creates an IpLookupsEnrichment instance from a JValue.
@@ -86,7 +66,7 @@ object IpLookupsEnrichment extends ParseableEnrichment {
   private def getArgumentFromName(conf: JValue, name: String): Option[ValidatedNelMessage[(String, URI, String)]] =
     if (ScalazJson4sUtils.fieldExists(conf, "parameters", name)) {
       val uri = ScalazJson4sUtils.extract[String](conf, "parameters", name, "uri")
-      val db  = ScalazJson4sUtils.extract[String](conf, "parameters", name, "database")
+      val db = ScalazJson4sUtils.extract[String](conf, "parameters", name, "database")
 
       (uri.toValidationNel |@| db.toValidationNel) { (uri, db) =>
         for {
@@ -112,7 +92,7 @@ object IpLookupsEnrichment extends ParseableEnrichment {
       .stringToUri(uri + "/" + database)
       .flatMap(_ match {
         case Some(u) => u.success
-        case None    => "URI to MaxMind file must be provided".fail
+        case None => "URI to MaxMind file must be provided".fail
       })
       .toProcessingMessage
 }
@@ -138,7 +118,7 @@ case class IpLookupsEnrichment(
 ) extends Enrichment {
 
   private type FinalPath = String
-  private type DbEntry   = Option[(Option[URI], FinalPath)]
+  private type DbEntry = Option[(Option[URI], FinalPath)]
 
   // Construct a Tuple4 of all the IP Lookup databases
   private val dbs: Tuple4[DbEntry, DbEntry, DbEntry, DbEntry] = {

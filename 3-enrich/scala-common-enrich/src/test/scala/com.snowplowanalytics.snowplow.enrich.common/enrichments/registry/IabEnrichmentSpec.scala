@@ -10,29 +10,15 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow.enrich.common
-package enrichments
-package registry
+package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
-// Java
 import java.net.URI
 
-// joda-time
 import org.joda.time.DateTime
-
-// json4s
 import org.json4s.jackson.JsonMethods.parse
-
-// iglu
-import iglu.client.SchemaKey
-
-// Specs2, Scalaz-Specs2 & ScalaCheck
+import org.specs2.{ScalaCheck, Specification}
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
-import org.specs2.{ScalaCheck, Specification}
-
-// Scalaz
 import scalaz._
 
 class IabEnrichmentSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck {

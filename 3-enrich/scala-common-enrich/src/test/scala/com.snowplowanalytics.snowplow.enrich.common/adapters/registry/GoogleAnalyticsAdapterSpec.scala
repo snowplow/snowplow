@@ -15,19 +15,13 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-// Joda-Time
 import org.joda.time.DateTime
-
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// Specs2
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.{DisjunctionMatchers, ValidationMatchers}
+import scalaz._
+import Scalaz._
 
-// Snowplow
 import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
 import GoogleAnalyticsAdapter._
 

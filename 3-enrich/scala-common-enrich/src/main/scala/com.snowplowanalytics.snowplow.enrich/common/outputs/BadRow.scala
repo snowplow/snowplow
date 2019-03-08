@@ -10,28 +10,17 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
-package outputs
+package com.snowplowanalytics.snowplow.enrich.common.outputs
 
-// Scalaz
+import com.snowplowanalytics.iglu.client.ProcessingMessageNel
+import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
+import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.format.DateTimeFormat
 import scalaz._
 import Scalaz._
-
-// json4s
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
-
-// Joda-Time
-import org.joda.time.{DateTime, DateTimeZone}
-import org.joda.time.format.DateTimeFormat
-
-// Iglu Scala Client
-import iglu.client.ProcessingMessageNel
-import iglu.client.validation.ProcessingMessageMethods._
 
 /**
  * Alternate BadRow constructors
@@ -58,8 +47,8 @@ object BadRow {
    */
   def oversizedRow(size: Long, errors: NonEmptyList[String], tstamp: Long = System.currentTimeMillis()): String =
     compact(
-      ("size"             -> size) ~
-        ("errors"         -> errors.toList.map(e => fromJsonNode(e.toProcessingMessage.asJson))) ~
+      ("size" -> size) ~
+        ("errors" -> errors.toList.map(e => fromJsonNode(e.toProcessingMessage.asJson))) ~
         ("failure_tstamp" -> tstamp)
     )
 }
@@ -87,8 +76,8 @@ case class BadRow(
    * @return the TypeHierarchy as a json4s JValue
    */
   def toJValue: JValue =
-    ("line"             -> line) ~
-      ("errors"         -> errors.toList.map(e => fromJsonNode(e.asJson))) ~
+    ("line" -> line) ~
+      ("errors" -> errors.toList.map(e => fromJsonNode(e.asJson))) ~
       ("failure_tstamp" -> this.getTimestamp(tstamp))
 
   /**

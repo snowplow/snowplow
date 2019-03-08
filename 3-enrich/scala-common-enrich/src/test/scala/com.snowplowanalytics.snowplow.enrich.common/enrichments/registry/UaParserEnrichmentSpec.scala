@@ -9,21 +9,14 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common
-package enrichments
-package registry
+package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
-// Specs2
 import java.net.URI
 
-import org.specs2.matcher.DataTables
-import org.specs2.scalaz._
-
-// Scalaz
-
-// Json4s
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
+import org.specs2.matcher.DataTables
+import org.specs2.scalaz._
 
 class UaParserEnrichmentSpec extends org.specs2.mutable.Specification with ValidationMatchers with DataTables {
 

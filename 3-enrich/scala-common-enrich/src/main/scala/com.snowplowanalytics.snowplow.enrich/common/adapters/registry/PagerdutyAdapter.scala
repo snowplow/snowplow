@@ -10,35 +10,17 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-// Jackson
-import com.fasterxml.jackson.databind.JsonNode
+import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
 import com.fasterxml.jackson.core.JsonParseException
-
-// Scala
-import scala.collection.JavaConversions._
-
-// Scalaz
 import scalaz._
 import Scalaz._
-
-// json4s
 import org.json4s._
-import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
-import org.json4s.scalaz.JsonScalaz._
 
-// Iglu
-import iglu.client.{Resolver, SchemaKey}
-import iglu.client.validation.ValidatableJsonMethods._
-
-// This project
 import loaders.CollectorPayload
 import utils.{JsonUtils => JU}
 
@@ -61,13 +43,13 @@ object PagerdutyAdapter extends Adapter {
   // Event-Schema Map for reverse-engineering a Snowplow unstructured event
   private val Incident = SchemaKey("com.pagerduty", "incident", "jsonschema", "1-0-0").toSchemaUri
   private val EventSchemaMap = Map(
-    "incident.trigger"       -> Incident,
-    "incident.acknowledge"   -> Incident,
+    "incident.trigger" -> Incident,
+    "incident.acknowledge" -> Incident,
     "incident.unacknowledge" -> Incident,
-    "incident.resolve"       -> Incident,
-    "incident.assign"        -> Incident,
-    "incident.escalate"      -> Incident,
-    "incident.delegate"      -> Incident
+    "incident.resolve" -> Incident,
+    "incident.assign" -> Incident,
+    "incident.escalate" -> Incident,
+    "incident.delegate" -> Incident
   )
 
   /**
@@ -108,13 +90,13 @@ object PagerdutyAdapter extends Adapter {
                 } yield {
 
                   val formattedEvent = reformatParameters(event)
-                  val qsParams       = toMap(payload.querystring)
+                  val qsParams = toMap(payload.querystring)
                   RawEvent(
-                    api         = payload.api,
-                    parameters  = toUnstructEventParams(TrackerVersion, qsParams, schema, formattedEvent, "srv"),
+                    api = payload.api,
+                    parameters = toUnstructEventParams(TrackerVersion, qsParams, schema, formattedEvent, "srv"),
                     contentType = payload.contentType,
-                    source      = payload.source,
-                    context     = payload.context
+                    source = payload.source,
+                    context = payload.context
                   )
                 }
               }
@@ -140,8 +122,8 @@ object PagerdutyAdapter extends Adapter {
       val parsed = parse(body)
       (parsed \ "messages") match {
         case JArray(list) => list.success
-        case JNothing     => s"${VendorName} payload does not contain the needed 'messages' key".fail
-        case _            => s"Could not resolve ${VendorName} payload into a JSON array of events".fail
+        case JNothing => s"${VendorName} payload does not contain the needed 'messages' key".fail
+        case _ => s"Could not resolve ${VendorName} payload into a JSON array of events".fail
       }
     } catch {
       case e: JsonParseException => {
@@ -191,7 +173,7 @@ object PagerdutyAdapter extends Adapter {
       case (key, JString("null")) => (key, JNull)
       case ("type", JString(value)) if value.startsWith("incident.") =>
         ("type", JString(value.replace("incident.", "")))
-      case ("created_on", JString(value))            => ("created_on", JString(formatDatetime(value)))
+      case ("created_on", JString(value)) => ("created_on", JString(formatDatetime(value)))
       case ("last_status_change_on", JString(value)) => ("last_status_change_on", JString(formatDatetime(value)))
     }
 }
