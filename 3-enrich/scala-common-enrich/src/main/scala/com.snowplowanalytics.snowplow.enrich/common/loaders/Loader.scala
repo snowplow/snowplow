@@ -13,17 +13,13 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
-// Java
 import java.net.URI
+import java.nio.charset.Charset
 
-// Apache URLEncodedUtils
-import org.apache.http.client.utils.URLEncodedUtils
-
-// Scala
 import scala.util.control.NonFatal
 import scala.collection.JavaConversions._
 
-// Scalaz
+import org.apache.http.client.utils.URLEncodedUtils
 import scalaz._
 import Scalaz._
 
@@ -33,7 +29,7 @@ import Scalaz._
  */
 object Loader {
 
-  private val TsvRegex    = "^tsv/(.*)$".r
+  private val TsvRegex = "^tsv/(.*)$".r
   private val NdjsonRegex = "^ndjson/(.*)$".r
 
   /**
@@ -49,12 +45,12 @@ object Loader {
    *         in a Scalaz Validation
    */
   def getLoader(collectorOrProtocol: String): Validation[String, Loader[_]] = collectorOrProtocol match {
-    case "cloudfront"   => CloudfrontLoader.success
-    case "clj-tomcat"   => CljTomcatLoader.success
-    case "thrift"       => ThriftLoader.success // Finally - a data protocol rather than a piece of software
-    case TsvRegex(f)    => TsvLoader(f).success
+    case "cloudfront" => CloudfrontLoader.success
+    case "clj-tomcat" => CljTomcatLoader.success
+    case "thrift" => ThriftLoader.success // Finally - a data protocol rather than a piece of software
+    case TsvRegex(f) => TsvLoader(f).success
     case NdjsonRegex(f) => NdjsonLoader(f).success
-    case c              => "[%s] is not a recognised Snowplow event collector".format(c).fail
+    case c => "[%s] is not a recognised Snowplow event collector".format(c).fail
   }
 }
 
@@ -63,8 +59,6 @@ object Loader {
  * abstract base class.
  */
 abstract class Loader[T] {
-
-  import CollectorPayload._
 
   /**
    * Converts the source string into a
@@ -99,7 +93,7 @@ abstract class Loader[T] {
    *         message, boxed in a Scalaz
    *         Validation
    */
-  protected[loaders] def parseQuerystring(qs: Option[String], enc: String): ValidatedNameValuePairs = qs match {
+  protected[loaders] def parseQuerystring(qs: Option[String], enc: Charset): ValidatedNameValuePairs = qs match {
     case Some(q) => {
       try {
         URLEncodedUtils.parse(URI.create("http://localhost/?" + q), enc).toList.success

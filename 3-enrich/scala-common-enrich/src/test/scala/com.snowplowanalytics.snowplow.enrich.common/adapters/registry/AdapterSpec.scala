@@ -10,36 +10,23 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-// Iglu
-import iglu.client.Resolver
-
-// Joda-Time
+import com.snowplowanalytics.iglu.client.Resolver
 import org.joda.time.DateTime
-
-// Scalaz
+import org.specs2.{ScalaCheck, Specification}
+import org.specs2.matcher.DataTables
+import org.specs2.scalaz.ValidationMatchers
 import scalaz._
 import Scalaz._
-
-// json4s
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
-// Snowplow
 import SpecHelpers._
 import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
-
-// Specs2
-import org.specs2.{ScalaCheck, Specification}
-import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
 
 class AdapterSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck {
   def is = s2"""

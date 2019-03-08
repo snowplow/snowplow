@@ -13,34 +13,26 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry.sqlquery
 
-// Scala
+import java.sql.PreparedStatement
+
 import scala.collection.immutable.IntMap
 import scala.util.control.NonFatal
 
-// Java
-import java.sql.PreparedStatement
-
-// JSONPath
 import io.gatling.jsonpath.JsonPath
-
-// Scalaz
 import scalaz._
 import Scalaz._
-
-// Json4s
 import org.json4s._
 
-// This project
 import utils.JsonPath._
 import outputs.EnrichedEvent
 
 /**
  * Container for key with one (and only one) of possible input sources
  * Basically, represents a key for future template context and way to get value
- * out of [[EnrichedEvent]], custom context, derived event or unstruct event.
+ * out of EnrichedEvent, custom context, derived event or unstruct event.
  *
  * @param placeholder extracted key
- * @param pojo optional pojo source to take straight from [[EnrichedEvent]]
+ * @param pojo optional pojo source to take straight from EnrichedEvent
  * @param json optional JSON source to take from context or unstruct event
  */
 case class Input(placeholder: Int, pojo: Option[PojoInput], json: Option[JsonInput]) {
@@ -59,7 +51,7 @@ case class Input(placeholder: Int, pojo: Option[PojoInput], json: Option[JsonInp
   // but it won't give user meaningful error message
   val validatedJsonPath = json.map(_.jsonPath).map(compileQuery) match {
     case Some(compiledQuery) => compiledQuery
-    case None                => "No JSON Input with JSONPath was given".failure
+    case None => "No JSON Input with JSONPath was given".failure
   }
 
   /**
@@ -67,7 +59,7 @@ case class Input(placeholder: Int, pojo: Option[PojoInput], json: Option[JsonInp
    *
    * @param event currently enriching event
    * @return validated pair of placeholder's postition and extracted value ready
-   *         to be set on [[PreparedStatement]]
+   *         to be set on PreparedStatement
    */
   def getFromEvent(event: EnrichedEvent): ValidationNel[Throwable, (Int, Option[ExtractedValue])] = pojo match {
     case Some(pojoInput) =>
@@ -94,11 +86,12 @@ case class Input(placeholder: Int, pojo: Option[PojoInput], json: Option[JsonInp
    * @param custom list of self-describing JObjects representing custom contexts
    * @param unstruct optional self-describing JObject representing unstruct event
    * @return validated pair of placeholder's postition and extracted value ready
-   *         to be setted on [[PreparedStatement]]
+   *         to be setted on PreparedStatement
    */
-  def getFromJson(derived: List[JObject],
-                  custom: List[JObject],
-                  unstruct: Option[JObject]): ValidationNel[Throwable, (Int, Option[ExtractedValue])] =
+  def getFromJson(
+    derived: List[JObject],
+    custom: List[JObject],
+    unstruct: Option[JObject]): ValidationNel[Throwable, (Int, Option[ExtractedValue])] =
     json match {
       case Some(jsonInput) =>
         jsonInput.extract(derived, custom, unstruct).map(json => (placeholder, json.flatMap(extractFromJson)))
@@ -133,13 +126,14 @@ case class JsonInput(field: String, schemaCriterion: String, jsonPath: String) {
    *         failure means fatal error which should abort enrichment
    *         none means not-found value
    */
-  def extract(derived: List[JObject],
-              custom: List[JObject],
-              unstruct: Option[JObject]): ValidationNel[Throwable, Option[JValue]] = {
+  def extract(
+    derived: List[JObject],
+    custom: List[JObject],
+    unstruct: Option[JObject]): ValidationNel[Throwable, Option[JValue]] = {
     val validatedJson = field match {
       case "derived_contexts" => getBySchemaCriterion(derived, schemaCriterion).successNel
-      case "contexts"         => getBySchemaCriterion(custom, schemaCriterion).successNel
-      case "unstruct_event"   => getBySchemaCriterion(unstruct.toList, schemaCriterion).successNel
+      case "contexts" => getBySchemaCriterion(custom, schemaCriterion).successNel
+      case "unstruct_event" => getBySchemaCriterion(unstruct.toList, schemaCriterion).successNel
       case other =>
         InvalidInput(
           s"SQL Query Enrichment: wrong field [$other] passed to Input.getFromJson. " +
@@ -148,7 +142,7 @@ case class JsonInput(field: String, schemaCriterion: String, jsonPath: String) {
 
     val validatedJsonPath: Validation[Throwable, JsonPath] = compileQuery(jsonPath) match {
       case Success(compiledQuery) => compiledQuery.success
-      case Failure(error)         => new Exception(error).failure
+      case Failure(error) => new Exception(error).failure
     }
 
     (validatedJsonPath.toValidationNel |@| validatedJson) { (jsonPath, validJson) =>
@@ -169,7 +163,7 @@ object Input {
     "^(iglu:[a-zA-Z0-9-_.]+/[a-zA-Z0-9-_]+/[a-zA-Z0-9-_]+/)([1-9][0-9]*|\\*)-((?:0|[1-9][0-9]*)|\\*)-((?:0|[1-9][0-9]*)|\\*)$".r
 
   /**
-   * Map all properties inside [[EnrichedEvent]] to textual representations of their types
+   * Map all properties inside EnrichedEvent to textual representations of their types
    * It is dynamically configured *once*, when job has started
    */
   val eventTypeMap = classOf[EnrichedEvent].getDeclaredFields
@@ -178,27 +172,27 @@ object Input {
     .toMap
 
   /**
-   * Map all textual representations of types of [[EnrichedEvent]] properties
-   * to corresponding [[StatementPlaceholder]]s
+   * Map all textual representations of types of EnrichedEvent properties
+   * to corresponding StatementPlaceholders
    */
   val typeHandlersMap = Map(
-    "java.lang.String"  -> StringPlaceholder,
+    "java.lang.String" -> StringPlaceholder,
     "java.lang.Integer" -> IntPlaceholder,
-    "java.lang.Byte"    -> BytePlaceholder,
-    "java.lang.Float"   -> FloatPlaceholder,
+    "java.lang.Byte" -> BytePlaceholder,
+    "java.lang.Float" -> FloatPlaceholder,
     // Just in case
-    "String"        -> StringPlaceholder,
-    "scala.Int"     -> IntPlaceholder,
-    "scala.Double"  -> DoublePlaceholder,
+    "String" -> StringPlaceholder,
+    "scala.Int" -> IntPlaceholder,
+    "scala.Double" -> DoublePlaceholder,
     "scala.Boolean" -> BooleanPlaceholder
   )
 
   /**
    * Value extracted from POJO or JSON
-   * It is wrapped into [[StatementPlaceholder#Value]], because its real type
+   * It is wrapped into StatementPlaceholder#Value, because its real type
    * is unknown in compile time and all we need is its method
    * `.set(preparedStatement: PreparedStatement, placeholder: Int): Unit`
-   * to fill [[PreparedStatement]]
+   * to fill PreparedStatement
    */
   type ExtractedValue = StatementPlaceholder#Value
 
@@ -221,7 +215,7 @@ object Input {
       val matched = contexts.filter { context =>
         context.obj.exists {
           case ("schema", JString(schema)) => schema.startsWith(criterion)
-          case _                           => false
+          case _ => false
         }
       }
       matched.map(_ \ "data").headOption
@@ -235,16 +229,16 @@ object Input {
    */
   private def criterionMatch(schemaCriterion: String): Option[String] =
     schemaCriterion match {
-      case criterionRegex(schema, "*", _, _)   => s"$schema".some
-      case criterionRegex(schema, m, "*", _)   => s"$schema$m-".some
+      case criterionRegex(schema, "*", _, _) => s"$schema".some
+      case criterionRegex(schema, m, "*", _) => s"$schema$m-".some
       case criterionRegex(schema, m, rev, "*") => s"$schema$m-$rev-".some
       case criterionRegex(schema, m, rev, add) => s"$schema$m-$rev-$add".some
-      case _                                   => None
+      case _ => None
     }
 
   /**
-   * Build [[IntMap]] with all sequental input values
-   * It returns [[Failure]] if **any** of inputs were extracted with fatal error
+   * Build IntMap with all sequental input values
+   * It returns Failure if **any** of inputs were extracted with fatal error
    * (not-found is not a fatal error)
    *
    * @param inputs list of all [[Input]] objects
@@ -255,14 +249,15 @@ object Input {
    * @return IntMap if all input values were extracted without error,
    *         non-empty list of errors otherwise
    */
-  def buildPlaceholderMap(inputs: List[Input],
-                          event: EnrichedEvent,
-                          derivedContexts: List[JObject],
-                          customContexts: List[JObject],
-                          unstructEvent: Option[JObject]): ValidationNel[Throwable, PlaceholderMap] = {
+  def buildPlaceholderMap(
+    inputs: List[Input],
+    event: EnrichedEvent,
+    derivedContexts: List[JObject],
+    customContexts: List[JObject],
+    unstructEvent: Option[JObject]): ValidationNel[Throwable, PlaceholderMap] = {
 
     val eventInputs = inputs.map(_.getFromEvent(event))
-    val jsonInputs  = inputs.map(_.getFromJson(derivedContexts, customContexts, unstructEvent))
+    val jsonInputs = inputs.map(_.getFromJson(derivedContexts, customContexts, unstructEvent))
 
     val pairs = (eventInputs ++ jsonInputs).sequenceU
       .asInstanceOf[ValidationNel[Throwable, List[(Int, Option[ExtractedValue])]]]
@@ -271,13 +266,13 @@ object Input {
     // Fail if some indexes are missing
     pairs.map(list => IntMap(list: _*)) match {
       case Success(map) if isConsistent(map) => Some(map).successNel
-      case Success(map)                      => None.success
-      case Failure(err)                      => err.failure
+      case Success(map) => None.success
+      case Failure(err) => err.failure
     }
   }
 
   /**
-   * Check if there any gaps in keys of [[IntMap]] (like 1,2,4,5) and keys
+   * Check if there any gaps in keys of IntMap (like 1,2,4,5) and keys
    * contain "1", so they fill all placeholders
    *
    * @param intMap Map with Ints as keys
@@ -293,7 +288,7 @@ object Input {
   }
 
   /**
-   * Convert list of inputs to [[IntMap]] with placeholder as a key
+   * Convert list of inputs to IntMap with placeholder as a key
    * It will throw away inputs with clasing placeholders (which is actually
    * valid configuration state). Used only to check consistency of placeholders
    */
@@ -309,12 +304,12 @@ object Input {
    *         or None if it is object, array, null or JNothing
    */
   def extractFromJson(json: JValue): Option[ExtractedValue] = json match {
-    case JString(s)                                              => Some(StringPlaceholder.Value(s))
-    case JBool(b)                                                => Some(BooleanPlaceholder.Value(b))
+    case JString(s) => Some(StringPlaceholder.Value(s))
+    case JBool(b) => Some(BooleanPlaceholder.Value(b))
     case JInt(int) if int <= Int.MaxValue && int >= Int.MinValue => Some(IntPlaceholder.Value(int.toInt))
-    case JInt(long)                                              => Some(LongPlaceholder.Value(long.toLong))
-    case JDouble(d)                                              => Some(DoublePlaceholder.Value(d))
-    case _                                                       => None // Objects, Arrays and nulls are invalid ("not-found") values
+    case JInt(long) => Some(LongPlaceholder.Value(long.toLong))
+    case JDouble(d) => Some(DoublePlaceholder.Value(d))
+    case _ => None // Objects, Arrays and nulls are invalid ("not-found") values
     // In API Request Enrichment null is valid value
   }
 
@@ -322,7 +317,7 @@ object Input {
    * Get [[StatementPlaceholder]] for specified field
    * For e.g. "geo_longitude" => [[FloatPlaceholder]]
    *
-   * @param field particular property of [[EnrichedEvent]]
+   * @param field particular property of EnrichedEvent
    * @return some
    */
   def getFieldType(field: String): Option[StatementPlaceholder] =
@@ -330,19 +325,19 @@ object Input {
 
   /**
    * This objects hold a value of some extracted from [[Input]] and
-   * know how to set this value to [[PreparedStatement]]
+   * know how to set this value to PreparedStatement
    */
   sealed trait StatementPlaceholder {
 
     /**
-     * This type member represents type of placeholder inside [[PreparedStatement]]
+     * This type member represents type of placeholder inside PreparedStatement
      * Known only in runtime
      */
     type PlaceholderType
 
     /**
-     * Closure that accepts [[PreparedStatement]] and returns setter function which
-     * accepts value (one of allowed types) and its position in [[PreparedStatement]]
+     * Closure that accepts PreparedStatement and returns setter function which
+     * accepts value (one of allowed types) and its position in PreparedStatement
      *
      * @param preparedStatement statement being mutating
      * @return setter function closed on prepared statement

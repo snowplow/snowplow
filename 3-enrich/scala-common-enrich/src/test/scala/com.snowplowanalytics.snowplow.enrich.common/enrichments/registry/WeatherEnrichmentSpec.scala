@@ -9,35 +9,22 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common
-package enrichments
-package registry
+package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
-// Java
 import java.lang.{Float => JFloat}
 
-// Specs2
-import org.specs2.Specification
-
-// Joda
+import com.snowplowanalytics.iglu.client.SchemaKey
 import org.joda.time.DateTime
-
-// Json4s
 import org.json4s._
 import org.json4s.jackson.JsonMethods.parse
-
-// Snowplow
-import com.snowplowanalytics.iglu.client.SchemaKey
-
-// Scala weather
-import com.snowplowanalytics.weather._
+import org.specs2.Specification
 
 object WeatherEnrichmentSpec {
   val OwmApiKey = "OWM_KEY"
 }
 
-import WeatherEnrichmentSpec._
 class WeatherEnrichmentSpec extends Specification {
+  import WeatherEnrichmentSpec._
   def is =
     skipAllIf(sys.env.get(OwmApiKey).isEmpty) ^ // Actually only e4 and e6 need to be skipped
       s2"""

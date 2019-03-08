@@ -13,10 +13,8 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package utils
 
-// Java
 import java.lang.reflect.Method
 
-// Scalaz
 import scalaz._
 import Scalaz._
 
@@ -62,7 +60,7 @@ import Scalaz._
 object MapTransformer {
 
   // Clarificatory aliases
-  type Key   = String
+  type Key = String
   type Value = String
   type Field = String
 
@@ -92,7 +90,7 @@ object MapTransformer {
    */
   def generate[T <: AnyRef](sourceMap: SourceMap, transformMap: TransformMap)(implicit m: Manifest[T]): Validated[T] = {
     val newInst = m.runtimeClass.newInstance()
-    val result  = _transform(newInst, sourceMap, transformMap, getSetters(m.runtimeClass))
+    val result = _transform(newInst, sourceMap, transformMap, getSetters(m.runtimeClass))
     result.flatMap(s => newInst.asInstanceOf[T].success) // On success, replace the field count with the new instance
   }
 
@@ -150,16 +148,17 @@ object MapTransformer {
    *         of error Strings, or the count of
    *         updated fields
    */
-  private def _transform[T](obj: T,
-                            sourceMap: SourceMap,
-                            transformMap: TransformMap,
-                            setters: SettersMap): ValidationNel[String, Int] = {
+  private def _transform[T](
+    obj: T,
+    sourceMap: SourceMap,
+    transformMap: TransformMap,
+    setters: SettersMap): ValidationNel[String, Int] = {
 
     val results: List[Validation[String, Int]] = sourceMap.map {
       case (key, in) =>
         if (transformMap.contains(key)) {
           val (func, field) = transformMap(key)
-          val out           = func(key, in)
+          val out = func(key, in)
 
           out match {
             case Success(s) =>

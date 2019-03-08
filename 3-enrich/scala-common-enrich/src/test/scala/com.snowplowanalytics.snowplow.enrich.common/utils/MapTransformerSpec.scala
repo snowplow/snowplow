@@ -13,24 +13,15 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package utils
 
-// Scala
 import scala.beans.BeanProperty
 
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// Specs2 & Scalaz-Specs2
+import org.apache.commons.lang3.builder.ToStringBuilder
+import org.apache.commons.lang3.builder.HashCodeBuilder
 import org.specs2.mutable.Specification
 import org.specs2.scalaz.ValidationMatchers
 
-// Utils
-import org.apache.commons.lang3.builder.ToStringBuilder
-import org.apache.commons.lang3.builder.HashCodeBuilder
-
-// This project
 import MapTransformer._
-import enrichments.{ClientEnrichments, EventEnrichments, MiscEnrichments}
+import enrichments.{ClientEnrichments, MiscEnrichments}
 
 // Test Bean
 final class TargetBean {

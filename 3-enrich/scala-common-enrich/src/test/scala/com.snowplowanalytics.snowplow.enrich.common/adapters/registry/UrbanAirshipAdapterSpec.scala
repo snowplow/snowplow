@@ -10,28 +10,18 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common.adapters.registry
+package com.snowplowanalytics.snowplow.enrich.common
+package adapters.registry
 
-import com.snowplowanalytics.snowplow.enrich.common.SpecHelpers
-import com.snowplowanalytics.snowplow.enrich.common.loaders.{
-  CollectorApi,
-  CollectorContext,
-  CollectorPayload,
-  CollectorSource
-}
 import org.joda.time.DateTime
-
-// Scalaz
 import scalaz.Scalaz._
 import scalaz._
-
-// Specs2
 import org.specs2.mutable.Specification
 import org.specs2.scalaz.ValidationMatchers
-
-// json4s
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
+
+import loaders._
 
 class UrbanAirshipAdapterSpec extends Specification with ValidationMatchers {
 

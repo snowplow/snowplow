@@ -10,25 +10,16 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-// Iglu
-import iglu.client.{Resolver, SchemaKey}
-
-// Scalaz
+import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
+import org.joda.time.DateTimeZone
+import org.joda.time.format.DateTimeFormat
 import scalaz._
 import Scalaz._
 
-// Joda-Time
-import org.joda.time.DateTimeZone
-import org.joda.time.format.DateTimeFormat
-
-// This project
 import loaders.CollectorPayload
 import utils.{JsonUtils => JU}
 
@@ -52,8 +43,8 @@ object CallrailAdapter extends Adapter {
 
   // Create a simple formatter function
   private val CallrailFormatter: FormatterFunc = {
-    val bools                        = List("first_call", "answered")
-    val ints                         = List("duration")
+    val bools = List("first_call", "answered")
+    val ints = List("duration")
     val dateTimes: JU.DateTimeFields = Some((NonEmptyList("datetime"), CallrailDateTimeFormat))
     buildFormatter(bools, ints, dateTimes)
   }
@@ -78,11 +69,11 @@ object CallrailAdapter extends Adapter {
 
       NonEmptyList(
         RawEvent(
-          api         = payload.api,
-          parameters  = toUnstructEventParams(TrackerVersion, params, SchemaUris.CallComplete, CallrailFormatter, "srv"),
+          api = payload.api,
+          parameters = toUnstructEventParams(TrackerVersion, params, SchemaUris.CallComplete, CallrailFormatter, "srv"),
           contentType = payload.contentType,
-          source      = payload.source,
-          context     = payload.context
+          source = payload.source,
+          context = payload.context
         )).success
     }
   }

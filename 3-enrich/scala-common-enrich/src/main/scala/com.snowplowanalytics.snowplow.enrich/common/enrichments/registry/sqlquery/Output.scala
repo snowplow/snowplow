@@ -13,23 +13,16 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry.sqlquery
 
-// scala
-import scala.collection.mutable.ListBuffer
-
-// scalaz
-import scalaz._
-import Scalaz._
-
-// java
 import java.sql.{ResultSet, ResultSetMetaData}
 
-// Json4s
+import scala.collection.mutable.ListBuffer
+
+import scalaz._
+import Scalaz._
+import org.joda.time.DateTime
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods.parseOpt
-
-// Joda
-import org.joda.time.DateTime
 
 /**
  * Container class for output preferences.
@@ -45,9 +38,9 @@ case class Output(json: JsonOutput, expectedRows: String) {
    * `expectedRows` object converted from String
    */
   val expectedRowsMode = expectedRows match {
-    case "EXACTLY_ONE"   => ExactlyOne
-    case "AT_MOST_ONE"   => AtMostOne
-    case "AT_LEAST_ONE"  => AtLeastOne
+    case "EXACTLY_ONE" => ExactlyOne
+    case "AT_MOST_ONE" => AtMostOne
+    case "AT_LEAST_ONE" => AtLeastOne
     case "AT_LEAST_ZERO" => AtLeastZero
     case other =>
       throw new MappingException(s"SQL Query Enrichment: [$other] is unknown value for expectedRows property")
@@ -73,29 +66,29 @@ case class Output(json: JsonOutput, expectedRows: String) {
     resultSet.close()
 
     for {
-      jsons    <- parsedJsons
+      jsons <- parsedJsons
       contexts <- envelope(jsons)
     } yield contexts
   }
 
   /**
-   * Validate output according to [[expectedRows]] and describe
-   * (attach Schema URI) to context according to [[json.describes]].
+   * Validate output according to expectedRows and describe
+   * (attach Schema URI) to context according to json.describes.
    *
    * @param jsons list of JSON Objects derived from SQL rows (row is always JSON Object)
    * @return validated list of described JSONs
    */
   def envelope(jsons: List[JObject]): ThrowableXor[List[JObject]] = (describeMode, expectedRowsMode) match {
-    case (AllRows, AtLeastOne)  => AtLeastOne.collect(jsons).map(rows => describe(JArray(rows))).map(List(_))
+    case (AllRows, AtLeastOne) => AtLeastOne.collect(jsons).map(rows => describe(JArray(rows))).map(List(_))
     case (AllRows, AtLeastZero) => AtLeastZero.collect(jsons).map(rows => describe(JArray(rows))).map(List(_))
-    case (AllRows, single)      => single.collect(jsons).map(_.headOption.map(describe).toList)
-    case (EveryRow, any)        => any.collect(jsons).map(_.map(describe))
+    case (AllRows, single) => single.collect(jsons).map(_.headOption.map(describe).toList)
+    case (EveryRow, any) => any.collect(jsons).map(_.map(describe))
   }
 
   /**
-   * Transform [[ResultSet]] (single row) fetched from DB into a JSON Object
-   * Each column maps to an Object's key with name transformed by [[json.propertyNames]]
-   * And value transformed using [[JsonOutput.getValue]]
+   * Transform ResultSet35 (single row) fetched from DB into a JSON Object
+   * Each column maps to an Object's key with name transformed by json.propertyNames
+   * And value transformed using [[JsonOutput#getValue]]
    *
    * @param resultSet single column result
    * @return successful raw JSON Object or throwable in case of error
@@ -119,7 +112,7 @@ object Output {
    * ADT specifying whether the schema is the self-describing schema for all
    * rows returned by the query, or whether the schema should be attached to
    * each of the returned rows.
-   * Processing in [[Output.envelope]]
+   * Processing in [[Output#envelope]]
    */
   sealed trait DescribeMode
 
@@ -161,7 +154,7 @@ object Output {
     def collect(resultSet: List[JObject]): ThrowableXor[List[JObject]] =
       resultSet match {
         case List(one) => List(one).right
-        case other     => InvalidDbResponse(s"SQL Query Enrichment: exactly one row was expected").left
+        case other => InvalidDbResponse(s"SQL Query Enrichment: exactly one row was expected").left
       }
   }
 
@@ -173,8 +166,8 @@ object Output {
     def collect(resultSet: List[JObject]): ThrowableXor[List[JObject]] =
       resultSet match {
         case List(one) => List(one).right
-        case List()    => Nil.right
-        case other     => InvalidDbResponse(s"SQL Query Enrichment: at most one row was expected").left
+        case List() => Nil.right
+        case other => InvalidDbResponse(s"SQL Query Enrichment: at most one row was expected").left
       }
   }
 
@@ -193,7 +186,7 @@ object Output {
   case object AtLeastOne extends ExpectedRowsMode {
     def collect(resultSet: List[JObject]): ThrowableXor[List[JObject]] =
       resultSet match {
-        case Nil   => InvalidDbResponse(s"SQL Query Enrichment: at least one row was expected. 0 given instead").left
+        case Nil => InvalidDbResponse(s"SQL Query Enrichment: at least one row was expected. 0 given instead").left
         case other => other.right
       }
   }
@@ -209,24 +202,24 @@ case class JsonOutput(schema: String, describes: String, propertyNames: String) 
   import Output._
 
   val describeMode: DescribeMode = describes match {
-    case "ALL_ROWS"  => AllRows
+    case "ALL_ROWS" => AllRows
     case "EVERY_ROW" => EveryRow
-    case p           => throw new MappingException(s"Describe [$p] is not allowed")
+    case p => throw new MappingException(s"Describe [$p] is not allowed")
   }
 
   val propertyNameMode = propertyNames match {
-    case "AS_IS"       => AsIs
-    case "CAMEL_CASE"  => CamelCase
+    case "AS_IS" => AsIs
+    case "CAMEL_CASE" => CamelCase
     case "PASCAL_CASE" => PascalCase
-    case "SNAKE_CASE"  => SnakeCase
-    case "LOWER_CASE"  => LowerCase
-    case "UPPER_CASE"  => UpperCase
-    case p             => throw new MappingException(s"PropertyName [$p] is not allowed")
+    case "SNAKE_CASE" => SnakeCase
+    case "LOWER_CASE" => LowerCase
+    case "UPPER_CASE" => UpperCase
+    case p => throw new MappingException(s"PropertyName [$p] is not allowed")
   }
 
   /**
-   * Transform fetched from DB row (as [[ResultSet]]) into JSON object
-   * All column names are mapped to object keys using [[propertyNames]]
+   * Transform fetched from DB row (as ResultSet) into JSON object
+   * All column names are mapped to object keys using propertyNames
    *
    * @param resultSet column fetched from DB
    * @return JSON object as right disjunction in case of success
@@ -234,11 +227,11 @@ case class JsonOutput(schema: String, describes: String, propertyNames: String) 
    */
   def transform(resultSet: ResultSet): ThrowableXor[JObject] = {
     val fields = for {
-      rsMeta   <- getMetaData(resultSet).liftM[ListT]
-      idx      <- ListT[ThrowableXor, Int](getColumnCount(rsMeta).map((x: Int) => (1 to x).toList))
+      rsMeta <- getMetaData(resultSet).liftM[ListT]
+      idx <- ListT[ThrowableXor, Int](getColumnCount(rsMeta).map((x: Int) => (1 to x).toList))
       colLabel <- getColumnLabel(idx, rsMeta).liftM[ListT]
-      colType  <- getColumnType(idx, rsMeta).liftM[ListT]
-      value    <- getColumnValue(colType, idx, resultSet).liftM[ListT]
+      colType <- getColumnType(idx, rsMeta).liftM[ListT]
+      value <- getColumnValue(colType, idx, resultSet).liftM[ListT]
     } yield propertyNameMode.transform(colLabel) -> value
 
     fields.toList.map((x: List[JField]) => JObject(x))
@@ -305,49 +298,49 @@ object JsonOutput {
    */
   val resultsetGetters: Map[String, Object => JValue] = Map(
     "java.lang.Integer" -> ((obj: Object) => JInt(obj.asInstanceOf[Int])),
-    "java.lang.Long"    -> ((obj: Object) => JInt(obj.asInstanceOf[Long])),
+    "java.lang.Long" -> ((obj: Object) => JInt(obj.asInstanceOf[Long])),
     "java.lang.Boolean" -> ((obj: Object) => JBool(obj.asInstanceOf[Boolean])),
-    "java.lang.Double"  -> ((obj: Object) => JDouble(obj.asInstanceOf[Double])),
-    "java.lang.Float"   -> ((obj: Object) => JDouble(obj.asInstanceOf[Float].toDouble)),
-    "java.lang.String"  -> ((obj: Object) => JString(obj.asInstanceOf[String])),
-    "java.sql.Date"     -> ((obj: Object) => JString(new DateTime(obj.asInstanceOf[java.sql.Date]).toString))
+    "java.lang.Double" -> ((obj: Object) => JDouble(obj.asInstanceOf[Double])),
+    "java.lang.Float" -> ((obj: Object) => JDouble(obj.asInstanceOf[Float].toDouble)),
+    "java.lang.String" -> ((obj: Object) => JString(obj.asInstanceOf[String])),
+    "java.sql.Date" -> ((obj: Object) => JString(new DateTime(obj.asInstanceOf[java.sql.Date]).toString))
   )
 
   /**
-   * Lift failing [[ResultSet#getMetaData]] into scalaz disjunction
+   * Lift failing ResultSet#getMetaData into scalaz disjunction
    * with Throwable as left-side
    */
   def getMetaData(rs: ResultSet): ThrowableXor[ResultSetMetaData] =
     \/ fromTryCatch rs.getMetaData
 
   /**
-   * Lift failing [[ResultSetMetaData#getColumnCount]] into scalaz disjunction
+   * Lift failing ResultSetMetaData#getColumnCount into scalaz disjunction
    * with Throwable as left-side
    */
   def getColumnCount(rsMeta: ResultSetMetaData): ThrowableXor[Int] =
     \/ fromTryCatch rsMeta.getColumnCount
 
   /**
-   * Lift failing [[ResultSetMetaData#getColumnLabel]] into scalaz disjunction
+   * Lift failing ResultSetMetaData#getColumnLabel into scalaz disjunction
    * with Throwable as left-side
    */
   def getColumnLabel(column: Int, rsMeta: ResultSetMetaData): ThrowableXor[String] =
     \/ fromTryCatch rsMeta.getColumnLabel(column)
 
   /**
-   * Lift failing [[ResultSetMetaData#getColumnClassName]] into scalaz disjunction
+   * Lift failing ResultSetMetaData#getColumnClassName into scalaz disjunction
    * with Throwable as left-side
    */
   def getColumnType(column: Int, rsMeta: ResultSetMetaData): ThrowableXor[String] =
     \/ fromTryCatch rsMeta.getColumnClassName(column)
 
   /**
-   * Get value from [[ResultSet]] using column number
+   * Get value from ResultSet using column number
    *
    * @param datatype stringified type representing real type
    * @param columnIdx column's number in table
    * @param rs result set fetched from DB
-   * @return JSON in case of success or [[Throwable]] in case of SQL error
+   * @return JSON in case of success or Throwable in case of SQL error
    */
   def getColumnValue(datatype: String, columnIdx: Int, rs: ResultSet): ThrowableXor[JValue] =
     for {
@@ -355,11 +348,11 @@ object JsonOutput {
     } yield value.map(getValue(_, datatype)).getOrElse(JNull)
 
   /**
-   * Transform value from [[AnyRef]] using stringified type hint
+   * Transform value from AnyRef using stringified type hint
    *
-   * @param anyRef [[AnyRef]] extracted from [[ResultSet]]
-   * @param datatype stringified type representing [[AnyRef]]'s real type
-   * @return [[AnyRef]] converted to JSON
+   * @param anyRef AnyRef extracted from ResultSet
+   * @param datatype stringified type representing AnyRef's real type
+   * @return AnyRef converted to JSON
    */
   def getValue(anyRef: AnyRef, datatype: String): JValue =
     if (anyRef == null) JNull
@@ -379,7 +372,7 @@ object JsonOutput {
     val string = obj.toString
     parseOpt(string) match {
       case Some(json) => json
-      case None       => JString(string)
+      case None => JString(string)
     }
   }
 }

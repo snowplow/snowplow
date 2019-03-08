@@ -10,12 +10,8 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich
-package common
-package utils
-package shredder
+package com.snowplowanalytics.snowplow.enrich.common.utils.shredder
 
-// Specs2
 import org.specs2.Specification
 
 class TypeHierarchySpec extends Specification {

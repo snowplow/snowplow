@@ -14,14 +14,11 @@ package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 package web
 
-// Java
 import java.net.URI
 
-// Scalaz
 import scalaz._
 import Scalaz._
 
-// This project
 import utils.{ConversionUtils => CU}
 
 /**
@@ -52,10 +49,10 @@ object PageEnrichments {
    */
   def extractPageUri(fromReferer: Option[String], fromTracker: Option[String]): Validation[String, Option[URI]] =
     (fromReferer, fromTracker) match {
-      case (Some(r), None)    => CU.stringToUri(r)
-      case (None, Some(t))    => CU.stringToUri(t)
+      case (Some(r), None) => CU.stringToUri(r)
+      case (None, Some(t)) => CU.stringToUri(t)
       case (Some(r), Some(t)) => CU.stringToUri(t) // Tracker URL takes precedence
-      case (None, None)       => None.success // No page URI available. Not a failable offence
+      case (None, None) => None.success // No page URI available. Not a failable offence
     }
 
   /**
@@ -74,7 +71,7 @@ object PageEnrichments {
         val duid = CU.makeTsvSafe(crossDomainElements(0)).some
         val tstamp = crossDomainElements.lift(1) match {
           case Some(spDtm) => EventEnrichments.extractTimestamp("sp_dtm", spDtm).map(_.some)
-          case None        => None.success
+          case None => None.success
         }
 
         tstamp.map(duid -> _)

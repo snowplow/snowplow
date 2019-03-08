@@ -13,21 +13,19 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry
 
-// Scala libraries
 import com.fasterxml.jackson.databind.{ObjectMapper, SerializationFeature}
 import com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider
 import com.jayway.jsonpath.{Configuration, Option => JOption}
 
-// Snowplow
 import outputs.EnrichedEvent
 
 package object pii {
-  type DigestFunction  = Function1[Array[Byte], String]
-  type ModifiedFields  = List[ModifiedField]
+  type DigestFunction = Function1[Array[Byte], String]
+  type ModifiedFields = List[ModifiedField]
   type ApplyStrategyFn = (String, PiiStrategy) => (String, ModifiedFields)
-  type MutatorFn       = (EnrichedEvent, PiiStrategy, ApplyStrategyFn) => ModifiedFields
+  type MutatorFn = (EnrichedEvent, PiiStrategy, ApplyStrategyFn) => ModifiedFields
 
-  val JsonMutators   = Mutators.JsonMutators
+  val JsonMutators = Mutators.JsonMutators
   val ScalarMutators = Mutators.ScalarMutators
 
   // Configuration for JsonPath
@@ -75,11 +73,12 @@ package pii {
   /**
    * Case class for capturing JSON field modifications.
    */
-  private[pii] final case class JsonModifiedField(fieldName: String,
-                                                  originalValue: String,
-                                                  modifiedValue: String,
-                                                  jsonPath: String,
-                                                  schema: String)
+  private[pii] final case class JsonModifiedField(
+    fieldName: String,
+    originalValue: String,
+    modifiedValue: String,
+    jsonPath: String,
+    schema: String)
       extends ModifiedField
 
   /**

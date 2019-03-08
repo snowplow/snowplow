@@ -10,22 +10,14 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common
-package enrichments
-package registry
-package apirequest
+package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.apirequest
 
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// json4s
 import org.json4s.JInt
-
-// specs2
 import org.specs2.Specification
 import org.specs2.scalaz.ValidationMatchers
 import org.specs2.mock.Mockito
+import scalaz._
+import Scalaz._
 
 class CacheSpec extends Specification with ValidationMatchers with Mockito {
   def is = s2"""

@@ -13,21 +13,16 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
-// Scala
+import java.nio.charset.StandardCharsets.UTF_8
+
 import scala.util.control.NonFatal
 import scala.util.matching.Regex
 
-// Scalaz
+import org.apache.commons.lang3.StringUtils
+import org.joda.time.DateTime
 import scalaz._
 import Scalaz._
 
-// Apache Commons
-import org.apache.commons.lang3.StringUtils
-
-// Joda-Time
-import org.joda.time.DateTime
-
-// This project
 import utils.ConversionUtils.singleEncodePcts
 
 /**
@@ -49,7 +44,7 @@ import utils.ConversionUtils.singleEncodePcts
 object CloudfrontLoader extends Loader[String] {
 
   // The encoding used on CloudFront logs
-  private val CollectorEncoding = "UTF-8"
+  private val CollectorEncoding = UTF_8
 
   // The name of this collector
   private val CollectorName = "cloudfront"
@@ -89,11 +84,11 @@ object CloudfrontLoader extends Loader[String] {
   )
 
   private val CfOriginalPlusAdditionalRegex = toRegex(originalFields, additionalFields = true)
-  private val CfOriginalRegex               = toRegex(originalFields)
-  private val Cf12Sep2012Regex              = toRegex(fields12Sep2012)
-  private val Cf21Oct2013Regex              = toRegex(fields21Oct2013)
-  private val Cf29Apr2014Regex              = toRegex(fields29Apr2014)
-  private val Cf01Jul2014Regex              = toRegex(fields01Jul2014, additionalFields = true)
+  private val CfOriginalRegex = toRegex(originalFields)
+  private val Cf12Sep2012Regex = toRegex(fields12Sep2012)
+  private val Cf21Oct2013Regex = toRegex(fields21Oct2013)
+  private val Cf29Apr2014Regex = toRegex(fields29Apr2014)
+  private val Cf01Jul2014Regex = toRegex(fields01Jul2014, additionalFields = true)
 
   /**
    * Converts the source string into a
@@ -165,8 +160,8 @@ object CloudfrontLoader extends Loader[String] {
    */
   def toOption(field: String): Option[String] = Option(field) match {
     case Some("-") => None
-    case Some("")  => None
-    case s         => s // Leaves any other Some(x) or None as-is
+    case Some("") => None
+    case s => s // Leaves any other Some(x) or None as-is
   }
 
   /**
@@ -192,14 +187,15 @@ object CloudfrontLoader extends Loader[String] {
       fields.mkString(whitespaceRegex).r
   }
 
-  private case class CloudfrontLogLine(date: String,
-                                       time: String,
-                                       lastIp: String,
-                                       objct: String,
-                                       rfr: String,
-                                       ua: String,
-                                       qs: String,
-                                       forwardedFor: String = "-") {
+  private case class CloudfrontLogLine(
+    date: String,
+    time: String,
+    lastIp: String,
+    objct: String,
+    rfr: String,
+    ua: String,
+    qs: String,
+    forwardedFor: String = "-") {
 
     def toValidatedMaybeCollectorPayload: ValidatedMaybeCollectorPayload = {
       // Validations, and let's strip double-encodings
@@ -210,10 +206,10 @@ object CloudfrontLoader extends Loader[String] {
       }
 
       // No validation (yet) on the below
-      val ip        = IpAddressExtractor.extractIpAddress(forwardedFor, lastIp)
+      val ip = IpAddressExtractor.extractIpAddress(forwardedFor, lastIp)
       val userAgent = singleEncodePcts(ua)
-      val refr      = singleEncodePcts(rfr)
-      val referer   = toOption(refr) map toCleanUri
+      val refr = singleEncodePcts(rfr)
+      val referer = toOption(refr) map toCleanUri
 
       val api = CollectorApi.parse(objct)
 
@@ -221,7 +217,7 @@ object CloudfrontLoader extends Loader[String] {
         CollectorPayload(
           q,
           CollectorName,
-          CollectorEncoding,
+          CollectorEncoding.toString,
           None, // No hostname for CloudFront
           Some(t),
           toOption(ip),

@@ -10,36 +10,23 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
-
-// Scalaz
-import com.fasterxml.jackson.core.JsonParseException
-import com.snowplowanalytics.snowplow.enrich.common.adapters.registry.SendgridAdapter._
-import org.joda.time.{DateTime, DateTimeZone}
-import org.joda.time.format.DateTimeFormat
-
-import scalaz.Scalaz._
-import scalaz._
-
-// json4s
-import org.json4s._
-import org.json4s.jackson.JsonMethods._
-
-// Iglu
-import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
-
-// This project
-import com.snowplowanalytics.snowplow.enrich.common.loaders.CollectorPayload
-import com.snowplowanalytics.snowplow.enrich.common.utils.{JsonUtils => JU}
 
 import javax.mail.internet.ContentType
 
 import scala.util.Try
+
+import com.fasterxml.jackson.core.JsonParseException
+import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
+import scalaz._
+import Scalaz._
+import org.json4s._
+import org.json4s.jackson.JsonMethods._
+
+import loaders.CollectorPayload
+import utils.{JsonUtils => JU}
 
 /**
  * Transforms a collector payload which conforms to
@@ -93,22 +80,22 @@ object SendgridAdapter extends Adapter {
 
       for ((itm, index) <- parsed.children.zipWithIndex)
         yield {
-          val eventType   = (itm \\ "event").extractOpt[String]
+          val eventType = (itm \\ "event").extractOpt[String]
           val queryString = toMap(payload.querystring)
 
           lookupSchema(eventType, VendorName, index, EventSchemaMap) map { schema =>
             {
               RawEvent(
                 api = payload.api,
-                parameters =
-                  toUnstructEventParams(TrackerVersion,
-                                        queryString,
-                                        schema,
-                                        cleanupJsonEventValues(itm, ("event", eventType.get).some, "timestamp"),
-                                        "srv"),
+                parameters = toUnstructEventParams(
+                  TrackerVersion,
+                  queryString,
+                  schema,
+                  cleanupJsonEventValues(itm, ("event", eventType.get).some, "timestamp"),
+                  "srv"),
                 contentType = payload.contentType,
-                source      = payload.source,
-                context     = payload.context
+                source = payload.source,
+                context = payload.context
               )
             }
           }

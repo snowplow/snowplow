@@ -10,38 +10,26 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-// Java
 import java.net.URI
-import org.apache.http.client.utils.URLEncodedUtils
+import java.nio.charset.StandardCharsets.UTF_8
 
-// Scala
 import scala.collection.JavaConversions._
 import scala.util.control.NonFatal
 import scala.util.{Try, Success => TS, Failure => TF}
 
-// Scalaz
+import com.fasterxml.jackson.core.JsonParseException
+import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
+import org.apache.http.client.utils.URLEncodedUtils
 import scalaz._
 import Scalaz._
-
-// Jackson
-import com.fasterxml.jackson.core.JsonParseException
-
-// json4s
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
-// Iglu
-import iglu.client.{Resolver, SchemaKey}
-
-// This project
 import loaders.CollectorPayload
 import utils.{JsonUtils => JU}
 
@@ -59,17 +47,17 @@ object MailgunAdapter extends Adapter {
   private val TrackerVersion = "com.mailgun-v1"
 
   // Expected content type for a request body
-  private val ContentTypes    = List("application/x-www-form-urlencoded", "multipart/form-data")
+  private val ContentTypes = List("application/x-www-form-urlencoded", "multipart/form-data")
   private val ContentTypesStr = ContentTypes.mkString(" or ")
 
   // Schemas for reverse-engineering a Snowplow unstructured event
   private val EventSchemaMap = Map(
-    "bounced"      -> SchemaKey("com.mailgun", "message_bounced", "jsonschema", "1-0-0").toSchemaUri,
-    "clicked"      -> SchemaKey("com.mailgun", "message_clicked", "jsonschema", "1-0-0").toSchemaUri,
-    "complained"   -> SchemaKey("com.mailgun", "message_complained", "jsonschema", "1-0-0").toSchemaUri,
-    "delivered"    -> SchemaKey("com.mailgun", "message_delivered", "jsonschema", "1-0-0").toSchemaUri,
-    "dropped"      -> SchemaKey("com.mailgun", "message_dropped", "jsonschema", "1-0-0").toSchemaUri,
-    "opened"       -> SchemaKey("com.mailgun", "message_opened", "jsonschema", "1-0-0").toSchemaUri,
+    "bounced" -> SchemaKey("com.mailgun", "message_bounced", "jsonschema", "1-0-0").toSchemaUri,
+    "clicked" -> SchemaKey("com.mailgun", "message_clicked", "jsonschema", "1-0-0").toSchemaUri,
+    "complained" -> SchemaKey("com.mailgun", "message_complained", "jsonschema", "1-0-0").toSchemaUri,
+    "delivered" -> SchemaKey("com.mailgun", "message_delivered", "jsonschema", "1-0-0").toSchemaUri,
+    "dropped" -> SchemaKey("com.mailgun", "message_dropped", "jsonschema", "1-0-0").toSchemaUri,
+    "opened" -> SchemaKey("com.mailgun", "message_opened", "jsonschema", "1-0-0").toSchemaUri,
     "unsubscribed" -> SchemaKey("com.mailgun", "recipient_unsubscribed", "jsonschema", "1-0-0").toSchemaUri
   )
 
@@ -100,7 +88,7 @@ object MailgunAdapter extends Adapter {
         Try {
           getBoundary(ct)
             .map(parseMultipartForm(body, _))
-            .getOrElse(toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), "UTF-8").toList))
+            .getOrElse(toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).toList))
         } match {
           case TF(e) =>
             s"${VendorName}Adapter could not parse body: [${JU.stripInstanceEtc(e.getMessage).orNull}]".failureNel
@@ -111,21 +99,21 @@ object MailgunAdapter extends Adapter {
                 case eventType =>
                   for {
                     schemaUri <- lookupSchema(eventType.some, VendorName, EventSchemaMap)
-                    event     <- payloadBodyToEvent(bodyMap)
-                    mEvent    <- mutateMailgunEvent(event)
+                    event <- payloadBodyToEvent(bodyMap)
+                    mEvent <- mutateMailgunEvent(event)
                   } yield
                     NonEmptyList(
                       RawEvent(
                         api = payload.api,
-                        parameters =
-                          toUnstructEventParams(TrackerVersion,
-                                                params,
-                                                schemaUri,
-                                                cleanupJsonEventValues(mEvent, ("event", eventType).some, "timestamp"),
-                                                "srv"),
+                        parameters = toUnstructEventParams(
+                          TrackerVersion,
+                          params,
+                          schemaUri,
+                          cleanupJsonEventValues(mEvent, ("event", eventType).some, "timestamp"),
+                          "srv"),
                         contentType = payload.contentType,
-                        source      = payload.source,
-                        context     = payload.context
+                        source = payload.source,
+                        context = payload.context
                       ))
               }
               .getOrElse(s"No ${VendorName} event parameter provided: cannot determine event type".failureNel)
@@ -167,7 +155,7 @@ object MailgunAdapter extends Adapter {
    */
   private def getBoundary(contentType: String): Option[String] = contentType match {
     case boundaryRegex(boundaryString) => Some(boundaryString)
-    case _                             => None
+    case _ => None
   }
 
   /**
@@ -190,7 +178,7 @@ object MailgunAdapter extends Adapter {
       .split(s"--$boundary")
       .flatMap({
         case formDataRegex(k, v) => Some((k, v))
-        case _                   => None
+        case _ => None
       })
       .toMap
 
@@ -205,11 +193,11 @@ object MailgunAdapter extends Adapter {
       case (_, _, None) => s"${VendorName} event data missing 'signature'".failureNel
       case (Some(timestamp), Some(token), Some(signature)) => {
         try {
-          val json  = compact(render(bodyMap))
+          val json = compact(render(bodyMap))
           val event = parse(json)
           event match {
             case obj: JObject => obj.success
-            case _            => s"${VendorName} event wrong type: [%s]".format(event.getClass).failureNel
+            case _ => s"${VendorName} event wrong type: [%s]".format(event.getClass).failureNel
           }
         } catch {
           case e: JsonParseException =>
