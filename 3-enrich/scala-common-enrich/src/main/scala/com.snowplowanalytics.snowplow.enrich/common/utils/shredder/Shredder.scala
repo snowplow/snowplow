@@ -10,32 +10,21 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 package utils
 package shredder
 
-// Jackson
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.node.ObjectNode
-
-// Scala
 import scala.collection.JavaConversions._
 
-// Scalaz
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.ObjectNode
+import com.snowplowanalytics.iglu.client.{JsonSchemaPair, Resolver, SchemaCriterion}
+import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
+import com.snowplowanalytics.iglu.client.validation.ValidatableJsonMethods._
 import scalaz._
 import Scalaz._
 
-// Snowplow Common Enrich
-import common._
 import outputs.EnrichedEvent
-
-// Iglu Scala Client
-import iglu.client.{JsonSchemaPair, Resolver, SchemaCriterion}
-import iglu.client.validation.ProcessingMessageMethods._
-import iglu.client.validation.ValidatableJsonMethods._
 
 /**
  * The shredder takes the two fields containing JSONs
@@ -89,7 +78,7 @@ object Shredder {
 
     // Get our unstructured event and Lists of contexts and derived_contexts
     val ue = extractAndValidateUnstructEvent(event)
-    val c  = extractAndValidateCustomContexts(event)
+    val c = extractAndValidateCustomContexts(event)
     val dc = extractAndValidateDerivedContexts(event)
 
     // Joining all validated JSONs into a single validated List[JsonNode], collecting Failures too
@@ -103,7 +92,7 @@ object Shredder {
   }
 
   /**
-   * Extract unstruct event out of [[EnrichedEvent]] and validate against it's schema
+   * Extract unstruct event out of EnrichedEvent and validate against it's schema
    *
    * @param event The Snowplow enriched event to find unstruct event in
    * @param resolver iglu resolver
@@ -212,7 +201,7 @@ object Shredder {
    */
   private[shredder] def flatten(o: Option[ValidatedNelMessage[JsonNodes]]): ValidatedNelMessage[JsonNodes] = o match {
     case Some(vjl) => vjl
-    case None      => List[JsonNode]().success
+    case None => List[JsonNode]().success
   }
 
   /**
@@ -227,11 +216,11 @@ object Shredder {
    */
   private[shredder] def makePartialHierarchy(rootId: String, rootTstamp: String): TypeHierarchy =
     TypeHierarchy(
-      rootId     = rootId,
+      rootId = rootId,
       rootTstamp = rootTstamp,
-      refRoot    = TypeHierarchyRoot,
-      refTree    = List(TypeHierarchyRoot), // This is a partial tree. Need to complete later
-      refParent  = TypeHierarchyRoot // Hardcode as nested shredding not supported yet
+      refRoot = TypeHierarchyRoot,
+      refTree = List(TypeHierarchyRoot), // This is a partial tree. Need to complete later
+      refParent = TypeHierarchyRoot // Hardcode as nested shredding not supported yet
     )
 
   /**
@@ -273,7 +262,7 @@ object Shredder {
     // below structure.
     val updated = instance.asInstanceOf[ObjectNode]
     updated.replace("schema", schemaNode)
-    updated.put("hierarchy", hierarchyNode)
+    updated.set("hierarchy", hierarchyNode)
 
     (schemaKey, updated)
   }

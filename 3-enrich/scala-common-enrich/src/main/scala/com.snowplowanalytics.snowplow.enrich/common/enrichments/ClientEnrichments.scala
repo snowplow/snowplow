@@ -13,13 +13,10 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 
-// Java
 import java.lang.{Integer => JInteger}
 
-// Scala
 import scala.util.control.NonFatal
 
-// Scalaz
 import scalaz._
 import Scalaz._
 

@@ -13,24 +13,11 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package utils
 
-// Java
-import java.lang.{Byte => JByte}
-
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// json4s
 import org.json4s.jackson.JsonMethods.parse
 import org.json4s.DefaultFormats
-
-// Specs2
 import org.specs2.mutable.Specification
 import org.specs2.scalaz.ValidationMatchers
 
-/**
- * Tests ScalazJson4sUtils
- */
 class JsonExtractionSpec extends Specification with ValidationMatchers {
   implicit val formats = DefaultFormats
   val testJson         = parse("""{

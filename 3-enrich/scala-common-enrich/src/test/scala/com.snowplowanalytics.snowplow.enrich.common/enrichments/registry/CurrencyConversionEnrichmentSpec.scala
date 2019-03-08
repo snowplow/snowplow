@@ -10,24 +10,14 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common
-package enrichments
-package registry
+package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
-// Scala-Forex
 import com.snowplowanalytics.forex.oerclient.DeveloperAccount
-
-// Specs2
+import org.joda.time.DateTime
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
-import org.specs2.scalaz._
-
-// Scalaz
 import scalaz._
 import Scalaz._
-
-// Joda Time
-import org.joda.time.DateTime
 
 object CurrencyConversionEnrichmentSpec {
   val OerApiKey = "OER_KEY"

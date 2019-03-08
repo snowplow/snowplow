@@ -10,30 +10,16 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
-package enrichments
-package registry
+package com.snowplowanalytics.snowplow.enrich.common
+package enrichments.registry
 
-// Maven Artifact
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion
-
-// Scalaz
+import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
+import org.apache.http.message.BasicHeaderValueParser
 import scalaz._
 import Scalaz._
-
-// json4s
 import org.json4s._
 import org.json4s.JsonDSL._
 
-// Iglu
-import iglu.client.{SchemaCriterion, SchemaKey}
-// HttpClient
-import org.apache.http.message.BasicHeaderValueParser
-
-// This project
 import utils.ScalazJson4sUtils
 
 object CookieExtractorEnrichmentConfig extends ParseableEnrichment {
@@ -88,7 +74,7 @@ case class CookieExtractorEnrichment(
     cookies.map { cookie =>
       (("schema" -> "iglu:org.ietf/http_cookie/jsonschema/1-0-0") ~
         ("data" ->
-          ("name"    -> cookie.getName) ~
+          ("name" -> cookie.getName) ~
             ("value" -> cookie.getValue)))
     }
   }

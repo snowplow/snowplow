@@ -10,18 +10,12 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
-package utils
-package shredder
+package com.snowplowanalytics.snowplow.enrich.common
+package utils.shredder
 
-// Snowplow Common Enrich
-import outputs.EnrichedEvent
-
-// Specs2
 import org.specs2.Specification
+
+import outputs.EnrichedEvent
 
 class ShredderSpec extends Specification {
   def is = s2"""

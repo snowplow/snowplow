@@ -10,34 +10,19 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common
-package utils
+package com.snowplowanalytics.snowplow.enrich.common.utils
 
-// Java
 import java.math.{BigInteger => JBigInteger}
-import java.net.URLEncoder
 
-// Scala
 import scala.util.control.NonFatal
 
-// Jackson
 import com.fasterxml.jackson.databind.{JsonNode, ObjectMapper}
-
-// Joda-Time
 import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
-
-// Scalaz
 import scalaz._
 import Scalaz._
-
-// json4s
 import org.json4s._
-import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
-
-// This project
-import utils.{ConversionUtils => CU}
 
 /**
  * Contains general purpose extractors and other
@@ -63,7 +48,9 @@ object JsonUtils {
    * validates it as correct JSON.
    */
   val extractBase64EncJson: (String, String) => Validation[String, String] = (field, str) =>
-    CU.decodeBase64Url(field, str).flatMap(json => validateAndReformatJson(field, json))
+    ConversionUtils
+      .decodeBase64Url(field, str)
+      .flatMap(json => validateAndReformatJson(field, json))
 
   /**
    * Converts a Joda DateTime into
@@ -91,9 +78,9 @@ object JsonUtils {
    *         original String
    */
   private[utils] def booleanToJValue(str: String): JValue = str match {
-    case "true"  => JBool(true)
+    case "true" => JBool(true)
     case "false" => JBool(false)
-    case _       => JString(str)
+    case _ => JString(str)
   }
 
   /**
@@ -157,18 +144,19 @@ object JsonUtils {
    * @return a JField, containing the original key and the
    *         processed String, now as a JValue
    */
-  def toJField(key: String,
-               value: String,
-               bools: List[String],
-               ints: List[String],
-               dateTimes: DateTimeFields): JField = {
+  def toJField(
+    key: String,
+    value: String,
+    bools: List[String],
+    ints: List[String],
+    dateTimes: DateTimeFields): JField = {
 
     val v = (value, dateTimes) match {
-      case ("", _)                                           => JNull
-      case _ if bools.contains(key)                          => booleanToJValue(value)
-      case _ if ints.contains(key)                           => integerToJValue(value)
+      case ("", _) => JNull
+      case _ if bools.contains(key) => booleanToJValue(value)
+      case _ if ints.contains(key) => integerToJValue(value)
       case (_, Some((nel, fmt))) if nel.toList.contains(key) => JString(toJsonSchemaDateTime(value, fmt))
-      case _                                                 => JString(value)
+      case _ => JString(value)
     }
     (key, v)
   }

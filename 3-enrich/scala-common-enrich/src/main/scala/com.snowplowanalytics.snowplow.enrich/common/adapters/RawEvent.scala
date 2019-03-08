@@ -13,7 +13,6 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 
-// This project
 import loaders.{CollectorApi, CollectorContext, CollectorSource}
 
 /**

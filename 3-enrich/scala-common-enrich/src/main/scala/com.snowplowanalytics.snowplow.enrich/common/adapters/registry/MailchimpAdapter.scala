@@ -10,42 +10,24 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-// Java
 import java.net.URI
-import org.apache.http.client.utils.URLEncodedUtils
+import java.nio.charset.StandardCharsets.UTF_8
 
-// Joda-Time
-import org.joda.time.{DateTime, DateTimeZone}
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
-
-// Jackson
-import com.fasterxml.jackson.databind.JsonNode
-
-// Scala
 import scala.collection.JavaConversions._
 
-// Scalaz
+import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
+import org.apache.http.client.utils.URLEncodedUtils
+import org.joda.time.DateTimeZone
+import org.joda.time.format.DateTimeFormat
 import scalaz._
 import Scalaz._
-
-// json4s
 import org.json4s._
 import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
-import org.json4s.scalaz.JsonScalaz._
 
-// Iglu
-import iglu.client.{Resolver, SchemaKey}
-import iglu.client.validation.ValidatableJsonMethods._
-
-// This project
 import loaders.CollectorPayload
 import utils.{JsonUtils => JU}
 
@@ -67,12 +49,12 @@ object MailchimpAdapter extends Adapter {
 
   // Schemas for reverse-engineering a Snowplow unstructured event
   private val EventSchemaMap = Map(
-    "subscribe"   -> SchemaKey("com.mailchimp", "subscribe", "jsonschema", "1-0-0").toSchemaUri,
+    "subscribe" -> SchemaKey("com.mailchimp", "subscribe", "jsonschema", "1-0-0").toSchemaUri,
     "unsubscribe" -> SchemaKey("com.mailchimp", "unsubscribe", "jsonschema", "1-0-0").toSchemaUri,
-    "campaign"    -> SchemaKey("com.mailchimp", "campaign_sending_status", "jsonschema", "1-0-0").toSchemaUri,
-    "cleaned"     -> SchemaKey("com.mailchimp", "cleaned_email", "jsonschema", "1-0-0").toSchemaUri,
-    "upemail"     -> SchemaKey("com.mailchimp", "email_address_change", "jsonschema", "1-0-0").toSchemaUri,
-    "profile"     -> SchemaKey("com.mailchimp", "profile_update", "jsonschema", "1-0-0").toSchemaUri
+    "campaign" -> SchemaKey("com.mailchimp", "campaign_sending_status", "jsonschema", "1-0-0").toSchemaUri,
+    "cleaned" -> SchemaKey("com.mailchimp", "cleaned_email", "jsonschema", "1-0-0").toSchemaUri,
+    "upemail" -> SchemaKey("com.mailchimp", "email_address_change", "jsonschema", "1-0-0").toSchemaUri,
+    "profile" -> SchemaKey("com.mailchimp", "profile_update", "jsonschema", "1-0-0").toSchemaUri
   )
 
   // Datetime format used by MailChimp (as we will need to massage)
@@ -105,7 +87,7 @@ object MailchimpAdapter extends Adapter {
         s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failNel
       case (Some(body), _) => {
 
-        val params = toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), "UTF-8").toList)
+        val params = toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).toList)
         params.get("type") match {
           case None => s"No ${VendorName} type parameter provided: cannot determine event type".failNel
           case Some(eventType) => {
@@ -116,11 +98,11 @@ object MailchimpAdapter extends Adapter {
             } yield {
               NonEmptyList(
                 RawEvent(
-                  api         = payload.api,
-                  parameters  = toUnstructEventParams(TrackerVersion, allParams, schema, MailchimpFormatter, "srv"),
+                  api = payload.api,
+                  parameters = toUnstructEventParams(TrackerVersion, allParams, schema, MailchimpFormatter, "srv"),
                   contentType = payload.contentType,
-                  source      = payload.source,
-                  context     = payload.context
+                  source = payload.source,
+                  context = payload.context
                 ))
             }
           }
@@ -168,8 +150,10 @@ object MailchimpAdapter extends Adapter {
    */
   private[registry] def toNestedJField(keys: NonEmptyList[String], value: String): JField =
     keys.toList match {
-      case head :: second :: tail => JField(head, toNestedJField(NonEmptyList(second, tail: _*), value))
-      case head :: Nil            => JField(head, JString(value))
+      case h1 :: h2 :: t => JField(h1, toNestedJField(NonEmptyList(h2, t: _*), value))
+      case h :: Nil => JField(h, JString(value))
+      // unreachable but can't pattern match on NEL
+      case _ => JField("", JString(value))
     }
 
   /**
@@ -189,7 +173,7 @@ object MailchimpAdapter extends Adapter {
   private[registry] def mergeJFields(jfields: List[JField]): JObject =
     jfields match {
       case x :: xs => xs.foldLeft(JObject(x))(_ merge JObject(_))
-      case Nil     => JObject(Nil)
+      case Nil => JObject(Nil)
     }
 
   /**
@@ -204,6 +188,6 @@ object MailchimpAdapter extends Adapter {
   private[registry] def reformatParameters(parameters: RawEventParameters): RawEventParameters =
     parameters.get("fired_at") match {
       case Some(firedAt) => parameters.updated("fired_at", JU.toJsonSchemaDateTime(firedAt, MailchimpDateTimeFormat))
-      case None          => parameters
+      case None => parameters
     }
 }

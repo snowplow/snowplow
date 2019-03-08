@@ -10,31 +10,23 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow
-package enrich.common
-package enrichments
-package registry
-package apirequest
+package com.snowplowanalytics.snowplow.enrich.common
+package enrichments.registry.apirequest
 
-// Scala
 import scala.util.control.NonFatal
 
-// Scalaz
 import scalaz._
 import Scalaz._
-
-// Json4s
 import org.json4s._
 import org.json4s.jackson.compactJson
 
-// This project
 import outputs.EnrichedEvent
 import utils.JsonPath._
 
 /**
  * Container for key with one (and only one) of possible input sources
  * Basically, represents a key for future template context and way to get value
- * out of [[EnrichedEvent]], custom context, derived event or unstruct event.
+ * out of EnrichedEvent, custom context, derived event or unstruct event.
  *
  * @param key extracted key
  * @param pojo optional POJO source to take stright from `EnrichedEvent`
@@ -56,7 +48,7 @@ case class Input(key: String, pojo: Option[PojoInput], json: Option[JsonInput]) 
   // but it won't give user meaningful error message
   val validatedJsonPath = json.map(_.jsonPath).map(compileQuery) match {
     case Some(compiledQuery) => compiledQuery
-    case None                => "No JSON Input with JSONPath was given".failure
+    case None => "No JSON Input with JSONPath was given".failure
   }
 
   /**
@@ -69,7 +61,7 @@ case class Input(key: String, pojo: Option[PojoInput], json: Option[JsonInput]) 
     case Some(pojoInput) => {
       try {
         val method = event.getClass.getMethod(pojoInput.field)
-        val value  = Option(method.invoke(event)).map(_.toString)
+        val value = Option(method.invoke(event)).map(_.toString)
         value.map(v => Map(key -> Tags.LastVal(v))).successNel
       } catch {
         case NonFatal(err) => s"Error accessing POJO input field [$key]: [$err]".failureNel
@@ -91,8 +83,8 @@ case class Input(key: String, pojo: Option[PojoInput], json: Option[JsonInput]) 
       case Some(jsonInput) => {
         val validatedJson = jsonInput.field match {
           case "derived_contexts" => getBySchemaCriterion(derived, jsonInput.schemaCriterion).successNel
-          case "contexts"         => getBySchemaCriterion(custom, jsonInput.schemaCriterion).successNel
-          case "unstruct_event"   => getBySchemaCriterion(unstruct.toList, jsonInput.schemaCriterion).successNel
+          case "contexts" => getBySchemaCriterion(custom, jsonInput.schemaCriterion).successNel
+          case "unstruct_event" => getBySchemaCriterion(unstruct.toList, jsonInput.schemaCriterion).successNel
           case other =>
             s"Error: wrong field [$other] passed to Input.getFromJson. Should be one of: derived_contexts, contexts, unstruct_event".failureNel
         }
@@ -136,7 +128,7 @@ object Input {
    * (key inside double curly braces) in template strings
    * Failure means failure while accessing particular field, like invalid JSONPath, POJO-access, etc
    * None means any of required fields were not found, so this lookup need to be skipped in future
-   * Tag used to not merge values on colliding keys ([[Tags.FirstVal]] can be used as well)
+   * Tag used to not merge values on colliding keys (`Tags.FirstVal` can be used as well)
    */
   type TemplateContext = ValidationNel[String, Option[Map[String, String @@ Tags.LastVal]]]
 
@@ -158,14 +150,15 @@ object Input {
    * @param unstructEvent optional unstruct event object
    * @return final template context
    */
-  def buildTemplateContext(inputs: List[Input],
-                           event: EnrichedEvent,
-                           derivedContexts: List[JObject],
-                           customContexts: List[JObject],
-                           unstructEvent: Option[JObject]): TemplateContext = {
+  def buildTemplateContext(
+    inputs: List[Input],
+    event: EnrichedEvent,
+    derivedContexts: List[JObject],
+    customContexts: List[JObject],
+    unstructEvent: Option[JObject]): TemplateContext = {
 
     val eventInputs = buildInputsMap(inputs.map(_.getFromEvent(event)))
-    val jsonInputs  = buildInputsMap(inputs.map(_.getFromJson(derivedContexts, customContexts, unstructEvent)))
+    val jsonInputs = buildInputsMap(inputs.map(_.getFromJson(derivedContexts, customContexts, unstructEvent)))
 
     eventInputs |+| jsonInputs
   }
@@ -183,7 +176,7 @@ object Input {
       val matched = contexts.filter { context =>
         context.obj.exists {
           case ("schema", JString(schema)) => schema.startsWith(criterion)
-          case _                           => false
+          case _ => false
         }
       }
       matched.map(_ \ "data").headOption
@@ -197,11 +190,11 @@ object Input {
    */
   private def criterionMatch(schemaCriterion: String): Option[String] =
     schemaCriterion match {
-      case criterionRegex(schema, "*", _, _)   => s"$schema".some
-      case criterionRegex(schema, m, "*", _)   => s"$schema$m-".some
+      case criterionRegex(schema, "*", _, _) => s"$schema".some
+      case criterionRegex(schema, m, "*", _) => s"$schema$m-".some
       case criterionRegex(schema, m, rev, "*") => s"$schema$m-$rev-".some
       case criterionRegex(schema, m, rev, add) => s"$schema$m-$rev-$add".some
-      case _                                   => None
+      case _ => None
     }
 
   /**
@@ -229,14 +222,14 @@ object Input {
    * @return some string best represenging JValue or None if there's no way to stringify it
    */
   private def stringifyJson(json: JValue): Option[String] = json match {
-    case JString(s)    => s.some
+    case JString(s) => s.some
     case JArray(array) => array.map(stringifyJson).mkString(",").some
-    case obj: JObject  => compactJson(obj).some
-    case JInt(i)       => i.toString.some
-    case JDouble(d)    => d.toString.some
-    case JDecimal(d)   => d.toString.some
-    case JBool(b)      => b.toString.some
-    case JNull         => "null".some // TODO: or None?
-    case JNothing      => none
+    case obj: JObject => compactJson(obj).some
+    case JInt(i) => i.toString.some
+    case JDouble(d) => d.toString.some
+    case JDecimal(d) => d.toString.some
+    case JBool(b) => b.toString.some
+    case JNull => "null".some // TODO: or None?
+    case JNothing => none
   }
 }

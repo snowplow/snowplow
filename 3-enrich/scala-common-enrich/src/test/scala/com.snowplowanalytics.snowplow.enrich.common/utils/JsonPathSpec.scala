@@ -12,13 +12,10 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.utils
 
-// specs2
-import org.specs2.Specification
-import org.specs2.scalaz.ValidationMatchers
-
-// json4s
 import org.json4s._
 import org.json4s.jackson.parseJson
+import org.specs2.Specification
+import org.specs2.scalaz.ValidationMatchers
 
 class JsonPathSpec extends Specification with ValidationMatchers {
   def is = s2"""

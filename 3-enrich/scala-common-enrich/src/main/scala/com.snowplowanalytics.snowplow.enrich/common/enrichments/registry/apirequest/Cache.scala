@@ -10,22 +10,12 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow
-package enrich.common.enrichments
-package registry
-package apirequest
+package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.apirequest
 
-// Scalaz
-import scalaz._
-
-// json4s
-import org.json4s.JValue
-
-// JodaTime
-import org.joda.time.DateTime
-
-// Twitter utils
 import com.twitter.util.SynchronizedLruMap
+import org.json4s.JValue
+import org.joda.time.DateTime
+import scalaz._
 
 /**
  * Just LRU cache
@@ -67,6 +57,7 @@ case class Cache(size: Int, ttl: Int) {
   def put(key: String, value: Validation[Throwable, JValue]): Unit = {
     val now = (new DateTime().getMillis / 1000).toInt
     cache.put(key, (value, now))
+    ()
   }
 
   /**

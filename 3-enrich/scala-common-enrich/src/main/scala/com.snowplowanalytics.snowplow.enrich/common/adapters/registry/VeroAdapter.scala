@@ -10,30 +10,19 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-// Scalaz
-import scalaz.Scalaz._
+import scala.util.{Failure, Success, Try}
 
-// json4s
+import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
+import org.joda.time.DateTime
+import scalaz.Scalaz._
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 
-// Iglu
-import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
-
-// Joda Time
-import org.joda.time.DateTime
-
-// This project
-import com.snowplowanalytics.snowplow.enrich.common.loaders.CollectorPayload
-
-import scala.util.{Failure, Success, Try}
+import loaders.CollectorPayload
 
 /**
  * Transforms a collector payload which conforms to
@@ -53,11 +42,11 @@ object VeroAdapter extends Adapter {
 
   // Schemas for reverse-engineering a Snowplow unstructured event
   private val EventSchemaMap = Map(
-    "bounced"      -> SchemaKey("com.getvero", "bounced", "jsonschema", "1-0-0").toSchemaUri,
-    "clicked"      -> SchemaKey("com.getvero", "clicked", "jsonschema", "1-0-0").toSchemaUri,
-    "delivered"    -> SchemaKey("com.getvero", "delivered", "jsonschema", "1-0-0").toSchemaUri,
-    "opened"       -> SchemaKey("com.getvero", "opened", "jsonschema", "1-0-0").toSchemaUri,
-    "sent"         -> SchemaKey("com.getvero", "sent", "jsonschema", "1-0-0").toSchemaUri,
+    "bounced" -> SchemaKey("com.getvero", "bounced", "jsonschema", "1-0-0").toSchemaUri,
+    "clicked" -> SchemaKey("com.getvero", "clicked", "jsonschema", "1-0-0").toSchemaUri,
+    "delivered" -> SchemaKey("com.getvero", "delivered", "jsonschema", "1-0-0").toSchemaUri,
+    "opened" -> SchemaKey("com.getvero", "opened", "jsonschema", "1-0-0").toSchemaUri,
+    "sent" -> SchemaKey("com.getvero", "sent", "jsonschema", "1-0-0").toSchemaUri,
     "unsubscribed" -> SchemaKey("com.getvero", "unsubscribed", "jsonschema", "1-0-0").toSchemaUri,
     "user_created" -> SchemaKey("com.getvero", "created", "jsonschema", "1-0-0").toSchemaUri,
     "user_updated" -> SchemaKey("com.getvero", "updated", "jsonschema", "1-0-0").toSchemaUri
@@ -80,17 +69,18 @@ object VeroAdapter extends Adapter {
       }
       eventType <- Try((parsed \ "type").extract[String]) match {
         case Success(et) => et.successNel
-        case Failure(e)  => s"Could not extract type from $VendorName event JSON: [${e.getMessage}]".failureNel
+        case Failure(e) => s"Could not extract type from $VendorName event JSON: [${e.getMessage}]".failureNel
       }
-      formattedEvent   = cleanupJsonEventValues(parsed, ("type", eventType).some, s"${eventType}_at")
+      formattedEvent = cleanupJsonEventValues(parsed, ("type", eventType).some, s"${eventType}_at")
       reformattedEvent = reformatParameters(formattedEvent)
       schema <- lookupSchema(eventType.some, VendorName, EventSchemaMap)
       params = toUnstructEventParams(TrackerVersion, toMap(payload.querystring), schema, reformattedEvent, "srv")
-      rawEvent = RawEvent(api = payload.api,
-                          parameters  = params,
-                          contentType = payload.contentType,
-                          source      = payload.source,
-                          context     = payload.context)
+      rawEvent = RawEvent(
+        api = payload.api,
+        parameters = params,
+        contentType = payload.contentType,
+        source = payload.source,
+        context = payload.context)
     } yield rawEvent
 
   /**
@@ -132,7 +122,7 @@ object VeroAdapter extends Adapter {
     }
 
     json transformField {
-      case ("_tags", JObject(v))         => ("tags", JObject(v))
+      case ("_tags", JObject(v)) => ("tags", JObject(v))
       case ("triggered_at", JInt(value)) => ("triggered_at", toStringField(value.toLong * 1000))
     }
   }

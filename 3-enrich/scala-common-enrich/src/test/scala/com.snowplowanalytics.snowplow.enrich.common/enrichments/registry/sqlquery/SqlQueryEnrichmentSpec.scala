@@ -12,15 +12,10 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.sqlquery
 
-// json4s
+import com.snowplowanalytics.iglu.client.SchemaKey
 import org.json4s.jackson.parseJson
-
-// specs2
 import org.specs2.Specification
 import org.specs2.scalaz.ValidationMatchers
-
-// Iglu
-import com.snowplowanalytics.iglu.client.SchemaKey
 
 class SqlQueryEnrichmentSpec extends Specification with ValidationMatchers {
   def is = s2"""

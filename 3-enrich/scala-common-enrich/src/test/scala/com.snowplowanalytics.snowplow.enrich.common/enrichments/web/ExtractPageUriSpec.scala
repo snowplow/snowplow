@@ -10,19 +10,13 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common
-package enrichments
-package web
+package com.snowplowanalytics.snowplow.enrich.common.enrichments.web
 
-// Java
 import java.net.URI
 
-// Specs2 & Scalaz-Specs2
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
-
-// Scalaz
 import scalaz._
 import Scalaz._
 

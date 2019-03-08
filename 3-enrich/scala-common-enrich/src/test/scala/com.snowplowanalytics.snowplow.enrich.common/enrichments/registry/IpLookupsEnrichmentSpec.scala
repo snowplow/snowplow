@@ -10,28 +10,16 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow.enrich.common
-package enrichments
-package registry
+package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
-// Java
 import java.net.URI
 
-// Specs2, Scalaz-Specs2 & ScalaCheck
+import com.snowplowanalytics.maxmind.iplookups.model.IpLocation
 import org.specs2.{ScalaCheck, Specification}
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
-import org.scalacheck._
-import org.scalacheck.Arbitrary._
-
-// Scalaz
 import scalaz._
 import Scalaz._
-
-// Scala MaxMind GeoIP
-import maxmind.iplookups.IpLookups
-import maxmind.iplookups.model.IpLocation
 
 class IpLookupsEnrichmentSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck {
   def is = s2"""

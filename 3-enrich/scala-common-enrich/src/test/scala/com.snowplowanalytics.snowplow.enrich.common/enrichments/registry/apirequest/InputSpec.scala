@@ -10,25 +10,16 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich
-package common
-package enrichments
-package registry
-package apirequest
+package com.snowplowanalytics.snowplow.enrich.common
+package enrichments.registry.apirequest
 
-// scalaz
+import org.json4s.JObject
+import org.json4s.jackson.parseJson
+import org.specs2.Specification
+import org.specs2.scalaz.ValidationMatchers
 import scalaz._
 import Scalaz._
 
-// specs2
-import org.specs2.Specification
-import org.specs2.scalaz.ValidationMatchers
-
-// json4s
-import org.json4s.JObject
-import org.json4s.jackson.parseJson
-
-// This project
 import outputs.EnrichedEvent
 
 class InputSpec extends Specification with ValidationMatchers {
@@ -218,7 +209,7 @@ class InputSpec extends Specification with ValidationMatchers {
                                           HttpApi("GET", uriTemplate, 1000, Authentication(None)),
                                           List(Output("iglu:someschema", JsonOutput("$").some)),
                                           Cache(10, 5))
-    val event = new common.outputs.EnrichedEvent
+    val event = new outputs.EnrichedEvent
     event.setUser_id("chuwy")
     // time in true_tstamp won't be found
     val request = enrichment.lookup(event, Nil, Nil, Nil)

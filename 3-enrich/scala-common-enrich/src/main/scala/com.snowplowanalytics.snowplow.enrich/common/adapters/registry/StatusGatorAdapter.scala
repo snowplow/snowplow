@@ -10,38 +10,25 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-// Java
 import java.net.URI
-import org.apache.http.client.utils.URLEncodedUtils
+import java.nio.charset.StandardCharsets.UTF_8
 
-// Scala
 import scala.collection.JavaConversions._
-import scala.util.control.NonFatal
 import scala.util.{Try, Success => TS, Failure => TF}
 
-// Scalaz
+import com.fasterxml.jackson.core.JsonParseException
+import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
+import org.apache.http.client.utils.URLEncodedUtils
 import scalaz._
 import Scalaz._
-
-// Jackson
-import com.fasterxml.jackson.core.JsonParseException
-
-// json4s
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
-// Iglu
-import iglu.client.{Resolver, SchemaKey}
-
-// This project
 import loaders.CollectorPayload
 import utils.{JsonUtils => JU}
 
@@ -89,21 +76,21 @@ object StatusGatorAdapter extends Adapter {
       case (Some(body), _) => {
         val qsParams = toMap(payload.querystring)
         Try {
-          toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), "UTF-8").toList)
+          toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).toList)
         } match {
           case TF(e) =>
             s"${VendorName} incorrect event string : [${JU.stripInstanceEtc(e.getMessage).orNull}]".failureNel
           case TS(bodyMap) =>
             try {
               val a: Map[String, String] = bodyMap
-              val event                  = parse(compact(render(a)))
+              val event = parse(compact(render(a)))
               NonEmptyList(
                 RawEvent(
-                  api         = payload.api,
-                  parameters  = toUnstructEventParams(TrackerVersion, qsParams, EventSchema, camelize(event), "srv"),
+                  api = payload.api,
+                  parameters = toUnstructEventParams(TrackerVersion, qsParams, EventSchema, camelize(event), "srv"),
                   contentType = payload.contentType,
-                  source      = payload.source,
-                  context     = payload.context
+                  source = payload.source,
+                  context = payload.context
                 )).success
             } catch {
               case e: JsonParseException =>

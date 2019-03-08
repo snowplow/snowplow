@@ -10,25 +10,18 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common.loaders
+package com.snowplowanalytics.snowplow.enrich.common
+package loaders
 
-import com.snowplowanalytics.snowplow.enrich.common.ValidatedMaybeCollectorPayload
-import org.joda.time.{DateTime, DateTimeZone}
-
-// Scalaz
+import com.fasterxml.jackson.core.JsonParseException
 import scalaz._
 import Scalaz._
-
-// json4s
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 
-// Java
-import com.fasterxml.jackson.core.JsonParseException
-
 case class NdjsonLoader(adapter: String) extends Loader[String] {
 
-  private val CollectorName     = "ndjson"
+  private val CollectorName = "ndjson"
   private val CollectorEncoding = "UTF-8"
 
   /**

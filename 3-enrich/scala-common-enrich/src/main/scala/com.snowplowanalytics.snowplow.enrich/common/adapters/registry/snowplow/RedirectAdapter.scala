@@ -10,33 +10,21 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 package snowplow
 
-// Jackson
 import com.fasterxml.jackson.databind.JsonNode
-
-// Iglu
-import iglu.client.{Resolver, SchemaCriterion, SchemaKey}
-import iglu.client.validation.ValidatableJsonMethods._
-
-// Scalaz
+import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
 import scalaz._
 import Scalaz._
-
-// json4s
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
-// This project
 import loaders.CollectorPayload
-import utils.{JsonUtils       => JU}
+import utils.{JsonUtils => JU}
 import utils.{ConversionUtils => CU}
 
 /**
@@ -91,10 +79,10 @@ object RedirectAdapter extends Adapter {
               // Already have an event so add the URI redirect as a context (more fiddly)
               def newCo = Map("co" -> compact(toContext(json))).successNel
               (originalParams.get("cx"), originalParams.get("co")) match {
-                case (None, None)                 => newCo
+                case (None, None) => newCo
                 case (None, Some(co)) if co == "" => newCo
-                case (None, Some(co))             => addToExistingCo(json, co).map(str => Map("co" -> str))
-                case (Some(cx), _)                => addToExistingCx(json, cx).map(str => Map("cx" -> str))
+                case (None, Some(co)) => addToExistingCo(json, co).map(str => Map("co" -> str))
+                case (Some(cx), _) => addToExistingCx(json, cx).map(str => Map("cx" -> str))
               }
             } else {
               // Add URI redirect as an unstructured event
@@ -103,18 +91,18 @@ object RedirectAdapter extends Adapter {
 
           val fixedParams = Map(
             "tv" -> TrackerVersion,
-            "p"  -> originalParams.getOrElse("p", TrackerPlatform) // Required field
+            "p" -> originalParams.getOrElse("p", TrackerPlatform) // Required field
           )
 
           for {
             np <- newParams
             ev = NonEmptyList(
               RawEvent(
-                api         = payload.api,
-                parameters  = (originalParams - "u") ++ np ++ fixedParams,
+                api = payload.api,
+                parameters = (originalParams - "u") ++ np ++ fixedParams,
                 contentType = payload.contentType,
-                source      = payload.source,
-                context     = payload.context
+                source = payload.source,
+                context = payload.context
               ))
           } yield ev
       }
@@ -175,7 +163,7 @@ object RedirectAdapter extends Adapter {
   private def addToExistingCx(newContext: JValue, existing: String): Validated[String] =
     for {
       decoded <- CU.decodeBase64Url("cx", existing).toValidationNel: Validated[String]
-      added   <- addToExistingCo(newContext, decoded)
+      added <- addToExistingCo(newContext, decoded)
       recoded = CU.encodeBase64Url(added)
     } yield recoded
 

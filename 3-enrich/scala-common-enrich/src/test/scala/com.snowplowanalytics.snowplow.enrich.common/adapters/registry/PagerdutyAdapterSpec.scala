@@ -14,33 +14,16 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-// Joda-Time
 import org.joda.time.DateTime
-
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// json4s
-import org.json4s._
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
-import org.json4s.scalaz.JsonScalaz._
-
-// Snowplow
-import loaders.{
-  CollectorApi,
-  CollectorSource,
-  CollectorContext,
-  CollectorPayload
-}
-import utils.ConversionUtils
-import SpecHelpers._
-
-// Specs2
 import org.specs2.{Specification, ScalaCheck}
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
+import scalaz._
+import Scalaz._
+import org.json4s._
+import org.json4s.jackson.JsonMethods._
+
+import loaders._
 
 class PagerdutyAdapterSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is = s2"""
   This is a specification to test the PagerdutyAdapter functionality
