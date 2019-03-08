@@ -11,25 +11,14 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich.common
-package enrichments
-package registry
+package enrichments.registry
 
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// Json4s
-import org.json4s._
-import org.json4s.JValue
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
-
-// This project
-import outputs.EnrichedEvent
-
-// Specs2
 import org.specs2.Specification
 import org.specs2.scalaz.ValidationMatchers
+import org.json4s._
+import org.json4s.jackson.JsonMethods._
+
+import outputs.EnrichedEvent
 
 /**
  * Tests the anonymzeIp function

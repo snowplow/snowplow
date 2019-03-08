@@ -12,7 +12,6 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.loaders
 
-// Specs2
 import org.specs2.mutable.Specification
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers

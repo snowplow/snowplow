@@ -13,36 +13,26 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package utils
 
-// Java
-import java.net.URI
-import java.net.URLDecoder
-import java.net.URLEncoder
-import java.lang.{Integer    => JInteger}
+import java.lang.{Byte => JByte, Integer => JInteger}
 import java.math.{BigDecimal => JBigDecimal}
-import java.lang.{Byte       => JByte}
-import java.util.UUID
+import java.net.{URI, URLDecoder, URLEncoder}
+import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets.UTF_8
+import java.util.UUID
 
-// Scala
 import scala.collection.JavaConversions._
 import scala.util.Try
 import scala.util.control.NonFatal
 
-// Apache HTTP
-import org.apache.http.client.utils.URLEncodedUtils
-
-// Apache Commons Codec
-import org.apache.commons.codec.binary.Base64
-
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// Scala URI
 import io.lemonlabs.uri.{Uri, Url}
 import io.lemonlabs.uri.config.UriConfig
 import io.lemonlabs.uri.decoding.PercentDecoder
 import io.lemonlabs.uri.encoding.percentEncode
+import org.apache.commons.codec.binary.Base64
+import org.apache.commons.lang3.exception.ExceptionUtils
+import org.apache.http.client.utils.URLEncodedUtils
+import scalaz._
+import Scalaz._
 
 /**
  * General-purpose utils to help the
@@ -57,14 +47,14 @@ object ConversionUtils {
    * components of a URI.
    */
   case class UriComponents(
-                           // Required
-                           scheme: String,
-                           host: String,
-                           port: JInteger,
-                           // Optional
-                           path: Option[String],
-                           query: Option[String],
-                           fragment: Option[String])
+    // Required
+    scheme: String,
+    host: String,
+    port: JInteger,
+    // Optional
+    path: Option[String],
+    query: Option[String],
+    fragment: Option[String])
 
   /**
    * Explodes a URI into its 6 components
@@ -83,13 +73,13 @@ object ConversionUtils {
 
     // TODO: should we be using decodeString below instead?
     // Trouble is we can't be sure of the querystring's encoding.
-    val query    = fixTabsNewlines(uri.getRawQuery)
-    val path     = fixTabsNewlines(uri.getRawPath)
+    val query = fixTabsNewlines(uri.getRawQuery)
+    val path = fixTabsNewlines(uri.getRawPath)
     val fragment = fixTabsNewlines(uri.getRawFragment)
 
     UriComponents(
       scheme = uri.getScheme,
-      host   = uri.getHost,
+      host = uri.getHost,
       port = if (port == -1 && uri.getScheme == "https") {
         443
       } else if (port == -1) {
@@ -97,8 +87,8 @@ object ConversionUtils {
       } else {
         port
       },
-      path     = path,
-      query    = query,
+      path = path,
+      query = query,
       fragment = fragment
     )
   }
@@ -157,7 +147,7 @@ object ConversionUtils {
   def decodeBase64Url(field: String, str: String): Validation[String, String] =
     try {
       val decodedBytes = UrlSafeBase64.decode(str)
-      val result       = new String(decodedBytes, UTF_8) // Must specify charset (EMR uses US_ASCII)
+      val result = new String(decodedBytes, UTF_8) // Must specify charset (EMR uses US_ASCII)
       result.success
     } catch {
       case NonFatal(e) =>
@@ -192,10 +182,10 @@ object ConversionUtils {
   val validateUuid: (String, String) => ValidatedString = (field, str) => {
 
     def check(s: String)(u: UUID): Boolean = (u != null && s.toLowerCase == u.toString)
-    val uuid                               = Try(UUID.fromString(str)).toOption.filter(check(str))
+    val uuid = Try(UUID.fromString(str)).toOption.filter(check(str))
     uuid match {
       case Some(_) => str.toLowerCase.success
-      case None    => s"Field [$field]: [$str] is not a valid UUID".fail
+      case None => s"Field [$field]: [$str] is not a valid UUID".fail
     }
   }
 
@@ -238,18 +228,18 @@ object ConversionUtils {
    * @return a Scalaz Validation, wrapping either
    *         an error String or the decoded String
    */
-  val decodeString: (String, String, String) => ValidatedString = (enc, field, str) =>
+  val decodeString: (Charset, String, String) => ValidatedString = (enc, field, str) =>
     try {
       // TODO: switch to style of fixTabsNewlines above
       // TODO: potentially switch to using fixTabsNewlines too to avoid duplication
       val s = Option(str).getOrElse("")
-      val d = URLDecoder.decode(s, enc)
+      val d = URLDecoder.decode(s, enc.toString)
       val r = d.replaceAll("(\\r|\\n)", "").replaceAll("\\t", "    ")
       r.success
     } catch {
       case NonFatal(e) =>
         "Field [%s]: Exception URL-decoding [%s] (encoding [%s]): [%s]".format(field, str, enc, e.getMessage).fail
-  }
+    }
 
   /**
    * On 17th August 2013, Amazon made an
@@ -298,7 +288,7 @@ object ConversionUtils {
    *         an error String or the decoded String
    */
   def doubleDecode(field: String, str: String): ValidatedString =
-    ConversionUtils.decodeString("UTF-8", field, singleEncodePcts(str))
+    ConversionUtils.decodeString(UTF_8, field, singleEncodePcts(str))
 
   /**
    * Encodes a string in the specified encoding
@@ -348,7 +338,7 @@ object ConversionUtils {
    * @param uri URI containing the querystring
    * @param encoding Encoding of the URI
    */
-  def extractQuerystring(uri: URI, encoding: String): Validation[String, Map[String, String]] =
+  def extractQuerystring(uri: URI, encoding: Charset): Validation[String, Map[String, String]] =
     Try(URLEncodedUtils.parse(uri, encoding).map(p => (p.getName -> p.getValue))).recoverWith {
       case NonFatal(_) =>
         Try(Url.parse(uri.toString).query.params).map(l => l.map(t => (t._1, t._2.getOrElse(""))))
@@ -486,7 +476,7 @@ object ConversionUtils {
     str match {
       case "1" => (1.toByte: JByte).success
       case "0" => (0.toByte: JByte).success
-      case _   => "Field [%s]: cannot convert [%s] to Boolean-like JByte".format(field, str).fail
+      case _ => "Field [%s]: cannot convert [%s] to Boolean-like JByte".format(field, str).fail
   }
 
   /**

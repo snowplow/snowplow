@@ -14,22 +14,15 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-// Joda-Time
 import org.joda.time.DateTime
-
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// Snowplow
-import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource, TsvLoader}
-import utils.ConversionUtils
-import SpecHelpers._
-
-// Specs2
 import org.specs2.{ScalaCheck, Specification}
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
+import scalaz._
+import Scalaz._
+
+import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource, TsvLoader}
+import SpecHelpers._
 
 class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck {
   def is = s2"""
@@ -395,7 +388,7 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
       CollectorPayload(Shared.api,
                        params,
                        None,
-                       "a\tb\tc\td\te\tf\tg\th\ti\t$url\tk\t$doubleEncodedQs".some,
+                       s"a\tb\tc\td\te\tf\tg\th\ti\t$url\tk\t$doubleEncodedQs".some,
                        Shared.source,
                        Shared.context)
     val actual = CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(payload)

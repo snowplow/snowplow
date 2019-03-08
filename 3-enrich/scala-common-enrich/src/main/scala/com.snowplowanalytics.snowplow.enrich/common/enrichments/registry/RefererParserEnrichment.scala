@@ -10,38 +10,18 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
-package enrichments
-package registry
+package com.snowplowanalytics.snowplow.enrich.common
+package enrichments.registry
 
-// Java
 import java.net.URI
 
-// Maven Artifact
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion
-
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// json4s
-import org.json4s.{DefaultFormats, JValue}
-
-// Iglu
-import iglu.client.{SchemaCriterion, SchemaKey}
-import iglu.client.validation.ProcessingMessageMethods._
-
-// Snowplow referer-parser
+import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
 import com.snowplowanalytics.refererparser.scala.{Parser => RefererParser}
 import com.snowplowanalytics.refererparser.scala.Referer
+import org.json4s.{DefaultFormats, JValue}
+import scalaz._
 
-// This project
 import utils.{ConversionUtils => CU}
-import utils.MapTransformer
-import utils.MapTransformer._
 import utils.ScalazJson4sUtils
 
 /**

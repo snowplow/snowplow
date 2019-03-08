@@ -10,17 +10,12 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common
-package enrichments.registry
-package apirequest
+package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.apirequest
 
-// specs2
-import org.specs2.Specification
-import org.specs2.scalaz.ValidationMatchers
-
-// json4s
 import org.json4s.JObject
 import org.json4s.JsonDSL._
+import org.specs2.Specification
+import org.specs2.scalaz.ValidationMatchers
 
 class OutputSpec extends Specification with ValidationMatchers {
   def is = s2"""

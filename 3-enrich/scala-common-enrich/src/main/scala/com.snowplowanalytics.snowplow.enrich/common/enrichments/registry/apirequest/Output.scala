@@ -10,25 +10,17 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich
-package common
-package enrichments
-package registry
-package apirequest
+package com.snowplowanalytics.snowplow.enrich.common
+package enrichments.registry.apirequest
 
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// Scala
 import scala.util.control.NonFatal
 
-// Json4s
+import scalaz._
+import Scalaz._
 import org.json4s.{JNothing, JObject, JValue}
 import org.json4s.JsonDSL._
 import org.json4s.jackson.{compactJson, parseJson}
 
-// This project
 import utils.JsonPath.{query, wrapArray}
 
 /**
@@ -47,7 +39,7 @@ case class Output(schema: String, json: Option[JsonOutput]) {
    */
   def parse(apiResponse: String): Validation[Throwable, JValue] = json match {
     case Some(jsonOutput) => jsonOutput.parse(apiResponse)
-    case output           => new InvalidStateException(s"Error: Unknown output [$output]").failure // Cannot happen now
+    case output => new InvalidStateException(s"Error: Unknown output [$output]").failure // Cannot happen now
   }
 
   /**
@@ -58,7 +50,7 @@ case class Output(schema: String, json: Option[JsonOutput]) {
    */
   def extract(value: JValue): Validation[Throwable, JValue] = json match {
     case Some(jsonOutput) => jsonOutput.extract(value)
-    case output           => new InvalidStateException(s"Error: Unknown output [$output]").failure // Cannot happen now
+    case output => new InvalidStateException(s"Error: Unknown output [$output]").failure // Cannot happen now
   }
 
   /**
@@ -89,11 +81,11 @@ sealed trait ApiOutput[A] {
   def parse(response: String): Validation[Throwable, A]
 
   /**
-   * Extract value specified by [[path]] and
+   * Extract value specified by `path` and
    * transform to context-ready JSON data
    *
    * @param response parsed API response
-   * @return extracted by [[path]] value mapped to JSON
+   * @return extracted by `path` value mapped to JSON
    */
   def extract(response: A): Validation[Throwable, JValue]
 
@@ -106,7 +98,7 @@ sealed trait ApiOutput[A] {
   def get(response: String): Validation[Throwable, JValue] =
     for {
       validated <- parse(response)
-      result    <- extract(validated)
+      result <- extract(validated)
     } yield result
 }
 
@@ -120,7 +112,7 @@ case class JsonOutput(jsonPath: String) extends ApiOutput[JValue] {
   val path = jsonPath
 
   /**
-   * Proxy function for [[query]] which wrap missing value in error
+   * Proxy function for `query` which wrap missing value in error
    *
    * @param json JSON value to look in
    * @return validated found JSON, with absent value treated like failure

@@ -13,7 +13,6 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
-// Scalaz
 import scalaz._
 import Scalaz._
 

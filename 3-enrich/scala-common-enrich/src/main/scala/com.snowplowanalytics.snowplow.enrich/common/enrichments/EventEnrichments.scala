@@ -13,23 +13,14 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 
-// Java
 import java.util.UUID
 
-// Scala
 import scala.util.control.NonFatal
 
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// Joda-Time
 import org.joda.time.{DateTime, DateTimeZone, Period}
 import org.joda.time.format.DateTimeFormat
-
-// This project
-import utils.{ConversionUtils => CU}
-import utils.{JsonUtils       => JU}
+import scalaz._
+import Scalaz._
 
 /**
  * Holds the enrichments related to events.
@@ -106,7 +97,7 @@ object EventEnrichments {
         ((dvceSentTstamp, dvceCreatedTstamp, collectorTstamp) match {
           case (Some(dst), Some(dct), Some(ct)) =>
             val startTstamp = fromTimestamp(dct)
-            val endTstamp   = fromTimestamp(dst)
+            val endTstamp = fromTimestamp(dst)
             if (startTstamp.isBefore(endTstamp)) {
               toTimestamp(fromTimestamp(ct).minus(new Period(startTstamp, endTstamp))).some
             } else {
@@ -136,7 +127,7 @@ object EventEnrichments {
    */
   val extractTimestamp: (String, String) => ValidatedString = (field, tstamp) =>
     try {
-      val dt              = new DateTime(tstamp.toLong)
+      val dt = new DateTime(tstamp.toLong)
       val timestampString = toTimestamp(dt)
       if (timestampString.startsWith("-") || dt.getYear > 9999 || dt.getYear < 0) {
         s"Field [$field]: [$tstamp] is formatted as [$timestampString] which isn't Redshift-compatible".fail
@@ -170,7 +161,7 @@ object EventEnrichments {
       case "ti" => "transaction_item".success
       case "pv" => "page_view".success
       case "pp" => "page_ping".success
-      case ec   => "Field [%s]: [%s] is not a recognised event code".format(field, ec).fail
+      case ec => "Field [%s]: [%s] is not a recognised event code".format(field, ec).fail
   }
 
   /**

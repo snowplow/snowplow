@@ -10,28 +10,13 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
-package enrichments
-package registry
+package com.snowplowanalytics.snowplow.enrich.common
+package enrichments.registry
 
-// Maven Artifact
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion
-
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// json4s
+import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
 import org.json4s._
 import org.json4s.JsonDSL._
 
-// Iglu
-import iglu.client.{SchemaCriterion, SchemaKey}
-
-// This project
 import utils.ScalazJson4sUtils
 
 object HttpHeaderExtractorEnrichmentConfig extends ParseableEnrichment {
@@ -79,7 +64,7 @@ case class HttpHeaderExtractorEnrichment(headersPattern: String) extends Enrichm
     httpHeaders.map { header =>
       (("schema" -> "iglu:org.ietf/http_header/jsonschema/1-0-0") ~
         ("data" ->
-          ("name"    -> header.name.trim) ~
+          ("name" -> header.name.trim) ~
             ("value" -> header.value.trim)))
     }
   }

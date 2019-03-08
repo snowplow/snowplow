@@ -9,23 +9,12 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common
-package enrichments
-package registry
+package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
-// Specs2
+import org.json4s._
+import org.json4s.jackson.JsonMethods._
 import org.specs2.Specification
 import org.specs2.scalaz._
-
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// Json4s
-import org.json4s._
-import org.json4s.JValue
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
 
 class HttpHeaderExtractorEnrichmentSpec extends Specification with ValidationMatchers {
   def is = s2"""
@@ -55,9 +44,10 @@ class HttpHeaderExtractorEnrichmentSpec extends Specification with ValidationMat
   }
 
   def e3 = {
-    val expected = List()
+    val expected = List.empty[String]
 
-    HttpHeaderExtractorEnrichment(".*").extract(Nil).map(h => compact(render(h))) must_== expected.map(e =>
-      compact(render(parse(e))))
+    HttpHeaderExtractorEnrichment(".*")
+      .extract(Nil)
+      .map(h => compact(render(h))) must_== expected.map(e => compact(render(parse(e))))
   }
 }

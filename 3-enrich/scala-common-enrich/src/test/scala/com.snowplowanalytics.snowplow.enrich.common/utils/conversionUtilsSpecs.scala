@@ -10,21 +10,17 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common
-package utils
+package com.snowplowanalytics.snowplow.enrich.common.utils
 
-// Java
 import java.net.URI
 
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// Specs2
+import org.scalacheck.Arbitrary._
 import org.specs2.{ScalaCheck, Specification}
 import org.specs2.mutable.{Specification => MutableSpecification}
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
+import scalaz._
+import Scalaz._
 
 class StringToUriSpec extends MutableSpecification with ValidationMatchers {
 

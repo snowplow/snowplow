@@ -10,33 +10,22 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow.enrich.common
+package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
-// Apache URLEncodedUtils
-import org.apache.http.NameValuePair
+import java.nio.charset.Charset
 
-// Joda-Time
-import org.joda.time.{DateTime, DateTimeZone}
-
-// Thrift
-import org.apache.thrift.TDeserializer
-
-// Java conversions
 import scala.collection.JavaConversions._
 
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// Iglu
-import iglu.client.{SchemaCriterion, SchemaKey}
-
-// Snowplow
+import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
 import com.snowplowanalytics.snowplow.CollectorPayload.thrift.model1.{CollectorPayload => CollectorPayload1}
 import com.snowplowanalytics.snowplow.SchemaSniffer.thrift.model1.SchemaSniffer
 import com.snowplowanalytics.snowplow.collectors.thrift.SnowplowRawEvent
+import org.apache.http.NameValuePair
+import org.apache.thrift.TDeserializer
+import org.joda.time.{DateTime, DateTimeZone}
+import scalaz._
+import Scalaz._
 
 /**
  * Loader for Thrift SnowplowRawEvent objects.
@@ -114,12 +103,12 @@ object ThriftLoader extends Loader[Array[Byte]] {
 
     val querystring = parseQuerystring(
       Option(collectorPayload.querystring),
-      collectorPayload.encoding
+      Charset.forName(collectorPayload.encoding)
     )
 
-    val hostname      = Option(collectorPayload.hostname)
-    val userAgent     = Option(collectorPayload.userAgent)
-    val refererUri    = Option(collectorPayload.refererUri)
+    val hostname = Option(collectorPayload.hostname)
+    val userAgent = Option(collectorPayload.userAgent)
+    val refererUri = Option(collectorPayload.refererUri)
     val networkUserId = Option(collectorPayload.networkUserId)
 
     val headers = Option(collectorPayload.headers).map(_.toList).getOrElse(Nil)
@@ -127,7 +116,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
     val ip = IpAddressExtractor.extractIpAddress(headers, collectorPayload.ipAddress).some // Required
 
     val api = Option(collectorPayload.path) match {
-      case None    => "Request does not contain a path".fail
+      case None => "Request does not contain a path".fail
       case Some(p) => CollectorApi.parse(p)
     }
 
@@ -175,12 +164,12 @@ object ThriftLoader extends Loader[Array[Byte]] {
 
     val querystring = parseQuerystring(
       Option(snowplowRawEvent.payload.data),
-      snowplowRawEvent.encoding
+      Charset.forName(snowplowRawEvent.encoding)
     )
 
-    val hostname      = Option(snowplowRawEvent.hostname)
-    val userAgent     = Option(snowplowRawEvent.userAgent)
-    val refererUri    = Option(snowplowRawEvent.refererUri)
+    val hostname = Option(snowplowRawEvent.hostname)
+    val userAgent = Option(snowplowRawEvent.userAgent)
+    val refererUri = Option(snowplowRawEvent.refererUri)
     val networkUserId = Option(snowplowRawEvent.networkUserId)
 
     val headers = Option(snowplowRawEvent.headers).map(_.toList).getOrElse(Nil)

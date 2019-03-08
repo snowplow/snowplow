@@ -10,33 +10,24 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 
-// Iglu
-import iglu.client.SchemaKey
-import iglu.client.Resolver
-
-// Jackson
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.TextNode
-
-// Common
-import outputs.EnrichedEvent
-import utils.shredder.Shredder
-
-// Scalaz
+import com.snowplowanalytics.iglu.client.SchemaKey
+import com.snowplowanalytics.iglu.client.Resolver
 import scalaz._
 import Scalaz._
+
+import outputs.EnrichedEvent
+import utils.shredder.Shredder
 
 object SchemaEnrichment {
 
   private object Schemas {
-    val pageViewSchema    = SchemaKey("com.snowplowanalytics.snowplow", "page_view", "jsonschema", "1-0-0").success
-    val pagePingSchema    = SchemaKey("com.snowplowanalytics.snowplow", "page_ping", "jsonschema", "1-0-0").success
+    val pageViewSchema = SchemaKey("com.snowplowanalytics.snowplow", "page_view", "jsonschema", "1-0-0").success
+    val pagePingSchema = SchemaKey("com.snowplowanalytics.snowplow", "page_ping", "jsonschema", "1-0-0").success
     val transactionSchema = SchemaKey("com.snowplowanalytics.snowplow", "transaction", "jsonschema", "1-0-0").success
     val transactionItemSchema =
       SchemaKey("com.snowplowanalytics.snowplow", "transaction_item", "jsonschema", "1-0-0").success
@@ -45,13 +36,13 @@ object SchemaEnrichment {
 
   def extractSchema(event: EnrichedEvent)(implicit resolver: Resolver): Validation[String, SchemaKey] =
     event.event match {
-      case "page_view"        => Schemas.pageViewSchema
-      case "page_ping"        => Schemas.pagePingSchema
-      case "struct"           => Schemas.structSchema
-      case "transaction"      => Schemas.transactionSchema
+      case "page_view" => Schemas.pageViewSchema
+      case "page_ping" => Schemas.pagePingSchema
+      case "struct" => Schemas.structSchema
+      case "transaction" => Schemas.transactionSchema
       case "transaction_item" => Schemas.transactionItemSchema
-      case "unstruct"         => extractUnstructSchema(event)
-      case eventType          => "Unrecognized event [%s]".format(eventType).fail
+      case "unstruct" => extractUnstructSchema(event)
+      case eventType => "Unrecognized event [%s]".format(eventType).fail
     }
 
   private def extractUnstructSchema(event: EnrichedEvent)(implicit resolver: Resolver): Validation[String, SchemaKey] =
