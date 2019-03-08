@@ -10,24 +10,13 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common
-package enrichments
-package registry
+package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
-// Java
 import java.net.URI
 
-// Specs2 & Scalaz-Specs2
+import com.snowplowanalytics.refererparser.scala.{Medium, Referer}
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
-
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// referer-parser
-import com.snowplowanalytics.refererparser.scala.{Medium, Referer}
 
 /**
  * A small selection of tests partially borrowed from referer-parser.

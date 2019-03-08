@@ -13,18 +13,11 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 
-// Specs2
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
-import org.specs2.scalaz._
-
-// Scalaz
 import scalaz._
 import Scalaz._
 
-/**
- * Tests the extractViewDimensions function
- */
 class ExtractViewDimensionsSpec extends Specification with DataTables {
 
   val FieldName = "res"

@@ -10,32 +10,18 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
-// Commons Codec
 import org.apache.commons.codec.binary.Base64
-
-// Joda-Time
 import org.joda.time.DateTime
-
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// Snowplow
-import SpecHelpers._
-
-// Specs2
 import org.specs2.{ScalaCheck, Specification}
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
+import scalaz._
+import Scalaz._
 
-// ScalaCheck
-import org.scalacheck._
-import org.scalacheck.Arbitrary._
+import SpecHelpers._
 
 class ThriftLoaderSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck {
   def is = s2"""

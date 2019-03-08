@@ -10,37 +10,25 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-// Java
 import java.net.URI
-import org.apache.http.client.utils.URLEncodedUtils
+import java.nio.charset.StandardCharsets.UTF_8
 
-// Scala
 import scala.util.{Try, Success => TS, Failure => TF}
 import scala.collection.JavaConversions._
 
-// Scalaz
+import com.fasterxml.jackson.core.JsonParseException
+import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
+import org.apache.http.client.utils.URLEncodedUtils
 import scalaz._
 import Scalaz._
-
-// Jackson
-import com.fasterxml.jackson.core.JsonParseException
-
-// json4s
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
-// Iglu
-import iglu.client.{Resolver, SchemaKey}
-
-// This project
 import loaders.CollectorPayload
 import utils.{JsonUtils => JU}
 
@@ -92,7 +80,7 @@ object UnbounceAdapter extends Adapter {
         if (body.isEmpty) s"${VendorName} event body is empty: nothing to process".failureNel
         else {
           val qsParams = toMap(payload.querystring)
-          Try { toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), "UTF-8").toList) } match {
+          Try { toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).toList) } match {
             case TF(e) =>
               s"${VendorName} incorrect event string : [${JU.stripInstanceEtc(e.getMessage).orNull}]".failureNel
             case TS(bodyMap) =>
@@ -104,11 +92,11 @@ object UnbounceAdapter extends Adapter {
                         case unstructEventParams =>
                           NonEmptyList(
                             RawEvent(
-                              api         = payload.api,
-                              parameters  = unstructEventParams,
+                              api = payload.api,
+                              parameters = unstructEventParams,
                               contentType = payload.contentType,
-                              source      = payload.source,
-                              context     = payload.context
+                              source = payload.source,
+                              context = payload.context
                             )).success
                       }
                   }
@@ -119,11 +107,12 @@ object UnbounceAdapter extends Adapter {
     }
 
   private def payloadBodyToEvent(bodyMap: Map[String, String]): Validated[JValue] =
-    (bodyMap.get("page_id"),
-     bodyMap.get("page_name"),
-     bodyMap.get("variant"),
-     bodyMap.get("page_url"),
-     bodyMap.get("data.json")) match {
+    (
+      bodyMap.get("page_id"),
+      bodyMap.get("page_name"),
+      bodyMap.get("variant"),
+      bodyMap.get("page_url"),
+      bodyMap.get("data.json")) match {
       case (None, _, _, _, _) => s"${VendorName} context data missing 'page_id'".failureNel
       case (_, None, _, _, _) => s"${VendorName} context data missing 'page_name'".failureNel
       case (_, _, None, _, _) => s"${VendorName} context data missing 'variant'".failureNel

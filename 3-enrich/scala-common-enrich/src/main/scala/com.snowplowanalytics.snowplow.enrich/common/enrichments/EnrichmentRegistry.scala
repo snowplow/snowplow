@@ -10,59 +10,23 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 
-// Scalaz
 import java.net.URI
 
+import com.snowplowanalytics.iglu.client.{Resolver, SchemaCriterion, SchemaKey}
+import com.snowplowanalytics.iglu.client.validation.ValidatableJsonMethods._
+import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
 import scalaz._
 import Scalaz._
-
-// json4s
-import org.json4s.scalaz.JsonScalaz._
 import org.json4s._
-import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
-// Iglu
-import iglu.client.{Resolver, SchemaCriterion, SchemaKey}
-import iglu.client.validation.ValidatableJsonMethods._
-import iglu.client.validation.ProcessingMessageMethods._
-
-// This project
-import registry.{
-  AnonIpEnrichment,
-  CampaignAttributionEnrichment,
-  CookieExtractorEnrichment,
-  CookieExtractorEnrichmentConfig,
-  CurrencyConversionEnrichment,
-  CurrencyConversionEnrichmentConfig,
-  Enrichment,
-  EventFingerprintEnrichment,
-  EventFingerprintEnrichmentConfig,
-  HttpHeaderExtractorEnrichment,
-  HttpHeaderExtractorEnrichmentConfig,
-  IabEnrichment,
-  IpLookupsEnrichment,
-  JavascriptScriptEnrichment,
-  JavascriptScriptEnrichmentConfig,
-  RefererParserEnrichment,
-  UaParserEnrichment,
-  UaParserEnrichmentConfig,
-  UserAgentUtilsEnrichment,
-  UserAgentUtilsEnrichmentConfig,
-  WeatherEnrichment,
-  WeatherEnrichmentConfig,
-  YauaaEnrichment
-}
+import registry._
 import registry.apirequest.{ApiRequestEnrichment, ApiRequestEnrichmentConfig}
 import registry.pii.PiiPseudonymizerEnrichment
 import registry.sqlquery.{SqlQueryEnrichment, SqlQueryEnrichmentConfig}
-
 import utils.ScalazJson4sUtils
 
 /**
@@ -132,9 +96,11 @@ object EnrichmentRegistry {
    * @return ValidatedNelMessage boxing Option boxing Tuple2 containing
    *         the Enrichment object and the schemaKey
    */
-  private def buildEnrichmentConfig(schemaKey: SchemaKey,
-                                    enrichmentConfig: JValue,
-                                    localMode: Boolean): ValidatedNelMessage[Option[(String, Enrichment)]] = {
+  private def buildEnrichmentConfig(
+    schemaKey: SchemaKey,
+    enrichmentConfig: JValue,
+    localMode: Boolean
+  ): ValidatedNelMessage[Option[Tuple2[String, Enrichment]]] = {
     val enabled = ScalazJson4sUtils.extract[Boolean](enrichmentConfig, "enabled").toValidationNel
     enabled match {
       case Success(false) => None.success.toValidationNel // Enrichment is disabled

@@ -13,12 +13,10 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry.sqlquery
 
-// Scalaz
+import java.sql._
+
 import scalaz._
 import Scalaz._
-
-// Java
-import java.sql._
 
 /**
  * Common trait for all Databases
@@ -38,7 +36,7 @@ trait Rdbms {
   val connectionString: String
 
   /**
-   * Cached connection, it persist until it is open. After closing [[getConnection]]
+   * Cached connection, it persist until it is open. After closing getConnection
    * will try to reinitilize it
    */
   private[this] var lastConnection: ThrowableXor[Connection] =
@@ -49,7 +47,7 @@ trait Rdbms {
    * acquired successfully
    *
    * @return successful connection if it was in cache or initialized or
-   *         [[Throwable]] as failure
+   *         Throwable as failure
    */
   def getConnection: ThrowableXor[Connection] = lastConnection match {
     case \/-(c) if !c.isClosed => c.right
@@ -61,7 +59,7 @@ trait Rdbms {
   }
 
   /**
-   * Execute filled [[PreparedStatement]]
+   * Execute filled PreparedStatement
    */
   def execute(preparedStatement: PreparedStatement): ThrowableXor[ResultSet] =
     try {
@@ -71,13 +69,13 @@ trait Rdbms {
     }
 
   /**
-   * Get amount of placeholders (?-signs) in [[PreparedStatement]]
+   * Get amount of placeholders (?-signs) in PreparedStatement
    */
   def getPlaceholderCount(preparedStatement: PreparedStatement): ThrowableXor[Int] =
     \/ fromTryCatch preparedStatement.getParameterMetaData.getParameterCount
 
   /**
-   * Transform SQL-string with placeholders (?-signs) into [[PreparedStatement]]
+   * Transform SQL-string with placeholders (?-signs) into PreparedStatement
    */
   def createEmptyStatement(sql: String): ThrowableXor[PreparedStatement] =
     for { connection <- getConnection } yield connection.prepareStatement(sql)

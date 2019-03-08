@@ -10,24 +10,14 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 package utils
 
-// Scalaz
-import org.json4s.Formats
-
+import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
+import org.json4s.{Formats, JNothing, JValue, MappingException}
+import org.json4s.JsonDSL._
 import scalaz._
 import Scalaz._
-
-// json4s
-import org.json4s.{DefaultFormats, JNothing, JValue, MappingException}
-import org.json4s.JsonDSL._
-
-// Iglu
-import iglu.client.validation.ProcessingMessageMethods._
 
 object ScalazJson4sUtils {
 
@@ -76,6 +66,6 @@ object ScalazJson4sUtils {
   def fieldExists(config: JValue, head: String, tail: String*): Boolean =
     (head +: tail).foldLeft(config)(_ \ _) match {
       case JNothing => false
-      case s        => true
+      case s => true
     }
 }

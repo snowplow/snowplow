@@ -10,41 +10,23 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-// Java
 import java.net.URI
-import org.apache.http.client.utils.URLEncodedUtils
+import java.nio.charset.StandardCharsets.UTF_8
 
-// Joda-Time
-import org.joda.time.{DateTime, DateTimeZone}
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
-
-// Jackson
-import com.fasterxml.jackson.core.JsonParseException
-
-// Scala
 import scala.collection.JavaConversions._
 
-// Scalaz
+import com.fasterxml.jackson.core.JsonParseException
+import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
+import org.apache.http.client.utils.URLEncodedUtils
 import scalaz._
 import Scalaz._
-
-// json4s
 import org.json4s._
-import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
-import org.json4s.scalaz.JsonScalaz._
 
-// Iglu
-import iglu.client.{Resolver, SchemaKey}
-
-// This project
 import loaders.CollectorPayload
 import utils.{JsonUtils => JU}
 
@@ -67,14 +49,14 @@ object MandrillAdapter extends Adapter {
   // Schemas for reverse-engineering a Snowplow unstructured event
   private val EventSchemaMap = Map(
     "hard_bounce" -> SchemaKey("com.mandrill", "message_bounced", "jsonschema", "1-0-1").toSchemaUri,
-    "click"       -> SchemaKey("com.mandrill", "message_clicked", "jsonschema", "1-0-1").toSchemaUri,
-    "deferral"    -> SchemaKey("com.mandrill", "message_delayed", "jsonschema", "1-0-1").toSchemaUri,
-    "spam"        -> SchemaKey("com.mandrill", "message_marked_as_spam", "jsonschema", "1-0-1").toSchemaUri,
-    "open"        -> SchemaKey("com.mandrill", "message_opened", "jsonschema", "1-0-1").toSchemaUri,
-    "reject"      -> SchemaKey("com.mandrill", "message_rejected", "jsonschema", "1-0-0").toSchemaUri,
-    "send"        -> SchemaKey("com.mandrill", "message_sent", "jsonschema", "1-0-0").toSchemaUri,
+    "click" -> SchemaKey("com.mandrill", "message_clicked", "jsonschema", "1-0-1").toSchemaUri,
+    "deferral" -> SchemaKey("com.mandrill", "message_delayed", "jsonschema", "1-0-1").toSchemaUri,
+    "spam" -> SchemaKey("com.mandrill", "message_marked_as_spam", "jsonschema", "1-0-1").toSchemaUri,
+    "open" -> SchemaKey("com.mandrill", "message_opened", "jsonschema", "1-0-1").toSchemaUri,
+    "reject" -> SchemaKey("com.mandrill", "message_rejected", "jsonschema", "1-0-0").toSchemaUri,
+    "send" -> SchemaKey("com.mandrill", "message_sent", "jsonschema", "1-0-0").toSchemaUri,
     "soft_bounce" -> SchemaKey("com.mandrill", "message_soft_bounced", "jsonschema", "1-0-1").toSchemaUri,
-    "unsub"       -> SchemaKey("com.mandrill", "recipient_unsubscribed", "jsonschema", "1-0-1").toSchemaUri
+    "unsub" -> SchemaKey("com.mandrill", "recipient_unsubscribed", "jsonschema", "1-0-1").toSchemaUri
   )
 
   /**
@@ -120,15 +102,15 @@ object MandrillAdapter extends Adapter {
 
                   val formattedEvent = cleanupJsonEventValues(event, eventOpt match {
                     case Some(x) => ("event", x).some
-                    case None    => None
+                    case None => None
                   }, "ts")
                   val qsParams = toMap(payload.querystring)
                   RawEvent(
-                    api         = payload.api,
-                    parameters  = toUnstructEventParams(TrackerVersion, qsParams, schema, formattedEvent, "srv"),
+                    api = payload.api,
+                    parameters = toUnstructEventParams(TrackerVersion, qsParams, schema, formattedEvent, "srv"),
                     contentType = payload.contentType,
-                    source      = payload.source,
-                    context     = payload.context
+                    source = payload.source,
+                    context = payload.context
                   )
                 }
               }
@@ -157,20 +139,20 @@ object MandrillAdapter extends Adapter {
    */
   private[registry] def payloadBodyToEvents(rawEventString: String): Validation[String, List[JValue]] = {
 
-    val bodyMap = toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + rawEventString), "UTF-8").toList)
+    val bodyMap = toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + rawEventString), UTF_8).toList)
 
     bodyMap match {
       case map if map.size != 1 => s"Mapped ${VendorName} body has invalid count of keys: ${map.size}".fail
       case map => {
         map.get("mandrill_events") match {
-          case None     => s"Mapped ${VendorName} body does not have 'mandrill_events' as a key".fail
+          case None => s"Mapped ${VendorName} body does not have 'mandrill_events' as a key".fail
           case Some("") => s"${VendorName} events string is empty: nothing to process".fail
           case Some(dStr) => {
             try {
               val parsed = parse(dStr)
               parsed match {
                 case JArray(list) => list.success
-                case _            => s"Could not resolve ${VendorName} payload into a JSON array of events".fail
+                case _ => s"Could not resolve ${VendorName} payload into a JSON array of events".fail
               }
             } catch {
               case e: JsonParseException => {

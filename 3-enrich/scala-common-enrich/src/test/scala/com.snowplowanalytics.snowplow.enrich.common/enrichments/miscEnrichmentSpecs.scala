@@ -10,28 +10,15 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common
-package enrichments
+package com.snowplowanalytics.snowplow.enrich.common.enrichments
 
-// Specs2 & ScalaCheck
 import org.specs2.mutable.{Specification => MutSpecification}
 import org.specs2.{ScalaCheck, Specification}
 import org.specs2.matcher.DataTables
-import org.scalacheck._
-
-// Scalaz
 import scalaz._
 import Scalaz._
-
-// json4s
-import org.json4s._
 import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
 
-/**
- * Tests the etlVersion variable.
- * Uses mutable.Specification.
- */
 class EtlVersionSpec extends MutSpecification {
 
   "The ETL version" should {

@@ -11,22 +11,14 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich.common
-package enrichments.registry
-package sqlquery
+package enrichments.registry.sqlquery
 
-// Scala
 import scala.collection.immutable.IntMap
 
-// json4s
+import com.twitter.util.SynchronizedLruMap
+import org.joda.time.DateTime
 import org.json4s.JObject
 
-// JodaTime
-import org.joda.time.DateTime
-
-// Twitter utils
-import com.twitter.util.SynchronizedLruMap
-
-// This library
 import Input.ExtractedValue
 
 /**
@@ -69,6 +61,7 @@ case class Cache(size: Int, ttl: Int) {
   def put(key: IntMap[ExtractedValue], value: ThrowableXor[List[JObject]]): Unit = {
     val now = (new DateTime().getMillis / 1000).toInt
     cache.put(key, (value, now))
+    ()
   }
 
   /**

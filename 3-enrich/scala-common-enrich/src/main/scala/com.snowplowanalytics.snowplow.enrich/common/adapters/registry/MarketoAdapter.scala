@@ -10,32 +10,22 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-// Scalaz
-import scalaz.Scalaz._
+import scala.util.{Failure, Success, Try}
 
-// json4s
+import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
+import org.joda.time.DateTimeZone
+import org.joda.time.format.DateTimeFormat
+import scalaz._
+import Scalaz._
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 
-// Iglu
-import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
-
-// Joda Time
-import org.joda.time.DateTimeZone
-import org.joda.time.format.DateTimeFormat
-
-// This project
-import com.snowplowanalytics.snowplow.enrich.common.loaders.CollectorPayload
-import com.snowplowanalytics.snowplow.enrich.common.utils.{JsonUtils => JU}
-
-import scala.util.{Failure, Success, Try}
+import loaders.CollectorPayload
+import utils.{JsonUtils => JU}
 
 /**
  * Transforms a collector payload which conforms to
@@ -100,11 +90,12 @@ object MarketoAdapter extends Adapter {
       eventType = Some("event")
       schema <- lookupSchema(eventType, VendorName, EventSchemaMap)
       params = toUnstructEventParams(TrackerVersion, toMap(payload.querystring), schema, parsedConverted, "srv")
-      rawEvent = RawEvent(api = payload.api,
-                          parameters  = params,
-                          contentType = payload.contentType,
-                          source      = payload.source,
-                          context     = payload.context)
+      rawEvent = RawEvent(
+        api = payload.api,
+        parameters = params,
+        contentType = payload.contentType,
+        source = payload.source,
+        context = payload.context)
     } yield rawEvent
 
   /**

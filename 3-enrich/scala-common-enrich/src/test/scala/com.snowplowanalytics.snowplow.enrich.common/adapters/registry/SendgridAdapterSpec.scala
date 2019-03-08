@@ -14,28 +14,15 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-// Joda-Time
 import org.joda.time.DateTime
-
-// Scalaz
-import scalaz.Scalaz._
-import scalaz._
-
-// Snowplow
-import com.snowplowanalytics.snowplow.enrich.common.loaders.{
-  CollectorApi,
-  CollectorContext,
-  CollectorPayload,
-  CollectorSource
-}
-
-// Specs2
 import org.specs2.mutable.Specification
 import org.specs2.scalaz.ValidationMatchers
-
-// json4s
+import scalaz._
+import Scalaz._
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
+
+import loaders._
 
 class SendgridAdapterSpec extends Specification with ValidationMatchers {
 

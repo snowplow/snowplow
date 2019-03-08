@@ -12,23 +12,13 @@
  */
 package com.snowplowanalytics.snowplow.enrich
 
-// Java
 import java.lang.{Integer => JInteger}
 
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// Apache URLEncodedUtils
-import org.apache.http.NameValuePair
-
-// JSON Schema
 import com.github.fge.jsonschema.core.report.ProcessingMessage
-
-// Iglu
 import com.snowplowanalytics.iglu.client.JsonSchemaPair
+import org.apache.http.NameValuePair
+import scalaz._
 
-// This project
 import common.loaders.CollectorPayload
 import common.adapters.RawEvent
 import common.outputs.EnrichedEvent
@@ -151,8 +141,8 @@ package object common {
   type JsonSchemaPairs = List[JsonSchemaPair]
 
   /**
-   * Type alias for either [[Throwable]] or successful value
-   * It has [[Monad]] instance unlike [[Validation]]
+   * Type alias for either Throwable or successful value
+   * It has Monad instance unlike Validation
    */
   type ThrowableXor[+A] = Throwable \/ A
 }

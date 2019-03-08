@@ -10,31 +10,19 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-// Iglu
-import iglu.client.{Resolver, SchemaKey}
-
-// Scala
 import scala.util.control.NonFatal
 
-// Scalaz
+import com.snowplowanalytics.iglu.client.Resolver
+import org.joda.time.DateTime
 import scalaz._
 import Scalaz._
-
-// Joda-Time
-import org.joda.time.DateTime
-
-// json4s
 import org.json4s._
 import org.json4s.JsonDSL._
 
-// This project
 import loaders.{CollectorContext, CollectorPayload}
 import utils.ConversionUtils
 
@@ -101,16 +89,17 @@ object CloudfrontAccessLogAdapter {
             case 23 => "1-0-4".successNel // 01 Jul 2015
             case 24 => "1-0-5".successNel // 29 Sep 2016
             case 26 => "1-0-6".successNel
-            case n  => s"Access log TSV line contained $n fields, expected 12, 15, 18, 19, 23, 24 or 26".failNel
+            case n => s"Access log TSV line contained $n fields, expected 12, 15, 18, 19, 23, 24 or 26".failNel
           }
           schemaVersion.flatMap { v =>
             // Combine the first two fields into a timestamp
             val schemaCompatibleFields = "%sT%sZ".format(fields(0), fields(1)) :: fields.toList.tail.tail
 
             // Attempt to build the json, accumulating errors from unparseable fields
-            def buildJson(errors: List[String],
-                          fields: List[(String, String)],
-                          json: JObject): (List[String], JObject) =
+            def buildJson(
+              errors: List[String],
+              fields: List[(String, String)],
+              json: JObject): (List[String], JObject) =
               fields match {
                 case Nil => (errors, json)
                 case head :: tail =>
@@ -122,9 +111,10 @@ object CloudfrontAccessLogAdapter {
                         buildJson(errors, tail, json ~ (("timeTaken", field.toDouble)))
                       } catch {
                         case e: NumberFormatException =>
-                          buildJson("Field [timeTaken]: cannot convert [%s] to Double".format(field) :: errors,
-                                    tail,
-                                    json)
+                          buildJson(
+                            "Field [timeTaken]: cannot convert [%s] to Double".format(field) :: errors,
+                            tail,
+                            json)
                       }
                     case (name, field) if name == "csBytes" || name == "scBytes" =>
                       try {
@@ -149,7 +139,7 @@ object CloudfrontAccessLogAdapter {
             val (errors, ueJson) = buildJson(Nil, FieldNames zip schemaCompatibleFields, JObject())
 
             val failures = errors match {
-              case Nil    => None.successNel
+              case Nil => None.successNel
               case h :: t => (NonEmptyList(h) :::> t).fail // list to nonemptylist
             }
 
@@ -157,17 +147,17 @@ object CloudfrontAccessLogAdapter {
 
             (validatedTstamp |@| failures) { (tstamp, e) =>
               val ip = schemaCompatibleFields(3) match {
-                case ""       => None
+                case "" => None
                 case nonempty => nonempty.some
               }
 
               val qsParams: Map[String, String] = schemaCompatibleFields(8) match {
-                case ""  => Map()
+                case "" => Map()
                 case url => Map("url" -> url)
               }
 
               val userAgent = schemaCompatibleFields(9) match {
-                case ""       => None
+                case "" => None
                 case nonempty => ConversionUtils.singleEncodePcts(nonempty).some
               }
 
@@ -180,11 +170,11 @@ object CloudfrontAccessLogAdapter {
               )
               NonEmptyList(
                 RawEvent(
-                  api         = payload.api,
-                  parameters  = parameters,
+                  api = payload.api,
+                  parameters = parameters,
                   contentType = payload.contentType,
-                  source      = payload.source,
-                  context     = CollectorContext(tstamp, ip, userAgent, None, Nil, None)
+                  source = payload.source,
+                  context = CollectorContext(tstamp, ip, userAgent, None, Nil, None)
                 ))
             }
           }

@@ -10,16 +10,21 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow.enrich
-package common.enrichments.registry
+package com.snowplowanalytics.snowplow.enrich.common
+package enrichments.registry
 package pii
 
-// Scala
+import org.apache.commons.codec.digest.DigestUtils
+
 import scala.collection.JavaConverters._
 import scala.collection.mutable.MutableList
 
-// Scala libraries
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode, TextNode}
+import com.jayway.jsonpath.{Configuration, JsonPath => JJsonPath}
+import com.jayway.jsonpath.MapFunction
+import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
+import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
 import org.json4s
 import org.json4s.{DefaultFormats, Diff, JValue}
 import org.json4s.JsonAST._
@@ -28,28 +33,11 @@ import org.json4s.jackson.JsonMethods
 import org.json4s.jackson.JsonMethods.{compact, parse, render}
 import org.json4s.jackson.Serialization.write
 import org.json4s.Extraction.decompose
-
-// Java
-import org.apache.commons.codec.digest.DigestUtils
-
-// Java libraries
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode, TextNode}
-import com.jayway.jsonpath.{Configuration, JsonPath => JJsonPath}
-import com.jayway.jsonpath.MapFunction
-
-// Scalaz
 import scalaz._
 import Scalaz._
 
-// Iglu
-import iglu.client.validation.ProcessingMessageMethods._
-import iglu.client.{SchemaCriterion, SchemaKey}
-
-// This project
-import common.ValidatedNelMessage
-import common.utils.ScalazJson4sUtils.{extract, fieldExists}
-import common.outputs.EnrichedEvent
+import utils.ScalazJson4sUtils.{extract, fieldExists}
+import outputs.EnrichedEvent
 
 /**
  * Companion object. Lets us create a PiiPseudonymizerEnrichment
@@ -67,21 +55,21 @@ object PiiPseudonymizerEnrichment extends ParseableEnrichment {
       conf <- matchesSchema(config, schemaKey)
       emitIdentificationEvent = extract[Boolean](conf, "emitEvent").toOption
         .getOrElse(false)
-      piiFields    <- extract[List[JObject]](conf, "parameters", "pii").leftMap(_.getMessage)
-      piiStrategy  <- extractStrategy(config)
+      piiFields <- extract[List[JObject]](conf, "parameters", "pii").leftMap(_.getMessage)
+      piiStrategy <- extractStrategy(config)
       piiFieldList <- extractFields(piiFields)
     } yield PiiPseudonymizerEnrichment(piiFieldList, emitIdentificationEvent, piiStrategy)
   }.leftMap(_.toProcessingMessageNel)
 
   private[pii] def getHashFunction(strategyFunction: String): Validation[String, DigestFunction] =
     strategyFunction match {
-      case "MD2"     => { DigestUtils.md2Hex(_: Array[Byte]) }.success
-      case "MD5"     => { DigestUtils.md5Hex(_: Array[Byte]) }.success
-      case "SHA-1"   => { DigestUtils.sha1Hex(_: Array[Byte]) }.success
+      case "MD2" => { DigestUtils.md2Hex(_: Array[Byte]) }.success
+      case "MD5" => { DigestUtils.md5Hex(_: Array[Byte]) }.success
+      case "SHA-1" => { DigestUtils.sha1Hex(_: Array[Byte]) }.success
       case "SHA-256" => { DigestUtils.sha256Hex(_: Array[Byte]) }.success
       case "SHA-384" => { DigestUtils.sha384Hex(_: Array[Byte]) }.success
       case "SHA-512" => { DigestUtils.sha512Hex(_: Array[Byte]) }.success
-      case fName     => s"Unknown function $fName".failure
+      case fName => s"Unknown function $fName".failure
     }
 
   private def extractFields(piiFields: List[JObject]): Validation[String, List[PiiField]] =
@@ -142,9 +130,9 @@ object PiiPseudonymizerEnrichment extends ParseableEnrichment {
  */
 final case class PiiStrategyPseudonymize(functionName: String, hashFunction: DigestFunction, salt: String)
     extends PiiStrategy {
-  val TextEncoding                                 = "UTF-8"
+  val TextEncoding = "UTF-8"
   override def scramble(clearText: String): String = hash(clearText + salt)
-  def hash(text: String): String                   = hashFunction(text.getBytes(TextEncoding))
+  def hash(text: String): String = hashFunction(text.getBytes(TextEncoding))
 }
 
 /**
@@ -161,9 +149,10 @@ final case class PiiStrategyPseudonymize(functionName: String, hashFunction: Dig
  * @param emitIdentificationEvent whether to emit an identification event
  * @param strategy the pseudonymization strategy to use
  */
-case class PiiPseudonymizerEnrichment(fieldList: List[PiiField],
-                                      emitIdentificationEvent: Boolean,
-                                      strategy: PiiStrategy)
+case class PiiPseudonymizerEnrichment(
+  fieldList: List[PiiField],
+  emitIdentificationEvent: Boolean,
+  strategy: PiiStrategy)
     extends Enrichment {
   implicit val json4sFormats = DefaultFormats +
     new PiiModifiedFieldsSerializer +
@@ -225,8 +214,9 @@ final case class PiiJson(fieldMutator: Mutator, schemaCriterion: SchemaCriterion
   /**
    * Map context top fields with strategy if they match.
    */
-  private def mapContextTopFields(tuple: (String, json4s.JValue),
-                                  strategy: PiiStrategy): (String, (JValue, List[JsonModifiedField])) = tuple match {
+  private def mapContextTopFields(
+    tuple: (String, json4s.JValue),
+    strategy: PiiStrategy): (String, (JValue, List[JsonModifiedField])) = tuple match {
     case (k: String, contexts: JValue) if k == "data" =>
       (k, contexts match {
         case JArray(contexts) =>
@@ -243,20 +233,21 @@ final case class PiiJson(fieldMutator: Mutator, schemaCriterion: SchemaCriterion
    */
   private def getModifiedContext(jv: JValue, strategy: PiiStrategy): (JValue, List[JsonModifiedField]) = jv match {
     case JObject(context) => modifyObjectIfSchemaMatches(context, strategy)
-    case x                => (x, List.empty[JsonModifiedField])
+    case x => (x, List.empty[JsonModifiedField])
   }
 
   /**
    * Tests whether the schema for this event matches the schema criterion and if it does modifies it.
    */
-  private def modifyObjectIfSchemaMatches(context: List[(String, json4s.JValue)],
-                                          strategy: PiiStrategy): (JObject, List[JsonModifiedField]) = {
+  private def modifyObjectIfSchemaMatches(
+    context: List[(String, json4s.JValue)],
+    strategy: PiiStrategy): (JObject, List[JsonModifiedField]) = {
     val fieldsObj = context.toMap
     (for {
-      schema              <- fieldsObj.get("schema")
-      schemaStr           <- schema.extractOpt[String]
+      schema <- fieldsObj.get("schema")
+      schemaStr <- schema.extractOpt[String]
       parsedSchemaMatches <- SchemaKey.parse(schemaStr).map(schemaCriterion.matches).toOption
-      data                <- fieldsObj.get("data")
+      data <- fieldsObj.get("data")
       if parsedSchemaMatches
       updated = jsonPathReplace(data, strategy, schemaStr)
     } yield (JObject(fieldsObj.updated("schema", schema).updated("data", updated._1).toList), updated._2))
@@ -266,39 +257,41 @@ final case class PiiJson(fieldMutator: Mutator, schemaCriterion: SchemaCriterion
   /**
    * Replaces a value in the given context data with the result of applying the strategy that value.
    */
-  private def jsonPathReplace(jValue: JValue,
-                              strategy: PiiStrategy,
-                              schema: String): (JValue, List[JsonModifiedField]) = {
-    val objectNode      = JsonMethods.mapper.valueToTree[ObjectNode](jValue)
+  private def jsonPathReplace(
+    jValue: JValue,
+    strategy: PiiStrategy,
+    schema: String): (JValue, List[JsonModifiedField]) = {
+    val objectNode = JsonMethods.mapper.valueToTree[ObjectNode](jValue)
     val documentContext = JJsonPath.using(JsonPathConf).parse(objectNode)
-    val modifiedFields  = MutableList[JsonModifiedField]()
+    val modifiedFields = MutableList[JsonModifiedField]()
     val documentContext2 = documentContext.map(
       jsonPath,
       new ScrambleMapFunction(strategy, modifiedFields, fieldMutator.fieldName, jsonPath, schema))
     // make sure it is a structure preserving method, see #3636
-    val transformedJValue            = JsonMethods.fromJsonNode(documentContext.json[JsonNode]())
+    val transformedJValue = JsonMethods.fromJsonNode(documentContext.json[JsonNode]())
     val Diff(_, erroneouslyAdded, _) = jValue diff transformedJValue
-    val Diff(_, withoutCruft, _)     = erroneouslyAdded diff transformedJValue
+    val Diff(_, withoutCruft, _) = erroneouslyAdded diff transformedJValue
     (withoutCruft, modifiedFields.toList)
   }
 }
 
-private final class ScrambleMapFunction(strategy: PiiStrategy,
-                                        modifiedFields: MutableList[JsonModifiedField],
-                                        fieldName: String,
-                                        jsonPath: String,
-                                        schema: String)
+private final class ScrambleMapFunction(
+  strategy: PiiStrategy,
+  modifiedFields: MutableList[JsonModifiedField],
+  fieldName: String,
+  jsonPath: String,
+  schema: String)
     extends MapFunction {
   override def map(currentValue: AnyRef, configuration: Configuration): AnyRef = currentValue match {
     case s: String =>
       val newValue = strategy.scramble(s)
-      val _        = modifiedFields += JsonModifiedField(fieldName, s, newValue, jsonPath, schema)
+      val _ = modifiedFields += JsonModifiedField(fieldName, s, newValue, jsonPath, schema)
       newValue
     case a: ArrayNode =>
       a.elements.asScala.map {
         case t: TextNode =>
           val originalValue = t.asText()
-          val newValue      = strategy.scramble(originalValue)
+          val newValue = strategy.scramble(originalValue)
           modifiedFields += JsonModifiedField(fieldName, originalValue, newValue, jsonPath, schema)
           newValue
         case default: AnyRef => default

@@ -13,24 +13,14 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
-// Joda-Time
 import org.joda.time.DateTime
-
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// Snowplow
-import SpecHelpers._
-
-// Specs2
 import org.specs2.{ScalaCheck, Specification}
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
+import scalaz._
+import Scalaz._
 
-// ScalaCheck
-import org.scalacheck._
-import org.scalacheck.Arbitrary._
+import SpecHelpers._
 
 class CljTomcatLoaderSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck {
   def is = s2"""

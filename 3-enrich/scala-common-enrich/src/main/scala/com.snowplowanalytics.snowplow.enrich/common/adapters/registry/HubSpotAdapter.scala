@@ -10,35 +10,18 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-// Jackson
-import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.core.JsonParseException
-
-// Scalaz
+import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
+import org.joda.time.DateTime
 import scalaz._
 import Scalaz._
-
-// json4s
 import org.json4s._
-import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
-import org.json4s.scalaz.JsonScalaz._
 
-// Iglu
-import iglu.client.{Resolver, SchemaKey}
-import iglu.client.validation.ValidatableJsonMethods._
-
-// Joda Time
-import org.joda.time.DateTime
-
-// This project
 import loaders.CollectorPayload
 import utils.{JsonUtils => JU}
 
@@ -60,15 +43,15 @@ object HubSpotAdapter extends Adapter {
 
   // Event-Schema Map for reverse-engineering a Snowplow unstructured event
   private val EventSchemaMap = Map(
-    "contact.creation"       -> SchemaKey("com.hubspot", "contact_creation", "jsonschema", "1-0-0").toSchemaUri,
-    "contact.deletion"       -> SchemaKey("com.hubspot", "contact_deletion", "jsonschema", "1-0-0").toSchemaUri,
+    "contact.creation" -> SchemaKey("com.hubspot", "contact_creation", "jsonschema", "1-0-0").toSchemaUri,
+    "contact.deletion" -> SchemaKey("com.hubspot", "contact_deletion", "jsonschema", "1-0-0").toSchemaUri,
     "contact.propertyChange" -> SchemaKey("com.hubspot", "contact_change", "jsonschema", "1-0-0").toSchemaUri,
-    "company.creation"       -> SchemaKey("com.hubspot", "company_creation", "jsonschema", "1-0-0").toSchemaUri,
-    "company.deletion"       -> SchemaKey("com.hubspot", "company_deletion", "jsonschema", "1-0-0").toSchemaUri,
+    "company.creation" -> SchemaKey("com.hubspot", "company_creation", "jsonschema", "1-0-0").toSchemaUri,
+    "company.deletion" -> SchemaKey("com.hubspot", "company_deletion", "jsonschema", "1-0-0").toSchemaUri,
     "company.propertyChange" -> SchemaKey("com.hubspot", "company_change", "jsonschema", "1-0-0").toSchemaUri,
-    "deal.creation"          -> SchemaKey("com.hubspot", "deal_creation", "jsonschema", "1-0-0").toSchemaUri,
-    "deal.deletion"          -> SchemaKey("com.hubspot", "deal_deletion", "jsonschema", "1-0-0").toSchemaUri,
-    "deal.propertyChange"    -> SchemaKey("com.hubspot", "deal_change", "jsonschema", "1-0-0").toSchemaUri
+    "deal.creation" -> SchemaKey("com.hubspot", "deal_creation", "jsonschema", "1-0-0").toSchemaUri,
+    "deal.deletion" -> SchemaKey("com.hubspot", "deal_deletion", "jsonschema", "1-0-0").toSchemaUri,
+    "deal.propertyChange" -> SchemaKey("com.hubspot", "deal_change", "jsonschema", "1-0-0").toSchemaUri
   )
 
   /**
@@ -109,13 +92,13 @@ object HubSpotAdapter extends Adapter {
                 } yield {
 
                   val formattedEvent = reformatParameters(event)
-                  val qsParams       = toMap(payload.querystring)
+                  val qsParams = toMap(payload.querystring)
                   RawEvent(
-                    api         = payload.api,
-                    parameters  = toUnstructEventParams(TrackerVersion, qsParams, schema, formattedEvent, "srv"),
+                    api = payload.api,
+                    parameters = toUnstructEventParams(TrackerVersion, qsParams, schema, formattedEvent, "srv"),
                     contentType = payload.contentType,
-                    source      = payload.source,
-                    context     = payload.context
+                    source = payload.source,
+                    context = payload.context
                   )
                 }
               }
@@ -141,7 +124,7 @@ object HubSpotAdapter extends Adapter {
       val parsed = parse(body)
       parsed match {
         case JArray(list) => list.success
-        case _            => s"Could not resolve ${VendorName} payload into a JSON array of events".fail
+        case _ => s"Could not resolve ${VendorName} payload into a JSON array of events".fail
       }
     } catch {
       case e: JsonParseException => {
@@ -168,7 +151,7 @@ object HubSpotAdapter extends Adapter {
 
     json removeField {
       case ("subscriptionType", JString(s)) => true
-      case _                                => false
+      case _ => false
     } transformField {
       case ("occurredAt", JInt(value)) => ("occurredAt", toStringField(value.toLong))
     }

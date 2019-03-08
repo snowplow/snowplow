@@ -10,42 +10,28 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow.enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 package registry
 package pii
 
-// Specs2 & Scalaz-Specs2
+import java.net.URI
+
+import com.snowplowanalytics.iglu.client.{Resolver, SchemaCriterion}
+import com.snowplowanalytics.iglu.client.repositories.RepositoryRefConfig
+import org.joda.time.DateTime
+import org.json4s.jackson.JsonMethods.parse
+import org.apache.commons.codec.digest.DigestUtils
 import org.specs2.Specification
 import org.specs2.scalaz.ValidationMatchers
+import scalaz._
+import Scalaz._
 
-// Scala
-import org.json4s.jackson.JsonMethods.parse
-
-// Java
-import java.net.URI
-import org.joda.time.DateTime
-import org.apache.commons.codec.digest.DigestUtils
-
-// Snowplow
-import common.loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
-import common.outputs.EnrichedEvent
-import common.adapters.AdapterRegistry
+import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import outputs.EnrichedEvent
+import utils.{ScalazJson4sUtils, TestResourcesRepositoryRef}
+import SpecHelpers.toNameValuePairs
 import utils.TestResourcesRepositoryRef
-import common.SpecHelpers.toNameValuePairs
-import common.utils.TestResourcesRepositoryRef
-import utils.ScalazJson4sUtils
-
-// Iglu
-import iglu.client.SchemaCriterion
-import iglu.client.Resolver
-import iglu.client.repositories.RepositoryRefConfig
-import iglu.client.validation.ValidatableJValue._
-
-// Scalaz
-import scalaz.Scalaz._
 
 class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatchers {
   def is = s2"""

@@ -10,40 +10,26 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-// Java
 import java.net.URI
+import java.nio.charset.StandardCharsets.UTF_8
 
-import org.apache.http.client.utils.URLEncodedUtils
-import org.joda.time.DateTime
-
-// Scala
-import scala.util.matching.Regex
 import scala.util.control.NonFatal
 import scala.collection.JavaConversions._
 import scala.util.{Try, Success => TS, Failure => TF}
 
-// Scalaz
+import com.fasterxml.jackson.core.JsonParseException
+import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
+import org.apache.http.client.utils.URLEncodedUtils
+import org.joda.time.DateTime
 import scalaz._
 import Scalaz._
-
-// Jackson
-import com.fasterxml.jackson.core.JsonParseException
-
-// json4s
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 
-// Iglu
-import iglu.client.{Resolver, SchemaKey}
-
-// This project
 import loaders.CollectorPayload
 import utils.{JsonUtils => JU}
 
@@ -65,7 +51,7 @@ object OlarkAdapter extends Adapter {
 
   // Schemas for reverse-engineering a Snowplow unstructured event
   private val EventSchemaMap = Map(
-    "transcript"      -> SchemaKey("com.olark", "transcript", "jsonschema", "1-0-0").toSchemaUri,
+    "transcript" -> SchemaKey("com.olark", "transcript", "jsonschema", "1-0-0").toSchemaUri,
     "offline_message" -> SchemaKey("com.olark", "offline_message", "jsonschema", "1-0-0").toSchemaUri
   )
 
@@ -93,14 +79,14 @@ object OlarkAdapter extends Adapter {
       case (Some(body), _) if (body.isEmpty) => s"${VendorName} event body is empty: nothing to process".failureNel
       case (Some(body), _) => {
         val qsParams = toMap(payload.querystring)
-        Try { toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), "UTF-8").toList) } match {
+        Try { toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).toList) } match {
           case TF(e) => s"${VendorName} could not parse body: [${JU.stripInstanceEtc(e.getMessage).orNull}]".failureNel
           case TS(bodyMap) =>
             payloadBodyToEvent(bodyMap).flatMap {
               case event => {
                 val eventType = (event \ "operators") match {
                   case (JNothing) => Some("offline_message")
-                  case (_)        => Some("transcript")
+                  case (_) => Some("transcript")
                 }
                 lookupSchema(eventType, VendorName, EventSchemaMap).flatMap {
                   case schema =>
@@ -109,14 +95,15 @@ object OlarkAdapter extends Adapter {
                         NonEmptyList(
                           RawEvent(
                             api = payload.api,
-                            parameters = toUnstructEventParams(TrackerVersion,
-                                                               qsParams,
-                                                               schema,
-                                                               camelize(transformedEvent),
-                                                               "srv"),
+                            parameters = toUnstructEventParams(
+                              TrackerVersion,
+                              qsParams,
+                              schema,
+                              camelize(transformedEvent),
+                              "srv"),
                             contentType = payload.contentType,
-                            source      = payload.source,
-                            context     = payload.context
+                            source = payload.source,
+                            context = payload.context
                           )).success
                     }
                 }
@@ -135,7 +122,7 @@ object OlarkAdapter extends Adapter {
   private def transformTimestamps(json: JValue): Validated[JValue] = {
     def toMsec(oTs: String): Long =
       (oTs.split('.') match {
-        case Array(sec)       => s"${sec}000"
+        case Array(sec) => s"${sec}000"
         case Array(sec, msec) => s"${sec}${msec.take(3).padTo(3, '0')}"
       }).toLong
 
@@ -163,14 +150,14 @@ object OlarkAdapter extends Adapter {
    */
   private def payloadBodyToEvent(bodyMap: Map[String, String]): Validated[JObject] =
     bodyMap.get("data") match {
-      case None     => s"${VendorName} event data does not have 'data' as a key".failureNel
+      case None => s"${VendorName} event data does not have 'data' as a key".failureNel
       case Some("") => s"${VendorName} event data is empty: nothing to process".failureNel
       case Some(json) => {
         try {
           val event = parse(json)
           event match {
             case obj: JObject => obj.successNel
-            case _            => s"${VendorName} event wrong type: [%s]".format(event.getClass).failureNel
+            case _ => s"${VendorName} event wrong type: [%s]".format(event.getClass).failureNel
           }
         } catch {
           case e: JsonParseException =>
