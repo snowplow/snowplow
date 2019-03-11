@@ -50,7 +50,6 @@ object Dependencies {
     val circe            = "0.11.1"
     val circeOptics      = "0.11.0"
     val circeJackson     = "0.11.1"
-    val igluClient       = "0.6.0-M6"
     val scalaForex       = "0.7.0-M4"
     val scalaWeather     = "0.5.0-M2"
     val scalaj           = "2.4.1"
@@ -95,7 +94,6 @@ object Dependencies {
     val scalaForex       = "com.snowplowanalytics"      %% "scala-forex"                   % V.scalaForex
     val refererParser    = "com.snowplowanalytics"      %% "scala-referer-parser"          % V.refererParser
     val maxmindIplookups = "com.snowplowanalytics"      %% "scala-maxmind-iplookups"       % V.maxmindIplookups
-    val igluClient       = "com.snowplowanalytics"      %% "iglu-scala-client"             % V.igluClient
     val scalaUri         = "io.lemonlabs"               %% "scala-uri"                     % V.scalaUri
     val scalaWeather     = "com.snowplowanalytics"      %% "scala-weather"                 % V.scalaWeather
     val scalaj           = "org.scalaj"                 %% "scalaj-http"                   % V.scalaj
