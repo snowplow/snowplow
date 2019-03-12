@@ -51,6 +51,18 @@ class OpenCageEnrichmentSpec extends Specification {
 
 }
 
+class OpenCageCacheSpec extends Specification {
+  def is: Fragments =
+    s2"""
+        This specification is to test the OpenCageCage
+        Round floats to meaningful precisions $e1
+      """
+
+  private def e1 =
+    OpenCageCache.roundCoordinate(41.1234567f, 5) === 41.12345f
+
+}
+
 class OpenCageEnrichmentUsingAPISpec extends Specification {
   def is: Fragments =
     s2"""

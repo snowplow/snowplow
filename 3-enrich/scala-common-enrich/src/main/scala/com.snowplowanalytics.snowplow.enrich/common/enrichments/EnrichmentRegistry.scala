@@ -312,10 +312,10 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
     getEnrichment[HttpHeaderExtractorEnrichment]("http_header_extractor_config")
 
   /**
-   * Returns an Option boxing the WeatherEnrichment
+   * Returns an Option boxing the OpenCageEnrichment
    * config value if present, or None if not
    *
-   * @return Option boxing the WeatherEnrichment instance
+   * @return Option boxing the OpenCageEnrichment instance
    */
   def getOpenCageEnrichment: Option[OpenCageEnrichment] =
     getEnrichment[OpenCageEnrichment]("opencage_enrichment_config")
