@@ -21,12 +21,11 @@ import java.nio.charset.StandardCharsets.UTF_8
 import scala.collection.JavaConversions._
 
 import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
+import io.circe._
+import io.circe.syntax._
 import org.apache.http.client.utils.URLEncodedUtils
 import scalaz._
 import Scalaz._
-import org.json4s._
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
 
 import loaders.CollectorPayload
 import utils.ConversionUtils._
@@ -74,12 +73,14 @@ object GoogleAnalyticsAdapter extends Adapter {
   final case class IntType(i: Int) extends FieldType
   final case class DoubleType(d: Double) extends FieldType
   final case class BooleanType(b: Boolean) extends FieldType
-  implicit val fieldTypeJson4s: FieldType => JValue = (f: FieldType) =>
-    f match {
-      case StringType(s) => JString(s)
-      case IntType(i) => JInt(i)
-      case DoubleType(f) => JDouble(f)
-      case BooleanType(b) => JBool(b)
+  implicit val encodeFieldType: Encoder[FieldType] = new Encoder[FieldType] {
+    def apply(f: FieldType): Json =
+      f match {
+        case StringType(s) => Json.fromString(s)
+        case IntType(i) => Json.fromInt(i)
+        case DoubleType(f) => Json.fromDoubleOrNull(f)
+        case BooleanType(b) => Json.fromBoolean(b)
+      }
   }
 
   // translations between string and the needed types in the measurement protocol Iglu schemas
@@ -236,7 +237,9 @@ object GoogleAnalyticsAdapter extends Adapter {
           "fl" -> idTranslation("flashVersion")
         )
       ),
-      MPData(SchemaKey(Vendor, "link", Format, SchemaVersion), Map("linkid" -> idTranslation("id"))),
+      MPData(
+        SchemaKey(Vendor, "link", Format, SchemaVersion),
+        Map("linkid" -> idTranslation("id"))),
       MPData(
         SchemaKey(Vendor, "app", Format, SchemaVersion),
         Map(
@@ -444,8 +447,11 @@ object GoogleAnalyticsAdapter extends Adapter {
    * @param payload original CollectorPayload
    * @return a Validation boxing either a RawEvent or a NEL of Failure Strings
    */
-  private def parsePayload(bodyPart: String, payload: CollectorPayload): ValidationNel[String, RawEvent] = {
-    val params = toMap(URLEncodedUtils.parse(URI.create(s"http://localhost/?$bodyPart"), UTF_8).toList)
+  private def parsePayload(
+    bodyPart: String,
+    payload: CollectorPayload): ValidationNel[String, RawEvent] = {
+    val params = toMap(
+      URLEncodedUtils.parse(URI.create(s"http://localhost/?$bodyPart"), UTF_8).toList)
     params.get("t") match {
       case None => s"No $VendorName t parameter provided: cannot determine hit type".failNel
       case Some(hitType) =>
@@ -455,7 +461,10 @@ object GoogleAnalyticsAdapter extends Adapter {
           .get(hitType)
           .map(_.translationTable)
           .toSuccess(s"No matching $VendorName hit type for hit type $hitType".wrapNel)
-        val schemaVal = lookupSchema(hitType.some, VendorName, unstructEventData.mapValues(_.schemaKey.toSchemaUri))
+        val schemaVal = lookupSchema(
+          hitType.some,
+          VendorName,
+          unstructEventData.mapValues(_.schemaKey.toSchemaUri))
         val simpleContexts = buildContexts(params, contextData, fieldToSchemaMap)
         val compositeContexts =
           buildCompositeContexts(
@@ -478,11 +487,11 @@ object GoogleAnalyticsAdapter extends Adapter {
               }
             val contextParam =
               if (contextJsons.isEmpty) Map.empty
-              else Map("co" -> compact(toContexts(contextJsons)))
+              else Map("co" -> toContexts(contextJsons).noSpaces)
 
             translatePayload(params, trTable)
               .map { e =>
-                val unstructEvent = compact(toUnstructEvent(buildJson(schema, e)))
+                val unstructEvent = toUnstructEvent(buildJson(schema, e)).noSpaces
                 RawEvent(
                   api = payload.api,
                   parameters = contextParam ++ mappings ++
@@ -592,7 +601,9 @@ object GoogleAnalyticsAdapter extends Adapter {
       composite <- originalParams
         .filterKeys(k => k.exists(_.isDigit))
         .right
-      brokenDown <- composite.toList.sorted.map { case (k, v) => breakDownCompField(k, v, indicator) }.sequenceU
+      brokenDown <- composite.toList.sorted.map {
+        case (k, v) => breakDownCompField(k, v, indicator)
+      }.sequenceU
       partitioned = brokenDown.map(_.partition(_._1.startsWith(indicator))).unzip
       // we additionally make sure we have a rectangular dataset
       grouped = (partitioned._2 ++ removeConsecutiveDuplicates(partitioned._1)).flatten
@@ -621,7 +632,9 @@ object GoogleAnalyticsAdapter extends Adapter {
           val values = transpose(m.values.map(_.toList).toList)
           k -> (originalParams.get("cu") match {
             case Some(currency) if schemasWithCU.contains(k) =>
-              values.map(m.keys zip _).map(l => ("currencyCode" -> StringType(currency) :: l.toList).toMap)
+              values
+                .map(m.keys zip _)
+                .map(l => ("currencyCode" -> StringType(currency) :: l.toList).toMap)
             case _ =>
               values.map(m.keys zip _).map(_.toMap)
           })
@@ -681,7 +694,8 @@ object GoogleAnalyticsAdapter extends Adapter {
    * @param fieldName raw composite field name
    * @return the break down of the field or a failure if it couldn't be parsed
    */
-  private[registry] def breakDownCompField(fieldName: String): \/[String, (List[String], List[String])] =
+  private[registry] def breakDownCompField(
+    fieldName: String): \/[String, (List[String], List[String])] =
     fieldName match {
       case compositeFieldRegex(grps @ _*) => splitEvenOdd(grps.toList.filter(_.nonEmpty)).right
       case s if s.isEmpty => "Cannot parse empty composite field name".left
@@ -718,6 +732,9 @@ object GoogleAnalyticsAdapter extends Adapter {
       case head => head :: transpose(l.collect { case _ :: tail => tail })
     }
 
-  private def buildJson(schema: String, fields: Map[String, FieldType]): JValue =
-    ("schema" -> schema) ~ ("data" -> fields)
+  private def buildJson(schema: String, fields: Map[String, FieldType]): Json =
+    Json.obj(
+      "schema" := schema,
+      "data" := fields
+    )
 }

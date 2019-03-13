@@ -21,7 +21,11 @@ import org.specs2.scalaz.ValidationMatchers
 import scalaz._
 import Scalaz._
 
-class IpLookupsEnrichmentSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck {
+class IpLookupsEnrichmentSpec
+    extends Specification
+    with DataTables
+    with ValidationMatchers
+    with ScalaCheck {
   def is = s2"""
   This is a specification to test the IpLookupsEnrichment
   extractIpInformation should correctly extract location data from IP addresses where possible      $e1
@@ -40,12 +44,12 @@ class IpLookupsEnrichmentSpec extends Specification with DataTables with Validat
   )
 
   def e1 =
-    "SPEC NAME"               || "IP ADDRESS" | "EXPECTED LOCATION" |
-      "blank IP address"      !! "" ! Some(Failure("AddressNotFoundException")) |
-      "null IP address"       !! null ! Some(Failure("AddressNotFoundException")) |
+    "SPEC NAME" || "IP ADDRESS" | "EXPECTED LOCATION" |
+      "blank IP address" !! "" ! Some(Failure("AddressNotFoundException")) |
+      "null IP address" !! null ! Some(Failure("AddressNotFoundException")) |
       "invalid IP address #1" !! "localhost" ! Some(Failure("AddressNotFoundException")) |
       "invalid IP address #2" !! "hello" ! Some(Failure("UnknownHostException")) |
-      "valid IP address"      !! "175.16.199.0" !
+      "valid IP address" !! "175.16.199.0" !
         IpLocation( // Taken from scala-maxmind-geoip. See that test suite for other valid IP addresses
           countryCode = "CN",
           countryName = "China",
@@ -71,15 +75,20 @@ class IpLookupsEnrichmentSpec extends Specification with DataTables with Validat
           metroCode   = None,
           regionName  = Some("Jilin Sheng")
         ).success.some |> { (_, ipAddress, expected) =>
-      config.extractIpInformation(ipAddress).ipLocation.map(_.leftMap(_.getClass.getSimpleName)) must_== expected
+      config
+        .extractIpInformation(ipAddress)
+        .ipLocation
+        .map(_.leftMap(_.getClass.getSimpleName)) must_== expected
     }
 
-  def e2 = config.extractIpInformation("70.46.123.145").isp must_== "FDN Communications".success.some
+  def e2 =
+    config.extractIpInformation("70.46.123.145").isp must_== "FDN Communications".success.some
 
   def e3 = config.filesToCache must_== Nil
 
   val configRemote = IpLookupsEnrichment(
-    Some(("geo", new URI("http://public-website.com/files/GeoLite2-City.mmdb"), "GeoLite2-City.mmdb")),
+    Some(
+      ("geo", new URI("http://public-website.com/files/GeoLite2-City.mmdb"), "GeoLite2-City.mmdb")),
     Some(("isp", new URI("s3://private-bucket/files/GeoIP2-ISP.mmdb"), "GeoIP2-ISP.mmdb")),
     None,
     None,

@@ -16,69 +16,86 @@ package sqlquery
 
 import scala.collection.immutable.IntMap
 
-import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
+import cats.syntax.either._
+import com.snowplowanalytics.iglu.client.{JsonSchemaPair, SchemaCriterion, SchemaKey}
+import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
+import io.circe._
+import io.circe.generic.auto._
+import io.circe.jackson._
+import io.circe.syntax._
 import scalaz._
 import Scalaz._
-import org.json4s._
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods.fromJsonNode
 
 import outputs.EnrichedEvent
-import utils.ScalazJson4sUtils
+import utils.ScalazCirceUtils
 
-/**
- * Lets us create an SqlQueryEnrichmentConfig from a JValue
- */
+/** Lets us create an SqlQueryEnrichmentConfig from a Json */
 object SqlQueryEnrichmentConfig extends ParseableEnrichment {
 
-  implicit val formats = DefaultFormats
-
   val supportedSchema =
-    SchemaCriterion("com.snowplowanalytics.snowplow.enrichments", "sql_query_enrichment_config", "jsonschema", 1, 0, 0)
+    SchemaCriterion(
+      "com.snowplowanalytics.snowplow.enrichments",
+      "sql_query_enrichment_config",
+      "jsonschema",
+      1,
+      0,
+      0)
 
   /**
-   * Creates an SqlQueryEnrichment instance from a JValue.
-   *
+   * Creates an SqlQueryEnrichment instance from a Json.
    * @param config The enrichment JSON
-   * @param schemaKey The SchemaKey provided for the enrichment
-   *        Must be a supported SchemaKey for this enrichment
+   * @param schemaKey provided for the enrichment, must be supported by this enrichment
    * @return a configured SqlQueryEnrichment instance
    */
-  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[SqlQueryEnrichment] =
+  def parse(config: Json, schemaKey: SchemaKey): ValidatedNelMessage[SqlQueryEnrichment] =
     isParseable(config, schemaKey).flatMap(conf => {
       (for {
-        inputs <- ScalazJson4sUtils.extract[List[Input]](config, "parameters", "inputs")
-        db <- ScalazJson4sUtils.extract[Db](config, "parameters", "database")
-        query <- ScalazJson4sUtils.extract[Query](config, "parameters", "query")
-        output <- ScalazJson4sUtils.extract[Output](config, "parameters", "output")
-        cache <- ScalazJson4sUtils.extract[Cache](config, "parameters", "cache")
+        // input ctor throws exception
+        inputs <- Either.catchNonFatal(
+          ScalazCirceUtils.extract[List[Input]](config, "parameters", "inputs")
+        ) match {
+          case Left(e) => e.getMessage.toProcessingMessage.fail
+          case Right(r) => r
+        }
+        db <- ScalazCirceUtils.extract[Db](config, "parameters", "database")
+        query <- ScalazCirceUtils.extract[Query](config, "parameters", "query")
+        // output ctor throws exception
+        output <- Either.catchNonFatal(
+          ScalazCirceUtils.extract[Output](config, "parameters", "output")
+        ) match {
+          case Left(e) => e.getMessage.toProcessingMessage.fail
+          case Right(r) => r
+        }
+        cache <- ScalazCirceUtils.extract[Cache](config, "parameters", "cache")
       } yield SqlQueryEnrichment(inputs, db, query, output, cache)).toValidationNel
     })
 }
 
-case class SqlQueryEnrichment(inputs: List[Input], db: Db, query: Query, output: Output, cache: Cache)
-    extends Enrichment {
-
+case class SqlQueryEnrichment(
+  inputs: List[Input],
+  db: Db,
+  query: Query,
+  output: Output,
+  cache: Cache
+) extends Enrichment {
   import SqlQueryEnrichment._
 
   /**
-   * Primary function of the enrichment
-   * Failure means connection failure, failed unexpected JSON-value, etc
-   * Successful Nil skipped lookup (unfilled placeholder for eg, empty response)
-   *
+   * Primary function of the enrichment. Failure means connection failure, failed unexpected
+   * JSON-value, etc. Successful Nil skipped lookup (unfilled placeholder for eg, empty response)
    * @param event currently enriching event
    * @param derivedContexts derived contexts as list of JSON objects
    * @param customContexts custom contexts as [[JsonSchemaPairs]]
-   * @param unstructEvent unstructured (self-describing) event as empty or single element [[JsonSchemaPairs]]
+   * @param unstructEvent unstructured (self-describing) event as empty or single element
+   * [[JsonSchemaPairs]]
    * @return Nil if some inputs were missing, validated JSON contexts if lookup performed
    */
   def lookup(
     event: EnrichedEvent,
-    derivedContexts: List[JObject],
-    customContexts: JsonSchemaPairs,
-    unstructEvent: JsonSchemaPairs
-  ): ValidationNel[String, List[JObject]] = {
-
+    derivedContexts: List[Json],
+    customContexts: List[JsonSchemaPair],
+    unstructEvent: List[JsonSchemaPair]
+  ): ValidationNel[String, List[Json]] = {
     val jsonCustomContexts = transformRawPairs(customContexts)
     val jsonUnstructEvent = transformRawPairs(unstructEvent).headOption
 
@@ -96,13 +113,11 @@ case class SqlQueryEnrichment(inputs: List[Input], db: Db, query: Query, output:
   }
 
   /**
-   * Get contexts from cache or perform query if nothing found
-   * and put result into cache
-   *
+   * Get contexts from cache or perform query if nothing found and put result into cache
    * @param intMap IntMap of extracted values
    * @return validated list of Self-describing contexts
    */
-  def get(intMap: IntMap[Input.ExtractedValue]): ThrowableXor[List[JObject]] =
+  def get(intMap: IntMap[Input.ExtractedValue]): ThrowableXor[List[Json]] =
     cache.get(intMap) match {
       case Some(response) => response
       case None =>
@@ -113,12 +128,11 @@ case class SqlQueryEnrichment(inputs: List[Input], db: Db, query: Query, output:
 
   /**
    * Perform SQL query and convert result to JSON object
-   *
-   * @param intMap map with values extracted from inputs and ready to
-   *               be set placeholders in prepared statement
+   * @param intMap map with values extracted from inputs and ready to be set placeholders in
+   * prepared statement
    * @return validated list of Self-describing contexts
    */
-  def query(intMap: IntMap[Input.ExtractedValue]): ThrowableXor[List[JObject]] =
+  def query(intMap: IntMap[Input.ExtractedValue]): ThrowableXor[List[Json]] =
     for {
       sqlQuery <- db.createStatement(query.sql, intMap)
       resultSet <- db.execute(sqlQuery)
@@ -128,12 +142,12 @@ case class SqlQueryEnrichment(inputs: List[Input], db: Db, query: Query, output:
   /**
    * Transform [[Input.PlaceholderMap]] to None if not enough input values were extracted
    * This prevents db from start building a statement while not failing event enrichment
-   *
-   * @param placeholderMap some IntMap with extracted values or None if it is known
-   *                       already that not all values were extracted
+   * @param placeholderMap some IntMap with extracted values or None if it is known already that not
+   * all values were extracted
    * @return Some unchanged value if all placeholder were filled, None otherwise
    */
-  private def allPlaceholdersFilled(placeholderMap: Input.PlaceholderMap): Validated[Input.PlaceholderMap] =
+  private def allPlaceholdersFilled(
+    placeholderMap: Input.PlaceholderMap): Validated[Input.PlaceholderMap] =
     getPlaceholderCount.map { placeholderCount =>
       placeholderMap match {
         case Some(intMap) if intMap.keys.size == placeholderCount => Some(intMap)
@@ -141,10 +155,7 @@ case class SqlQueryEnrichment(inputs: List[Input], db: Db, query: Query, output:
       }
     }
 
-  /**
-   * Stored amount of ?-signs in query.sql
-   * Initialized once
-   */
+  /** Stored amount of ?-signs in query.sql. Initialized once */
   private var lastPlaceholderCount: Validation[Throwable, Int] =
     InvalidStateException("SQL Query Enrichment: placeholderCount hasn't been initialized").failure
 
@@ -161,31 +172,26 @@ case class SqlQueryEnrichment(inputs: List[Input], db: Db, query: Query, output:
   }
 }
 
-/**
- * Companion object containing common methods for requests and manipulating data
- */
+/** Companion object containing common methods for requests and manipulating data */
 object SqlQueryEnrichment {
 
-  private implicit val formats = DefaultFormats
-
   /**
-   * Transform pairs of schema and node obtained from [[utils.shredder.Shredder]]
-   * into list of regular self-describing JObject representing custom context
-   * or unstructured event.
-   * If node isn't Self-describing (doesn't contain data key)
-   * it will be filtered out.
-   *
+   * Transform pairs of schema and node obtained from [[utils.shredder.Shredder]] into list of
+   * regular self-describing JObject representing custom context or unstructured event.
+   * If node isn't Self-describing (doesn't contain data key) it will be filtered out.
    * @param pairs list of pairs consisting of schema and Json nodes
    * @return list of regular JObjects
    */
-  def transformRawPairs(pairs: JsonSchemaPairs): List[JObject] =
-    pairs.flatMap {
+  def transformRawPairs(pairs: List[JsonSchemaPair]): List[Json] =
+    pairs.map {
       case (schema, node) =>
         val uri = schema.toSchemaUri
-        val data = fromJsonNode(node)
-        data \ "data" match {
-          case JNothing => Nil
-          case json => (("schema" -> uri) ~ ("data" -> json): JObject) :: Nil
+        val data = jacksonToCirce(node)
+        data.hcursor.downField("data").focus.map { json =>
+          Json.obj(
+            "schema" := Json.fromString(uri),
+            "data" := json
+          )
         }
-    }
+    }.flatten
 }

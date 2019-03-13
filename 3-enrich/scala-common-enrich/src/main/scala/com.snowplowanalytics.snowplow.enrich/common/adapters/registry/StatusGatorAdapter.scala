@@ -20,25 +20,20 @@ import java.nio.charset.StandardCharsets.UTF_8
 import scala.collection.JavaConversions._
 import scala.util.{Try, Success => TS, Failure => TF}
 
-import com.fasterxml.jackson.core.JsonParseException
 import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
+import io.circe.syntax._
 import org.apache.http.client.utils.URLEncodedUtils
 import scalaz._
 import Scalaz._
-import org.json4s._
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
 
 import loaders.CollectorPayload
 import utils.{JsonUtils => JU}
 
 /**
- * Transforms a collector payload which conforms to
- * a known version of the StatusGator Tracking webhook
- * into raw events.
+ * Transforms a collector payload which conforms to a known version of the StatusGator Tracking
+ * webhook into raw events.
  */
 object StatusGatorAdapter extends Adapter {
-
   // Vendor name for Failure Message
   private val VendorName = "StatusGator"
 
@@ -49,53 +44,48 @@ object StatusGatorAdapter extends Adapter {
   private val ContentType = "application/x-www-form-urlencoded"
 
   // Schemas for reverse-engineering a Snowplow unstructured event
-  private val EventSchema = SchemaKey("com.statusgator", "status_change", "jsonschema", "1-0-0").toSchemaUri
+  private val EventSchema =
+    SchemaKey("com.statusgator", "status_change", "jsonschema", "1-0-0").toSchemaUri
 
   /**
-   * Converts a CollectorPayload instance into raw events.
-   *
-   * A StatusGator Tracking payload contains one single event
-   * in the body of the payload, stored within a HTTP encoded
-   * string.
-   *
-   * @param payload  The CollectorPayload containing one or more
-   *                 raw events as collected by a Snowplow collector
-   * @param resolver (implicit) The Iglu resolver used for
-   *                 schema lookup and validation. Not used
-   * @return a Validation boxing either a NEL of RawEvents on
-   *         Success, or a NEL of Failure Strings
+   * Converts a CollectorPayload instance into raw events. A StatusGator Tracking payload contains
+   * one single event in the body of the payload, stored within a HTTP encoded string.
+   * @param payload  The CollectorPayload containing one or more raw events
+   * @param resolver (implicit) The Iglu resolver used for schema lookup and validation. Not used
+   * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
     (payload.body, payload.contentType) match {
-      case (None, _) => s"Request body is empty: no ${VendorName} events to process".failureNel
+      case (None, _) => s"Request body is empty: no $VendorName events to process".failureNel
       case (_, None) =>
-        s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failureNel
+        s"Request body provided but content type empty, expected $ContentType for $VendorName".failureNel
       case (_, Some(ct)) if ct != ContentType =>
-        s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failureNel
-      case (Some(body), _) if (body.isEmpty) => s"${VendorName} event body is empty: nothing to process".failureNel
+        s"Content type of $ct provided, expected $ContentType for $VendorName".failureNel
+      case (Some(body), _) if (body.isEmpty) =>
+        s"$VendorName event body is empty: nothing to process".failureNel
       case (Some(body), _) => {
         val qsParams = toMap(payload.querystring)
         Try {
           toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).toList)
         } match {
           case TF(e) =>
-            s"${VendorName} incorrect event string : [${JU.stripInstanceEtc(e.getMessage).orNull}]".failureNel
+            val msg = JU.stripInstanceEtc(e.getMessage).orNull
+            s"$VendorName incorrect event string : [$msg]".failureNel
           case TS(bodyMap) =>
-            try {
-              val a: Map[String, String] = bodyMap
-              val event = parse(compact(render(a)))
-              NonEmptyList(
-                RawEvent(
-                  api = payload.api,
-                  parameters = toUnstructEventParams(TrackerVersion, qsParams, EventSchema, camelize(event), "srv"),
-                  contentType = payload.contentType,
-                  source = payload.source,
-                  context = payload.context
-                )).success
-            } catch {
-              case e: JsonParseException =>
-                s"${VendorName} event string failed to parse into JSON: [${JU.stripInstanceEtc(e.getMessage).orNull}]".failureNel
-            }
+            NonEmptyList(
+              RawEvent(
+                api = payload.api,
+                parameters = toUnstructEventParams(
+                  TrackerVersion,
+                  qsParams,
+                  EventSchema,
+                  camelize(bodyMap.asJson),
+                  "srv"),
+                contentType = payload.contentType,
+                source = payload.source,
+                context = payload.context
+              )
+            ).success
         }
       }
     }

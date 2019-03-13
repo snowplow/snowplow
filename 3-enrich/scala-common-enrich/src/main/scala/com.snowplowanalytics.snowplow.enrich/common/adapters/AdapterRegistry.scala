@@ -19,7 +19,11 @@ import Scalaz._
 
 import loaders.CollectorPayload
 import registry._
-import registry.snowplow.{Tp1Adapter => SpTp1Adapter, Tp2Adapter => SpTp2Adapter, RedirectAdapter => SpRedirectAdapter}
+import registry.snowplow.{
+  Tp1Adapter => SpTp1Adapter,
+  Tp2Adapter => SpTp2Adapter,
+  RedirectAdapter => SpRedirectAdapter
+}
 
 /**
  * The AdapterRegistry lets us convert a CollectorPayload
@@ -105,7 +109,8 @@ class AdapterRegistry(remoteAdapters: Map[(String, String), RemoteAdapter] = Map
       case (Vendor.Redirect, "tp2") => SpRedirectAdapter.toRawEvents(payload)
       case (Vendor.Iglu, "v1") => IgluAdapter.toRawEvents(payload)
       case (Vendor.Callrail, "v1") => CallrailAdapter.toRawEvents(payload)
-      case (Vendor.Cloudfront, "wd_access_log") => CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(payload)
+      case (Vendor.Cloudfront, "wd_access_log") =>
+        CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(payload)
       case (Vendor.Mailchimp, "v1") => MailchimpAdapter.toRawEvents(payload)
       case (Vendor.Mailgun, "v1") => MailgunAdapter.toRawEvents(payload)
       case (Vendor.GoogleAnalytics, "v1") => GoogleAnalyticsAdapter.toRawEvents(payload)

@@ -14,18 +14,22 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
+import io.circe.literal._
 import org.joda.time.DateTime
-import org.specs2.{Specification, ScalaCheck}
+import org.specs2.{ScalaCheck, Specification}
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
 import scalaz._
 import Scalaz._
-import org.json4s._
-import org.json4s.jackson.JsonMethods._
 
 import loaders._
 
-class PagerdutyAdapterSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is = s2"""
+class PagerdutyAdapterSpec
+    extends Specification
+    with DataTables
+    with ValidationMatchers
+    with ScalaCheck {
+  def is = s2"""
   This is a specification to test the PagerdutyAdapter functionality
   reformatParameters must return an updated JSON whereby all null Strings have been replaced by null $e1
   reformatParameters must return an updated JSON where 'incident.xxx' is replaced by xxx             $e2
@@ -44,72 +48,127 @@ class PagerdutyAdapterSpec extends Specification with DataTables with Validation
   object Shared {
     val api = CollectorApi("com.pagerduty", "v1")
     val cljSource = CollectorSource("clj-tomcat", "UTF-8", None)
-    val context = CollectorContext(DateTime.parse("2013-08-29T00:18:48.000+00:00").some, "37.157.33.123".some, None, None, Nil, None)
+    val context = CollectorContext(
+      DateTime.parse("2013-08-29T00:18:48.000+00:00").some,
+      "37.157.33.123".some,
+      None,
+      None,
+      Nil,
+      None)
   }
 
   val ContentType = "application/json"
 
   def e1 =
-    "SPEC NAME"                     || "INPUT"                             | "EXPECTED OUTPUT"               |
-    "Valid, update one value"       !! """{"type":"null"}"""               ! """{"type":null}"""             |
-    "Valid, update multiple values" !! """{"type":"null","some":"null"}""" ! """{"type":null,"some":null}""" |
-    "Valid, update nested values"   !! """{"type": {"some":"null"}}"""     ! """{"type":{"some":null}}"""    |> {
-      (_, input, expected) => PagerdutyAdapter.reformatParameters(parse(input)) mustEqual parse(expected)
-  }
+    "SPEC NAME" || "INPUT" | "EXPECTED OUTPUT" |
+      "Valid, update one value" !! json"""{"type":"null"}""" ! json"""{"type":null}""" |
+      "Valid, update multiple values" !! json"""{"type":"null","some":"null"}""" ! json"""{"type":null,"some":null}""" |
+      "Valid, update nested values" !! json"""{"type": {"some":"null"}}""" ! json"""{"type":{"some":null}}""" |> {
+      (_, input, expected) =>
+        PagerdutyAdapter.reformatParameters(input) mustEqual expected
+    }
 
   def e2 = {
-    val json = parse("""{"type":"incident.trigger"}""")
-    val expected = parse("""{"type":"trigger"}""")
+    val json = json"""{"type":"incident.trigger"}"""
+    val expected = json"""{"type":"trigger"}"""
     PagerdutyAdapter.reformatParameters(json) mustEqual expected
   }
 
   def e3 =
-    "SPEC NAME"                     || "INPUT"                                                                                              | "EXPECTED OUTPUT"                                                                                    |
-    "Valid, update one value"       !! """{"created_on":"2014-11-12T18:53:47 00:00"}"""                                                     ! """{"created_on":"2014-11-12T18:53:47+00:00"}"""                                                     |
-    "Valid, update multiple values" !! """{"created_on":"2014-11-12T18:53:47 00:00","last_status_change_on":"2014-11-12T18:53:47 00:00"}""" ! """{"created_on":"2014-11-12T18:53:47+00:00","last_status_change_on":"2014-11-12T18:53:47+00:00"}""" |
-    "Valid, update nested values"   !! """{"created_on":"2014-12-15T08:19:54Z","nested":{"created_on":"2014-11-12T18:53:47 00:00"}}"""      ! """{"created_on":"2014-12-15T08:19:54Z","nested":{"created_on":"2014-11-12T18:53:47+00:00"}}"""      |> {
-      (_, input, expected) => PagerdutyAdapter.reformatParameters(parse(input)) mustEqual parse(expected)
-  }
+    "SPEC NAME" || "INPUT" | "EXPECTED OUTPUT" |
+      "Valid, update one value" !! json"""{"created_on":"2014-11-12T18:53:47 00:00"}""" ! json"""{"created_on":"2014-11-12T18:53:47+00:00"}""" |
+      "Valid, update multiple values" !! json"""{"created_on":"2014-11-12T18:53:47 00:00","last_status_change_on":"2014-11-12T18:53:47 00:00"}""" ! json"""{"created_on":"2014-11-12T18:53:47+00:00","last_status_change_on":"2014-11-12T18:53:47+00:00"}""" |
+      "Valid, update nested values" !! json"""{"created_on":"2014-12-15T08:19:54Z","nested":{"created_on":"2014-11-12T18:53:47 00:00"}}""" ! json"""{"created_on":"2014-12-15T08:19:54Z","nested":{"created_on":"2014-11-12T18:53:47+00:00"}}""" |> {
+      (_, input, expected) =>
+        PagerdutyAdapter.reformatParameters(input) mustEqual expected
+    }
 
   def e4 = {
-    val bodyStr = """{"messages":[{"type":"incident.trigger","data":{"incident":{"id":"P9WY9U9"}}}]}"""
-    val expected = List(JObject(List(("type",JString("incident.trigger")), ("data",JObject(List(("incident",JObject(List(("id",JString("P9WY9U9")))))))))))
+    val bodyStr =
+      """{"messages":[{"type":"incident.trigger","data":{"incident":{"id":"P9WY9U9"}}}]}"""
+    val expected = List(json"""{
+      "type": "incident.trigger",
+      "data": {
+        "incident": {
+          "id": "P9WY9U9"
+        }
+      }
+    }""")
     PagerdutyAdapter.payloadBodyToEvents(bodyStr) must beSuccessful(expected)
   }
 
   def e5 =
-    "SPEC NAME"                     || "INPUT"                   | "EXPECTED OUTPUT"                                              |
-    "Failure, parse exception"      !! """{"something:"some"}""" ! """PagerDuty payload failed to parse into JSON: [com.fasterxml.jackson.core.JsonParseException: Unexpected character ('s' (code 115)): was expecting a colon to separate field name and value at [Source: (String)"{"something:"some"}"; line: 1, column: 15]]""" |
-    "Failure, missing messages key" !! """{"somekey":"key"}"""   ! "PagerDuty payload does not contain the needed 'messages' key" |> {
-      (_, input, expected) => PagerdutyAdapter.payloadBodyToEvents(input) must beFailing(expected)
+    "SPEC NAME" || "INPUT" | "EXPECTED OUTPUT" |
+      "Failure, parse exception" !! """{"something:"some"}""" ! """PagerDuty payload failed to parse into JSON: [expected : got 'some"}' (line 1, column 14)]""" |
+      "Failure, missing messages key" !! """{"somekey":"key"}""" ! "Could not resolve PagerDuty payload into a JSON array of events" |> {
+      (_, input, expected) =>
+        PagerdutyAdapter.payloadBodyToEvents(input) must beFailing(expected)
     }
 
   def e6 = {
-    val bodyStr = """{"messages":[{"type":"incident.trigger","data":{"incident":{"id":"P9WY9U9","incident_number":139,"created_on":"2014-11-12T18:53:47 00:00","status":"triggered","html_url":"https://snowplow.pagerduty.com/incidents/P9WY9U9","incident_key":"srv01/HTTP","service":{"id":"PTHO4FF","name":"Webhooks Test","html_url":"https://snowplow.pagerduty.com/services/PTHO4FF","deleted_at":null},"escalation_policy":{"id":"P8ETVHU","name":"Default","deleted_at":null},"assigned_to_user":{"id":"P9L426X","name":"Yali Sassoon","email":"yali@snowplowanalytics.com","html_url":"https://snowplow.pagerduty.com/users/P9L426X"},"trigger_summary_data":{"description":"FAILURE for production/HTTP on machine srv01.acme.com","client":"Sample Monitoring Service","client_url":"https://monitoring.service.com"},"trigger_details_html_url":"https://snowplow.pagerduty.com/incidents/P9WY9U9/log_entries/P5AWPTR","trigger_type":"trigger_svc_event","last_status_change_on":"2014-11-12T18:53:47Z","last_status_change_by":null,"number_of_escalations":0,"assigned_to":[{"at":"2014-11-12T18:53:47Z","object":{"id":"P9L426X","name":"Yali Sassoon","email":"yali@snowplowanalytics.com","html_url":"https://snowplow.pagerduty.com/users/P9L426X","type":"user"}}]}},"id":"3c3e8ee0-6a9d-11e4-b3d5-22000ae31361","created_on":"2014-11-12T18:53:47Z"}]}"""
-    val payload = CollectorPayload(Shared.api, Nil, ContentType.some, bodyStr.some, Shared.cljSource, Shared.context)
-    val expected = NonEmptyList(RawEvent(Shared.api,Map("tv" -> "com.pagerduty-v1", "e" -> "ue", "p" -> "srv", "ue_pr" -> """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.pagerduty/incident/jsonschema/1-0-0","data":{"type":"trigger","data":{"incident":{"id":"P9WY9U9","incident_number":139,"created_on":"2014-11-12T18:53:47+00:00","status":"triggered","html_url":"https://snowplow.pagerduty.com/incidents/P9WY9U9","incident_key":"srv01/HTTP","service":{"id":"PTHO4FF","name":"Webhooks Test","html_url":"https://snowplow.pagerduty.com/services/PTHO4FF","deleted_at":null},"escalation_policy":{"id":"P8ETVHU","name":"Default","deleted_at":null},"assigned_to_user":{"id":"P9L426X","name":"Yali Sassoon","email":"yali@snowplowanalytics.com","html_url":"https://snowplow.pagerduty.com/users/P9L426X"},"trigger_summary_data":{"description":"FAILURE for production/HTTP on machine srv01.acme.com","client":"Sample Monitoring Service","client_url":"https://monitoring.service.com"},"trigger_details_html_url":"https://snowplow.pagerduty.com/incidents/P9WY9U9/log_entries/P5AWPTR","trigger_type":"trigger_svc_event","last_status_change_on":"2014-11-12T18:53:47Z","last_status_change_by":null,"number_of_escalations":0,"assigned_to":[{"at":"2014-11-12T18:53:47Z","object":{"id":"P9L426X","name":"Yali Sassoon","email":"yali@snowplowanalytics.com","html_url":"https://snowplow.pagerduty.com/users/P9L426X","type":"user"}}]}},"id":"3c3e8ee0-6a9d-11e4-b3d5-22000ae31361","created_on":"2014-11-12T18:53:47Z"}}}"""),ContentType.some, Shared.cljSource, Shared.context))
+    val bodyStr =
+      """{"messages":[{"type":"incident.trigger","data":{"incident":{"id":"P9WY9U9","incident_number":139,"created_on":"2014-11-12T18:53:47 00:00","status":"triggered","html_url":"https://snowplow.pagerduty.com/incidents/P9WY9U9","incident_key":"srv01/HTTP","service":{"id":"PTHO4FF","name":"Webhooks Test","html_url":"https://snowplow.pagerduty.com/services/PTHO4FF","deleted_at":null},"escalation_policy":{"id":"P8ETVHU","name":"Default","deleted_at":null},"assigned_to_user":{"id":"P9L426X","name":"Yali Sassoon","email":"yali@snowplowanalytics.com","html_url":"https://snowplow.pagerduty.com/users/P9L426X"},"trigger_summary_data":{"description":"FAILURE for production/HTTP on machine srv01.acme.com","client":"Sample Monitoring Service","client_url":"https://monitoring.service.com"},"trigger_details_html_url":"https://snowplow.pagerduty.com/incidents/P9WY9U9/log_entries/P5AWPTR","trigger_type":"trigger_svc_event","last_status_change_on":"2014-11-12T18:53:47Z","last_status_change_by":null,"number_of_escalations":0,"assigned_to":[{"at":"2014-11-12T18:53:47Z","object":{"id":"P9L426X","name":"Yali Sassoon","email":"yali@snowplowanalytics.com","html_url":"https://snowplow.pagerduty.com/users/P9L426X","type":"user"}}]}},"id":"3c3e8ee0-6a9d-11e4-b3d5-22000ae31361","created_on":"2014-11-12T18:53:47Z"}]}"""
+    val payload = CollectorPayload(
+      Shared.api,
+      Nil,
+      ContentType.some,
+      bodyStr.some,
+      Shared.cljSource,
+      Shared.context)
+    val expected = NonEmptyList(
+      RawEvent(
+        Shared.api,
+        Map(
+          "tv" -> "com.pagerduty-v1",
+          "e" -> "ue",
+          "p" -> "srv",
+          "ue_pr" -> """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.pagerduty/incident/jsonschema/1-0-0","data":{"type":"trigger","data":{"incident":{"assigned_to_user":{"id":"P9L426X","name":"Yali Sassoon","email":"yali@snowplowanalytics.com","html_url":"https://snowplow.pagerduty.com/users/P9L426X"},"incident_key":"srv01/HTTP","trigger_summary_data":{"description":"FAILURE for production/HTTP on machine srv01.acme.com","client":"Sample Monitoring Service","client_url":"https://monitoring.service.com"},"last_status_change_by":null,"incident_number":139,"service":{"id":"PTHO4FF","name":"Webhooks Test","html_url":"https://snowplow.pagerduty.com/services/PTHO4FF","deleted_at":null},"trigger_details_html_url":"https://snowplow.pagerduty.com/incidents/P9WY9U9/log_entries/P5AWPTR","id":"P9WY9U9","assigned_to":[{"at":"2014-11-12T18:53:47Z","object":{"id":"P9L426X","name":"Yali Sassoon","email":"yali@snowplowanalytics.com","html_url":"https://snowplow.pagerduty.com/users/P9L426X","type":"user"}}],"number_of_escalations":0,"last_status_change_on":"2014-11-12T18:53:47Z","status":"triggered","escalation_policy":{"id":"P8ETVHU","name":"Default","deleted_at":null},"created_on":"2014-11-12T18:53:47+00:00","trigger_type":"trigger_svc_event","html_url":"https://snowplow.pagerduty.com/incidents/P9WY9U9"}},"id":"3c3e8ee0-6a9d-11e4-b3d5-22000ae31361","created_on":"2014-11-12T18:53:47Z"}}}"""
+        ),
+        ContentType.some,
+        Shared.cljSource,
+        Shared.context
+      ))
     PagerdutyAdapter.toRawEvents(payload) must beSuccessful(expected)
   }
 
   def e7 = {
-    val bodyStr = """{"messages":[{"type":"trigger","data":{"incident":{"id":"P9WY9U9","incident_number":139,"created_on":"2014-11-12T18:53:47 00:00","status":"triggered","html_url":"https://snowplow.pagerduty.com/incidents/P9WY9U9","incident_key":"srv01/HTTP","service":{"id":"PTHO4FF","name":"Webhooks Test","html_url":"https://snowplow.pagerduty.com/services/PTHO4FF","deleted_at":null},"escalation_policy":{"id":"P8ETVHU","name":"Default","deleted_at":null},"assigned_to_user":{"id":"P9L426X","name":"Yali Sassoon","email":"yali@snowplowanalytics.com","html_url":"https://snowplow.pagerduty.com/users/P9L426X"},"trigger_summary_data":{"description":"FAILURE for production/HTTP on machine srv01.acme.com","client":"Sample Monitoring Service","client_url":"https://monitoring.service.com"},"trigger_details_html_url":"https://snowplow.pagerduty.com/incidents/P9WY9U9/log_entries/P5AWPTR","trigger_type":"trigger_svc_event","last_status_change_on":"2014-11-12T18:53:47Z","last_status_change_by":null,"number_of_escalations":0,"assigned_to":[{"at":"2014-11-12T18:53:47Z","object":{"id":"P9L426X","name":"Yali Sassoon","email":"yali@snowplowanalytics.com","html_url":"https://snowplow.pagerduty.com/users/P9L426X","type":"user"}}]}},"id":"3c3e8ee0-6a9d-11e4-b3d5-22000ae31361","created_on":"2014-11-12T18:53:47Z"}]}"""
-    val payload = CollectorPayload(Shared.api, Nil, ContentType.some, bodyStr.some, Shared.cljSource, Shared.context)
+    val bodyStr =
+      """{"messages":[{"type":"trigger","data":{"incident":{"id":"P9WY9U9","incident_number":139,"created_on":"2014-11-12T18:53:47 00:00","status":"triggered","html_url":"https://snowplow.pagerduty.com/incidents/P9WY9U9","incident_key":"srv01/HTTP","service":{"id":"PTHO4FF","name":"Webhooks Test","html_url":"https://snowplow.pagerduty.com/services/PTHO4FF","deleted_at":null},"escalation_policy":{"id":"P8ETVHU","name":"Default","deleted_at":null},"assigned_to_user":{"id":"P9L426X","name":"Yali Sassoon","email":"yali@snowplowanalytics.com","html_url":"https://snowplow.pagerduty.com/users/P9L426X"},"trigger_summary_data":{"description":"FAILURE for production/HTTP on machine srv01.acme.com","client":"Sample Monitoring Service","client_url":"https://monitoring.service.com"},"trigger_details_html_url":"https://snowplow.pagerduty.com/incidents/P9WY9U9/log_entries/P5AWPTR","trigger_type":"trigger_svc_event","last_status_change_on":"2014-11-12T18:53:47Z","last_status_change_by":null,"number_of_escalations":0,"assigned_to":[{"at":"2014-11-12T18:53:47Z","object":{"id":"P9L426X","name":"Yali Sassoon","email":"yali@snowplowanalytics.com","html_url":"https://snowplow.pagerduty.com/users/P9L426X","type":"user"}}]}},"id":"3c3e8ee0-6a9d-11e4-b3d5-22000ae31361","created_on":"2014-11-12T18:53:47Z"}]}"""
+    val payload = CollectorPayload(
+      Shared.api,
+      Nil,
+      ContentType.some,
+      bodyStr.some,
+      Shared.cljSource,
+      Shared.context)
     val expected = "PagerDuty event at index [0] failed: type parameter [trigger] not recognized"
     PagerdutyAdapter.toRawEvents(payload) must beFailing(NonEmptyList(expected))
   }
 
   def e8 = {
-    val payload = CollectorPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
-    PagerdutyAdapter.toRawEvents(payload) must beFailing(NonEmptyList("Request body is empty: no PagerDuty events to process"))
+    val payload =
+      CollectorPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
+    PagerdutyAdapter.toRawEvents(payload) must beFailing(
+      NonEmptyList("Request body is empty: no PagerDuty events to process"))
   }
 
   def e9 = {
-    val payload = CollectorPayload(Shared.api, Nil, None, "stub".some, Shared.cljSource, Shared.context)
-    PagerdutyAdapter.toRawEvents(payload) must beFailing(NonEmptyList("Request body provided but content type empty, expected application/json for PagerDuty"))
+    val payload =
+      CollectorPayload(Shared.api, Nil, None, "stub".some, Shared.cljSource, Shared.context)
+    PagerdutyAdapter.toRawEvents(payload) must beFailing(
+      NonEmptyList(
+        "Request body provided but content type empty, expected application/json for PagerDuty"))
   }
 
   def e10 = {
-    val payload = CollectorPayload(Shared.api, Nil, "application/x-www-form-urlencoded".some, "stub".some, Shared.cljSource, Shared.context)
-    PagerdutyAdapter.toRawEvents(payload) must beFailing(NonEmptyList("Content type of application/x-www-form-urlencoded provided, expected application/json for PagerDuty"))
+    val payload = CollectorPayload(
+      Shared.api,
+      Nil,
+      "application/x-www-form-urlencoded".some,
+      "stub".some,
+      Shared.cljSource,
+      Shared.context)
+    PagerdutyAdapter.toRawEvents(payload) must beFailing(NonEmptyList(
+      "Content type of application/x-www-form-urlencoded provided, expected application/json for PagerDuty"))
   }
 }

@@ -14,8 +14,8 @@ package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.sqlque
 
 import java.sql.Date
 
+import io.circe._
 import org.joda.time.DateTime
-import org.json4s._
 import org.specs2.Specification
 import org.specs2.scalaz.ValidationMatchers
 
@@ -29,16 +29,17 @@ class OutputSpec extends Specification with ValidationMatchers {
   """
 
   def e1 =
-    JsonOutput.getValue(1: Integer, "") must beEqualTo(JInt(1))
+    JsonOutput.getValue(1: Integer, "") must beEqualTo(Json.fromInt(1))
 
   def e2 =
-    JsonOutput.getValue(32.2: java.lang.Double, "") must beEqualTo(JDouble(32.2))
+    JsonOutput.getValue(32.2: java.lang.Double, "") must beEqualTo(Json.fromDoubleOrNull(32.2))
 
   def e3 =
-    JsonOutput.getValue(null, "") must beEqualTo(JNull)
+    JsonOutput.getValue(null, "") must beEqualTo(Json.Null)
 
   def e4 = {
     val date = new Date(1465558727000L)
-    JsonOutput.getValue(date, "java.sql.Date") must beEqualTo(JString(new DateTime(date).toString))
+    JsonOutput.getValue(date, "java.sql.Date") must
+      beEqualTo(Json.fromString(new DateTime(date).toString))
   }
 }

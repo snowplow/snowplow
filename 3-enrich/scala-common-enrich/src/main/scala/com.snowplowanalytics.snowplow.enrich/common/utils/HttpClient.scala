@@ -26,7 +26,6 @@ object HttpClient {
 
   /**
    * Blocking method to get body of HTTP response
-   *
    * @param request assembled request object
    * @return validated body of HTTP request
    */
@@ -41,7 +40,6 @@ object HttpClient {
 
   /**
    * Build HTTP request object
-   *
    * @param uri full URI to request
    * @param authUser optional username for basic auth
    * @param authPassword optional password for basic auth
@@ -67,7 +65,8 @@ object HttpClient {
   implicit class RichHttpRequest(request: HttpRequest) {
 
     def maybeAuth(user: Option[String], password: Option[String]): HttpRequest =
-      if (user.isDefined || password.isDefined) request.auth(user.getOrElse(""), password.getOrElse(""))
+      if (user.isDefined || password.isDefined)
+        request.auth(user.getOrElse(""), password.getOrElse(""))
       else request
 
     def maybeTimeout(connectionTimeout: Option[Long], readTimeout: Option[Long]): HttpRequest =
@@ -79,6 +78,8 @@ object HttpClient {
       }
 
     def maybePostData(body: Option[String]): HttpRequest =
-      body.map(data => request.postData(data).header("content-type", "application/json")).getOrElse(request)
+      body
+        .map(data => request.postData(data).header("content-type", "application/json"))
+        .getOrElse(request)
   }
 }

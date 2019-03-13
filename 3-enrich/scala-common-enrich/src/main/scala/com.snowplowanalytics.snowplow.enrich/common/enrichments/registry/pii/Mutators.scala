@@ -18,9 +18,9 @@ import outputs.EnrichedEvent
 object Mutators {
 
   /**
-   * This and the next constant maps from a configuration field name to an EnrichedEvent mutator. The structure is such so that
-   * it preserves type safety, and it can be easily replaced in the future by generated code that will use the configuration as
-   * input.
+   * This and the next constant maps from a configuration field name to an EnrichedEvent mutator.
+   * The structure is such so that it preserves type safety, and it can be easily replaced in the
+   * future by generated code that will use the configuration as input.
    */
   val ScalarMutators: Map[String, Mutator] = Map(
     "user_id" -> Mutator(

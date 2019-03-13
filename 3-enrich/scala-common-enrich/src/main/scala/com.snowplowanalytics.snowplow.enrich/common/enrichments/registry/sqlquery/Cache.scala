@@ -16,8 +16,8 @@ package enrichments.registry.sqlquery
 import scala.collection.immutable.IntMap
 
 import com.twitter.util.SynchronizedLruMap
+import io.circe._
 import org.joda.time.DateTime
-import org.json4s.JObject
 
 import Input.ExtractedValue
 
@@ -25,21 +25,20 @@ import Input.ExtractedValue
  * Just LRU cache
  * Stores full IntMap with extracted values as keys and
  * full list Self-describing contexts as values
- *
  * @param size amount of objects
  * @param ttl time in seconds to live
  */
 case class Cache(size: Int, ttl: Int) {
 
-  private val cache = new SynchronizedLruMap[IntMap[ExtractedValue], (ThrowableXor[List[JObject]], Int)](size)
+  private val cache =
+    new SynchronizedLruMap[IntMap[ExtractedValue], (ThrowableXor[List[Json]], Int)](size)
 
   /**
    * Get a value if it's not outdated
-   *
    * @param key HTTP URL
    * @return validated JSON as it was fetched from DB if found
    */
-  def get(key: IntMap[ExtractedValue]): Option[ThrowableXor[List[JObject]]] =
+  def get(key: IntMap[ExtractedValue]): Option[ThrowableXor[List[Json]]] =
     cache.get(key) match {
       case Some((value, _)) if ttl == 0 => Some(value)
       case Some((value, created)) =>
@@ -54,11 +53,10 @@ case class Cache(size: Int, ttl: Int) {
 
   /**
    * Put a value into cache with current timestamp
-   *
    * @param key all inputs Map
    * @param value context object (with Iglu URI, not just plain JSON)
    */
-  def put(key: IntMap[ExtractedValue], value: ThrowableXor[List[JObject]]): Unit = {
+  def put(key: IntMap[ExtractedValue], value: ThrowableXor[List[Json]]): Unit = {
     val now = (new DateTime().getMillis / 1000).toInt
     cache.put(key, (value, now))
     ()
@@ -66,7 +64,6 @@ case class Cache(size: Int, ttl: Int) {
 
   /**
    * Get actual size of cache
-   *
    * @return number of elements in
    */
   private[sqlquery] def actualLoad: Int = cache.size

@@ -28,14 +28,15 @@ package object pii {
   val JsonMutators = Mutators.JsonMutators
   val ScalarMutators = Mutators.ScalarMutators
 
-  // Configuration for JsonPath
-  // SerializationFeature.FAIL_ON_EMPTY_BEANS is required otherwise an invalid path causes an exception
+  // Configuration for JsonPath, SerializationFeature.FAIL_ON_EMPTY_BEANS is required otherwise an
+  // invalid path causes an exception
   private[pii] val JacksonNodeJsonObjectMapper = {
     val objectMapper = new ObjectMapper()
     objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
     objectMapper
   }
-  // SUPPRESS_EXCEPTIONS is useful here as we prefer an empty list to an exception when a path is not found.
+  // SUPPRESS_EXCEPTIONS is useful here as we prefer an empty list to an exception when a path is
+  // not found.
   private[pii] val JsonPathConf =
     Configuration
       .builder()
@@ -47,32 +48,34 @@ package object pii {
 package pii {
 
   /**
-   * PiiStrategy trait. This corresponds to a strategy to apply to a single field. Currently only String input is
-   * supported.
+   * PiiStrategy trait. This corresponds to a strategy to apply to a single field. Currently only
+   * String input is supported.
    */
   trait PiiStrategy {
     def scramble(clearText: String): String
   }
 
   /**
-   * The mutator class encapsulates the mutator function and the field name where the mutator will be applied.
+   * The mutator class encapsulates the mutator function and the field name where the mutator will
+   * be applied.
    */
   private[pii] final case class Mutator(fieldName: String, muatatorFn: MutatorFn)
 
   /**
-   * Parent class for classes that serialize the values that were modified during the PII enrichment.
+   * Parent class for classes that serialize the values that were modified during the PII enrichment
    */
-  private[pii] final case class PiiModifiedFields(modifiedFields: ModifiedFields, strategy: PiiStrategy)
+  private[pii] final case class PiiModifiedFields(
+    modifiedFields: ModifiedFields,
+    strategy: PiiStrategy)
 
-  /**
-   * Case class for capturing scalar field modifications.
-   */
-  private[pii] final case class ScalarModifiedField(fieldName: String, originalValue: String, modifiedValue: String)
+  /** Case class for capturing scalar field modifications. */
+  private[pii] final case class ScalarModifiedField(
+    fieldName: String,
+    originalValue: String,
+    modifiedValue: String)
       extends ModifiedField
 
-  /**
-   * Case class for capturing JSON field modifications.
-   */
+  /** Case class for capturing JSON field modifications. */
   private[pii] final case class JsonModifiedField(
     fieldName: String,
     originalValue: String,
@@ -82,21 +85,21 @@ package pii {
       extends ModifiedField
 
   /**
-   * PiiField trait. This corresponds to a configuration top-level field (i.e. either a scalar or a JSON field) along with
-   * a function to apply that strategy to the EnrichedEvent POJO (A scalar field is represented in config py "pojo")
+   * PiiField trait. This corresponds to a configuration top-level field (i.e. either a scalar or a
+   * JSON field) along with a function to apply that strategy to the EnrichedEvent POJO (A scalar
+   * field is represented in config py "pojo")
    */
   private[pii] trait PiiField {
 
     /**
      * The POJO mutator for this field
-     *
      * @return fieldMutator
      */
     def fieldMutator: Mutator
 
     /**
-     * Gets an enriched event from the enrichment manager and modifies it according to the specified strategy.
-     *
+     * Gets an enriched event from the enrichment manager and modifies it according to the specified
+     * strategy.
      * @param event The enriched event
      */
     def transform(event: EnrichedEvent, strategy: PiiStrategy): ModifiedFields =
@@ -106,13 +109,12 @@ package pii {
   }
 
   /**
-   * The modified field trait represents an item that is transformed in either the JSON or a scalar mutators.
+   * The modified field trait represents an item that is transformed in either the JSON or a scalar
+   * mutators.
    */
   sealed trait ModifiedField
 
-  /**
-   * Abstract type to get salt using the supported methods
-   */
+  /** Abstract type to get salt using the supported methods */
   private[pii] trait PiiStrategyPseudonymizeSalt {
     def getSalt: String
   }

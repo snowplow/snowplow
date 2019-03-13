@@ -14,14 +14,19 @@ package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
 import java.net.URI
 
+import io.circe.literal._
 import org.joda.time.DateTime
-import org.json4s.jackson.JsonMethods.parse
 import org.specs2.{ScalaCheck, Specification}
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
 import scalaz._
 
-class IabEnrichmentSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck {
+class IabEnrichmentSpec
+    extends Specification
+    with DataTables
+    with ValidationMatchers
+    with ScalaCheck {
+
   def is =
     s2"""
   This is a specification to test the IabEnrichment
@@ -40,12 +45,19 @@ class IabEnrichmentSpec extends Specification with DataTables with ValidationMat
   )
 
   def e1 =
-    "SPEC NAME"                 || "USER AGENT"  | "IP ADDRESS"     | "EXPECTED SPIDER OR ROBOT" | "EXPECTED CATEGORY" | "EXPECTED REASON"   | "EXPECTED PRIMARY IMPACT" |
-      "null UA/IP"              !! null          ! null             ! false                      ! "BROWSER"           ! "PASSED_ALL"        ! "NONE" |
-      "valid UA/IP"             !! "Xdroid"      ! "192.168.0.1"    ! false                      ! "BROWSER"           ! "PASSED_ALL"        ! "NONE" |
-      "valid UA, excluded IP"   !! "Mozilla/5.0" ! "192.168.151.21" ! true                       ! "SPIDER_OR_ROBOT"   ! "FAILED_IP_EXCLUDE" ! "UNKNOWN" |
-      "invalid UA, excluded IP" !! "xonitor"     ! "192.168.0.1"    ! true                       ! "SPIDER_OR_ROBOT"   ! "FAILED_UA_INCLUDE" ! "UNKNOWN" |> {
-      (_, userAgent, ipAddress, expectedSpiderOrRobot, expectedCategory, expectedReason, expectedPrimaryImpact) =>
+    "SPEC NAME" || "USER AGENT" | "IP ADDRESS" | "EXPECTED SPIDER OR ROBOT" | "EXPECTED CATEGORY" | "EXPECTED REASON" | "EXPECTED PRIMARY IMPACT" |
+      "null UA/IP" !! null ! null ! false ! "BROWSER" ! "PASSED_ALL" ! "NONE" |
+      "valid UA/IP" !! "Xdroid" ! "192.168.0.1" ! false ! "BROWSER" ! "PASSED_ALL" ! "NONE" |
+      "valid UA, excluded IP" !! "Mozilla/5.0" ! "192.168.151.21" ! true ! "SPIDER_OR_ROBOT" ! "FAILED_IP_EXCLUDE" ! "UNKNOWN" |
+      "invalid UA, excluded IP" !! "xonitor" ! "192.168.0.1" ! true ! "SPIDER_OR_ROBOT" ! "FAILED_UA_INCLUDE" ! "UNKNOWN" |> {
+      (
+        _,
+        userAgent,
+        ipAddress,
+        expectedSpiderOrRobot,
+        expectedCategory,
+        expectedReason,
+        expectedPrimaryImpact) =>
         {
           validConfig.performCheck(userAgent, ipAddress, DateTime.now()) must beLike {
             case Success(check) =>
@@ -64,18 +76,19 @@ class IabEnrichmentSpec extends Specification with DataTables with ValidationMat
     validConfig.getIabContext(None, None, None) must beFailing
 
   def e4 = {
-    val responseJson = parse("""
-                             |{
-                             |    "schema": "iglu:com.iab.snowplow/spiders_and_robots/jsonschema/1-0-0",
-                             |    "data": {
-                             |        "spiderOrRobot": false,
-                             |        "category": "BROWSER",
-                             |        "reason": "PASSED_ALL",
-                             |        "primaryImpact": "NONE"
-                             |    }
-                             |}
-                           """.stripMargin)
-    validConfig.getIabContext(Some("Xdroid"), Some("192.168.0.1"), Some(DateTime.now())) must beSuccessful(responseJson)
+    val responseJson = json"""
+      {
+          "schema": "iglu:com.iab.snowplow/spiders_and_robots/jsonschema/1-0-0",
+          "data": {
+              "spiderOrRobot": false,
+              "category": "BROWSER",
+              "reason": "PASSED_ALL",
+              "primaryImpact": "NONE"
+          }
+      }
+    """
+    validConfig.getIabContext(Some("Xdroid"), Some("192.168.0.1"), Some(DateTime.now())) must beSuccessful(
+      responseJson)
   }
 
 }

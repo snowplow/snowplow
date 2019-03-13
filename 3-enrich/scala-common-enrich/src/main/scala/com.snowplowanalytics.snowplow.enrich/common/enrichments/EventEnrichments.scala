@@ -22,30 +22,22 @@ import org.joda.time.format.DateTimeFormat
 import scalaz._
 import Scalaz._
 
-/**
- * Holds the enrichments related to events.
- */
+/** Holds the enrichments related to events. */
 object EventEnrichments {
 
-  /**
-   * A Redshift-compatible timestamp format
-   */
-  private val TstampFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS").withZone(DateTimeZone.UTC)
+  /** A Redshift-compatible timestamp format */
+  private val TstampFormat =
+    DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS").withZone(DateTimeZone.UTC)
 
   /**
-   * Converts a Joda DateTime into
-   * a Redshift-compatible timestamp String.
-   *
-   * @param datetime The Joda DateTime
-   *        to convert to a timestamp String
+   * Converts a Joda DateTime into a Redshift-compatible timestamp String.
+   * @param datetime The Joda DateTime to convert to a timestamp String
    * @return the timestamp String
    */
   def toTimestamp(datetime: DateTime): String = TstampFormat.print(datetime)
 
   /**
-   * Converts a Redshift-compatible timestamp String
-   * back into a Joda DateTime.
-   *
+   * Converts a Redshift-compatible timestamp String back into a Joda DateTime.
    * @param timestamp The timestamp String to convert
    * @return the Joda DateTime
    */
@@ -53,7 +45,6 @@ object EventEnrichments {
 
   /**
    * Make a collector_tstamp Redshift-compatible
-   *
    * @param Optional collectorTstamp
    * @return Validation boxing the result of making the timestamp Redshift-compatible
    */
@@ -71,15 +62,12 @@ object EventEnrichments {
 
   /**
    * Calculate the derived timestamp
-   *
    * If dvce_sent_tstamp and dvce_created_tstamp are not null and the former is after the latter,
    * add the difference between the two to the collector_tstamp.
    * Otherwise just return the collector_tstamp.
-   *
    * TODO: given missing collectorTstamp is invalid, consider updating this signature to
    * `..., collectorTstamp: String): Validation[String, String]` and making the call to this
    * function in the EnrichmentManager dependent on a Success(collectorTstamp).
-   *
    * @param dvceSentTstamp
    * @param dvceCreatedTstamp
    * @param collectorTstamp
@@ -111,19 +99,10 @@ object EventEnrichments {
   }
 
   /**
-   * Extracts the timestamp from the
-   * format as laid out in the Tracker
-   * Protocol:
-   *
+   * Extracts the timestamp from the format as laid out in the Tracker Protocol:
    * https://github.com/snowplow/snowplow/wiki/snowplow-tracker-protocol#wiki-common-params
-   *
-   * @param tstamp The timestamp as
-   *        stored in the Tracker
-   *        Protocol
-   * @return a Tuple of two Strings
-   *         (date and time), or an
-   *         error message if the
-   *         format was invalid
+   * @param tstamp The timestamp as stored in the Tracker Protocol
+   * @return a Tuple of two Strings (date and time), or an error message if the format was invalid
    */
   val extractTimestamp: (String, String) => ValidatedString = (field, tstamp) =>
     try {
@@ -140,16 +119,11 @@ object EventEnrichments {
   }
 
   /**
-   * Turns an event code into a valid event type,
-   * e.g. "pv" -> "page_view". See the Tracker
+   * Turns an event code into a valid event type, e.g. "pv" -> "page_view". See the Tracker
    * Protocol for details:
-   *
    * https://github.com/snowplow/snowplow/wiki/snowplow-tracker-protocol#wiki-event2
-   *
    * @param eventCode The event code
-   * @return the event type, or an error message
-   *         if not recognised, boxed in a Scalaz
-   *         Validation
+   * @return the event type, or an error message if not recognised, boxed in a Scalaz Validation
    */
   val extractEventType: (String, String) => ValidatedString = (field, code) =>
     code match {
@@ -165,13 +139,9 @@ object EventEnrichments {
   }
 
   /**
-   * Returns a unique event ID. The event ID is
-   * generated as a type 4 UUID, then converted
+   * Returns a unique event ID. The event ID is generated as a type 4 UUID, then converted
    * to a String.
-   *
-   * () on the function signature because it's
-   * not pure
-   *
+   * () on the function signature because it's not pure
    * @return the unique event ID
    */
   def generateEventId(): String = UUID.randomUUID().toString
