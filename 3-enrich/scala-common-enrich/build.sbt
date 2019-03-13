@@ -47,14 +47,14 @@ lazy val root = project
       Dependencies.Libraries.yauaa,
       Dependencies.Libraries.kryo,
       // Scala
+      Dependencies.Libraries.circeOptics,
+      Dependencies.Libraries.circeJackson,
       Dependencies.Libraries.scalaz7,
       Dependencies.Libraries.snowplowRawEvent,
       Dependencies.Libraries.collectorPayload,
       Dependencies.Libraries.schemaSniffer,
       Dependencies.Libraries.refererParser,
       Dependencies.Libraries.maxmindIplookups,
-      Dependencies.Libraries.json4sJackson,
-      Dependencies.Libraries.json4sScalaz,
       Dependencies.Libraries.igluClient,
       Dependencies.Libraries.scalaUri,
       Dependencies.Libraries.scalaForex,
@@ -67,5 +67,5 @@ lazy val root = project
       Dependencies.Libraries.scalaCheck,
       Dependencies.Libraries.scaldingArgs,
       Dependencies.Libraries.mockito
-    )
+    ) ++ Dependencies.Libraries.circeDeps
   )

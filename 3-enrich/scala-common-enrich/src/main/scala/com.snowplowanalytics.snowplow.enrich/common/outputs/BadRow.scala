@@ -14,22 +14,19 @@ package com.snowplowanalytics.snowplow.enrich.common.outputs
 
 import com.snowplowanalytics.iglu.client.ProcessingMessageNel
 import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
+import io.circe._
+import io.circe.jackson._
+import io.circe.syntax._
 import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.format.DateTimeFormat
 import scalaz._
 import Scalaz._
-import org.json4s._
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
 
-/**
- * Alternate BadRow constructors
- */
+/** Alternate BadRow constructors */
 object BadRow {
 
   /**
    * Constructor using Strings instead of ProcessingMessages
-   *
    * @param line
    * @param errors
    * @return a BadRow
@@ -39,59 +36,61 @@ object BadRow {
 
   /**
    * For rows which are so too long to send to Kinesis and so cannot contain their own original line
-   *
    * @param line
    * @param errors
    * @param tstamp
    * @return a BadRow
    */
-  def oversizedRow(size: Long, errors: NonEmptyList[String], tstamp: Long = System.currentTimeMillis()): String =
-    compact(
-      ("size" -> size) ~
-        ("errors" -> errors.toList.map(e => fromJsonNode(e.toProcessingMessage.asJson))) ~
-        ("failure_tstamp" -> tstamp)
-    )
+  def oversizedRow(
+    size: Long,
+    errors: NonEmptyList[String],
+    tstamp: Long = System.currentTimeMillis()
+  ): String =
+    Json
+      .obj(
+        "size" := Json.fromLong(size),
+        "errors" := Json.arr(
+          errors.toList.map(e => jacksonToCirce(e.toProcessingMessage.asJson)): _*),
+        "failure_tstamp" := Json.fromLong(tstamp)
+      )
+      .noSpaces
 }
 
 /**
  * Models our report on a bad row. Consists of:
- * 1. Our original input line (which was meant
- *    to be a Snowplow enriched event)
+ * 1. Our original input line (which was meant to be a Snowplow enriched event)
  * 2. A non-empty list of our Validation errors
  * 3. A timestamp
  */
-case class BadRow(
+final case class BadRow(
   val line: String,
   val errors: ProcessingMessageNel,
   val tstamp: Long = System.currentTimeMillis()
 ) {
 
   // An ISO valid timestamp formatter
-  private val TstampFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(DateTimeZone.UTC)
+  private val TstampFormat =
+    DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(DateTimeZone.UTC)
 
   /**
-   * Converts a TypeHierarchy into a JSON containing
-   * each element.
-   *
-   * @return the TypeHierarchy as a json4s JValue
+   * Converts a TypeHierarchy into a JSON containing each element.
+   * @return the TypeHierarchy as a Json
    */
-  def toJValue: JValue =
-    ("line" -> line) ~
-      ("errors" -> errors.toList.map(e => fromJsonNode(e.asJson))) ~
-      ("failure_tstamp" -> this.getTimestamp(tstamp))
+  def toJson: Json =
+    Json.obj(
+      "line" := Json.fromString(line),
+      "errors" := Json.arr(errors.toList.map(e => jacksonToCirce(e.asJson)): _*),
+      "failure_tstamp" := getTimestamp(tstamp)
+    )
 
   /**
-   * Converts our BadRow into a single JSON encapsulating
-   * both the input line and errors.
-   *
+   * Converts our BadRow into a single JSON encapsulating both the input line and errors.
    * @return this BadRow as a compact stringified JSON
    */
-  def toCompactJson: String =
-    compact(this.toJValue)
+  def toCompactJson: String = toJson.noSpaces
 
   /**
    * Returns an ISO valid timestamp
-   *
    * @param tstamp The Timestamp to convert
    * @return the formatted Timestamp
    */

@@ -26,23 +26,16 @@ import Scalaz._
 import utils.ConversionUtils.singleEncodePcts
 
 /**
- * The dedicated loader for events
- * collected by CloudFront.
- *
- * We support the following CloudFront access
- * log formats:
- *
+ * The dedicated loader for events collected by CloudFront.
+ * We support the following CloudFront access log formats:
  * 1. Pre-12 Sep 2012
  * 2. 12 Sep 2012 - 21 Oct 2013
  * 3. 21 Oct 2013 - 29 Apr 2014
- * 4. Potential future updates, provided they
- *    are solely additive in nature
- *
+ * 4. Potential future updates, provided they are solely additive in nature
  * For more details on this format, please see:
  * http://docs.amazonwebservices.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html#LogFileFormat
  */
 object CloudfrontLoader extends Loader[String] {
-
   // The encoding used on CloudFront logs
   private val CollectorEncoding = UTF_8
 
@@ -91,58 +84,47 @@ object CloudfrontLoader extends Loader[String] {
   private val Cf01Jul2014Regex = toRegex(fields01Jul2014, additionalFields = true)
 
   /**
-   * Converts the source string into a
-   * ValidatedMaybeCollectorPayload.
-   *
+   * Converts the source string into a ValidatedMaybeCollectorPayload.
    * @param line A line of data to convert
-   * @return either a set of validation
-   *         errors or an Option-boxed
-   *         CanonicalInput object, wrapped
-   *         in a Scalaz ValidatioNel.
+   * @return either a set of validation errors or an Option-boxed CanonicalInput object, wrapped
+   * in a Scalaz ValidatioNel.
    */
   def toCollectorPayload(line: String): ValidatedMaybeCollectorPayload = line match {
-
     // 1. Header row
     case h if (h.startsWith("#Version:") || h.startsWith("#Fields:")) =>
       None.success
-
     // 2. Not a GET request
-    case CfOriginalPlusAdditionalRegex(_, _, _, _, _, op, _, _, _, _, _, _) if op.toUpperCase != "GET" =>
-      s"Only GET operations supported for CloudFront Collector, not ${op.toUpperCase}".failNel[Option[CollectorPayload]]
-
+    case CfOriginalPlusAdditionalRegex(_, _, _, _, _, op, _, _, _, _, _, _)
+        if op.toUpperCase != "GET" =>
+      s"Only GET operations supported for CloudFront Collector, not ${op.toUpperCase}"
+        .failNel[Option[CollectorPayload]]
     // 3. Row matches original CloudFront format
     case CfOriginalRegex(date, time, _, _, ip, _, _, objct, _, rfr, ua, qs) =>
       CloudfrontLogLine(date, time, ip, objct, rfr, ua, qs).toValidatedMaybeCollectorPayload
-
     case Cf12Sep2012Regex(date, time, _, _, ip, _, _, objct, _, rfr, ua, qs) =>
       CloudfrontLogLine(date, time, ip, objct, rfr, ua, qs).toValidatedMaybeCollectorPayload
-
     case Cf21Oct2013Regex(date, time, _, _, ip, _, _, objct, _, rfr, ua, qs) =>
       CloudfrontLogLine(date, time, ip, objct, rfr, ua, qs).toValidatedMaybeCollectorPayload
-
     case Cf29Apr2014Regex(date, time, _, _, ip, _, _, objct, _, rfr, ua, qs) =>
       CloudfrontLogLine(date, time, ip, objct, rfr, ua, qs).toValidatedMaybeCollectorPayload
-
     case Cf01Jul2014Regex(date, time, _, _, ip, _, _, objct, _, rfr, ua, qs, forwardedFor) =>
       CloudfrontLogLine(date, time, ip, objct, rfr, ua, qs, forwardedFor).toValidatedMaybeCollectorPayload
-
     // 4. Row not recognised
-    case _ => "Line does not match CloudFront header or data row formats".failNel[Option[CollectorPayload]]
+    case _ =>
+      "Line does not match CloudFront header or data row formats".failNel[Option[CollectorPayload]]
   }
 
   /**
-   * Converts a CloudFront log-format date and
-   * a time to a timestamp.
-   *
+   * Converts a CloudFront log-format date and a time to a timestamp.
    * @param date The CloudFront log-format date
    * @param time The CloudFront log-format time
-   * @return the timestamp as a Joda DateTime
-   *         or an error String, all wrapped in
-   *         a Scalaz Validation
+   * @return the timestamp as a Joda DateTime or an error String, all wrapped in a Scalaz Validation
    */
   def toTimestamp(date: String, time: String): Validation[String, DateTime] =
     try {
-      DateTime.parse("%sT%s+00:00".format(date, time)).success // Construct a UTC ISO date from CloudFront date and time
+      DateTime
+        .parse("%sT%s+00:00".format(date, time))
+        .success // Construct a UTC ISO date from CloudFront date and time
     } catch {
       case NonFatal(e) =>
         "Unexpected exception converting date [%s] and time [%s] to timestamp: [%s]"
@@ -151,10 +133,7 @@ object CloudfrontLoader extends Loader[String] {
     }
 
   /**
-   * Checks whether a String field is a hyphen
-   * "-", which is used by CloudFront to signal
-   * a null.
-   *
+   * Checks whether a String field is a hyphen "-", which is used by CloudFront to signal a null.
    * @param field The field to check
    * @return True if the String was a hyphen "-"
    */
@@ -165,14 +144,9 @@ object CloudfrontLoader extends Loader[String] {
   }
 
   /**
-   * 'Cleans' a string to make it parsable by
-   * URLDecoder.decode.
-   *
-   * The '%' character seems to be appended to the
-   * end of some URLs in the CloudFront logs, causing
-   * Exceptions when using URLDecoder.decode. Perhaps
-   * a CloudFront bug?
-   *
+   * 'Cleans' a string to make it parsable by URLDecoder.decode.
+   * The '%' character seems to be appended to the end of some URLs in the CloudFront logs, causing
+   * Exceptions when using URLDecoder.decode. Perhaps a CloudFront bug?
    * @param uri The String to clean
    * @return the cleaned string
    */
@@ -195,8 +169,8 @@ object CloudfrontLoader extends Loader[String] {
     rfr: String,
     ua: String,
     qs: String,
-    forwardedFor: String = "-") {
-
+    forwardedFor: String = "-"
+  ) {
     def toValidatedMaybeCollectorPayload: ValidatedMaybeCollectorPayload = {
       // Validations, and let's strip double-encodings
       val timestamp = toTimestamp(date, time)
@@ -213,22 +187,23 @@ object CloudfrontLoader extends Loader[String] {
 
       val api = CollectorApi.parse(objct)
 
-      (timestamp.toValidationNel |@| querystring.toValidationNel |@| api.toValidationNel) { (t, q, a) =>
-        CollectorPayload(
-          q,
-          CollectorName,
-          CollectorEncoding.toString,
-          None, // No hostname for CloudFront
-          Some(t),
-          toOption(ip),
-          toOption(userAgent),
-          referer,
-          Nil, // No headers for CloudFront
-          None, // No collector-set user ID for CloudFront
-          a, // API vendor/version
-          None, // No content type
-          None // No request body
-        ).some
+      (timestamp.toValidationNel |@| querystring.toValidationNel |@| api.toValidationNel) {
+        (t, q, a) =>
+          CollectorPayload(
+            q,
+            CollectorName,
+            CollectorEncoding.toString,
+            None, // No hostname for CloudFront
+            Some(t),
+            toOption(ip),
+            toOption(userAgent),
+            referer,
+            Nil, // No headers for CloudFront
+            None, // No collector-set user ID for CloudFront
+            a, // API vendor/version
+            None, // No content type
+            None // No request body
+          ).some
       }
     }
   }

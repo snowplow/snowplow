@@ -14,24 +14,22 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-import com.fasterxml.jackson.core.JsonParseException
+import cats.instances.option._
+import cats.syntax.either._
 import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
+import io.circe._
+import io.circe.parser._
 import org.joda.time.DateTime
 import scalaz._
 import Scalaz._
-import org.json4s._
-import org.json4s.jackson.JsonMethods._
 
 import loaders.CollectorPayload
-import utils.{JsonUtils => JU}
 
 /**
- * Transforms a collector payload which conforms to
- * a known version of the HubSpot webhook subscription
- * into raw events.
+ * Transforms a collector payload which conforms to a known version of the HubSpot webhook
+ * subscription into raw events.
  */
 object HubSpotAdapter extends Adapter {
-
   // Vendor name for Failure Message
   private val VendorName = "HubSpot"
 
@@ -55,105 +53,100 @@ object HubSpotAdapter extends Adapter {
   )
 
   /**
-   * Converts a CollectorPayload instance into raw events.
-   * A HubSpot Tracking payload can contain many events in one.
-   * We expect the type parameter to be 1 of 9 options otherwise
-   * we have an unsupported event type.
-   *
-   * @param payload The CollectorPaylod containing one or more
-   *        raw events as collected by a Snowplow collector
-   * @param resolver (implicit) The Iglu resolver used for
-   *        schema lookup and validation. Not used
-   * @return a Validation boxing either a NEL of RawEvents on
-   *         Success, or a NEL of Failure Strings
+   * Converts a CollectorPayload instance into raw events. A HubSpot Tracking payload can contain
+   * many events in one. We expect the type parameter to be 1 of 9 options otherwise we have an
+   * unsupported event type.
+   * @param payload CollectorPayload containing one or more raw events
+   * @param resolver (implicit) The Iglu resolver used for schema lookup and validation. Not used
+   * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
     (payload.body, payload.contentType) match {
-      case (None, _) => s"Request body is empty: no ${VendorName} events to process".failNel
+      case (None, _) => s"Request body is empty: no $VendorName events to process".failNel
       case (_, None) =>
-        s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failNel
+        s"Request body provided but content type empty, expected $ContentType for $VendorName".failNel
       case (_, Some(ct)) if ct != ContentType =>
-        s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failNel
-      case (Some(body), _) => {
-
+        s"Content type of $ct provided, expected $ContentType for $VendorName".failNel
+      case (Some(body), _) =>
         payloadBodyToEvents(body) match {
           case Failure(str) => str.failNel
-          case Success(list) => {
-
+          case Success(list) =>
             // Create our list of Validated RawEvents
             val rawEventsList: List[Validated[RawEvent]] =
               for {
                 (event, index) <- list.zipWithIndex
               } yield {
-
-                val eventType: Option[String] = (event \ "subscriptionType").extractOpt[String]
+                val eventType: Option[String] = for {
+                  obj <- event.asObject
+                  subType <- obj("subscriptionType")
+                  subTypeAsString <- subType.asString
+                } yield subTypeAsString
                 for {
                   schema <- lookupSchema(eventType, VendorName, index, EventSchemaMap)
                 } yield {
-
                   val formattedEvent = reformatParameters(event)
                   val qsParams = toMap(payload.querystring)
                   RawEvent(
                     api = payload.api,
-                    parameters = toUnstructEventParams(TrackerVersion, qsParams, schema, formattedEvent, "srv"),
+                    parameters = toUnstructEventParams(
+                      TrackerVersion,
+                      qsParams,
+                      schema,
+                      formattedEvent,
+                      "srv"),
                     contentType = payload.contentType,
                     source = payload.source,
                     context = payload.context
                   )
                 }
               }
-
             // Processes the List for Failures and Successes and returns ValidatedRawEvents
             rawEventsListProcessor(rawEventsList)
-          }
         }
-      }
     }
 
   /**
-   * Returns a list of JValue events from the
-   * HubSpot payload
-   *
-   * @param body The payload body from the HubSpot
-   *        event
-   * @return either a Successful List of JValue JSONs
-   *         or a Failure String
+   * Returns a list of JValue events from the HubSpot payload
+   * @param body The payload body from the HubSpot event
+   * @return either a Successful List of JValue JSONs or a Failure String
    */
-  private[registry] def payloadBodyToEvents(body: String): Validation[String, List[JValue]] =
-    try {
-      val parsed = parse(body)
-      parsed match {
-        case JArray(list) => list.success
-        case _ => s"Could not resolve ${VendorName} payload into a JSON array of events".fail
-      }
-    } catch {
-      case e: JsonParseException => {
-        val exception = JU.stripInstanceEtc(e.toString).orNull
-        s"${VendorName} payload failed to parse into JSON: [${exception}]".fail
-      }
-    }
+  private[registry] def payloadBodyToEvents(body: String): Validation[String, List[Json]] =
+    Validation.fromEither(for {
+      b <- parse(body)
+        .leftMap(e => s"$VendorName payload failed to parse into JSON: [${e.getMessage}]")
+      a <- b.asArray.toRight(s"Could not resolve $VendorName payload into a JSON array of events")
+    } yield a.toList)
 
   /**
-   * Returns an updated HubSpot event JSON where
-   * the "subscriptionType" field is removed
-   * and "occurredAt" fields' values have been converted
-   *
-   * @param json The event JSON which we need to
-   *        update values for
+   * Returns an updated HubSpot event JSON where the "subscriptionType" field is removed and
+   * "occurredAt" fields' values have been converted
+   * @param json The event JSON which we need to update values for
    * @return the updated JSON with updated fields and values
    */
-  def reformatParameters(json: JValue): JValue = {
-
-    def toStringField(value: Long): JString = {
+  def reformatParameters(json: Json): Json = {
+    def toStringField(value: Long): String = {
       val dt: DateTime = new DateTime(value)
-      JString(JsonSchemaDateTimeFormat.print(dt))
+      JsonSchemaDateTimeFormat.print(dt)
     }
 
-    json removeField {
-      case ("subscriptionType", JString(s)) => true
-      case _ => false
-    } transformField {
-      case ("occurredAt", JInt(value)) => ("occurredAt", toStringField(value.toLong))
-    }
+    val longToDateString: Kleisli[Option, Json, Json] = Kleisli(
+      (json: Json) =>
+        json
+          .as[Long]
+          .toOption
+          .map(v => Json.fromString(toStringField(v)))
+    )
+
+    val occurredAtKey = "occurredAt"
+    (for {
+      jObj <- json.asObject
+      newValue = jObj.kleisli
+        .andThen(longToDateString)
+        .run(occurredAtKey)
+      res = newValue
+        .map(v => jObj.add(occurredAtKey, v))
+        .getOrElse(jObj)
+        .remove("subscriptionType")
+    } yield Json.fromJsonObject(res)).getOrElse(json)
   }
 }

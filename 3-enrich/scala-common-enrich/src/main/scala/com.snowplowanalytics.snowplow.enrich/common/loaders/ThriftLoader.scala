@@ -16,9 +16,12 @@ package loaders
 import java.nio.charset.Charset
 
 import scala.collection.JavaConversions._
+import scala.util.control.NonFatal
 
 import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
-import com.snowplowanalytics.snowplow.CollectorPayload.thrift.model1.{CollectorPayload => CollectorPayload1}
+import com.snowplowanalytics.snowplow.CollectorPayload.thrift.model1.{
+  CollectorPayload => CollectorPayload1
+}
 import com.snowplowanalytics.snowplow.SchemaSniffer.thrift.model1.SchemaSniffer
 import com.snowplowanalytics.snowplow.collectors.thrift.SnowplowRawEvent
 import org.apache.http.NameValuePair
@@ -27,31 +30,25 @@ import org.joda.time.{DateTime, DateTimeZone}
 import scalaz._
 import Scalaz._
 
-/**
- * Loader for Thrift SnowplowRawEvent objects.
- */
+/** Loader for Thrift SnowplowRawEvent objects. */
 object ThriftLoader extends Loader[Array[Byte]] {
-
   private val thriftDeserializer = new TDeserializer
 
-  private val ExpectedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "CollectorPayload", "thrift", 1, 0)
+  private val ExpectedSchema =
+    SchemaCriterion("com.snowplowanalytics.snowplow", "CollectorPayload", "thrift", 1, 0)
 
   /**
    * Converts the source string into a ValidatedMaybeCollectorPayload.
    * Checks the version of the raw event and calls the appropriate method.
-   *
-   * @param line A serialized Thrift object Byte array mapped to a String.
-   *   The method calling this should encode the serialized object
-   *   with `snowplowRawEventBytes.map(_.toChar)`.
-   *   Reference: http://stackoverflow.com/questions/5250324/
-   * @return either a set of validation errors or an Option-boxed
-   *         CanonicalInput object, wrapped in a Scalaz ValidatioNel.
+   * @param line A serialized Thrift object Byte array mapped to a String. The method calling this
+   * should encode the serialized object with `snowplowRawEventBytes.map(_.toChar)`.
+   * Reference: http://stackoverflow.com/questions/5250324/
+   * @return either a set of validation errors or an Option-boxed CanonicalInput object, wrapped in
+   * a Scalaz ValidatioNel.
    */
   def toCollectorPayload(line: Array[Byte]): ValidatedMaybeCollectorPayload =
     try {
-
       var schema = new SchemaSniffer
-
       this.synchronized {
         thriftDeserializer.deserialize(
           schema,
@@ -61,7 +58,6 @@ object ThriftLoader extends Loader[Array[Byte]] {
 
       if (schema.isSetSchema) {
         val actualSchema = SchemaKey.parse(schema.getSchema).leftMap(_.toString).toValidationNel
-
         for {
           as <- actualSchema
           res <- if (ExpectedSchema.matches(as)) {
@@ -70,29 +66,25 @@ object ThriftLoader extends Loader[Array[Byte]] {
             s"Verifying record as $ExpectedSchema failed: found $as".failNel
           }
         } yield res
-
       } else {
         convertOldSchema(line)
       }
     } catch {
       // TODO: Check for deserialization errors.
-      case e: Throwable =>
+      case NonFatal(e) =>
         s"Error deserializing raw event: ${e.getMessage}".failNel[Option[CollectorPayload]]
     }
 
   /**
    * Converts the source string into a ValidatedMaybeCollectorPayload.
    * Assumes that the byte array is a serialized CollectorPayload, version 1.
-   *
-   * @param line A serialized Thrift object Byte array mapped to a String.
-   *   The method calling this should encode the serialized object
-   *   with `snowplowRawEventBytes.map(_.toChar)`.
-   *   Reference: http://stackoverflow.com/questions/5250324/
-   * @return either a set of validation errors or an Option-boxed
-   *         CanonicalInput object, wrapped in a Scalaz ValidatioNel.
+   * @param line A serialized Thrift object Byte array mapped to a String. The method calling this
+   * should encode the serialized object with`snowplowRawEventBytes.map(_.toChar)`.
+   * Reference: http://stackoverflow.com/questions/5250324/
+   * @return either a set of validation errors or an Option-boxed CanonicalInput object, wrapped in
+   * a Scalaz ValidatioNel.
    */
   private def convertSchema1(line: Array[Byte]): ValidatedMaybeCollectorPayload = {
-
     var collectorPayload = new CollectorPayload1
     this.synchronized {
       thriftDeserializer.deserialize(
@@ -141,19 +133,15 @@ object ThriftLoader extends Loader[Array[Byte]] {
   }
 
   /**
-   * Converts the source string into a ValidatedMaybeCollectorPayload.
-   * Assumes that the byte array is an old serialized SnowplowRawEvent
-   * which is not self-describing.
-   *
-   * @param line A serialized Thrift object Byte array mapped to a String.
-   *   The method calling this should encode the serialized object
-   *   with `snowplowRawEventBytes.map(_.toChar)`.
-   *   Reference: http://stackoverflow.com/questions/5250324/
-   * @return either a set of validation errors or an Option-boxed
-   *         CanonicalInput object, wrapped in a Scalaz ValidatioNel.
+   * Converts the source string into a ValidatedMaybeCollectorPayload. Assumes that the byte array
+   * is an old serialized SnowplowRawEvent which is not self-describing.
+   * @param line A serialized Thrift object Byte array mapped to a String. The method calling this
+   * should encode the serialized object with `snowplowRawEventBytes.map(_.toChar)`.
+   * Reference: http://stackoverflow.com/questions/5250324/
+   * @return either a set of validation errors or an Option-boxed CanonicalInput object, wrapped in
+   * a Scalaz ValidatioNel.
    */
   private def convertOldSchema(line: Array[Byte]): ValidatedMaybeCollectorPayload = {
-
     var snowplowRawEvent = new SnowplowRawEvent
     this.synchronized {
       thriftDeserializer.deserialize(

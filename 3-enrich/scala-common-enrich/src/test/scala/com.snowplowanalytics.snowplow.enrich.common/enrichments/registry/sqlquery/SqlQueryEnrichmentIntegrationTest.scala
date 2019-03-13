@@ -13,11 +13,13 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry.sqlquery
 
+import cats.syntax.either._
 import com.snowplowanalytics.iglu.client.{JsonSchemaPair, SchemaKey}
-import org.json4s._
-import org.json4s.JsonDSL._
-import org.json4s.jackson.parseJson
-import org.json4s.jackson.JsonMethods.asJsonNode
+import io.circe._
+import io.circe.jackson.{circeToJackson, jacksonToCirce}
+import io.circe.literal._
+import io.circe.parser._
+import io.circe.syntax._
 import org.specs2.Specification
 import org.specs2.scalaz.ValidationMatchers
 
@@ -26,7 +28,7 @@ import outputs.EnrichedEvent
 object SqlQueryEnrichmentIntegrationTest {
   def continuousIntegration: Boolean = sys.env.get("CI") match {
     case Some("true") => true
-    case _            => false
+    case _ => false
   }
 
   /**
@@ -34,19 +36,28 @@ object SqlQueryEnrichmentIntegrationTest {
    * out of *valid* JSON string and [[SchemaKey]].
    * Useful only if we're passing unstruct event or custom context (but not derived) straight into
    * SqlQueryEnrichment.lookup method
-   *
    * WARNING: this is REQUIRED to test custom contexts (not derived!) and unstruct event
    */
   def createPair(key: SchemaKey, validJson: String): JsonSchemaPair = {
-    val hierarchy = parseJson(
-      s"""{"rootId":null,"rootTstamp":null,"refRoot":"events","refTree":["events","${key.name}"],"refParent":"events"}""")
-    (key, asJsonNode(("data", parseJson(validJson)) ~
-      (("hierarchy", hierarchy)) ~
-      (("schema", key.toJValue))))
+    val hierarchy = parse(
+      s"""{"rootId":null,"rootTstamp":null,"refRoot":"events","refTree":["events","${key.name}"],"refParent":"events"}""").toOption
+      .get
+    (
+      key,
+      circeToJackson(
+        Json.obj(
+          "data" := parse(validJson).toOption.get,
+          "hierarchy" := hierarchy,
+          "schema" := jacksonToCirce(key.toJsonNode)
+        )
+      ))
   }
 
-  def createDerived(key: SchemaKey, validJson: String): JObject =
-    (("schema", key.toSchemaUri)) ~ (("data", parseJson(validJson)))
+  def createDerived(key: SchemaKey, validJson: String): Json =
+    Json.obj(
+      "schema" := key.toSchemaUri,
+      "data" := parse(validJson).toOption.get
+    )
 }
 
 import SqlQueryEnrichmentIntegrationTest._
@@ -60,58 +71,61 @@ class SqlQueryEnrichmentIntegrationTest extends Specification with ValidationMat
   """
 
   val SCHEMA_KEY =
-    SchemaKey("com.snowplowanalytics.snowplow.enrichments", "sql_query_enrichment_config", "jsonschema", "1-0-0")
+    SchemaKey(
+      "com.snowplowanalytics.snowplow.enrichments",
+      "sql_query_enrichment_config",
+      "jsonschema",
+      "1-0-0")
 
   def e1 = {
-    val configuration = parseJson("""
-        |{
-        |  "vendor": "com.snowplowanalytics.snowplow.enrichments",
-        |  "name": "sql_query_enrichment_config",
-        |  "enabled": true,
-        |  "parameters": {
-        |    "inputs": [],
-        |    "database": {
-        |      "postgresql": {
-        |        "host": "localhost",
-        |        "port": 5432,
-        |        "sslMode": false,
-        |        "username": "enricher",
-        |        "password": "supersecret1",
-        |        "database": "sql_enrichment_test"
-        |      }
-        |    },
-        |    "query": {
-        |      "sql": "SELECT 42 AS \"singleColumn\""
-        |    },
-        |    "output": {
-        |      "expectedRows": "AT_MOST_ONE",
-        |      "json": {
-        |        "schema": "iglu:com.acme/singleColumn/jsonschema/1-0-0",
-        |        "describes": "ALL_ROWS",
-        |        "propertyNames": "AS_IS"
-        |      }
-        |    },
-        |    "cache": {
-        |      "size": 3000,
-        |      "ttl": 60
-        |    }
-        |  }
-        |}
-      """.stripMargin)
+    val configuration = json"""
+      {
+        "vendor": "com.snowplowanalytics.snowplow.enrichments",
+        "name": "sql_query_enrichment_config",
+        "enabled": true,
+        "parameters": {
+          "inputs": [],
+          "database": {
+            "postgresql": {
+              "host": "localhost",
+              "port": 5432,
+              "sslMode": false,
+              "username": "enricher",
+              "password": "supersecret1",
+              "database": "sql_enrichment_test"
+            }
+          },
+          "query": {
+            "sql": "SELECT 42 AS \"singleColumn\""
+          },
+          "output": {
+            "expectedRows": "AT_MOST_ONE",
+            "json": {
+              "schema": "iglu:com.acme/singleColumn/jsonschema/1-0-0",
+              "describes": "ALL_ROWS",
+              "propertyNames": "AS_IS"
+            }
+          },
+          "cache": {
+            "size": 3000,
+            "ttl": 60
+          }
+        }
+      }
+      """
 
     val event = new EnrichedEvent
 
-    val config  = SqlQueryEnrichmentConfig.parse(configuration, SCHEMA_KEY)
+    val config = SqlQueryEnrichmentConfig.parse(configuration, SCHEMA_KEY)
     val context = config.flatMap(_.lookup(event, Nil, Nil, Nil))
 
-    val correctContext = parseJson("""
-        |{
-        |  "schema": "iglu:com.acme/singleColumn/jsonschema/1-0-0",
-        |  "data": {
-        |    "singleColumn": 42
-        |  }
-        |}
-      """.stripMargin)
+    val correctContext = json"""
+      {
+        "schema": "iglu:com.acme/singleColumn/jsonschema/1-0-0",
+        "data": {
+          "singleColumn": 42
+        }
+      }"""
 
     context must beSuccessful.like {
       case List(json) => json must beEqualTo(correctContext)
@@ -127,94 +141,92 @@ class SqlQueryEnrichmentIntegrationTest extends Specification with ValidationMat
    * + cache
    */
   def e2 = {
-
-    val configuration = parseJson(
+    val configuration = parse(
       """
-        |{
-        |  "vendor": "com.snowplowanalytics.snowplow.enrichments",
-        |  "name": "sql_query_enrichment_config",
-        |  "enabled": true,
-        |  "parameters": {
-        |    "inputs": [
-        |      {
-        |        "placeholder": 1,
-        |        "pojo": {
-        |          "field": "geo_city"
-        |        }
-        |      },
-        |
-        |      {
-        |        "placeholder": 2,
-        |        "json": {
-        |          "field": "derived_contexts",
-        |          "schemaCriterion": "iglu:org.openweathermap/weather/jsonschema/*-*-*",
-        |          "jsonPath": "$.dt"
-        |        }
-        |      },
-        |
-        |      {
-        |        "placeholder": 3,
-        |        "pojo": {
-        |          "field": "user_id"
-        |        }
-        |      },
-        |
-        |      {
-        |        "placeholder": 3,
-        |        "json": {
-        |           "field": "contexts",
-        |           "schemaCriterion": "iglu:com.snowplowanalytics.snowplow/client_session/jsonschema/1-*-*",
-        |           "jsonPath": "$.userId"
-        |         }
-        |      },
-        |
-        |      {
-        |        "placeholder": 4,
-        |        "json": {
-        |           "field": "contexts",
-        |           "schemaCriterion": "iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-1-*",
-        |           "jsonPath": "$.speed"
-        |        }
-        |      },
-        |
-        |      {
-        |        "placeholder": 5,
-        |        "json": {
-        |           "field": "unstruct_event",
-        |           "schemaCriterion": "iglu:com.snowplowanalytics.monitoring.kinesis/app_initialized/jsonschema/1-0-0",
-        |           "jsonPath": "$.applicationName"
-        |        }
-        |      }
-        |    ],
-        |
-        |    "database": {
-        |      "postgresql": {
-        |        "host": "localhost",
-        |        "port": 5432,
-        |        "sslMode": false,
-        |        "username": "enricher",
-        |        "password": "supersecret1",
-        |        "database": "sql_enrichment_test"
-        |      }
-        |    },
-        |    "query": {
-        |      "sql": "SELECT city, country, pk FROM enrichment_test WHERE city = ? AND date_time = ? AND name = ? AND speed = ? AND aux = ?;"
-        |    },
-        |    "output": {
-        |      "expectedRows": "AT_MOST_ONE",
-        |      "json": {
-        |        "schema": "iglu:com.acme/demographic/jsonschema/1-0-0",
-        |        "describes": "ALL_ROWS",
-        |        "propertyNames": "CAMEL_CASE"
-        |      }
-        |    },
-        |    "cache": {
-        |      "size": 3000,
-        |      "ttl": 60
-        |    }
-        |  }
-        |}
-      """.stripMargin)
+      {
+        "vendor": "com.snowplowanalytics.snowplow.enrichments",
+        "name": "sql_query_enrichment_config",
+        "enabled": true,
+        "parameters": {
+          "inputs": [
+            {
+              "placeholder": 1,
+              "pojo": {
+                "field": "geo_city"
+              }
+            },
+
+            {
+              "placeholder": 2,
+              "json": {
+                "field": "derived_contexts",
+                "schemaCriterion": "iglu:org.openweathermap/weather/jsonschema/*-*-*",
+                "jsonPath": "$.dt"
+              }
+            },
+
+            {
+              "placeholder": 3,
+              "pojo": {
+                "field": "user_id"
+              }
+            },
+
+            {
+              "placeholder": 3,
+              "json": {
+                 "field": "contexts",
+                 "schemaCriterion": "iglu:com.snowplowanalytics.snowplow/client_session/jsonschema/1-*-*",
+                 "jsonPath": "$.userId"
+               }
+            },
+
+            {
+              "placeholder": 4,
+              "json": {
+                 "field": "contexts",
+                 "schemaCriterion": "iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-1-*",
+                 "jsonPath": "$.speed"
+              }
+            },
+
+            {
+              "placeholder": 5,
+              "json": {
+                 "field": "unstruct_event",
+                 "schemaCriterion": "iglu:com.snowplowanalytics.monitoring.kinesis/app_initialized/jsonschema/1-0-0",
+                 "jsonPath": "$.applicationName"
+              }
+            }
+          ],
+
+          "database": {
+            "postgresql": {
+              "host": "localhost",
+              "port": 5432,
+              "sslMode": false,
+              "username": "enricher",
+              "password": "supersecret1",
+              "database": "sql_enrichment_test"
+            }
+          },
+          "query": {
+            "sql": "SELECT city, country, pk FROM enrichment_test WHERE city = ? AND date_time = ? AND name = ? AND speed = ? AND aux = ?;"
+          },
+          "output": {
+            "expectedRows": "AT_MOST_ONE",
+            "json": {
+              "schema": "iglu:com.acme/demographic/jsonschema/1-0-0",
+              "describes": "ALL_ROWS",
+              "propertyNames": "CAMEL_CASE"
+            }
+          },
+          "cache": {
+            "size": 3000,
+            "ttl": 60
+          }
+        }
+      }""").toOption.get
 
     val event1 = new EnrichedEvent
     event1.setGeo_city("Krasnoyarsk")
@@ -227,7 +239,11 @@ class SqlQueryEnrichmentIntegrationTest extends Specification with ValidationMat
       SchemaKey("com.snowplowanalytics.snowplow", "geolocation_context", "jsonschema", "1-1-0"),
       """ {"latitude": 12.5, "longitude": 32.1, "speed": 10.0} """)
     val ue1 = createPair(
-      SchemaKey("com.snowplowanalytics.monitoring.kinesis", "app_initialized", "jsonschema", "1-0-0"),
+      SchemaKey(
+        "com.snowplowanalytics.monitoring.kinesis",
+        "app_initialized",
+        "jsonschema",
+        "1-0-0"),
       """ {"applicationName": "ue_test_krsk"} """)
 
     val event2 = new EnrichedEvent
@@ -241,7 +257,11 @@ class SqlQueryEnrichmentIntegrationTest extends Specification with ValidationMat
       SchemaKey("com.snowplowanalytics.snowplow", "geolocation_context", "jsonschema", "1-1-0"),
       """ {"latitude": 12.5, "longitude": 32.1, "speed": 25.0} """)
     val ue2 = createPair(
-      SchemaKey("com.snowplowanalytics.monitoring.kinesis", "app_initialized", "jsonschema", "1-0-0"),
+      SchemaKey(
+        "com.snowplowanalytics.monitoring.kinesis",
+        "app_initialized",
+        "jsonschema",
+        "1-0-0"),
       """ {"applicationName": "ue_test_london"} """)
 
     val event3 = new EnrichedEvent
@@ -255,7 +275,11 @@ class SqlQueryEnrichmentIntegrationTest extends Specification with ValidationMat
       SchemaKey("com.snowplowanalytics.snowplow", "geolocation_context", "jsonschema", "1-1-0"),
       """ {"latitude": 12.5, "longitude": 32.1, "speed": 2.5} """)
     val ue3 = createPair(
-      SchemaKey("com.snowplowanalytics.monitoring.kinesis", "app_initialized", "jsonschema", "1-0-0"),
+      SchemaKey(
+        "com.snowplowanalytics.monitoring.kinesis",
+        "app_initialized",
+        "jsonschema",
+        "1-0-0"),
       """ {"applicationName": "ue_test_ny"} """)
 
     val event4 = new EnrichedEvent
@@ -273,45 +297,77 @@ class SqlQueryEnrichmentIntegrationTest extends Specification with ValidationMat
       SchemaKey("com.snowplowanalytics.snowplow", "geolocation_context", "jsonschema", "1-1-0"),
       """ {"latitude": 12.5, "longitude": 32.1, "speed": 25.0} """)
     val ue4 = createPair(
-      SchemaKey("com.snowplowanalytics.monitoring.kinesis", "app_initialized", "jsonschema", "1-0-0"),
+      SchemaKey(
+        "com.snowplowanalytics.monitoring.kinesis",
+        "app_initialized",
+        "jsonschema",
+        "1-0-0"),
       """ {"applicationName": "ue_test_london"} """)
 
     val config = SqlQueryEnrichmentConfig.parse(configuration, SCHEMA_KEY)
 
-    val context1        = config.flatMap(_.lookup(event1, List(weatherContext1), List(geoContext1), List(ue1)))
-    val result_context1 = parseJson("""|{"schema":"iglu:com.acme/demographic/jsonschema/1-0-0",
-        |  "data": {
-        |    "city": "Krasnoyarsk",
-        |    "country": "Russia",
-        |    "pk": 1}}""".stripMargin)
+    val context1 =
+      config.flatMap(_.lookup(event1, List(weatherContext1), List(geoContext1), List(ue1)))
+    val result_context1 = json"""
+      {
+        "schema":"iglu:com.acme/demographic/jsonschema/1-0-0",
+        "data": {
+          "city": "Krasnoyarsk",
+          "country": "Russia",
+          "pk": 1
+        }
+      }"""
 
-    val context2        = config.flatMap(_.lookup(event2, List(weatherContext2), List(geoContext2), List(ue2)))
-    val result_context2 = parseJson("""|{"schema":"iglu:com.acme/demographic/jsonschema/1-0-0",
-        |  "data": {
-        |    "city": "London",
-        |    "country": "England",
-        |    "pk": 2}}""".stripMargin)
+    val context2 =
+      config.flatMap(_.lookup(event2, List(weatherContext2), List(geoContext2), List(ue2)))
+    val result_context2 = json"""
+      {
+        "schema":"iglu:com.acme/demographic/jsonschema/1-0-0",
+        "data": {
+          "city": "London",
+          "country": "England",
+          "pk": 2
+        }
+      }"""
 
-    val context3        = config.flatMap(_.lookup(event3, List(weatherContext3), List(geoContext3), List(ue3)))
-    val result_context3 = parseJson("""|{"schema":"iglu:com.acme/demographic/jsonschema/1-0-0",
-        |  "data": {
-        |    "city": "New York",
-        |    "country": "USA",
-        |    "pk": 3}}
-      """.stripMargin)
+    val context3 =
+      config.flatMap(_.lookup(event3, List(weatherContext3), List(geoContext3), List(ue3)))
+    val result_context3 = json"""
+      {
+        "schema":"iglu:com.acme/demographic/jsonschema/1-0-0",
+        "data": {
+          "city": "New York",
+          "country": "USA",
+          "pk": 3
+        }
+      }"""
 
-    val context4        = config.flatMap(_.lookup(event4, List(weatherContext4), List(geoContext4, clientSession4), List(ue4)))
-    val result_context4 = parseJson("""|{"schema":"iglu:com.acme/demographic/jsonschema/1-0-0",
-        |  "data": {
-        |    "city": "London",
-        |    "country": "England",
-        |    "pk": 2}}""".stripMargin)
+    val context4 = config.flatMap(
+      _.lookup(event4, List(weatherContext4), List(geoContext4, clientSession4), List(ue4)))
+    val result_context4 = json"""
+      {
+        "schema":"iglu:com.acme/demographic/jsonschema/1-0-0",
+        "data": {
+          "city": "London",
+          "country": "England",
+          "pk": 2
+        }
+      }"""
 
-    val res1  = context1 must beSuccessful.like { case List(ctx)                  => ctx must beEqualTo(result_context1) }
-    val res2  = context2 must beSuccessful.like { case List(ctx)                  => ctx must beEqualTo(result_context2) }
-    val res3  = context3 must beSuccessful.like { case List(ctx)                  => ctx must beEqualTo(result_context3) }
-    val res4  = context4 must beSuccessful.like { case List(ctx)                  => ctx must beEqualTo(result_context4) }
-    val cache = config.map(_.cache.actualLoad) must beSuccessful.like { case size => size must beEqualTo(3) }
+    val res1 = context1 must beSuccessful.like {
+      case List(ctx) => ctx must beEqualTo(result_context1)
+    }
+    val res2 = context2 must beSuccessful.like {
+      case List(ctx) => ctx must beEqualTo(result_context2)
+    }
+    val res3 = context3 must beSuccessful.like {
+      case List(ctx) => ctx must beEqualTo(result_context3)
+    }
+    val res4 = context4 must beSuccessful.like {
+      case List(ctx) => ctx must beEqualTo(result_context4)
+    }
+    val cache = config.map(_.cache.actualLoad) must
+      beSuccessful.like { case size => size must beEqualTo(3) }
 
     res1.and(res2).and(res3).and(res4).and(cache)
   }

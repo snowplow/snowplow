@@ -15,8 +15,7 @@ package enrichments.registry.apirequest
 
 import java.net.URLEncoder
 
-import org.json4s.DefaultFormats
-import org.json4s.jackson.Serialization
+import io.circe.syntax._
 import scalaz._
 import Scalaz._
 
@@ -24,7 +23,6 @@ import utils.HttpClient
 
 /**
  * API client able to make HTTP requests
- *
  * @param method HTTP method
  * @param uri URI template
  * @param authentication auth preferences
@@ -46,7 +44,6 @@ case class HttpApi(method: String, uri: String, timeout: Int, authentication: Au
   /**
    * Primary API method, taking kv-context derived from event (POJO and contexts),
    * generating request and sending it
-   *
    * @param url URL to query
    * @param body optional request body
    * @return self-describing JSON ready to be attached to event contexts
@@ -59,7 +56,6 @@ case class HttpApi(method: String, uri: String, timeout: Int, authentication: Au
   /**
    * Build URL from URI templates (http://acme.com/{{key1}}/{{key2}}
    * Context values taken from event will be URL-encoded
-   *
    * @param context key-value context to substitute
    * @return Some request if everything is built correct,
    *         None if some placeholders weren't matched
@@ -72,14 +68,12 @@ case class HttpApi(method: String, uri: String, timeout: Int, authentication: Au
 
   /**
    * Build request data body when the method supports this
-   *
    * @param context key-value context
-   * @return Some body data if method supports body,
-   *         None if method does not support body
+   * @return Some body data if method supports body, None if method does not support body
    */
   private[apirequest] def buildBody(context: Map[String, String]): Option[String] =
     method match {
-      case "POST" | "PUT" => Some(Serialization.write(context)(DefaultFormats))
+      case "POST" | "PUT" => Some(context.asJson.noSpaces)
       case "GET" => None
     }
 }
@@ -88,7 +82,6 @@ object HttpApi {
 
   /**
    * Check if URI still contain any braces (it's impossible for URL-encoded string)
-   *
    * @param uri URI generated out of template
    * @return true if uri contains no curly braces
    */
@@ -96,11 +89,9 @@ object HttpApi {
     !(uri.contains('{') || uri.contains('}'))
 
   /**
-   * Replace all keys (within curly braces) inside template `t`
-   * with corresponding value.
+   * Replace all keys (within curly braces) inside template `t` with corresponding value.
    * This function also double checks pair's key contains only allowed characters
    * (as specified in ALE config schema), otherwise regex can be injected
-   *
    * @param t string with placeholders
    * @param pair key-value pair
    * @return template with replaced placehoders for pair's key
@@ -114,12 +105,9 @@ object HttpApi {
 
 /**
  * Helper class to configure authentication for HTTP API
- *
  * @param httpBasic single possible auth type is http-basic
  */
 case class Authentication(httpBasic: Option[HttpBasic])
 
-/**
- * Container for HTTP Basic auth credentials
- */
+/** Container for HTTP Basic auth credentials */
 case class HttpBasic(username: Option[String], password: Option[String])

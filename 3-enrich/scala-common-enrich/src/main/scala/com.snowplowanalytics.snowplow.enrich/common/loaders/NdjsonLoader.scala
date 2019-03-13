@@ -13,59 +13,49 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
-import com.fasterxml.jackson.core.JsonParseException
+import io.circe.parser._
 import scalaz._
 import Scalaz._
-import org.json4s._
-import org.json4s.jackson.JsonMethods._
 
-case class NdjsonLoader(adapter: String) extends Loader[String] {
+final case class NdjsonLoader(adapter: String) extends Loader[String] {
 
   private val CollectorName = "ndjson"
   private val CollectorEncoding = "UTF-8"
 
   /**
-   * Converts the source string into a
-   * CanonicalInput.
-   *
+   * Converts the source string into a CanonicalInput.
    * @param line A line of data to convert
-   * @return a CanonicalInput object, Option-
-   *         boxed, or None if no input was
-   *         extractable.
+   * @return a CanonicalInput object, Option-boxed, or None if no input was extractable.
    */
   override def toCollectorPayload(line: String): ValidatedMaybeCollectorPayload =
-    try {
-
-      if (line.replaceAll("\r?\n", "").isEmpty) {
-        Success(None)
-      } else if (line.split("\r?\n").size > 1) {
-        "Too many lines! Expected single line".failNel
-      } else {
-        parse(line)
-        CollectorApi
-          .parse(adapter)
-          .map(
-            CollectorPayload(
-              Nil,
-              CollectorName,
-              CollectorEncoding,
-              None,
-              None,
-              None,
-              None,
-              None,
-              Nil,
-              None,
-              _,
-              None,
-              Some(line)
-            ).some
-          )
-          .toValidationNel
+    if (line.replaceAll("\r?\n", "").isEmpty) {
+      Success(None)
+    } else if (line.split("\r?\n").size > 1) {
+      "Too many lines! Expected single line".failNel
+    } else {
+      parse(line) match {
+        case Left(e) => s"Unparsable JSON: ${e.getMessage}".failNel
+        case _ =>
+          CollectorApi
+            .parse(adapter)
+            .map(
+              CollectorPayload(
+                Nil,
+                CollectorName,
+                CollectorEncoding,
+                None,
+                None,
+                None,
+                None,
+                None,
+                Nil,
+                None,
+                _,
+                None,
+                Some(line)
+              ).some
+            )
+            .toValidationNel
       }
-
-    } catch {
-      case e: JsonParseException => "Unparsable JSON".failNel
     }
-
 }

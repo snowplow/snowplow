@@ -14,23 +14,15 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-import scala.util.{Failure, Success, Try}
-
 import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
-import org.joda.time.DateTime
+import io.circe._
+import io.circe.parser._
 import scalaz.Scalaz._
-import org.json4s._
-import org.json4s.jackson.JsonMethods._
 
 import loaders.CollectorPayload
 
-/**
- * Transforms a collector payload which conforms to
- * a known version of the Vero webhook
- * into raw events.
- */
+/** Transforms a collector payload which fits the Vero webhook into raw events. */
 object VeroAdapter extends Adapter {
-
   // Vendor name for Failure Message
   private val VendorName = "Vero"
 
@@ -53,28 +45,37 @@ object VeroAdapter extends Adapter {
   )
 
   /**
-   * Converts a payload into a single validated event
-   * Expects a valid json returns failure if one is not present
-   *
+   * Converts a payload into a single validated event. Expects a valid json returns failure if one
+   * is not present
    * @param json Payload body that is sent by Vero
    * @param payload The details of the payload
-   * @return a Validation boxing either a NEL of RawEvents on
-   *         Success, or a NEL of Failure Strings
+   * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
   private def payloadBodyToEvent(json: String, payload: CollectorPayload): Validated[RawEvent] =
     for {
-      parsed <- Try(parse(json)) match {
-        case Success(p) => p.successNel
-        case Failure(e) => s"$VendorName event failed to parse into JSON: [${e.getMessage}]".failureNel
+      parsed <- parse(json) match {
+        case Right(p) => p.successNel
+        case Left(e) =>
+          s"$VendorName event failed to parse into JSON: [${e.getMessage}]".failureNel
       }
-      eventType <- Try((parsed \ "type").extract[String]) match {
-        case Success(et) => et.successNel
-        case Failure(e) => s"Could not extract type from $VendorName event JSON: [${e.getMessage}]".failureNel
+      eventType <- parsed.hcursor.get[String]("type") match {
+        case Right(et) => et.successNel
+        case Left(e) =>
+          s"Could not extract type from $VendorName event JSON: [${e.getMessage}]".failureNel
       }
-      formattedEvent = cleanupJsonEventValues(parsed, ("type", eventType).some, s"${eventType}_at")
+      formattedEvent = cleanupJsonEventValues(
+        parsed,
+        ("type", eventType).some,
+        List(s"${eventType}_at", "triggered_at")
+      )
       reformattedEvent = reformatParameters(formattedEvent)
       schema <- lookupSchema(eventType.some, VendorName, EventSchemaMap)
-      params = toUnstructEventParams(TrackerVersion, toMap(payload.querystring), schema, reformattedEvent, "srv")
+      params = toUnstructEventParams(
+        TrackerVersion,
+        toMap(payload.querystring),
+        schema,
+        reformattedEvent,
+        "srv")
       rawEvent = RawEvent(
         api = payload.api,
         parameters = params,
@@ -84,19 +85,16 @@ object VeroAdapter extends Adapter {
     } yield rawEvent
 
   /**
-   * Converts a CollectorPayload instance into raw events.
-   * A Vero API payload only contains a single event.
-   * We expect the type parameter to match the supported events, else
-   * we have an unsupported event type.
-   *
-   * @param payload The CollectorPayload containing one or more
-   *        raw events as collected by a Snowplow collector
-   * @param resolver (implicit) The Iglu resolver used for
-   *        schema lookup and validation. Not used
-   * @return a Validation boxing either a NEL of RawEvents on
-   *         Success, or a NEL of Failure Strings
+   * Converts a CollectorPayload instance into raw events. A Vero API payload only contains a single
+   * event. We expect the type parameter to match the supported events, otherwise we have an
+   * unsupported event type.
+   * @param payload The CollectorPayload containing one or more raw events
+   * @param resolver (implicit) The Iglu resolver used for schema lookup and validation. Not used
+   * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  override def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
+  override def toRawEvents(
+    payload: CollectorPayload
+  )(implicit resolver: Resolver): ValidatedRawEvents =
     (payload.body, payload.contentType) match {
       case (None, _) => s"Request body is empty: no $VendorName event to process".failureNel
       case (Some(body), _) => {
@@ -106,24 +104,20 @@ object VeroAdapter extends Adapter {
     }
 
   /**
-   * Returns an updated Vero event JSON where
-   * the "_tag" field is renamed to "tag"
-   * and "triggered_at" fields' values have been converted
-   *
-   * @param json The event JSON which we need to
-   *        update values for
+   * Returns an updated Vero event JSON where the "_tags" field is renamed to "tags"
+   * @param json The event JSON which we need to update values for
    * @return the updated JSON with updated fields and values
    */
-  def reformatParameters(json: JValue): JValue = {
-
-    def toStringField(value: Long): JString = {
-      val dt: DateTime = new DateTime(value)
-      JString(JsonSchemaDateTimeFormat.print(dt))
-    }
-
-    json transformField {
-      case ("_tags", JObject(v)) => ("tags", JObject(v))
-      case ("triggered_at", JInt(value)) => ("triggered_at", toStringField(value.toLong * 1000))
+  def reformatParameters(json: Json): Json = {
+    val oldTagsKey = "_tags"
+    val tagsKey = "tags"
+    json.mapObject { obj =>
+      val updatedObj = obj.toMap.map {
+        case (k, v) if k == oldTagsKey => (tagsKey, v)
+        case (k, v) if v.isObject => (k, reformatParameters(v))
+        case (k, v) => (k, v)
+      }
+      JsonObject(updatedObj.toList: _*)
     }
   }
 }

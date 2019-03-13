@@ -19,42 +19,34 @@ import scala.util.control.NonFatal
 
 import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
 import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
+import io.circe._
+import io.circe.syntax._
 import scalaz._
 import Scalaz._
-import org.json4s._
-import org.json4s.DefaultFormats
-import org.json4s.JValue
-import org.json4s.JsonDSL._
 import ua_parser.Parser
 import ua_parser.Client
 
-import utils.{ConversionUtils, ScalazJson4sUtils}
+import utils.{ConversionUtils, ScalazCirceUtils}
 
-/**
- * Companion object. Lets us create a UaParserEnrichment
- * from a JValue.
- */
+/** Companion object. Lets us create a UaParserEnrichment from a Json. */
 object UaParserEnrichmentConfig extends ParseableEnrichment {
-  implicit val formats = DefaultFormats
-
-  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "ua_parser_config", "jsonschema", 1, 0)
+  val supportedSchema =
+    SchemaCriterion("com.snowplowanalytics.snowplow", "ua_parser_config", "jsonschema", 1, 0)
 
   private val localRulefile = "./ua-parser-rules.yml"
 
-  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[UaParserEnrichment] = {
-    val c = UaParserEnrichment(None)
-    isParseable(config, schemaKey).flatMap(conf => {
+  def parse(config: Json, schemaKey: SchemaKey): ValidatedNelMessage[UaParserEnrichment] =
+    isParseable(config, schemaKey).flatMap { conf =>
       (for {
         rules <- getCustomRules(conf)
       } yield UaParserEnrichment(rules)).toValidationNel
-    })
-  }
+    }
 
-  private def getCustomRules(conf: JValue): ValidatedMessage[Option[(URI, String)]] =
-    if (ScalazJson4sUtils.fieldExists(conf, "parameters", "uri")) {
+  private def getCustomRules(conf: Json): ValidatedMessage[Option[(URI, String)]] =
+    if (conf.hcursor.downField("parameters").downField("uri").focus.isDefined) {
       for {
-        uri <- ScalazJson4sUtils.extract[String](conf, "parameters", "uri")
-        db <- ScalazJson4sUtils.extract[String](conf, "parameters", "database")
+        uri <- ScalazCirceUtils.extract[String](conf, "parameters", "uri")
+        db <- ScalazCirceUtils.extract[String](conf, "parameters", "database")
         source <- getUri(uri, db)
       } yield (source, localRulefile).some
     } else {
@@ -71,13 +63,8 @@ object UaParserEnrichmentConfig extends ParseableEnrichment {
       .toProcessingMessage
 }
 
-/**
- * Config for an ua_parser_config enrichment
- *
- * Uses uap-java library to parse client attributes
- */
-case class UaParserEnrichment(customRulefile: Option[(URI, String)]) extends Enrichment {
-
+/** Config for an ua_parser_config enrichment. Uses uap-java library to parse client attributes */
+final case class UaParserEnrichment(customRulefile: Option[(URI, String)]) extends Enrichment {
   override val filesToCache: List[(URI, String)] =
     customRulefile.map(List(_)).getOrElse(List.empty)
 
@@ -106,9 +93,7 @@ case class UaParserEnrichment(customRulefile: Option[(URI, String)]) extends Enr
     parser.leftMap(e => s"Failed to initialize ua parser: [${e.getMessage}]")
   }
 
-  /*
-   * Adds a period in front of a not-null version element
-   */
+  /** Adds a period in front of a not-null version element */
   def prependDot(versionElement: String): String =
     if (versionElement != null) {
       "." + versionElement
@@ -116,9 +101,7 @@ case class UaParserEnrichment(customRulefile: Option[(URI, String)]) extends Enr
       ""
     }
 
-  /*
-   * Prepends space before the versionElement
-   */
+  /** Prepends space before the versionElement */
   def prependSpace(versionElement: String): String =
     if (versionElement != null) {
       " " + versionElement
@@ -126,9 +109,7 @@ case class UaParserEnrichment(customRulefile: Option[(URI, String)]) extends Enr
       ""
     }
 
-  /*
-   * Checks for null value in versionElement for family parameter
-   */
+  /** Checks for null value in versionElement for family parameter */
   def checkNull(versionElement: String): String =
     if (versionElement == null) {
       ""
@@ -137,54 +118,50 @@ case class UaParserEnrichment(customRulefile: Option[(URI, String)]) extends Enr
     }
 
   /**
-   * Extracts the client attributes
-   * from a useragent string, using
-   * UserAgentEnrichment.
-   *
-   * @param useragent The useragent
-   *                  String to extract from.
-   *                  Should be encoded (i.e.
-   *                  not previously decoded).
-   * @return the json or
-   *         the message of the
-   *         exception, boxed in a
-   *         Scalaz Validation
+   * Extracts the client attributes from a useragent string, using UserAgentEnrichment.
+   * @param useragent to extract from. Should be encoded, i.e. not previously decoded.
+   * @return the json or the message of the exception, boxed in a Scalaz Validation
    */
-  def extractUserAgent(useragent: String): Validation[String, JsonAST.JObject] =
+  def extractUserAgent(useragent: String): Validation[String, Json] =
     for {
       parser <- uaParser
       c <- try {
         parser.parse(useragent).success
       } catch {
-        case NonFatal(e) => s"Exception parsing useragent [${useragent}]: [${e.getMessage}]".fail
+        case NonFatal(e) => s"Exception parsing useragent [$useragent]: [${e.getMessage}]".fail
       }
     } yield assembleContext(c)
 
-  /**
-   * Assembles ua_parser_context from a parsed user agent.
-   */
-  def assembleContext(c: Client): JsonAST.JObject = {
+  /** Assembles ua_parser_context from a parsed user agent. */
+  def assembleContext(c: Client): Json = {
     // To display useragent version
     val useragentVersion = checkNull(c.userAgent.family) + prependSpace(c.userAgent.major) + prependDot(
       c.userAgent.minor) + prependDot(c.userAgent.patch)
 
     // To display operating system version
-    val osVersion = checkNull(c.os.family) + prependSpace(c.os.major) + prependDot(c.os.minor) + prependDot(c.os.patch) + prependDot(
-      c.os.patchMinor)
+    val osVersion = checkNull(c.os.family) + prependSpace(c.os.major) + prependDot(c.os.minor) +
+      prependDot(c.os.patch) + prependDot(c.os.patchMinor)
 
-    (("schema" -> "iglu:com.snowplowanalytics.snowplow/ua_parser_context/jsonschema/1-0-0") ~
-      ("data" ->
-        ("useragentFamily" -> c.userAgent.family) ~
-          ("useragentMajor" -> c.userAgent.major) ~
-          ("useragentMinor" -> c.userAgent.minor) ~
-          ("useragentPatch" -> c.userAgent.patch) ~
-          ("useragentVersion" -> useragentVersion) ~
-          ("osFamily" -> c.os.family) ~
-          ("osMajor" -> c.os.major) ~
-          ("osMinor" -> c.os.minor) ~
-          ("osPatch" -> c.os.patch) ~
-          ("osPatchMinor" -> c.os.patchMinor) ~
-          ("osVersion" -> osVersion) ~
-          ("deviceFamily" -> c.device.family)))
+    def getJson(s: String): Json =
+      Option(s).map(Json.fromString).getOrElse(Json.Null)
+
+    Json.obj(
+      "schema" :=
+        Json.fromString("iglu:com.snowplowanalytics.snowplow/ua_parser_context/jsonschema/1-0-0"),
+      "data" := Json.obj(
+        "useragentFamily" := getJson(c.userAgent.family),
+        "useragentMajor" := getJson(c.userAgent.major),
+        "useragentMinor" := getJson(c.userAgent.minor),
+        "useragentPatch" := getJson(c.userAgent.patch),
+        "useragentVersion" := getJson(useragentVersion),
+        "osFamily" := getJson(c.os.family),
+        "osMajor" := getJson(c.os.major),
+        "osMinor" := getJson(c.os.minor),
+        "osPatch" := getJson(c.os.patch),
+        "osPatchMinor" := getJson(c.os.patchMinor),
+        "osVersion" := getJson(osVersion),
+        "deviceFamily" := getJson(c.device.family)
+      )
+    )
   }
 }
