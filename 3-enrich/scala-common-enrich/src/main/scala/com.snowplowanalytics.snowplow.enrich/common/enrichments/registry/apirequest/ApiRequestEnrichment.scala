@@ -16,22 +16,21 @@ package apirequest
 
 import java.util.UUID
 
+import cats.syntax.either._
+import com.snowplowanalytics.iglu.client.{JsonSchemaPair, SchemaCriterion, SchemaKey}
+import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
+import io.circe._
+import io.circe.generic.auto._
+import io.circe.jackson._
+import io.circe.syntax._
 import scalaz._
 import Scalaz._
-import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
-import org.json4s.JsonDSL._
-import org.json4s._
-import org.json4s.jackson.JsonMethods.fromJsonNode
 
 import outputs.EnrichedEvent
-import utils.ScalazJson4sUtils
+import utils.ScalazCirceUtils
 
-/**
- * Lets us create an ApiRequestEnrichmentConfig from a JValue
- */
+/** Lets us create an ApiRequestEnrichmentConfig from a JValue */
 object ApiRequestEnrichmentConfig extends ParseableEnrichment {
-
-  implicit val formats = DefaultFormats
 
   val supportedSchema =
     SchemaCriterion(
@@ -44,43 +43,49 @@ object ApiRequestEnrichmentConfig extends ParseableEnrichment {
 
   /**
    * Creates an ApiRequestEnrichment instance from a JValue.
-   *
    * @param config The enrichment JSON
    * @param schemaKey The SchemaKey provided for the enrichment
-   *        Must be a supported SchemaKey for this enrichment
+   * Must be a supported SchemaKey for this enrichment
    * @return a configured ApiRequestEnrichment instance
    */
-  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[ApiRequestEnrichment] =
+  def parse(config: Json, schemaKey: SchemaKey): ValidatedNelMessage[ApiRequestEnrichment] =
     isParseable(config, schemaKey).flatMap(conf => {
       (for {
-        inputs <- ScalazJson4sUtils.extract[List[Input]](config, "parameters", "inputs")
-        httpApi <- ScalazJson4sUtils.extract[HttpApi](config, "parameters", "api", "http")
-        outputs <- ScalazJson4sUtils.extract[List[Output]](config, "parameters", "outputs")
-        cache <- ScalazJson4sUtils.extract[Cache](config, "parameters", "cache")
+        // input ctor throws exception
+        inputs <- Either.catchNonFatal(
+          ScalazCirceUtils.extract[List[Input]](config, "parameters", "inputs")
+        ) match {
+          case Left(e) => e.getMessage.toProcessingMessage.fail
+          case Right(r) => r
+        }
+        httpApi <- ScalazCirceUtils.extract[HttpApi](config, "parameters", "api", "http")
+        outputs <- ScalazCirceUtils.extract[List[Output]](config, "parameters", "outputs")
+        cache <- ScalazCirceUtils.extract[Cache](config, "parameters", "cache")
       } yield ApiRequestEnrichment(inputs, httpApi, outputs, cache)).toValidationNel
     })
 }
 
-case class ApiRequestEnrichment(inputs: List[Input], api: HttpApi, outputs: List[Output], cache: Cache)
-    extends Enrichment {
-
+case class ApiRequestEnrichment(
+  inputs: List[Input],
+  api: HttpApi,
+  outputs: List[Output],
+  cache: Cache
+) extends Enrichment {
   import ApiRequestEnrichment._
 
   /**
-   * Primary function of the enrichment
-   * Failure means HTTP failure, failed unexpected JSON-value, etc
-   * Successful None skipped lookup (missing key for eg.)
-   *
+   * Primary function of the enrichment. Failure means HTTP failure, failed unexpected JSON-value,
+   * etc. Successful None skipped lookup (missing key for eg.)
    * @param event currently enriching event
    * @param derivedContexts derived contexts
    * @return none if some inputs were missing, validated JSON context if lookup performed
    */
   def lookup(
     event: EnrichedEvent,
-    derivedContexts: List[JObject],
-    customContexts: JsonSchemaPairs,
-    unstructEvent: JsonSchemaPairs): ValidationNel[String, List[JObject]] = {
-
+    derivedContexts: List[Json],
+    customContexts: List[JsonSchemaPair],
+    unstructEvent: List[JsonSchemaPair]
+  ): ValidationNel[String, List[Json]] = {
     // Note that [[JsonSchemaPairs]] have specific structure - it is a pair,
     // where first element is [[SchemaKey]], second element is JSON Object
     // with keys: `data`, `schema` and `hierarchy` and `schema` contains again [[SchemaKey]]
@@ -89,19 +94,24 @@ case class ApiRequestEnrichment(inputs: List[Input], api: HttpApi, outputs: List
     val jsonUnstructEvent = transformRawPairs(unstructEvent).headOption
 
     val templateContext =
-      Input.buildTemplateContext(inputs, event, derivedContexts, jsonCustomContexts, jsonUnstructEvent)
+      Input.buildTemplateContext(
+        inputs,
+        event,
+        derivedContexts,
+        jsonCustomContexts,
+        jsonUnstructEvent)
 
     templateContext.flatMap(getOutputs(_).toValidationNel)
   }
 
   /**
    * Build URI and try to get value for each of [[outputs]]
-   *
    * @param validInputs map to build template context
-   * @return validated list of lookups, whole lookup will be failed if any of
-   *         outputs were failed
+   * @return validated list of lookups, whole lookup will be failed if any of outputs were failed
    */
-  private[apirequest] def getOutputs(validInputs: Option[Map[String, String]]): Validation[String, List[JObject]] = {
+  private[apirequest] def getOutputs(
+    validInputs: Option[Map[String, String]]
+  ): Validation[String, List[Json]] = {
     val result = for {
       templateContext <- validInputs.toList
       url <- api.buildUrl(templateContext).toList
@@ -113,7 +123,6 @@ case class ApiRequestEnrichment(inputs: List[Input], api: HttpApi, outputs: List
 
   /**
    * Check cache for URL and perform HTTP request if value wasn't found
-   *
    * @param url URL to request
    * @param output currently processing output
    * @return validated JObject, in case of success ready to be attached to derived contexts
@@ -121,12 +130,13 @@ case class ApiRequestEnrichment(inputs: List[Input], api: HttpApi, outputs: List
   private[apirequest] def cachedOrRequest(
     url: String,
     body: Option[String],
-    output: Output): Validation[Throwable, JObject] = {
+    output: Output
+  ): Validation[Throwable, Json] = {
     val key = cacheKey(url, body)
     val value = cache.get(key) match {
       case Some(cachedResponse) => cachedResponse
       case None =>
-        val json = api.perform(url, body).flatMap(output.parse)
+        val json = api.perform(url, body).flatMap(output.parseResponse)
         cache.put(key, json)
         json
     }
@@ -134,30 +144,28 @@ case class ApiRequestEnrichment(inputs: List[Input], api: HttpApi, outputs: List
   }
 }
 
-/**
- * Companion object containing common methods for requests and manipulating data
- */
+/** Companion object containing common methods for requests and manipulating data */
 object ApiRequestEnrichment {
 
   /**
-   * Transform pairs of schema and node obtained from [[utils.shredder.Shredder]]
-   * into list of regular self-describing instance representing custom context
-   * or unstruct event
-   *
+   * Transform pairs of schema and node obtained from [[utils.shredder.Shredder]] into list of
+   * regular self-describing instance representing custom context or unstruct event
    * @param pairs list of pairs consisting of schema and Json nodes
-   * @return list of regular JObjects
+   * @return list of regular Json
    */
-  def transformRawPairs(pairs: JsonSchemaPairs): List[JObject] =
+  def transformRawPairs(pairs: List[JsonSchemaPair]): List[Json] =
     pairs.map {
       case (schema, node) =>
         val uri = schema.toSchemaUri
-        val data = fromJsonNode(node)
-        ("schema" -> uri) ~ ("data" -> data \ "data")
+        val data = jacksonToCirce(node)
+        Json.obj(
+          "schema" := Json.fromString(uri),
+          "data" := data.hcursor.downField("data").focus.getOrElse(data)
+        )
     }
 
   /**
    * Creates an UUID based on url and optional body.
-   *
    * @param url URL to query
    * @param body optional request body
    * @return UUID that identifies of the request.

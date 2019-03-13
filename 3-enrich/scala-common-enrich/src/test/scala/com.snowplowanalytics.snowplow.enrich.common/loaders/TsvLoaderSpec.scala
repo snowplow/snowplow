@@ -27,16 +27,18 @@ class TsvLoaderSpec extends Specification with DataTables with ValidationMatcher
 
   def e1 = {
     val expected = CollectorPayload(
-      api         = CollectorApi("com.amazon.aws.cloudfront", "wd_access_log"),
+      api = CollectorApi("com.amazon.aws.cloudfront", "wd_access_log"),
       querystring = Nil,
-      body        = "a\tb".some,
+      body = "a\tb".some,
       contentType = None,
-      source      = CollectorSource("tsv", "UTF-8", None),
-      context     = CollectorContext(None, None, None, None, Nil, None)
+      source = CollectorSource("tsv", "UTF-8", None),
+      context = CollectorContext(None, None, None, None, Nil, None)
     )
-    TsvLoader("com.amazon.aws.cloudfront/wd_access_log").toCollectorPayload("a\tb") must beSuccessful(expected.some)
+    TsvLoader("com.amazon.aws.cloudfront/wd_access_log").toCollectorPayload("a\tb") must beSuccessful(
+      expected.some)
   }
 
   def e2 =
-    TsvLoader("com.amazon.aws.cloudfront/wd_access_log").toCollectorPayload("#Version: 1.0") must beSuccessful(None)
+    TsvLoader("com.amazon.aws.cloudfront/wd_access_log").toCollectorPayload("#Version: 1.0") must beSuccessful(
+      None)
 }

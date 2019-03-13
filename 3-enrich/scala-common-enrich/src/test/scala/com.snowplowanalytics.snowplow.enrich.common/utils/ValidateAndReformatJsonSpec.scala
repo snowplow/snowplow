@@ -26,41 +26,35 @@ class ValidateAndReformatJsonSpec extends Specification with DataTables with Val
   val FieldName = "json"
 
   def e1 =
-    "SPEC NAME"             || "INPUT STR"                    | "EXPECTED" |
-      "Empty JSON"          !! "{}"                           ! "{}" |
-      "Simple JSON #1"      !! """{"key":"value"}"""          ! """{"key":"value"}""" |
-      "Simple JSON #2"      !! """[1,2,3]"""                  ! """[1,2,3]""" |
-      "Tolerated JSON #1"   !! """{"a":9}}}"""                ! """{"a":9}""" |
-      "Tolerated JSON #2"   !! """[];[]"""                    ! """[]""" |
-      "Tolerated JSON #3"   !! """"a":[]"""                   ! "\"a\"" |
-      "Reformatted JSON #1" !! """{ "key" : 23 }"""           ! """{"key":23}""" |
-      "Reformatted JSON #2" !! """[1.00, 2.00, 3.00, 4.00]""" ! """[1.0,2.0,3.0,4.0]""" |
+    "SPEC NAME" || "INPUT STR" | "EXPECTED" |
+      "Empty JSON" !! "{}" ! "{}" |
+      "Simple JSON #1" !! """{"key":"value"}""" ! """{"key":"value"}""" |
+      "Simple JSON #2" !! """[1,2,3]""" ! """[1,2,3]""" |
+      "Reformatted JSON #1" !! """{ "key" : 23 }""" ! """{"key":23}""" |
+      "Reformatted JSON #2" !! """[1.00, 2.00, 3.00, 4.00]""" ! """[1.00,2.00,3.00,4.00]""" |
       "Reformatted JSON #3" !! """
       {
         "a": 23
-      }"""                                                    ! """{"a":23}""" |> { (_, str, expected) =>
+      }""" ! """{"a":23}""" |> { (_, str, expected) =>
       JsonUtils.validateAndReformatJson(FieldName, str) must beSuccessful(expected)
     }
 
-  def err1 =
-    """Field [%s]: invalid JSON [] with parsing error: mapping resulted in null"""
-      .format(FieldName)
-  def err2: (String, Char, Integer, Integer) => String =
-    (str, char, code, pos) =>
-      """Field [%s]: invalid JSON [%s] with parsing error: Unexpected character ('%c' (code %d)): expected a valid value (number, String, array, object, 'true', 'false' or 'null') at [Source: (String)"%2$s"; line: 1, column: %d]"""
-        .format(FieldName, str, char, code, pos)
-  def err3: (String, Char, Integer) => String =
-    (str, char, int) =>
-      """Field [%s]: invalid JSON [%s] with parsing error: Unexpected character ('%c' (code %d)): was expecting double-quote to start field name at [Source: (String)"%2$s"; line: 1, column: 3]"""
-        .format(FieldName, str, char, int)
+  def err1 = s"Field [$FieldName]: invalid JSON [] with parsing error: exhausted input"
+  def err2: (String, String, Int, Int) => String =
+    (str, got, line, col) =>
+      s"Field [$FieldName]: invalid JSON [$str] with parsing error: expected json value got '$got' (line $line, column $col)"
+  def err3: (String, String, Int, Int) => String =
+    (str, got, line, col) =>
+      s"""Field [$FieldName]: invalid JSON [$str] with parsing error: expected " got '$got' (line $line, column $col)"""
 
   def e2 =
-    "SPEC NAME"       || "INPUT STR"    | "EXPECTED" |
-      "Empty string"  !! ""             ! err1 |
-      "Double colons" !! """{"a"::2}""" ! err2("""{"a"::2}""", ':', 58, 7) |
-      "Random noise"  !! "^45fj_"       ! err2("^45fj_", '^', 94, 2) |
-      "Bad key"       !! """{9:"a"}"""  ! err3("""{9:"a"}""", '9', 57) |> { (_, str, expected) =>
-      JsonUtils.validateAndReformatJson(FieldName, str) must beFailing(expected)
+    "SPEC NAME" || "INPUT STR" | "EXPECTED" |
+      "Empty string" !! "" ! err1 |
+      "Double colons" !! """{"a"::2}""" ! err2("""{"a"::2}""", ":2}", 1, 6) |
+      "Random noise" !! "^45fj_" ! err2("^45fj_", "^45fj_", 1, 1) |
+      "Bad key" !! """{9:"a"}""" ! err3("""{9:"a"}""", """9:"a"}""", 1, 2) |> {
+      (_, str, expected) =>
+        JsonUtils.validateAndReformatJson(FieldName, str) must beFailing(expected)
     }
 
 }

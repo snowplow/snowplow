@@ -16,17 +16,14 @@ package loaders
 import scalaz._
 import Scalaz._
 
-/**
- * Loader for TSVs
- */
-case class TsvLoader(adapter: String) extends Loader[String] {
+/** Loader for TSVs */
+final case class TsvLoader(adapter: String) extends Loader[String] {
 
   /**
    * Converts the source TSV into a ValidatedMaybeCollectorPayload.
-   *
    * @param line A TSV
-   * @return either a set of validation errors or an Option-boxed
-   *         CanonicalInput object, wrapped in a Scalaz ValidationNel.
+   * @return either a set of validation errors or an Option-boxed CanonicalInput object, wrapped in
+   * a Scalaz ValidationNel.
    */
   def toCollectorPayload(line: String): ValidatedMaybeCollectorPayload =
     // Throw away the first two lines of Cloudfront web distribution access logs

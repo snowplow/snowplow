@@ -17,29 +17,28 @@ package registry
 import java.net.URI
 import java.nio.charset.StandardCharsets.UTF_8
 
-import scala.util.control.NonFatal
 import scala.collection.JavaConversions._
 import scala.util.{Try, Success => TS, Failure => TF}
 
-import com.fasterxml.jackson.core.JsonParseException
+import cats.instances.either._
+import cats.syntax.either._
 import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
+import io.circe._
+import io.circe.parser._
+import io.circe.optics.JsonPath._
 import org.apache.http.client.utils.URLEncodedUtils
 import org.joda.time.DateTime
 import scalaz._
 import Scalaz._
-import org.json4s._
-import org.json4s.jackson.JsonMethods._
 
 import loaders.CollectorPayload
 import utils.{JsonUtils => JU}
 
 /**
- * Transforms a collector payload which conforms to
- * a known version of the Olark Tracking webhook
+ * Transforms a collector payload which conforms to a known version of the Olark Tracking webhook
  * into raw events.
  */
 object OlarkAdapter extends Adapter {
-
   // Vendor name for Failure Message
   private val VendorName = "Olark"
 
@@ -56,91 +55,82 @@ object OlarkAdapter extends Adapter {
   )
 
   /**
-   * Converts a CollectorPayload instance into raw events.
-   *
-   * An Olark Tracking payload contains one single event
-   * in the body of the payload, stored within a HTTP encoded
-   * string.
-   *
-   * @param payload The CollectorPayload containing one or more
-   *        raw events as collected by a Snowplow collector
-   * @param resolver (implicit) The Iglu resolver used for
-   *        schema lookup and validation. Not used
-   * @return a Validation boxing either a NEL of RawEvents on
-   *         Success, or a NEL of Failure Strings
+   * Converts a CollectorPayload instance into raw events. An Olark Tracking payload contains one
+   * single event in the body of the payload, stored within a HTTP encoded string.
+   * @param payload The CollectorPayload containing one or more raw events
+   * @param resolver (implicit) The Iglu resolver used for schema lookup and validation. Not used
+   * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
     (payload.body, payload.contentType) match {
-      case (None, _) => s"Request body is empty: no ${VendorName} events to process".failureNel
+      case (None, _) => s"Request body is empty: no $VendorName events to process".failureNel
       case (_, None) =>
-        s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failureNel
+        s"Request body provided but content type empty, expected $ContentType for $VendorName".failureNel
       case (_, Some(ct)) if ct != ContentType =>
-        s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failureNel
-      case (Some(body), _) if (body.isEmpty) => s"${VendorName} event body is empty: nothing to process".failureNel
-      case (Some(body), _) => {
+        s"Content type of $ct provided, expected $ContentType for $VendorName".failureNel
+      case (Some(body), _) if (body.isEmpty) =>
+        s"$VendorName event body is empty: nothing to process".failureNel
+      case (Some(body), _) =>
         val qsParams = toMap(payload.querystring)
-        Try { toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).toList) } match {
-          case TF(e) => s"${VendorName} could not parse body: [${JU.stripInstanceEtc(e.getMessage).orNull}]".failureNel
+        Try {
+          toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).toList)
+        } match {
+          case TF(e) =>
+            val message = JU.stripInstanceEtc(e.getMessage).orNull
+            s"$VendorName could not parse body: [$message]".failureNel
           case TS(bodyMap) =>
-            payloadBodyToEvent(bodyMap).flatMap {
-              case event => {
-                val eventType = (event \ "operators") match {
-                  case (JNothing) => Some("offline_message")
-                  case (_) => Some("transcript")
-                }
-                lookupSchema(eventType, VendorName, EventSchemaMap).flatMap {
-                  case schema =>
-                    transformTimestamps(event).flatMap {
-                      case transformedEvent =>
-                        NonEmptyList(
-                          RawEvent(
-                            api = payload.api,
-                            parameters = toUnstructEventParams(
-                              TrackerVersion,
-                              qsParams,
-                              schema,
-                              camelize(transformedEvent),
-                              "srv"),
-                            contentType = payload.contentType,
-                            source = payload.source,
-                            context = payload.context
-                          )).success
-                    }
-                }
+            for {
+              event <- payloadBodyToEvent(bodyMap)
+              eventType = event.hcursor.get[Json]("operators").toOption match {
+                case Some(_) => "transcript"
+                case _ => "offline_message"
               }
-            }
+              schema <- lookupSchema(eventType.some, VendorName, EventSchemaMap)
+              transformedEvent <- transformTimestamps(event)
+            } yield
+              NonEmptyList(
+                RawEvent(
+                  api = payload.api,
+                  parameters = toUnstructEventParams(
+                    TrackerVersion,
+                    qsParams,
+                    schema,
+                    camelize(transformedEvent),
+                    "srv"),
+                  contentType = payload.contentType,
+                  source = payload.source,
+                  context = payload.context
+                ))
         }
-      }
     }
 
   /**
-   * Converts all olark timestamps in a parsed transcript or offline_message json object to iso8601 strings
-   *
+   * Converts all olark timestamps in a parsed transcript or offline_message json object to iso8601
+   * strings
    * @param json a parsed event
    * @return JObject the event with timstamps replaced
    */
-  private def transformTimestamps(json: JValue): Validated[JValue] = {
-    def toMsec(oTs: String): Long =
-      (oTs.split('.') match {
-        case Array(sec) => s"${sec}000"
-        case Array(sec, msec) => s"${sec}${msec.take(3).padTo(3, '0')}"
-      }).toLong
+  private def transformTimestamps(json: Json): Validated[Json] = {
+    def toMsec(oTs: String): Either[String, Long] =
+      for {
+        formatted <- oTs.split('.') match {
+          case Array(sec) => Right(s"${sec}000")
+          case Array(sec, msec) => Right(s"${sec}${msec.take(3).padTo(3, '0')}")
+          case _ => Left(s"$VendorName unexpected timestamp format: $oTs")
+        }
+        long <- Either.catchNonFatal(formatted.toLong).leftMap(_.getMessage)
+      } yield long
 
-    Try {
-      json.transformField {
-        case JField("items", jArray) =>
-          ("items", jArray.transform {
-            case jo: JObject =>
-              jo.transformField {
-                case JField("timestamp", JString(value)) =>
-                  ("timestamp", JString(JsonSchemaDateTimeFormat.print(new DateTime(toMsec(value)))))
-              }
-          })
-      }.successNel
-    } match {
-      case TF(e) =>
-        s"${VendorName} could not convert timestamps: [${JU.stripInstanceEtc(e.getMessage).orNull}]".failureNel
-      case TS(s) => s
+    type EitherString[A] = Either[String, A]
+
+    val modifiedTimestamps: Either[String, Json] =
+      root.items.each.timestamp.string.modifyF[EitherString] { v =>
+        toMsec(v).map(long => JsonSchemaDateTimeFormat.print(new DateTime(long)))
+      }(json)
+
+    modifiedTimestamps match {
+      case Right(json) => json.successNel
+      case Left(e) => s"$VendorName could not convert timestamps: [$e]".failureNel
     }
   }
 
@@ -148,23 +138,15 @@ object OlarkAdapter extends Adapter {
    * Converts a querystring payload into an event
    * @param bodyMap The converted map from the querystring
    */
-  private def payloadBodyToEvent(bodyMap: Map[String, String]): Validated[JObject] =
+  private def payloadBodyToEvent(bodyMap: Map[String, String]): Validated[Json] =
     bodyMap.get("data") match {
-      case None => s"${VendorName} event data does not have 'data' as a key".failureNel
-      case Some("") => s"${VendorName} event data is empty: nothing to process".failureNel
-      case Some(json) => {
-        try {
-          val event = parse(json)
-          event match {
-            case obj: JObject => obj.successNel
-            case _ => s"${VendorName} event wrong type: [%s]".format(event.getClass).failureNel
-          }
-        } catch {
-          case e: JsonParseException =>
-            s"${VendorName} event string failed to parse into JSON: [${JU.stripInstanceEtc(e.getMessage).orNull}]".failureNel
-          case NonFatal(e) =>
-            s"${VendorName} incorrect event string : [${JU.stripInstanceEtc(e.getMessage).orNull}]".failureNel
+      case None => s"$VendorName event data does not have 'data' as a key".failureNel
+      case Some("") => s"$VendorName event data is empty: nothing to process".failureNel
+      case Some(json) =>
+        parse(json) match {
+          case Right(event) => event.successNel
+          case Left(e) =>
+            s"$VendorName event string failed to parse into JSON: [${e.getMessage}]".failureNel
         }
-      }
     }
 }

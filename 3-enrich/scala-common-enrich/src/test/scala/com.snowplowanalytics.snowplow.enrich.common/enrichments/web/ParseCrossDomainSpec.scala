@@ -31,7 +31,8 @@ class ParseCrossDomainSpec extends Specification with DataTables with Validation
     PageEnrichments.parseCrossDomain(Map()) must beSuccessful((None, None))
 
   def e2 = {
-    val expected = "Field [sp_dtm]: [not-a-timestamp] is not in the expected format (ms since epoch)"
+    val expected =
+      "Field [sp_dtm]: [not-a-timestamp] is not in the expected format (ms since epoch)"
     PageEnrichments.parseCrossDomain(Map("_sp" -> "abc.not-a-timestamp")) must beFailing(expected)
   }
 

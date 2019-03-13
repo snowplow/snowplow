@@ -97,7 +97,8 @@ case class PostgresqlDb(
 
   val connectionString = s"jdbc:postgresql://$host:$port/$database?user=$username&password=$password" ++ (if (sslMode)
                                                                                                             "&ssl=true&sslfactory=org.postgresql.ssl.NonValidatingFactory"
-                                                                                                          else "")
+                                                                                                          else
+                                                                                                            "")
 }
 
 /**
@@ -116,5 +117,6 @@ case class MysqlDb(
 
   val connectionString = s"jdbc:mysql://$host:$port/$database?user=$username&password=$password" ++ (if (sslMode)
                                                                                                        "&useSsl=true&verifyServerCertificate=false"
-                                                                                                     else "")
+                                                                                                     else
+                                                                                                       "")
 }

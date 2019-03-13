@@ -13,45 +13,30 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 
+import io.circe._
+import io.circe.syntax._
 import scalaz._
 import Scalaz._
-import org.json4s._
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
 
 import generated.ProjectSettings
 import utils.{ConversionUtils => CU}
 
-/**
- * Miscellaneous enrichments which don't fit into
- * one of the other modules.
- */
+/** Miscellaneous enrichments which don't fit into one of the other modules. */
 object MiscEnrichments {
 
   /**
-   * The version of this ETL. Appends this version
-   * to the supplied "host" ETL.
-   *
-   * @param hostEtlVersion The version of the host ETL
-   *        running this library
+   * The version of this ETL. Appends this version to the supplied "host" ETL.
+   * @param hostEtlVersion The version of the host ETL running this library
    * @return the complete ETL version
    */
   def etlVersion(hostEtlVersion: String): String =
     "%s-common-%s".format(hostEtlVersion, ProjectSettings.version)
 
   /**
-   * Validate the specified
-   * platform.
-   *
-   * @param field The name of
-   *        the field being
-   *        processed
-   * @param platform The code
-   *        for the platform
-   *        generating this
-   *        event.
-   * @return a Scalaz
-   *         ValidatedString.
+   * Validate the specified platform.
+   * @param field The name of the field being processed
+   * @param platform The code for the platform generating this event.
+   * @return a Scalaz ValidatedString.
    */
   val extractPlatform: (String, String) => ValidatedString = (field, platform) => {
     platform match {
@@ -67,16 +52,12 @@ object MiscEnrichments {
     }
   }
 
-  /**
-   * Identity transform.
-   * Straight passthrough.
-   */
+  /** Identity transform. Straight passthrough. */
   val identity: (String, String) => ValidatedString = (field, value) => value.success
 
-  /**
-   * Make a String TSV safe
-   */
-  val toTsvSafe: (String, String) => ValidatedString = (field, value) => CU.makeTsvSafe(value).success
+  /** Make a String TSV safe */
+  val toTsvSafe: (String, String) => ValidatedString = (field, value) =>
+    CU.makeTsvSafe(value).success
 
   /**
    * The X-Forwarded-For header can contain a comma-separated list of IPs especially if it has
@@ -91,14 +72,14 @@ object MiscEnrichments {
 
   /**
    * Turn a list of custom contexts into a self-describing JSON
-   *
    * @param derivedContexts
    * @return Self-describing JSON of custom contexts
    */
-  def formatDerivedContexts(derivedContexts: List[JObject]): String =
-    compact(
-      render(
-        ("schema" -> "iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-1") ~
-          ("data" -> JArray(derivedContexts))
-      ))
+  def formatDerivedContexts(derivedContexts: List[Json]): String =
+    Json
+      .obj(
+        "schema" := "iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-1",
+        "data" := Json.arr(derivedContexts: _*)
+      )
+      .noSpaces
 }
