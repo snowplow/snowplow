@@ -17,20 +17,20 @@ package pii
 
 import java.net.URI
 
+import cats.syntax.either._
 import com.snowplowanalytics.iglu.client.{Resolver, SchemaCriterion}
 import com.snowplowanalytics.iglu.client.repositories.RepositoryRefConfig
+import io.circe.parser._
 import org.joda.time.DateTime
-import org.json4s.jackson.JsonMethods.parse
 import org.apache.commons.codec.digest.DigestUtils
 import org.specs2.Specification
 import org.specs2.scalaz.ValidationMatchers
 import scalaz._
 import Scalaz._
 
+import SpecHelpers.toNameValuePairs
 import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
 import outputs.EnrichedEvent
-import utils.{ScalazJson4sUtils, TestResourcesRepositoryRef}
-import SpecHelpers.toNameValuePairs
 import utils.TestResourcesRepositoryRef
 
 class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatchers {
@@ -49,16 +49,22 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
   def commonSetup(enrichmentMap: EnrichmentMap): List[ValidatedEnrichedEvent] = {
     val enrichmentRegistry = EnrichmentRegistry(enrichmentMap)
     val context =
-      CollectorContext(Some(DateTime.parse("2017-07-14T03:39:39.000+00:00")), Some("127.0.0.1"), None, None, Nil, None)
+      CollectorContext(
+        Some(DateTime.parse("2017-07-14T03:39:39.000+00:00")),
+        Some("127.0.0.1"),
+        None,
+        None,
+        Nil,
+        None)
     val source = CollectorSource("clj-tomcat", "UTF-8", None)
     val collectorPayload = CollectorPayload(
       CollectorApi("com.snowplowanalytics.snowplow", "tp2"),
       toNameValuePairs(
-        "e"   -> "se",
+        "e" -> "se",
         "aid" -> "ads",
         "uid" -> "john@acme.com",
-        "ip"  -> "70.46.123.145",
-        "fp"  -> "its_you_again!",
+        "ip" -> "70.46.123.145",
+        "fp" -> "its_you_again!",
         "co" ->
           """
         |{
@@ -120,18 +126,18 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
       context
     )
     val input: ValidatedMaybeCollectorPayload = Some(collectorPayload).successNel
-    val rrc                                   = new RepositoryRefConfig("test-schema", 1, List("com.snowplowanalytics.snowplow"))
-    val repos                                 = TestResourcesRepositoryRef(rrc, "src/test/resources/iglu-schemas")
-    val adapterRegistry                       = new AdapterRegistry()
-    implicit val resolver                     = new Resolver(repos = List(repos))
-    EtlPipeline.processEvents(adapterRegistry, enrichmentRegistry, s"spark-0.0.0", new DateTime(1500000000L), input)
+    val rrc = new RepositoryRefConfig("test-schema", 1, List("com.snowplowanalytics.snowplow"))
+    val repos = TestResourcesRepositoryRef(rrc, "src/test/resources/iglu-schemas")
+    implicit val resolver = new Resolver(repos = List(repos))
+    EtlPipeline.processEvents(registry, s"spark-0.0.0", new DateTime(1500000000L), input)
   }
 
-  private val ipEnrichment = IpLookupsEnrichment(Some(("geo", new URI("/ignored-in-local-mode/"), "GeoIP2-City.mmdb")),
-                                                 Some(("isp", new URI("/ignored-in-local-mode/"), "GeoIP2-ISP.mmdb")),
-                                                 None,
-                                                 None,
-                                                 true)
+  private val ipEnrichment = IpLookupsEnrichment(
+    Some(("geo", new URI("/ignored-in-local-mode/"), "GeoIP2-City.mmdb")),
+    Some(("isp", new URI("/ignored-in-local-mode/"), "GeoIP2-ISP.mmdb")),
+    None,
+    None,
+    true)
 
   def e1 = {
     val enrichmentMap = Map(
@@ -148,18 +154,21 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
           )
         ),
         false,
-        PiiStrategyPseudonymize("SHA-256", hashFunction = DigestUtils.sha256Hex(_: Array[Byte]), "pepper123")
+        PiiStrategyPseudonymize(
+          "SHA-256",
+          hashFunction = DigestUtils.sha256Hex(_: Array[Byte]),
+          "pepper123")
       )
     )
-    val output   = commonSetup(enrichmentMap = enrichmentMap)
+    val output = commonSetup(enrichmentMap = enrichmentMap)
     val expected = new EnrichedEvent()
-    expected.app_id           = "ads"
-    expected.user_id          = "7d8a4beae5bc9d314600667d2f410918f9af265017a6ade99f60a9c8f3aac6e9"
-    expected.user_ipaddress   = "dd9720903c89ae891ed5c74bb7a9f2f90f6487927ac99afe73b096ad0287f3f5"
-    expected.ip_domain        = null
+    expected.app_id = "ads"
+    expected.user_id = "7d8a4beae5bc9d314600667d2f410918f9af265017a6ade99f60a9c8f3aac6e9"
+    expected.user_ipaddress = "dd9720903c89ae891ed5c74bb7a9f2f90f6487927ac99afe73b096ad0287f3f5"
+    expected.ip_domain = null
     expected.user_fingerprint = "27abac60dff12792c6088b8d00ce7f25c86b396b8c3740480cd18e21068ecff4"
-    expected.geo_city         = null
-    expected.etl_tstamp       = "1970-01-18 08:40:00.000"
+    expected.geo_city = null
+    expected.etl_tstamp = "1970-01-18 08:40:00.000"
     expected.collector_tstamp = "2017-07-14 03:39:39.000"
     output.size must_== 1
     val out = output.head
@@ -182,59 +191,81 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
       "pii_enrichment_config" -> PiiPseudonymizerEnrichment(
         List(
           PiiJson(
-            fieldMutator    = JsonMutators.get("contexts").get,
-            schemaCriterion = SchemaCriterion.parse("iglu:com.acme/email_sent/jsonschema/1-0-*").toOption.get,
-            jsonPath        = "$.emailAddress"
+            fieldMutator = JsonMutators.get("contexts").get,
+            schemaCriterion =
+              SchemaCriterion.parse("iglu:com.acme/email_sent/jsonschema/1-0-*").toOption.get,
+            jsonPath = "$.emailAddress"
           ),
           PiiJson(
-            fieldMutator    = JsonMutators.get("contexts").get,
-            schemaCriterion = SchemaCriterion.parse("iglu:com.acme/email_sent/jsonschema/1-1-0").toOption.get,
-            jsonPath        = "$.data.emailAddress2"
+            fieldMutator = JsonMutators.get("contexts").get,
+            schemaCriterion =
+              SchemaCriterion.parse("iglu:com.acme/email_sent/jsonschema/1-1-0").toOption.get,
+            jsonPath = "$.data.emailAddress2"
           ),
           PiiJson(
-            fieldMutator    = JsonMutators.get("unstruct_event").get,
-            schemaCriterion = SchemaCriterion.parse("iglu:com.mailgun/message_clicked/jsonschema/1-0-0").toOption.get,
-            jsonPath        = "$.ip"
+            fieldMutator = JsonMutators.get("unstruct_event").get,
+            schemaCriterion = SchemaCriterion
+              .parse("iglu:com.mailgun/message_clicked/jsonschema/1-0-0")
+              .toOption
+              .get,
+            jsonPath = "$.ip"
           )
         ),
         false,
-        PiiStrategyPseudonymize("SHA-256", hashFunction = DigestUtils.sha256Hex(_: Array[Byte]), "pepper123")
+        PiiStrategyPseudonymize(
+          "SHA-256",
+          hashFunction = DigestUtils.sha256Hex(_: Array[Byte]),
+          "pepper123")
       )
     )
 
-    val output   = commonSetup(enrichmentMap = enrichmentMap)
+    val output = commonSetup(enrichmentMap = enrichmentMap)
     val expected = new EnrichedEvent()
-    expected.app_id           = "ads"
-    expected.user_id          = "john@acme.com"
-    expected.user_ipaddress   = "70.46.123.145"
-    expected.ip_domain        = null
+    expected.app_id = "ads"
+    expected.user_id = "john@acme.com"
+    expected.user_ipaddress = "70.46.123.145"
+    expected.ip_domain = null
     expected.user_fingerprint = "its_you_again!"
-    expected.geo_city         = null
-    expected.etl_tstamp       = "1970-01-18 08:40:00.000"
+    expected.geo_city = null
+    expected.etl_tstamp = "1970-01-18 08:40:00.000"
     expected.collector_tstamp = "2017-07-14 03:39:39.000"
     output.size must_== 1
     val out = output.head
     out must beSuccessful.like {
       case enrichedEvent =>
-        implicit val formats = org.json4s.DefaultFormats
-        val contextJ         = parse(enrichedEvent.contexts)
-        val unstructEventJ   = parse(enrichedEvent.unstruct_event)
-        (((contextJ \ "data")(0) \ "data" \ "emailAddress")
-          .extract[String] must_== "72f323d5359eabefc69836369e4cabc6257c43ab6419b05dfb2211d0e44284c6") and
-          (((contextJ \ "data")(0) \ "data" \ "emailAddress2").extract[String] must_== "bob@acme.com") and
-          (((contextJ \ "data")(1) \ "data" \ "emailAddress").extract[String] must_== "tim@acme.com") and
-          (((contextJ \ "data")(1) \ "data" \ "emailAddress2").extract[String] must_== "tom@acme.com") and
-          // The following three tests are for the case that the context schema allows the fields data and schema
-          // and in addition the schema field matches the configured schema. There should be no replacement there
-          // (unless that is specified in jsonpath)
-          (((contextJ \ "data")(1) \ "data" \ "data" \ "emailAddress").extract[String] must_== "jim@acme.com") and
-          (((contextJ \ "data")(1) \ "data" \ "data" \ "emailAddress2")
-            .extract[String] must_== "1c6660411341411d5431669699149283d10e070224be4339d52bbc4b007e78c5") and
-          (((contextJ \ "data")(1) \ "data" \ "schema")
-            .extract[String] must_== "iglu:com.acme/email_sent/jsonschema/1-0-0") and
-          (((unstructEventJ \ "data") \ "data" \ "ip")
-            .extract[String] must_== "269c433d0cc00395e3bc5fe7f06c5ad822096a38bec2d8a005367b52c0dfb428") and
-          (((unstructEventJ \ "data") \ "data" \ "myVar2").extract[String] must_== "awesome")
+        val contextJ = parse(enrichedEvent.contexts).toOption.get.hcursor
+        val contextJFirstElement = contextJ.downField("data").downArray
+        val contextJSecondElement = contextJFirstElement.right
+        val unstructEventJ = parse(enrichedEvent.unstruct_event).toOption.get.hcursor
+          .downField("data")
+          .downField("data")
+
+        contextJFirstElement.downField("data").get[String]("emailAddress") must_==
+          Right("72f323d5359eabefc69836369e4cabc6257c43ab6419b05dfb2211d0e44284c6")
+        contextJFirstElement.downField("data").get[String]("emailAddress2") must_==
+          Right("bob@acme.com")
+        contextJSecondElement.downField("data").get[String]("emailAddress") must_==
+          Right("tim@acme.com")
+        contextJSecondElement.downField("data").get[String]("emailAddress2") must_==
+          Right("tom@acme.com")
+        // The following three tests are for the case that the context schema allows the fields
+        // data and schema and in addition the schema field matches the configured schema. There
+        // should be no replacement there (unless that is specified in jsonpath)
+        contextJSecondElement
+          .downField("data")
+          .downField("data")
+          .get[String]("emailAddress") must_== Right("jim@acme.com")
+        contextJSecondElement
+          .downField("data")
+          .downField("data")
+          .get[String]("emailAddress2") must_==
+          Right("1c6660411341411d5431669699149283d10e070224be4339d52bbc4b007e78c5")
+        contextJSecondElement.downField("data").get[String]("schema") must_==
+          Right("iglu:com.acme/email_sent/jsonschema/1-0-0")
+
+        unstructEventJ.get[String]("ip") must_==
+          Right("269c433d0cc00395e3bc5fe7f06c5ad822096a38bec2d8a005367b52c0dfb428")
+        unstructEventJ.get[String]("myVar2") must_== Right("awesome")
     }
   }
 
@@ -244,36 +275,41 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
       "pii_enrichment_config" -> PiiPseudonymizerEnrichment(
         List(
           PiiJson(
-            fieldMutator    = JsonMutators.get("contexts").get,
-            schemaCriterion = SchemaCriterion.parse("iglu:com.acme/email_sent/jsonschema/1-*-*").toOption.get,
-            jsonPath        = "$.field.that.does.not.exist.in.this.instance"
+            fieldMutator = JsonMutators.get("contexts").get,
+            schemaCriterion =
+              SchemaCriterion.parse("iglu:com.acme/email_sent/jsonschema/1-*-*").toOption.get,
+            jsonPath = "$.field.that.does.not.exist.in.this.instance"
           )
         ),
         false,
-        PiiStrategyPseudonymize("SHA-256", hashFunction = DigestUtils.sha256Hex(_: Array[Byte]), "pepper123")
+        PiiStrategyPseudonymize(
+          "SHA-256",
+          hashFunction = DigestUtils.sha256Hex(_: Array[Byte]),
+          "pepper123")
       )
     )
 
-    val output   = commonSetup(enrichmentMap = enrichmentMap)
+    val output = commonSetup(enrichmentMap = enrichmentMap)
     val expected = new EnrichedEvent()
-    expected.app_id           = "ads"
-    expected.user_id          = "john@acme.com"
-    expected.user_ipaddress   = "70.46.123.145"
-    expected.ip_domain        = null
+    expected.app_id = "ads"
+    expected.user_id = "john@acme.com"
+    expected.user_ipaddress = "70.46.123.145"
+    expected.ip_domain = null
     expected.user_fingerprint = "its_you_again!"
-    expected.geo_city         = null
-    expected.etl_tstamp       = "1970-01-18 08:40:00.000"
+    expected.geo_city = null
+    expected.etl_tstamp = "1970-01-18 08:40:00.000"
     expected.collector_tstamp = "2017-07-14 03:39:39.000"
     output.size must_== 1
     val out = output.head
     out must beSuccessful.like {
       case enrichedEvent =>
-        implicit val formats = org.json4s.DefaultFormats
-        val contextJ         = parse(enrichedEvent.contexts)
-        (((contextJ \ "data")(0) \ "data" \ "emailAddress").extract[String] must_== "jim@acme.com") and
-          (((contextJ \ "data")(0) \ "data" \ "emailAddress2").extract[String] must_== "bob@acme.com") and
-          (((contextJ \ "data")(1) \ "data" \ "emailAddress").extract[String] must_== "tim@acme.com") and
-          (((contextJ \ "data")(1) \ "data" \ "emailAddress2").extract[String] must_== "tom@acme.com")
+        val contextJ = parse(enrichedEvent.contexts).toOption.get.hcursor.downField("data")
+        val firstElem = contextJ.downArray.downField("data")
+        val secondElem = contextJ.downArray.right.downField("data")
+        firstElem.get[String]("emailAddress") must_== Right("jim@acme.com")
+        firstElem.get[String]("emailAddress2") must_== Right("bob@acme.com")
+        secondElem.get[String]("emailAddress") must_== Right("tim@acme.com")
+        secondElem.get[String]("emailAddress2") must_== Right("tom@acme.com")
     }
   }
 
@@ -283,38 +319,43 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
       "pii_enrichment_config" -> PiiPseudonymizerEnrichment(
         List(
           PiiJson(
-            fieldMutator    = JsonMutators.get("contexts").get,
-            schemaCriterion = SchemaCriterion.parse("iglu:com.acme/email_sent/jsonschema/1-0-*").toOption.get,
-            jsonPath        = "$.['emailAddress', 'emailAddress2', 'emailAddressNonExistent']" // Last case throws an exeption if misconfigured
+            fieldMutator = JsonMutators.get("contexts").get,
+            schemaCriterion =
+              SchemaCriterion.parse("iglu:com.acme/email_sent/jsonschema/1-0-*").toOption.get,
+            jsonPath = "$.['emailAddress', 'emailAddress2', 'emailAddressNonExistent']" // Last case throws an exeption if misconfigured
           )
         ),
         false,
-        PiiStrategyPseudonymize("SHA-256", hashFunction = DigestUtils.sha256Hex(_: Array[Byte]), "pepper123")
+        PiiStrategyPseudonymize(
+          "SHA-256",
+          hashFunction = DigestUtils.sha256Hex(_: Array[Byte]),
+          "pepper123")
       )
     )
 
-    val output   = commonSetup(enrichmentMap = enrichmentMap)
+    val output = commonSetup(enrichmentMap = enrichmentMap)
     val expected = new EnrichedEvent()
-    expected.app_id           = "ads"
-    expected.user_id          = "john@acme.com"
-    expected.user_ipaddress   = "70.46.123.145"
-    expected.ip_domain        = null
+    expected.app_id = "ads"
+    expected.user_id = "john@acme.com"
+    expected.user_ipaddress = "70.46.123.145"
+    expected.ip_domain = null
     expected.user_fingerprint = "its_you_again!"
-    expected.geo_city         = null
-    expected.etl_tstamp       = "1970-01-18 08:40:00.000"
+    expected.geo_city = null
+    expected.etl_tstamp = "1970-01-18 08:40:00.000"
     expected.collector_tstamp = "2017-07-14 03:39:39.000"
     output.size must_== 1
     val out = output.head
     out must beSuccessful.like {
       case enrichedEvent =>
-        implicit val formats = org.json4s.DefaultFormats
-        val contextJ         = parse(enrichedEvent.contexts)
-        (((contextJ \ "data")(0) \ "data" \ "emailAddress")
-          .extract[String] must_== "72f323d5359eabefc69836369e4cabc6257c43ab6419b05dfb2211d0e44284c6") and
-          (((contextJ \ "data")(0) \ "data" \ "emailAddress2")
-            .extract[String] must_== "1c6660411341411d5431669699149283d10e070224be4339d52bbc4b007e78c5") and
-          (((contextJ \ "data")(1) \ "data" \ "emailAddress").extract[String] must_== "tim@acme.com") and
-          (((contextJ \ "data")(1) \ "data" \ "emailAddress2").extract[String] must_== "tom@acme.com")
+        val contextJ = parse(enrichedEvent.contexts).toOption.get.hcursor.downField("data")
+        val firstElem = contextJ.downArray.downField("data")
+        val secondElem = contextJ.downArray.right.downField("data")
+        firstElem.get[String]("emailAddress") must_==
+          Right("72f323d5359eabefc69836369e4cabc6257c43ab6419b05dfb2211d0e44284c6")
+        firstElem.get[String]("emailAddress2") must_==
+          Right("1c6660411341411d5431669699149283d10e070224be4339d52bbc4b007e78c5")
+        secondElem.get[String]("emailAddress") must_== Right("tim@acme.com")
+        secondElem.get[String]("emailAddress2") must_== Right("tom@acme.com")
     }
   }
 
@@ -324,38 +365,42 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
       "pii_enrichment_config" -> PiiPseudonymizerEnrichment(
         List(
           PiiJson(
-            fieldMutator    = JsonMutators.get("contexts").get,
-            schemaCriterion = SchemaCriterion.parse("iglu:com.acme/email_sent/jsonschema/1-*-0").toOption.get,
-            jsonPath        = "$.emailAddress"
+            fieldMutator = JsonMutators.get("contexts").get,
+            schemaCriterion =
+              SchemaCriterion.parse("iglu:com.acme/email_sent/jsonschema/1-*-0").toOption.get,
+            jsonPath = "$.emailAddress"
           )
         ),
         false,
-        PiiStrategyPseudonymize("SHA-256", hashFunction = DigestUtils.sha256Hex(_: Array[Byte]), "pepper123")
+        PiiStrategyPseudonymize(
+          "SHA-256",
+          hashFunction = DigestUtils.sha256Hex(_: Array[Byte]),
+          "pepper123")
       )
     )
-    val output   = commonSetup(enrichmentMap = enrichmentMap)
+    val output = commonSetup(enrichmentMap = enrichmentMap)
     val expected = new EnrichedEvent()
-    expected.app_id           = "ads"
-    expected.user_id          = "john@acme.com"
-    expected.user_ipaddress   = "70.46.123.145"
-    expected.ip_domain        = null
+    expected.app_id = "ads"
+    expected.user_id = "john@acme.com"
+    expected.user_ipaddress = "70.46.123.145"
+    expected.ip_domain = null
     expected.user_fingerprint = "its_you_again!"
-    expected.geo_city         = null
-    expected.etl_tstamp       = "1970-01-18 08:40:00.000"
+    expected.geo_city = null
+    expected.etl_tstamp = "1970-01-18 08:40:00.000"
     expected.collector_tstamp = "2017-07-14 03:39:39.000"
     output.size must_== 1
     val out = output.head
     out must beSuccessful.like {
       case enrichedEvent =>
-        implicit val formats = org.json4s.DefaultFormats
-        val contextJ         = parse(enrichedEvent.contexts)
-        (((contextJ \ "data")(0) \ "data" \ "emailAddress")
-          .extract[String] must_== "72f323d5359eabefc69836369e4cabc6257c43ab6419b05dfb2211d0e44284c6") and
-          (((contextJ \ "data")(0) \ "data" \ "emailAddress2")
-            .extract[String] must_== "bob@acme.com") and
-          (((contextJ \ "data")(1) \ "data" \ "emailAddress")
-            .extract[String] must_== "09e4160b10703767dcb28d834c1905a182af0f828d6d3512dd07d466c283c840") and
-          (((contextJ \ "data")(1) \ "data" \ "emailAddress2").extract[String] must_== "tom@acme.com")
+        val contextJ = parse(enrichedEvent.contexts).toOption.get.hcursor.downField("data")
+        val firstElem = contextJ.downArray.downField("data")
+        val secondElem = contextJ.downArray.right.downField("data")
+        firstElem.get[String]("emailAddress") must_==
+          Right("72f323d5359eabefc69836369e4cabc6257c43ab6419b05dfb2211d0e44284c6")
+        firstElem.get[String]("emailAddress2") must_== Right("bob@acme.com")
+        secondElem.get[String]("emailAddress") must_==
+          Right("09e4160b10703767dcb28d834c1905a182af0f828d6d3512dd07d466c283c840")
+        secondElem.get[String]("emailAddress2") must_== Right("tom@acme.com")
     }
   }
 
@@ -365,39 +410,41 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
       "pii_enrichment_config" -> PiiPseudonymizerEnrichment(
         List(
           PiiJson(
-            fieldMutator    = JsonMutators.get("contexts").get,
-            schemaCriterion = SchemaCriterion.parse("iglu:com.acme/email_sent/jsonschema/1-*-*").toOption.get,
-            jsonPath        = "$.someInt"
+            fieldMutator = JsonMutators.get("contexts").get,
+            schemaCriterion =
+              SchemaCriterion.parse("iglu:com.acme/email_sent/jsonschema/1-*-*").toOption.get,
+            jsonPath = "$.someInt"
           )
         ),
         false,
-        PiiStrategyPseudonymize("SHA-256", hashFunction = DigestUtils.sha256Hex(_: Array[Byte]), "pepper123")
+        PiiStrategyPseudonymize(
+          "SHA-256",
+          hashFunction = DigestUtils.sha256Hex(_: Array[Byte]),
+          "pepper123")
       )
     )
-    val output   = commonSetup(enrichmentMap = enrichmentMap)
+    val output = commonSetup(enrichmentMap = enrichmentMap)
     val expected = new EnrichedEvent()
-    expected.app_id           = "ads"
-    expected.user_id          = "john@acme.com"
-    expected.user_ipaddress   = "70.46.123.145"
-    expected.ip_domain        = null
+    expected.app_id = "ads"
+    expected.user_id = "john@acme.com"
+    expected.user_ipaddress = "70.46.123.145"
+    expected.ip_domain = null
     expected.user_fingerprint = "its_you_again!"
-    expected.geo_city         = null
-    expected.etl_tstamp       = "1970-01-18 08:40:00.000"
+    expected.geo_city = null
+    expected.etl_tstamp = "1970-01-18 08:40:00.000"
     expected.collector_tstamp = "2017-07-14 03:39:39.000"
     output.size must_== 1
     val out = output.head
     out must beSuccessful.like {
       case enrichedEvent =>
-        implicit val formats = org.json4s.DefaultFormats
-        val contextJ         = parse(enrichedEvent.contexts)
-        (((contextJ \ "data")(0) \ "data" \ "emailAddress")
-          .extract[String] must_== "jim@acme.com") and
-          (((contextJ \ "data")(0) \ "data" \ "emailAddress2")
-            .extract[String] must_== "bob@acme.com") and
-          (((contextJ \ "data")(1) \ "data" \ "emailAddress")
-            .extract[String] must_== "tim@acme.com") and
-          (((contextJ \ "data")(1) \ "data" \ "emailAddress2").extract[String] must_== "tom@acme.com")
-        (((contextJ \ "data")(1) \ "data" \ "someInt").extract[Int] must_== 1)
+        val contextJ = parse(enrichedEvent.contexts).toOption.get.hcursor.downField("data")
+        val firstElem = contextJ.downArray.downField("data")
+        val secondElem = contextJ.downArray.right.downField("data")
+        firstElem.get[String]("emailAddress") must_== Right("jim@acme.com")
+        firstElem.get[String]("emailAddress2") must_== Right("bob@acme.com")
+        secondElem.get[String]("emailAddress") must_== Right("im@acme.com")
+        secondElem.get[String]("emailAddress2") must_== Right("tom@acme.com")
+        secondElem.get[Int]("someInt") must_== Right(1)
     }
   }
 
@@ -411,31 +458,39 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
           PiiScalar(fieldMutator = ScalarMutators.get("ip_domain").get),
           PiiScalar(fieldMutator = ScalarMutators.get("user_fingerprint").get),
           PiiJson(
-            fieldMutator    = JsonMutators.get("contexts").get,
-            schemaCriterion = SchemaCriterion.parse("iglu:com.acme/email_sent/jsonschema/1-0-*").toOption.get,
-            jsonPath        = "$.emailAddress"
+            fieldMutator = JsonMutators.get("contexts").get,
+            schemaCriterion =
+              SchemaCriterion.parse("iglu:com.acme/email_sent/jsonschema/1-0-*").toOption.get,
+            jsonPath = "$.emailAddress"
           ),
           PiiJson(
-            fieldMutator    = JsonMutators.get("contexts").get,
-            schemaCriterion = SchemaCriterion.parse("iglu:com.acme/email_sent/jsonschema/1-1-0").toOption.get,
-            jsonPath        = "$.data.emailAddress2"
+            fieldMutator = JsonMutators.get("contexts").get,
+            schemaCriterion =
+              SchemaCriterion.parse("iglu:com.acme/email_sent/jsonschema/1-1-0").toOption.get,
+            jsonPath = "$.data.emailAddress2"
           ),
           PiiJson(
-            fieldMutator    = JsonMutators.get("unstruct_event").get,
-            schemaCriterion = SchemaCriterion.parse("iglu:com.mailgun/message_clicked/jsonschema/1-0-0").toOption.get,
-            jsonPath        = "$.ip"
+            fieldMutator = JsonMutators.get("unstruct_event").get,
+            schemaCriterion = SchemaCriterion
+              .parse("iglu:com.mailgun/message_clicked/jsonschema/1-0-0")
+              .toOption
+              .get,
+            jsonPath = "$.ip"
           )
         ),
         true,
-        PiiStrategyPseudonymize("SHA-256", hashFunction = DigestUtils.sha256Hex(_: Array[Byte]), "pepper123")
+        PiiStrategyPseudonymize(
+          "SHA-256",
+          hashFunction = DigestUtils.sha256Hex(_: Array[Byte]),
+          "pepper123")
       )
     )
-    val output   = commonSetup(enrichmentMap = enrichmentMap)
+    val output = commonSetup(enrichmentMap = enrichmentMap)
     val expected = new EnrichedEvent()
-    expected.app_id           = "ads"
-    expected.ip_domain        = null
-    expected.geo_city         = null
-    expected.etl_tstamp       = "1970-01-18 08:40:00.000"
+    expected.app_id = "ads"
+    expected.ip_domain = null
+    expected.geo_city = null
+    expected.etl_tstamp = "1970-01-18 08:40:00.000"
     expected.collector_tstamp = "2017-07-14 03:39:39.000"
     expected.pii =
       """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.snowplowanalytics.snowplow/pii_transformation/jsonschema/1-0-0","data":{"pii":{"pojo":[{"fieldName":"user_fingerprint","originalValue":"its_you_again!","modifiedValue":"27abac60dff12792c6088b8d00ce7f25c86b396b8c3740480cd18e21068ecff4"},{"fieldName":"user_ipaddress","originalValue":"70.46.123.145","modifiedValue":"dd9720903c89ae891ed5c74bb7a9f2f90f6487927ac99afe73b096ad0287f3f5"},{"fieldName":"user_id","originalValue":"john@acme.com","modifiedValue":"7d8a4beae5bc9d314600667d2f410918f9af265017a6ade99f60a9c8f3aac6e9"}],"json":[{"fieldName":"unstruct_event","originalValue":"50.56.129.169","modifiedValue":"269c433d0cc00395e3bc5fe7f06c5ad822096a38bec2d8a005367b52c0dfb428","jsonPath":"$.ip","schema":"iglu:com.mailgun/message_clicked/jsonschema/1-0-0"},{"fieldName":"contexts","originalValue":"bob@acme.com","modifiedValue":"1c6660411341411d5431669699149283d10e070224be4339d52bbc4b007e78c5","jsonPath":"$.data.emailAddress2","schema":"iglu:com.acme/email_sent/jsonschema/1-1-0"},{"fieldName":"contexts","originalValue":"jim@acme.com","modifiedValue":"72f323d5359eabefc69836369e4cabc6257c43ab6419b05dfb2211d0e44284c6","jsonPath":"$.emailAddress","schema":"iglu:com.acme/email_sent/jsonschema/1-0-0"}]},"strategy":{"pseudonymize":{"hashFunction":"SHA-256"}}}}}"""
@@ -444,22 +499,25 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
     val out = output.head
     out must beSuccessful.like {
       case enrichedEvent =>
-        implicit val formats = org.json4s.DefaultFormats
-        val contextJ         = parse(enrichedEvent.contexts)
-        val unstructEventJ   = parse(enrichedEvent.unstruct_event)
+        val contextJ = parse(enrichedEvent.contexts).toOption.get.hcursor.downField("data")
+        val firstElem = contextJ.downArray.downField("data")
+        val secondElem = contextJ.downArray.right.downField("data")
+        val unstructEventJ =
+          parse(enrichedEvent.unstruct_event).toOption.get.hcursor.downField("data")
+
         (enrichedEvent.pii must_== expected.pii) and // This is the important test, the rest just verify that nothing has changed.
           (enrichedEvent.app_id must_== expected.app_id) and
           (enrichedEvent.ip_domain must_== expected.ip_domain) and
           (enrichedEvent.geo_city must_== expected.geo_city) and
           (enrichedEvent.etl_tstamp must_== expected.etl_tstamp) and
-          (enrichedEvent.collector_tstamp must_== expected.collector_tstamp) and
-          (((contextJ \ "data")(0) \ "data" \ "emailAddress2").extract[String] must_== "bob@acme.com") and
-          (((contextJ \ "data")(1) \ "data" \ "emailAddress").extract[String] must_== "tim@acme.com") and
-          (((contextJ \ "data")(1) \ "data" \ "emailAddress2").extract[String] must_== "tom@acme.com") and
-          (((contextJ \ "data")(1) \ "data" \ "data" \ "emailAddress").extract[String] must_== "jim@acme.com") and
-          (((contextJ \ "data")(1) \ "data" \ "schema")
-            .extract[String] must_== "iglu:com.acme/email_sent/jsonschema/1-0-0") and
-          (((unstructEventJ \ "data") \ "data" \ "myVar2").extract[String] must_== "awesome")
+          (enrichedEvent.collector_tstamp must_== expected.collector_tstamp)
+
+        firstElem.get[String]("emailAddress2") must_== Right("bob@acme.com")
+        secondElem.get[String]("emailAddress") must_== Right("tim@acme.com")
+        secondElem.get[String]("emailAddress2") must_== Right("tom@acme.com")
+        secondElem.downField("data").get[String]("emailAddress") must_== Right("jim@acme.com")
+        secondElem.get[String]("schema") must_== Right("iglu:com.acme/email_sent/jsonschema/1-0-0")
+        unstructEventJ.downField("data").get[String]("myVar2") must_== Right("awesome")
     }
   }
 
@@ -469,39 +527,43 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
       ("pii_enrichment_config" -> PiiPseudonymizerEnrichment(
         List(
           PiiJson(
-            fieldMutator    = JsonMutators.get("contexts").get,
-            schemaCriterion = SchemaCriterion.parse("iglu:com.acme/email_sent/jsonschema/1-0-0").toOption.get,
-            jsonPath        = "$.['emailAddress', 'nonExistentEmailAddress']"
+            fieldMutator = JsonMutators.get("contexts").get,
+            schemaCriterion =
+              SchemaCriterion.parse("iglu:com.acme/email_sent/jsonschema/1-0-0").toOption.get,
+            jsonPath = "$.['emailAddress', 'nonExistentEmailAddress']"
           )
         ),
         true,
-        PiiStrategyPseudonymize("SHA-256", hashFunction = DigestUtils.sha256Hex(_: Array[Byte]), "pepper123")
+        PiiStrategyPseudonymize(
+          "SHA-256",
+          hashFunction = DigestUtils.sha256Hex(_: Array[Byte]),
+          "pepper123")
       ))
     )
-    val output   = commonSetup(enrichmentMap = enrichmentMap)
+    val output = commonSetup(enrichmentMap = enrichmentMap)
     val expected = new EnrichedEvent()
-    expected.app_id           = "ads"
-    expected.user_id          = "john@acme.com"
-    expected.user_ipaddress   = "70.46.123.145"
-    expected.ip_domain        = null
+    expected.app_id = "ads"
+    expected.user_id = "john@acme.com"
+    expected.user_ipaddress = "70.46.123.145"
+    expected.ip_domain = null
     expected.user_fingerprint = "its_you_again!"
-    expected.geo_city         = "Delray Beach"
-    expected.etl_tstamp       = "1970-01-18 08:40:00.000"
+    expected.geo_city = "Delray Beach"
+    expected.etl_tstamp = "1970-01-18 08:40:00.000"
     expected.collector_tstamp = "2017-07-14 03:39:39.000"
     output.size must_== 1
     val out = output(0)
     out must beSuccessful.like {
       case enrichedEvent => {
-        implicit val formats = org.json4s.DefaultFormats
-        val contextJ         = parse(enrichedEvent.contexts)
-        (((contextJ \ "data")(0) \ "data" \ "emailAddress")
-          .extract[String] must_== "72f323d5359eabefc69836369e4cabc6257c43ab6419b05dfb2211d0e44284c6") and
-          (ScalazJson4sUtils.fieldExists(((contextJ \ "data")(0) \ "data"), "nonExistentEmailAddress") must_== false) and
-          (((contextJ \ "data")(0) \ "data" \ "emailAddress2")
-            .extract[String] must_== "bob@acme.com") and
-          (((contextJ \ "data")(1) \ "data" \ "emailAddress")
-            .extract[String] must_== "tim@acme.com") and
-          (((contextJ \ "data")(1) \ "data" \ "emailAddress2").extract[String] must_== "tom@acme.com")
+        val contextJ = parse(enrichedEvent.contexts).toOption.get.hcursor.downField("data")
+        val firstElem = contextJ.downArray.downField("data")
+        val secondElem = contextJ.downArray.right.downField("data")
+
+        firstElem.get[String]("emailAddress") must_==
+          Right("72f323d5359eabefc69836369e4cabc6257c43ab6419b05dfb2211d0e44284c6")
+        firstElem.downField("data").get[String]("nonExistentEmailAddress") must beLeft
+        firstElem.get[String]("emailAddress2") must_== Right("bob@acme.com")
+        secondElem.get[String]("emaillAddress") must_== Right("tim@acme.com")
+        secondElem.get[String]("emailAddress2") must_== Right("tom@acme.com")
       }
     }
   }

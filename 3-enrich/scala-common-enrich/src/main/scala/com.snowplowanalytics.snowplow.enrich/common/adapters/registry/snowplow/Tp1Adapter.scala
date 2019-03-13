@@ -21,26 +21,17 @@ import Scalaz._
 
 import loaders.CollectorPayload
 
-/**
- * Version 1 of the Tracker Protocol is GET only.
- * All data comes in on the querystring.
- */
+/** Version 1 of the Tracker Protocol is GET only. All data comes in on the querystring. */
 object Tp1Adapter extends Adapter {
 
   /**
-   * Converts a CollectorPayload instance into raw events.
-   * Tracker Protocol 1 only supports a single event in a
-   * payload.
-   *
-   * @param payload The CollectorPaylod containing one or more
-   *        raw events as collected by a Snowplow collector
-   * @param resolver (implicit) The Iglu resolver used for
-   *        schema lookup and validation. Not used
-   * @return a Validation boxing either a NEL of RawEvents on
-   *         Success, or a NEL of Failure Strings
+   * Converts a CollectorPayload instance into raw events. Tracker Protocol 1 only supports a single
+   * event in a payload.
+   * @param payload The CollectorPaylod containing one or more raw events
+   * @param resolver (implicit) The Iglu resolver used for schema lookup and validation. Not used
+   * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = {
-
     val params = toMap(payload.querystring)
     if (params.isEmpty) {
       "Querystring is empty: no raw event to process".failNel
@@ -52,7 +43,8 @@ object Tp1Adapter extends Adapter {
           contentType = payload.contentType,
           source = payload.source,
           context = payload.context
-        )).success
+        )
+      ).success
     }
   }
 }

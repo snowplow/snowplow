@@ -21,77 +21,82 @@ import com.snowplowanalytics.forex.oerclient._
 import com.snowplowanalytics.forex.{Forex, ForexConfig}
 import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
 import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
+import io.circe._
 import org.joda.time.DateTime
-import org.json4s.{DefaultFormats, JValue}
 import scalaz._
 import Scalaz._
 
-import utils.ScalazJson4sUtils
+import utils.ScalazCirceUtils
 
-/**
- * Companion object. Lets us create an CurrencyConversionEnrichment
- * instance from a JValue.
- */
+/** Companion object. Lets us create an CurrencyConversionEnrichment instance from a Json. */
 object CurrencyConversionEnrichmentConfig extends ParseableEnrichment {
 
-  implicit val formats = DefaultFormats
-
   val supportedSchema =
-    SchemaCriterion("com.snowplowanalytics.snowplow", "currency_conversion_config", "jsonschema", 1, 0)
+    SchemaCriterion(
+      "com.snowplowanalytics.snowplow",
+      "currency_conversion_config",
+      "jsonschema",
+      1,
+      0
+    )
 
   // Creates a CurrencyConversionEnrichment instance from a JValue
-  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[CurrencyConversionEnrichment] =
-    isParseable(config, schemaKey).flatMap(conf => {
+  def parse(config: Json, schemaKey: SchemaKey): ValidatedNelMessage[CurrencyConversionEnrichment] =
+    isParseable(config, schemaKey).flatMap { conf =>
       (for {
-        apiKey <- ScalazJson4sUtils.extract[String](config, "parameters", "apiKey")
-        baseCurrency <- ScalazJson4sUtils.extract[String](config, "parameters", "baseCurrency")
-        accountType <- (ScalazJson4sUtils.extract[String](config, "parameters", "accountType") match {
-          case Success("DEVELOPER") => DeveloperAccount.success
-          case Success("ENTERPRISE") => EnterpriseAccount.success
-          case Success("UNLIMITED") => UnlimitedAccount.success
-
-          // Should never happen (prevented by schema validation)
-          case Success(s) =>
-            "accountType [%s] is not one of DEVELOPER, ENTERPRISE, and UNLIMITED".format(s).toProcessingMessage.fail
-          case Failure(f) => Failure(f)
-        })
-        rateAt <- ScalazJson4sUtils.extract[String](config, "parameters", "rateAt")
+        apiKey <- ScalazCirceUtils.extract[String](config, "parameters", "apiKey")
+        baseCurrency <- ScalazCirceUtils.extract[String](config, "parameters", "baseCurrency")
+        accountType <- ScalazCirceUtils
+          .extract[String](config, "parameters", "accountType")
+          .flatMap {
+            case "DEVELOPER" => DeveloperAccount.success
+            case "ENTERPRISE" => EnterpriseAccount.success
+            case "UNLIMITED" => UnlimitedAccount.success
+            // Should never happen (prevented by schema validation)
+            case s =>
+              "accountType [%s] is not one of DEVELOPER, ENTERPRISE, and UNLIMITED"
+                .format(s)
+                .toProcessingMessage
+                .fail
+          }
+        rateAt <- ScalazCirceUtils.extract[String](config, "parameters", "rateAt")
         enrich = CurrencyConversionEnrichment(accountType, apiKey, baseCurrency, rateAt)
       } yield enrich).toValidationNel
-    })
+    }
 }
 
 /**
  * Configuration for a currency_conversion enrichment
- *
  * @param apiKey OER authentication
  * @param baseCurrency Currency to which to convert
  * @param rateAt Which exchange rate to use - "EOD_PRIOR" for "end of previous day".
  */
-case class CurrencyConversionEnrichment(accountType: AccountType, apiKey: String, baseCurrency: String, rateAt: String)
-    extends Enrichment {
-
+final case class CurrencyConversionEnrichment(
+  accountType: AccountType,
+  apiKey: String,
+  baseCurrency: String,
+  rateAt: String
+) extends Enrichment {
   val fx = Forex(ForexConfig(), OerClientConfig(apiKey, accountType))
 
   /**
    * Attempt to convert if the initial currency and value are both defined
-   *
    * @param inputCurrency Option boxing the initial currency if it is present
    * @param value Option boxing the amount to convert
    * @return None.success if the inputs were not both defined,
-   *         otherwise Validation[Option[_]] boxing the result of the conversion
+   * otherwise Validation[Option[_]] boxing the result of the conversion
    */
   private def performConversion(
     initialCurrency: Option[String],
     value: Option[Double],
-    tstamp: DateTime): Validation[String, Option[String]] =
+    tstamp: DateTime
+  ): Validation[String, Option[String]] =
     (initialCurrency, value) match {
       case (Some(ic), Some(v)) =>
         fx.convert(v, ic).to(baseCurrency).at(tstamp) match {
-          case Left(l) => {
+          case Left(l) =>
             val errorType = l.errorType.getClass.getSimpleName.replace("$", "")
             s"Open Exchange Rates error, type: [$errorType], message: [${l.errorMessage}]".failure
-          }
           case Right(s) => (s.getAmount().toPlainString()).some.success
         }
       case _ => None.success
@@ -99,7 +104,6 @@ case class CurrencyConversionEnrichment(accountType: AccountType, apiKey: String
 
   /**
    * Converts currency using Scala Forex
-   *
    * @param trCurrency Initial transaction currency
    * @param trTotal Total transaction value
    * @param trTax Transaction tax
@@ -116,8 +120,8 @@ case class CurrencyConversionEnrichment(accountType: AccountType, apiKey: String
     trShipping: Option[Double],
     tiCurrency: Option[String],
     tiPrice: Option[Double],
-    collectorTstamp: Option[DateTime])
-    : ValidationNel[String, (Option[String], Option[String], Option[String], Option[String])] =
+    collectorTstamp: Option[DateTime]
+  ): ValidationNel[String, (Option[String], Option[String], Option[String], Option[String])] =
     collectorTstamp match {
       case Some(tstamp) =>
         try {
@@ -129,8 +133,10 @@ case class CurrencyConversionEnrichment(accountType: AccountType, apiKey: String
             (_, _, _, _)
           }
         } catch {
-          case e: NoSuchElementException => "Base currency [%s] not supported: [%s]".format(baseCurrency, e).failNel
-          case f: UnknownHostException => "Could not connect to Open Exchange Rates: [%s]".format(f).failNel
+          case e: NoSuchElementException =>
+            "Base currency [%s] not supported: [%s]".format(baseCurrency, e).failNel
+          case f: UnknownHostException =>
+            "Could not connect to Open Exchange Rates: [%s]".format(f).failNel
           case NonFatal(g) => "Unexpected exception converting currency: [%s]".format(g).failNel
         }
       case None => "Collector timestamp missing".failNel // This should never happen

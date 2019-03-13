@@ -25,12 +25,12 @@ import enrichments.{ClientEnrichments, MiscEnrichments}
 
 // Test Bean
 final class TargetBean {
-  @BeanProperty var platform: String      = _
+  @BeanProperty var platform: String = _
   @BeanProperty var br_features_pdf: Byte = _
-  @BeanProperty var visit_id: Int         = _
-  @BeanProperty var tracker_v: String     = _
-  @BeanProperty var width: Int            = _
-  @BeanProperty var height: Int           = _
+  @BeanProperty var visit_id: Int = _
+  @BeanProperty var tracker_v: String = _
+  @BeanProperty var width: Int = _
+  @BeanProperty var height: Int = _
 
   override def equals(other: Any): Boolean = other match {
     case that: TargetBean => {
@@ -46,21 +46,19 @@ final class TargetBean {
   // No canEqual needed as the class is final
 
   // Use Reflection - perf hit is okay as this is only in the test suite
-  override def hashCode: Int    = HashCodeBuilder.reflectionHashCode(this, false)
+  override def hashCode: Int = HashCodeBuilder.reflectionHashCode(this, false)
   override def toString: String = ToStringBuilder.reflectionToString(this)
 }
 
-/**
- * Tests the MapTransformer.
- */
 class MapTransformerSpec extends Specification with ValidationMatchers {
 
-  val sourceMap = Map("p" -> "web",
-                      "f_pdf"   -> "1",
-                      "vid"     -> "1",
-                      "tv"      -> "no-js-0.1.1",
-                      "res"     -> "720x1080",
-                      "missing" -> "Not in the transformation map")
+  val sourceMap = Map(
+    "p" -> "web",
+    "f_pdf" -> "1",
+    "vid" -> "1",
+    "tv" -> "no-js-0.1.1",
+    "res" -> "720x1080",
+    "missing" -> "Not in the transformation map")
 
   val transformMap: TransformMap = Map(
     ("p", (MiscEnrichments.extractPlatform, "platform")),
@@ -72,21 +70,20 @@ class MapTransformerSpec extends Specification with ValidationMatchers {
 
   val expected = {
     val t = new TargetBean()
-    t.platform        = "web"
+    t.platform = "web"
     t.br_features_pdf = 1
-    t.visit_id        = 1
-    t.tracker_v       = "no-js-0.1.1"
-    t.width           = 720
-    t.height          = 1080
+    t.visit_id = 1
+    t.tracker_v = "no-js-0.1.1"
+    t.width = 720
+    t.height = 1080
     t
   }
 
   "Applying a TransformMap to an existing POJO" should {
     "successfully set each of the target fields" in {
-
       val target = {
         val t = new TargetBean()
-        t.platform  = "old"
+        t.platform = "old"
         t.tracker_v = "old"
         t
       }
@@ -99,7 +96,6 @@ class MapTransformerSpec extends Specification with ValidationMatchers {
 
   "Executing TransformMap's generate() factory" should {
     "successfully instantiate a new POJO" in {
-
       val result = MapTransformer.generate[TargetBean](sourceMap, transformMap)
       result must beSuccessful(expected)
     }

@@ -22,11 +22,10 @@ object HttpClient {
 
   // The defaults are from scalaj library
   val DEFAULT_CONNECTION_TIMEOUT_MS = 1000
-  val DEFAULT_READ_TIMEOUT_MS       = 5000
+  val DEFAULT_READ_TIMEOUT_MS = 5000
 
   /**
    * Blocking method to get body of HTTP response
-   *
    * @param request assembled request object
    * @return validated body of HTTP request
    */
@@ -41,7 +40,6 @@ object HttpClient {
 
   /**
    * Build HTTP request object
-   *
    * @param uri full URI to request
    * @param authUser optional username for basic auth
    * @param authPassword optional password for basic auth
@@ -67,18 +65,21 @@ object HttpClient {
   implicit class RichHttpRequest(request: HttpRequest) {
 
     def maybeAuth(user: Option[String], password: Option[String]): HttpRequest =
-      if (user.isDefined || password.isDefined) request.auth(user.getOrElse(""), password.getOrElse(""))
+      if (user.isDefined || password.isDefined)
+        request.auth(user.getOrElse(""), password.getOrElse(""))
       else request
 
     def maybeTimeout(connectionTimeout: Option[Long], readTimeout: Option[Long]): HttpRequest =
       (connectionTimeout, readTimeout) match {
         case (Some(ct), Some(rt)) => request.timeout(ct.toInt, rt.toInt)
-        case (Some(ct), None)     => request.timeout(ct.toInt, DEFAULT_READ_TIMEOUT_MS)
-        case (None, Some(rt))     => request.timeout(DEFAULT_CONNECTION_TIMEOUT_MS, rt.toInt)
-        case _                    => request.timeout(DEFAULT_CONNECTION_TIMEOUT_MS, DEFAULT_READ_TIMEOUT_MS)
+        case (Some(ct), None) => request.timeout(ct.toInt, DEFAULT_READ_TIMEOUT_MS)
+        case (None, Some(rt)) => request.timeout(DEFAULT_CONNECTION_TIMEOUT_MS, rt.toInt)
+        case _ => request.timeout(DEFAULT_CONNECTION_TIMEOUT_MS, DEFAULT_READ_TIMEOUT_MS)
       }
 
     def maybePostData(body: Option[String]): HttpRequest =
-      body.map(data => request.postData(data).header("content-type", "application/json")).getOrElse(request)
+      body
+        .map(data => request.postData(data).header("content-type", "application/json"))
+        .getOrElse(request)
   }
 }

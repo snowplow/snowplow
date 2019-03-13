@@ -25,47 +25,39 @@ import com.snowplowanalytics.iglu.client.utils.{ValidationExceptions => VE}
 import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
 import scalaz.Scalaz._
 
-/**
- * Iglu repository ref that looks up a schema in test resources.
- */
-case class TestResourcesRepositoryRef(override val config: RepositoryRefConfig, path: String) extends RepositoryRef {
+/** Iglu repository ref that looks up a schema in test resources. */
+case class TestResourcesRepositoryRef(
+  override val config: RepositoryRefConfig,
+  path: String
+) extends RepositoryRef {
 
-  /**
-   * Prioritize searching this class of repository to ensure that tests use it
-   */
+  /** Prioritize searching this class of repository to ensure that tests use it */
   override val classPriority: Int = 1
 
-  /**
-   * Human-readable descriptor for this
-   * type of repository ref.
-   */
+  /** Human-readable descriptor for this type of repository ref. */
   val descriptor = "test"
 
   /**
-   * Retrieves an IgluSchema from the Iglu Repo as
-   * a JsonNode.
-   *
-   * @param schemaKey The SchemaKey uniquely identifies
-   *        the schema in Iglu
-   * @return a Validation boxing either the Schema's
-   *         JsonNode on Success, or an error String
-   *         on Failure
+   * Retrieves an IgluSchema from the Iglu Repo as a JsonNode.
+   * @param schemaKey The SchemaKey uniquely identifies the schema in Iglu
+   * @return a Validation boxing either the Schema's JsonNode on Success, or an error String
+   * on Failure
    */
   def lookupSchema(schemaKey: SchemaKey): Validated[Option[JsonNode]] = {
-    val schemaPath = s"${path}/${schemaKey.toPath}"
+    val schemaPath = s"$path/${schemaKey.toPath}"
     try {
       JsonLoader.fromPath(schemaPath).some.success
     } catch {
       case jpe: JsonParseException => // Child of IOException so match first
-        s"Problem parsing ${schemaPath} as JSON in ${descriptor} Iglu repository ${config.name}: %s"
+        s"Problem parsing $schemaPath as JSON in $descriptor Iglu repository ${config.name}: %s"
           .format(VE.stripInstanceEtc(jpe.getMessage))
           .failure
           .toProcessingMessage
       case ioe: IOException =>
         None.success // Schema not found
       case NonFatal(e) =>
-        s"Unknown problem reading and parsing ${schemaPath} in ${descriptor} Iglu repository ${config.name}: ${VE
-          .getThrowableMessage(e)}".failure.toProcessingMessage
+        (s"Unknown problem reading and parsing $schemaPath in $descriptor Iglu repository " +
+          s"${config.name}: ${VE.getThrowableMessage(e)}").failure.toProcessingMessage
     }
   }
 }

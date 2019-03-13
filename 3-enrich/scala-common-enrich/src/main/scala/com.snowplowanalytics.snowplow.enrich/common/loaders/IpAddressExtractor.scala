@@ -29,16 +29,18 @@ object IpAddressExtractor {
   /**
    * If a request has been forwarded, extract the original client IP address;
    * otherwise return the standard IP address
-   *
    * If both FORWARDED and X-FORWARDED-FOR are set,
    * the IP contained in X-FORWARDED-FOR will be used.
-   *
    * @param headers List of headers potentially containing X-FORWARDED-FOR or FORWARDED
    * @param lastIp Fallback IP address if no X-FORWARDED-FOR or FORWARDED header exists
    * @return True client IP address
    */
   @tailrec
-  def extractIpAddress(headers: List[String], lastIp: String, maybeForwardedForIp: Option[String] = None): String =
+  def extractIpAddress(
+    headers: List[String],
+    lastIp: String,
+    maybeForwardedForIp: Option[String] = None
+  ): String =
     headers match {
       case h :: t =>
         h.toLowerCase match {
@@ -51,14 +53,13 @@ object IpAddressExtractor {
       case Nil =>
         maybeForwardedForIp match {
           case Some(forwardedForIp) => forwardedForIp
-          case _                    => lastIp
+          case _ => lastIp
         }
     }
 
   /**
    * If a request has been forwarded, extract the original client IP address;
    * otherwise return the standard IP address
-   *
    * @param xForwardedFor x-forwarded-for field from the Cloudfront log
    * @param lastIp Fallback IP address if no X-FORWARDED-FOR header exists
    * @return True client IP address

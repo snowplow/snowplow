@@ -42,7 +42,12 @@ object YauaaEnrichment extends ParseableEnrichment {
   implicit val formats = DefaultFormats
 
   val supportedSchema =
-    SchemaCriterion("com.snowplowanalytics.snowplow.enrichments", "yauaa_enrichment_config", "jsonschema", 1, 0)
+    SchemaCriterion(
+      "com.snowplowanalytics.snowplow.enrichments",
+      "yauaa_enrichment_config",
+      "jsonschema",
+      1,
+      0)
 
   /**
    * Creates a YauaaEnrichment instance from a JValue containing the configuration of the enrichment.
@@ -54,15 +59,16 @@ object YauaaEnrichment extends ParseableEnrichment {
    */
   def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[YauaaEnrichment] =
     isParseable(config, schemaKey).flatMap { _ =>
-      val maybeCacheSize = ScalazJson4sUtils.extract[Int](config, "parameters", "cacheSize").toOption
+      val maybeCacheSize =
+        ScalazJson4sUtils.extract[Int](config, "parameters", "cacheSize").toOption
       YauaaEnrichment(maybeCacheSize).success
     }
 
   /** Helper to decapitalize a string. Used for the names of the fields returned in the context. */
   def decapitalize(s: String): String = s match {
-    case _ if s.isEmpty     => s
+    case _ if s.isEmpty => s
     case _ if s.length == 1 => s.toLowerCase
-    case _                  => s.charAt(0).toLower + s.substring(1)
+    case _ => s.charAt(0).toLower + s.substring(1)
   }
 }
 
@@ -92,7 +98,7 @@ final case class YauaaEnrichment(cacheSize: Option[Int]) extends Enrichment {
   val contextSchema = "iglu:nl.basjes/yauaa_context/jsonschema/1-0-0"
 
   val defaultDeviceClass = "UNKNOWN"
-  val defaultResult      = Map(decapitalize(UserAgent.DEVICE_CLASS) -> defaultDeviceClass)
+  val defaultResult = Map(decapitalize(UserAgent.DEVICE_CLASS) -> defaultDeviceClass)
 
   /**
    * Gets the result of YAUAA user agent analysis as self-describing JSON, for a specific event.
@@ -105,7 +111,7 @@ final case class YauaaEnrichment(cacheSize: Option[Int]) extends Enrichment {
     val parsed = parseUserAgent(userAgent)
     Extraction.decompose(parsed) match {
       case obj: JObject => addSchema(obj).success
-      case _            => s"Couldn't transform YAUAA fields [$parsed] into JSON".failure
+      case _ => s"Couldn't transform YAUAA fields [$parsed] into JSON".failure
     }
   }
 

@@ -29,32 +29,28 @@ import loaders.CollectorPayload
 import utils.{JsonUtils => JU}
 
 /**
- * Version 2 of the Tracker Protocol supports GET and POST. Note that
- * with POST, data can still be passed on the querystring.
+ * Version 2 of the Tracker Protocol supports GET and POST. Note that with POST, data can still be
+ * passed on the querystring.
  */
 object Tp2Adapter extends Adapter {
-
   // Expected content types for a request body
   private object ContentTypes {
-    val list = List("application/json", "application/json; charset=utf-8", "application/json; charset=UTF-8")
+    val list =
+      List("application/json", "application/json; charset=utf-8", "application/json; charset=UTF-8")
     val str = list.mkString(", ")
   }
 
   // Request body expected to validate against this JSON Schema
-  private val PayloadDataSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "payload_data", "jsonschema", 1, 0)
+  private val PayloadDataSchema =
+    SchemaCriterion("com.snowplowanalytics.snowplow", "payload_data", "jsonschema", 1, 0)
 
   /**
    * Converts a CollectorPayload instance into N raw events.
-   *
-   * @param payload The CollectorPaylod containing one or more
-   *        raw events as collected by a Snowplow collector
-   * @param resolver (implicit) The Iglu resolver used for
-   *        schema lookup and validation
-   * @return a Validation boxing either a NEL of RawEvents on
-   *         Success, or a NEL of Failure Strings
+   * @param payload The CollectorPaylod containing one or more raw events
+   * @param resolver (implicit) The Iglu resolver used for schema lookup and validation
+   * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = {
-
     val qsParams = toMap(payload.querystring)
 
     // Verify: body + content type set; content type matches expected; body contains expected JSON Schema; body passes schema validation
@@ -86,25 +82,19 @@ object Tp2Adapter extends Adapter {
   }
 
   /**
-   * Converts a JSON Node into a Validated NEL
-   * of parameters for a RawEvent. The parameters
+   * Converts a JSON Node into a Validated NEL of parameters for a RawEvent. The parameters
    * take the form Map[String, String].
-   *
-   * Takes a second set of parameters to merge with
-   * the generated parameters (the second set takes
+   * Takes a second set of parameters to merge with the generated parameters (the second set takes
    * precedence in case of a clash).
-   *
    * @param instance The JSON Node to convert
-   * @param mergeWith A second set of parameters to
-   *        merge (and possibly overwrite) parameters
-   *        from the instance
-   * @return a NEL of Map[String, String] parameters
-   *         on Succeess, a NEL of Strings on Failure
+   * @param mergeWith A second set of parameters to merge (and possibly overwrite) parameters
+   * from the instance
+   * @return a NEL of Map[String, String] parameters on Succeess, a NEL of Strings on Failure
    */
   private def toParametersNel(
     instance: JsonNode,
-    mergeWith: RawEventParameters): Validated[NonEmptyList[RawEventParameters]] = {
-
+    mergeWith: RawEventParameters
+  ): Validated[NonEmptyList[RawEventParameters]] = {
     val events: List[List[Validation[String, (String, String)]]] = for {
       event <- instance.iterator.toList
     } yield
@@ -132,20 +122,19 @@ object Tp2Adapter extends Adapter {
       case (s :: ss, Nil) => NonEmptyList(s, ss: _*).success // No Failures collected
       case (s :: ss, f :: fs) =>
         NonEmptyList(f, fs: _*).fail // Some Failures, return those. Should never happen, unless JSON Schema changed
-      case (Nil, _) => "List of events is empty (should never happen, did JSON Schema change?)".failNel
+      case (Nil, _) =>
+        "List of events is empty (should never happen, did JSON Schema change?)".failNel
     }
   }
 
   /**
-   * Converts a Java Map.Entry containing a JsonNode
-   * into a (String -> String) parameter.
-   *
+   * Converts a Java Map.Entry containing a JsonNode into a (String -> String) parameter.
    * @param entry The Java Map.Entry to convert
-   * @return a Validation boxing either our parameter
-   *         on Success, or an error String on Failure.
-   *
+   * @return a Validation boxing either our parameter on Success, or an error String on Failure.
    */
-  private def toParameter(entry: JMapEntry[String, JsonNode]): Validation[String, Tuple2[String, String]] = {
+  private def toParameter(
+    entry: JMapEntry[String, JsonNode]
+  ): Validation[String, Tuple2[String, String]] = {
     val key = entry.getKey
     val rawValue = entry.getValue
 
@@ -153,33 +142,29 @@ object Tp2Adapter extends Adapter {
       case Some(txt) => (key, txt).success
       case None if rawValue.isTextual =>
         s"Value for key ${key} is a null String (should never happen, did Jackson implementation change?)".fail
-      case _ => s"Value for key ${key} is not a String (should never happen, did JSON Schema change?)".fail
+      case _ =>
+        s"Value for key ${key} is not a String (should never happen, did JSON Schema change?)".fail
     }
   }
 
   /**
-   * Extract the JSON from a String, and
-   * validate it against the supplied
-   * JSON Schema.
-   *
-   * @param field The name of the field
-   *        containing the JSON instance
-   * @param schemaCriterion The schema that we
-   *        expected this self-describing
-   *        JSON to conform to
+   * Extract the JSON from a String, and validate it against the supplied JSON Schema.
+   * @param field The name of the field containing the JSON instance
+   * @param schemaCriterion The schema that we expected this self-describing JSON to conform to
    * @param instance A JSON instance as String
-   * @param resolver Our implicit Iglu
-   *        Resolver, for schema lookups
-   * @return an Option-boxed Validation
-   *         containing either a Nel of
-   *         JsonNodes error message on
-   *         Failure, or a singular
-   *         JsonNode on success
+   * @param resolver Our implicit Iglu Resolver, for schema lookups
+   * @return an Option-boxed Validation containing either a Nel of JsonNodes error message on
+   * Failure, or a singular JsonNode on success
    */
-  private def extractAndValidateJson(field: String, schemaCriterion: SchemaCriterion, instance: String)(
-    implicit resolver: Resolver): Validated[JsonNode] =
+  private def extractAndValidateJson(
+    field: String,
+    schemaCriterion: SchemaCriterion,
+    instance: String
+  )(
+    implicit resolver: Resolver
+  ): Validated[JsonNode] =
     for {
-      j <- (JU.extractJson(field, instance).toValidationNel: Validated[JsonNode])
+      j <- (JU.extractJsonNode(field, instance).toValidationNel: Validated[JsonNode])
       v <- j.verifySchemaAndValidate(schemaCriterion, true).leftMap(_.map(_.toString))
     } yield v
 

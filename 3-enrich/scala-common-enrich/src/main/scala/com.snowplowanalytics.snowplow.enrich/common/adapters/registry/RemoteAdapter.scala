@@ -38,12 +38,15 @@ import scala.util.control.NonFatal
  * @param connectionTimeout max duration of each connection attempt
  * @param readTimeout max duration of read wait time
  */
-class RemoteAdapter(val remoteUrl: String, val connectionTimeout: Option[Long], val readTimeout: Option[Long])
+class RemoteAdapter(
+  val remoteUrl: String,
+  val connectionTimeout: Option[Long],
+  val readTimeout: Option[Long])
     extends Adapter {
 
-  val bodyMissingErrorText          = "Missing payload body"
-  val missingEventsErrorText        = "Missing events in the response"
-  val emptyResponseErrorText        = "Empty response"
+  val bodyMissingErrorText = "Missing payload body"
+  val missingEventsErrorText = "Missing events in the response"
+  val emptyResponseErrorText = "Empty response"
   val incompatibleResponseErrorText = "Incompatible response, missing error and events fields"
 
   /**
@@ -63,15 +66,16 @@ class RemoteAdapter(val remoteUrl: String, val connectionTimeout: Option[Long], 
       case Some(body) if body.nonEmpty =>
         val json = ("contentType" -> payload.contentType) ~
           ("queryString" -> toMap(payload.querystring)) ~
-          ("headers"     -> payload.context.headers) ~
-          ("body"        -> payload.body)
-        val request = HttpClient.buildRequest(remoteUrl,
-                                              authUser     = None,
-                                              authPassword = None,
-                                              Some(compact(render(json))),
-                                              "POST",
-                                              connectionTimeout,
-                                              readTimeout)
+          ("headers" -> payload.context.headers) ~
+          ("body" -> payload.body)
+        val request = HttpClient.buildRequest(
+          remoteUrl,
+          authUser = None,
+          authPassword = None,
+          Some(compact(render(json))),
+          "POST",
+          connectionTimeout,
+          readTimeout)
         processResponse(payload, HttpClient.getBody(request))
 
       case _ => bodyMissingErrorText.failNel
@@ -89,15 +93,15 @@ class RemoteAdapter(val remoteUrl: String, val connectionTimeout: Option[Long], 
             (parse(bodyAsString) \ "error", parse(bodyAsString) \ "events") match {
               case (JNull, JNull) | (JNothing, JNothing) => incompatibleResponseErrorText.failNel
               case (error, JNull | JNothing) => error.extract[String].failNel
-              case (JNull        | JNothing, eventsObj) =>
+              case (JNull | JNothing, eventsObj) =>
                 val events = eventsObj.extract[List[Map[String, String]]]
                 rawEventsListProcessor(events.map { event =>
                   RawEvent(
-                    api         = payload.api,
-                    parameters  = event,
+                    api = payload.api,
+                    parameters = event,
                     contentType = payload.contentType,
-                    source      = payload.source,
-                    context     = payload.context
+                    source = payload.source,
+                    context = payload.context
                   ).success
                 })
               case _ => s"Unable to parse response: ${bodyAsString}".failNel
@@ -107,8 +111,9 @@ class RemoteAdapter(val remoteUrl: String, val connectionTimeout: Option[Long], 
         } catch {
           case e: MappingException =>
             s"The events field should be List[Map[String, String]], error: ${e} - response: ${bodyAsString}".failNel
-          case e: JsonParseException => s"Json is not parsable, error: ${e} - response: ${bodyAsString}".failNel
-          case NonFatal(e)           => s"Unexpected error: $e".failNel
+          case e: JsonParseException =>
+            s"Json is not parsable, error: ${e} - response: ${bodyAsString}".failNel
+          case NonFatal(e) => s"Unexpected error: $e".failNel
         }
     }
 }

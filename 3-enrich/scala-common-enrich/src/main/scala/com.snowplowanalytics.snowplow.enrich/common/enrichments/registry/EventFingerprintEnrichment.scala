@@ -15,77 +15,76 @@ package enrichments.registry
 
 import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
 import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
+import io.circe._
 import org.apache.commons.codec.digest.DigestUtils
 import scalaz._
 import Scalaz._
-import org.json4s._
 
-import utils.ScalazJson4sUtils
+import utils.ScalazCirceUtils
 
-/**
- * Lets us create an EventFingerprintEnrichmentConfig from a JValue.
- */
+/** Lets us create an EventFingerprintEnrichmentConfig from a Json. */
 object EventFingerprintEnrichmentConfig extends ParseableEnrichment {
 
-  implicit val formats = DefaultFormats
-
   val supportedSchema =
-    SchemaCriterion("com.snowplowanalytics.snowplow", "event_fingerprint_config", "jsonschema", 1, 0)
+    SchemaCriterion(
+      "com.snowplowanalytics.snowplow",
+      "event_fingerprint_config",
+      "jsonschema",
+      1,
+      0
+    )
 
   /**
    * Creates an EventFingerprintEnrichment instance from a JValue.
-   *
    * @param config The enrichment JSON
-   * @param schemaKey The SchemaKey provided for the enrichment
-   *        Must be a supported SchemaKey for this enrichment
+   * @param schemaKey provided for the enrichment, must be supported fby this enrichment
    * @return a configured EventFingerprintEnrichment instance
    */
-  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[EventFingerprintEnrichment] =
+  def parse(config: Json, schemaKey: SchemaKey): ValidatedNelMessage[EventFingerprintEnrichment] =
     isParseable(config, schemaKey).flatMap(conf => {
       (for {
-        excludedParameters <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "excludeParameters")
-        algorithmName <- ScalazJson4sUtils.extract[String](config, "parameters", "hashAlgorithm")
+        excludedParameters <- ScalazCirceUtils
+          .extract[List[String]](config, "parameters", "excludeParameters")
+        algorithmName <- ScalazCirceUtils.extract[String](config, "parameters", "hashAlgorithm")
         algorithm <- getAlgorithm(algorithmName)
       } yield EventFingerprintEnrichment(algorithm, excludedParameters)).toValidationNel
     })
 
   /**
    * Look up the fingerprinting algorithm by name
-   *
    * @param algorithmName
    * @return A hashing algorithm
    */
-  private[registry] def getAlgorithm(algorithmName: String): ValidatedMessage[String => String] = algorithmName match {
-    case "MD5"    => ((s: String) => DigestUtils.md5Hex(s)).success
-    case "SHA1"   => ((s: String) => DigestUtils.sha1Hex(s)).success
-    case "SHA256" => ((s: String) => DigestUtils.sha256Hex(s)).success
-    case "SHA384" => ((s: String) => DigestUtils.sha384Hex(s)).success
-    case "SHA512" => ((s: String) => DigestUtils.sha512Hex(s)).success
-    case other    => s"[$other] is not a supported event fingerprint generation algorithm".toProcessingMessage.fail
-  }
+  private[registry] def getAlgorithm(algorithmName: String): ValidatedMessage[String => String] =
+    algorithmName match {
+      case "MD5" => ((s: String) => DigestUtils.md5Hex(s)).success
+      case "SHA1" => ((s: String) => DigestUtils.sha1Hex(s)).success
+      case "SHA256" => ((s: String) => DigestUtils.sha256Hex(s)).success
+      case "SHA384" => ((s: String) => DigestUtils.sha384Hex(s)).success
+      case "SHA512" => ((s: String) => DigestUtils.sha512Hex(s)).success
+      case other =>
+        s"[$other] is not a supported event fingerprint generation algorithm".toProcessingMessage.fail
+    }
 
 }
 
-/**
- * Companion object
- */
 object EventFingerprintEnrichment {
   private val UnitSeparator = "\u001f"
 }
 
 /**
  * Config for an event fingerprint enrichment
- *
  * @param algorithm Hashing algorithm
  * @param excludedParameters List of querystring parameters to exclude from the calculation
  * @return Event fingerprint
  */
-case class EventFingerprintEnrichment(algorithm: String => String, excludedParameters: List[String])
-    extends Enrichment {
+final case class EventFingerprintEnrichment(
+  algorithm: String => String,
+  excludedParameters: List[String]
+) extends Enrichment {
 
   /**
    * Calculate an event fingerprint using all querystring fields except the excludedParameters
-   *
    * @param parameterMap
    * @return Event fingerprint
    */

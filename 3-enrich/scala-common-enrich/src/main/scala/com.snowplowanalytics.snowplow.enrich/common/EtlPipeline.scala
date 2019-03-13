@@ -25,42 +25,33 @@ import adapters.AdapterRegistry
 import enrichments.{EnrichmentManager, EnrichmentRegistry}
 import outputs.EnrichedEvent
 
-/**
- * Expresses the end-to-end event pipeline
- * supported by the Scala Common Enrich
- * project.
- */
+/** Expresses the end-to-end event pipeline supported by the Scala Common Enrich project. */
 object EtlPipeline {
 
   /**
-   * A helper method to take a ValidatedMaybeCanonicalInput
-   * and transform it into a List (possibly empty) of
-   * ValidatedCanonicalOutputs.
-   *
-   * We have to do some unboxing because enrichEvent
-   * expects a raw CanonicalInput as its argument, not
-   * a MaybeCanonicalInput.
-   *
+   * A helper method to take a ValidatedMaybeCanonicalInput and transform it into a List (possibly
+   * empty) of ValidatedCanonicalOutputs.
+   * We have to do some unboxing because enrichEvent expects a raw CanonicalInput as its argument,
+   * not a MaybeCanonicalInput.
    * @param adapterRegistry Contains all of the events adapters
-   * @param enrichmentRegistry Contains configuration for all
-   *        enrichments to apply
+   * @param enrichmentRegistry Contains configuration for all enrichments to apply
    * @param etlVersion The ETL version
    * @param etlTstamp The ETL timestamp
    * @param input The ValidatedMaybeCanonicalInput
-   * @param resolver (implicit) The Iglu resolver used for
-   *        schema lookup and validation
-   * @return the ValidatedMaybeCanonicalOutput. Thanks to
-   *         flatMap, will include any validation errors
-   *         contained within the ValidatedMaybeCanonicalInput
+   * @param resolver (implicit) The Iglu resolver used for schema lookup and validation
+   * @return the ValidatedMaybeCanonicalOutput. Thanks to flatMap, will include any validation
+   * errors contained within the ValidatedMaybeCanonicalInput
    */
   def processEvents(
     adapterRegistry: AdapterRegistry,
     enrichmentRegistry: EnrichmentRegistry,
     etlVersion: String,
     etlTstamp: DateTime,
-    input: ValidatedMaybeCollectorPayload)(implicit resolver: Resolver): List[ValidatedEnrichedEvent] = {
-
-    def flattenToList[A](v: Validated[Option[Validated[NonEmptyList[Validated[A]]]]]): List[Validated[A]] = v match {
+    input: ValidatedMaybeCollectorPayload)(
+    implicit resolver: Resolver
+  ): List[ValidatedEnrichedEvent] = {
+    def flattenToList[A](
+      v: Validated[Option[Validated[NonEmptyList[Validated[A]]]]]): List[Validated[A]] = v match {
       case Success(Some(Success(nel))) => nel.toList
       case Success(Some(Failure(f))) => List(f.fail)
       case Failure(f) => List(f.fail)
@@ -80,7 +71,11 @@ object EtlPipeline {
             } yield
               for {
                 event <- events
-                enriched = EnrichmentManager.enrichEvent(enrichmentRegistry, etlVersion, etlTstamp, event)
+                enriched = EnrichmentManager.enrichEvent(
+                  enrichmentRegistry,
+                  etlVersion,
+                  etlTstamp,
+                  event)
               } yield enriched
 
       flattenToList[EnrichedEvent](e)

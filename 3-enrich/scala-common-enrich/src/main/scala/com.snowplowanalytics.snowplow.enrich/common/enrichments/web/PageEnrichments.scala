@@ -21,33 +21,19 @@ import Scalaz._
 
 import utils.{ConversionUtils => CU}
 
-/**
- * Holds enrichments related to the
- * web page's URL, and the document
- * object contained within the page.
- */
+/** Holds enrichments related to the web page URL, and the document object contained in the page. */
 object PageEnrichments {
 
   /**
-   * Extracts the page URI from
-   * either the collector's referer
-   * or the appropriate tracker
-   * variable. Tracker variable
-   * takes precedence as per #268
-   *
-   * @param fromReferer The
-   *        page URI reported
-   *        as the referer to
-   *        the collector
-   * @param fromTracker The
-   *        page URI reported
-   *        by the tracker
-   * @return either the chosen
-   *         page URI, or an
-   *         error, wrapped in a
-   *         Validation
+   * Extracts the page URI from either the collector's referer* or the appropriate tracker variable.
+   * Tracker variable takes precedence as per #268
+   * @param fromReferer The page URI reported as the referer to the collector
+   * @param fromTracker The page URI reported by the tracker
+   * @return either the chosen page URI, or an error, wrapped in a Validation
    */
-  def extractPageUri(fromReferer: Option[String], fromTracker: Option[String]): Validation[String, Option[URI]] =
+  def extractPageUri(
+    fromReferer: Option[String],
+    fromTracker: Option[String]): Validation[String, Option[URI]] =
     (fromReferer, fromTracker) match {
       case (Some(r), None) => CU.stringToUri(r)
       case (None, Some(t)) => CU.stringToUri(t)
@@ -58,14 +44,14 @@ object PageEnrichments {
   /**
    * Extract the referrer domain user ID and timestamp from the "_sp={{DUID}}.{{TSTAMP}}"
    * portion of the querystring
-   *
    * @param qsMap The querystring converted to a map
    * @return Validation boxing a pair of optional strings corresponding to the two fields
    */
-  def parseCrossDomain(qsMap: Map[String, String]): Validation[String, (Option[String], Option[String])] =
+  def parseCrossDomain(
+    qsMap: Map[String, String]): Validation[String, (Option[String], Option[String])] =
     qsMap.get("_sp") match {
       case Some("") => (None, None).success
-      case Some(sp) => {
+      case Some(sp) =>
         val crossDomainElements = sp.split("\\.")
 
         val duid = CU.makeTsvSafe(crossDomainElements(0)).some
@@ -75,7 +61,6 @@ object PageEnrichments {
         }
 
         tstamp.map(duid -> _)
-      }
       case None => (None -> None).success
     }
 }

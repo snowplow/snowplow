@@ -18,8 +18,6 @@ import sbt._
 object Dependencies {
 
   val resolutionRepos = Seq(
-    // Required for our json4s snapshot
-    "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
      // For some misc Scalding and Twitter libs
     "Concurrent Maven Repo" at "http://conjars.org/repo",
      // For Twitter's util functions
@@ -58,7 +56,9 @@ object Dependencies {
     val schemaSniffer    = "0.0.0"
     val refererParser    = "0.3.1"
     val maxmindIplookups = "0.4.0"
-    val json4s           = "3.2.11"
+    val circe            = "0.11.1"
+    val circeOptics      = "0.11.0"
+    val circeJackson     = "0.11.1"
     val igluClient       = "0.5.0"
     val scalaForex       = "0.5.0"
     val scalaWeather     = "0.3.0"
@@ -95,6 +95,14 @@ object Dependencies {
     val guava            = "com.google.guava"           %  "guava"                         % V.guava
 
     // Scala
+    val circeDeps        = List(
+      "circe-core",
+      "circe-generic",
+      "circe-parser",
+      "circe-literal"
+    ).map("io.circe" %% _ % V.circe)
+    val circeOptics      = "io.circe"                   %% "circe-optics"                  % V.circeOptics
+    val circeJackson     = "io.circe"                   %% "circe-jackson28"               % V.circeJackson
     val scalaForex       = "com.snowplowanalytics"      %% "scala-forex"                   % V.scalaForex
     val scalaz7          = "org.scalaz"                 %% "scalaz-core"                   % V.scalaz7
     val snowplowRawEvent = "com.snowplowanalytics"      %  "snowplow-thrift-raw-event"     % V.snowplowRawEvent
@@ -102,9 +110,7 @@ object Dependencies {
     val schemaSniffer    = "com.snowplowanalytics"      %  "schema-sniffer-1"              % V.schemaSniffer
     val refererParser    = "com.snowplowanalytics"      %% "referer-parser"                % V.refererParser
     val maxmindIplookups = "com.snowplowanalytics"      %% "scala-maxmind-iplookups"       % V.maxmindIplookups
-    val json4sJackson    = "org.json4s"                 %% "json4s-jackson"                % V.json4s
-    val json4sScalaz     = "org.json4s"                 %% "json4s-scalaz"                 % V.json4s
-    val igluClient       = "com.snowplowanalytics"      %%  "iglu-scala-client"            % V.igluClient
+    val igluClient       = "com.snowplowanalytics"      %% "iglu-scala-client"             % V.igluClient
     val scalaUri         = "io.lemonlabs"               %% "scala-uri"                     % V.scalaUri
     val scalaWeather     = "com.snowplowanalytics"      %% "scala-weather"                 % V.scalaWeather
     val scalaj           = "org.scalaj"                 %% "scalaj-http"                   % V.scalaj
@@ -114,6 +120,6 @@ object Dependencies {
     val scalazSpecs2     = "org.typelevel"              %% "scalaz-specs2"                 % V.scalazSpecs2   % "test"
     val scalaCheck       = "org.scalacheck"             %% "scalacheck"                    % V.scalaCheck     % "test"
     val scaldingArgs     = "com.twitter"                %% "scalding-args"                 % V.scaldingArgs   % "test"
-    val mockito          = "org.mockito"                % "mockito-core"                   % V.mockito        % "test"
+    val mockito          = "org.mockito"                %  "mockito-core"                  % V.mockito        % "test"
   }
 }

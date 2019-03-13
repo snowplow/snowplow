@@ -29,7 +29,9 @@ class EventFingerprintEnrichmentSpec extends Specification with ValidationMatche
   """
 
   val standardConfig =
-    EventFingerprintEnrichment(EventFingerprintEnrichmentConfig.getAlgorithm("MD5").toOption.get, List("stm", "eid"))
+    EventFingerprintEnrichment(
+      EventFingerprintEnrichmentConfig.getAlgorithm("MD5").toOption.get,
+      List("stm", "eid"))
 
   def e1 = {
     val config = EventFingerprintEnrichment(
@@ -39,16 +41,15 @@ class EventFingerprintEnrichmentSpec extends Specification with ValidationMatche
 
     config.getEventFingerprint(
       Map(
-        "stm"   -> "1000000000000",
-        "e"     -> "se",
+        "stm" -> "1000000000000",
+        "e" -> "se",
         "se_ac" -> "buy"
       )) must_== "15"
   }
 
   def e2 = {
-
     val initialVersion = Map(
-      "e"     -> "se",
+      "e" -> "se",
       "se_ac" -> "action",
       "se_ca" -> "category",
       "se_pr" -> "property"
@@ -58,26 +59,28 @@ class EventFingerprintEnrichmentSpec extends Specification with ValidationMatche
       "se_ca" -> "category",
       "se_ac" -> "action",
       "se_pr" -> "property",
-      "e"     -> "se"
+      "e" -> "se"
     )
 
-    standardConfig.getEventFingerprint(permutedVersion) must_== standardConfig.getEventFingerprint(initialVersion)
+    standardConfig.getEventFingerprint(permutedVersion) must_== standardConfig.getEventFingerprint(
+      initialVersion)
   }
 
   def e3 = {
     val initialVersion = Map(
-      "stm"   -> "1000000000000",
-      "eid"   -> "123e4567-e89b-12d3-a456-426655440000",
-      "e"     -> "se",
+      "stm" -> "1000000000000",
+      "eid" -> "123e4567-e89b-12d3-a456-426655440000",
+      "e" -> "se",
       "se_ac" -> "buy"
     )
     val delayedVersion = Map(
-      "stm"   -> "9999999999999",
-      "e"     -> "se",
+      "stm" -> "9999999999999",
+      "e" -> "se",
       "se_ac" -> "buy"
     )
 
-    standardConfig.getEventFingerprint(delayedVersion) must_== standardConfig.getEventFingerprint(initialVersion)
+    standardConfig.getEventFingerprint(delayedVersion) must_== standardConfig.getEventFingerprint(
+      initialVersion)
   }
 
   def e4 = {
@@ -86,7 +89,8 @@ class EventFingerprintEnrichmentSpec extends Specification with ValidationMatche
     )
     val overlappingVersion = Map("prefi" -> "xsuffix")
 
-    standardConfig.getEventFingerprint(initialVersion) should not be standardConfig.getEventFingerprint(initialVersion)
+    standardConfig.getEventFingerprint(initialVersion) should not be standardConfig
+      .getEventFingerprint(initialVersion)
   }
 
   def e5 = {

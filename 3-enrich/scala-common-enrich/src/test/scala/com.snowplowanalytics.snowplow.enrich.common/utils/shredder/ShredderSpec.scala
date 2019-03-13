@@ -24,23 +24,24 @@ class ShredderSpec extends Specification {
   shred should extract the JSONs from an unstructured event with multiple contexts $e2
   """
 
-  val EventId            = "f81d4fae-7dec-11d0-a765-00a0c91e6bf6"
+  val EventId = "f81d4fae-7dec-11d0-a765-00a0c91e6bf6"
   val CollectorTimestamp = "2014-04-29 09:00:54.000"
 
   implicit val resolver = SpecHelpers.IgluResolver
 
   def e1 =
     Shredder.makePartialHierarchy(EventId, CollectorTimestamp) must_==
-      TypeHierarchy(rootId     = EventId,
-                    rootTstamp = CollectorTimestamp,
-                    refRoot    = "events",
-                    refTree    = List("events"),
-                    refParent  = "events")
+      TypeHierarchy(
+        rootId = EventId,
+        rootTstamp = CollectorTimestamp,
+        refRoot = "events",
+        refTree = List("events"),
+        refParent = "events")
 
   def e2 = {
     val event = {
       val e = new EnrichedEvent()
-      e.event_id         = EventId
+      e.event_id = EventId
       e.collector_tstamp = CollectorTimestamp
       e.unstruct_event =
         """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.snowplowanalytics.snowplow/link_click/jsonschema/1-0-0","data":{"targetUrl":"http://snowplowanalytics.com/blog/page2","elementClasses":["next"]}}}"""

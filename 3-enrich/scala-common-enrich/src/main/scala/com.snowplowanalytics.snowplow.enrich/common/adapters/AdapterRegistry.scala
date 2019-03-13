@@ -19,7 +19,11 @@ import Scalaz._
 
 import loaders.CollectorPayload
 import registry._
-import registry.snowplow.{Tp1Adapter => SpTp1Adapter, Tp2Adapter => SpTp2Adapter, RedirectAdapter => SpRedirectAdapter}
+import registry.snowplow.{
+  Tp1Adapter => SpTp1Adapter,
+  Tp2Adapter => SpTp2Adapter,
+  RedirectAdapter => SpRedirectAdapter
+}
 
 /**
  * The AdapterRegistry lets us convert a CollectorPayload
@@ -28,26 +32,26 @@ import registry.snowplow.{Tp1Adapter => SpTp1Adapter, Tp2Adapter => SpTp2Adapter
 class AdapterRegistry(remoteAdapters: Map[(String, String), RemoteAdapter] = Map.empty) {
 
   val adapters: Map[(String, String), Adapter] = Map(
-    (Vendor.Snowplow, "tp1")             -> SpTp1Adapter,
-    (Vendor.Snowplow, "tp2")             -> SpTp2Adapter,
-    (Vendor.Redirect, "tp2")             -> SpRedirectAdapter,
-    (Vendor.Iglu, "v1")                  -> IgluAdapter,
-    (Vendor.Callrail, "v1")              -> CallrailAdapter,
+    (Vendor.Snowplow, "tp1") -> SpTp1Adapter,
+    (Vendor.Snowplow, "tp2") -> SpTp2Adapter,
+    (Vendor.Redirect, "tp2") -> SpRedirectAdapter,
+    (Vendor.Iglu, "v1") -> IgluAdapter,
+    (Vendor.Callrail, "v1") -> CallrailAdapter,
     (Vendor.Cloudfront, "wd_access_log") -> CloudfrontAccessLogAdapter.WebDistribution,
-    (Vendor.Mailchimp, "v1")             -> MailchimpAdapter,
-    (Vendor.Mailgun, "v1")               -> MailgunAdapter,
-    (Vendor.GoogleAnalytics, "v1")       -> GoogleAnalyticsAdapter,
-    (Vendor.Mandrill, "v1")              -> MandrillAdapter,
-    (Vendor.Olark, "v1")                 -> OlarkAdapter,
-    (Vendor.Pagerduty, "v1")             -> PagerdutyAdapter,
-    (Vendor.Pingdom, "v1")               -> PingdomAdapter,
-    (Vendor.Sendgrid, "v3")              -> SendgridAdapter,
-    (Vendor.StatusGator, "v1")           -> StatusGatorAdapter,
-    (Vendor.Unbounce, "v1")              -> UnbounceAdapter,
-    (Vendor.UrbanAirship, "v1")          -> UrbanAirshipAdapter,
-    (Vendor.Marketo, "v1")               -> MarketoAdapter,
-    (Vendor.Vero, "v1")                  -> VeroAdapter,
-    (Vendor.HubSpot, "v1")               -> HubSpotAdapter
+    (Vendor.Mailchimp, "v1") -> MailchimpAdapter,
+    (Vendor.Mailgun, "v1") -> MailgunAdapter,
+    (Vendor.GoogleAnalytics, "v1") -> GoogleAnalyticsAdapter,
+    (Vendor.Mandrill, "v1") -> MandrillAdapter,
+    (Vendor.Olark, "v1") -> OlarkAdapter,
+    (Vendor.Pagerduty, "v1") -> PagerdutyAdapter,
+    (Vendor.Pingdom, "v1") -> PingdomAdapter,
+    (Vendor.Sendgrid, "v3") -> SendgridAdapter,
+    (Vendor.StatusGator, "v1") -> StatusGatorAdapter,
+    (Vendor.Unbounce, "v1") -> UnbounceAdapter,
+    (Vendor.UrbanAirship, "v1") -> UrbanAirshipAdapter,
+    (Vendor.Marketo, "v1") -> MarketoAdapter,
+    (Vendor.Vero, "v1") -> VeroAdapter,
+    (Vendor.HubSpot, "v1") -> HubSpotAdapter
   ) ++ remoteAdapters
 
   /**
@@ -105,7 +109,8 @@ class AdapterRegistry(remoteAdapters: Map[(String, String), RemoteAdapter] = Map
       case (Vendor.Redirect, "tp2") => SpRedirectAdapter.toRawEvents(payload)
       case (Vendor.Iglu, "v1") => IgluAdapter.toRawEvents(payload)
       case (Vendor.Callrail, "v1") => CallrailAdapter.toRawEvents(payload)
-      case (Vendor.Cloudfront, "wd_access_log") => CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(payload)
+      case (Vendor.Cloudfront, "wd_access_log") =>
+        CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(payload)
       case (Vendor.Mailchimp, "v1") => MailchimpAdapter.toRawEvents(payload)
       case (Vendor.Mailgun, "v1") => MailgunAdapter.toRawEvents(payload)
       case (Vendor.GoogleAnalytics, "v1") => GoogleAnalyticsAdapter.toRawEvents(payload)

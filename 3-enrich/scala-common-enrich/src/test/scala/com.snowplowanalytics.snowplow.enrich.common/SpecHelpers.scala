@@ -49,9 +49,10 @@ object SpecHelpers {
    * the above Iglu configuration.
    */
   val IgluResolver = (for {
-    json <- JsonUtils.extractJson(igluConfigField, igluConfig)
+    json <- JsonUtils.extractJsonNode(igluConfigField, igluConfig)
     reso <- Resolver.parse(json)
-  } yield reso).getOrElse(throw new RuntimeException("Could not build an Iglu resolver, should never happen"))
+  } yield reso)
+    .getOrElse(throw new RuntimeException("Could not build an Iglu resolver, should never happen"))
 
   private type NvPair = Tuple2[String, String]
 

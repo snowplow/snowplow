@@ -11,8 +11,8 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
-import org.json4s._
-import org.json4s.jackson.JsonMethods._
+import io.circe._
+import io.circe.literal._
 import org.specs2.Specification
 import org.specs2.scalaz._
 
@@ -26,28 +26,21 @@ class HttpHeaderExtractorEnrichmentSpec extends Specification with ValidationMat
 
   def e1 = {
     val expected = List(
-      """{"schema":"iglu:org.ietf/http_header/jsonschema/1-0-0","data":{"name":"X-Forwarded-For","value":"129.78.138.66, 129.78.64.103"}}"""
+      json"""{"schema":"iglu:org.ietf/http_header/jsonschema/1-0-0","data":{"name":"X-Forwarded-For","value":"129.78.138.66, 129.78.64.103"}}"""
     )
-
     HttpHeaderExtractorEnrichment("X-Forwarded-For")
-      .extract(List("X-Forwarded-For: 129.78.138.66, 129.78.64.103"))
-      .map(h => compact(render(h))) must_== expected.map(e => compact(render(parse(e))))
+      .extract(List("X-Forwarded-For: 129.78.138.66, 129.78.64.103")) must_== expected
   }
 
   def e2 = {
     val expected = List(
-      """{"schema":"iglu:org.ietf/http_header/jsonschema/1-0-0","data":{"name":"Accept","value":"text/html"}}"""
+      json"""{"schema":"iglu:org.ietf/http_header/jsonschema/1-0-0","data":{"name":"Accept","value":"text/html"}}"""
     )
-
-    HttpHeaderExtractorEnrichment(".*").extract(List("Accept: text/html")).map(h => compact(render(h))) must_== expected
-      .map(e                                                                     => compact(render(parse(e))))
+    HttpHeaderExtractorEnrichment(".*").extract(List("Accept: text/html")) must_== expected
   }
 
   def e3 = {
-    val expected = List.empty[String]
-
-    HttpHeaderExtractorEnrichment(".*")
-      .extract(Nil)
-      .map(h => compact(render(h))) must_== expected.map(e => compact(render(parse(e))))
+    val expected = List.empty[Json]
+    HttpHeaderExtractorEnrichment(".*").extract(Nil) must_== expected
   }
 }
