@@ -12,7 +12,7 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.apirequest
 
-import org.json4s.JInt
+import io.circe._
 import org.specs2.Specification
 import org.specs2.scalaz.ValidationMatchers
 import org.specs2.mock.Mockito
@@ -30,45 +30,45 @@ class CacheSpec extends Specification with ValidationMatchers with Mockito {
 
   def e1 = {
     val cache = Cache(3, 2)
-    val key   = ApiRequestEnrichment.cacheKey(url = "http://api.acme.com/url", body = None)
+    val key = ApiRequestEnrichment.cacheKey(url = "http://api.acme.com/url", body = None)
 
-    cache.put(key, JInt(42).success)
-    cache.put(key, JInt(52).success)
+    cache.put(key, Json.fromInt(42).success)
+    cache.put(key, Json.fromInt(52).success)
     cache.get(key) must beSome.like {
-      case v => v must beSuccessful(JInt(52))
+      case v => v must beSuccessful(Json.fromInt(52))
     } and (cache.actualLoad must beEqualTo(1))
   }
 
   def e2 = {
     val cache = Cache(3, 2)
-    val key   = ApiRequestEnrichment.cacheKey(url = "http://api.acme.com/url", body = None)
-    cache.put(key, JInt(42).success)
+    val key = ApiRequestEnrichment.cacheKey(url = "http://api.acme.com/url", body = None)
+    cache.put(key, Json.fromInt(42).success)
     Thread.sleep(3000)
     cache.get(key) must beNone and (cache.actualLoad must beEqualTo(0))
   }
 
   def e3 = {
     val cache = Cache(2, 2)
-    val key1  = ApiRequestEnrichment.cacheKey(url = "http://api.acme.com/url1", body = None)
-    cache.put(key1, JInt(32).success)
+    val key1 = ApiRequestEnrichment.cacheKey(url = "http://api.acme.com/url1", body = None)
+    cache.put(key1, Json.fromInt(32).success)
 
     val key2 = ApiRequestEnrichment.cacheKey(url = "http://api.acme.com/url2", body = None)
-    cache.put(key2, JInt(32).success)
+    cache.put(key2, Json.fromInt(32).success)
 
     val key3 = ApiRequestEnrichment.cacheKey(url = "http://api.acme.com/url3", body = None)
-    cache.put(key3, JInt(32).success)
+    cache.put(key3, Json.fromInt(32).success)
 
     cache.get(key1) must beNone and (cache.actualLoad must beEqualTo(2))
   }
 
   def e4 = {
     val cache = Cache(3, 2)
-    val key   = ApiRequestEnrichment.cacheKey(url = "http://api.acme.com/url", body = Some("""{"value":"42"}"""))
+    val key = ApiRequestEnrichment.cacheKey("http://api.acme.com/url", Some("""{"value":"42"}"""))
 
-    cache.put(key, JInt(33).success)
-    cache.put(key, JInt(42).success)
+    cache.put(key, Json.fromInt(33).success)
+    cache.put(key, Json.fromInt(42).success)
     cache.get(key) must beSome.like {
-      case v => v must beSuccessful(JInt(42))
+      case v => v must beSuccessful(Json.fromInt(42))
     } and (cache.actualLoad must beEqualTo(1))
   }
 }

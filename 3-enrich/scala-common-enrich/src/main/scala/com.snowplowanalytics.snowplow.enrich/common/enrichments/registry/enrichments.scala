@@ -17,46 +17,35 @@ import java.net.URI
 
 import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
 import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
-import org.json4s.JValue
+import io.circe._
 import scalaz._
 import Scalaz._
 
-/**
- * Trait inherited by every enrichment config case class
- */
+/** Trait inherited by every enrichment config case class */
 trait Enrichment {
 
   /**
-   * Gets the list of files the enrichment requires cached locally.
-   * The default implementation returns an empty list; if an
-   * enrichment requires files, it must override this method.
-   *
-   * @return A list of pairs, where the first entry in the pair
-   * indicates the (remote) location of the source file and the
-   * second indicates the local path where the enrichment expects
-   * to find the file.
+   * Gets the list of files the enrichment requires cached locally. The default implementation
+   * returns an empty list; if an enrichment requires files, it must override this method.
+   * @return A list of pairs, where the first entry in the pair indicates the (remote) location of
+   * the source file and the second indicates the local path where the enrichment expects to find
+   * the file.
    */
   def filesToCache: List[(URI, String)] = List.empty
 }
 
-/**
- * Trait to hold helpers relating to enrichment config
- */
+/** Trait to hold helpers relating to enrichment config */
 trait ParseableEnrichment {
-
   val supportedSchema: SchemaCriterion
 
   /**
-   * Tests whether a JSON is parseable by a
-   * specific EnrichmentConfig constructor
-   *
+   * Tests whether a JSON is parseable by a specific EnrichmentConfig constructor
    * @param config The JSON
-   * @param schemaKey The schemaKey which needs
-   *        to be checked
+   * @param schemaKey The schemaKey which needs to be checked
    * @return The JSON or an error message, boxed
    */
-  def isParseable(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[JValue] =
-    if (supportedSchema matches schemaKey) {
+  def isParseable(config: Json, schemaKey: SchemaKey): ValidatedNelMessage[Json] =
+    if (supportedSchema.matches(schemaKey)) {
       config.success
     } else {
       ("Schema key %s is not supported. A '%s' enrichment must have schema '%s'.")

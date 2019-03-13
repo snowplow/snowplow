@@ -32,9 +32,7 @@ import outputs.EnrichedEvent
 
 /**
  * A module to hold our enrichment process.
- *
- * At the moment this is very fixed - no
- * support for configuring enrichments etc.
+ * At the moment this is very fixed - no support for configuring enrichments etc.
  */
 object EnrichmentManager {
 
@@ -43,20 +41,18 @@ object EnrichmentManager {
 
   /**
    * Runs our enrichment process.
-   *
-   * @param registry Contains configuration
-   *        for all enrichments to apply
+   * @param registry Contains configuration for all enrichments to apply
    * @param hostEtlVersion ETL version
    * @param etlTstamp ETL timestamp
-   * @param raw Our canonical input
-   *        to enrich
-   * @return a MaybeCanonicalOutput - i.e.
-   *         a ValidationNel containing
-   *         either failure Strings or a
-   *         NonHiveOutput.
+   * @param raw Our canonical input to enrich
+   * @return a MaybeCanonicalOutput - i.e. a ValidationNel containing either failure Strings
    */
-  def enrichEvent(registry: EnrichmentRegistry, hostEtlVersion: String, etlTstamp: DateTime, raw: RawEvent)(
-    implicit resolver: Resolver): ValidatedEnrichedEvent = {
+  def enrichEvent(
+    registry: EnrichmentRegistry,
+    hostEtlVersion: String,
+    etlTstamp: DateTime,
+    raw: RawEvent
+  )(implicit resolver: Resolver): ValidatedEnrichedEvent = {
     // Placeholders for where the Success value doesn't matter.
     // Useful when you're updating large (>22 field) POSOs.
     val unitSuccess = ().success[String]
@@ -73,7 +69,10 @@ object EnrichmentManager {
       e.v_etl = ME.etlVersion(hostEtlVersion)
       e.etl_tstamp = EE.toTimestamp(etlTstamp)
       e.network_userid = raw.context.userId.orNull // May be updated later by 'nuid'
-      e.user_ipaddress = ME.extractIp("user_ipaddress", raw.context.ipAddress.orNull).toOption.orNull // May be updated later by 'ip'
+      e.user_ipaddress = ME
+        .extractIp("user_ipaddress", raw.context.ipAddress.orNull)
+        .toOption
+        .orNull // May be updated later by 'ip'
       e
     }
 
@@ -536,7 +535,8 @@ object EnrichmentManager {
         (customContexts, unstructEvent) match {
           case (Success(cctx), Success(ue)) =>
             enrichment.lookup(event, preparedDerivedContexts, cctx, ue)
-          case _ => Nil.success // Skip. Unstruct event or custom context corrupted (event enrichment will fail anyway)
+          case _ =>
+            Nil.success // Skip. Unstruct event or custom context corrupted (event enrichment will fail anyway)
         }
       case None => Nil.success
     }
@@ -547,7 +547,8 @@ object EnrichmentManager {
         (customContexts, unstructEvent, sqlQueryContexts) match {
           case (Success(cctx), Success(ue), Success(sctx)) =>
             enrichment.lookup(event, preparedDerivedContexts ++ sctx, cctx, ue)
-          case _ => Nil.success // Skip. Unstruct event or custom context corrupted (event enrichment will fail anyway)
+          case _ =>
+            Nil.success // Skip. Unstruct event or custom context corrupted (event enrichment will fail anyway)
         }
       case None => Nil.success
     }

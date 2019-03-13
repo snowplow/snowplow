@@ -21,7 +21,7 @@ import scalaz._
 import Scalaz._
 
 import loaders.CollectorPayload
-import utils.{JsonUtils => JU}
+import utils._
 
 /**
  * Transforms a collector payload which conforms to
@@ -39,13 +39,15 @@ object CallrailAdapter extends Adapter {
   }
 
   // Datetime format used by CallRail (as we will need to massage)
-  private val CallrailDateTimeFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").withZone(DateTimeZone.UTC)
+  private val CallrailDateTimeFormat =
+    DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").withZone(DateTimeZone.UTC)
 
   // Create a simple formatter function
   private val CallrailFormatter: FormatterFunc = {
     val bools = List("first_call", "answered")
     val ints = List("duration")
-    val dateTimes: JU.DateTimeFields = Some((NonEmptyList("datetime"), CallrailDateTimeFormat))
+    val dateTimes: JsonUtils.DateTimeFields =
+      Some((NonEmptyList("datetime"), CallrailDateTimeFormat))
     buildFormatter(bools, ints, dateTimes)
   }
 
@@ -70,7 +72,12 @@ object CallrailAdapter extends Adapter {
       NonEmptyList(
         RawEvent(
           api = payload.api,
-          parameters = toUnstructEventParams(TrackerVersion, params, SchemaUris.CallComplete, CallrailFormatter, "srv"),
+          parameters = toUnstructEventParams(
+            TrackerVersion,
+            params,
+            SchemaUris.CallComplete,
+            CallrailFormatter,
+            "srv"),
           contentType = payload.contentType,
           source = payload.source,
           context = payload.context

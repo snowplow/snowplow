@@ -12,8 +12,9 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.sqlquery
 
+import cats.syntax.either._
 import com.snowplowanalytics.iglu.client.SchemaKey
-import org.json4s.jackson.parseJson
+import io.circe.parser._
 import org.specs2.Specification
 import org.specs2.scalaz.ValidationMatchers
 
@@ -26,7 +27,11 @@ class SqlQueryEnrichmentSpec extends Specification with ValidationMatchers {
   """
 
   val SCHEMA_KEY =
-    SchemaKey("com.snowplowanalytics.snowplow.enrichments", "sql_query_enrichment_config", "jsonschema", "1-0-0")
+    SchemaKey(
+      "com.snowplowanalytics.snowplow.enrichments",
+      "sql_query_enrichment_config",
+      "jsonschema",
+      "1-0-0")
 
   def e1 = {
     val inputs = List(
@@ -35,195 +40,207 @@ class SqlQueryEnrichmentSpec extends Specification with ValidationMatchers {
         1,
         pojo = None,
         json = Some(
-          JsonInput("contexts", "iglu:com.snowplowanalytics.snowplow/client_session/jsonschema/1-*-*", "$.userId"))),
+          JsonInput(
+            "contexts",
+            "iglu:com.snowplowanalytics.snowplow/client_session/jsonschema/1-*-*",
+            "$.userId"))),
       Input(2, pojo = Some(PojoInput("app_id")), json = None)
     )
     val db = Db(
       postgresql = Some(
-        PostgresqlDb("cluster01.redshift.acme.com", 5439, sslMode = true, "snowplow_enrich_ro", "1asIkJed", "crm")),
+        PostgresqlDb(
+          "cluster01.redshift.acme.com",
+          5439,
+          sslMode = true,
+          "snowplow_enrich_ro",
+          "1asIkJed",
+          "crm")),
       mysql = None)
     val output = JsonOutput("iglu:com.acme/user/jsonschema/1-0-0", "ALL_ROWS", "CAMEL_CASE")
-    val cache  = Cache(3000, 60)
+    val cache = Cache(3000, 60)
     val query = Query(
       "SELECT username, email_address, date_of_birth FROM tbl_users WHERE user = ? AND client = ? LIMIT 1")
     val config = SqlQueryEnrichment(inputs, db, query, Output(output, "AT_MOST_ONE"), cache)
 
-    val configuration = parseJson(
-      """|{
-      |    "vendor": "com.snowplowanalytics.snowplow.enrichments",
-      |    "name": "sql_query_enrichment_config",
-      |    "enabled": true,
-      |    "parameters": {
-      |      "inputs": [
-      |        {
-      |          "placeholder": 1,
-      |          "pojo": {
-      |            "field": "user_id"
-      |          }
-      |        },
-      |        {
-      |          "placeholder": 1,
-      |          "json": {
-      |            "field": "contexts",
-      |            "schemaCriterion": "iglu:com.snowplowanalytics.snowplow/client_session/jsonschema/1-*-*",
-      |            "jsonPath": "$.userId"
-      |          }
-      |        },
-      |        {
-      |          "placeholder": 2,
-      |          "pojo": {
-      |            "field": "app_id"
-      |          }
-      |        }
-      |      ],
-      |      "query": {
-      |        "sql": "SELECT username, email_address, date_of_birth FROM tbl_users WHERE user = ? AND client = ? LIMIT 1"
-      |       },
-      |      "database": {
-      |        "postgresql": {
-      |          "host": "cluster01.redshift.acme.com",
-      |          "port": 5439,
-      |          "sslMode": true,
-      |          "username": "snowplow_enrich_ro",
-      |          "password": "1asIkJed",
-      |          "database": "crm"
-      |        }
-      |      },
-      |      "output": {
-      |        "expectedRows": "AT_MOST_ONE",
-      |        "json": {
-      |          "schema": "iglu:com.acme/user/jsonschema/1-0-0",
-      |          "describes": "ALL_ROWS",
-      |          "propertyNames": "CAMEL_CASE"
-      |        }
-      |      },
-      |      "cache": {
-      |        "size": 3000,
-      |        "ttl": 60
-      |      }
-      |    }
-      |  }""".stripMargin)
+    val configuration = parse(
+      """
+      {
+        "vendor": "com.snowplowanalytics.snowplow.enrichments",
+        "name": "sql_query_enrichment_config",
+        "enabled": true,
+        "parameters": {
+          "inputs": [
+            {
+              "placeholder": 1,
+              "pojo": {
+                "field": "user_id"
+              }
+            },
+            {
+              "placeholder": 1,
+              "json": {
+                "field": "contexts",
+                "schemaCriterion": "iglu:com.snowplowanalytics.snowplow/client_session/jsonschema/1-*-*",
+                "jsonPath": "$.userId"
+              }
+            },
+            {
+              "placeholder": 2,
+              "pojo": {
+                "field": "app_id"
+              }
+            }
+          ],
+          "query": {
+            "sql": "SELECT username, email_address, date_of_birth FROM tbl_users WHERE user = ? AND client = ? LIMIT 1"
+            },
+          "database": {
+            "postgresql": {
+              "host": "cluster01.redshift.acme.com",
+              "port": 5439,
+              "sslMode": true,
+              "username": "snowplow_enrich_ro",
+              "password": "1asIkJed",
+              "database": "crm"
+            }
+          },
+          "output": {
+            "expectedRows": "AT_MOST_ONE",
+            "json": {
+              "schema": "iglu:com.acme/user/jsonschema/1-0-0",
+              "describes": "ALL_ROWS",
+              "propertyNames": "CAMEL_CASE"
+            }
+          },
+          "cache": {
+            "size": 3000,
+            "ttl": 60
+          }
+        }
+      }""").toOption.get
 
     SqlQueryEnrichmentConfig.parse(configuration, SCHEMA_KEY) must beSuccessful(config)
   }
 
   def e2 = {
     // $.output.json.describes contains invalid value
-    val configuration = parseJson(
-      """|{
-      |    "vendor": "com.snowplowanalytics.snowplow.enrichments",
-      |    "name": "sql_query_enrichment_config",
-      |    "enabled": true,
-      |    "parameters": {
-      |      "inputs": [
-      |        {
-      |          "placeholder": 1,
-      |          "pojo": {
-      |            "field": "user_id"
-      |          }
-      |        },
-      |        {
-      |          "placeholder": 1,
-      |          "json": {
-      |            "field": "contexts",
-      |            "schemaCriterion": "iglu:com.snowplowanalytics.snowplow/client_session/jsonschema/1-*-*",
-      |            "jsonPath": "$.userId"
-      |          }
-      |        },
-      |        {
-      |          "placeholder": 2,
-      |          "pojo": {
-      |            "field": "app_id"
-      |          }
-      |        }
-      |      ],
-      |      "query": {
-      |        "sql": "SELECT username, email_address, date_of_birth FROM tbl_users WHERE user = ? AND client = ? LIMIT 1"
-      |      },
-      |      "database": {
-      |        "postgresql": {
-      |          "host": "cluster01.redshift.acme.com",
-      |          "port": 5439,
-      |          "sslMode": true,
-      |          "username": "snowplow_enrich_ro",
-      |          "password": "1asIkJed",
-      |          "database": "crm"
-      |        }
-      |      },
-      |      "output": {
-      |        "expectedRows": "AT_MOST_ONE",
-      |        "json": {
-      |          "schema": "iglu:com.acme/user/jsonschema/1-0-0",
-      |          "describes": "INVALID",
-      |          "propertyNames": "CAMEL_CASE"
-      |        }
-      |      },
-      |      "cache": {
-      |        "size": 3000,
-      |        "ttl": 60
-      |      }
-      |    }
-      |  }""".stripMargin)
+    val configuration = parse(
+      """
+      {
+        "vendor": "com.snowplowanalytics.snowplow.enrichments",
+        "name": "sql_query_enrichment_config",
+        "enabled": true,
+        "parameters": {
+          "inputs": [
+            {
+              "placeholder": 1,
+              "pojo": {
+                "field": "user_id"
+              }
+            },
+            {
+              "placeholder": 1,
+              "json": {
+                "field": "contexts",
+                "schemaCriterion": "iglu:com.snowplowanalytics.snowplow/client_session/jsonschema/1-*-*",
+                "jsonPath": "$.userId"
+              }
+            },
+            {
+              "placeholder": 2,
+              "pojo": {
+                "field": "app_id"
+              }
+            }
+          ],
+          "query": {
+            "sql": "SELECT username, email_address, date_of_birth FROM tbl_users WHERE user = ? AND client = ? LIMIT 1"
+          },
+          "database": {
+            "postgresql": {
+              "host": "cluster01.redshift.acme.com",
+              "port": 5439,
+              "sslMode": true,
+              "username": "snowplow_enrich_ro",
+              "password": "1asIkJed",
+              "database": "crm"
+            }
+          },
+          "output": {
+            "expectedRows": "AT_MOST_ONE",
+            "json": {
+              "schema": "iglu:com.acme/user/jsonschema/1-0-0",
+              "describes": "INVALID",
+              "propertyNames": "CAMEL_CASE"
+            }
+          },
+          "cache": {
+            "size": 3000,
+            "ttl": 60
+          }
+        }
+      }""").toOption.get
 
     SqlQueryEnrichmentConfig.parse(configuration, SCHEMA_KEY) must beFailing
   }
 
   def e3 = {
-    val configuration = parseJson(
-      """|{
-      |    "vendor": "com.snowplowanalytics.snowplow.enrichments",
-      |    "name": "sql_query_enrichment_config",
-      |    "enabled": true,
-      |    "parameters": {
-      |      "inputs": [
-      |        {
-      |          "placeholder": 1,
-      |          "pojo": {
-      |            "field": "user_id"
-      |          }
-      |        },
-      |        {
-      |          "placeholder": 1,
-      |          "json": {
-      |            "field": "contexts",
-      |            "schemaCriterion": "iglu:com.snowplowanalytics.snowplow/client_session/jsonschema/1-*-*",
-      |            "jsonPath": "$.userId"
-      |          }
-      |        },
-      |        {
-      |          "placeholder": 2,
-      |          "pojo": {
-      |            "field": "app_id"
-      |          }
-      |        }
-      |      ],
-      |      "query": {
-      |        "sql": "SELECT username, email_address, date_of_birth FROM tbl_users WHERE user = ? AND client = ? LIMIT 1"
-      |       },
-      |      "database": {
-      |        "mysql": {
-      |          "host": "cluster01.redshift.acme.com",
-      |          "port": 5439,
-      |          "sslMode": true,
-      |          "username": "snowplow_enrich_ro",
-      |          "password": "1asIkJed",
-      |          "database": "crm"
-      |        }
-      |      },
-      |      "output": {
-      |        "expectedRows": "AT_LEAST_ONE",
-      |        "json": {
-      |          "schema": "iglu:com.acme/user/jsonschema/1-0-0",
-      |          "describes": "EVERY_ROW",
-      |          "propertyNames": "CAMEL_CASE"
-      |        }
-      |      },
-      |      "cache": {
-      |        "size": 3000,
-      |        "ttl": 60
-      |      }
-      |    }
-      |  }""".stripMargin)
+    val configuration = parse(
+      """
+      {
+        "vendor": "com.snowplowanalytics.snowplow.enrichments",
+        "name": "sql_query_enrichment_config",
+        "enabled": true,
+        "parameters": {
+          "inputs": [
+            {
+              "placeholder": 1,
+              "pojo": {
+                "field": "user_id"
+              }
+            },
+            {
+              "placeholder": 1,
+              "json": {
+                "field": "contexts",
+                "schemaCriterion": "iglu:com.snowplowanalytics.snowplow/client_session/jsonschema/1-*-*",
+                "jsonPath": "$.userId"
+              }
+            },
+            {
+              "placeholder": 2,
+              "pojo": {
+                "field": "app_id"
+              }
+            }
+          ],
+          "query": {
+            "sql": "SELECT username, email_address, date_of_birth FROM tbl_users WHERE user = ? AND client = ? LIMIT 1"
+           },
+          "database": {
+            "mysql": {
+              "host": "cluster01.redshift.acme.com",
+              "port": 5439,
+              "sslMode": true,
+              "username": "snowplow_enrich_ro",
+              "password": "1asIkJed",
+              "database": "crm"
+            }
+          },
+          "output": {
+            "expectedRows": "AT_LEAST_ONE",
+            "json": {
+              "schema": "iglu:com.acme/user/jsonschema/1-0-0",
+              "describes": "EVERY_ROW",
+              "propertyNames": "CAMEL_CASE"
+            }
+          },
+          "cache": {
+            "size": 3000,
+            "ttl": 60
+          }
+        }
+      }""").toOption.get
 
     SqlQueryEnrichmentConfig.parse(configuration, SCHEMA_KEY) must beSuccessful
   }

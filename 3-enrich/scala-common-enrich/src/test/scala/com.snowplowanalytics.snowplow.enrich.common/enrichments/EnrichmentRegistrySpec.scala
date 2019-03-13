@@ -37,14 +37,14 @@ class EnrichmentRegistrySpec extends Specification with DataTables with Validati
   def makeFiles(files: String*): List[(URI, String)] =
     files.toList.map(f => (new URI(s"http://foobar.com/$f"), f))
 
-  val nofiles     = NoFileEnrichment()
+  val nofiles = NoFileEnrichment()
   val enrichment1 = FileEnrichment(files1)
   val enrichment2 = FileEnrichment(files2)
 
   def e1 =
-    "SPEC NAME"             || "ENRICHMENTS"                                  | "EXPECTED FILES" |
-      "none with files"     !! enrichments(nofiles, nofiles, nofiles)         ! List.empty |
-      "one with files"      !! enrichments(nofiles, enrichment1, nofiles)     ! files1 |
+    "SPEC NAME" || "ENRICHMENTS" | "EXPECTED FILES" |
+      "none with files" !! enrichments(nofiles, nofiles, nofiles) ! List.empty |
+      "one with files" !! enrichments(nofiles, enrichment1, nofiles) ! files1 |
       "multiple with files" !! enrichments(enrichment1, nofiles, enrichment2) ! files1 ++ files2 |> {
       (_, enrichments, expectedFiles) =>
         {
