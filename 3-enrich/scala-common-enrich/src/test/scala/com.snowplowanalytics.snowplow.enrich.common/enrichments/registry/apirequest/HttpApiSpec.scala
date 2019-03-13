@@ -26,21 +26,23 @@ class HttpApiSpec extends Specification with ValidationMatchers with Mockito {
   """
 
   def e1 = {
-    val httpApi         = HttpApi("GET", "http://api.acme.com/{{user}}/{{ time}}/", anyInt, Authentication(None))
+    val httpApi =
+      HttpApi("GET", "http://api.acme.com/{{user}}/{{ time}}/", anyInt, Authentication(None))
     val templateContext = Map("user" -> "admin")
-    val request         = httpApi.buildUrl(templateContext)
+    val request = httpApi.buildUrl(templateContext)
     request must beNone
   }
 
   def e2 = {
     val httpApi =
-      HttpApi(anyString,
-              "http://thishostdoesntexist31337:8123/{{  user }}/foo/{{ time}}/{{user}}",
-              anyInt,
-              Authentication(None))
+      HttpApi(
+        anyString,
+        "http://thishostdoesntexist31337:8123/{{  user }}/foo/{{ time}}/{{user}}",
+        anyInt,
+        Authentication(None))
 
     val templateContext = Map("user" -> "admin", "time" -> "November 2015")
-    val request         = httpApi.buildUrl(templateContext)
+    val request = httpApi.buildUrl(templateContext)
     request must beSome("http://thishostdoesntexist31337:8123/admin/foo/November+2015/admin")
   }
 
@@ -52,7 +54,7 @@ class HttpApiSpec extends Specification with ValidationMatchers with Mockito {
       List(Output("", Some(JsonOutput("")))),
       Cache(1, 1))
 
-    val event   = new outputs.EnrichedEvent
+    val event = new outputs.EnrichedEvent
     val request = enrichment.lookup(event, Nil, Nil, Nil)
     request must beFailing
   }

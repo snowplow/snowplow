@@ -14,22 +14,18 @@ package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry
 
 import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
-import org.json4s.{DefaultFormats, JValue}
+import io.circe._
 import scalaz._
 import Scalaz._
 
 import utils.MapTransformer.SourceMap
-import utils.ScalazJson4sUtils
+import utils.ScalazCirceUtils
 
-/**
- * Companion object. Lets us create a
- * CampaignAttributionEnrichment from a JValue
- */
+/** Companion object. Lets us create a CampaignAttributionEnrichment from a Json */
 object CampaignAttributionEnrichment extends ParseableEnrichment {
 
-  implicit val formats = DefaultFormats
-
-  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "campaign_attribution", "jsonschema", 1, 0)
+  val supportedSchema =
+    SchemaCriterion("com.snowplowanalytics.snowplow", "campaign_attribution", "jsonschema", 1, 0)
 
   val DefaultNetworkMap = Map(
     "gclid" -> "Google",
@@ -39,22 +35,27 @@ object CampaignAttributionEnrichment extends ParseableEnrichment {
 
   /**
    * Creates a CampaignAttributionEnrichment instance from a JValue.
-   *
    * @param config The referer_parser enrichment JSON
-   * @param schemaKey The SchemaKey provided for the enrichment
-   *        Must be a supported SchemaKey for this enrichment
+   * @param schemaKey provided for the enrichment, must be supported by this enrichment
    * @return a configured CampaignAttributionEnrichment instance
    */
-  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[CampaignAttributionEnrichment] =
+  def parse(
+    config: Json,
+    schemaKey: SchemaKey
+  ): ValidatedNelMessage[CampaignAttributionEnrichment] =
     isParseable(config, schemaKey).flatMap(conf => {
       (for {
-        medium <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "fields", "mktMedium")
-        source <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "fields", "mktSource")
-        term <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "fields", "mktTerm")
-        content <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "fields", "mktContent")
-        campaign <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "fields", "mktCampaign")
+        medium <- ScalazCirceUtils
+          .extract[List[String]](config, "parameters", "fields", "mktMedium")
+        source <- ScalazCirceUtils
+          .extract[List[String]](config, "parameters", "fields", "mktSource")
+        term <- ScalazCirceUtils.extract[List[String]](config, "parameters", "fields", "mktTerm")
+        content <- ScalazCirceUtils
+          .extract[List[String]](config, "parameters", "fields", "mktContent")
+        campaign <- ScalazCirceUtils
+          .extract[List[String]](config, "parameters", "fields", "mktCampaign")
 
-        customClickMap = ScalazJson4sUtils
+        customClickMap = ScalazCirceUtils
           .extract[Map[String, String]](config, "parameters", "fields", "mktClickId")
           .fold(
             // Assign empty Map on missing property for backwards compatibility with schema version 1-0-0
@@ -76,7 +77,6 @@ object CampaignAttributionEnrichment extends ParseableEnrichment {
 
 /**
  * Class for a marketing campaign
- *
  * @param medium Campaign medium
  * @param source Campaign source
  * @param term Campaign term
@@ -85,7 +85,7 @@ object CampaignAttributionEnrichment extends ParseableEnrichment {
  * @param clickId Click ID
  * @param network Advertising network
  */
-case class MarketingCampaign(
+final case class MarketingCampaign(
   medium: Option[String],
   source: Option[String],
   term: Option[String],
@@ -97,7 +97,6 @@ case class MarketingCampaign(
 
 /**
  * Config for a campaign_attribution enrichment
- *
  * @param mediumParameters List of marketing medium parameters
  * @param sourceParameters List of marketing source parameters
  * @param termParameters List of marketing term parameters
@@ -105,7 +104,7 @@ case class MarketingCampaign(
  * @param campaignParameters List of marketing campaign parameters
  * @param mktClick: Map of click ID parameters to networks
  */
-case class CampaignAttributionEnrichment(
+final case class CampaignAttributionEnrichment(
   mediumParameters: List[String],
   sourceParameters: List[String],
   termParameters: List[String],
@@ -115,11 +114,9 @@ case class CampaignAttributionEnrichment(
 ) extends Enrichment {
 
   /**
-   * Find the first string in parameterList which is a key of
-   * sourceMap and return the value of that key in sourceMap.
-   *
-   * @param parameterList List of accepted campaign parameter
-   *        names in order of decreasing precedence
+   * Find the first string in parameterList which is a key of sourceMap and return the value of that
+   * key in sourceMap.
+   * @param parameterList List of accepted parameter names in order of decreasing precedence
    * @param sourceMap Map of key-value pairs in URI querystring
    * @return Option boxing the value of the campaign parameter
    */
@@ -128,13 +125,8 @@ case class CampaignAttributionEnrichment(
 
   /**
    * Extract the marketing fields from a URL.
-   *
-   * @param nvPairs The querystring to extract
-   *        marketing fields from
-   * @return the MarketingCampaign
-   *         or an error message,
-   *         boxed in a Scalaz
-   *         Validation
+   * @param nvPairs The querystring to extract marketing fields from
+   * @return the MarketingCampaign or an error message, boxed in a Scalaz Validation
    */
   def extractMarketingFields(nvPairs: SourceMap): ValidationNel[String, MarketingCampaign] = {
     val medium = getFirstParameter(mediumParameters, nvPairs)
@@ -145,7 +137,9 @@ case class CampaignAttributionEnrichment(
 
     val (clickId, network) =
       Unzip[Option].unzip(
-        clickIdParameters.find(pair => nvPairs.contains(pair._1)).map(pair => (nvPairs(pair._1), pair._2)))
+        clickIdParameters
+          .find(pair => nvPairs.contains(pair._1))
+          .map(pair => (nvPairs(pair._1), pair._2)))
 
     MarketingCampaign(medium, source, term, content, campaign, clickId, network).success.toValidationNel
   }

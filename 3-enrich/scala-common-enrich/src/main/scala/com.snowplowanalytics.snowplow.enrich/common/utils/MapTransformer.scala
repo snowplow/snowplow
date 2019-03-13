@@ -64,7 +64,8 @@ object MapTransformer {
   type Value = String
   type Field = String
 
-  // A transformation takes a Key and Value and returns a Scalaz Validation with String for Failure and anything for Success
+  // A transformation takes a Key and Value and returns a Scalaz Validation with String for Failure
+  // and anything for Success
   type TransformFunc = Function2[Key, Value, Validation[String, _]]
 
   // Our source map
@@ -77,36 +78,28 @@ object MapTransformer {
   type SettersMap = Map[Key, Method]
 
   /**
-   * A factory to generate a new object using
-   * a TransformMap.
-   *
-   * @param sourceMap Contains the source data to
-   *                  apply to the obj
-   * @param transformMap Determines how the source
-   *                     data should be transformed
-   *                     before storing in the obj
-   * @return a ValidationNel containing either a Nel
-   *         of error Strings, or the new object
+   * A factory to generate a new object using a TransformMap.
+   * @param sourceMap Contains the source data to apply to the obj
+   * @param transformMap Determines how the data should be transformed before storing in the obj
+   * @return a ValidationNel containing either a Nel of error Strings, or the new object
    */
-  def generate[T <: AnyRef](sourceMap: SourceMap, transformMap: TransformMap)(implicit m: Manifest[T]): Validated[T] = {
+  def generate[T <: AnyRef](sourceMap: SourceMap, transformMap: TransformMap)(
+    implicit m: Manifest[T]): Validated[T] = {
     val newInst = m.runtimeClass.newInstance()
     val result = _transform(newInst, sourceMap, transformMap, getSetters(m.runtimeClass))
-    result.flatMap(s => newInst.asInstanceOf[T].success) // On success, replace the field count with the new instance
+    // On success, replace the field count with the new instance
+    result.flatMap(s => newInst.asInstanceOf[T].success)
   }
 
   /**
-   * An implicit conversion to take any Object and make it
-   * Transformable.
-   *
+   * An implicit conversion to take any Object and make it Transformable.
    * @param obj Any Object
    * @return the new Transformable class, with manifest attached
    */
-  implicit def makeTransformable[T <: AnyRef](obj: T)(implicit m: Manifest[T]) = new TransformableClass[T](obj)
+  implicit def makeTransformable[T <: AnyRef](obj: T)(implicit m: Manifest[T]) =
+    new TransformableClass[T](obj)
 
-  /**
-   * A pimped object, now transformable by
-   * using the transform method.
-   */
+  /** A pimped object, now transformable by using the transform method. */
   class TransformableClass[T](obj: T)(implicit m: Manifest[T]) {
 
     // Do all the reflection for the setters we need:
@@ -114,46 +107,30 @@ object MapTransformer {
     private lazy val setters = getSetters(m.runtimeClass)
 
     /**
-     * Update the object by applying the contents
-     * of a SourceMap to the object using a TransformMap.
-     *
-     * @param sourceMap Contains the source data to
-     *                  apply to the obj
-     * @param transformMap Determines how the source
-     *                     data should be transformed
-     *                     before storing in the obj
-     * @return a ValidationNel containing either a Nel
-     *         of error Strings, or the count of
-     *         updated fields
+     * Update the object by applying the contents of a SourceMap to the object using a TransformMap.
+     * @param sourceMap Contains the source data to apply to the obj
+     * @param transformMap Determines how the data should be transformed before storing in the obj
+     * @return a ValidationNel containing a Nel of error Strings, or the count of updated fields
      */
     def transform(sourceMap: SourceMap, transformMap: TransformMap): ValidationNel[String, Int] =
       _transform[T](obj, sourceMap, transformMap, setters)
   }
 
   /**
-   * General-purpose method to update any object
-   * by applying the contents of a SourceMap to
-   * the object using a TransformMap. We use the
-   * SettersMap to update the object.
-   *
+   * General-purpose method to update any object by applying the contents of a SourceMap to
+   * the object using a TransformMap. We use the SettersMap to update the object.
    * @param obj Any Object
-   * @param sourceMap Contains the source data to
-   *                  apply to the obj
-   * @param transformMap Determines how the source
-   *                     data should be transformed
-   *                     before storing in the obj
-   * @param setters Provides access to the obj's
-   *                setX() methods
-   * @return a ValidationNel containing either a Nel
-   *         of error Strings, or the count of
-   *         updated fields
+   * @param sourceMap Contains the source data to apply to the obj
+   * @param transformMap Determines how the data should be transformed before storing in the obj
+   * @param setters Provides access to the obj's setX() methods
+   * @return a ValidationNel containing a Nel of error Strings, or the count of updated fields
    */
   private def _transform[T](
     obj: T,
     sourceMap: SourceMap,
     transformMap: TransformMap,
-    setters: SettersMap): ValidationNel[String, Int] = {
-
+    setters: SettersMap
+  ): ValidationNel[String, Int] = {
     val results: List[Validation[String, Int]] = sourceMap.map {
       case (key, in) =>
         if (transformMap.contains(key)) {
@@ -198,37 +175,30 @@ object MapTransformer {
   }
 
   /**
-   * Lowercases the first character in
-   * a String.
-   *
-   * @param s The String to lowercase the
-   *          first letter of
-   * @return s with the first character
-   *           in lowercase
+   * Lowercases the first character in a String.
+   * @param s The String to lowercase the first letter of
+   * @return s with the first character in lowercase
    */
   private def lowerFirst(s: String): String =
     s.substring(0, 1).toLowerCase + s.substring(1)
 
   /**
-   * Gets the field name from a setter Method,
-   * by cutting out "set" and lowercasing the
-   * first character after in the setter's name.
-   *
-   * @param setter The Method from which we will
-   *               reverse-engineer the field name
+   * Gets the field name from a setter Method, by cutting out "set" and lowercasing the first
+   * character after in the setter's name.
+   * @param setter The Method from which we will reverse-engineer the field name
    * @return the field name extracted from the setter
    */
   private def setterToFieldName(setter: Method): String =
     lowerFirst(setter.getName.substring(3))
 
   /**
-   * Gets all of the setter Methods
-   * from a manifest.
-   *
-   * @param c The manifest containing the
-   *          setter methods to return
+   * Gets all of the setter Methods from a manifest.
+   * @param c The manifest containing the setter methods to return
    * @return the Map of setter Methods
    */
   private def getSetters[T](c: Class[T]): SettersMap =
-    c.getDeclaredMethods.filter { _.getName.startsWith("set") }.groupBy { setterToFieldName(_) }.mapValues { _.head }
+    c.getDeclaredMethods
+      .filter { _.getName.startsWith("set") }
+      .groupBy { setterToFieldName(_) }
+      .mapValues { _.head }
 }

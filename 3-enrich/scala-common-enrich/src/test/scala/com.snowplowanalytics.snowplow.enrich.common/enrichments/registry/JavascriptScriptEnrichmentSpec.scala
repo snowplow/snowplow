@@ -13,16 +13,13 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry
 
+import io.circe.literal._
 import org.specs2.Specification
 import org.specs2.scalaz.ValidationMatchers
-import org.json4s._
-import org.json4s.jackson.JsonMethods._
 
 import outputs.EnrichedEvent
 
-/**
- * Tests the anonymzeIp function
- */
+/** Tests the anonymzeIp function */
 class JavascriptScriptEnrichmentSpec extends Specification with ValidationMatchers {
   def is = s2"""
   This is a specification to test the JavascriptScriptEnrichment
@@ -56,7 +53,7 @@ class JavascriptScriptEnrichmentSpec extends Specification with ValidationMatche
   def buildEvent(appId: String): EnrichedEvent = {
     val e = new EnrichedEvent()
     e.platform = "server"
-    e.app_id   = appId
+    e.app_id = appId
     e
   }
 
@@ -67,18 +64,16 @@ class JavascriptScriptEnrichmentSpec extends Specification with ValidationMatche
 
   def e2 = {
     val event = buildEvent("guess")
-
     val actual = PreparedEnrichment.process(event)
     actual must beFailing
   }
 
   def e3 = {
     val event = buildEvent("secret")
-
-    val actual   = PreparedEnrichment.process(event)
-    val expected = """{"schema":"iglu:com.acme/foo/jsonschema/1-0-0","data":{"appIdUpper":"SECRET"}}"""
-
-    actual must beSuccessful.like { case head :: Nil => compact(render(head)) must_== compact(render(parse(expected))) }
+    val actual = PreparedEnrichment.process(event)
+    val expected =
+      json"""{"schema":"iglu:com.acme/foo/jsonschema/1-0-0","data":{"appIdUpper":"SECRET"}}"""
+    actual must beSuccessful.like { case head :: Nil => head must_== expected }
   }
 
 }

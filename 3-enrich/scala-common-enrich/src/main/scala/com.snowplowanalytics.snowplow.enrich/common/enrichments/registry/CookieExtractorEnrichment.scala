@@ -14,32 +14,29 @@ package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry
 
 import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
+import io.circe._
+import io.circe.syntax._
 import org.apache.http.message.BasicHeaderValueParser
 import scalaz._
 import Scalaz._
-import org.json4s._
-import org.json4s.JsonDSL._
 
-import utils.ScalazJson4sUtils
+import utils.ScalazCirceUtils
 
 object CookieExtractorEnrichmentConfig extends ParseableEnrichment {
 
-  implicit val formats = DefaultFormats
-
-  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "cookie_extractor_config", "jsonschema", 1, 0)
+  val supportedSchema =
+    SchemaCriterion("com.snowplowanalytics.snowplow", "cookie_extractor_config", "jsonschema", 1, 0)
 
   /**
    * Creates a CookieExtractorEnrichment instance from a JValue.
-   *
    * @param config The cookie_extractor enrichment JSON
-   * @param schemaKey The SchemaKey provided for the enrichment
-   *        Must be a supported SchemaKey for this enrichment
+   * @param schemaKey provided for the enrichment, must be supported by this enrichment
    * @return a configured CookieExtractorEnrichment instance
    */
-  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[CookieExtractorEnrichment] =
+  def parse(config: Json, schemaKey: SchemaKey): ValidatedNelMessage[CookieExtractorEnrichment] =
     isParseable(config, schemaKey).flatMap(conf => {
       (for {
-        cookieNames <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "cookies")
+        cookieNames <- ScalazCirceUtils.extract[List[String]](config, "parameters", "cookies")
         enrich = CookieExtractorEnrichment(cookieNames)
       } yield enrich).toValidationNel
     })
@@ -47,20 +44,17 @@ object CookieExtractorEnrichmentConfig extends ParseableEnrichment {
 
 /**
  * Enrichment extracting certain cookies from headers.
- *
  * @param cookieNames Names of the cookies to be extracted
  */
-case class CookieExtractorEnrichment(
-  cookieNames: List[String]
-) extends Enrichment {
+final case class CookieExtractorEnrichment(cookieNames: List[String]) extends Enrichment {
 
-  def extract(headers: List[String]): List[JsonAST.JObject] = {
+  def extract(headers: List[String]): List[Json] = {
     // rfc6265 - sections 4.2.1 and 4.2.2
-
     val cookies = headers.flatMap { header =>
       header.split(":", 2) match {
         case Array("Cookie", value) =>
-          val nameValuePairs = BasicHeaderValueParser.parseParameters(value, BasicHeaderValueParser.INSTANCE)
+          val nameValuePairs =
+            BasicHeaderValueParser.parseParameters(value, BasicHeaderValueParser.INSTANCE)
 
           val filtered = nameValuePairs.filter { nvp =>
             cookieNames.contains(nvp.getName)
@@ -72,10 +66,16 @@ case class CookieExtractorEnrichment(
     }.flatten
 
     cookies.map { cookie =>
-      (("schema" -> "iglu:org.ietf/http_cookie/jsonschema/1-0-0") ~
-        ("data" ->
-          ("name" -> cookie.getName) ~
-            ("value" -> cookie.getValue)))
+      Json.obj(
+        "schema" := "iglu:org.ietf/http_cookie/jsonschema/1-0-0",
+        "data" := Json.obj(
+          "name" := stringToJson(cookie.getName),
+          "value" := stringToJson(cookie.getValue)
+        )
+      )
     }
   }
+
+  private def stringToJson(str: String): Json =
+    Option(str).map(Json.fromString).getOrElse(Json.Null)
 }

@@ -30,16 +30,17 @@ class ExtractViewDimensionsSpec extends Specification with DataTables {
     s2"Extracting screen dimensions (viewports, screen resolution etc) with extractViewDimensions should work $e1"
 
   def e1 =
-    "SPEC NAME"          || "INPUT VAL"       | "EXPECTED OUTPUT" |
-      "valid desktop"    !! "1200x800"        ! (1200, 800).success |
-      "valid mobile"     !! "76x128"          ! (76, 128).success |
-      "invalid empty"    !! ""                ! err("").fail |
-      "invalid null"     !! null              ! err(null).fail |
-      "invalid hex"      !! "76xEE"           ! err("76xEE").fail |
-      "invalid negative" !! "1200x-17"        ! err("1200x-17").fail |
-      "Arabic number"    !! "٤٥٦٧x680"        ! err("٤٥٦٧x680").fail |
-      "number > int #1"  !! "760x3389336768"  ! err2("760x3389336768").fail |
-      "number > int #2"  !! "9989336768x1200" ! err2("9989336768x1200").fail |> { (_, input, expected) =>
-      ClientEnrichments.extractViewDimensions(FieldName, input) must_== expected
+    "SPEC NAME" || "INPUT VAL" | "EXPECTED OUTPUT" |
+      "valid desktop" !! "1200x800" ! (1200, 800).success |
+      "valid mobile" !! "76x128" ! (76, 128).success |
+      "invalid empty" !! "" ! err("").fail |
+      "invalid null" !! null ! err(null).fail |
+      "invalid hex" !! "76xEE" ! err("76xEE").fail |
+      "invalid negative" !! "1200x-17" ! err("1200x-17").fail |
+      "Arabic number" !! "٤٥٦٧x680" ! err("٤٥٦٧x680").fail |
+      "number > int #1" !! "760x3389336768" ! err2("760x3389336768").fail |
+      "number > int #2" !! "9989336768x1200" ! err2("9989336768x1200").fail |> {
+      (_, input, expected) =>
+        ClientEnrichments.extractViewDimensions(FieldName, input) must_== expected
     }
 }

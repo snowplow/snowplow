@@ -13,11 +13,13 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry.apirequest
 
+import cats.syntax.either._
 import com.snowplowanalytics.iglu.client.{JsonSchemaPair, SchemaKey}
-import org.json4s._
-import org.json4s.JsonDSL._
-import org.json4s.jackson.{parseJson, prettyJson}
-import org.json4s.jackson.JsonMethods.asJsonNode
+import io.circe._
+import io.circe.jackson.{circeToJackson, jacksonToCirce}
+import io.circe.literal._
+import io.circe.parser._
+import io.circe.syntax._
 import org.specs2.Specification
 import org.specs2.scalaz.ValidationMatchers
 import org.specs2.matcher.Matcher
@@ -27,7 +29,7 @@ import outputs.EnrichedEvent
 object ApiRequestEnrichmentIntegrationTest {
   def continuousIntegration: Boolean = sys.env.get("CI") match {
     case Some("true") => true
-    case _            => false
+    case _ => false
   }
 
   /**
@@ -37,11 +39,17 @@ object ApiRequestEnrichmentIntegrationTest {
    * ApiRequestEnrichment.lookup method
    */
   def createPair(key: SchemaKey, validJson: String): JsonSchemaPair = {
-    val hierarchy = parseJson(
-      s"""{"rootId":null,"rootTstamp":null,"refRoot":"events","refTree":["events","${key.name}"],"refParent":"events"}""")
-    (key, asJsonNode(("data", parseJson(validJson)) ~
-      (("hierarchy", hierarchy)) ~
-      (("schema", key.toJValue))))
+    val hierarchy = parse(
+      s"""{"rootId":null,"rootTstamp":null,"refRoot":"events","refTree":["events","${key.name}"],"refParent":"events"}""").toOption
+      .get
+    (
+      key,
+      circeToJackson(
+        Json.obj(
+          "data" := parse(validJson).toOption.get,
+          "hierarchy" := hierarchy,
+          "schema" := jacksonToCirce(key.toJsonNode)
+        )))
   }
 }
 
@@ -56,180 +64,162 @@ class ApiRequestEnrichmentIntegrationTest extends Specification with ValidationM
   """
 
   object IntegrationTests {
-    val configuration = parseJson("""
-        |{
-        |
-        |    "vendor": "com.snowplowanalytics.snowplow.enrichments",
-        |    "name": "api_request_enrichment_config",
-        |    "enabled": true,
-        |    "parameters": {
-        |      "inputs": [
-        |        {
-        |          "key": "user",
-        |          "pojo": {
-        |            "field": "user_id"
-        |          }
-        |        },
-        |        {
-        |          "key": "client",
-        |          "pojo": {
-        |            "field": "app_id"
-        |          }
-        |        }
-        |      ],
-        |      "api": {
-        |        "http": {
-        |          "method": "GET",
-        |          "uri": "http://localhost:8000/guest/api/{{client}}/{{user}}?format=json",
-        |         "timeout": 5000,
-        |          "authentication": {}
-        |        }
-        |      },
-        |      "outputs": [{
-        |        "schema": "iglu:com.acme/unauth/jsonschema/1-0-0",
-        |        "json": {
-        |          "jsonPath": "$"
-        |        }
-        |      }],
-        |      "cache": {
-        |        "size": 3000,
-        |        "ttl": 60
-        |      }
-        |    }
-        |  }
-        |
-      """.stripMargin)
+    val configuration = parse(
+      """{
+      "vendor": "com.snowplowanalytics.snowplow.enrichments",
+      "name": "api_request_enrichment_config",
+      "enabled": true,
+      "parameters": {
+        "inputs": [
+          {
+            "key": "user",
+            "pojo": {
+              "field": "user_id"
+            }
+          },
+          {
+            "key": "client",
+            "pojo": {
+              "field": "app_id"
+            }
+          }
+        ],
+        "api": {
+          "http": {
+            "method": "GET",
+            "uri": "http://localhost:8000/guest/api/{{client}}/{{user}}?format=json",
+           "timeout": 5000,
+            "authentication": {}
+          }
+        },
+        "outputs": [{
+          "schema": "iglu:com.acme/unauth/jsonschema/1-0-0",
+          "json": {
+            "jsonPath": "$"
+          }
+        }],
+        "cache": {
+          "size": 3000,
+          "ttl": 60
+        }
+      }
+    }""").toOption.get
 
-    val correctResultContext = parseJson(
-      """
-        |{
-        |  "schema": "iglu:com.acme/unauth/jsonschema/1-0-0",
-        |  "data": {"path": "/guest/api/lookup-test/snowplower?format=json", "message": "unauthorized", "method": "GET"}
-        |}
-      """.stripMargin)
+    val correctResultContext = json"""{
+      "schema": "iglu:com.acme/unauth/jsonschema/1-0-0",
+      "data": {"path": "/guest/api/lookup-test/snowplower?format=json", "message": "unauthorized", "method": "GET"}
+    }"""
 
-    val configuration2 = parseJson(
-      """
-        |{
-        |    "vendor": "com.snowplowanalytics.snowplow.enrichments",
-        |    "name": "api_request_enrichment_config",
-        |    "enabled": true,
-        |    "parameters": {
-        |      "inputs": [
-        |      {
-        |        "key": "user",
-        |        "pojo": {
-        |          "field": "user_id"
-        |        }
-        |      },
-        |      {
-        |        "key": "client",
-        |        "pojo": {
-        |          "field": "app_id"
-        |       }
-        |      },
-        |      {
-        |        "key": "jobflow",
-        |        "json": {
-        |          "field": "unstruct_event",
-        |          "jsonPath": "$.jobflow_id",
-        |          "schemaCriterion": "iglu:com.snowplowanalytics.monitoring.batch/emr_job_status/jsonschema/*-*-*"
-        |        }
-        |      },
-        |      {
-        |       "key": "latitude",
-        |       "json": {
-        |         "field": "contexts",
-        |         "jsonPath": "$.latitude",
-        |         "schemaCriterion": "iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-1-0"
-        |      }
-        |      },
-        |      {
-        |        "key": "datetime",
-        |        "json": {
-        |          "field": "derived_contexts",
-        |          "jsonPath": "$.dt",
-        |          "schemaCriterion": "iglu:org.openweathermap/weather/jsonschema/1-*-*"
-        |        }
-        |      }],
-        |      "api": {
-        |        "http": {
-        |          "method": "POST",
-        |          "uri": "http://localhost:8000/api/{{client}}/{{user}}/{{ jobflow }}/{{latitude}}?date={{ datetime }}",
-        |         "timeout": 5000,
-        |          "authentication": {
-        |            "httpBasic": {
-        |              "username": "snowplower",
-        |              "password": "supersecret"
-        |           }
-        |         }
-        |        }
-        |      },
-        |      "outputs": [{
-        |        "schema": "iglu:com.acme/user/jsonschema/1-0-0",
-        |        "json": {
-        |          "jsonPath": "$.data.lookupArray[0]"
-        |        }
-        |      }, {
-        |        "schema": "iglu:com.acme/onlypath/jsonschema/1-0-0",
-        |        "json": {
-        |          "jsonPath": "$.data.lookupArray[1]"
-        |        }
-        |      }],
-        |      "cache": {
-        |        "size": 3000,
-        |        "ttl": 60
-        |      }
-        |    }
-        |  }
-        |
-      """.stripMargin)
+    val configuration2 = parse(
+      """{
+      "vendor": "com.snowplowanalytics.snowplow.enrichments",
+      "name": "api_request_enrichment_config",
+      "enabled": true,
+      "parameters": {
+        "inputs": [
+        {
+          "key": "user",
+          "pojo": {
+            "field": "user_id"
+          }
+        },
+        {
+          "key": "client",
+          "pojo": {
+            "field": "app_id"
+         }
+        },
+        {
+          "key": "jobflow",
+          "json": {
+            "field": "unstruct_event",
+            "jsonPath": "$.jobflow_id",
+            "schemaCriterion": "iglu:com.snowplowanalytics.monitoring.batch/emr_job_status/jsonschema/*-*-*"
+          }
+        },
+        {
+         "key": "latitude",
+         "json": {
+           "field": "contexts",
+           "jsonPath": "$.latitude",
+           "schemaCriterion": "iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-1-0"
+        }
+        },
+        {
+          "key": "datetime",
+          "json": {
+            "field": "derived_contexts",
+            "jsonPath": "$.dt",
+            "schemaCriterion": "iglu:org.openweathermap/weather/jsonschema/1-*-*"
+          }
+        }],
+        "api": {
+          "http": {
+            "method": "POST",
+            "uri": "http://localhost:8000/api/{{client}}/{{user}}/{{ jobflow }}/{{latitude}}?date={{ datetime }}",
+           "timeout": 5000,
+            "authentication": {
+              "httpBasic": {
+                "username": "snowplower",
+                "password": "supersecret"
+             }
+           }
+          }
+        },
+        "outputs": [{
+          "schema": "iglu:com.acme/user/jsonschema/1-0-0",
+          "json": {
+            "jsonPath": "$.data.lookupArray[0]"
+          }
+        }, {
+          "schema": "iglu:com.acme/onlypath/jsonschema/1-0-0",
+          "json": {
+            "jsonPath": "$.data.lookupArray[1]"
+          }
+        }],
+        "cache": {
+          "size": 3000,
+          "ttl": 60
+        }
+      }
+    }""").toOption.get
 
     // NOTE: akka-http 1.0 was sending "2014-11-10T08:38:30.000Z" as is with ':', this behavior was changed in 2.0
 
-    val correctResultContext2 = parseJson(
-      """
-     |{
-     |  "schema": "iglu:com.acme/user/jsonschema/1-0-0",
-     |  "data": {"path": "/api/lookup+test/snowplower/j-ZKIY4CKQRX72/32.1?date=2014-11-10T08%3A38%3A30.000Z","method": "POST", "auth_header": "snowplower:supersecret", "request": 1}
-     |}
-    """.stripMargin)
+    val correctResultContext2 = json"""{
+      "schema": "iglu:com.acme/user/jsonschema/1-0-0",
+      "data": {"path": "/api/lookup+test/snowplower/j-ZKIY4CKQRX72/32.1?date=2014-11-10T08%3A38%3A30.000Z","method": "POST", "auth_header": "snowplower:supersecret", "request": 1}
+    }"""
 
-    val correctResultContext3 = parseJson(
-      """
-     |{
-     |  "schema": "iglu:com.acme/onlypath/jsonschema/1-0-0",
-     |  "data": {"path": "/api/lookup+test/snowplower/j-ZKIY4CKQRX72/32.1?date=2014-11-10T08%3A38%3A30.000Z", "request": 1}
-     |}
-     """.stripMargin)
+    val correctResultContext3 = json"""{
+      "schema": "iglu:com.acme/onlypath/jsonschema/1-0-0",
+      "data": {"path": "/api/lookup+test/snowplower/j-ZKIY4CKQRX72/32.1?date=2014-11-10T08%3A38%3A30.000Z", "request": 1}
+    }"""
 
     // Usual self-describing instance
-    val weatherContext = parseJson(
-      """
-      |{
-      | "schema": "iglu:org.openweathermap/weather/jsonschema/1-0-0",
-      | "data": {
-      |    "clouds": {
-      |        "all": 0
-      |    },
-      |    "dt": "2014-11-10T08:38:30.000Z",
-      |    "main": {
-      |        "grnd_level": 1021.91,
-      |        "humidity": 90,
-      |        "pressure": 1021.91,
-      |        "sea_level": 1024.77,
-      |        "temp": 301.308,
-      |        "temp_max": 301.308,
-      |        "temp_min": 301.308
-      |    },
-      |    "weather": [ { "description": "Sky is Clear", "icon": "01d", "id": 800, "main": "Clear" } ],
-      |    "wind": {
-      |        "deg": 190.002,
-      |        "speed": 4.39
-      |    }
-      |}
-      |}
-    """.stripMargin).asInstanceOf[JObject]
+    val weatherContext = json"""{
+     "schema": "iglu:org.openweathermap/weather/jsonschema/1-0-0",
+     "data": {
+        "clouds": {
+            "all": 0
+        },
+        "dt": "2014-11-10T08:38:30.000Z",
+        "main": {
+            "grnd_level": 1021.91,
+            "humidity": 90,
+            "pressure": 1021.91,
+            "sea_level": 1024.77,
+            "temp": 301.308,
+            "temp_max": 301.308,
+            "temp_min": 301.308
+        },
+        "weather": [ { "description": "Sky is Clear", "icon": "01d", "id": 800, "main": "Clear" } ],
+        "wind": {
+            "deg": 190.002,
+            "speed": 4.39
+        }
+      }
+    }"""
 
     // JsonSchemaPair built by Shredder
     val customContexts = createPair(
@@ -249,54 +239,63 @@ class ApiRequestEnrichmentIntegrationTest extends Specification with ValidationM
   }
 
   val SCHEMA_KEY =
-    SchemaKey("com.snowplowanalytics.snowplow.enrichments", "api_request_enrichment_config", "jsonschema", "1-0-0")
+    SchemaKey(
+      "com.snowplowanalytics.snowplow.enrichments",
+      "api_request_enrichment_config",
+      "jsonschema",
+      "1-0-0")
 
   /**
    * Helper matcher to print JSON
    */
-  def beJson(expected: JValue): Matcher[JValue] = { actual: JValue =>
-    (actual == expected, "actual:\n" + prettyJson(actual) + "\n expected:\n" + prettyJson(expected) + "\n")
+  def beJson(expected: Json): Matcher[Json] = { actual: Json =>
+    (actual == expected, "actual:\n" + actual.spaces2 + "\n expected:\n" + expected.spaces2 + "\n")
   }
 
   def e1 = {
     val config = ApiRequestEnrichmentConfig.parse(IntegrationTests.configuration, SCHEMA_KEY)
-    val event  = new EnrichedEvent
+    val event = new EnrichedEvent
     event.setApp_id("lookup-test")
     event.setUser_id("snowplower")
     val context = config.flatMap(_.lookup(event, Nil, Nil, Nil))
     context must beSuccessful.like {
-      case context => context must contain(IntegrationTests.correctResultContext) and (context must have size (1))
+      case context =>
+        context must contain(IntegrationTests.correctResultContext) and (context must have size (1))
     }
   }
 
   def e2 = {
     val config = ApiRequestEnrichmentConfig.parse(IntegrationTests.configuration2, SCHEMA_KEY)
-    val event  = new EnrichedEvent
+    val event = new EnrichedEvent
     event.setApp_id("lookup test")
     event.setUser_id("snowplower")
 
     // Fill cache
     config.flatMap(
-      _.lookup(event,
-               List(IntegrationTests.weatherContext),
-               List(IntegrationTests.customContexts),
-               List(IntegrationTests.unstructEvent)))
+      _.lookup(
+        event,
+        List(IntegrationTests.weatherContext),
+        List(IntegrationTests.customContexts),
+        List(IntegrationTests.unstructEvent)))
     config.flatMap(
-      _.lookup(event,
-               List(IntegrationTests.weatherContext),
-               List(IntegrationTests.customContexts),
-               List(IntegrationTests.unstructEvent)))
+      _.lookup(
+        event,
+        List(IntegrationTests.weatherContext),
+        List(IntegrationTests.customContexts),
+        List(IntegrationTests.unstructEvent)))
 
     val context = config.flatMap(
-      _.lookup(event,
-               List(IntegrationTests.weatherContext),
-               List(IntegrationTests.customContexts),
-               List(IntegrationTests.unstructEvent)))
+      _.lookup(
+        event,
+        List(IntegrationTests.weatherContext),
+        List(IntegrationTests.customContexts),
+        List(IntegrationTests.unstructEvent)))
 
     context must beSuccessful.like {
       case context =>
-        context must contain(beJson(IntegrationTests.correctResultContext2),
-                             beJson(IntegrationTests.correctResultContext3)) and (context must have size (2))
+        context must contain(
+          beJson(IntegrationTests.correctResultContext2),
+          beJson(IntegrationTests.correctResultContext3)) and (context must have size (2))
     } and {
       config must beSuccessful.like {
         case c => c.cache.actualLoad must beEqualTo(1)

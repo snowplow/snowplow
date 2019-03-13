@@ -13,33 +13,28 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package utils
 
-import org.json4s.jackson.JsonMethods.parse
-import org.json4s.DefaultFormats
+import io.circe.literal._
 import org.specs2.mutable.Specification
 import org.specs2.scalaz.ValidationMatchers
 
-class JsonExtractionSpec extends Specification with ValidationMatchers {
-  implicit val formats = DefaultFormats
-  val testJson         = parse("""{
+class ScalazCirceSpec extends Specification with ValidationMatchers {
+  val testJson = json"""{
     "outer": "1",
     "inner": {
       "value": 2
       }
-    }""")
+    }"""
 
   "Applying extractString" should {
     "successfully access an outer string field" in {
-
-      val result = ScalazJson4sUtils.extract[String](testJson, "outer")
+      val result = ScalazCirceUtils.extract[String](testJson, "outer")
       result must beSuccessful("1")
     }
   }
 
   "Applying extractInt" should {
-
     "successfully access an inner string field" in {
-
-      val result = ScalazJson4sUtils.extract[Int](testJson, "inner", "value")
+      val result = ScalazCirceUtils.extract[Int](testJson, "inner", "value")
       result must beSuccessful(2)
     }
   }

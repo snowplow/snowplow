@@ -14,30 +14,34 @@ package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry
 
 import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
-import org.json4s._
-import org.json4s.JsonDSL._
+import io.circe._
+import io.circe.syntax._
 
-import utils.ScalazJson4sUtils
+import utils.ScalazCirceUtils
 
 object HttpHeaderExtractorEnrichmentConfig extends ParseableEnrichment {
 
-  implicit val formats = DefaultFormats
-
   val supportedSchema =
-    SchemaCriterion("com.snowplowanalytics.snowplow.enrichments", "http_header_extractor_config", "jsonschema", 1, 0)
+    SchemaCriterion(
+      "com.snowplowanalytics.snowplow.enrichments",
+      "http_header_extractor_config",
+      "jsonschema",
+      1,
+      0)
 
   /**
-   * Creates a HttpHeaderExtractorEnrichment instance from a JValue.
-   *
+   * Creates a HttpHeaderExtractorEnrichment instance from a Json.
    * @param config The header_extractor enrichment JSON
-   * @param schemaKey The SchemaKey provided for the enrichment
-   *        Must be a supported SchemaKey for this enrichment
+   * @param schemaKey provided for the enrichment, must be supported by this enrichment
    * @return a configured HeaderExtractorEnrichment instance
    */
-  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[HttpHeaderExtractorEnrichment] =
+  def parse(
+    config: Json,
+    schemaKey: SchemaKey
+  ): ValidatedNelMessage[HttpHeaderExtractorEnrichment] =
     isParseable(config, schemaKey).flatMap(conf => {
       (for {
-        headersPattern <- ScalazJson4sUtils.extract[String](config, "parameters", "headersPattern")
+        headersPattern <- ScalazCirceUtils.extract[String](config, "parameters", "headersPattern")
         enrich = HttpHeaderExtractorEnrichment(headersPattern)
       } yield enrich).toValidationNel
     })
@@ -45,14 +49,12 @@ object HttpHeaderExtractorEnrichmentConfig extends ParseableEnrichment {
 
 /**
  * Enrichment extracting certain headers from headers.
- *
  * @param headersPattern Names of the headers to be extracted
  */
-case class HttpHeaderExtractorEnrichment(headersPattern: String) extends Enrichment {
-
+final case class HttpHeaderExtractorEnrichment(headersPattern: String) extends Enrichment {
   case class Header(name: String, value: String)
 
-  def extract(headers: List[String]): List[JsonAST.JObject] = {
+  def extract(headers: List[String]): List[Json] = {
     val httpHeaders = headers.flatMap { header =>
       header.split(":", 2) match {
         case Array(name, value) if name.matches(headersPattern) =>
@@ -62,10 +64,13 @@ case class HttpHeaderExtractorEnrichment(headersPattern: String) extends Enrichm
     }
 
     httpHeaders.map { header =>
-      (("schema" -> "iglu:org.ietf/http_header/jsonschema/1-0-0") ~
-        ("data" ->
-          ("name" -> header.name.trim) ~
-            ("value" -> header.value.trim)))
+      Json.obj(
+        "schema" := Json.fromString("iglu:org.ietf/http_header/jsonschema/1-0-0"),
+        "data" := Json.obj(
+          "name" := Json.fromString(header.name.trim),
+          "value" := Json.fromString(header.value.trim)
+        )
+      )
     }
   }
 }

@@ -12,8 +12,8 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.apirequest
 
-import org.json4s.JObject
-import org.json4s.JsonDSL._
+import io.circe._
+import io.circe.literal._
 import org.specs2.Specification
 import org.specs2.scalaz.ValidationMatchers
 
@@ -26,22 +26,33 @@ class OutputSpec extends Specification with ValidationMatchers {
   """
 
   def e1 = {
-    val output = Output("iglu:com.snowplowanalytics/some_schema/jsonschema/1-0-0", Some(JsonOutput("$.value")))
-    output.extract(JObject(Nil)) must beFailing
+    val output =
+      Output("iglu:com.snowplowanalytics/some_schema/jsonschema/1-0-0", Some(JsonOutput("$.value")))
+    output.extract(Json.fromJsonObject(JsonObject.empty)) must beFailing
   }
 
   def e2 = {
-    val output = Output("iglu:com.snowplowanalytics/some_schema/jsonschema/1-0-0", Some(JsonOutput("$.value")))
-    output.parse("""{"value": 32}""").flatMap(output.extract).map(output.describeJson) must beSuccessful.like {
+    val output = Output(
+      "iglu:com.snowplowanalytics/some_schema/jsonschema/1-0-0",
+      Some(JsonOutput("$.value"))
+    )
+    output
+      .parseResponse("""{"value": 32}""")
+      .flatMap(output.extract)
+      .map(output.describeJson) must beSuccessful.like {
       case context =>
-        context must be equalTo (("schema", "iglu:com.snowplowanalytics/some_schema/jsonschema/1-0-0") ~ ("data" -> 32))
+        context must be equalTo json"""{
+            "schema": "iglu:com.snowplowanalytics/some_schema/jsonschema/1-0-0",
+            "data": 32
+          }"""
     }
   }
 
   def e3 = {
-    val output = Output("iglu:com.snowplowanalytics/complex_schema/jsonschema/1-0-0",
-                        Some(JsonOutput("$.objects[1].deepNesting[3]")))
-    output.parse("""
+    val output = Output(
+      "iglu:com.snowplowanalytics/complex_schema/jsonschema/1-0-0",
+      Some(JsonOutput("$.objects[1].deepNesting[3]")))
+    output.parseResponse("""
         |{
         |  "value": 32,
         |  "objects":
@@ -53,8 +64,10 @@ class OutputSpec extends Specification with ValidationMatchers {
         |}
       """.stripMargin).flatMap(output.extract).map(output.describeJson) must beSuccessful.like {
       case context =>
-        context must be equalTo (("schema", "iglu:com.snowplowanalytics/complex_schema/jsonschema/1-0-0") ~ ("data" -> 42))
-
+        context must be equalTo json"""{
+          "schema": "iglu:com.snowplowanalytics/complex_schema/jsonschema/1-0-0",
+          "data": 42
+        }"""
     }
 
   }

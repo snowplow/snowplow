@@ -16,18 +16,21 @@ import scala.util.control.NonFatal
 
 import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
 import eu.bitwalker.useragentutils._
-import org.json4s.JValue
+import io.circe._
 import org.slf4j.LoggerFactory
 import scalaz._
 import Scalaz._
 
 object UserAgentUtilsEnrichmentConfig extends ParseableEnrichment {
-
-  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "user_agent_utils_config", "jsonschema", 1, 0)
+  val supportedSchema =
+    SchemaCriterion("com.snowplowanalytics.snowplow", "user_agent_utils_config", "jsonschema", 1, 0)
   private val log = LoggerFactory.getLogger(getClass())
 
   // Creates a UserAgentUtilsEnrichment instance from a JValue
-  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[UserAgentUtilsEnrichment.type] = {
+  def parse(
+    config: Json,
+    schemaKey: SchemaKey
+  ): ValidatedNelMessage[UserAgentUtilsEnrichment.type] = {
     log.warn(
       s"user_agent_utils enrichment is deprecated. Please visit here for more information: " +
         s"https://github.com/snowplow/snowplow/wiki/user-agent-utils-enrichment")
@@ -36,14 +39,11 @@ object UserAgentUtilsEnrichmentConfig extends ParseableEnrichment {
 }
 
 /**
- * Case class to wrap everything we
- * can extract from the useragent
- * using UserAgentUtils.
- *
+ * Case class to wrap everything we can extract from the useragent using UserAgentUtils.
  * Not to be declared inside a class Object
  * http://stackoverflow.com/questions/17270003/why-are-classes-inside-scala-package-objects-dispreferred
  */
-case class ClientAttributes(
+final case class ClientAttributes(
   // Browser
   browserName: String,
   browserFamily: String,
@@ -56,30 +56,17 @@ case class ClientAttributes(
   osManufacturer: String,
   // Hardware the OS is running on
   deviceType: String,
-  deviceIsMobile: Boolean)
-
-// Object and a case object with the same name
+  deviceIsMobile: Boolean
+)
 
 case object UserAgentUtilsEnrichment extends Enrichment {
-
   private val mobileDeviceTypes = Set(DeviceType.MOBILE, DeviceType.TABLET, DeviceType.WEARABLE)
 
   /**
-   * Extracts the client attributes
-   * from a useragent string, using
-   * UserAgentUtils.
-   *
-   * TODO: rewrite this when we swap
-   * out UserAgentUtils for ua-parser
-   *
-   * @param useragent The useragent
-   *        String to extract from.
-   *        Should be encoded (i.e.
-   *        not previously decoded).
-   * @return the ClientAttributes or
-   *         the message of the
-   *         exception, boxed in a
-   *         Scalaz Validation
+   * Extracts the client attributes from a useragent string, using UserAgentUtils.
+   * TODO: rewrite this when we swap out UserAgentUtils for ua-parser
+   * @param useragent to extract from. Should be encoded, i.e. not previously decoded.
+   * @return the ClientAttributes or the message of the exception, boxed in a Scalaz Validation
    */
   def extractClientAttributes(useragent: String): Validation[String, ClientAttributes] =
     try {
@@ -100,6 +87,7 @@ case object UserAgentUtilsEnrichment extends Enrichment {
         deviceIsMobile = mobileDeviceTypes.contains(os.getDeviceType)
       ).success
     } catch {
-      case NonFatal(e) => "Exception parsing useragent [%s]: [%s]".format(useragent, e.getMessage).fail
+      case NonFatal(e) =>
+        "Exception parsing useragent [%s]: [%s]".format(useragent, e.getMessage).fail
     }
 }

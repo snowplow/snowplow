@@ -19,14 +19,13 @@ import scalaz._
 class NdjsonLoaderSpec extends Specification with ValidationMatchers {
 
   "toCollectorPayload" should {
-
     "return failure on unparsable json" in {
       val invalid = NdjsonLoader("com.abc/v1").toCollectorPayload("""{ ... """)
       invalid must beFailing
     }
 
     "return success on parsable json" in {
-      val valid = NdjsonLoader("com.abc/v1").toCollectorPayload("""{ "key": "value" } """")
+      val valid = NdjsonLoader("com.abc/v1").toCollectorPayload("""{ "key": "value" }""")
       valid must beSuccessful
     }
 
