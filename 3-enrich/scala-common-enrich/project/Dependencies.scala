@@ -68,7 +68,7 @@ object Dependencies {
     val scalaCheck       = "1.10.0"
     val scaldingArgs     = "0.13.0"
     val mockito          = "1.10.19"
-    val openCage         = "1.1.0"
+    val openCage         = "1.1.1"
   }
 
   object Libraries {
