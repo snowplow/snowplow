@@ -50,7 +50,7 @@ object Dependencies {
     val kryo             = "2.24.0"
     val guava            = "28.1-jre" //used only for InetAddress (because it doesn't do dns lookup)
     // Scala
-    val scalaz7          = "7.0.9"
+    val cats             = "1.6.0"
     val snowplowRawEvent = "0.1.0"
     val collectorPayload = "0.0.0"
     val schemaSniffer    = "0.0.0"
@@ -101,10 +101,10 @@ object Dependencies {
       "circe-parser",
       "circe-literal"
     ).map("io.circe" %% _ % V.circe)
+    val cats             = "org.typelevel"              %% "cats-core"                     % V.cats
     val circeOptics      = "io.circe"                   %% "circe-optics"                  % V.circeOptics
     val circeJackson     = "io.circe"                   %% "circe-jackson28"               % V.circeJackson
     val scalaForex       = "com.snowplowanalytics"      %% "scala-forex"                   % V.scalaForex
-    val scalaz7          = "org.scalaz"                 %% "scalaz-core"                   % V.scalaz7
     val snowplowRawEvent = "com.snowplowanalytics"      %  "snowplow-thrift-raw-event"     % V.snowplowRawEvent
     val collectorPayload = "com.snowplowanalytics"      %  "collector-payload-1"           % V.collectorPayload
     val schemaSniffer    = "com.snowplowanalytics"      %  "schema-sniffer-1"              % V.schemaSniffer
@@ -117,7 +117,6 @@ object Dependencies {
     val gatlingJsonpath  = "io.gatling"                 %% "jsonpath"                      % V.gatlingJsonpath
     // Scala (test only)
     val specs2           = "org.specs2"                 %% "specs2"                        % V.specs2         % "test"
-    val scalazSpecs2     = "org.typelevel"              %% "scalaz-specs2"                 % V.scalazSpecs2   % "test"
     val scalaCheck       = "org.scalacheck"             %% "scalacheck"                    % V.scalaCheck     % "test"
     val scaldingArgs     = "com.twitter"                %% "scalding-args"                 % V.scaldingArgs   % "test"
     val mockito          = "org.mockito"                %  "mockito-core"                  % V.mockito        % "test"

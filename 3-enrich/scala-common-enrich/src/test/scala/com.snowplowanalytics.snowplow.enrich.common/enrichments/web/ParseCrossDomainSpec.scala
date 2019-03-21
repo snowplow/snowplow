@@ -12,13 +12,11 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.enrichments.web
 
+import cats.syntax.option._
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
-import scalaz._
-import Scalaz._
 
-class ParseCrossDomainSpec extends Specification with DataTables with ValidationMatchers {
+class ParseCrossDomainSpec extends Specification with DataTables {
   def is = s2"""
   This is a specification to test the parseCrossDomain function
   parseCrossDomain should return None when the querystring contains no _sp parameter           $e1
@@ -28,21 +26,21 @@ class ParseCrossDomainSpec extends Specification with DataTables with Validation
   parseCrossDomain should extract neither field from an empty _sp parameter                    $e5
   """
   def e1 =
-    PageEnrichments.parseCrossDomain(Map()) must beSuccessful((None, None))
+    PageEnrichments.parseCrossDomain(Map()) must beRight((None, None))
 
   def e2 = {
     val expected =
       "Field [sp_dtm]: [not-a-timestamp] is not in the expected format (ms since epoch)"
-    PageEnrichments.parseCrossDomain(Map("_sp" -> "abc.not-a-timestamp")) must beFailing(expected)
+    PageEnrichments.parseCrossDomain(Map("_sp" -> "abc.not-a-timestamp")) must beLeft(expected)
   }
 
   def e3 =
-    PageEnrichments.parseCrossDomain(Map("_sp" -> "abc")) must beSuccessful(("abc".some, None))
+    PageEnrichments.parseCrossDomain(Map("_sp" -> "abc")) must beRight(("abc".some, None))
 
   def e4 =
-    PageEnrichments.parseCrossDomain(Map("_sp" -> "abc.1426245561368")) must beSuccessful(
+    PageEnrichments.parseCrossDomain(Map("_sp" -> "abc.1426245561368")) must beRight(
       ("abc".some, "2015-03-13 11:19:21.368".some))
 
   def e5 =
-    PageEnrichments.parseCrossDomain(Map("_sp" -> "")) must beSuccessful(None -> None)
+    PageEnrichments.parseCrossDomain(Map("_sp" -> "")) must beRight(None -> None)
 }

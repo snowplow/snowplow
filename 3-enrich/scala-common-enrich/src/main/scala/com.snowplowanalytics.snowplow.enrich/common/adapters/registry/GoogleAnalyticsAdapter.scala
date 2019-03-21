@@ -20,12 +20,13 @@ import java.nio.charset.StandardCharsets.UTF_8
 
 import scala.collection.JavaConversions._
 
+import cats.{Applicative, Functor}
+import cats.data.{NonEmptyList, ValidatedNel}
+import cats.implicits._
 import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
 import io.circe._
 import io.circe.syntax._
 import org.apache.http.client.utils.URLEncodedUtils
-import scalaz._
-import Scalaz._
 
 import loaders.CollectorPayload
 import utils.ConversionUtils._
@@ -48,7 +49,7 @@ object GoogleAnalyticsAdapter extends Adapter {
   private val PageViewHitType = "pageview"
 
   // models a translation between measurement protocol fields and the fields in Iglu schemas
-  type Translation = Function1[String, Validation[String, FieldType]]
+  type Translation = Function1[String, Either[String, FieldType]]
 
   /**
    * Case class holding the name of the field in the Iglu schemas as well as the necessary
@@ -85,7 +86,7 @@ object GoogleAnalyticsAdapter extends Adapter {
 
   // translations between string and the needed types in the measurement protocol Iglu schemas
   private val idTranslation: (String => KVTranslation) = (fieldName: String) =>
-    KVTranslation(fieldName, (value: String) => StringType(value).success)
+    KVTranslation(fieldName, (value: String) => StringType(value).asRight)
   private val intTranslation: (String => KVTranslation) = (fieldName: String) =>
     KVTranslation(fieldName, stringToJInteger(fieldName, _: String).map(i => IntType(i.toInt)))
   private val twoDecimalsTranslation: (String => KVTranslation) = (fieldName: String) =>
@@ -432,13 +433,15 @@ object GoogleAnalyticsAdapter extends Adapter {
    * @param resolver (implicit) The Iglu resolver used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
+  def toRawEvents(payload: CollectorPayload)(
+    implicit resolver: Resolver
+  ): ValidatedNel[String, NonEmptyList[RawEvent]] =
     (for {
       body <- payload.body
       rawEvents <- body.lines.map(parsePayload(_, payload)).toList.toNel
     } yield rawEvents) match {
-      case Some(rawEvents) => rawEvents.sequenceU
-      case None => s"Request body is empty: no $VendorName events to process".failNel
+      case Some(rawEvents) => rawEvents.sequence
+      case None => s"Request body is empty: no $VendorName events to process".invalidNel
     }
 
   /**
@@ -449,22 +452,24 @@ object GoogleAnalyticsAdapter extends Adapter {
    */
   private def parsePayload(
     bodyPart: String,
-    payload: CollectorPayload): ValidationNel[String, RawEvent] = {
+    payload: CollectorPayload
+  ): ValidatedNel[String, RawEvent] = {
     val params = toMap(
       URLEncodedUtils.parse(URI.create(s"http://localhost/?$bodyPart"), UTF_8).toList)
     params.get("t") match {
-      case None => s"No $VendorName t parameter provided: cannot determine hit type".failNel
+      case None => s"No $VendorName t parameter provided: cannot determine hit type".invalidNel
       case Some(hitType) =>
         // direct mappings
         val mappings = translatePayload(params, directMappings(hitType))
         val translationTable = unstructEventData
           .get(hitType)
           .map(_.translationTable)
-          .toSuccess(s"No matching $VendorName hit type for hit type $hitType".wrapNel)
+          .toValidNel(s"No matching $VendorName hit type for hit type $hitType")
         val schemaVal = lookupSchema(
           hitType.some,
           VendorName,
-          unstructEventData.mapValues(_.schemaKey.toSchemaUri))
+          unstructEventData.mapValues(_.schemaKey.toSchemaUri)
+        ).toValidatedNel
         val simpleContexts = buildContexts(params, contextData, fieldToSchemaMap)
         val compositeContexts =
           buildCompositeContexts(
@@ -472,11 +477,17 @@ object GoogleAnalyticsAdapter extends Adapter {
             compositeContextData,
             compositeContextsWithCU,
             nrCompFieldsPerSchema,
-            valueInFieldNameIndicator).validation
-            .toValidationNel
+            valueInFieldNameIndicator
+          ).toValidatedNel
 
-        (translationTable |@| schemaVal |@| simpleContexts |@| compositeContexts) {
-          (trTable, schema, contexts, compContexts) =>
+        (for {
+          // better-monadic-for doesn't work for some reason?
+          result <- (
+            translationTable,
+            schemaVal,
+            simpleContexts,
+            compositeContexts
+          ).mapN { (trTable, schema, contexts, compContexts) =>
             val contextJsons = (contexts.toList ++ compContexts)
               .collect {
                 // an unnecessary pageview context might have been built so we need to remove it
@@ -485,23 +496,56 @@ object GoogleAnalyticsAdapter extends Adapter {
                       s != unstructEventData(PageViewHitType).schemaKey =>
                   buildJson(s.toSchemaUri, d)
               }
-            val contextParam =
+            val contextParam: Map[String, String] =
               if (contextJsons.isEmpty) Map.empty
               else Map("co" -> toContexts(contextJsons).noSpaces)
+            (trTable, schema, contextParam)
+          }.toEither
+          payload <- translatePayload(params, result._1)
+            .map { e =>
+              val unstructEvent = toUnstructEvent(buildJson(result._2, e)).noSpaces
+              RawEvent(
+                api = payload.api,
+                parameters = result._3 ++ mappings ++
+                  Map("e" -> "ue", "ue_pr" -> unstructEvent, "tv" -> Protocol, "p" -> "srv"),
+                contentType = payload.contentType,
+                source = payload.source,
+                context = payload.context
+              )
+            }
+            .leftMap(NonEmptyList.one)
+        } yield payload).toValidated
+      /**(
+          translationTable,
+          schemaVal,
+          simpleContexts,
+          compositeContexts
+        ).mapN { (trTable, schema, contexts, compContexts) =>
+          val contextJsons = (contexts.toList ++ compContexts)
+            .collect {
+              // an unnecessary pageview context might have been built so we need to remove it
+              case (s, d)
+                  if hitType != PageViewHitType ||
+                    s != unstructEventData(PageViewHitType).schemaKey =>
+                buildJson(s.toSchemaUri, d)
+            }
+          val contextParam =
+            if (contextJsons.isEmpty) Map.empty
+            else Map("co" -> toContexts(contextJsons).noSpaces)
 
-            translatePayload(params, trTable)
-              .map { e =>
-                val unstructEvent = toUnstructEvent(buildJson(schema, e)).noSpaces
-                RawEvent(
-                  api = payload.api,
-                  parameters = contextParam ++ mappings ++
-                    Map("e" -> "ue", "ue_pr" -> unstructEvent, "tv" -> Protocol, "p" -> "srv"),
-                  contentType = payload.contentType,
-                  source = payload.source,
-                  context = payload.context
-                )
-              }
-        }.flatMap(identity)
+          translatePayload(params, trTable)
+            .map { e =>
+              val unstructEvent = toUnstructEvent(buildJson(schema, e)).noSpaces
+              RawEvent(
+                api = payload.api,
+                parameters = contextParam ++ mappings ++
+                  Map("e" -> "ue", "ue_pr" -> unstructEvent, "tv" -> Protocol, "p" -> "srv"),
+                contentType = payload.contentType,
+                source = payload.source,
+                context = payload.context
+              )
+            }
+        }**/
     }
   }
 
@@ -514,19 +558,20 @@ object GoogleAnalyticsAdapter extends Adapter {
   private def translatePayload(
     originalParams: Map[String, String],
     translationTable: Map[String, KVTranslation]
-  ): ValidationNel[String, Map[String, FieldType]] =
-    originalParams
-      .foldLeft(Map.empty[String, ValidationNel[String, FieldType]]) {
+  ): Either[String, Map[String, FieldType]] = {
+    val m = originalParams
+      .foldLeft(Map.empty[String, Either[String, FieldType]]) {
         case (m, (fieldName, value)) =>
           translationTable
             .get(fieldName)
             .map {
               case KVTranslation(newName, translation) =>
-                m + (newName -> translation(value).toValidationNel)
+                m + (newName -> translation(value))
             }
             .getOrElse(m)
       }
-      .sequenceU
+    traverseMap(m)
+  }
 
   /**
    * Translates a payload according to a translation table.
@@ -558,9 +603,9 @@ object GoogleAnalyticsAdapter extends Adapter {
     originalParams: Map[String, String],
     referenceTable: Map[SchemaKey, Map[String, KVTranslation]],
     fieldToSchemaMap: Map[String, SchemaKey]
-  ): ValidationNel[String, Map[SchemaKey, Map[String, FieldType]]] =
-    originalParams
-      .foldLeft(Map.empty[SchemaKey, Map[String, ValidationNel[String, FieldType]]]) {
+  ): ValidatedNel[String, Map[SchemaKey, Map[String, FieldType]]] = {
+    val m = originalParams
+      .foldLeft(Map.empty[SchemaKey, Map[String, ValidatedNel[String, FieldType]]]) {
         case (m, (fieldName, value)) =>
           fieldToSchemaMap
             .get(fieldName)
@@ -568,13 +613,14 @@ object GoogleAnalyticsAdapter extends Adapter {
               // this is safe when fieldToSchemaMap is built from referenceTable
               val KVTranslation(newName, translation) = referenceTable(schema)(fieldName)
               val trTable = m.getOrElse(schema, Map.empty) +
-                (newName -> translation(value).toValidationNel)
+                (newName -> translation(value).toValidatedNel)
               m + (schema -> trTable)
             }
             .getOrElse(m)
       }
-      .map { case (k, v) => (k -> v.sequenceU) }
-      .sequenceU
+      .map { case (k, v) => (k -> traverseMap(v)) }
+    traverseMap(m)
+  }
 
   /**
    * Builds the contexts containing composite fields in quadratic time
@@ -595,37 +641,39 @@ object GoogleAnalyticsAdapter extends Adapter {
     schemasWithCU: List[SchemaKey],
     nrCompFieldsPerSchema: Map[SchemaKey, Int],
     indicator: String
-  ): \/[String, List[(SchemaKey, Map[String, FieldType])]] =
+  ): Either[String, List[(SchemaKey, Map[String, FieldType])]] =
     for {
       // composite params have digits in their key
       composite <- originalParams
         .filterKeys(k => k.exists(_.isDigit))
-        .right
+        .asRight
       brokenDown <- composite.toList.sorted.map {
         case (k, v) => breakDownCompField(k, v, indicator)
-      }.sequenceU
+      }.sequence
       partitioned = brokenDown.map(_.partition(_._1.startsWith(indicator))).unzip
       // we additionally make sure we have a rectangular dataset
       grouped = (partitioned._2 ++ removeConsecutiveDuplicates(partitioned._1)).flatten
         .groupBy(_._1)
         .mapValues(_.map(_._2))
-      translated <- grouped
-        .foldLeft(Map.empty[SchemaKey, Map[String, \/[String, Seq[FieldType]]]]) {
-          case (m, (fieldName, values)) =>
-            val additions = referenceTable
-              .filter(_.translationTable.contains(fieldName))
-              .map { d =>
-                // this is safe because of the filter above
-                val KVTranslation(newName, translation) = d.translationTable(fieldName)
-                val trTable = m.getOrElse(d.schemaKey, Map.empty) +
-                  (newName -> values.map(v => translation(v).disjunction).sequenceU)
-                d.schemaKey -> trTable
-              }
-              .toMap
-            m ++ additions
-        }
-        .map { case (k, v) => (k -> v.sequenceU) }
-        .sequenceU
+      translated <- {
+        val m = grouped
+          .foldLeft(Map.empty[SchemaKey, Map[String, Either[String, Seq[FieldType]]]]) {
+            case (m, (fieldName, values)) =>
+              val additions = referenceTable
+                .filter(_.translationTable.contains(fieldName))
+                .map { d =>
+                  // this is safe because of the filter above
+                  val KVTranslation(newName, translation) = d.translationTable(fieldName)
+                  val trTable = m.getOrElse(d.schemaKey, Map.empty) +
+                    (newName -> values.map(v => translation(v)).sequence)
+                  d.schemaKey -> trTable
+                }
+                .toMap
+              m ++ additions
+          }
+          .map { case (k, v) => (k -> traverseMap(v)) }
+        traverseMap(m)
+      }
       // we need to reattach the currency code to the contexts which need it
       transposed = translated.map {
         case (k, m) =>
@@ -669,17 +717,17 @@ object GoogleAnalyticsAdapter extends Adapter {
     fieldName: String,
     value: String,
     indicator: String
-  ): \/[String, Map[String, String]] =
+  ): Either[String, Map[String, String]] =
     for {
       brokenDown <- breakDownCompField(fieldName)
       (strs, ints) = brokenDown
       m <- if (strs.length == ints.length) {
-        (strs.scanRight("")(_ + _).init.map(indicator + _) zip ints).toMap.right
+        (strs.scanRight("")(_ + _).init.map(indicator + _) zip ints).toMap.asRight
       } else if (strs.length == ints.length + 1) {
-        (strs.init.scanRight("")(_ + _).init.map(indicator + _) zip ints).toMap.right
+        (strs.init.scanRight("")(_ + _).init.map(indicator + _) zip ints).toMap.asRight
       } else {
         // can't happen without changing breakDownCompField(fieldName)
-        s"Cannot parse field name $fieldName, unexpected number of values inside".left
+        s"Cannot parse field name $fieldName, unexpected number of values inside".asLeft
       }
       r = m + (strs.reduce(_ + _) -> value)
     } yield r
@@ -695,13 +743,13 @@ object GoogleAnalyticsAdapter extends Adapter {
    * @return the break down of the field or a failure if it couldn't be parsed
    */
   private[registry] def breakDownCompField(
-    fieldName: String): \/[String, (List[String], List[String])] =
+    fieldName: String): Either[String, (List[String], List[String])] =
     fieldName match {
-      case compositeFieldRegex(grps @ _*) => splitEvenOdd(grps.toList.filter(_.nonEmpty)).right
-      case s if s.isEmpty => "Cannot parse empty composite field name".left
+      case compositeFieldRegex(grps @ _*) => splitEvenOdd(grps.toList.filter(_.nonEmpty)).asRight
+      case s if s.isEmpty => "Cannot parse empty composite field name".asLeft
       case _ =>
         (s"Cannot parse field name $fieldName, " +
-          s"it doesn't conform to the expected composite field regex: $compositeFieldRegex").left
+          s"it doesn't conform to the expected composite field regex: $compositeFieldRegex").asLeft
     }
 
   /** Splits a list in two based on the oddness or evenness of their indices */
@@ -737,4 +785,14 @@ object GoogleAnalyticsAdapter extends Adapter {
       "schema" := schema,
       "data" := fields
     )
+
+  private def traverseMap[G[_]: Functor: Applicative, K, V](
+    m: Map[K, G[V]]
+  ): G[Map[K, V]] =
+    m.toList
+      .traverse {
+        case (name, vnel) =>
+          vnel.map(m => (name, m))
+      }
+      .map(_.toMap)
 }

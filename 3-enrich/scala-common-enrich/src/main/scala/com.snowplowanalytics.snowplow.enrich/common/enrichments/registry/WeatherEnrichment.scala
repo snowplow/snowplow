@@ -15,19 +15,19 @@ package enrichments.registry
 
 import java.lang.{Float => JFloat}
 
-import scala.util.control.NonFatal
-
+import cats.data.{NonEmptyList, ValidatedNel}
+import cats.implicits._
+import com.github.fge.jsonschema.core.report.ProcessingMessage
 import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
+import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
 import com.snowplowanalytics.weather.providers.openweather.OwmCacheClient
 import com.snowplowanalytics.weather.providers.openweather.Responses._
 import io.circe._
 import io.circe.generic.auto._
 import io.circe.syntax._
 import org.joda.time.{DateTime, DateTimeZone}
-import scalaz._
-import Scalaz._
 
-import utils.ScalazCirceUtils
+import utils.CirceUtils
 
 /** Companion object. Lets us create an WeatherEnrichment instance from a Json */
 object WeatherEnrichmentConfig extends ParseableEnrichment {
@@ -39,17 +39,19 @@ object WeatherEnrichmentConfig extends ParseableEnrichment {
       1,
       0)
 
-  def parse(config: Json, schemaKey: SchemaKey): ValidatedNelMessage[WeatherEnrichment] =
-    isParseable(config, schemaKey).flatMap { conf =>
-      (for {
-        apiKey <- ScalazCirceUtils.extract[String](config, "parameters", "apiKey")
-        cacheSize <- ScalazCirceUtils.extract[Int](config, "parameters", "cacheSize")
-        geoPrecision <- ScalazCirceUtils.extract[Int](config, "parameters", "geoPrecision")
-        apiHost <- ScalazCirceUtils.extract[String](config, "parameters", "apiHost")
-        timeout <- ScalazCirceUtils.extract[Int](config, "parameters", "timeout")
-        enrich = WeatherEnrichment(apiKey, cacheSize, geoPrecision, apiHost, timeout)
-      } yield enrich).toValidationNel
-    }
+  def parse(c: Json, schemaKey: SchemaKey): ValidatedNel[ProcessingMessage, WeatherEnrichment] =
+    isParseable(c, schemaKey)
+      .leftMap(e => NonEmptyList.one(e.toProcessingMessage))
+      .flatMap { _ =>
+        (
+          CirceUtils.extract[String](c, "parameters", "apiKey").toValidatedNel,
+          CirceUtils.extract[Int](c, "parameters", "cacheSize").toValidatedNel,
+          CirceUtils.extract[Int](c, "parameters", "geoPrecision").toValidatedNel,
+          CirceUtils.extract[String](c, "parameters", "apiHost").toValidatedNel,
+          CirceUtils.extract[Int](c, "parameters", "timeout").toValidatedNel
+        ).mapN { WeatherEnrichment(_, _, _, _, _) }.toEither.leftMap(_.map(_.toProcessingMessage))
+      }
+      .toValidated
 }
 
 /**
@@ -61,7 +63,7 @@ object WeatherEnrichmentConfig extends ParseableEnrichment {
  * @param apiHost address of weather provider's API host
  * @param timeout timeout in seconds to fetch weather from server
  */
-case class WeatherEnrichment(
+final case class WeatherEnrichment(
   apiKey: String,
   cacheSize: Int,
   geoPrecision: Int,
@@ -86,12 +88,11 @@ case class WeatherEnrichment(
     latitude: Option[JFloat],
     longitude: Option[JFloat],
     time: Option[DateTime]
-  ): Validation[String, Json] =
-    try {
-      getWeather(latitude, longitude, time).map(addSchema)
-    } catch {
-      case NonFatal(exc) => exc.getMessage.fail
-    }
+  ): Either[String, Json] =
+    Either
+      .catchNonFatal(getWeather(latitude, longitude, time).map(addSchema))
+      .leftMap(_.getMessage)
+      .joinRight
 
   /**
    * Get weather stamp as JSON received from OpenWeatherMap and extracted with Scala Weather
@@ -104,16 +105,16 @@ case class WeatherEnrichment(
     latitude: Option[JFloat],
     longitude: Option[JFloat],
     time: Option[DateTime]
-  ): Validation[String, Json] =
+  ): Either[String, Json] =
     (latitude, longitude, time) match {
       case (Some(lat), Some(lon), Some(t)) =>
-        getCachedOrRequest(lat, lon, (t.getMillis / 1000).toInt).flatMap { weatherStamp =>
+        getCachedOrRequest(lat, lon, (t.getMillis / 1000).toInt).map { weatherStamp =>
           val transformedWeather = transformWeather(weatherStamp)
-          transformedWeather.asJson.success
+          transformedWeather.asJson
         }
       case _ =>
         ("One of required event fields missing. latitude: " +
-          s"$latitude, longitude: $longitude, tstamp: $time").fail
+          s"$latitude, longitude: $longitude, tstamp: $time").asLeft
     }
 
   /**
@@ -126,11 +127,9 @@ case class WeatherEnrichment(
   private def getCachedOrRequest(
     latitude: Float,
     longitude: Float,
-    timestamp: Int): Validation[String, Weather] =
-    client.getCachedOrRequest(latitude, longitude, timestamp) match {
-      case Right(w) => w.success
-      case Left(e) => e.toString.failure
-    }
+    timestamp: Int
+  ): Either[String, Weather] =
+    client.getCachedOrRequest(latitude, longitude, timestamp).leftMap(_.toString)
 
   /**
    * Add Iglu URI to JSON Object

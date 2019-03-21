@@ -19,13 +19,15 @@ import java.nio.charset.StandardCharsets.UTF_8
 
 import scala.collection.JavaConversions._
 
+import cats.data.{NonEmptyList, ValidatedNel}
+import cats.syntax.either._
+import cats.syntax.option._
+import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
 import io.circe._
 import org.apache.http.client.utils.URLEncodedUtils
 import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormat
-import scalaz._
-import Scalaz._
 
 import loaders.CollectorPayload
 import utils.{JsonUtils => JU}
@@ -71,25 +73,27 @@ object MailchimpAdapter extends Adapter {
    * @param resolver (implicit) The Iglu resolver used for schema lookup and validation. Not used
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
+  def toRawEvents(payload: CollectorPayload)(
+    implicit resolver: Resolver
+  ): ValidatedNel[String, NonEmptyList[RawEvent]] =
     (payload.body, payload.contentType) match {
-      case (None, _) => s"Request body is empty: no $VendorName event to process".failNel
+      case (None, _) => s"Request body is empty: no $VendorName event to process".invalidNel
       case (_, None) =>
-        s"Request body provided but content type empty, expected $ContentType for $VendorName".failNel
+        s"Request body provided but content type empty, expected $ContentType for $VendorName".invalidNel
       case (_, Some(ct)) if ct != ContentType =>
-        s"Content type of $ct provided, expected $ContentType for $VendorName".failNel
+        s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel
       case (Some(body), _) =>
         val params = toMap(
           URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).toList)
         params.get("type") match {
           case None =>
-            s"No $VendorName type parameter provided: cannot determine event type".failNel
+            s"No $VendorName type parameter provided: cannot determine event type".invalidNel
           case Some(eventType) =>
             val allParams = toMap(payload.querystring) ++ reformatParameters(params)
             for {
-              schema <- lookupSchema(eventType.some, VendorName, EventSchemaMap)
+              schema <- lookupSchema(eventType.some, VendorName, EventSchemaMap).toValidatedNel
             } yield {
-              NonEmptyList(
+              NonEmptyList.one(
                 RawEvent(
                   api = payload.api,
                   parameters = toUnstructEventParams(
@@ -123,7 +127,7 @@ object MailchimpAdapter extends Adapter {
    */
   private[registry] def toKeys(formKey: String): NonEmptyList[String] = {
     val keys = formKey.split("\\]?(\\[|\\])").toList
-    NonEmptyList(keys(0), keys.tail: _*) // Safe only because split() never produces an empty Array
+    NonEmptyList.of(keys(0), keys.tail: _*) // Safe only because split() never produces an empty Array
   }
 
   /**
@@ -134,7 +138,7 @@ object MailchimpAdapter extends Adapter {
    */
   private[registry] def toNestedJson(keys: NonEmptyList[String], value: String): (String, Json) =
     keys.toList match {
-      case h1 :: h2 :: t => (h1, Json.obj(toNestedJson(NonEmptyList(h2, t: _*), value)))
+      case h1 :: h2 :: t => (h1, Json.obj(toNestedJson(NonEmptyList.of(h2, t: _*), value)))
       case h :: Nil => (h, Json.fromString(value))
       // unreachable but can't pattern match on NEL
       case _ => ("", Json.fromString(value))

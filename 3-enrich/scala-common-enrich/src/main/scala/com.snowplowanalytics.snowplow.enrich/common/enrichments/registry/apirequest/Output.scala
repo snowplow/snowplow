@@ -13,11 +13,10 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry.apirequest
 
+import cats.syntax.either._
 import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
-import scalaz._
-import Scalaz._
 
 import utils.JsonPath.{query, wrapArray}
 
@@ -33,10 +32,10 @@ case class Output(schema: String, json: Option[JsonOutput]) {
    * @param apiResponse response taken from `ApiMethod`
    * @return parsed extracted JSON
    */
-  def parseResponse(apiResponse: String): Validation[Throwable, Json] = json match {
+  def parseResponse(apiResponse: String): Either[Throwable, Json] = json match {
     case Some(jsonOutput) => jsonOutput.parseResponse(apiResponse)
     case output =>
-      new InvalidStateException(s"Error: Unknown output [$output]").failure // Cannot happen now
+      new InvalidStateException(s"Error: Unknown output [$output]").asLeft // Cannot happen now
   }
 
   /**
@@ -44,10 +43,10 @@ case class Output(schema: String, json: Option[JsonOutput]) {
    * @param value parsed API response
    * @return extracted validated JSON
    */
-  def extract(value: Json): Validation[Throwable, Json] = json match {
+  def extract(value: Json): Either[Throwable, Json] = json match {
     case Some(jsonOutput) => jsonOutput.extract(value)
     case output =>
-      new InvalidStateException(s"Error: Unknown output [$output]").failure // Cannot happen now
+      new InvalidStateException(s"Error: Unknown output [$output]").asLeft // Cannot happen now
   }
 
   /**
@@ -74,21 +73,21 @@ sealed trait ApiOutput[A] {
    * @param response API response assumed to be JSON
    * @return validated JSON
    */
-  def parseResponse(response: String): Validation[Throwable, A]
+  def parseResponse(response: String): Either[Throwable, A]
 
   /**
    * Extract value specified by `path` and transform to context-ready JSON data
    * @param response parsed API response
    * @return extracted by `path` value mapped to JSON
    */
-  def extract(response: A): Validation[Throwable, Json]
+  def extract(response: A): Either[Throwable, Json]
 
   /**
    * Try to parse string as JSON and extract value by JSON PAth
    * @param response API response assumed to be JSON
    * @return validated extracted value
    */
-  def get(response: String): Validation[Throwable, Json] =
+  def get(response: String): Either[Throwable, Json] =
     for {
       validated <- parseResponse(response)
       result <- extract(validated)
@@ -107,17 +106,14 @@ case class JsonOutput(jsonPath: String) extends ApiOutput[Json] {
    * @param json JSON value to look in
    * @return validated found JSON, with absent value treated like failure
    */
-  def extract(json: Json): Validation[Throwable, Json] =
+  def extract(json: Json): Either[Throwable, Json] =
     query(path, json).map(wrapArray) match {
-      case Success(js) if js.asArray.map(_.isEmpty).getOrElse(false) =>
+      case Right(js) if js.asArray.map(_.isEmpty).getOrElse(false) =>
         ValueNotFoundException(
-          s"Error: no values were found by JSON Path [$jsonPath] in [${json.noSpaces}]").failure
+          s"Error: no values were found by JSON Path [$jsonPath] in [${json.noSpaces}]").asLeft
       case other => other.leftMap(JsonPathException.apply)
     }
 
-  def parseResponse(response: String): Validation[Throwable, Json] =
-    parse(response) match {
-      case Right(json) => json.success
-      case Left(e) => e.failure
-    }
+  def parseResponse(response: String): Either[Throwable, Json] =
+    parse(response)
 }

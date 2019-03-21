@@ -19,11 +19,13 @@ import java.util.Map.{Entry => JMapEntry}
 
 import scala.collection.JavaConversions._
 
+import cats.data.{NonEmptyList, Validated, ValidatedNel}
+import cats.data.Validated._
+import cats.syntax.either._
+import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.{Resolver, SchemaCriterion}
 import com.snowplowanalytics.iglu.client.validation.ValidatableJsonMethods._
 import com.fasterxml.jackson.databind.JsonNode
-import scalaz._
-import Scalaz._
 
 import loaders.CollectorPayload
 import utils.{JsonUtils => JU}
@@ -50,25 +52,27 @@ object Tp2Adapter extends Adapter {
    * @param resolver (implicit) The Iglu resolver used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = {
+  def toRawEvents(payload: CollectorPayload)(
+    implicit resolver: Resolver
+  ): ValidatedNel[String, NonEmptyList[RawEvent]] = {
     val qsParams = toMap(payload.querystring)
 
     // Verify: body + content type set; content type matches expected; body contains expected JSON Schema; body passes schema validation
-    val validatedParamsNel: Validated[NonEmptyList[RawEventParameters]] =
+    val validatedParamsNel: ValidatedNel[String, NonEmptyList[RawEventParameters]] =
       (payload.body, payload.contentType) match {
         case (None, _) if qsParams.isEmpty =>
-          s"Request body and querystring parameters empty, expected at least one populated".failNel
+          s"Request body and querystring parameters empty, expected at least one populated".invalidNel
         case (_, Some(ct)) if !ContentTypes.list.contains(ct) =>
-          s"Content type of ${ct} provided, expected one of: ${ContentTypes.str}".failNel
+          s"Content type of ${ct} provided, expected one of: ${ContentTypes.str}".invalidNel
         case (Some(_), None) =>
-          s"Request body provided but content type empty, expected one of: ${ContentTypes.str}".failNel
-        case (None, Some(ct)) => s"Content type of ${ct} provided but request body empty".failNel
-        case (None, None) => NonEmptyList(qsParams).success
+          s"Request body provided but content type empty, expected one of: ${ContentTypes.str}".invalidNel
+        case (None, Some(ct)) => s"Content type of ${ct} provided but request body empty".invalidNel
+        case (None, None) => NonEmptyList.one(qsParams).valid
         case (Some(bdy), Some(_)) => // Build our NEL of parameters
-          for {
+          (for {
             json <- extractAndValidateJson("Body", PayloadDataSchema, bdy)
             nel <- toParametersNel(json, qsParams)
-          } yield nel
+          } yield nel).toValidated
       }
 
     // Validated NEL of parameters -> Validated NEL of raw events
@@ -94,17 +98,15 @@ object Tp2Adapter extends Adapter {
   private def toParametersNel(
     instance: JsonNode,
     mergeWith: RawEventParameters
-  ): Validated[NonEmptyList[RawEventParameters]] = {
-    val events: List[List[Validation[String, (String, String)]]] = for {
+  ): Either[NonEmptyList[String], NonEmptyList[RawEventParameters]] = {
+    val events: List[List[Validated[String, (String, String)]]] = for {
       event <- instance.iterator.toList
     } yield
       for {
         entry <- event.fields.toList
       } yield toParameter(entry)
 
-    val failures: List[String] = events.flatten.collect {
-      case Failure(f) => f
-    }
+    val failures: List[String] = events.flatten.collect { case Invalid(f) => f }
 
     // We don't bother doing this conditionally because we
     // don't expect any failures, so any performance gain
@@ -115,15 +117,20 @@ object Tp2Adapter extends Adapter {
       (for {
         param <- params
       } yield param).collect {
-        case Success(p) => p
+        case Valid(p) => p
       }.toMap ++ mergeWith) // Overwrite with mergeWith
 
     (successes, failures) match {
-      case (s :: ss, Nil) => NonEmptyList(s, ss: _*).success // No Failures collected
+      case (s :: ss, Nil) => NonEmptyList.of(s, ss: _*).asRight // No Failures collected
       case (s :: ss, f :: fs) =>
-        NonEmptyList(f, fs: _*).fail // Some Failures, return those. Should never happen, unless JSON Schema changed
+        // Some Failures, return those. Should never happen, unless JSON Schema changed
+        NonEmptyList.of(f, fs: _*).asLeft
       case (Nil, _) =>
-        "List of events is empty (should never happen, did JSON Schema change?)".failNel
+        NonEmptyList
+          .one(
+            "List of events is empty (should never happen, did JSON Schema change?)"
+          )
+          .asLeft
     }
   }
 
@@ -133,17 +140,16 @@ object Tp2Adapter extends Adapter {
    * @return a Validation boxing either our parameter on Success, or an error String on Failure.
    */
   private def toParameter(
-    entry: JMapEntry[String, JsonNode]
-  ): Validation[String, Tuple2[String, String]] = {
+    entry: JMapEntry[String, JsonNode]): Validated[String, Tuple2[String, String]] = {
     val key = entry.getKey
     val rawValue = entry.getValue
 
     Option(rawValue.textValue) match {
-      case Some(txt) => (key, txt).success
+      case Some(txt) => (key, txt).valid
       case None if rawValue.isTextual =>
-        s"Value for key ${key} is a null String (should never happen, did Jackson implementation change?)".fail
+        s"Value for key ${key} is a null String (should never happen, did Jackson implementation change?)".invalid
       case _ =>
-        s"Value for key ${key} is not a String (should never happen, did JSON Schema change?)".fail
+        s"Value for key ${key} is not a String (should never happen, did JSON Schema change?)".invalid
     }
   }
 
@@ -160,12 +166,13 @@ object Tp2Adapter extends Adapter {
     field: String,
     schemaCriterion: SchemaCriterion,
     instance: String
-  )(
-    implicit resolver: Resolver
-  ): Validated[JsonNode] =
+  )(implicit resolver: Resolver): Either[NonEmptyList[String], JsonNode] =
     for {
-      j <- (JU.extractJsonNode(field, instance).toValidationNel: Validated[JsonNode])
-      v <- j.verifySchemaAndValidate(schemaCriterion, true).leftMap(_.map(_.toString))
+      j <- JU.extractJsonNode(field, instance).leftMap(NonEmptyList.one)
+      v <- j
+        .verifySchemaAndValidate(schemaCriterion, true)
+        .leftMap(nel => NonEmptyList.of(nel.head, nel.tail: _*).map(_.toString))
+        .toEither
     } yield v
 
 }

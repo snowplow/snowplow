@@ -12,12 +12,9 @@
 package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
 import org.specs2.matcher.DataTables
-import org.specs2.scalaz._
+import org.specs2.mutable.Specification
 
-class UserAgentUtilsEnrichmentSpec
-    extends org.specs2.mutable.Specification
-    with ValidationMatchers
-    with DataTables {
+class UserAgentUtilsEnrichmentSpec extends Specification with DataTables {
 
   "useragent parser" should {
     "parse useragent" in {
@@ -50,7 +47,7 @@ class UserAgentUtilsEnrichmentSpec
               osFields._3,
               deviceType,
               deviceIsMobile)
-            UserAgentUtilsEnrichment.extractClientAttributes(input) must beSuccessful(expected)
+            UserAgentUtilsEnrichment.extractClientAttributes(input) must beRight(expected)
           }
       }
     }

@@ -15,15 +15,16 @@ package enrichments.registry
 
 import java.net.URI
 
+import cats.data.{NonEmptyList, ValidatedNel}
+import cats.implicits._
+import com.github.fge.jsonschema.core.report.ProcessingMessage
 import com.snowplowanalytics.maxmind.iplookups.IpLookups
-import com.snowplowanalytics.maxmind.iplookups.model.IpLookupResult
+import com.snowplowanalytics.maxmind.iplookups.model.{IpLocation, IpLookupResult => IpLookupRes}
 import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
 import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
 import io.circe._
-import scalaz._
-import Scalaz._
 
-import utils.{ConversionUtils, ScalazCirceUtils}
+import utils.{CirceUtils, ConversionUtils}
 
 /** Companion object. Lets us create an IpLookupsEnrichment instance from a Json. */
 object IpLookupsEnrichment extends ParseableEnrichment {
@@ -32,22 +33,27 @@ object IpLookupsEnrichment extends ParseableEnrichment {
 
   /**
    * Creates an IpLookupsEnrichment instance from a JValue.
-   * @param config The ip_lookups enrichment JSON
+   * @param c The ip_lookups enrichment JSON
    * @param schemaKey provided for the enrichment, must be supported  by this enrichment
    * @param localMode Whether to use the local MaxMind data file, enabled for tests
    * @return a configured IpLookupsEnrichment instance
    */
   def parse(
-    config: Json,
+    c: Json,
     schemaKey: SchemaKey,
     localMode: Boolean
-  ): ValidatedNelMessage[IpLookupsEnrichment] =
-    isParseable(config, schemaKey).flatMap { conf =>
-      def db(name: String) = getArgumentFromName(conf, name).sequenceU
-      (db("geo") |@| db("isp") |@| db("domain") |@| db("connectionType")) {
-        IpLookupsEnrichment(_, _, _, _, localMode)
+  ): ValidatedNel[ProcessingMessage, IpLookupsEnrichment] =
+    isParseable(c, schemaKey)
+      .leftMap(e => NonEmptyList.one(e.toProcessingMessage))
+      .flatMap { _ =>
+        (
+          getArgumentFromName(c, "geo").sequence,
+          getArgumentFromName(c, "isp").sequence,
+          getArgumentFromName(c, "domain").sequence,
+          getArgumentFromName(c, "connectionType").sequence
+        ).mapN { IpLookupsEnrichment(_, _, _, _, localMode) }.toEither
       }
-    }
+      .toValidated
 
   /**
    * Creates the (URI, String) tuple arguments which are the case class parameters
@@ -59,16 +65,16 @@ object IpLookupsEnrichment extends ParseableEnrichment {
   private def getArgumentFromName(
     conf: Json,
     name: String
-  ): Option[ValidatedNelMessage[(String, URI, String)]] =
+  ): Option[ValidatedNel[ProcessingMessage, (String, URI, String)]] =
     if (conf.hcursor.downField("parameters").downField(name).focus.isDefined) {
-      val uri = ScalazCirceUtils.extract[String](conf, "parameters", name, "uri")
-      val db = ScalazCirceUtils.extract[String](conf, "parameters", name, "database")
+      val uri = CirceUtils.extract[String](conf, "parameters", name, "uri")
+      val db = CirceUtils.extract[String](conf, "parameters", name, "database")
 
-      (uri.toValidationNel |@| db.toValidationNel) { (uri, db) =>
-        for {
-          u <- (getMaxmindUri(uri, db).toValidationNel: ValidatedNelMessage[URI])
-        } yield (name, u, db)
-      }.flatMap(identity).some
+      // better-monadic-for
+      (for {
+        uriAndDb <- (uri.toValidatedNel, db.toValidatedNel).mapN { (_, _) }.toEither
+        uri <- getMaxmindUri(uriAndDb._1, uriAndDb._2).leftMap(NonEmptyList.one)
+      } yield (name, uri, uriAndDb._2)).leftMap(_.map(_.toProcessingMessage)).toValidated.some
     } else None
 
   /**
@@ -77,14 +83,13 @@ object IpLookupsEnrichment extends ParseableEnrichment {
    * @param database Name of the MaxMind database
    * @return a Validation-boxed URI
    */
-  private def getMaxmindUri(uri: String, database: String): ValidatedMessage[URI] =
+  private def getMaxmindUri(uri: String, database: String): Either[String, URI] =
     ConversionUtils
       .stringToUri(uri + "/" + database)
       .flatMap {
-        case Some(u) => u.success
-        case None => "URI to MaxMind file must be provided".fail
+        case Some(u) => u.asRight
+        case None => "URI to MaxMind file must be provided".asLeft
       }
-      .toProcessingMessage
 }
 
 /**
@@ -97,7 +102,7 @@ object IpLookupsEnrichment extends ParseableEnrichment {
  * @param connectionTypeTuple (Full URI to the netspeed lookup MaxMind data file, database name)
  * @param localMode Whether to use the local MaxMind data file. Enabled for tests.
  */
-case class IpLookupsEnrichment(
+final case class IpLookupsEnrichment(
   geoTuple: Option[(String, URI, String)],
   ispTuple: Option[(String, URI, String)],
   domainTuple: Option[(String, URI, String)],
@@ -146,8 +151,29 @@ case class IpLookupsEnrichment(
    * @param ip The client's IP address to use to lookup the client's geo-location
    * @return an IpLookupResult
    */
-  def extractIpInformation(ip: String): IpLookupResult = ip match {
-    case EnrichmentManager.IPv4Regex(ipv4WithoutPort) => ipLookups.performLookups(ipv4WithoutPort)
-    case _ => ipLookups.performLookups(ip)
+  def extractIpInformation(ip: String): IpLookupResult = {
+    val res = ip match {
+      case EnrichmentManager.IPv4Regex(ipv4WithoutPort) => ipLookups.performLookups(ipv4WithoutPort)
+      case _ => ipLookups.performLookups(ip)
+    }
+    IpLookupResult(res)
   }
+}
+
+final case class IpLookupResult(
+  ipLocation: Option[Either[Throwable, IpLocation]],
+  isp: Option[Either[Throwable, String]],
+  organization: Option[Either[Throwable, String]],
+  domain: Option[Either[Throwable, String]],
+  connectionType: Option[Either[Throwable, String]]
+)
+
+object IpLookupResult {
+  def apply(ilr: IpLookupRes): IpLookupResult = IpLookupResult(
+    ilr.ipLocation.map(_.toEither),
+    ilr.isp.map(_.toEither),
+    ilr.organization.map(_.toEither),
+    ilr.domain.map(_.toEither),
+    ilr.connectionType.map(_.toEither)
+  )
 }

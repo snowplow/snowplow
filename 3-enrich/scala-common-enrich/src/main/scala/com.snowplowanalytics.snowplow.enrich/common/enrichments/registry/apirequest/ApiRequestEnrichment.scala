@@ -16,18 +16,18 @@ package apirequest
 
 import java.util.UUID
 
-import cats.syntax.either._
+import cats.data.{NonEmptyList, ValidatedNel}
+import cats.implicits._
+import com.github.fge.jsonschema.core.report.ProcessingMessage
 import com.snowplowanalytics.iglu.client.{JsonSchemaPair, SchemaCriterion, SchemaKey}
 import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
 import io.circe._
 import io.circe.generic.auto._
 import io.circe.jackson._
 import io.circe.syntax._
-import scalaz._
-import Scalaz._
 
 import outputs.EnrichedEvent
-import utils.ScalazCirceUtils
+import utils.CirceUtils
 
 /** Lets us create an ApiRequestEnrichmentConfig from a JValue */
 object ApiRequestEnrichmentConfig extends ParseableEnrichment {
@@ -43,29 +43,40 @@ object ApiRequestEnrichmentConfig extends ParseableEnrichment {
 
   /**
    * Creates an ApiRequestEnrichment instance from a JValue.
-   * @param config The enrichment JSON
+   * @param c The enrichment JSON
    * @param schemaKey The SchemaKey provided for the enrichment
    * Must be a supported SchemaKey for this enrichment
    * @return a configured ApiRequestEnrichment instance
    */
-  def parse(config: Json, schemaKey: SchemaKey): ValidatedNelMessage[ApiRequestEnrichment] =
-    isParseable(config, schemaKey).flatMap(conf => {
-      (for {
+  def parse(
+    c: Json,
+    schemaKey: SchemaKey
+  ): ValidatedNel[ProcessingMessage, ApiRequestEnrichment] =
+    isParseable(c, schemaKey)
+      .leftMap(e => NonEmptyList.one(e.toProcessingMessage))
+      .flatMap { _ =>
         // input ctor throws exception
-        inputs <- Either.catchNonFatal(
-          ScalazCirceUtils.extract[List[Input]](config, "parameters", "inputs")
-        ) match {
-          case Left(e) => e.getMessage.toProcessingMessage.fail
+        val inputs: ValidatedNel[String, List[Input]] = Either.catchNonFatal {
+          CirceUtils.extract[List[Input]](c, "parameters", "inputs").toValidatedNel
+        } match {
+          case Left(e) => e.getMessage.invalidNel
           case Right(r) => r
         }
-        httpApi <- ScalazCirceUtils.extract[HttpApi](config, "parameters", "api", "http")
-        outputs <- ScalazCirceUtils.extract[List[Output]](config, "parameters", "outputs")
-        cache <- ScalazCirceUtils.extract[Cache](config, "parameters", "cache")
-      } yield ApiRequestEnrichment(inputs, httpApi, outputs, cache)).toValidationNel
-    })
+        (
+          inputs,
+          CirceUtils.extract[HttpApi](c, "parameters", "api", "http").toValidatedNel,
+          CirceUtils.extract[List[Output]](c, "parameters", "outputs").toValidatedNel,
+          CirceUtils.extract[Cache](c, "parameters", "cache").toValidatedNel
+        ).mapN { (inputs, api, outputs, cache) =>
+            ApiRequestEnrichment(inputs, api, outputs, cache)
+          }
+          .toEither
+          .leftMap(_.map(_.toProcessingMessage))
+      }
+      .toValidated
 }
 
-case class ApiRequestEnrichment(
+final case class ApiRequestEnrichment(
   inputs: List[Input],
   api: HttpApi,
   outputs: List[Output],
@@ -85,7 +96,7 @@ case class ApiRequestEnrichment(
     derivedContexts: List[Json],
     customContexts: List[JsonSchemaPair],
     unstructEvent: List[JsonSchemaPair]
-  ): ValidationNel[String, List[Json]] = {
+  ): ValidatedNel[String, List[Json]] = {
     // Note that [[JsonSchemaPairs]] have specific structure - it is a pair,
     // where first element is [[SchemaKey]], second element is JSON Object
     // with keys: `data`, `schema` and `hierarchy` and `schema` contains again [[SchemaKey]]
@@ -101,7 +112,10 @@ case class ApiRequestEnrichment(
         jsonCustomContexts,
         jsonUnstructEvent)
 
-    templateContext.flatMap(getOutputs(_).toValidationNel)
+    (for {
+      context <- templateContext.toEither
+      outputs <- getOutputs(context).leftMap(e => NonEmptyList.one(e))
+    } yield outputs).toValidated
   }
 
   /**
@@ -111,14 +125,14 @@ case class ApiRequestEnrichment(
    */
   private[apirequest] def getOutputs(
     validInputs: Option[Map[String, String]]
-  ): Validation[String, List[Json]] = {
+  ): Either[String, List[Json]] = {
     val result = for {
       templateContext <- validInputs.toList
       url <- api.buildUrl(templateContext).toList
       output <- outputs
       body = api.buildBody(templateContext)
     } yield cachedOrRequest(url, body, output).leftMap(_.toString)
-    result.sequenceU
+    result.sequence
   }
 
   /**
@@ -131,7 +145,7 @@ case class ApiRequestEnrichment(
     url: String,
     body: Option[String],
     output: Output
-  ): Validation[Throwable, Json] = {
+  ): Either[Throwable, Json] = {
     val key = cacheKey(url, body)
     val value = cache.get(key) match {
       case Some(cachedResponse) => cachedResponse

@@ -20,13 +20,31 @@ import com.snowplowanalytics.iglu.client.SchemaKey
 import io.circe.literal._
 import io.circe.parser._
 import org.apache.commons.codec.binary.Base64
-import org.specs2.matcher.DataTables
+import org.specs2.matcher.{DataTables, ValidatedMatchers}
 import org.specs2.mutable.Specification
-import org.specs2.scalaz.ValidationMatchers
 
-class EnrichmentConfigsSpec extends Specification with ValidationMatchers with DataTables {
+class EnrichmentConfigsSpec extends Specification with ValidatedMatchers with DataTables {
 
   "Parsing a valid anon_ip enrichment JSON" should {
+    "successfully construct an AnonIpEnrichment case class" in {
+      val ipAnonJson = json"""{
+        "enabled": true,
+        "parameters": {
+          "anonOctets": 2,
+          "anonSegments": 3
+        }
+      }"""
+
+      val schemaKey = SchemaKey(
+        "com.snowplowanalytics.snowplow",
+        "anon_ip",
+        "jsonschema",
+        SchemaVer.Full(1, 0, 1)
+      )
+      val result = AnonIpEnrichment.parse(ipAnonJson, schemaKey)
+      result must beValid(AnonIpConf(AnonIPv4Octets(2), AnonIPv6Segments(3)))
+    }
+
     "successfully construct an AnonIpEnrichment case class with default value for IPv6" in {
       val ipAnonJson = json"""{
         "enabled": true,
@@ -36,27 +54,7 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers with D
       }"""
       val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "anon_ip", "jsonschema", "1-0-0")
       val result = AnonIpEnrichment.parse(ipAnonJson, schemaKey)
-      result must beSuccessful(AnonIpEnrichment(AnonIPv4Octets(2), AnonIPv6Segments(2)))
-
-    }
-  }
-
-  "Parsing a valid anon_ip enrichment JSON" should {
-    "successfully construct an AnonIpEnrichment case class" in {
-
-      val ipAnonJson = parse("""{
-        "enabled": true,
-        "parameters": {
-          "anonOctets": 2,
-          "anonSegments": 3
-        }
-      }""")
-
-      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "anon_ip", "jsonschema", "1-0-1")
-
-      val result = AnonIpEnrichment.parse(ipAnonJson, schemaKey)
-      result must beSuccessful(AnonIpEnrichment(AnonIPv4Octets(2), AnonIPv6Segments(3)))
-
+      result must beValid(AnonIpConf(AnonIPv4Octets(2), AnonIPv6Segments(2)))
     }
   }
 
@@ -95,7 +93,7 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers with D
       )
 
       val result = IpLookupsEnrichment.parse(ipToGeoJson, schemaKey, true)
-      result must beSuccessful(expected)
+      result must beValid(expected)
 
     }
   }
@@ -117,7 +115,7 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers with D
         RefererParserEnrichment(
           List("www.subdomain1.snowplowanalytics.com", "www.subdomain2.snowplowanalytics.com"))
       val result = RefererParserEnrichment.parse(refererParserJson, schemaKey)
-      result must beSuccessful(expected)
+      result must beValid(expected)
 
     }
   }
@@ -159,7 +157,7 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers with D
         )
       )
       val result = CampaignAttributionEnrichment.parse(campaignAttributionEnrichmentJson, schemaKey)
-      result must beSuccessful(expected)
+      result must beValid(expected)
     }
   }
 
@@ -176,7 +174,7 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers with D
         "jsonschema",
         "1-0-0")
       val result = UserAgentUtilsEnrichmentConfig.parse(userAgentUtilsEnrichmentJson, schemaKey)
-      result must beSuccessful(UserAgentUtilsEnrichment)
+      result must beValid(UserAgentUtilsEnrichment)
 
     }
   }
@@ -206,7 +204,7 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers with D
         (config, expected) =>
           {
             val result = UaParserEnrichmentConfig.parse(config, schemaKey)
-            result must beSuccessful(UaParserEnrichment(expected))
+            result must beValid(UaParserEnrichment(expected))
           }
       }
     }
@@ -230,8 +228,7 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers with D
         "1-0-0")
       val result =
         CurrencyConversionEnrichmentConfig.parse(currencyConversionEnrichmentJson, schemaKey)
-      result must beSuccessful(
-        CurrencyConversionEnrichment(DeveloperAccount, "---", "EUR", "EOD_PRIOR"))
+      result must beValid(CurrencyConversionEnrichment(DeveloperAccount, "---", "EUR", "EOD_PRIOR"))
     }
   }
 
@@ -258,7 +255,7 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers with D
         "jsonschema",
         "1-0-0")
       val result = JavascriptScriptEnrichmentConfig.parse(javascriptScriptEnrichmentJson, schemaKey)
-      result must beSuccessful // TODO: check the result's contents by evaluating some JavaScript
+      result must beValid // TODO: check the result's contents by evaluating some JavaScript
     }
   }
 
@@ -278,7 +275,7 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers with D
         "1-0-0")
       val expectedExcludedParameters = List("stm")
       val result = EventFingerprintEnrichmentConfig.parse(refererParserJson, schemaKey)
-      result must beSuccessful.like {
+      result must beValid.like {
         case enr => enr.algorithm("sample") must beEqualTo("5e8ff9bf55ba3508199d22e984129be6")
       }
     }
@@ -298,7 +295,7 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers with D
         "jsonschema",
         "1-0-0")
       val result = CookieExtractorEnrichmentConfig.parse(cookieExtractorEnrichmentJson, schemaKey)
-      result must beSuccessful(CookieExtractorEnrichment(List("foo", "bar")))
+      result must beValid(CookieExtractorEnrichment(List("foo", "bar")))
     }
   }
 
@@ -339,7 +336,7 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers with D
           "jsonschema",
           "2-0-0")
       val result = PiiPseudonymizerEnrichment.parse(piiPseudonymizerEnrichmentJson, schemaKey)
-      result must beSuccessful.like {
+      result must beValid.like {
         case piiRes: PiiPseudonymizerEnrichment => {
           (piiRes.strategy must haveClass[PiiStrategyPseudonymize]) and
             (piiRes.strategy
@@ -408,7 +405,7 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers with D
         true
       )
       val result = IabEnrichment.parse(iabJson, schemaKey, true)
-      result must beSuccessful(expected)
+      result must beValid(expected)
     }
 
     "fail if a database file is missing" in {
@@ -462,7 +459,7 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers with D
         "jsonschema",
         "1-0-0")
       val result = IabEnrichment.parse(iabJson, schemaKey, true)
-      result must beFailing
+      result must beInvalid
     }
   }
 }

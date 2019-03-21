@@ -13,9 +13,8 @@
 package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
 import org.specs2.Specification
-import org.specs2.scalaz.ValidationMatchers
 
-class CampaignAttributionEnrichmentSpec extends Specification with ValidationMatchers {
+class CampaignAttributionEnrichmentSpec extends Specification {
   def is = s2"""
   This is a specification to test the CampaignAttributionEnrichment
   extractMarketingFields should create an empty MarketingCampaign if no campaign fields are specified $e1
@@ -66,8 +65,8 @@ class CampaignAttributionEnrichmentSpec extends Specification with ValidationMat
       List()
     )
 
-    config.extractMarketingFields(google_uri) must beSuccessful(
-      MarketingCampaign(None, None, None, None, None, None, None))
+    config.extractMarketingFields(google_uri) must_==
+      MarketingCampaign(None, None, None, None, None, None, None)
   }
 
   def e2 = {
@@ -80,7 +79,7 @@ class CampaignAttributionEnrichmentSpec extends Specification with ValidationMat
       List()
     )
 
-    config.extractMarketingFields(google_uri) must beSuccessful(
+    config.extractMarketingFields(google_uri) must_==
       MarketingCampaign(
         Some("cpc"),
         Some("GoogleSearch"),
@@ -88,7 +87,8 @@ class CampaignAttributionEnrichmentSpec extends Specification with ValidationMat
         Some("39254295088"),
         Some("uk-tarot--native-american"),
         None,
-        None))
+        None
+      )
   }
 
   def e3 = {
@@ -101,8 +101,8 @@ class CampaignAttributionEnrichmentSpec extends Specification with ValidationMat
       List()
     )
 
-    config.extractMarketingFields(omniture_uri) must beSuccessful(
-      MarketingCampaign(None, None, None, None, Some("uk-tarot--native-american"), None, None))
+    config.extractMarketingFields(omniture_uri) must_==
+      MarketingCampaign(None, None, None, None, Some("uk-tarot--native-american"), None, None)
   }
 
   def e4 = {
@@ -115,7 +115,7 @@ class CampaignAttributionEnrichmentSpec extends Specification with ValidationMat
       List()
     )
 
-    config.extractMarketingFields(heterogeneous_uri) must beSuccessful(
+    config.extractMarketingFields(heterogeneous_uri) must_==
       MarketingCampaign(
         Some("cpc"),
         Some("GoogleSearch"),
@@ -123,7 +123,8 @@ class CampaignAttributionEnrichmentSpec extends Specification with ValidationMat
         None,
         Some("uk-tarot--native-american"),
         None,
-        None))
+        None
+      )
   }
 
   def e5 = {
@@ -140,7 +141,7 @@ class CampaignAttributionEnrichmentSpec extends Specification with ValidationMat
       )
     )
 
-    config.extractMarketingFields(clickid_uri) must beSuccessful(
+    config.extractMarketingFields(clickid_uri) must_==
       MarketingCampaign(
         Some("cpc"),
         Some("GoogleSearch"),
@@ -148,7 +149,8 @@ class CampaignAttributionEnrichmentSpec extends Specification with ValidationMat
         None,
         Some("uk-tarot--native-american"),
         Some("500"),
-        Some("Microsoft")))
+        Some("Microsoft")
+      )
   }
 
 }

@@ -13,9 +13,11 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
+import cats.data.ValidatedNel
+import cats.syntax.either._
+import cats.syntax.option._
+import cats.syntax.validated._
 import io.circe.parser._
-import scalaz._
-import Scalaz._
 
 final case class NdjsonLoader(adapter: String) extends Loader[String] {
 
@@ -27,14 +29,14 @@ final case class NdjsonLoader(adapter: String) extends Loader[String] {
    * @param line A line of data to convert
    * @return a CanonicalInput object, Option-boxed, or None if no input was extractable.
    */
-  override def toCollectorPayload(line: String): ValidatedMaybeCollectorPayload =
+  override def toCollectorPayload(line: String): ValidatedNel[String, Option[CollectorPayload]] =
     if (line.replaceAll("\r?\n", "").isEmpty) {
-      Success(None)
+      None.validNel
     } else if (line.split("\r?\n").size > 1) {
-      "Too many lines! Expected single line".failNel
+      "Too many lines! Expected single line".invalidNel
     } else {
       parse(line) match {
-        case Left(e) => s"Unparsable JSON: ${e.getMessage}".failNel
+        case Left(e) => s"Unparsable JSON: ${e.getMessage}".invalidNel
         case _ =>
           CollectorApi
             .parse(adapter)
@@ -55,7 +57,7 @@ final case class NdjsonLoader(adapter: String) extends Loader[String] {
                 Some(line)
               ).some
             )
-            .toValidationNel
+            .toValidatedNel
       }
     }
 }

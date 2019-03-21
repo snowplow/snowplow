@@ -13,9 +13,8 @@
 package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
 import org.specs2.Specification
-import org.specs2.scalaz.ValidationMatchers
 
-class EventFingerprintEnrichmentSpec extends Specification with ValidationMatchers {
+class EventFingerprintEnrichmentSpec extends Specification {
   def is = s2"""
   This is a specification to test the EventFingerprintEnrichment
   getEventFingerprint should combine fields into a hash                       $e1
@@ -30,7 +29,7 @@ class EventFingerprintEnrichmentSpec extends Specification with ValidationMatche
 
   val standardConfig =
     EventFingerprintEnrichment(
-      EventFingerprintEnrichmentConfig.getAlgorithm("MD5").toOption.get,
+      EventFingerprintEnrichmentConfig.getAlgorithm("MD5").right.get,
       List("stm", "eid"))
 
   def e1 = {
@@ -95,10 +94,13 @@ class EventFingerprintEnrichmentSpec extends Specification with ValidationMatche
 
   def e5 = {
     val sha1Config =
-      EventFingerprintEnrichment(EventFingerprintEnrichmentConfig.getAlgorithm("SHA1").toOption.get, List("stm", "eid"))
+      EventFingerprintEnrichment(
+        EventFingerprintEnrichment.getAlgorithm("SHA1").toOption.get,
+        List("stm", "eid")
+      )
 
     val initialVersion = Map(
-      "e"     -> "se",
+      "e" -> "se",
       "se_ac" -> "action"
     )
 
@@ -107,11 +109,13 @@ class EventFingerprintEnrichmentSpec extends Specification with ValidationMatche
 
   def e6 = {
     val sha256Config =
-      EventFingerprintEnrichment(EventFingerprintEnrichmentConfig.getAlgorithm("SHA256").toOption.get,
-                                 List("stm", "eid"))
+      EventFingerprintEnrichment(
+        EventFingerprintEnrichment.getAlgorithm("SHA256").toOption.get,
+        List("stm", "eid")
+      )
 
     val initialVersion = Map(
-      "e"     -> "se",
+      "e" -> "se",
       "se_ac" -> "action"
     )
 
@@ -120,11 +124,13 @@ class EventFingerprintEnrichmentSpec extends Specification with ValidationMatche
 
   def e7 = {
     val sha384Config =
-      EventFingerprintEnrichment(EventFingerprintEnrichmentConfig.getAlgorithm("SHA384").toOption.get,
-                                 List("stm", "eid"))
+      EventFingerprintEnrichment(
+        EventFingerprintEnrichment.getAlgorithm("SHA384").toOption.get,
+        List("stm", "eid")
+      )
 
     val initialVersion = Map(
-      "e"     -> "se",
+      "e" -> "se",
       "se_ac" -> "action"
     )
 
@@ -133,11 +139,13 @@ class EventFingerprintEnrichmentSpec extends Specification with ValidationMatche
 
   def e8 = {
     val sha512Config =
-      EventFingerprintEnrichment(EventFingerprintEnrichmentConfig.getAlgorithm("SHA512").toOption.get,
-                                 List("stm", "eid"))
+      EventFingerprintEnrichment(
+        EventFingerprintEnrichment.getAlgorithm("SHA512").toOption.get,
+        List("stm", "eid")
+      )
 
     val initialVersion = Map(
-      "e"     -> "se",
+      "e" -> "se",
       "se_ac" -> "action"
     )
 

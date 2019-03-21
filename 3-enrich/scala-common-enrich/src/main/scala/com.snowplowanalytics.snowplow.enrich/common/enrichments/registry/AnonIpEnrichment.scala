@@ -13,17 +13,18 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry
 
+import cats.data.ValidatedNel
+import cats.syntax.either._
+import com.github.fge.jsonschema.core.report.ProcessingMessage
 import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
 import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
 import io.circe._
-import scalaz._
-import Scalaz._
 
-import utils.ScalazCirceUtils
+import utils.CirceUtils
 
 import java.net.{Inet4Address, Inet6Address}
 import com.google.common.net.{InetAddresses => GuavaInetAddress}
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 
 /** Companion object. Lets us create a AnonIpEnrichment from a Json. */
 object AnonIpEnrichment extends ParseableEnrichment {
@@ -33,22 +34,25 @@ object AnonIpEnrichment extends ParseableEnrichment {
 
   /**
    * Creates an AnonIpEnrichment instance from a JValue.
-   * @param config The anon_ip enrichment JSON
+   * @param c The anon_ip enrichment JSON
    * @param schemaKey provided for the enrichment, must be supported by this enrichment
    * @return a configured AnonIpEnrichment instance
    */
-  def parse(config: Json, schemaKey: SchemaKey): ValidatedNelMessage[AnonIpEnrichment] =
-    isParseable(config, schemaKey).flatMap(conf => {
-      (for {
-        paramIPv4Octet <- ScalazCirceUtils.extract[Int](config, "parameters", "anonOctets")
-        paramIPv6Segment <- ScalazCirceUtils
-          .extract[Int](config, "parameters", "anonSegments")
-          .orElse(paramIPv4Octet.success)
-        ipv4Octets <- AnonIPv4Octets.fromInt(paramIPv4Octet)
-        ipv6Segment <- AnonIPv6Segments.fromInt(paramIPv6Segment)
-        enrich = AnonIpEnrichment(ipv4Octets, ipv6Segment)
-      } yield enrich).toValidationNel
-    })
+  override def parse(
+    config: Json,
+    schemaKey: SchemaKey,
+    localMode: Boolean = false
+  ): ValidatedNel[String, AnonIpConf] =
+    (for {
+      _ <- isParseable(config, schemaKey)
+      paramIPv4Octet <- CirceUtils.extract[Int](config, "parameters", "anonOctets").toEither
+      paramIPv6Segment <- CirceUtils
+        .extract[Int](config, "parameters", "anonSegments")
+        .orElse(Validated.valid(paramIPv4Octet))
+        .toEither
+      ipv4Octets <- AnonIPv4Octets.fromInt(paramIPv4Octet)
+      ipv6Segment <- AnonIPv6Segments.fromInt(paramIPv6Segment)
+    } yield AnonIpConf(ipv4Octets, ipv6Segment)).toValidatedNel
 }
 
 /** How many octets (ipv4) to anonymize */
@@ -63,15 +67,15 @@ object AnonIPv4Octets extends Enumeration {
    * Convert a Stringly-typed integer into the corresponding AnonOctets Enum Value.
    * Update the Validation Error if the conversion isn't possible.
    * @param anonIPv4Octets A String holding the number of IP address octets to anonymize
-   * @return a Validation-boxed AnonIPv4Octets
+   * @return `Right(AnonIPv4Octets)` or `Left(errorMsg)`
    */
-  def fromInt(anonIPv4Octets: Int): ValidatedMessage[AnonIPv4Octets] =
-    try {
-      AnonIPv4Octets(anonIPv4Octets).success
-    } catch {
-      case _: NoSuchElementException =>
-        s"IPv4 address octets to anonymize must be 1, 2, 3 or 4. Value: $anonIPv4Octets was given.".toProcessingMessage.fail
-    }
+  def fromInt(anonIPv4Octets: Int): Either[String, AnonIPv4Octets] =
+    Either
+      .catchNonFatal(AnonIPv4Octets(anonIPv4Octets))
+      .leftMap(
+        e =>
+          s"IPv4 address octets to anonymize must be 1, 2, 3 or 4. Value: $anonIPv4Octets was given. Error: [${e.getMessage}]"
+      )
 }
 
 /**
@@ -98,18 +102,18 @@ object AnonIPv6Segments extends Enumeration {
    * Update the Validation Error if the
    * conversion isn't possible.
    *
-   * @param anonSegments A String holding
+   * @param anonIPv6Segments A String holding
    *        the number of IPv6 address
    *        segments to anonymize
-   * @return a Validation-boxed AnonIPv6Segments
+   * @return `Right(AnonIPv6Segments)` or `Left(errorMsg)`
    */
-  def fromInt(anonIPv6Segments: Int): ValidatedMessage[AnonIPv6Segments] =
-    try {
-      AnonIPv6Segments(anonIPv6Segments).success
-    } catch {
-      case _: NoSuchElementException =>
-        s"IPv6 address segments to anonymize must be 1, 2, 3, 4, 5, 6, 7 or 8. Value $anonIPv6Segments was given".toProcessingMessage.fail
-    }
+  def fromInt(anonIPv6Segments: Int): Either[String, AnonIPv6Segments] =
+    Either
+      .catchNonFatal(AnonIPv6Segments(anonIPv6Segments))
+      .leftMap(
+        e =>
+          s"IPv6 address segments to anonymize must be 1, 2, 3, 4, 5, 6, 7 or 8. Value $anonIPv6Segments was given. Error: [${e.getMessage}]"
+      )
 }
 
 /**

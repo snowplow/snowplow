@@ -14,11 +14,13 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
+import cats.data.{NonEmptyList, ValidatedNel}
+import cats.syntax.apply._
 import cats.syntax.either._
+import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
 import io.circe.parser._
 import org.joda.time.{DateTime, DateTimeZone}
-import scalaz.Scalaz._
 
 import loaders.CollectorPayload
 
@@ -78,7 +80,7 @@ object UrbanAirshipAdapter extends Adapter {
   private def payloadBodyToEvent(
     bodyJson: String,
     payload: CollectorPayload
-  ): Validated[RawEvent] = {
+  ): ValidatedNel[String, RawEvent] = {
     def toTtmFormat(jsonTimestamp: String) =
       "%d".format(new DateTime(jsonTimestamp).getMillis)
 
@@ -86,60 +88,31 @@ object UrbanAirshipAdapter extends Adapter {
       case Right(json) =>
         val cursor = json.hcursor
         val eventType = cursor.get[String]("type").toOption
-        val trueTs = cursor.get[String]("occurred").toOption
-        val eid = cursor.get[String]("id").toOption
-        val collectorTs = cursor.get[String]("processed").toOption
-        (trueTs |@| eid |@| collectorTs) { (tts, id, cts) =>
-          lookupSchema(eventType, VendorName, EventSchemaMap).map { schema =>
-            RawEvent(
-              api = payload.api,
-              parameters = toUnstructEventParams(
-                TrackerVersion,
-                toMap(payload.querystring) ++ Map("ttm" -> toTtmFormat(tts), "eid" -> id),
-                schema,
-                json,
-                "srv"
-              ),
-              contentType = payload.contentType,
-              source = payload.source,
-              context = payload.context.copy(timestamp = Some(new DateTime(cts, DateTimeZone.UTC)))
-            )
-          }
-        }.getOrElse(s"$VendorName malformed 'occurred', 'id' or 'processed' fields".failNel)
-      case Left(e) => s"$VendorName event failed to parse into JSON: [${e.getMessage}]".failNel
+        val trueTs = cursor.get[String]("occurred").leftMap(_.getMessage).toValidatedNel
+        val eid = cursor.get[String]("id").leftMap(_.getMessage).toValidatedNel
+        val collectorTs = cursor.get[String]("processed").leftMap(_.getMessage).toValidatedNel
+        (
+          trueTs,
+          eid,
+          collectorTs,
+          lookupSchema(eventType, VendorName, EventSchemaMap).toValidatedNel
+        ).mapN { (tts, id, cts, schema) =>
+          RawEvent(
+            api = payload.api,
+            parameters = toUnstructEventParams(
+              TrackerVersion,
+              toMap(payload.querystring) ++ Map("ttm" -> toTtmFormat(tts), "eid" -> id),
+              schema,
+              json,
+              "srv"
+            ),
+            contentType = payload.contentType,
+            source = payload.source,
+            context = payload.context.copy(timestamp = Some(new DateTime(cts, DateTimeZone.UTC)))
+          )
+        }
+      case Left(e) => s"$VendorName event failed to parse into JSON: [${e.getMessage}]".invalidNel
     }
-
-    /**try {
-      val parsed = parse(body_json)
-      val eventType = (parsed \ "type").extractOpt[String]
-      val trueTimestamp = (parsed \ "occurred").extractOpt[String]
-      val eid = (parsed \ "id").extractOpt[String]
-      val collectorTimestamp = (parsed \ "processed").extractOpt[String]
-
-      lookupSchema(eventType, VendorName, EventSchemaMap).map { schema =>
-        RawEvent(
-          api = payload.api,
-          parameters = toUnstructEventParams(
-            TrackerVersion,
-            toMap(payload.querystring) ++ Map(
-              "ttm" -> toTtmFormat(trueTimestamp.get),
-              "eid" -> eid.get),
-            schema,
-            parsed,
-            "srv"),
-          contentType = payload.contentType,
-          source = payload.source,
-          context = payload.context.copy(
-            timestamp = Some(new DateTime(collectorTimestamp.get, DateTimeZone.UTC)))
-        )
-      }
-    } catch {
-      case e: JsonParseException => {
-        val exception = JU.stripInstanceEtc(e.toString).orNull
-        s"$VendorName event failed to parse into JSON: [$exception]".failNel
-      }
-    }**/
-
   }
 
   /**
@@ -150,11 +123,13 @@ object UrbanAirshipAdapter extends Adapter {
    * @param resolver (implicit) The Iglu resolver used for schema lookup and validation. Not used
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
+  def toRawEvents(payload: CollectorPayload)(
+    implicit resolver: Resolver
+  ): ValidatedNel[String, NonEmptyList[RawEvent]] =
     (payload.body, payload.contentType) match {
-      case (None, _) => s"Request body is empty: no $VendorName event to process".failNel
+      case (None, _) => s"Request body is empty: no $VendorName event to process".invalidNel
       case (_, Some(ct)) =>
-        s"Content type of $ct provided, expected None for $VendorName".failNel
+        s"Content type of $ct provided, expected None for $VendorName".invalidNel
       case (Some(body), _) =>
         val event = payloadBodyToEvent(body, payload)
         rawEventsListProcessor(List(event))

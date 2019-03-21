@@ -12,10 +12,9 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.utils
 
-import io.gatling.jsonpath.{JsonPath => GatlingJsonPath}
+import cats.syntax.either._
 import io.circe._
-import scalaz._
-import Scalaz._
+import io.gatling.jsonpath.{JsonPath => GatlingJsonPath}
 
 /** Wrapper for `io.gatling.jsonpath` for circe and scalaz */
 object JsonPath {
@@ -27,27 +26,6 @@ object JsonPath {
    */
   def convertToJson(json: Json): Object =
     io.circe.jackson.mapper.convertValue(json, classOf[Object])
-
-  def testMe(): Unit = {
-    import io.circe.literal._
-    val json1 = json"""{"latitude": 43.1, "longitude": 32.1}"""
-    val json2 = Json.obj(
-      ("latitude", Json.fromDoubleOrNull(43.1)),
-      ("longitude", Json.fromDoubleOrNull(32.1))
-    )
-    import cats.syntax.eq._
-    println(json1 === json2)
-    val pojo1 = io.circe.jackson.mapper.convertValue(json1, classOf[Object])
-    val pojo2 = io.circe.jackson.mapper.convertValue(json2, classOf[Object])
-    println(pojo1 == pojo2)
-    import cats.syntax.either._
-    println(
-      Either.catchNonFatal(
-        pojo1.asInstanceOf[java.util.HashMap[Object, Object]].get("latitude").getClass))
-    println(
-      Either.catchNonFatal(
-        pojo2.asInstanceOf[java.util.HashMap[Object, Object]].get("latitude").getClass))
-  }
 
   /**
    * Pimp-up JsonPath class to work with JValue
@@ -65,11 +43,11 @@ object JsonPath {
    * Query some JSON by `jsonPath`. It always return List, even for single match.
    * Unlike `json.circeQuery(stringPath)` it gives error if JNothing was given
    */
-  def query(jsonPath: String, json: Json): Validation[String, List[Json]] = {
+  def query(jsonPath: String, json: Json): Either[String, List[Json]] = {
     val pojo = convertToJson(json)
     GatlingJsonPath.query(jsonPath, pojo) match {
-      case Right(iterator) => iterator.map(anyToJson).toList.success
-      case Left(error) => error.reason.fail
+      case Right(iterator) => iterator.map(anyToJson).toList.asRight
+      case Left(error) => error.reason.asLeft
     }
   }
 
@@ -78,8 +56,8 @@ object JsonPath {
    * @param query JsonPath query as a string
    * @return valid JsonPath object either error message
    */
-  def compileQuery(query: String): Validation[String, GatlingJsonPath] =
-    GatlingJsonPath.compile(query).leftMap(_.reason).disjunction.validation
+  def compileQuery(query: String): Either[String, GatlingJsonPath] =
+    GatlingJsonPath.compile(query).leftMap(_.reason)
 
   /**
    * Wrap list of values into JSON array if several values present

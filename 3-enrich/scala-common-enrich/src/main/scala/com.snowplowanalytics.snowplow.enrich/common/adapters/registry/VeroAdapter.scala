@@ -14,10 +14,13 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
+import cats.data.{NonEmptyList, ValidatedNel}
+import cats.syntax.either._
+import cats.syntax.option._
+import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
 import io.circe._
 import io.circe.parser._
-import scalaz.Scalaz._
 
 import loaders.CollectorPayload
 
@@ -51,18 +54,16 @@ object VeroAdapter extends Adapter {
    * @param payload The details of the payload
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  private def payloadBodyToEvent(json: String, payload: CollectorPayload): Validated[RawEvent] =
+  private def payloadBodyToEvent(
+    json: String,
+    payload: CollectorPayload
+  ): Either[String, RawEvent] =
     for {
-      parsed <- parse(json) match {
-        case Right(p) => p.successNel
-        case Left(e) =>
-          s"$VendorName event failed to parse into JSON: [${e.getMessage}]".failureNel
-      }
-      eventType <- parsed.hcursor.get[String]("type") match {
-        case Right(et) => et.successNel
-        case Left(e) =>
-          s"Could not extract type from $VendorName event JSON: [${e.getMessage}]".failureNel
-      }
+      parsed <- parse(json)
+        .leftMap(e => s"$VendorName event failed to parse into JSON: [${e.getMessage}]")
+      eventType <- parsed.hcursor
+        .get[String]("type")
+        .leftMap(e => s"Could not extract type from $VendorName event JSON: [${e.getMessage}]")
       formattedEvent = cleanupJsonEventValues(
         parsed,
         ("type", eventType).some,
@@ -94,12 +95,12 @@ object VeroAdapter extends Adapter {
    */
   override def toRawEvents(
     payload: CollectorPayload
-  )(implicit resolver: Resolver): ValidatedRawEvents =
+  )(implicit resolver: Resolver): ValidatedNel[String, NonEmptyList[RawEvent]] =
     (payload.body, payload.contentType) match {
-      case (None, _) => s"Request body is empty: no $VendorName event to process".failureNel
+      case (None, _) => s"Request body is empty: no $VendorName event to process".invalidNel
       case (Some(body), _) => {
         val event = payloadBodyToEvent(body, payload)
-        rawEventsListProcessor(List(event))
+        rawEventsListProcessor(List(event.toValidatedNel))
       }
     }
 

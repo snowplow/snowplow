@@ -14,9 +14,8 @@ package com.snowplowanalytics.snowplow.enrich.common.utils
 
 import scala.util.control.NonFatal
 
+import cats.syntax.either._
 import scalaj.http._
-import scalaz._
-import Scalaz._
 
 object HttpClient {
 
@@ -29,13 +28,13 @@ object HttpClient {
    * @param request assembled request object
    * @return validated body of HTTP request
    */
-  def getBody(request: HttpRequest): Validation[Throwable, String] =
+  def getBody(request: HttpRequest): Either[Throwable, String] =
     try {
       val res = request.asString
-      if (res.isSuccess) res.body.success
-      else new Exception(s"Request failed with status ${res.code} and body ${res.body}").failure
+      if (res.isSuccess) res.body.asRight
+      else new Exception(s"Request failed with status ${res.code} and body ${res.body}").asLeft
     } catch {
-      case NonFatal(e) => e.failure
+      case NonFatal(e) => e.asLeft
     }
 
   /**
