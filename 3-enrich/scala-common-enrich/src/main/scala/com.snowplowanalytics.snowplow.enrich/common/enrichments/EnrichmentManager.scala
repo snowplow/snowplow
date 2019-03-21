@@ -442,10 +442,10 @@ object EnrichmentManager {
     }
 
     // This enrichment cannot fail
-    (registry.getEventFingerprintEnrichment match {
+    registry.getEventFingerprintEnrichment match {
       case Some(efe) => event.event_fingerprint = efe.getEventFingerprint(sourceMap)
       case _         => ()
-    })
+    }
 
     // Validate custom contexts
     val customContexts = Shredder.extractAndValidateCustomContexts(event) match {
@@ -496,11 +496,10 @@ object EnrichmentManager {
 
     // Fetch opencage locations
     val openCageContext = registry.getOpenCageEnrichment match {
-      case Some(oce) => {
+      case Some(oce) =>
         oce
           .getGeoCodingContext(Option(event.geo_latitude), Option(event.geo_longitude))
           .map(_.some)
-      }
       case None => None.success
     }
 

@@ -21,6 +21,7 @@ import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
 import com.snowplowanalytics.snowplow.enrich.common.utils.ScalazJson4sUtils
 
 // OpenCage
+import com.opencagedata.geocoder.{OpencageClientError => OpenCageClientError}
 import com.opencagedata.geocoder._
 
 // Twitter
@@ -74,7 +75,7 @@ object OpenCageEnrichmentConfig extends ParseableEnrichment {
  * @param scale Number of decimals to keep from coordinates. Above 6 is useless
  * @param timeout Number of seconds to wait for OpenCage API to respond
  */
-case class OpenCageEnrichment(apiKey: String, cacheSize: Int, scale: Int, timeout: Int) extends Enrichment {
+final case class OpenCageEnrichment(apiKey: String, cacheSize: Int, scale: Int, timeout: Int) extends Enrichment {
 
   type Geocode = parts.Result
 
@@ -156,7 +157,7 @@ case class OpenCageEnrichment(apiKey: String, cacheSize: Int, scale: Int, timeou
 
 }
 
-private[enrichments] case class TransformedLocation(address: String)
+private[enrichments] final case class TransformedLocation(address: String)
 
 case class OpenCageCache(
   client: OpenCageClient,
@@ -169,10 +170,10 @@ case class OpenCageCache(
 
   case class CacheKey(latitude: Float, longitude: Float)
 
-  type Cache = SynchronizedLruMap[CacheKey, Either[OpencageClientError, OpenCageResponse]]
+  type Cache = SynchronizedLruMap[CacheKey, Either[OpenCageClientError, OpenCageResponse]]
   protected val cache: Cache = new Cache(cacheSize)
 
-  def getCachedOrRequest(latitude: Float, longitude: Float): Either[OpencageClientError, OpenCageResponse] = {
+  def getCachedOrRequest(latitude: Float, longitude: Float): Either[OpenCageClientError, OpenCageResponse] = {
     val key = this.coordToCacheKey(latitude, longitude)
     cache.get(key) match {
       case Some(Right(cached))         => Right(cached)
@@ -182,10 +183,11 @@ case class OpenCageCache(
     }
   }
 
-  private def getAndCache(latitude: Float, longitude: Float): Either[OpencageClientError, OpenCageResponse] = {
+  private def getAndCache(latitude: Float, longitude: Float): Either[OpenCageClientError, OpenCageResponse] = {
     val apiCallResult = Try(Await.result(client.reverseGeocode(latitude, longitude), secondsTimeout)) match {
-      case util.Success(value) => Right(value)
-      case util.Failure(ex)    => Left(ex.asInstanceOf[OpencageClientError])
+      case util.Success(value)                   => Right(value)
+      case util.Failure(ex: OpenCageClientError) => Left(ex)
+      case util.Failure(ex)                      => Left(UnexpectedError(ex.getMessage, ex))
     }
     cache.put(CacheKey(latitude, longitude), apiCallResult)
     apiCallResult
