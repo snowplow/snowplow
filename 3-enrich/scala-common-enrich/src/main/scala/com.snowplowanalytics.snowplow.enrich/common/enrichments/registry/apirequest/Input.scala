@@ -15,10 +15,11 @@ package enrichments.registry.apirequest
 
 import scala.util.control.NonFatal
 
-import cats.syntax.either._
+import cats.data.ValidatedNel
+import cats.implicits._
+import cats.kernel.Semigroup
 import io.circe._
-import scalaz._
-import Scalaz._
+import io.gatling.jsonpath.{JsonPath => GatlingJsonPath}
 
 import outputs.EnrichedEvent
 import utils.JsonPath._
@@ -47,10 +48,11 @@ case class Input(key: String, pojo: Option[PojoInput], json: Option[JsonInput]) 
 
   // We could short-circuit enrichment process on invalid JSONPath,
   // but it won't give user meaningful error message
-  val validatedJsonPath = json.map(_.jsonPath).map(compileQuery) match {
-    case Some(compiledQuery) => compiledQuery
-    case None => "No JSON Input with JSONPath was given".failure
-  }
+  val validatedJsonPath: Either[String, GatlingJsonPath] =
+    json.map(_.jsonPath).map(compileQuery) match {
+      case Some(compiledQuery) => compiledQuery
+      case None => "No JSON Input with JSONPath was given".asLeft
+    }
 
   /**
    * Get key-value pair input from specific `event` for composing
@@ -62,9 +64,9 @@ case class Input(key: String, pojo: Option[PojoInput], json: Option[JsonInput]) 
       try {
         val method = event.getClass.getMethod(pojoInput.field)
         val value = Option(method.invoke(event)).map(_.toString)
-        value.map(v => Map(key -> Tags.LastVal(v))).successNel
+        value.map(v => Map(key -> v)).validNel
       } catch {
-        case NonFatal(err) => s"Error accessing POJO input field [$key]: [$err]".failureNel
+        case NonFatal(err) => s"Error accessing POJO input field [$key]: [$err]".invalidNel
       }
     }
     case None => emptyTemplateContext
@@ -86,20 +88,20 @@ case class Input(key: String, pojo: Option[PojoInput], json: Option[JsonInput]) 
       case Some(jsonInput) =>
         val validatedJson = jsonInput.field match {
           case "derived_contexts" =>
-            getBySchemaCriterion(derived, jsonInput.schemaCriterion).successNel
-          case "contexts" => getBySchemaCriterion(custom, jsonInput.schemaCriterion).successNel
+            getBySchemaCriterion(derived, jsonInput.schemaCriterion).validNel
+          case "contexts" => getBySchemaCriterion(custom, jsonInput.schemaCriterion).validNel
           case "unstruct_event" =>
-            getBySchemaCriterion(unstruct.toList, jsonInput.schemaCriterion).successNel
+            getBySchemaCriterion(unstruct.toList, jsonInput.schemaCriterion).validNel
           case other =>
-            s"Error: wrong field [$other] passed to Input.getFromJson. Should be one of: derived_contexts, contexts, unstruct_event".failureNel
+            s"Error: wrong field [$other] passed to Input.getFromJson. Should be one of: derived_contexts, contexts, unstruct_event".invalidNel
         }
 
-        (validatedJson |@| validatedJsonPath.toValidationNel) { (validJson, jsonPath) =>
+        (validatedJson, validatedJsonPath.toValidatedNel).mapN { (validJson, jsonPath) =>
           validJson
             .map(jsonPath.circeQuery) // Query context/UE (always valid)
             .map(wrapArray) // Check if array
             .flatMap(stringifyJson) // Transform to valid string
-            .map(v => Map(key -> Tags.LastVal(v))) // Transform to Key-Value
+            .map(v => Map(key -> v)) // Transform to Key-Value
         }
       case None => emptyTemplateContext
     }
@@ -133,14 +135,21 @@ object Input {
    * None means any of required fields were not found, so this lookup need to be skipped in future
    * Tag used to not merge values on colliding keys (`Tags.FirstVal` can be used as well)
    */
-  type TemplateContext = ValidationNel[String, Option[Map[String, String @@ Tags.LastVal]]]
+  type TemplateContext = ValidatedNel[String, Option[Map[String, String]]]
 
   val emptyTemplateContext: TemplateContext =
-    Map.empty[String, String @@ Tags.LastVal].some.successNel
+    Map.empty[String, String].some.validNel
 
   // TODO: use iglu-client 0.4.0
   private val criterionRegex =
     "^(iglu:[a-zA-Z0-9-_.]+/[a-zA-Z0-9-_]+/[a-zA-Z0-9-_]+/)([1-9][0-9]*|\\*)-((?:0|[1-9][0-9]*)|\\*)-((?:0|[1-9][0-9]*)|\\*)$".r
+
+  private final case class M(m: Map[String, String]) extends AnyVal
+  private object M {
+    implicit def lastValSemigroup: Semigroup[M] = new Semigroup[M] {
+      def combine(a: M, b: M): M = M((a.m.toList |+| b.m.toList).toMap)
+    }
+  }
 
   /**
    * Get template context out of input configurations
@@ -162,7 +171,7 @@ object Input {
     val eventInputs = buildInputsMap(inputs.map(_.getFromEvent(event)))
     val jsonInputs = buildInputsMap(
       inputs.map(_.getFromJson(derivedContexts, customContexts, unstructEvent)))
-    eventInputs |+| jsonInputs
+    (eventInputs.map(_.map(M.apply)) |+| jsonInputs.map(_.map(M.apply))).map(_.map(_.m))
   }
 
   /**
@@ -201,10 +210,12 @@ object Input {
    * @return validated optional template context
    */
   def buildInputsMap(kvPairs: List[TemplateContext]): TemplateContext =
-    kvPairs.sequenceU // Swap List[Validation[F, Option[Map[K, V]]]] with Validation[F, List[Option[Map[K, V]]]]
+    kvPairs.sequence // Swap List[Validation[F, Option[Map[K, V]]]] with Validation[F, List[Option[Map[K, V]]]]
       .map(
         _.sequence // Swap List[Option[Map[K, V]]] with Option[List[Map[K, V]]]
-          .map(_.concatenate)) // Reduce List[Map[K, V]] to Map[K, V]
+          .map(_.foldLeft(List.empty[(String, String)]) { (acc, e) =>
+            acc |+| e.toList
+          }.toMap)) // Reduce List[Map[K, V]] to Map[K, V]
 
   /**
    * Helper function to stringify JValue to URL-friendly format

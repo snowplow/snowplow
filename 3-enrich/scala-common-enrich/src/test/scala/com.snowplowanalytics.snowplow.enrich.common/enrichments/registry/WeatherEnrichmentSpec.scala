@@ -62,7 +62,7 @@ class WeatherEnrichmentSpec extends Specification {
       Option(invalidEvent.lat),
       Option(invalidEvent.lon),
       Option(invalidEvent.time))
-    stamp.toEither must beLeft.like { case e => e must contain("tstamp: None") }
+    stamp must beLeft.like { case e => e must contain("tstamp: None") }
   }
 
   def e2 =
@@ -73,25 +73,24 @@ class WeatherEnrichmentSpec extends Specification {
     val enr = WeatherEnrichment(validAppKey, 5200, 1, "history.openweathermap.org", 10)
     val stamp =
       enr.getWeatherContext(Option(validEvent.lat), Option(validEvent.lon), Option(validEvent.time))
-    stamp.toEither must beRight
+    stamp must beRight
   }
 
   def e4 = {
     val enr = WeatherEnrichment("KEY", 5200, 1, "history.openweathermap.org", 10)
     val stamp =
       enr.getWeatherContext(Option(validEvent.lat), Option(validEvent.lon), Option(validEvent.time))
-    stamp.toEither must beLeft.like { case e => e must contain("AuthorizationError") }
+    stamp must beLeft.like { case e => e must contain("AuthorizationError") }
   }
 
   def e5 = {
     val enr = WeatherEnrichment(validAppKey, 5200, 1, "history.openweathermap.org", 15)
     val stamp =
       enr.getWeatherContext(Option(validEvent.lat), Option(validEvent.lon), Option(validEvent.time))
-    stamp.toEither must beRight.like {
-      case weather: JValue => {
-        val temp = weather.findField { case JField("humidity", _) => true; case _ => false }
-        temp must beSome(("humidity", JDouble(87.0)))
-      }
+    stamp must beRight.like {
+      case weather =>
+        val temp = weather.hcursor.get[Double]("humidity")
+        temp must beRight(87.0d)
     }
   }
 
@@ -130,11 +129,10 @@ class WeatherEnrichmentSpec extends Specification {
     val enr = WeatherEnrichment(validAppKey, 2, 1, "history.openweathermap.org", 15)
     val stamp =
       enr.getWeatherContext(Option(validEvent.lat), Option(validEvent.lon), Option(validEvent.time))
-    stamp.toEither must beRight.like { // successful request
-      case weather: JValue =>
-        val e = (weather \ "data").extractOpt[TransformedWeather]
-        e.map(_.dt) must beSome.like { // succesfull transformation
-          case dt => dt must equalTo("2019-05-01T00:00:00.000Z") // closest stamp storing on server
+    stamp must beRight.like { // successful request
+      case weather =>
+        weather.hcursor.get[TransformedWeather]("data") must beRight.like {
+          case w => w.dt must equalTo("2019-05-01T00:00:00.000Z")
         }
     }
   }

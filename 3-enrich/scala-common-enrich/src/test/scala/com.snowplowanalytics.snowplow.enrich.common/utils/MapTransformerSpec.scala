@@ -17,8 +17,8 @@ import scala.beans.BeanProperty
 
 import org.apache.commons.lang3.builder.ToStringBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
+import org.specs2.matcher.ValidatedMatchers
 import org.specs2.mutable.Specification
-import org.specs2.scalaz.ValidationMatchers
 
 import MapTransformer._
 import enrichments.{ClientEnrichments, MiscEnrichments}
@@ -50,7 +50,7 @@ final class TargetBean {
   override def toString: String = ToStringBuilder.reflectionToString(this)
 }
 
-class MapTransformerSpec extends Specification with ValidationMatchers {
+class MapTransformerSpec extends Specification with ValidatedMatchers {
 
   val sourceMap = Map(
     "p" -> "web",
@@ -89,7 +89,7 @@ class MapTransformerSpec extends Specification with ValidationMatchers {
       }
       val result = target.transform(sourceMap, transformMap)
 
-      result must beSuccessful(6) // 6 fields updated
+      result must beValid(6) // 6 fields updated
       target must_== expected
     }
   }
@@ -97,7 +97,7 @@ class MapTransformerSpec extends Specification with ValidationMatchers {
   "Executing TransformMap's generate() factory" should {
     "successfully instantiate a new POJO" in {
       val result = MapTransformer.generate[TargetBean](sourceMap, transformMap)
-      result must beSuccessful(expected)
+      result must beValid(expected)
     }
   }
 }

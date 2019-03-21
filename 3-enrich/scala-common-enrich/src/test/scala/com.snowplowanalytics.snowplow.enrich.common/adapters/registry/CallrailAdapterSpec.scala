@@ -14,21 +14,16 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
+import cats.data.NonEmptyList
+import cats.syntax.option._
 import org.joda.time.DateTime
-import org.specs2.{ScalaCheck, Specification}
-import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
-import scalaz._
-import Scalaz._
+import org.specs2.Specification
+import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
 import SpecHelpers._
 
-class CallrailAdapterSpec
-    extends Specification
-    with DataTables
-    with ValidationMatchers
-    with ScalaCheck {
+class CallrailAdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
   This is a specification to test the CallrailAdapter functionality
   toRawEvents should return a NEL containing one RawEvent if the querystring is correctly populated $e1
@@ -146,8 +141,8 @@ class CallrailAdapterSpec
             |}
           |}""".stripMargin.replaceAll("[\n\r]", "")
 
-    actual must beSuccessful(
-      NonEmptyList(
+    actual must beValid(
+      NonEmptyList.one(
         RawEvent(
           Shared.api,
           Expected.static ++ Map("ue_pr" -> expectedJson, "nuid" -> "-"),
@@ -161,6 +156,6 @@ class CallrailAdapterSpec
     val payload = CollectorPayload(Shared.api, params, None, None, Shared.source, Shared.context)
     val actual = CallrailAdapter.toRawEvents(payload)
 
-    actual must beFailing(NonEmptyList("Querystring is empty: no CallRail event to process"))
+    actual must beInvalid(NonEmptyList.one("Querystring is empty: no CallRail event to process"))
   }
 }

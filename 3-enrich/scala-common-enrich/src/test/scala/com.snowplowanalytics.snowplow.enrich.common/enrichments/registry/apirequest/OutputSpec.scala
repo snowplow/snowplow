@@ -12,12 +12,12 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.apirequest
 
+import cats.syntax.either._
 import io.circe._
 import io.circe.literal._
 import org.specs2.Specification
-import org.specs2.scalaz.ValidationMatchers
 
-class OutputSpec extends Specification with ValidationMatchers {
+class OutputSpec extends Specification {
   def is = s2"""
   This is a specification to test the HTTP API of API Request Enrichment
   Not found value result in Failure                   $e1
@@ -28,7 +28,7 @@ class OutputSpec extends Specification with ValidationMatchers {
   def e1 = {
     val output =
       Output("iglu:com.snowplowanalytics/some_schema/jsonschema/1-0-0", Some(JsonOutput("$.value")))
-    output.extract(Json.fromJsonObject(JsonObject.empty)) must beFailing
+    output.extract(Json.fromJsonObject(JsonObject.empty)) must beLeft
   }
 
   def e2 = {
@@ -39,7 +39,7 @@ class OutputSpec extends Specification with ValidationMatchers {
     output
       .parseResponse("""{"value": 32}""")
       .flatMap(output.extract)
-      .map(output.describeJson) must beSuccessful.like {
+      .map(output.describeJson) must beRight.like {
       case context =>
         context must be equalTo json"""{
             "schema": "iglu:com.snowplowanalytics/some_schema/jsonschema/1-0-0",
@@ -62,7 +62,7 @@ class OutputSpec extends Specification with ValidationMatchers {
         |    {"wrongValue": 10}
         |  ]
         |}
-      """.stripMargin).flatMap(output.extract).map(output.describeJson) must beSuccessful.like {
+      """.stripMargin).flatMap(output.extract).map(output.describeJson) must beRight.like {
       case context =>
         context must be equalTo json"""{
           "schema": "iglu:com.snowplowanalytics/complex_schema/jsonschema/1-0-0",

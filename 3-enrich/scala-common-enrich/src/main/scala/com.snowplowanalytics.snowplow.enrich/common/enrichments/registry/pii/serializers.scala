@@ -12,11 +12,10 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.pii
 
+import cats.syntax.either._
 import io.circe._
 import io.circe.generic.auto._
 import io.circe.syntax._
-import scalaz._
-import Scalaz._
 
 object serializers {
   implicit val piiModifiedFieldsEncoder: Encoder[PiiModifiedFields] =
@@ -50,7 +49,6 @@ object serializers {
           function <- c.downField("pseudonymize").get[String]("hashFunction")
           hashFn <- PiiPseudonymizerEnrichment
             .getHashFunction(function)
-            .toEither
             .leftMap(DecodingFailure(_, List.empty))
           salt <- c.downField("pseudonymize").get[String]("salt")
         } yield PiiStrategyPseudonymize(function, hashFn, salt)

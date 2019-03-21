@@ -13,12 +13,11 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package utils
 
-import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
+import cats.data.Validated
+import cats.syntax.either._
 import io.circe._
-import scalaz._
-import Scalaz._
 
-object ScalazCirceUtils {
+object CirceUtils {
 
   /**
    * Returns a field of type A at the end of a JSON path
@@ -31,14 +30,16 @@ object ScalazCirceUtils {
     config: Json,
     head: String,
     tail: String*
-  ): ValidatedMessage[A] = {
+  ): Validated[String, A] = {
     val path = head :: tail.toList
-    path.foldLeft(config.hcursor: ACursor) { case (c, f) => c.downField(f) }.as[A] match {
-      case Right(a) => a.success
-      case Left(e) =>
+    path
+      .foldLeft(config.hcursor: ACursor) { case (c, f) => c.downField(f) }
+      .as[A]
+      .toValidated
+      .leftMap { e =>
         val pathStr = path.mkString(".")
         val clas = manifest[A]
-        s"Could not extract $pathStr as $clas from supplied JSON due to ${e.getMessage}".toProcessingMessage.fail
-    }
+        s"Could not extract $pathStr as $clas from supplied JSON due to ${e.getMessage}"
+      }
   }
 }

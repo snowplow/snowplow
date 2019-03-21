@@ -13,9 +13,8 @@ package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
 import io.circe.literal._
 import org.specs2.Specification
-import org.specs2.scalaz._
 
-class CookieExtractorEnrichmentSpec extends Specification with ValidationMatchers {
+class CookieExtractorEnrichmentSpec extends Specification {
   def is = s2"""
   This is a specification to test the CookieExtractorEnrichment
   returns an empty list when no cookie header                $e1
@@ -25,7 +24,6 @@ class CookieExtractorEnrichmentSpec extends Specification with ValidationMatcher
 
   def e1 = {
     val actual = CookieExtractorEnrichment(List("cookieKey1")).extract(List("Content-Length: 348"))
-
     actual must_== Nil
   }
 

@@ -14,23 +14,18 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
+import cats.data.NonEmptyList
+import cats.syntax.option._
 import io.circe._
 import io.circe.literal._
 import org.joda.time.DateTime
-import org.specs2.{ScalaCheck, Specification}
-import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
-import scalaz._
-import Scalaz._
+import org.specs2.Specification
+import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import loaders._
 import SpecHelpers._
 
-class MailchimpAdapterSpec
-    extends Specification
-    with DataTables
-    with ValidationMatchers
-    with ScalaCheck {
+class MailchimpAdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
   This is a specification to test the MailchimpAdapter functionality
   toKeys should return a valid List of Keys from a string containing braces (or not)                 $e1
@@ -67,13 +62,13 @@ class MailchimpAdapterSpec
 
   def e1 = {
     val keys = "data[merges][LNAME]"
-    val expected = NonEmptyList("data", "merges", "LNAME")
+    val expected = NonEmptyList.of("data", "merges", "LNAME")
 
     MailchimpAdapter.toKeys(keys) mustEqual expected
   }
 
   def e2 = {
-    val keys = NonEmptyList("data", "merges", "LNAME")
+    val keys = NonEmptyList.of("data", "merges", "LNAME")
     val value = "Beemster"
     val expected = ("data", json"""{ "merges": { "LNAME": "Beemster" }}""")
 
@@ -146,8 +141,8 @@ class MailchimpAdapterSpec
           |}""".stripMargin.replaceAll("[\n\r]", "")
 
     val actual = MailchimpAdapter.toRawEvents(payload)
-    actual must beSuccessful(
-      NonEmptyList(
+    actual must beValid(
+      NonEmptyList.one(
         RawEvent(
           Shared.api,
           Map("tv" -> "com.mailchimp-v1", "e" -> "ue", "p" -> "srv", "ue_pr" -> expectedJson),
@@ -183,8 +178,8 @@ class MailchimpAdapterSpec
           |}""".stripMargin.replaceAll("[\n\r]", "")
 
     val actual = MailchimpAdapter.toRawEvents(payload)
-    actual must beSuccessful(
-      NonEmptyList(
+    actual must beValid(
+      NonEmptyList.one(
         RawEvent(
           Shared.api,
           Map("tv" -> "com.mailchimp-v1", "e" -> "ue", "p" -> "srv", "ue_pr" -> expectedJson),
@@ -212,8 +207,8 @@ class MailchimpAdapterSpec
           Shared.context)
         val expectedJson = "{\"schema\":\"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0\",\"data\":{\"schema\":\"" + expected + "\",\"data\":{\"type\":\"" + schema + "\"}}}"
         val actual = MailchimpAdapter.toRawEvents(payload)
-        actual must beSuccessful(
-          NonEmptyList(
+        actual must beValid(
+          NonEmptyList.one(
             RawEvent(
               Shared.api,
               Map("tv" -> "com.mailchimp-v1", "e" -> "ue", "p" -> "srv", "ue_pr" -> expectedJson),
@@ -236,7 +231,7 @@ class MailchimpAdapterSpec
           Shared.cljSource,
           Shared.context)
         val actual = MailchimpAdapter.toRawEvents(payload)
-        actual must beFailing(NonEmptyList(expected))
+        actual must beInvalid(NonEmptyList.one(expected))
     }
 
   def e10 = {
@@ -278,8 +273,8 @@ class MailchimpAdapterSpec
           |}""".stripMargin.replaceAll("[\n\r]", "")
 
     val actual = MailchimpAdapter.toRawEvents(payload)
-    actual must beSuccessful(
-      NonEmptyList(
+    actual must beValid(
+      NonEmptyList.one(
         RawEvent(
           Shared.api,
           Map(
@@ -297,14 +292,14 @@ class MailchimpAdapterSpec
     val payload =
       CollectorPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
     val actual = MailchimpAdapter.toRawEvents(payload)
-    actual must beFailing(NonEmptyList("Request body is empty: no MailChimp event to process"))
+    actual must beInvalid(NonEmptyList.one("Request body is empty: no MailChimp event to process"))
   }
 
   def e12 = {
     val payload =
       CollectorPayload(Shared.api, Nil, None, "stub".some, Shared.cljSource, Shared.context)
     val actual = MailchimpAdapter.toRawEvents(payload)
-    actual must beFailing(NonEmptyList(
+    actual must beInvalid(NonEmptyList.one(
       "Request body provided but content type empty, expected application/x-www-form-urlencoded for MailChimp"))
   }
 
@@ -317,7 +312,7 @@ class MailchimpAdapterSpec
       Shared.cljSource,
       Shared.context)
     val actual = MailchimpAdapter.toRawEvents(payload)
-    actual must beFailing(NonEmptyList(
+    actual must beInvalid(NonEmptyList.one(
       "Content type of application/json provided, expected application/x-www-form-urlencoded for MailChimp"))
   }
 
@@ -331,7 +326,7 @@ class MailchimpAdapterSpec
       Shared.cljSource,
       Shared.context)
     val actual = MailchimpAdapter.toRawEvents(payload)
-    actual must beFailing(
-      NonEmptyList("No MailChimp type parameter provided: cannot determine event type"))
+    actual must beInvalid(
+      NonEmptyList.one("No MailChimp type parameter provided: cannot determine event type"))
   }
 }

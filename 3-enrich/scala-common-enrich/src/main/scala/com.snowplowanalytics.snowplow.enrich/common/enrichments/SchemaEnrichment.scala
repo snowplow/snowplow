@@ -13,12 +13,12 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 
+import cats.data.Validated
+import cats.syntax.either._
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.TextNode
 import com.snowplowanalytics.iglu.client.SchemaKey
 import com.snowplowanalytics.iglu.client.Resolver
-import scalaz._
-import Scalaz._
 
 import outputs.EnrichedEvent
 import utils.shredder.Shredder
@@ -27,41 +27,43 @@ object SchemaEnrichment {
 
   private object Schemas {
     val pageViewSchema =
-      SchemaKey("com.snowplowanalytics.snowplow", "page_view", "jsonschema", "1-0-0").success
+      SchemaKey("com.snowplowanalytics.snowplow", "page_view", "jsonschema", "1-0-0")
     val pagePingSchema =
-      SchemaKey("com.snowplowanalytics.snowplow", "page_ping", "jsonschema", "1-0-0").success
+      SchemaKey("com.snowplowanalytics.snowplow", "page_ping", "jsonschema", "1-0-0")
     val transactionSchema =
-      SchemaKey("com.snowplowanalytics.snowplow", "transaction", "jsonschema", "1-0-0").success
+      SchemaKey("com.snowplowanalytics.snowplow", "transaction", "jsonschema", "1-0-0")
     val transactionItemSchema =
-      SchemaKey("com.snowplowanalytics.snowplow", "transaction_item", "jsonschema", "1-0-0").success
-    val structSchema = SchemaKey("com.google.analytics", "event", "jsonschema", "1-0-0").success
+      SchemaKey("com.snowplowanalytics.snowplow", "transaction_item", "jsonschema", "1-0-0")
+    val structSchema = SchemaKey("com.google.analytics", "event", "jsonschema", "1-0-0")
   }
 
   def extractSchema(event: EnrichedEvent)(
-    implicit resolver: Resolver): Validation[String, SchemaKey] =
+    implicit resolver: Resolver
+  ): Either[String, SchemaKey] =
     event.event match {
-      case "page_view" => Schemas.pageViewSchema
-      case "page_ping" => Schemas.pagePingSchema
-      case "struct" => Schemas.structSchema
-      case "transaction" => Schemas.transactionSchema
-      case "transaction_item" => Schemas.transactionItemSchema
+      case "page_view" => Schemas.pageViewSchema.asRight
+      case "page_ping" => Schemas.pagePingSchema.asRight
+      case "struct" => Schemas.structSchema.asRight
+      case "transaction" => Schemas.transactionSchema.asRight
+      case "transaction_item" => Schemas.transactionItemSchema.asRight
       case "unstruct" => extractUnstructSchema(event)
-      case eventType => "Unrecognized event [%s]".format(eventType).fail
+      case eventType => s"Unrecognized event [$eventType]".asLeft
     }
 
   private def extractUnstructSchema(event: EnrichedEvent)(
-    implicit resolver: Resolver): Validation[String, SchemaKey] =
+    implicit resolver: Resolver
+  ): Either[String, SchemaKey] =
     Shredder.extractUnstructEvent(event) match {
-      case Some(Success(List(json))) =>
+      case Some(Validated.Valid(List(json))) =>
         parseSchemaKey(Option(json.get("schema")))
-      case _ =>
-        "Unstructured event couldn't be extracted".fail
+      case _ => "Unstructured event couldn't be extracted".asLeft
     }
 
-  private def parseSchemaKey(node: Option[JsonNode]): Validation[String, SchemaKey] = node match {
+  private def parseSchemaKey(node: Option[JsonNode]): Either[String, SchemaKey] = node match {
     case Some(textNode: TextNode) =>
-      SchemaKey.parse(textNode.textValue()).<-:(_.toString)
+      SchemaKey.parse(textNode.textValue()).toEither.leftMap(_.toString)
     case _ =>
-      "Unrecognized unstructured event structure".fail // It's validated by the Shredder, so it should never happen
+      // It's validated by the Shredder, so it should never happen
+      "Unrecognized unstructured event structure".asLeft
   }
 }

@@ -16,18 +16,18 @@ package sqlquery
 
 import scala.collection.immutable.IntMap
 
-import cats.syntax.either._
+import cats.data.{NonEmptyList, ValidatedNel}
+import cats.implicits._
+import com.github.fge.jsonschema.core.report.ProcessingMessage
 import com.snowplowanalytics.iglu.client.{JsonSchemaPair, SchemaCriterion, SchemaKey}
 import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
 import io.circe._
 import io.circe.generic.auto._
 import io.circe.jackson._
 import io.circe.syntax._
-import scalaz._
-import Scalaz._
 
 import outputs.EnrichedEvent
-import utils.ScalazCirceUtils
+import utils.CirceUtils
 
 /** Lets us create an SqlQueryEnrichmentConfig from a Json */
 object SqlQueryEnrichmentConfig extends ParseableEnrichment {
@@ -43,32 +43,40 @@ object SqlQueryEnrichmentConfig extends ParseableEnrichment {
 
   /**
    * Creates an SqlQueryEnrichment instance from a Json.
-   * @param config The enrichment JSON
+   * @param c The enrichment JSON
    * @param schemaKey provided for the enrichment, must be supported by this enrichment
    * @return a configured SqlQueryEnrichment instance
    */
-  def parse(config: Json, schemaKey: SchemaKey): ValidatedNelMessage[SqlQueryEnrichment] =
-    isParseable(config, schemaKey).flatMap(conf => {
-      (for {
+  def parse(
+    c: Json,
+    schemaKey: SchemaKey
+  ): ValidatedNel[ProcessingMessage, SqlQueryEnrichment] =
+    isParseable(c, schemaKey)
+      .leftMap(e => NonEmptyList.one(e.toProcessingMessage))
+      .flatMap { _ =>
         // input ctor throws exception
-        inputs <- Either.catchNonFatal(
-          ScalazCirceUtils.extract[List[Input]](config, "parameters", "inputs")
+        val inputs: ValidatedNel[String, List[Input]] = Either.catchNonFatal(
+          CirceUtils.extract[List[Input]](c, "parameters", "inputs").toValidatedNel
         ) match {
-          case Left(e) => e.getMessage.toProcessingMessage.fail
+          case Left(e) => e.getMessage.invalidNel
           case Right(r) => r
         }
-        db <- ScalazCirceUtils.extract[Db](config, "parameters", "database")
-        query <- ScalazCirceUtils.extract[Query](config, "parameters", "query")
         // output ctor throws exception
-        output <- Either.catchNonFatal(
-          ScalazCirceUtils.extract[Output](config, "parameters", "output")
+        val output: ValidatedNel[String, Output] = Either.catchNonFatal(
+          CirceUtils.extract[Output](c, "parameters", "output").toValidatedNel
         ) match {
-          case Left(e) => e.getMessage.toProcessingMessage.fail
+          case Left(e) => e.getMessage.invalidNel
           case Right(r) => r
         }
-        cache <- ScalazCirceUtils.extract[Cache](config, "parameters", "cache")
-      } yield SqlQueryEnrichment(inputs, db, query, output, cache)).toValidationNel
-    })
+        (
+          inputs,
+          CirceUtils.extract[Db](c, "parameters", "database").toValidatedNel,
+          CirceUtils.extract[Query](c, "parameters", "query").toValidatedNel,
+          output,
+          CirceUtils.extract[Cache](c, "parameters", "cache").toValidatedNel
+        ).mapN { SqlQueryEnrichment(_, _, _, _, _) }.toEither.leftMap(_.map(_.toProcessingMessage))
+      }
+      .toValidated
 }
 
 case class SqlQueryEnrichment(
@@ -95,20 +103,21 @@ case class SqlQueryEnrichment(
     derivedContexts: List[Json],
     customContexts: List[JsonSchemaPair],
     unstructEvent: List[JsonSchemaPair]
-  ): ValidationNel[String, List[Json]] = {
+  ): ValidatedNel[String, List[Json]] = {
     val jsonCustomContexts = transformRawPairs(customContexts)
     val jsonUnstructEvent = transformRawPairs(unstructEvent).headOption
 
-    val placeholderMap: Validated[Input.PlaceholderMap] =
+    val placeholderMap: Either[NonEmptyList[String], Input.PlaceholderMap] =
       Input
         .buildPlaceholderMap(inputs, event, derivedContexts, jsonCustomContexts, jsonUnstructEvent)
-        .flatMap(allPlaceholdersFilled)
-        .leftMap(_.map(_.toString))
+        .toEither
+        .leftMap(_.map(_.getMessage))
+        .flatMap(m => allPlaceholdersFilled(m).leftMap(NonEmptyList.one))
 
     placeholderMap match {
-      case Success(Some(intMap)) => get(intMap).leftMap(_.toString).validation.toValidationNel
-      case Success(None) => Nil.successNel
-      case Failure(err) => err.map(_.toString).failure
+      case Right(Some(intMap)) => get(intMap).leftMap(_.toString).toValidatedNel
+      case Right(None) => Nil.validNel
+      case Left(err) => err.map(_.toString).invalid
     }
   }
 
@@ -117,7 +126,7 @@ case class SqlQueryEnrichment(
    * @param intMap IntMap of extracted values
    * @return validated list of Self-describing contexts
    */
-  def get(intMap: IntMap[Input.ExtractedValue]): ThrowableXor[List[Json]] =
+  def get(intMap: IntMap[Input.ExtractedValue]): EitherThrowable[List[Json]] =
     cache.get(intMap) match {
       case Some(response) => response
       case None =>
@@ -132,7 +141,7 @@ case class SqlQueryEnrichment(
    * prepared statement
    * @return validated list of Self-describing contexts
    */
-  def query(intMap: IntMap[Input.ExtractedValue]): ThrowableXor[List[Json]] =
+  def query(intMap: IntMap[Input.ExtractedValue]): EitherThrowable[List[Json]] =
     for {
       sqlQuery <- db.createStatement(query.sql, intMap)
       resultSet <- db.execute(sqlQuery)
@@ -147,7 +156,8 @@ case class SqlQueryEnrichment(
    * @return Some unchanged value if all placeholder were filled, None otherwise
    */
   private def allPlaceholdersFilled(
-    placeholderMap: Input.PlaceholderMap): Validated[Input.PlaceholderMap] =
+    placeholderMap: Input.PlaceholderMap
+  ): Either[String, Input.PlaceholderMap] =
     getPlaceholderCount.map { placeholderCount =>
       placeholderMap match {
         case Some(intMap) if intMap.keys.size == placeholderCount => Some(intMap)
@@ -156,20 +166,20 @@ case class SqlQueryEnrichment(
     }
 
   /** Stored amount of ?-signs in query.sql. Initialized once */
-  private var lastPlaceholderCount: Validation[Throwable, Int] =
-    InvalidStateException("SQL Query Enrichment: placeholderCount hasn't been initialized").failure
+  private var lastPlaceholderCount: Either[Throwable, Int] =
+    InvalidStateException("SQL Query Enrichment: placeholderCount hasn't been initialized").asLeft
 
   /**
    * If lastPlaceholderCount is successful return it
    * If it's unsucessfult - try to count save result for future use
    */
-  def getPlaceholderCount: ValidationNel[String, Int] = lastPlaceholderCount match {
-    case Success(count) => count.success
-    case Failure(_) =>
-      val newCount = db.getPlaceholderCount(query.sql).validation
-      lastPlaceholderCount = newCount
-      newCount.leftMap(_.toString).toValidationNel
-  }
+  def getPlaceholderCount: Either[String, Int] =
+    lastPlaceholderCount
+      .orElse {
+        val newCount = db.getPlaceholderCount(query.sql)
+        lastPlaceholderCount = newCount
+        newCount.leftMap(_.toString)
+      }
 }
 
 /** Companion object containing common methods for requests and manipulating data */

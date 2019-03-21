@@ -14,18 +14,13 @@ package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
 import java.net.URI
 
+import cats.syntax.option._
+import cats.syntax.either._
 import com.snowplowanalytics.maxmind.iplookups.model.IpLocation
-import org.specs2.{ScalaCheck, Specification}
+import org.specs2.Specification
 import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
-import scalaz._
-import Scalaz._
 
-class IpLookupsEnrichmentSpec
-    extends Specification
-    with DataTables
-    with ValidationMatchers
-    with ScalaCheck {
+class IpLookupsEnrichmentSpec extends Specification with DataTables {
   def is = s2"""
   This is a specification to test the IpLookupsEnrichment
   extractIpInformation should correctly extract location data from IP addresses where possible      $e1
@@ -45,10 +40,10 @@ class IpLookupsEnrichmentSpec
 
   def e1 =
     "SPEC NAME" || "IP ADDRESS" | "EXPECTED LOCATION" |
-      "blank IP address" !! "" ! Some(Failure("AddressNotFoundException")) |
-      "null IP address" !! null ! Some(Failure("AddressNotFoundException")) |
-      "invalid IP address #1" !! "localhost" ! Some(Failure("AddressNotFoundException")) |
-      "invalid IP address #2" !! "hello" ! Some(Failure("UnknownHostException")) |
+      "blank IP address" !! "" ! "AddressNotFoundException".asLeft.some |
+      "null IP address" !! null ! "AddressNotFoundException".asLeft.some |
+      "invalid IP address #1" !! "localhost" ! "AddressNotFoundException".asLeft.some |
+      "invalid IP address #2" !! "hello" ! "UnknownHostException".asLeft.some |
       "valid IP address" !! "175.16.199.0" !
         IpLocation( // Taken from scala-maxmind-geoip. See that test suite for other valid IP addresses
           countryCode = "CN",
@@ -61,7 +56,7 @@ class IpLookupsEnrichmentSpec
           postalCode  = None,
           metroCode   = None,
           regionName  = Some("Jilin Sheng")
-        ).success.some |
+        ).asRight.some |
       "valid IP address with port" !! "175.16.199.0:8080" !
         IpLocation( // Taken from scala-maxmind-geoip. See that test suite for other valid IP addresses
           countryCode = "CN",
@@ -74,7 +69,7 @@ class IpLookupsEnrichmentSpec
           postalCode  = None,
           metroCode   = None,
           regionName  = Some("Jilin Sheng")
-        ).success.some |> { (_, ipAddress, expected) =>
+        ).asRight.some |> { (_, ipAddress, expected) =>
       config
         .extractIpInformation(ipAddress)
         .ipLocation
@@ -82,7 +77,7 @@ class IpLookupsEnrichmentSpec
     }
 
   def e2 =
-    config.extractIpInformation("70.46.123.145").isp must_== "FDN Communications".success.some
+    config.extractIpInformation("70.46.123.145").isp must_== "FDN Communications".asRight.some
 
   def e3 = config.filesToCache must_== Nil
 

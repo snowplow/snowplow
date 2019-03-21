@@ -15,21 +15,16 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
+import cats.data.NonEmptyList
+import cats.syntax.option._
 import org.joda.time.DateTime
 import org.specs2.Specification
-import org.specs2.matcher.DataTables
-import org.specs2.scalaz.{DisjunctionMatchers, ValidationMatchers}
-import scalaz._
-import Scalaz._
+import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
 import GoogleAnalyticsAdapter._
 
-class GoogleAnalyticsAdapterSpec
-    extends Specification
-    with DataTables
-    with ValidationMatchers
-    with DisjunctionMatchers {
+class GoogleAnalyticsAdapterSpec extends Specification with DataTables with ValidatedMatchers {
 
   def is = s2"""
     This is a specification to test the GoogleAnalyticsAdapter functionality
@@ -79,24 +74,24 @@ class GoogleAnalyticsAdapterSpec
   def e1 = {
     val payload = CollectorPayload(api, Nil, None, None, source, context)
     val actual = toRawEvents(payload)
-    actual must beFailing(
-      NonEmptyList("Request body is empty: no GoogleAnalytics events to process"))
+    actual must beInvalid(
+      NonEmptyList.one("Request body is empty: no GoogleAnalytics events to process"))
   }
 
   def e2 = {
     val body = "dl=docloc"
     val payload = CollectorPayload(api, Nil, None, body.some, source, context)
     val actual = toRawEvents(payload)
-    actual must beFailing(
-      NonEmptyList("No GoogleAnalytics t parameter provided: cannot determine hit type"))
+    actual must beInvalid(
+      NonEmptyList.one("No GoogleAnalytics t parameter provided: cannot determine hit type"))
   }
 
   def e3 = {
     val body = "t=unknown&dl=docloc"
     val payload = CollectorPayload(api, Nil, None, body.some, source, context)
     val actual = toRawEvents(payload)
-    actual must beFailing(
-      NonEmptyList(
+    actual must beInvalid(
+      NonEmptyList.of(
         "No matching GoogleAnalytics hit type for hit type unknown",
         "GoogleAnalytics event failed: type parameter [unknown] not recognized"))
   }
@@ -123,7 +118,7 @@ class GoogleAnalyticsAdapterSpec
            |"data":[${hitContext("pageview")}]
          |}""".stripMargin.replaceAll("[\n\r]", "")
     val expectedParams = static ++ Map("ue_pr" -> expectedJson, "co" -> expectedCO)
-    actual must beSuccessful(NonEmptyList(RawEvent(api, expectedParams, None, source, context)))
+    actual must beValid(NonEmptyList.one(RawEvent(api, expectedParams, None, source, context)))
   }
 
   def e5 = {
@@ -153,7 +148,7 @@ class GoogleAnalyticsAdapterSpec
            |}]
          |}""".stripMargin.replaceAll("[\n\r]", "")
     val expectedParams = static ++ Map("ue_pr" -> expectedUE, "co" -> expectedCO)
-    actual must beSuccessful(NonEmptyList(RawEvent(api, expectedParams, None, source, context)))
+    actual must beValid(NonEmptyList.one(RawEvent(api, expectedParams, None, source, context)))
   }
 
   def e6 = {
@@ -179,7 +174,7 @@ class GoogleAnalyticsAdapterSpec
            |}]
          |}""".stripMargin.replaceAll("[\n\r]", "")
     val expectedParams = static ++ Map("ue_pr" -> expectedUE, "co" -> expectedCO, "ip" -> "ip")
-    actual must beSuccessful(NonEmptyList(RawEvent(api, expectedParams, None, source, context)))
+    actual must beValid(NonEmptyList.one(RawEvent(api, expectedParams, None, source, context)))
   }
 
   def e7 = {
@@ -214,7 +209,7 @@ class GoogleAnalyticsAdapterSpec
       "ti_pr" -> "12.228",
       "ti_qu" -> "12",
       "ti_nm" -> "name")
-    actual must beSuccessful(NonEmptyList(RawEvent(api, expectedParams, None, source, context)))
+    actual must beValid(NonEmptyList.one(RawEvent(api, expectedParams, None, source, context)))
   }
 
   def e8 = {
@@ -239,7 +234,7 @@ class GoogleAnalyticsAdapterSpec
            |}]
          |}""".stripMargin.replaceAll("[\n\r]", "")
     val expectedParams = static ++ Map("ue_pr" -> expectedUE, "co" -> expectedCO)
-    actual must beSuccessful(NonEmptyList(RawEvent(api, expectedParams, None, source, context)))
+    actual must beValid(NonEmptyList.one(RawEvent(api, expectedParams, None, source, context)))
   }
 
   def e9 = {
@@ -271,7 +266,7 @@ class GoogleAnalyticsAdapterSpec
       "co" -> expectedCO,
       "tr_cu" -> "EUR",
       "tr_id" -> "tr")
-    actual must beSuccessful(NonEmptyList(RawEvent(api, expectedParams, None, source, context)))
+    actual must beValid(NonEmptyList.one(RawEvent(api, expectedParams, None, source, context)))
   }
 
   def e10 = {
@@ -299,7 +294,7 @@ class GoogleAnalyticsAdapterSpec
            |}]
          |}""".stripMargin.replaceAll("[\n\r]", "")
     val expectedParams = static ++ Map("ue_pr" -> expectedUE, "co" -> expectedCO)
-    actual must beSuccessful(NonEmptyList(RawEvent(api, expectedParams, None, source, context)))
+    actual must beValid(NonEmptyList.one(RawEvent(api, expectedParams, None, source, context)))
   }
 
   def e11 = {
@@ -324,7 +319,7 @@ class GoogleAnalyticsAdapterSpec
            |}]
          |}""".stripMargin.replaceAll("[\n\r]", "")
     val expectedParams = static ++ Map("ue_pr" -> expectedUE, "co" -> expectedCO)
-    actual must beSuccessful(NonEmptyList(RawEvent(api, expectedParams, None, source, context)))
+    actual must beValid(NonEmptyList.one(RawEvent(api, expectedParams, None, source, context)))
   }
 
   def e12 = {
@@ -358,7 +353,7 @@ class GoogleAnalyticsAdapterSpec
            |}]
          |}""".stripMargin.replaceAll("[\n\r]", "")
     val expectedParams = static ++ Map("ue_pr" -> expectedUE, "co" -> expectedCO)
-    actual must beSuccessful(NonEmptyList(RawEvent(api, expectedParams, None, source, context)))
+    actual must beValid(NonEmptyList.one(RawEvent(api, expectedParams, None, source, context)))
   }
 
   def e13 = {
@@ -386,7 +381,7 @@ class GoogleAnalyticsAdapterSpec
            |}]
          |}""".stripMargin.replaceAll("[\n\r]", "")
     val expectedParams = static ++ Map("ue_pr" -> expectedUE, "co" -> expectedCO)
-    actual must beSuccessful(NonEmptyList(RawEvent(api, expectedParams, None, source, context)))
+    actual must beValid(NonEmptyList.one(RawEvent(api, expectedParams, None, source, context)))
   }
 
   def e14 = {
@@ -412,7 +407,7 @@ class GoogleAnalyticsAdapterSpec
          |}""".stripMargin.replaceAll("[\n\r]", "")
     val expectedParams = static ++ Map("ue_pr" -> expectedJson, "co" -> expectedCO)
     val event = RawEvent(api, expectedParams, None, source, context)
-    actual must beSuccessful(NonEmptyList(event, event))
+    actual must beValid(NonEmptyList.of(event, event))
   }
 
   def e15 = {
@@ -450,7 +445,7 @@ class GoogleAnalyticsAdapterSpec
       "ue_pr" -> expectedJson,
       "co" -> expectedCO,
       "ti_cu" -> "EUR")
-    actual must beSuccessful(NonEmptyList(RawEvent(api, expectedParams, None, source, context)))
+    actual must beValid(NonEmptyList.one(RawEvent(api, expectedParams, None, source, context)))
   }
 
   def e20 = {
@@ -458,18 +453,17 @@ class GoogleAnalyticsAdapterSpec
       s"Cannot parse field name $s, it doesn't conform to the " +
       """expected composite field regex: (pr|promo|il|cd|cm|cg)(\d+)([a-zA-Z]*)(\d*)([a-zA-Z]*)(\d*)$"""
     val s = Seq(
-      breakDownCompField("pr") must beLeftDisjunction(errorMessage("pr")),
-      breakDownCompField("pr12id") must beRightDisjunction((List("pr", "id"), List("12"))),
-      breakDownCompField("12") must beLeftDisjunction(errorMessage("12")),
-      breakDownCompField("") must beLeftDisjunction("Cannot parse empty composite field name"),
-      breakDownCompField("pr12id", "identifier", "IF") must beRightDisjunction(
+      breakDownCompField("pr") must beLeft(errorMessage("pr")),
+      breakDownCompField("pr12id") must beRight((List("pr", "id"), List("12"))),
+      breakDownCompField("12") must beLeft(errorMessage("12")),
+      breakDownCompField("") must beLeft("Cannot parse empty composite field name"),
+      breakDownCompField("pr12id", "identifier", "IF") must beRight(
         Map("IFpr" -> "12", "prid" -> "identifier")),
-      breakDownCompField("pr12cm42", "value", "IF") must beRightDisjunction(
+      breakDownCompField("pr12cm42", "value", "IF") must beRight(
         Map("IFprcm" -> "12", "IFcm" -> "42", "prcm" -> "value")),
-      breakDownCompField("pr", "value", "IF") must beLeftDisjunction(errorMessage("pr")),
-      breakDownCompField("pr", "", "IF") must beLeftDisjunction(errorMessage("pr")),
-      breakDownCompField("pr12", "val", "IF") must beRightDisjunction(
-        Map("IFpr" -> "12", "pr" -> "val"))
+      breakDownCompField("pr", "value", "IF") must beLeft(errorMessage("pr")),
+      breakDownCompField("pr", "", "IF") must beLeft(errorMessage("pr")),
+      breakDownCompField("pr12", "val", "IF") must beRight(Map("IFpr" -> "12", "pr" -> "val"))
     )
     s.reduce(_ and _)
   }

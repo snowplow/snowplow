@@ -15,14 +15,17 @@ package enrichments.registry
 
 import java.net.URI
 
+import cats.data.ValidatedNel
+import cats.syntax.either._
+import com.github.fge.jsonschema.core.report.ProcessingMessage
 import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
+import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
 import com.snowplowanalytics.refererparser.scala.{Parser => RefererParser}
 import com.snowplowanalytics.refererparser.scala.Referer
 import io.circe._
-import scalaz._
 
 import utils.{ConversionUtils => CU}
-import utils.ScalazCirceUtils
+import utils.CirceUtils
 
 /** Companion object. Lets us create a RefererParserEnrichment from a Json */
 object RefererParserEnrichment extends ParseableEnrichment {
@@ -31,18 +34,20 @@ object RefererParserEnrichment extends ParseableEnrichment {
 
   /**
    * Creates a RefererParserEnrichment instance from a Json.
-   * @param config The referer_parser enrichment JSON
+   * @param c The referer_parser enrichment JSON
    * @param schemaKey provided for the enrichment, must be supported by this enrichment
    * @return a configured RefererParserEnrichment instance
    */
-  def parse(config: Json, schemaKey: SchemaKey): ValidatedNelMessage[RefererParserEnrichment] =
-    isParseable(config, schemaKey).flatMap { conf =>
-      (for {
-        param <- ScalazCirceUtils.extract[List[String]](config, "parameters", "internalDomains")
-        enrich = RefererParserEnrichment(param)
-      } yield enrich).toValidationNel
-    }
-
+  def parse(
+    c: Json,
+    schemaKey: SchemaKey
+  ): ValidatedNel[ProcessingMessage, RefererParserEnrichment] =
+    (for {
+      _ <- isParseable(c, schemaKey)
+      param <- CirceUtils.extract[List[String]](c, "parameters", "internalDomains").toEither
+    } yield RefererParserEnrichment(param))
+      .leftMap(_.toProcessingMessage)
+      .toValidatedNel
 }
 
 /**
@@ -51,10 +56,6 @@ object RefererParserEnrichment extends ParseableEnrichment {
  */
 final case class RefererParserEnrichment(domains: List[String]) extends Enrichment {
 
-  /** A Scalaz Lens to update the term within a Referer object. */
-  private val termLens: Lens[Referer, Option[String]] =
-    Lens.lensu((r, newTerm) => r.copy(term = newTerm), _.term)
-
   /**
    * Extract details about the referer (sic). Uses the referer-parser library.
    * @param uri The referer URI to extract referer details from
@@ -62,8 +63,8 @@ final case class RefererParserEnrichment(domains: List[String]) extends Enrichme
    * @return a Tuple3 containing referer medium, source and term, all Strings
    */
   def extractRefererDetails(uri: URI, pageHost: String): Option[Referer] =
-    for {
-      r <- RefererParser.parse(uri, pageHost, domains)
-      t = r.term.flatMap(t => CU.fixTabsNewlines(t))
-    } yield termLens.set(r, t)
+    RefererParser.parse(uri, pageHost, domains).map { r =>
+      val fixedTerm = r.term.flatMap(CU.fixTabsNewlines)
+      r.copy(term = fixedTerm)
+    }
 }

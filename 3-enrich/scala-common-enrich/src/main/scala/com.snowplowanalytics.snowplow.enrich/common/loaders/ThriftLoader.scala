@@ -18,6 +18,8 @@ import java.nio.charset.Charset
 import scala.collection.JavaConversions._
 import scala.util.control.NonFatal
 
+import cats.data.{NonEmptyList, ValidatedNel}
+import cats.implicits._
 import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
 import com.snowplowanalytics.snowplow.CollectorPayload.thrift.model1.{
   CollectorPayload => CollectorPayload1
@@ -27,8 +29,6 @@ import com.snowplowanalytics.snowplow.collectors.thrift.SnowplowRawEvent
 import org.apache.http.NameValuePair
 import org.apache.thrift.TDeserializer
 import org.joda.time.{DateTime, DateTimeZone}
-import scalaz._
-import Scalaz._
 
 /** Loader for Thrift SnowplowRawEvent objects. */
 object ThriftLoader extends Loader[Array[Byte]] {
@@ -46,7 +46,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
    * @return either a set of validation errors or an Option-boxed CanonicalInput object, wrapped in
    * a Scalaz ValidatioNel.
    */
-  def toCollectorPayload(line: Array[Byte]): ValidatedMaybeCollectorPayload =
+  def toCollectorPayload(line: Array[Byte]): ValidatedNel[String, Option[CollectorPayload]] =
     try {
       var schema = new SchemaSniffer
       this.synchronized {
@@ -57,22 +57,24 @@ object ThriftLoader extends Loader[Array[Byte]] {
       }
 
       if (schema.isSetSchema) {
-        val actualSchema = SchemaKey.parse(schema.getSchema).leftMap(_.toString).toValidationNel
-        for {
-          as <- actualSchema
+        val actualSchema = SchemaKey.parse(schema.getSchema) match {
+          case scalaz.Success(s) => s.asRight
+          case scalaz.Failure(e) => e.toString.asLeft
+        }
+        (for {
+          as <- actualSchema.leftMap(NonEmptyList.one)
           res <- if (ExpectedSchema.matches(as)) {
-            convertSchema1(line)
+            convertSchema1(line).toEither
           } else {
-            s"Verifying record as $ExpectedSchema failed: found $as".failNel
+            NonEmptyList.one(s"Verifying record as $ExpectedSchema failed: found $as").asLeft
           }
-        } yield res
+        } yield res).toValidated
       } else {
         convertOldSchema(line)
       }
     } catch {
       // TODO: Check for deserialization errors.
-      case NonFatal(e) =>
-        s"Error deserializing raw event: ${e.getMessage}".failNel[Option[CollectorPayload]]
+      case NonFatal(e) => s"Error deserializing raw event: ${e.getMessage}".invalidNel
     }
 
   /**
@@ -84,7 +86,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
    * @return either a set of validation errors or an Option-boxed CanonicalInput object, wrapped in
    * a Scalaz ValidatioNel.
    */
-  private def convertSchema1(line: Array[Byte]): ValidatedMaybeCollectorPayload = {
+  private def convertSchema1(line: Array[Byte]): ValidatedNel[String, Option[CollectorPayload]] = {
     var collectorPayload = new CollectorPayload1
     this.synchronized {
       thriftDeserializer.deserialize(
@@ -108,12 +110,11 @@ object ThriftLoader extends Loader[Array[Byte]] {
     val ip = IpAddressExtractor.extractIpAddress(headers, collectorPayload.ipAddress).some // Required
 
     val api = Option(collectorPayload.path) match {
-      case None => "Request does not contain a path".fail
-      case Some(p) => CollectorApi.parse(p)
+      case None => "Request does not contain a path".invalidNel
+      case Some(p) => CollectorApi.parse(p).toValidatedNel
     }
 
-    (querystring.toValidationNel |@|
-      api.toValidationNel) { (q: List[NameValuePair], a: CollectorApi) =>
+    (querystring.toValidatedNel, api).mapN { (q, a) =>
       CollectorPayload(
         q,
         collectorPayload.collector,
@@ -141,7 +142,9 @@ object ThriftLoader extends Loader[Array[Byte]] {
    * @return either a set of validation errors or an Option-boxed CanonicalInput object, wrapped in
    * a Scalaz ValidatioNel.
    */
-  private def convertOldSchema(line: Array[Byte]): ValidatedMaybeCollectorPayload = {
+  private def convertOldSchema(
+    line: Array[Byte]
+  ): ValidatedNel[String, Option[CollectorPayload]] = {
     var snowplowRawEvent = new SnowplowRawEvent
     this.synchronized {
       thriftDeserializer.deserialize(
@@ -164,7 +167,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
 
     val ip = IpAddressExtractor.extractIpAddress(headers, snowplowRawEvent.ipAddress).some // Required
 
-    (querystring.toValidationNel) map { (q: List[NameValuePair]) =>
+    (querystring.toValidatedNel) map { (q: List[NameValuePair]) =>
       Some(
         CollectorPayload(
           q,

@@ -14,9 +14,8 @@ package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 import io.circe._
 import io.circe.literal._
 import org.specs2.Specification
-import org.specs2.scalaz._
 
-class HttpHeaderExtractorEnrichmentSpec extends Specification with ValidationMatchers {
+class HttpHeaderExtractorEnrichmentSpec extends Specification {
   def is = s2"""
   This is a specification to test the HttpHeaderExtractorEnrichment
   returns X-Forwarded-For header             $e1

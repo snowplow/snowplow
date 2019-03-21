@@ -12,10 +12,9 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.loaders
 
+import cats.syntax.either._
 import org.apache.http.NameValuePair
 import org.joda.time.DateTime
-import scalaz._
-import Scalaz._
 
 object CollectorPayload {
 
@@ -65,12 +64,12 @@ object CollectorApi {
    * @param path The request path
    * @return a Validation boxing either a CollectorApi or a Failure String.
    */
-  def parse(path: String): Validation[String, CollectorApi] = path match {
-    case ApiPathRegex(vnd, ver) => CollectorApi(vnd, ver).success
-    case _ if isIceRequest(path) => SnowplowTp1.success
+  def parse(path: String): Either[String, CollectorApi] = path match {
+    case ApiPathRegex(vnd, ver) => CollectorApi(vnd, ver).asRight
+    case _ if isIceRequest(path) => SnowplowTp1.asRight
     case _ =>
       (s"Request path $path does not match (/)vendor/version(/) pattern nor is a " +
-        "legacy /i(ce.png) request").fail
+        "legacy /i(ce.png) request").asLeft
   }
 
   /**

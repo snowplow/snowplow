@@ -13,14 +13,15 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry
 
+import cats.data.{NonEmptyList, ValidatedNel}
+import cats.implicits._
+import com.github.fge.jsonschema.core.report.ProcessingMessage
 import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
 import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
 import io.circe._
 import org.apache.commons.codec.digest.DigestUtils
-import scalaz._
-import Scalaz._
 
-import utils.ScalazCirceUtils
+import utils.CirceUtils
 
 /** Lets us create an EventFingerprintEnrichmentConfig from a Json. */
 object EventFingerprintEnrichmentConfig extends ParseableEnrichment {
@@ -35,30 +36,35 @@ object EventFingerprintEnrichmentConfig extends ParseableEnrichment {
 
   /**
    * Creates an EventFingerprintEnrichment instance from a JValue.
-   * @param config The enrichment JSON
+   * @param c The enrichment JSON
    * @param schemaKey provided for the enrichment, must be supported fby this enrichment
    * @return a configured EventFingerprintEnrichment instance
    */
-  def parse(config: Json, schemaKey: SchemaKey): ValidatedNelMessage[EventFingerprintEnrichment] =
-    isParseable(config, schemaKey).flatMap(conf => {
-      (for {
-        excludedParameters <- ScalazCirceUtils
-          .extract[List[String]](config, "parameters", "excludeParameters")
-        algorithmName <- ScalazCirceUtils.extract[String](config, "parameters", "hashAlgorithm")
-        algorithm <- getAlgorithm(algorithmName)
-      } yield EventFingerprintEnrichment(algorithm, excludedParameters)).toValidationNel
-    })
+  def parse(
+    c: Json,
+    schemaKey: SchemaKey
+  ): ValidatedNel[ProcessingMessage, EventFingerprintEnrichment] =
+    (for {
+      _ <- isParseable(c, schemaKey).leftMap(e => NonEmptyList.one(e.toProcessingMessage))
+      // better-monadic-for
+      paramsAndAlgo <- (
+        CirceUtils.extract[List[String]](c, "parameters", "excludeParameters").toValidatedNel,
+        CirceUtils.extract[String](c, "parameters", "hashAlgorithm").toValidatedNel
+      ).mapN { (_, _) }.toEither.leftMap(_.map(_.toProcessingMessage))
+      algorithm <- getAlgorithm(paramsAndAlgo._2)
+        .leftMap(e => NonEmptyList.one(e.toProcessingMessage))
+    } yield EventFingerprintEnrichment(algorithm, paramsAndAlgo._1)).toValidated
 
   /**
    * Look up the fingerprinting algorithm by name
    * @param algorithmName
    * @return A hashing algorithm
    */
-  private[registry] def getAlgorithm(algorithmName: String): ValidatedMessage[String => String] =
+  private[registry] def getAlgorithm(algorithmName: String): Either[String, String => String] =
     algorithmName match {
-      case "MD5" => ((s: String) => DigestUtils.md5Hex(s)).success
+      case "MD5" => ((s: String) => DigestUtils.md5Hex(s)).asRight
       case other =>
-        s"[$other] is not a supported event fingerprint generation algorithm".toProcessingMessage.fail
+        s"[$other] is not a supported event fingerprint generation algorithm".asLeft
     }
 
 }
