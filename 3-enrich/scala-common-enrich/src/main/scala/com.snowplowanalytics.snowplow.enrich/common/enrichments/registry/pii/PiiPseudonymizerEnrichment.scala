@@ -17,9 +17,11 @@ package pii
 import scala.collection.JavaConverters._
 import scala.collection.mutable.MutableList
 
-import cats.syntax.either._
+import cats.data.ValidatedNel
+import cats.implicits._
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode, TextNode}
+import com.github.fge.jsonschema.core.report.ProcessingMessage
 import com.jayway.jsonpath.{Configuration, JsonPath => JJsonPath}
 import com.jayway.jsonpath.MapFunction
 import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
@@ -28,12 +30,10 @@ import io.circe._
 import io.circe.jackson._
 import io.circe.syntax._
 import org.apache.commons.codec.digest.DigestUtils
-import scalaz._
-import Scalaz._
 
 import outputs.EnrichedEvent
 import serializers._
-import utils.ScalazCirceUtils
+import utils.CirceUtils
 
 /** Companion object. Lets us create a PiiPseudonymizerEnrichment from a Json. */
 object PiiPseudonymizerEnrichment extends ParseableEnrichment {
@@ -47,90 +47,91 @@ object PiiPseudonymizerEnrichment extends ParseableEnrichment {
       0,
       0)
 
-  def parse(config: Json, schemaKey: SchemaKey): ValidatedNelMessage[PiiPseudonymizerEnrichment] = {
+  def parse(
+    config: Json,
+    schemaKey: SchemaKey
+  ): ValidatedNel[ProcessingMessage, PiiPseudonymizerEnrichment] = {
     for {
       conf <- matchesSchema(config, schemaKey)
-      emitIdentificationEvent = ScalazCirceUtils
+      emitIdentificationEvent = CirceUtils
         .extract[Boolean](conf, "emitEvent")
         .toOption
         .getOrElse(false)
-      piiFields <- ScalazCirceUtils
+      piiFields <- CirceUtils
         .extract[List[Json]](conf, "parameters", "pii")
-        .leftMap(_.getMessage)
-      piiStrategy <- extractStrategy(config)
+        .toEither
+      piiStrategy <- CirceUtils
+        .extract[PiiStrategyPseudonymize](config, "parameters", "strategy")
+        .toEither
       piiFieldList <- extractFields(piiFields)
     } yield PiiPseudonymizerEnrichment(piiFieldList, emitIdentificationEvent, piiStrategy)
-  }.leftMap(_.toProcessingMessageNel)
+  }.leftMap(_.toProcessingMessage).toValidatedNel
 
-  private[pii] def getHashFunction(strategyFunction: String): Validation[String, DigestFunction] =
+  private[pii] def getHashFunction(strategyFunction: String): Either[String, DigestFunction] =
     strategyFunction match {
-      case "MD2" => { DigestUtils.md2Hex(_: Array[Byte]) }.success
-      case "MD5" => { DigestUtils.md5Hex(_: Array[Byte]) }.success
-      case "SHA-1" => { DigestUtils.sha1Hex(_: Array[Byte]) }.success
-      case "SHA-256" => { DigestUtils.sha256Hex(_: Array[Byte]) }.success
-      case "SHA-384" => { DigestUtils.sha384Hex(_: Array[Byte]) }.success
-      case "SHA-512" => { DigestUtils.sha512Hex(_: Array[Byte]) }.success
-      case fName => s"Unknown function $fName".failure
+      case "MD2" => { DigestUtils.md2Hex(_: Array[Byte]) }.asRight
+      case "MD5" => { DigestUtils.md5Hex(_: Array[Byte]) }.asRight
+      case "SHA-1" => { DigestUtils.sha1Hex(_: Array[Byte]) }.asRight
+      case "SHA-256" => { DigestUtils.sha256Hex(_: Array[Byte]) }.asRight
+      case "SHA-384" => { DigestUtils.sha384Hex(_: Array[Byte]) }.asRight
+      case "SHA-512" => { DigestUtils.sha512Hex(_: Array[Byte]) }.asRight
+      case fName => s"Unknown function $fName".asLeft
     }
 
-  private def extractFields(piiFields: List[Json]): Validation[String, List[PiiField]] =
+  private def extractFields(piiFields: List[Json]): Either[String, List[PiiField]] =
     piiFields.map { json =>
-      extractString(json, "pojo", "field")
+      CirceUtils
+        .extract[String](json, "pojo", "field")
+        .toEither
         .flatMap(extractPiiScalarField)
         .orElse {
           json.hcursor
             .downField("json")
             .focus
-            .toSuccess("No json field")
+            .toRight("No json field")
             .flatMap(extractPiiJsonField)
         }
         .orElse {
           ("PII Configuration: pii field does not include 'pojo' nor 'json' fields. " +
-            s"Got: [${json.noSpaces}]").failure[PiiField]
+            s"Got: [${json.noSpaces}]").asLeft
         }
-    }.sequenceU
+    }.sequence
 
-  private def extractPiiScalarField(fieldName: String): Validation[String, PiiScalar] =
+  private def extractPiiScalarField(fieldName: String): Either[String, PiiScalar] =
     ScalarMutators
       .get(fieldName)
-      .map(PiiScalar(_).success)
-      .getOrElse(s"The specified pojo field $fieldName is not supported".failure)
+      .map(PiiScalar(_).asRight)
+      .getOrElse(s"The specified pojo field $fieldName is not supported".asLeft)
 
-  private def extractPiiJsonField(jsonField: Json): Validation[String, PiiJson] = {
-    val schemaCriterion = extractString(jsonField, "schemaCriterion")
-      .flatMap(sc => SchemaCriterion.parse(sc).leftMap(_.getMessage))
-      .toValidationNel
-    val jsonPath = extractString(jsonField, "jsonPath").toValidationNel
-    val mutator = extractString(jsonField, "field")
+  private def extractPiiJsonField(jsonField: Json): Either[String, PiiJson] = {
+    val schemaCriterion = CirceUtils
+      .extract[String](jsonField, "schemaCriterion")
+      .toEither
+      .flatMap(sc => SchemaCriterion.parse(sc).leftMap(_.getMessage).toEither)
+      .toValidatedNel
+    val jsonPath = CirceUtils.extract[String](jsonField, "jsonPath").toValidatedNel
+    val mutator = CirceUtils
+      .extract[String](jsonField, "field")
+      .toEither
       .flatMap(getJsonMutator)
-      .toValidationNel
-    val validatedNel = (mutator |@| schemaCriterion |@| jsonPath)(PiiJson.apply)
-    validatedNel.leftMap(x => s"Unable to extract PII JSON: ${x.list.mkString(",")}")
+      .toValidatedNel
+    (mutator, schemaCriterion, jsonPath)
+      .mapN(PiiJson.apply)
+      .leftMap(x => s"Unable to extract PII JSON: ${x.toList.mkString(",")}")
+      .toEither
   }
 
-  private def getJsonMutator(fieldName: String): Validation[String, Mutator] =
+  private def getJsonMutator(fieldName: String): Either[String, Mutator] =
     JsonMutators
       .get(fieldName)
-      .map(_.success)
-      .getOrElse(s"The specified json field $fieldName is not supported".failure)
+      .map(_.asRight)
+      .getOrElse(s"The specified json field $fieldName is not supported".asLeft)
 
-  private def extractString(
-    jValue: Json,
-    field: String,
-    tail: String*
-  ): Validation[String, String] =
-    ScalazCirceUtils.extract[String](jValue, field, tail: _*).leftMap(_.getMessage)
-
-  private def extractStrategy(config: Json): Validation[String, PiiStrategyPseudonymize] =
-    ScalazCirceUtils
-      .extract[PiiStrategyPseudonymize](config, "parameters", "strategy")
-      .leftMap(_.getMessage)
-
-  private def matchesSchema(config: Json, schemaKey: SchemaKey): Validation[String, Json] =
+  private def matchesSchema(config: Json, schemaKey: SchemaKey): Either[String, Json] =
     if (supportedSchema.matches(schemaKey))
-      config.success
+      config.asRight
     else
-      s"Schema key $schemaKey is not supported. A '${supportedSchema.name}' enrichment must have schema '$supportedSchema'.".failure
+      s"Schema key $schemaKey is not supported. A '${supportedSchema.name}' enrichment must have schema '$supportedSchema'.".asLeft
 }
 
 /**

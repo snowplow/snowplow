@@ -15,12 +15,11 @@ package adapters
 package registry
 package snowplow
 
+import cats.data.NonEmptyList
+import cats.syntax.option._
 import org.joda.time.DateTime
 import org.specs2.{ScalaCheck, Specification}
-import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
-import scalaz._
-import Scalaz._
+import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
 import utils.{ConversionUtils => CU}
@@ -29,7 +28,7 @@ import SpecHelpers._
 class SnowplowAdapterSpec
     extends Specification
     with DataTables
-    with ValidationMatchers
+    with ValidatedMatchers
     with ScalaCheck {
   def is = s2"""
   This is a specification to test the SnowplowAdapter functionality
@@ -88,15 +87,15 @@ class SnowplowAdapterSpec
         Shared.source,
         Shared.context)
     val actual = Tp1Adapter.toRawEvents(payload)
-    actual must beSuccessful(
-      NonEmptyList(
+    actual must beValid(
+      NonEmptyList.one(
         RawEvent(Snowplow.Tp1, Map("aid" -> "test"), None, Shared.source, Shared.context)))
   }
 
   def e2 = {
     val payload = CollectorPayload(Snowplow.Tp1, Nil, None, None, Shared.source, Shared.context)
     val actual = Tp1Adapter.toRawEvents(payload)
-    actual must beFailing(NonEmptyList("Querystring is empty: no raw event to process"))
+    actual must beInvalid(NonEmptyList.one("Querystring is empty: no raw event to process"))
   }
 
   def e3 = {
@@ -108,8 +107,8 @@ class SnowplowAdapterSpec
       Shared.source,
       Shared.context)
     val actual = Tp2Adapter.toRawEvents(payload)
-    actual must beSuccessful(
-      NonEmptyList(
+    actual must beValid(
+      NonEmptyList.one(
         RawEvent(
           Snowplow.Tp2,
           Map("aid" -> "tp2", "e" -> "se"),
@@ -129,8 +128,8 @@ class SnowplowAdapterSpec
         Shared.source,
         Shared.context)
     val actual = Tp2Adapter.toRawEvents(payload)
-    actual must beSuccessful(
-      NonEmptyList(
+    actual must beValid(
+      NonEmptyList.one(
         RawEvent(
           Snowplow.Tp2,
           Map("tv" -> "ios-0.1.0", "p" -> "mob", "e" -> "se"),
@@ -159,8 +158,8 @@ class SnowplowAdapterSpec
         ApplicationJsonWithCapitalCharset.some,
         Shared.source,
         Shared.context)
-    actual must beSuccessful(
-      NonEmptyList(
+    actual must beValid(
+      NonEmptyList.of(
         rawEvent(Map("tv" -> "0", "p" -> "1", "e" -> "1", "nuid" -> "123")),
         rawEvent(Map("tv" -> "0", "p" -> "2", "e" -> "2", "nuid" -> "123")),
         rawEvent(Map("tv" -> "0", "p" -> "3", "e" -> "3", "nuid" -> "123"))
@@ -177,8 +176,8 @@ class SnowplowAdapterSpec
       Shared.source,
       Shared.context)
     val actual = Tp2Adapter.toRawEvents(payload)
-    actual must beSuccessful(
-      NonEmptyList(
+    actual must beValid(
+      NonEmptyList.one(
         RawEvent(
           Snowplow.Tp2,
           Map("tv" -> "ios-0.1.0", "p" -> "mob", "e" -> "se"),
@@ -206,7 +205,7 @@ class SnowplowAdapterSpec
             Shared.source,
             Shared.context)
           val actual = Tp2Adapter.toRawEvents(payload)
-          actual must beFailing(NonEmptyList(expected))
+          actual must beInvalid(NonEmptyList.one(expected))
         }
     }
 
@@ -219,8 +218,8 @@ class SnowplowAdapterSpec
       Shared.source,
       Shared.context)
     val actual = Tp2Adapter.toRawEvents(payload)
-    actual must beFailing(
-      NonEmptyList(
+    actual must beInvalid(
+      NonEmptyList.of(
         """error: object instance has properties which are not allowed by the schema: ["not"]
     level: "error"
     schema: {"loadingURI":"#","pointer":""}
@@ -251,8 +250,8 @@ class SnowplowAdapterSpec
       Shared.source,
       Shared.context)
     val actual = Tp2Adapter.toRawEvents(payload)
-    actual must beFailing(
-      NonEmptyList(
+    actual must beInvalid(
+      NonEmptyList.one(
         """error: Verifying schema as iglu:com.snowplowanalytics.snowplow/payload_data/jsonschema/1-0-* failed: found iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-0-0
     level: "error"
 """))
@@ -260,7 +259,7 @@ class SnowplowAdapterSpec
 
   def e10 =
     "SPEC NAME" || "IN JSON DATA" | "EXP. FAILURES" |
-      "JSON object instead of array" !! "{}" ! NonEmptyList(
+      "JSON object instead of array" !! "{}" ! NonEmptyList.one(
         """error: instance type (object) does not match any allowed primitive type (allowed: ["array"])
     level: "error"
     schema: {"loadingURI":"#","pointer":""}
@@ -270,7 +269,7 @@ class SnowplowAdapterSpec
     found: "object"
     expected: ["array"]
 """) |
-      "Missing required properties" !! """[{"tv":"ios-0.1.0"}]""" ! NonEmptyList(
+      "Missing required properties" !! """[{"tv":"ios-0.1.0"}]""" ! NonEmptyList.one(
         """error: object has missing required properties (["e","p"])
     level: "error"
     schema: {"loadingURI":"#","pointer":"/items"}
@@ -280,8 +279,9 @@ class SnowplowAdapterSpec
     required: ["e","p","tv"]
     missing: ["e","p"]
 """) |
-      "1 valid, 1 invalid" !! """[{"tv":"ios-0.1.0","p":"mob","e":"se"},{"new":"foo"}]""" ! NonEmptyList(
-        """error: object instance has properties which are not allowed by the schema: ["new"]
+      "1 valid, 1 invalid" !! """[{"tv":"ios-0.1.0","p":"mob","e":"se"},{"new":"foo"}]""" ! NonEmptyList
+        .of(
+          """error: object instance has properties which are not allowed by the schema: ["new"]
     level: "error"
     schema: {"loadingURI":"#","pointer":"/items"}
     instance: {"pointer":"/1"}
@@ -289,7 +289,7 @@ class SnowplowAdapterSpec
     keyword: "additionalProperties"
     unwanted: ["new"]
 """,
-        """error: object has missing required properties (["e","p","tv"])
+          """error: object has missing required properties (["e","p","tv"])
     level: "error"
     schema: {"loadingURI":"#","pointer":"/items"}
     instance: {"pointer":"/1"}
@@ -298,7 +298,7 @@ class SnowplowAdapterSpec
     required: ["e","p","tv"]
     missing: ["e","p","tv"]
 """
-      ) |> { (_, json, expected) =>
+        ) |> { (_, json, expected) =>
       {
 
         val body = toSelfDescJson(json, "payload_data")
@@ -312,7 +312,7 @@ class SnowplowAdapterSpec
             Shared.context)
 
         val actual = Tp2Adapter.toRawEvents(payload)
-        actual must beFailing(expected)
+        actual must beInvalid(expected)
       }
     }
 
@@ -325,8 +325,8 @@ class SnowplowAdapterSpec
       Shared.source,
       Shared.context)
     val actual = RedirectAdapter.toRawEvents(payload)
-    actual must beSuccessful(
-      NonEmptyList(RawEvent(
+    actual must beValid(
+      NonEmptyList.one(RawEvent(
         Snowplow.Tp2,
         Map(
           "e" -> "ue",
@@ -350,8 +350,8 @@ class SnowplowAdapterSpec
       Shared.source,
       Shared.context)
     val actual = RedirectAdapter.toRawEvents(payload)
-    actual must beSuccessful(
-      NonEmptyList(RawEvent(
+    actual must beValid(
+      NonEmptyList.one(RawEvent(
         Snowplow.Tp2,
         Map(
           "e" -> "se",
@@ -379,8 +379,8 @@ class SnowplowAdapterSpec
       Shared.source,
       Shared.context)
     val actual = RedirectAdapter.toRawEvents(payload)
-    actual must beSuccessful(
-      NonEmptyList(RawEvent(
+    actual must beValid(
+      NonEmptyList.one(RawEvent(
         Snowplow.Tp2,
         Map(
           "e" -> "se",
@@ -409,8 +409,8 @@ class SnowplowAdapterSpec
       Shared.context
     )
     val actual = RedirectAdapter.toRawEvents(payload)
-    actual must beSuccessful(
-      NonEmptyList(RawEvent(
+    actual must beValid(
+      NonEmptyList.one(RawEvent(
         Snowplow.Tp2,
         Map(
           "e" -> "se",
@@ -440,8 +440,8 @@ class SnowplowAdapterSpec
       Shared.context
     )
     val actual = RedirectAdapter.toRawEvents(payload)
-    actual must beSuccessful(
-      NonEmptyList(RawEvent(
+    actual must beValid(
+      NonEmptyList.one(RawEvent(
         Snowplow.Tp2,
         Map(
           "e" -> "se",
@@ -459,7 +459,7 @@ class SnowplowAdapterSpec
   def e16 = {
     val payload = CollectorPayload(Snowplow.Tp2, Nil, None, None, Shared.source, Shared.context)
     val actual = RedirectAdapter.toRawEvents(payload)
-    actual must beFailing(NonEmptyList("Querystring is empty: cannot be a valid URI redirect"))
+    actual must beInvalid(NonEmptyList.one("Querystring is empty: cannot be a valid URI redirect"))
   }
 
   def e17 = {
@@ -472,8 +472,8 @@ class SnowplowAdapterSpec
         Shared.source,
         Shared.context)
     val actual = RedirectAdapter.toRawEvents(payload)
-    actual must beFailing(
-      NonEmptyList("Querystring does not contain u parameter: not a valid URI redirect"))
+    actual must beInvalid(
+      NonEmptyList.one("Querystring does not contain u parameter: not a valid URI redirect"))
   }
 
   def e18 = {
@@ -488,7 +488,7 @@ class SnowplowAdapterSpec
       Shared.source,
       Shared.context)
     val actual = RedirectAdapter.toRawEvents(payload)
-    actual must beFailing(NonEmptyList(
+    actual must beInvalid(NonEmptyList.one(
       """Field [co|cx]: invalid JSON [{[-] with parsing error: expected " got '[-' (line 1, column 2)"""))
   }
 
@@ -501,8 +501,8 @@ class SnowplowAdapterSpec
       Shared.source,
       Shared.context)
     val actual = RedirectAdapter.toRawEvents(payload)
-    actual must beFailing(
-      NonEmptyList("Field [co|cx]: invalid JSON [] with parsing error: exhausted input"))
+    actual must beInvalid(
+      NonEmptyList.one("Field [co|cx]: invalid JSON [] with parsing error: exhausted input"))
   }
 
 }

@@ -15,18 +15,17 @@ package enrichments.registry
 import java.io.{FileInputStream, InputStream}
 import java.net.URI
 
-import scala.util.control.NonFatal
-
+import cats.data.{NonEmptyList, ValidatedNel}
+import cats.implicits._
+import com.github.fge.jsonschema.core.report.ProcessingMessage
 import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
 import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
 import io.circe._
 import io.circe.syntax._
-import scalaz._
-import Scalaz._
 import ua_parser.Parser
 import ua_parser.Client
 
-import utils.{ConversionUtils, ScalazCirceUtils}
+import utils.{CirceUtils, ConversionUtils}
 
 /** Companion object. Lets us create a UaParserEnrichment from a Json. */
 object UaParserEnrichmentConfig extends ParseableEnrichment {
@@ -35,32 +34,32 @@ object UaParserEnrichmentConfig extends ParseableEnrichment {
 
   private val localRulefile = "./ua-parser-rules.yml"
 
-  def parse(config: Json, schemaKey: SchemaKey): ValidatedNelMessage[UaParserEnrichment] =
-    isParseable(config, schemaKey).flatMap { conf =>
-      (for {
-        rules <- getCustomRules(conf)
-      } yield UaParserEnrichment(rules)).toValidationNel
-    }
+  def parse(c: Json, schemaKey: SchemaKey): ValidatedNel[ProcessingMessage, UaParserEnrichment] =
+    (for {
+      _ <- isParseable(c, schemaKey).leftMap(NonEmptyList.one)
+      rules <- getCustomRules(c).toEither
+    } yield UaParserEnrichment(rules)).leftMap(_.map(_.toProcessingMessage)).toValidated
 
-  private def getCustomRules(conf: Json): ValidatedMessage[Option[(URI, String)]] =
+  private def getCustomRules(conf: Json): ValidatedNel[String, Option[(URI, String)]] =
     if (conf.hcursor.downField("parameters").downField("uri").focus.isDefined) {
-      for {
-        uri <- ScalazCirceUtils.extract[String](conf, "parameters", "uri")
-        db <- ScalazCirceUtils.extract[String](conf, "parameters", "database")
-        source <- getUri(uri, db)
-      } yield (source, localRulefile).some
+      (for {
+        uriAndDb <- (
+          CirceUtils.extract[String](conf, "parameters", "uri").toValidatedNel,
+          CirceUtils.extract[String](conf, "parameters", "database").toValidatedNel
+        ).mapN((_, _)).toEither
+        source <- getUri(uriAndDb._1, uriAndDb._2).leftMap(NonEmptyList.one)
+      } yield (source, localRulefile)).toValidated.map(_.some)
     } else {
-      None.success
+      None.validNel
     }
 
-  private def getUri(uri: String, database: String): ValidatedMessage[URI] =
+  private def getUri(uri: String, database: String): Either[String, URI] =
     ConversionUtils
       .stringToUri(uri + (if (uri.endsWith("/")) "" else "/") + database)
       .flatMap {
-        case Some(u) => u.success
-        case None => "A valid URI to ua-parser regex file must be provided".fail
+        case Some(u) => u.asRight
+        case None => "A valid URI to ua-parser regex file must be provided".asLeft
       }
-      .toProcessingMessage
 }
 
 /** Config for an ua_parser_config enrichment. Uses uap-java library to parse client attributes */
@@ -79,16 +78,9 @@ final case class UaParserEnrichment(customRulefile: Option[(URI, String)]) exten
       case None => new Parser()
     }
 
-    def tryWithCatch[T](a: => T): Validation[Throwable, T] =
-      try {
-        a.success
-      } catch {
-        case NonFatal(e) => e.failure
-      }
-
     val parser = for {
-      input <- tryWithCatch(customRulefile.map(f => new FileInputStream(f._2)))
-      p <- tryWithCatch(constructParser(input))
+      input <- Either.catchNonFatal(customRulefile.map(f => new FileInputStream(f._2)))
+      p <- Either.catchNonFatal(constructParser(input))
     } yield p
     parser.leftMap(e => s"Failed to initialize ua parser: [${e.getMessage}]")
   }
@@ -122,14 +114,12 @@ final case class UaParserEnrichment(customRulefile: Option[(URI, String)]) exten
    * @param useragent to extract from. Should be encoded, i.e. not previously decoded.
    * @return the json or the message of the exception, boxed in a Scalaz Validation
    */
-  def extractUserAgent(useragent: String): Validation[String, Json] =
+  def extractUserAgent(useragent: String): Either[String, Json] =
     for {
       parser <- uaParser
-      c <- try {
-        parser.parse(useragent).success
-      } catch {
-        case NonFatal(e) => s"Exception parsing useragent [$useragent]: [${e.getMessage}]".fail
-      }
+      c <- Either
+        .catchNonFatal(parser.parse(useragent))
+        .leftMap(e => s"Exception parsing useragent [$useragent]: [${e.getMessage}]")
     } yield assembleContext(c)
 
   /** Assembles ua_parser_context from a parsed user agent. */

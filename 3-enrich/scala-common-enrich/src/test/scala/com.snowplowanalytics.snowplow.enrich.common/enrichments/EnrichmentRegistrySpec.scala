@@ -17,7 +17,6 @@ import java.net.URI
 
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
 
 import registry.Enrichment
 
@@ -26,7 +25,7 @@ case class FileEnrichment(files: List[(URI, String)]) extends Enrichment {
   override def filesToCache: List[(URI, String)] = files
 }
 
-class EnrichmentRegistrySpec extends Specification with DataTables with ValidationMatchers {
+class EnrichmentRegistrySpec extends Specification with DataTables {
   def is = s2"""
     Should report files to cache for all registered enrichments $e1
   """

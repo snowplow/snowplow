@@ -14,21 +14,16 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
+import cats.data.NonEmptyList
+import cats.syntax.option._
 import org.joda.time.DateTime
-import org.specs2.{ScalaCheck, Specification}
-import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
-import scalaz._
-import Scalaz._
+import org.specs2.Specification
+import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
 import SpecHelpers._
 
-class IgluAdapterSpec
-    extends Specification
-    with DataTables
-    with ValidationMatchers
-    with ScalaCheck {
+class IgluAdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
   This is a specification to test the IgluAdapter functionality
   toRawEvents should return a NEL containing one RawEvent if the CloudFront querystring is minimally populated           $e1
@@ -104,8 +99,8 @@ class IgluAdapterSpec
             |}
           |}""".stripMargin.replaceAll("[\n\r]", "")
 
-    actual must beSuccessful(
-      NonEmptyList(
+    actual must beValid(
+      NonEmptyList.one(
         RawEvent(
           Shared.api,
           Expected.static ++ Map("ue_pr" -> expectedJson),
@@ -148,7 +143,7 @@ class IgluAdapterSpec
       )
     }
 
-    actual must beSuccessful(NonEmptyList(
+    actual must beValid(NonEmptyList.one(
       RawEvent(Shared.api, Expected.static ++ expectedMap, None, Shared.cfSource, Shared.context)))
   }
 
@@ -190,7 +185,7 @@ class IgluAdapterSpec
       )
     }
 
-    actual must beSuccessful(NonEmptyList(
+    actual must beValid(NonEmptyList.one(
       RawEvent(Shared.api, Expected.static ++ expectedMap, None, Shared.cljSource, Shared.context)))
   }
 
@@ -216,8 +211,8 @@ class IgluAdapterSpec
             |}
           |}""".stripMargin.replaceAll("[\n\r]", "")
 
-    actual must beSuccessful(
-      NonEmptyList(
+    actual must beValid(
+      NonEmptyList.one(
         RawEvent(
           Shared.api,
           Expected.staticNoPlatform ++ Map("p" -> "mob", "ue_pr" -> expectedJson),
@@ -231,8 +226,8 @@ class IgluAdapterSpec
     val payload = CollectorPayload(Shared.api, params, None, None, Shared.cfSource, Shared.context)
     val actual = IgluAdapter.toRawEvents(payload)
 
-    actual must beFailing(
-      NonEmptyList("Iglu event failed: is not a sd-json or a valid GET or POST request"))
+    actual must beInvalid(
+      NonEmptyList.one("Iglu event failed: is not a sd-json or a valid GET or POST request"))
   }
 
   def e6 = {
@@ -243,8 +238,8 @@ class IgluAdapterSpec
     val payload = CollectorPayload(Shared.api, params, None, None, Shared.cfSource, Shared.context)
     val actual = IgluAdapter.toRawEvents(payload)
 
-    actual must beFailing(
-      NonEmptyList("Iglu event failed: is not a sd-json or a valid GET or POST request"))
+    actual must beInvalid(
+      NonEmptyList.one("Iglu event failed: is not a sd-json or a valid GET or POST request"))
   }
 
   def e7 = {
@@ -254,7 +249,8 @@ class IgluAdapterSpec
     val payload = CollectorPayload(Shared.api, params, None, None, Shared.cfSource, Shared.context)
     val actual = IgluAdapter.toRawEvents(payload)
 
-    actual must beFailing(NonEmptyList("iglooooooo://blah is not a valid Iglu-format schema URI"))
+    actual must beInvalid(
+      NonEmptyList.one("iglooooooo://blah is not a valid Iglu-format schema URI"))
   }
 
   def e8 = {
@@ -287,7 +283,7 @@ class IgluAdapterSpec
       Shared.context
     )
 
-    actual must beSuccessful(NonEmptyList(expected))
+    actual must beValid(NonEmptyList.one(expected))
   }
 
   def e9 = {
@@ -307,7 +303,7 @@ class IgluAdapterSpec
         Shared.context)
     val actual = IgluAdapter.toRawEvents(payload)
 
-    actual must beFailing(NonEmptyList("Content type not supported"))
+    actual must beInvalid(NonEmptyList.one("Content type not supported"))
   }
 
   def e10 = {
@@ -327,8 +323,8 @@ class IgluAdapterSpec
         Shared.context)
     val actual = IgluAdapter.toRawEvents(payload)
 
-    actual must beFailing(
-      NonEmptyList("Iglu event failed json sanity check: has no key-value pairs"))
+    actual must beInvalid(
+      NonEmptyList.one("Iglu event failed json sanity check: has no key-value pairs"))
   }
 
   def e11 = {
@@ -342,8 +338,8 @@ class IgluAdapterSpec
       CollectorPayload(Shared.api, params, None, jsonStr.some, Shared.cljSource, Shared.context)
     val actual = IgluAdapter.toRawEvents(payload)
 
-    actual must beFailing(
-      NonEmptyList("Iglu event failed: ContentType must be set for a POST payload"))
+    actual must beInvalid(
+      NonEmptyList.one("Iglu event failed: ContentType must be set for a POST payload"))
   }
 
   def e12 = {
@@ -373,7 +369,7 @@ class IgluAdapterSpec
       Shared.context
     )
 
-    actual must beSuccessful(NonEmptyList(expected))
+    actual must beValid(NonEmptyList.one(expected))
   }
 
   def e13 = {
@@ -390,7 +386,7 @@ class IgluAdapterSpec
         Shared.context)
     val actual = IgluAdapter.toRawEvents(payload)
 
-    actual must beFailing(NonEmptyList("Content type not supported"))
+    actual must beInvalid(NonEmptyList.one("Content type not supported"))
   }
 
   def e14 = {
@@ -406,7 +402,7 @@ class IgluAdapterSpec
         Shared.context)
     val actual = IgluAdapter.toRawEvents(payload)
 
-    actual must beFailing(NonEmptyList("Content type not supported"))
+    actual must beInvalid(NonEmptyList.one("Content type not supported"))
   }
 
   def e15 = {
@@ -435,7 +431,7 @@ class IgluAdapterSpec
       Shared.context
     )
 
-    actual must beSuccessful(NonEmptyList(expected))
+    actual must beValid(NonEmptyList.one(expected))
   }
 
   def e16 = {
@@ -469,7 +465,7 @@ class IgluAdapterSpec
       Shared.context
     )
 
-    actual must beSuccessful(NonEmptyList(expected, expected))
+    actual must beValid(NonEmptyList.of(expected, expected))
   }
 
   def e17 = {
@@ -489,7 +485,7 @@ class IgluAdapterSpec
         Shared.context)
     val actual = IgluAdapter.toRawEvents(payload)
 
-    actual must beFailing(
-      NonEmptyList("Iglu event failed json sanity check: array of events cannot be empty"))
+    actual must beInvalid(
+      NonEmptyList.one("Iglu event failed json sanity check: array of events cannot be empty"))
   }
 }

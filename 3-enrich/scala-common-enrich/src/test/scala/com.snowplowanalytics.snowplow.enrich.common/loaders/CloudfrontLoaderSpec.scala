@@ -13,13 +13,12 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
+import cats.data.NonEmptyList
+import cats.syntax.option._
 import org.joda.time.DateTime
 import org.scalacheck.Arbitrary._
 import org.specs2.{ScalaCheck, Specification}
-import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
-import scalaz._
-import Scalaz._
+import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import utils.ConversionUtils
 import SpecHelpers._
@@ -27,7 +26,7 @@ import SpecHelpers._
 class CloudfrontLoaderSpec
     extends Specification
     with DataTables
-    with ValidationMatchers
+    with ValidatedMatchers
     with ScalaCheck {
   def is = s2"""
   This is a specification to test the CloudfrontLoader functionality
@@ -58,7 +57,7 @@ class CloudfrontLoaderSpec
         "1980-04-01T21:20:04+00:00") |> { (_, date, time, expected) =>
       {
         val actual = CloudfrontLoader.toTimestamp(date, time)
-        actual must beSuccessful(expected)
+        actual must beRight(expected)
       }
     }
 
@@ -236,22 +235,22 @@ class CloudfrontLoaderSpec
             context = CollectorContext(timestamp.some, ipAddress, userAgent, refererUri, Nil, None)
           )
 
-          canonicalEvent must beSuccessful(expected.some)
+          canonicalEvent must beValid(expected.some)
         }
     }
 
   def e6 = {
     val raw =
       "2012-05-24  11:35:53  DFW3  3343  99.116.172.58 POST d3gs014xn8p70.cloudfront.net  /i  200 http://www.psychicbazaar.com/2-tarot-cards/genre/all/type/all?p=5 Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0  e=pv&page=Tarot%2520cards%2520-%2520Psychic%2520Bazaar&tid=344260&uid=288112e0a5003be2&vid=1&lang=en-US&refr=http%253A%252F%252Fwww.psychicbazaar.com%252F2-tarot-cards%252Fgenre%252Fall%252Ftype%252Fall%253Fp%253D4&f_pdf=1&f_qt=0&f_realp=0&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=1366x768&cookie=1"
-    CloudfrontLoader.toCollectorPayload(raw) must beFailing(
-      NonEmptyList("Only GET operations supported for CloudFront Collector, not POST"))
+    CloudfrontLoader.toCollectorPayload(raw) must beInvalid(
+      NonEmptyList.one("Only GET operations supported for CloudFront Collector, not POST"))
   }
 
   // A bit of fun: the chances of generating a valid CloudFront row at random are
   // so low that we can just use ScalaCheck here
   def e7 =
-    check { (raw: String) =>
-      CloudfrontLoader.toCollectorPayload(raw) must beFailing(
-        NonEmptyList("Line does not match CloudFront header or data row formats"))
+    prop { (raw: String) =>
+      CloudfrontLoader.toCollectorPayload(raw) must beInvalid(
+        NonEmptyList.one("Line does not match CloudFront header or data row formats"))
     }
 }

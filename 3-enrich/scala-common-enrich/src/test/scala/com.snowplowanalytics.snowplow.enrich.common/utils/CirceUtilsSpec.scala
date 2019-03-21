@@ -14,10 +14,10 @@ package com.snowplowanalytics.snowplow.enrich.common
 package utils
 
 import io.circe.literal._
+import org.specs2.matcher.ValidatedMatchers
 import org.specs2.mutable.Specification
-import org.specs2.scalaz.ValidationMatchers
 
-class ScalazCirceSpec extends Specification with ValidationMatchers {
+class CirceUtilsSpec extends Specification with ValidatedMatchers {
   val testJson = json"""{
     "outer": "1",
     "inner": {
@@ -27,15 +27,15 @@ class ScalazCirceSpec extends Specification with ValidationMatchers {
 
   "Applying extractString" should {
     "successfully access an outer string field" in {
-      val result = ScalazCirceUtils.extract[String](testJson, "outer")
-      result must beSuccessful("1")
+      val result = CirceUtils.extract[String](testJson, "outer")
+      result must beValid("1")
     }
   }
 
   "Applying extractInt" should {
     "successfully access an inner string field" in {
-      val result = ScalazCirceUtils.extract[Int](testJson, "inner", "value")
-      result must beSuccessful(2)
+      val result = CirceUtils.extract[Int](testJson, "inner", "value")
+      result must beValid(2)
     }
   }
 

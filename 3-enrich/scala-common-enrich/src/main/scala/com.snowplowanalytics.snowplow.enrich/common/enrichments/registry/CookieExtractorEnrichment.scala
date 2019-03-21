@@ -13,14 +13,16 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry
 
+import cats.data.ValidatedNel
+import cats.syntax.either._
+import com.github.fge.jsonschema.core.report.ProcessingMessage
 import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
+import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
 import io.circe._
 import io.circe.syntax._
 import org.apache.http.message.BasicHeaderValueParser
-import scalaz._
-import Scalaz._
 
-import utils.ScalazCirceUtils
+import utils.CirceUtils
 
 object CookieExtractorEnrichmentConfig extends ParseableEnrichment {
 
@@ -33,13 +35,14 @@ object CookieExtractorEnrichmentConfig extends ParseableEnrichment {
    * @param schemaKey provided for the enrichment, must be supported by this enrichment
    * @return a configured CookieExtractorEnrichment instance
    */
-  def parse(config: Json, schemaKey: SchemaKey): ValidatedNelMessage[CookieExtractorEnrichment] =
-    isParseable(config, schemaKey).flatMap(conf => {
-      (for {
-        cookieNames <- ScalazCirceUtils.extract[List[String]](config, "parameters", "cookies")
-        enrich = CookieExtractorEnrichment(cookieNames)
-      } yield enrich).toValidationNel
-    })
+  def parse(
+    config: Json,
+    schemaKey: SchemaKey
+  ): ValidatedNel[ProcessingMessage, CookieExtractorEnrichment] =
+    (for {
+      _ <- isParseable(config, schemaKey)
+      cookieNames <- CirceUtils.extract[List[String]](config, "parameters", "cookies").toEither
+    } yield CookieExtractorEnrichment(cookieNames)).leftMap(_.toProcessingMessage).toValidatedNel
 }
 
 /**

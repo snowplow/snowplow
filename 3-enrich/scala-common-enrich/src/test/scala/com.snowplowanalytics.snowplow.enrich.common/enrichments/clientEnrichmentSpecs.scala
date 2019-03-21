@@ -13,10 +13,9 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 
+import cats.syntax.either._
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
-import scalaz._
-import Scalaz._
 
 class ExtractViewDimensionsSpec extends Specification with DataTables {
 
@@ -31,15 +30,15 @@ class ExtractViewDimensionsSpec extends Specification with DataTables {
 
   def e1 =
     "SPEC NAME" || "INPUT VAL" | "EXPECTED OUTPUT" |
-      "valid desktop" !! "1200x800" ! (1200, 800).success |
-      "valid mobile" !! "76x128" ! (76, 128).success |
-      "invalid empty" !! "" ! err("").fail |
-      "invalid null" !! null ! err(null).fail |
-      "invalid hex" !! "76xEE" ! err("76xEE").fail |
-      "invalid negative" !! "1200x-17" ! err("1200x-17").fail |
-      "Arabic number" !! "٤٥٦٧x680" ! err("٤٥٦٧x680").fail |
-      "number > int #1" !! "760x3389336768" ! err2("760x3389336768").fail |
-      "number > int #2" !! "9989336768x1200" ! err2("9989336768x1200").fail |> {
+      "valid desktop" !! "1200x800" ! (1200, 800).asRight |
+      "valid mobile" !! "76x128" ! (76, 128).asRight |
+      "invalid empty" !! "" ! err("").asLeft |
+      "invalid null" !! null ! err(null).asLeft |
+      "invalid hex" !! "76xEE" ! err("76xEE").asLeft |
+      "invalid negative" !! "1200x-17" ! err("1200x-17").asLeft |
+      "Arabic number" !! "٤٥٦٧x680" ! err("٤٥٦٧x680").asLeft |
+      "number > int #1" !! "760x3389336768" ! err2("760x3389336768").asLeft |
+      "number > int #2" !! "9989336768x1200" ! err2("9989336768x1200").asLeft |> {
       (_, input, expected) =>
         ClientEnrichments.extractViewDimensions(FieldName, input) must_== expected
     }

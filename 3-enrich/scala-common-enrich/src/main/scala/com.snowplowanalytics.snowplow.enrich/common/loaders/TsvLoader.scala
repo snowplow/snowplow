@@ -13,8 +13,10 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
-import scalaz._
-import Scalaz._
+import cats.data.ValidatedNel
+import cats.syntax.either._
+import cats.syntax.option._
+import cats.syntax.validated._
 
 /** Loader for TSVs */
 final case class TsvLoader(adapter: String) extends Loader[String] {
@@ -25,10 +27,10 @@ final case class TsvLoader(adapter: String) extends Loader[String] {
    * @return either a set of validation errors or an Option-boxed CanonicalInput object, wrapped in
    * a Scalaz ValidationNel.
    */
-  def toCollectorPayload(line: String): ValidatedMaybeCollectorPayload =
+  def toCollectorPayload(line: String): ValidatedNel[String, Option[CollectorPayload]] =
     // Throw away the first two lines of Cloudfront web distribution access logs
     if (line.startsWith("#Version:") || line.startsWith("#Fields:")) {
-      None.success
+      None.valid
     } else {
       CollectorApi
         .parse(adapter)
@@ -49,6 +51,6 @@ final case class TsvLoader(adapter: String) extends Loader[String] {
             Some(line)
           ).some
         )
-        .toValidationNel
+        .toValidatedNel
     }
 }

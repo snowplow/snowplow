@@ -14,14 +14,14 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
+import cats.data.{Kleisli, NonEmptyList, ValidatedNel}
 import cats.instances.option._
 import cats.syntax.either._
+import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
 import io.circe._
 import io.circe.parser._
 import org.joda.time.DateTime
-import scalaz._
-import Scalaz._
 
 import loaders.CollectorPayload
 
@@ -60,29 +60,27 @@ object HubSpotAdapter extends Adapter {
    * @param resolver (implicit) The Iglu resolver used for schema lookup and validation. Not used
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
+  def toRawEvents(payload: CollectorPayload)(
+    implicit resolver: Resolver
+  ): ValidatedNel[String, NonEmptyList[RawEvent]] =
     (payload.body, payload.contentType) match {
-      case (None, _) => s"Request body is empty: no $VendorName events to process".failNel
+      case (None, _) => s"Request body is empty: no $VendorName events to process".invalidNel
       case (_, None) =>
-        s"Request body provided but content type empty, expected $ContentType for $VendorName".failNel
+        s"Request body provided but content type empty, expected $ContentType for $VendorName".invalidNel
       case (_, Some(ct)) if ct != ContentType =>
-        s"Content type of $ct provided, expected $ContentType for $VendorName".failNel
+        s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel
       case (Some(body), _) =>
         payloadBodyToEvents(body) match {
-          case Failure(str) => str.failNel
-          case Success(list) =>
+          case Left(str) => str.invalidNel
+          case Right(list) =>
             // Create our list of Validated RawEvents
-            val rawEventsList: List[Validated[RawEvent]] =
+            val rawEventsList: List[ValidatedNel[String, RawEvent]] =
               for {
                 (event, index) <- list.zipWithIndex
               } yield {
-                val eventType: Option[String] = for {
-                  obj <- event.asObject
-                  subType <- obj("subscriptionType")
-                  subTypeAsString <- subType.asString
-                } yield subTypeAsString
+                val eventType = event.hcursor.get[String]("subscriptionType").toOption
                 for {
-                  schema <- lookupSchema(eventType, VendorName, index, EventSchemaMap)
+                  schema <- lookupSchema(eventType, VendorName, index, EventSchemaMap).toValidatedNel
                 } yield {
                   val formattedEvent = reformatParameters(event)
                   val qsParams = toMap(payload.querystring)
@@ -110,12 +108,12 @@ object HubSpotAdapter extends Adapter {
    * @param body The payload body from the HubSpot event
    * @return either a Successful List of JValue JSONs or a Failure String
    */
-  private[registry] def payloadBodyToEvents(body: String): Validation[String, List[Json]] =
-    Validation.fromEither(for {
+  private[registry] def payloadBodyToEvents(body: String): Either[String, List[Json]] =
+    for {
       b <- parse(body)
         .leftMap(e => s"$VendorName payload failed to parse into JSON: [${e.getMessage}]")
       a <- b.asArray.toRight(s"Could not resolve $VendorName payload into a JSON array of events")
-    } yield a.toList)
+    } yield a.toList
 
   /**
    * Returns an updated HubSpot event JSON where the "subscriptionType" field is removed and

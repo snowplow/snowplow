@@ -14,12 +14,14 @@ package enrichments.registry
 
 import scala.util.control.NonFatal
 
+import cats.data.ValidatedNel
+import cats.syntax.either._
+import com.github.fge.jsonschema.core.report.ProcessingMessage
 import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
+import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
 import eu.bitwalker.useragentutils._
 import io.circe._
 import org.slf4j.LoggerFactory
-import scalaz._
-import Scalaz._
 
 object UserAgentUtilsEnrichmentConfig extends ParseableEnrichment {
   val supportedSchema =
@@ -30,11 +32,14 @@ object UserAgentUtilsEnrichmentConfig extends ParseableEnrichment {
   def parse(
     config: Json,
     schemaKey: SchemaKey
-  ): ValidatedNelMessage[UserAgentUtilsEnrichment.type] = {
+  ): ValidatedNel[ProcessingMessage, UserAgentUtilsEnrichment.type] = {
     log.warn(
       s"user_agent_utils enrichment is deprecated. Please visit here for more information: " +
         s"https://github.com/snowplow/snowplow/wiki/user-agent-utils-enrichment")
-    isParseable(config, schemaKey).map(_ => UserAgentUtilsEnrichment)
+    isParseable(config, schemaKey)
+      .map(_ => UserAgentUtilsEnrichment)
+      .leftMap(_.toProcessingMessage)
+      .toValidatedNel
   }
 }
 
@@ -68,7 +73,7 @@ case object UserAgentUtilsEnrichment extends Enrichment {
    * @param useragent to extract from. Should be encoded, i.e. not previously decoded.
    * @return the ClientAttributes or the message of the exception, boxed in a Scalaz Validation
    */
-  def extractClientAttributes(useragent: String): Validation[String, ClientAttributes] =
+  def extractClientAttributes(useragent: String): Either[String, ClientAttributes] =
     try {
       val ua = UserAgent.parseUserAgentString(useragent)
       val b = ua.getBrowser
@@ -85,9 +90,9 @@ case object UserAgentUtilsEnrichment extends Enrichment {
         osManufacturer = os.getManufacturer.getName,
         deviceType = os.getDeviceType.getName,
         deviceIsMobile = mobileDeviceTypes.contains(os.getDeviceType)
-      ).success
+      ).asRight
     } catch {
       case NonFatal(e) =>
-        "Exception parsing useragent [%s]: [%s]".format(useragent, e.getMessage).fail
+        "Exception parsing useragent [%s]: [%s]".format(useragent, e.getMessage).asLeft
     }
 }

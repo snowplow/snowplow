@@ -17,16 +17,17 @@ import java.net.UnknownHostException
 
 import scala.util.control.NonFatal
 
+import cats.data.{NonEmptyList, ValidatedNel}
+import cats.implicits._
+import com.github.fge.jsonschema.core.report.ProcessingMessage
 import com.snowplowanalytics.forex.oerclient._
 import com.snowplowanalytics.forex.{Forex, ForexConfig}
 import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
 import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
 import io.circe._
 import org.joda.time.DateTime
-import scalaz._
-import Scalaz._
 
-import utils.ScalazCirceUtils
+import utils.CirceUtils
 
 /** Companion object. Lets us create an CurrencyConversionEnrichment instance from a Json. */
 object CurrencyConversionEnrichmentConfig extends ParseableEnrichment {
@@ -41,30 +42,35 @@ object CurrencyConversionEnrichmentConfig extends ParseableEnrichment {
 
   // Creates a CurrencyConversionEnrichment instance from a JValue
   def parse(
-    config: Json,
+    c: Json,
     schemaKey: SchemaKey
-  ): ValidatedNelMessage[CurrencyConversionEnrichment] =
-    isParseable(config, schemaKey).flatMap { conf =>
-      (for {
-        apiKey <- ScalazCirceUtils.extract[String](config, "parameters", "apiKey")
-        baseCurrency <- ScalazCirceUtils.extract[String](config, "parameters", "baseCurrency")
-        accountType <- ScalazCirceUtils
-          .extract[String](config, "parameters", "accountType")
-          .flatMap {
-            case "DEVELOPER" => DeveloperAccount.success
-            case "ENTERPRISE" => EnterpriseAccount.success
-            case "UNLIMITED" => UnlimitedAccount.success
-            // Should never happen (prevented by schema validation)
-            case s =>
-              "accountType [%s] is not one of DEVELOPER, ENTERPRISE, and UNLIMITED"
-                .format(s)
-                .toProcessingMessage
-                .fail
+  ): ValidatedNel[ProcessingMessage, CurrencyConversionEnrichment] =
+    isParseable(c, schemaKey)
+      .leftMap(e => NonEmptyList.one(e.toProcessingMessage))
+      .flatMap { _ =>
+        (
+          CirceUtils.extract[String](c, "parameters", "apiKey").toValidatedNel,
+          CirceUtils.extract[String](c, "parameters", "baseCurrency").toValidatedNel,
+          CirceUtils
+            .extract[String](c, "parameters", "accountType")
+            .toEither
+            .flatMap {
+              case "DEVELOPER" => DeveloperAccount.asRight
+              case "ENTERPRISE" => EnterpriseAccount.asRight
+              case "UNLIMITED" => UnlimitedAccount.asRight
+              // Should never happen (prevented by schema validation)
+              case s =>
+                s"accountType [$s] is not one of DEVELOPER, ENTERPRISE, and UNLIMITED".asLeft
+            }
+            .toValidatedNel,
+          CirceUtils.extract[String](c, "parameters", "rateAt").toValidatedNel
+        ).mapN { (apiKey, baseCurrency, accountType, rateAt) =>
+            CurrencyConversionEnrichment(accountType, apiKey, baseCurrency, rateAt)
           }
-        rateAt <- ScalazCirceUtils.extract[String](config, "parameters", "rateAt")
-        enrich = CurrencyConversionEnrichment(accountType, apiKey, baseCurrency, rateAt)
-      } yield enrich).toValidationNel
-    }
+          .toEither
+          .leftMap(_.map(_.toProcessingMessage))
+      }
+      .toValidated
 }
 
 /**
@@ -92,16 +98,20 @@ final case class CurrencyConversionEnrichment(
     initialCurrency: Option[String],
     value: Option[Double],
     tstamp: DateTime
-  ): Validation[String, Option[String]] =
+  ): Either[String, Option[String]] =
     (initialCurrency, value) match {
       case (Some(ic), Some(v)) =>
-        fx.convert(v, ic).to(baseCurrency).at(tstamp) match {
-          case Left(l) =>
-            val errorType = l.errorType.getClass.getSimpleName.replace("$", "")
-            s"Open Exchange Rates error, type: [$errorType], message: [${l.errorMessage}]".failure
-          case Right(s) => (s.getAmount().toPlainString()).some.success
-        }
-      case _ => None.success
+        fx.convert(v, ic)
+          .to(baseCurrency)
+          .at(tstamp)
+          .bimap(
+            l => {
+              val errorType = l.errorType.getClass.getSimpleName.replace("$", "")
+              s"Open Exchange Rates error, type: [$errorType], message: [${l.errorMessage}]"
+            },
+            r => (r.getAmount().toPlainString()).some
+          )
+      case _ => None.asRight
     }
 
   /**
@@ -123,7 +133,7 @@ final case class CurrencyConversionEnrichment(
     tiCurrency: Option[String],
     tiPrice: Option[Double],
     collectorTstamp: Option[DateTime]
-  ): ValidationNel[String, (Option[String], Option[String], Option[String], Option[String])] =
+  ): ValidatedNel[String, (Option[String], Option[String], Option[String], Option[String])] =
     collectorTstamp match {
       case Some(tstamp) =>
         try {
@@ -131,16 +141,19 @@ final case class CurrencyConversionEnrichment(
           val newCurrencyTi = performConversion(tiCurrency, tiPrice, tstamp)
           val newTrTax = performConversion(trCurrency, trTax, tstamp)
           val newTrShipping = performConversion(trCurrency, trShipping, tstamp)
-          (newCurrencyTr.toValidationNel |@| newTrTax.toValidationNel |@| newTrShipping.toValidationNel |@| newCurrencyTi.toValidationNel) {
-            (_, _, _, _)
-          }
+          (
+            newCurrencyTr.toValidatedNel,
+            newTrTax.toValidatedNel,
+            newTrShipping.toValidatedNel,
+            newCurrencyTi.toValidatedNel
+          ).mapN((_, _, _, _))
         } catch {
           case e: NoSuchElementException =>
-            "Base currency [%s] not supported: [%s]".format(baseCurrency, e).failNel
+            "Base currency [%s] not supported: [%s]".format(baseCurrency, e).invalidNel
           case f: UnknownHostException =>
-            "Could not connect to Open Exchange Rates: [%s]".format(f).failNel
-          case NonFatal(g) => "Unexpected exception converting currency: [%s]".format(g).failNel
+            "Could not connect to Open Exchange Rates: [%s]".format(f).invalidNel
+          case NonFatal(g) => "Unexpected exception converting currency: [%s]".format(g).invalidNel
         }
-      case None => "Collector timestamp missing".failNel // This should never happen
+      case None => "Collector timestamp missing".invalidNel // This should never happen
     }
 }

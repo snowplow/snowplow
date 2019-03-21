@@ -16,12 +16,12 @@ package loaders
 import java.net.URI
 import java.nio.charset.Charset
 
-import scala.util.control.NonFatal
 import scala.collection.JavaConversions._
 
+import cats.data.ValidatedNel
+import cats.syntax.either._
+import org.apache.http.NameValuePair
 import org.apache.http.client.utils.URLEncodedUtils
-import scalaz._
-import Scalaz._
 
 /** Companion object to the CollectorLoader. Contains factory methods. */
 object Loader {
@@ -34,15 +34,15 @@ object Loader {
    * @param collector Identifier for the event collector
    * @return a CollectorLoader object, or an an error message, boxed in a Scalaz Validation
    */
-  def getLoader(collectorOrProtocol: String): Validation[String, Loader[_]] =
+  def getLoader(collectorOrProtocol: String): Either[String, Loader[_]] =
     collectorOrProtocol match {
-      case "cloudfront" => CloudfrontLoader.success
-      case "clj-tomcat" => CljTomcatLoader.success
-      case "thrift" =>
-        ThriftLoader.success // Finally - a data protocol rather than a piece of software
-      case TsvRegex(f) => TsvLoader(f).success
-      case NdjsonRegex(f) => NdjsonLoader(f).success
-      case c => "[%s] is not a recognised Snowplow event collector".format(c).fail
+      case "cloudfront" => CloudfrontLoader.asRight
+      case "clj-tomcat" => CljTomcatLoader.asRight
+      // a data protocol rather than a piece of software
+      case "thrift" => ThriftLoader.asRight
+      case TsvRegex(f) => TsvLoader(f).asRight
+      case NdjsonRegex(f) => NdjsonLoader(f).asRight
+      case c => s"[$c] is not a recognised Snowplow event collector".asLeft
     }
 }
 
@@ -55,7 +55,7 @@ abstract class Loader[T] {
    * @param line A line of data to convert
    * @return a CanonicalInput object, Option-boxed, or None if no input was extractable.
    */
-  def toCollectorPayload(line: T): ValidatedMaybeCollectorPayload
+  def toCollectorPayload(line: T): ValidatedNel[String, Option[CollectorPayload]]
 
   /**
    * Converts a querystring String into a non-empty list of NameValuePairs.
@@ -67,16 +67,14 @@ abstract class Loader[T] {
   protected[loaders] def parseQuerystring(
     qs: Option[String],
     enc: Charset
-  ): ValidatedNameValuePairs = qs match {
+  ): Either[String, List[NameValuePair]] = qs match {
     case Some(q) =>
-      try {
-        URLEncodedUtils.parse(URI.create("http://localhost/?" + q), enc).toList.success
-      } catch {
-        case NonFatal(e) =>
+      Either
+        .catchNonFatal(URLEncodedUtils.parse(URI.create("http://localhost/?" + q), enc))
+        .map(_.toList)
+        .leftMap(e =>
           "Exception extracting name-value pairs from querystring [%s] with encoding [%s]: [%s]"
-            .format(q, enc, e.getMessage)
-            .fail
-      }
-    case None => Nil.success
+            .format(q, enc, e.getMessage))
+    case None => Nil.asRight
   }
 }

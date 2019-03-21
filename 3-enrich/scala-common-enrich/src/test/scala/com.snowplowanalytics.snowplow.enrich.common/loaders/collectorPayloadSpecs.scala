@@ -14,9 +14,8 @@ package com.snowplowanalytics.snowplow.enrich.common.loaders
 
 import org.specs2.mutable.Specification
 import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
 
-class CollectorApiSpec extends Specification with DataTables with ValidationMatchers {
+class CollectorApiSpec extends Specification with DataTables {
 
   // TODO: let's abstract this up to a CollectorApi.parse test
   // (then we can make isIceRequest private again).

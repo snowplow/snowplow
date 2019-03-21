@@ -15,12 +15,9 @@ import java.net.URI
 
 import io.circe.literal._
 import org.specs2.matcher.DataTables
-import org.specs2.scalaz._
+import org.specs2.mutable.Specification
 
-class UaParserEnrichmentSpec
-    extends org.specs2.mutable.Specification
-    with ValidationMatchers
-    with DataTables {
+class UaParserEnrichmentSpec extends Specification with DataTables {
 
   val mobileSafariUserAgent =
     "Mozilla/5.0 (iPhone; CPU iPhone OS 5_1_1 like Mac OS X) AppleWebKit/534.46 (KHTML, like Gecko) Version/5.1 Mobile/9B206 Safari/7534.48.3"
@@ -53,9 +50,8 @@ class UaParserEnrichmentSpec
         None !! mobileSafariUserAgent !! mobileSafariJson |
         None !! safariUserAgent !! safariJson |
         Some(customRules) !! mobileSafariUserAgent !! testAgentJson |> { (rules, input, expected) =>
-        UaParserEnrichment(rules).extractUserAgent(input) must beSuccessful.like {
-          case a =>
-            a must_== expected
+        UaParserEnrichment(rules).extractUserAgent(input) must beRight.like {
+          case a => a must_== expected
         }
       }
     }
@@ -68,7 +64,7 @@ class UaParserEnrichmentSpec
       "Custom Rules" | "Input UserAgent" | "Parsed UserAgent" |
         Some(badRulefile) !! mobileSafariUserAgent !! "Failed to initialize ua parser" |> {
         (rules, input, errorPrefix) =>
-          UaParserEnrichment(rules).extractUserAgent(input) must beFailing.like {
+          UaParserEnrichment(rules).extractUserAgent(input) must beLeft.like {
             case a => a must startWith(errorPrefix)
           }
       }

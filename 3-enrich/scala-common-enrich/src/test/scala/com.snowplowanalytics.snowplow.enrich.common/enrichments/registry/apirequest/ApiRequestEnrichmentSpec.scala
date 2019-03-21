@@ -20,14 +20,12 @@ import io.circe.jackson.circeToJackson
 import io.circe.literal._
 import io.circe.parser._
 import org.specs2.Specification
+import org.specs2.matcher.ValidatedMatchers
 import org.specs2.mock.Mockito
-import org.specs2.scalaz.ValidationMatchers
-import scalaz._
-import Scalaz._
 
 import outputs.EnrichedEvent
 
-class ApiRequestEnrichmentSpec extends Specification with ValidationMatchers with Mockito {
+class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with Mockito {
   def is = s2"""
   This is a specification to test the ApiRequestEnrichment configuration
   Extract correct configuration for GET request and perform the request  $e1
@@ -143,7 +141,7 @@ class ApiRequestEnrichmentSpec extends Specification with ValidationMatchers wit
       }
     }""").toOption.get
 
-    ApiRequestEnrichmentConfig.parse(configuration, SCHEMA_KEY) must beSuccessful(config)
+    ApiRequestEnrichmentConfig.parse(configuration, SCHEMA_KEY) must beValid(config)
 
     val user = json"""{
       "schema": "iglu:com.acme/user/jsonschema/1-0-0",
@@ -156,7 +154,7 @@ class ApiRequestEnrichmentSpec extends Specification with ValidationMatchers wit
     apiSpy.perform(
       url = "http://api.acme.com/users/some-fancy-app-id/some-fancy-user-id?format=json",
       body = None
-    ) returns """{"record": {"name": "Fancy User", "company": "Acme"}}""".success
+    ) returns """{"record": {"name": "Fancy User", "company": "Acme"}}""".asRight
 
     val enrichedContextResult = config.lookup(
       event = fakeEnrichedEvent,
@@ -165,7 +163,7 @@ class ApiRequestEnrichmentSpec extends Specification with ValidationMatchers wit
       unstructEvent = List.empty
     )
 
-    enrichedContextResult must beSuccessful(List(user))
+    enrichedContextResult must beValid(List(user))
   }
 
   def e2 = {
@@ -216,7 +214,7 @@ class ApiRequestEnrichmentSpec extends Specification with ValidationMatchers wit
         }
       }
     }""").toOption.get
-    ApiRequestEnrichmentConfig.parse(configuration, SCHEMA_KEY) must beFailing
+    ApiRequestEnrichmentConfig.parse(configuration, SCHEMA_KEY) must beInvalid
   }
 
   def e3 = {
@@ -270,7 +268,7 @@ class ApiRequestEnrichmentSpec extends Specification with ValidationMatchers wit
         }
       }
     }""").toOption.get
-    ApiRequestEnrichmentConfig.parse(configuration, SCHEMA_KEY) must beFailing
+    ApiRequestEnrichmentConfig.parse(configuration, SCHEMA_KEY) must beInvalid
   }
 
   def e4 = {
@@ -374,7 +372,7 @@ class ApiRequestEnrichmentSpec extends Specification with ValidationMatchers wit
       }
    }""").toOption.get
 
-    ApiRequestEnrichmentConfig.parse(configuration, SCHEMA_KEY) must beSuccessful(config)
+    ApiRequestEnrichmentConfig.parse(configuration, SCHEMA_KEY) must beValid(config)
 
     val user = json"""{
       "schema": "iglu:com.acme/user/jsonschema/1-0-0",
@@ -388,7 +386,7 @@ class ApiRequestEnrichmentSpec extends Specification with ValidationMatchers wit
       url = "http://api.acme.com/users?format=json",
       body = Some(
         """{"client":"some-fancy-app-id","user":"some-fancy-user-id","userSession":"some-fancy-user-session-id"}""")
-    ) returns """{"record": {"name": "Fancy User", "company": "Acme"}}""".success
+    ) returns """{"record": {"name": "Fancy User", "company": "Acme"}}""".asRight
 
     val enrichedContextResult = config.lookup(
       event = fakeEnrichedEvent,
@@ -397,6 +395,6 @@ class ApiRequestEnrichmentSpec extends Specification with ValidationMatchers wit
       unstructEvent = List.empty
     )
 
-    enrichedContextResult must beSuccessful(List(user))
+    enrichedContextResult must beValid(List(user))
   }
 }

@@ -14,14 +14,13 @@ package com.snowplowanalytics.snowplow.enrich.common.utils
 
 import java.math.{BigInteger => JBigInteger}
 
+import cats.data.NonEmptyList
 import cats.syntax.either._
 import com.fasterxml.jackson.databind.{JsonNode, ObjectMapper}
 import io.circe._
 import io.circe.jackson._
 import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
-import scalaz._
-import Scalaz._
 
 /** Contains general purpose extractors and other utilities for JSONs. Jackson-based. */
 object JsonUtils {
@@ -35,10 +34,10 @@ object JsonUtils {
     DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(DateTimeZone.UTC)
 
   /** Validates a String as correct JSON. */
-  val extractUnencJson: (String, String) => Validation[String, String] = validateAndReformatJson
+  val extractUnencJson: (String, String) => Either[String, String] = validateAndReformatJson
 
   /** Decodes a Base64 (URL safe)-encoded String then validates it as correct JSON. */
-  val extractBase64EncJson: (String, String) => Validation[String, String] = (field, str) =>
+  val extractBase64EncJson: (String, String) => Either[String, String] = (field, str) =>
     ConversionUtils
       .decodeBase64Url(field, str)
       .flatMap(json => validateAndReformatJson(field, json))
@@ -134,7 +133,7 @@ object JsonUtils {
   private[utils] def validateAndReformatJson(
     field: String,
     str: String
-  ): Validation[String, String] =
+  ): Either[String, String] =
     extractJson(field, str).map(_.noSpaces)
 
   /**
@@ -144,14 +143,12 @@ object JsonUtils {
    * @param instance The JSON string to parse
    * @return a Scalaz Validation, wrapping either an error String or the extracted JsonNode
    */
-  def extractJson(field: String, instance: String): Validation[String, Json] =
-    io.circe.parser.parse(instance) match {
-      case Right(js) => js.success
-      case Left(e) =>
-        s"Field [$field]: invalid JSON [$instance] with parsing error: ${e.message}".fail
-    }
+  def extractJson(field: String, instance: String): Either[String, Json] =
+    io.circe.parser
+      .parse(instance)
+      .leftMap(e => s"Field [$field]: invalid JSON [$instance] with parsing error: ${e.message}")
 
-  def extractJsonNode(field: String, instance: String): Validation[String, JsonNode] =
+  def extractJsonNode(field: String, instance: String): Either[String, JsonNode] =
     extractJson(field, instance).map(circeToJackson)
 
   /**

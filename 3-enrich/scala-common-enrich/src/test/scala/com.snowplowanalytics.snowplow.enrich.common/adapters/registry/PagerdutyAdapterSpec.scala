@@ -14,21 +14,16 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
+import cats.data.NonEmptyList
+import cats.syntax.option._
 import io.circe.literal._
 import org.joda.time.DateTime
-import org.specs2.{ScalaCheck, Specification}
-import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
-import scalaz._
-import Scalaz._
+import org.specs2.Specification
+import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import loaders._
 
-class PagerdutyAdapterSpec
-    extends Specification
-    with DataTables
-    with ValidationMatchers
-    with ScalaCheck {
+class PagerdutyAdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
   This is a specification to test the PagerdutyAdapter functionality
   reformatParameters must return an updated JSON whereby all null Strings have been replaced by null $e1
@@ -94,7 +89,7 @@ class PagerdutyAdapterSpec
         }
       }
     }""")
-    PagerdutyAdapter.payloadBodyToEvents(bodyStr) must beSuccessful(expected)
+    PagerdutyAdapter.payloadBodyToEvents(bodyStr) must beRight(expected)
   }
 
   def e5 =
@@ -102,7 +97,7 @@ class PagerdutyAdapterSpec
       "Failure, parse exception" !! """{"something:"some"}""" ! """PagerDuty payload failed to parse into JSON: [expected : got 'some"}' (line 1, column 14)]""" |
       "Failure, missing messages key" !! """{"somekey":"key"}""" ! "Could not resolve PagerDuty payload into a JSON array of events" |> {
       (_, input, expected) =>
-        PagerdutyAdapter.payloadBodyToEvents(input) must beFailing(expected)
+        PagerdutyAdapter.payloadBodyToEvents(input) must beLeft(expected)
     }
 
   def e6 = {
@@ -115,7 +110,7 @@ class PagerdutyAdapterSpec
       bodyStr.some,
       Shared.cljSource,
       Shared.context)
-    val expected = NonEmptyList(
+    val expected = NonEmptyList.one(
       RawEvent(
         Shared.api,
         Map(
@@ -128,7 +123,7 @@ class PagerdutyAdapterSpec
         Shared.cljSource,
         Shared.context
       ))
-    PagerdutyAdapter.toRawEvents(payload) must beSuccessful(expected)
+    PagerdutyAdapter.toRawEvents(payload) must beValid(expected)
   }
 
   def e7 = {
@@ -142,21 +137,21 @@ class PagerdutyAdapterSpec
       Shared.cljSource,
       Shared.context)
     val expected = "PagerDuty event at index [0] failed: type parameter [trigger] not recognized"
-    PagerdutyAdapter.toRawEvents(payload) must beFailing(NonEmptyList(expected))
+    PagerdutyAdapter.toRawEvents(payload) must beInvalid(NonEmptyList.one(expected))
   }
 
   def e8 = {
     val payload =
       CollectorPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
-    PagerdutyAdapter.toRawEvents(payload) must beFailing(
-      NonEmptyList("Request body is empty: no PagerDuty events to process"))
+    PagerdutyAdapter.toRawEvents(payload) must beInvalid(
+      NonEmptyList.one("Request body is empty: no PagerDuty events to process"))
   }
 
   def e9 = {
     val payload =
       CollectorPayload(Shared.api, Nil, None, "stub".some, Shared.cljSource, Shared.context)
-    PagerdutyAdapter.toRawEvents(payload) must beFailing(
-      NonEmptyList(
+    PagerdutyAdapter.toRawEvents(payload) must beInvalid(
+      NonEmptyList.one(
         "Request body provided but content type empty, expected application/json for PagerDuty"))
   }
 
@@ -168,7 +163,7 @@ class PagerdutyAdapterSpec
       "stub".some,
       Shared.cljSource,
       Shared.context)
-    PagerdutyAdapter.toRawEvents(payload) must beFailing(NonEmptyList(
+    PagerdutyAdapter.toRawEvents(payload) must beInvalid(NonEmptyList.one(
       "Content type of application/x-www-form-urlencoded provided, expected application/json for PagerDuty"))
   }
 }

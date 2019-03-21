@@ -15,12 +15,11 @@ package enrichments.registry
 
 import io.circe.literal._
 import org.specs2.Specification
-import org.specs2.scalaz.ValidationMatchers
 
 import outputs.EnrichedEvent
 
 /** Tests the anonymzeIp function */
-class JavascriptScriptEnrichmentSpec extends Specification with ValidationMatchers {
+class JavascriptScriptEnrichmentSpec extends Specification {
   def is = s2"""
   This is a specification to test the JavascriptScriptEnrichment
   Compiling an invalid JavaScript script should fail              $e1
@@ -47,7 +46,7 @@ class JavascriptScriptEnrichmentSpec extends Specification with ValidationMatche
           |""".stripMargin
 
     val compiled = JavascriptScriptEnrichment.compile(script)
-    JavascriptScriptEnrichment(compiled.toOption.get)
+    JavascriptScriptEnrichment(compiled.right.get)
   }
 
   def buildEvent(appId: String): EnrichedEvent = {
@@ -59,13 +58,13 @@ class JavascriptScriptEnrichmentSpec extends Specification with ValidationMatche
 
   def e1 = {
     val actual = JavascriptScriptEnrichment.compile("[")
-    actual must beFailing
+    actual must beLeft
   }
 
   def e2 = {
     val event = buildEvent("guess")
     val actual = PreparedEnrichment.process(event)
-    actual must beFailing
+    actual must beLeft
   }
 
   def e3 = {
@@ -73,7 +72,7 @@ class JavascriptScriptEnrichmentSpec extends Specification with ValidationMatche
     val actual = PreparedEnrichment.process(event)
     val expected =
       json"""{"schema":"iglu:com.acme/foo/jsonschema/1-0-0","data":{"appIdUpper":"SECRET"}}"""
-    actual must beSuccessful.like { case head :: Nil => head must_== expected }
+    actual must beRight.like { case head :: Nil => head must_== expected }
   }
 
 }

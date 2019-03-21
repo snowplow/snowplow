@@ -20,11 +20,11 @@ import java.nio.charset.StandardCharsets.UTF_8
 import scala.collection.JavaConversions._
 import scala.util.{Try, Success => TS, Failure => TF}
 
+import cats.data.{NonEmptyList, ValidatedNel}
+import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
 import io.circe.syntax._
 import org.apache.http.client.utils.URLEncodedUtils
-import scalaz._
-import Scalaz._
 
 import loaders.CollectorPayload
 import utils.{JsonUtils => JU}
@@ -54,39 +54,42 @@ object StatusGatorAdapter extends Adapter {
    * @param resolver (implicit) The Iglu resolver used for schema lookup and validation. Not used
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
+  def toRawEvents(payload: CollectorPayload)(
+    implicit resolver: Resolver
+  ): ValidatedNel[String, NonEmptyList[RawEvent]] =
     (payload.body, payload.contentType) match {
-      case (None, _) => s"Request body is empty: no $VendorName events to process".failureNel
+      case (None, _) => s"Request body is empty: no $VendorName events to process".invalidNel
       case (_, None) =>
-        s"Request body provided but content type empty, expected $ContentType for $VendorName".failureNel
+        s"Request body provided but content type empty, expected $ContentType for $VendorName".invalidNel
       case (_, Some(ct)) if ct != ContentType =>
-        s"Content type of $ct provided, expected $ContentType for $VendorName".failureNel
+        s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel
       case (Some(body), _) if (body.isEmpty) =>
-        s"$VendorName event body is empty: nothing to process".failureNel
-      case (Some(body), _) => {
+        s"$VendorName event body is empty: nothing to process".invalidNel
+      case (Some(body), _) =>
         val qsParams = toMap(payload.querystring)
         Try {
           toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).toList)
         } match {
           case TF(e) =>
             val msg = JU.stripInstanceEtc(e.getMessage).orNull
-            s"$VendorName incorrect event string : [$msg]".failureNel
+            s"$VendorName incorrect event string : [$msg]".invalidNel
           case TS(bodyMap) =>
-            NonEmptyList(
-              RawEvent(
-                api = payload.api,
-                parameters = toUnstructEventParams(
-                  TrackerVersion,
-                  qsParams,
-                  EventSchema,
-                  camelize(bodyMap.asJson),
-                  "srv"),
-                contentType = payload.contentType,
-                source = payload.source,
-                context = payload.context
+            NonEmptyList
+              .one(
+                RawEvent(
+                  api = payload.api,
+                  parameters = toUnstructEventParams(
+                    TrackerVersion,
+                    qsParams,
+                    EventSchema,
+                    camelize(bodyMap.asJson),
+                    "srv"),
+                  contentType = payload.contentType,
+                  source = payload.source,
+                  context = payload.context
+                )
               )
-            ).success
+              .valid
         }
-      }
     }
 }
