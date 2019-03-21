@@ -14,20 +14,15 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
+import cats.data.NonEmptyList
+import cats.syntax.option._
 import org.joda.time.DateTime
-import org.specs2.{ScalaCheck, Specification}
-import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
-import scalaz._
-import Scalaz._
+import org.specs2.Specification
+import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
 
-class MarketoAdapterSpec
-    extends Specification
-    with DataTables
-    with ValidationMatchers
-    with ScalaCheck {
+class MarketoAdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
   This is a specification to test the MarketoAdapter functionality
   toRawEvents must return a success for a valid "event" type payload body being passed                $e1
@@ -60,7 +55,7 @@ class MarketoAdapterSpec
       bodyStr.some,
       Shared.cljSource,
       Shared.context)
-    val expected = NonEmptyList(
+    val expected = NonEmptyList.one(
       RawEvent(
         Shared.api,
         Map(
@@ -73,13 +68,13 @@ class MarketoAdapterSpec
         Shared.cljSource,
         Shared.context
       ))
-    MarketoAdapter.toRawEvents(payload) must beSuccessful(expected)
+    MarketoAdapter.toRawEvents(payload) must beValid(expected)
   }
 
   def e2 = {
     val payload =
       CollectorPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
-    MarketoAdapter.toRawEvents(payload) must beFailing(
-      NonEmptyList("Request body is empty: no Marketo event to process"))
+    MarketoAdapter.toRawEvents(payload) must beInvalid(
+      NonEmptyList.one("Request body is empty: no Marketo event to process"))
   }
 }

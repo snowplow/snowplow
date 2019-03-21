@@ -14,20 +14,15 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
+import cats.data.NonEmptyList
+import cats.syntax.option._
 import org.joda.time.DateTime
-import org.specs2.{ScalaCheck, Specification}
-import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
-import scalaz._
-import Scalaz._
+import org.specs2.Specification
+import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
 
-class VeroAdapterSpec
-    extends Specification
-    with DataTables
-    with ValidationMatchers
-    with ScalaCheck {
+class VeroAdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
   This is a specification to test the VeroAdapter functionality
   toRawEvents must return a success for a valid "sent" type payload body being passed                $e1
@@ -68,7 +63,7 @@ class VeroAdapterSpec
       bodyStr.some,
       Shared.cljSource,
       Shared.context)
-    val expected = NonEmptyList(
+    val expected = NonEmptyList.one(
       RawEvent(
         Shared.api,
         Map(
@@ -81,7 +76,7 @@ class VeroAdapterSpec
         Shared.cljSource,
         Shared.context
       ))
-    VeroAdapter.toRawEvents(payload) must beSuccessful(expected)
+    VeroAdapter.toRawEvents(payload) must beValid(expected)
   }
 
   def e2 = {
@@ -94,7 +89,7 @@ class VeroAdapterSpec
       bodyStr.some,
       Shared.cljSource,
       Shared.context)
-    val expected = NonEmptyList(
+    val expected = NonEmptyList.one(
       RawEvent(
         Shared.api,
         Map(
@@ -107,7 +102,7 @@ class VeroAdapterSpec
         Shared.cljSource,
         Shared.context
       ))
-    VeroAdapter.toRawEvents(payload) must beSuccessful(expected)
+    VeroAdapter.toRawEvents(payload) must beValid(expected)
   }
 
   def e3 = {
@@ -120,7 +115,7 @@ class VeroAdapterSpec
       bodyStr.some,
       Shared.cljSource,
       Shared.context)
-    val expected = NonEmptyList(
+    val expected = NonEmptyList.one(
       RawEvent(
         Shared.api,
         Map(
@@ -133,7 +128,7 @@ class VeroAdapterSpec
         Shared.cljSource,
         Shared.context
       ))
-    VeroAdapter.toRawEvents(payload) must beSuccessful(expected)
+    VeroAdapter.toRawEvents(payload) must beValid(expected)
   }
 
   def e4 = {
@@ -146,7 +141,7 @@ class VeroAdapterSpec
       bodyStr.some,
       Shared.cljSource,
       Shared.context)
-    val expected = NonEmptyList(
+    val expected = NonEmptyList.one(
       RawEvent(
         Shared.api,
         Map(
@@ -159,7 +154,7 @@ class VeroAdapterSpec
         Shared.cljSource,
         Shared.context
       ))
-    VeroAdapter.toRawEvents(payload) must beSuccessful(expected)
+    VeroAdapter.toRawEvents(payload) must beValid(expected)
   }
 
   def e5 = {
@@ -172,7 +167,7 @@ class VeroAdapterSpec
       bodyStr.some,
       Shared.cljSource,
       Shared.context)
-    val expected = NonEmptyList(
+    val expected = NonEmptyList.one(
       RawEvent(
         Shared.api,
         Map(
@@ -185,7 +180,7 @@ class VeroAdapterSpec
         Shared.cljSource,
         Shared.context
       ))
-    VeroAdapter.toRawEvents(payload) must beSuccessful(expected)
+    VeroAdapter.toRawEvents(payload) must beValid(expected)
   }
 
   def e6 = {
@@ -198,7 +193,7 @@ class VeroAdapterSpec
       bodyStr.some,
       Shared.cljSource,
       Shared.context)
-    val expected = NonEmptyList(
+    val expected = NonEmptyList.one(
       RawEvent(
         Shared.api,
         Map(
@@ -211,7 +206,7 @@ class VeroAdapterSpec
         Shared.cljSource,
         Shared.context
       ))
-    VeroAdapter.toRawEvents(payload) must beSuccessful(expected)
+    VeroAdapter.toRawEvents(payload) must beValid(expected)
   }
 
   def e7 = {
@@ -224,7 +219,7 @@ class VeroAdapterSpec
       bodyStr.some,
       Shared.cljSource,
       Shared.context)
-    val expected = NonEmptyList(
+    val expected = NonEmptyList.one(
       RawEvent(
         Shared.api,
         Map(
@@ -237,7 +232,7 @@ class VeroAdapterSpec
         Shared.cljSource,
         Shared.context
       ))
-    VeroAdapter.toRawEvents(payload) must beSuccessful(expected)
+    VeroAdapter.toRawEvents(payload) must beValid(expected)
   }
 
   def e8 = {
@@ -250,7 +245,7 @@ class VeroAdapterSpec
       bodyStr.some,
       Shared.cljSource,
       Shared.context)
-    val expected = NonEmptyList(
+    val expected = NonEmptyList.one(
       RawEvent(
         Shared.api,
         Map(
@@ -263,7 +258,7 @@ class VeroAdapterSpec
         Shared.cljSource,
         Shared.context
       ))
-    VeroAdapter.toRawEvents(payload) must beSuccessful(expected)
+    VeroAdapter.toRawEvents(payload) must beValid(expected)
   }
 
   def e9 =
@@ -287,8 +282,8 @@ class VeroAdapterSpec
           Shared.context)
         val expectedJson = "{\"schema\":\"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0\",\"data\":{\"schema\":\"" + expected + "\",\"data\":{}}}"
         val actual = VeroAdapter.toRawEvents(payload)
-        actual must beSuccessful(
-          NonEmptyList(
+        actual must beValid(
+          NonEmptyList.one(
             RawEvent(
               Shared.api,
               Map("tv" -> "com.getvero-v1", "e" -> "ue", "p" -> "srv", "ue_pr" -> expectedJson),
@@ -300,7 +295,7 @@ class VeroAdapterSpec
   def e10 = {
     val payload =
       CollectorPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
-    VeroAdapter.toRawEvents(payload) must beFailing(
-      NonEmptyList("Request body is empty: no Vero event to process"))
+    VeroAdapter.toRawEvents(payload) must beInvalid(
+      NonEmptyList.one("Request body is empty: no Vero event to process"))
   }
 }

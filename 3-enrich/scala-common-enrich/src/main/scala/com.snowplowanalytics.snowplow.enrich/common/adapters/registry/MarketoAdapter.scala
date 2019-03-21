@@ -14,14 +14,14 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
+import cats.data.{NonEmptyList, ValidatedNel}
 import cats.syntax.either._
+import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
 import io.circe._
 import io.circe.parser._
 import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormat
-import scalaz._
-import Scalaz._
 
 import loaders.CollectorPayload
 import utils.{JsonUtils => JU}
@@ -68,15 +68,16 @@ object MarketoAdapter extends Adapter {
    * @param payload Rest of the payload details
    * @return a validated JSON payload on Success, or a NEL
    */
-  private def payloadBodyToEvent(json: String, payload: CollectorPayload): Validated[RawEvent] =
-    for {
-      parsed <- parse(json) match {
-        case Right(json) => json.successNel
-        case Left(e) => s"$VendorName event failed to parse into JSON: [${e.getMessage}]".failureNel
-      }
+  private def payloadBodyToEvent(
+    json: String,
+    payload: CollectorPayload
+  ): ValidatedNel[String, RawEvent] =
+    (for {
+      parsed <- parse(json)
+        .leftMap(e => s"$VendorName event failed to parse into JSON: [${e.getMessage}]")
 
-      parsedConverted <- if (parsed.isObject) reformatParameters(parsed).successNel
-      else s"$VendorName event is not a json object".failureNel
+      parsedConverted <- if (parsed.isObject) reformatParameters(parsed).asRight
+      else s"$VendorName event is not a json object".asLeft
 
       // The payload doesn't contain a "type" field so we're constraining the eventType to be of
       // type "event"
@@ -94,7 +95,7 @@ object MarketoAdapter extends Adapter {
         contentType = payload.contentType,
         source = payload.source,
         context = payload.context)
-    } yield rawEvent
+    } yield rawEvent).toValidatedNel
 
   /**
    * Converts a CollectorPayload instance into raw events.
@@ -106,13 +107,14 @@ object MarketoAdapter extends Adapter {
    * @param resolver (implicit) The Iglu resolver used for schema lookup and validation. Not used
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  override def toRawEvents(payload: CollectorPayload)(implicit r: Resolver): ValidatedRawEvents =
+  override def toRawEvents(payload: CollectorPayload)(
+    implicit r: Resolver
+  ): ValidatedNel[String, NonEmptyList[RawEvent]] =
     (payload.body, payload.contentType) match {
-      case (None, _) => s"Request body is empty: no $VendorName event to process".failureNel
-      case (Some(body), _) => {
+      case (None, _) => s"Request body is empty: no $VendorName event to process".invalidNel
+      case (Some(body), _) =>
         val event = payloadBodyToEvent(body, payload)
         rawEventsListProcessor(List(event))
-      }
     }
 
   private[registry] def reformatParameters(json: Json): Json =

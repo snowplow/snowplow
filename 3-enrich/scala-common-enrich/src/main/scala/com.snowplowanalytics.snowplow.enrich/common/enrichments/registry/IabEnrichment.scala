@@ -16,6 +16,9 @@ package enrichments.registry
 import java.io.File
 import java.net.{InetAddress, URI, UnknownHostException}
 
+import cats.data.{NonEmptyList, ValidatedNel}
+import cats.implicits._
+import com.github.fge.jsonschema.core.report.ProcessingMessage
 import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
 import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
 import com.snowplowanalytics.iab.spidersandrobotsclient.IabClient
@@ -23,10 +26,8 @@ import io.circe._
 import io.circe.generic.auto._
 import io.circe.syntax._
 import org.joda.time.DateTime
-import scalaz._
-import Scalaz._
 
-import utils.{ConversionUtils, ScalazCirceUtils}
+import utils.{CirceUtils, ConversionUtils}
 
 /** Companion object. Lets us create an IabEnrichment instance from a Json. */
 object IabEnrichment extends ParseableEnrichment {
@@ -40,22 +41,28 @@ object IabEnrichment extends ParseableEnrichment {
 
   /**
    * Creates an IabEnrichment instance from a Json.
-   * @param config    The iab_spiders_and_robots_enrichment JSON
+   * @param c The iab_spiders_and_robots_enrichment JSON
    * @param schemaKey provided for the enrichment, must be supported by this enrichment
    * @param localMode Whether to use the local IAB database file, enabled for tests
    * @return a configured IabEnrichment instance
    */
   def parse(
-    config: Json,
+    c: Json,
     schemaKey: SchemaKey,
     localMode: Boolean
-  ): ValidatedNelMessage[IabEnrichment] =
-    isParseable(config, schemaKey).flatMap { conf =>
-      def uri(name: String) = getIabDbFromName(conf, name)
-      (uri("ipFile") |@| uri("excludeUseragentFile") |@| uri("includeUseragentFile")) {
-        case (ip, exclude, include) => IabEnrichment(ip.some, exclude.some, include.some, localMode)
+  ): ValidatedNel[ProcessingMessage, IabEnrichment] =
+    isParseable(c, schemaKey)
+      .leftMap(e => NonEmptyList.one(e.toProcessingMessage))
+      .flatMap { _ =>
+        (
+          getIabDbFromName(c, "ipFile"),
+          getIabDbFromName(c, "excludeUseragentFile"),
+          getIabDbFromName(c, "includeUseragentFile")
+        ).mapN { (ip, exclude, include) =>
+          IabEnrichment(ip.some, exclude.some, include.some, localMode)
+        }.toEither
       }
-    }
+      .toValidated
 
   /**
    * Creates IabDatabase instances used in the IabEnrichment case class.
@@ -67,13 +74,15 @@ object IabEnrichment extends ParseableEnrichment {
   private def getIabDbFromName(
     config: Json,
     name: String
-  ): ValidatedNelMessage[IabDatabase] = {
-    val uri = ScalazCirceUtils.extract[String](config, "parameters", name, "uri")
-    val db = ScalazCirceUtils.extract[String](config, "parameters", name, "database")
+  ): ValidatedNel[ProcessingMessage, IabDatabase] = {
+    val uri = CirceUtils.extract[String](config, "parameters", name, "uri")
+    val db = CirceUtils.extract[String](config, "parameters", name, "database")
 
-    (uri.toValidationNel |@| db.toValidationNel) { (uri, db) =>
-      getDatabaseUri(uri, db).toValidationNel.map[IabDatabase](u => IabDatabase(name, u, db))
-    }.flatMap(identity)
+    // better-monadic-for
+    (for {
+      uriAndDb <- (uri.toValidatedNel, db.toValidatedNel).mapN { (_, _) }.toEither
+      uri <- getDatabaseUri(uriAndDb._1, uriAndDb._2).leftMap(NonEmptyList.one)
+    } yield IabDatabase(name, uri, uriAndDb._2)).leftMap(_.map(_.toProcessingMessage)).toValidated
   }
 
   /**
@@ -82,14 +91,13 @@ object IabEnrichment extends ParseableEnrichment {
    * @param database Name of the IAB database
    * @return a Validation-boxed URI
    */
-  private def getDatabaseUri(uri: String, database: String): ValidatedMessage[URI] =
+  private def getDatabaseUri(uri: String, database: String): Either[String, URI] =
     ConversionUtils
       .stringToUri(uri + (if (uri.endsWith("/")) "" else "/") + database)
       .flatMap {
-        case Some(u) => u.success
-        case None => "URI to IAB file must be provided".fail
+        case Some(u) => u.asRight
+        case None => "URI to IAB file must be provided".asLeft
       }
-      .toProcessingMessage
 }
 
 /**
@@ -99,7 +107,7 @@ object IabEnrichment extends ParseableEnrichment {
  * @param includeUaFile (Full URI to the IAB included user agent list, database name)
  * @param localMode Whether to use the local database file. Enabled for tests.
  */
-case class IabEnrichment(
+final case class IabEnrichment(
   ipFile: Option[IabDatabase],
   excludeUaFile: Option[IabDatabase],
   includeUaFile: Option[IabDatabase],
@@ -148,16 +156,17 @@ case class IabEnrichment(
     userAgent: String,
     ipAddress: String,
     accurateAt: DateTime
-  ): Validation[String, IabEnrichmentResponse] =
+  ): Either[String, IabEnrichmentResponse] =
     try {
       val result = iabClient.checkAt(userAgent, InetAddress.getByName(ipAddress), accurateAt.toDate)
       IabEnrichmentResponse(
         result.isSpiderOrRobot,
         result.getCategory.toString,
         result.getReason.toString,
-        result.getPrimaryImpact.toString).success
+        result.getPrimaryImpact.toString
+      ).asRight
     } catch {
-      case exc: UnknownHostException => s"IP address $ipAddress was invald".failure
+      case exc: UnknownHostException => s"IP address $ipAddress was invald".asLeft
     }
 
   /**
@@ -171,7 +180,7 @@ case class IabEnrichment(
     userAgent: Option[String],
     ipAddress: Option[String],
     accurateAt: Option[DateTime]
-  ): Validation[String, Json] = getIab(userAgent, ipAddress, accurateAt).map(addSchema)
+  ): Either[String, Json] = getIab(userAgent, ipAddress, accurateAt).map(addSchema)
 
   /**
    * Get IAB check response received from the client library and extracted as a JSON object
@@ -184,12 +193,12 @@ case class IabEnrichment(
     userAgent: Option[String],
     ipAddress: Option[String],
     time: Option[DateTime]
-  ): Validation[String, Json] =
+  ): Either[String, Json] =
     (userAgent, ipAddress, time) match {
       case (Some(ua), Some(ip), Some(t)) => performCheck(ua, ip, t).map(_.asJson)
       case _ =>
         ("One of required event fields missing. " +
-          s"user agent: $userAgent, ip address: $ipAddress, time: $time").failure
+          s"user agent: $userAgent, ip address: $ipAddress, time: $time").asLeft
     }
 
   /**

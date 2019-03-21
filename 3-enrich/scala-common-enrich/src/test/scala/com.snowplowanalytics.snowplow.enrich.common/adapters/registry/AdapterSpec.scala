@@ -14,30 +14,30 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
+import cats.data.{NonEmptyList, Validated}
+import cats.syntax.option._
+import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.Resolver
 import io.circe._
 import io.circe.literal._
 import org.joda.time.DateTime
-import org.specs2.{ScalaCheck, Specification}
-import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
-import scalaz._
-import Scalaz._
+import org.specs2.Specification
+import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import SpecHelpers._
 import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
 
-class AdapterSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck {
+class AdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
   This is a specification to test the Adapter trait's functionality
   toMap should convert a list of name-value pairs into a map                                                 $e1
   toUnstructEventParams should generate a boilerplate set of parameters for an empty unstructured event      $e2
   toUnstructEventParams should preserve nuid, aid, cv, url, eid, ttm and p outside of the unstructured event $e3
-  lookupSchema must return a Success Nel for a valid key being passed against an event-schema map            $e4
-  lookupSchema must return a Failure Nel for an invalid key being passed against an event-schema map         $e5
-  lookupSchema must return a Failure Nel with an index if one is passed to it                                $e6
-  rawEventsListProcessor must return a Failure Nel if there are any Failures in the list                     $e7
-  rawEventsListProcessor must return a Success Nel of RawEvents if the list is full of success               $e8
+  lookupSchema must return a Validated.Valid Nel for a valid key being passed against an event-schema map            $e4
+  lookupSchema must return a Validated.Invalid Nel for an invalid key being passed against an event-schema map         $e5
+  lookupSchema must return a Validated.Invalid Nel with an index if one is passed to it                                $e6
+  rawEventsListProcessor must return a Validated.Invalid Nel if there are any Validated.Invalids in the list                     $e7
+  rawEventsListProcessor must return a Validated.Valid Nel of RawEvents if the list is full of success               $e8
   cleanupJsonEventValues must clean 'ts':[JInt, JString] fields into to a valid JsonSchema date-time format  $e9
   cleanupJsonEventValues must remove key-pairs if specified                                                  $e10
   """
@@ -47,7 +47,7 @@ class AdapterSpec extends Specification with DataTables with ValidationMatchers 
   implicit val resolver = SpecHelpers.IgluResolver
 
   object BaseAdapter extends Adapter {
-    def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver) = "Base".failNel
+    def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver) = "Base".invalidNel
   }
 
   object Shared {
@@ -114,7 +114,7 @@ class AdapterSpec extends Specification with DataTables with ValidationMatchers 
 
   def e4 = {
     val expected = "iglu:com.adaptertest/test/jsonschema/1-0-0"
-    BaseAdapter.lookupSchema("adapterTest".some, "Adapter", SchemaMap) must beSuccessful(expected)
+    BaseAdapter.lookupSchema("adapterTest".some, "Adapter", SchemaMap) must beRight(expected)
   }
 
   def e5 =
@@ -123,13 +123,13 @@ class AdapterSpec extends Specification with DataTables with ValidationMatchers 
       "Failing, empty type" !! Some("") ! "Adapter event failed: type parameter is empty - cannot determine event type" |
       "Failing, bad type passed" !! Some("bad") ! "Adapter event failed: type parameter [bad] not recognized" |> {
       (_, et, expected) =>
-        BaseAdapter.lookupSchema(et, "Adapter", SchemaMap) must beFailing(NonEmptyList(expected))
+        BaseAdapter.lookupSchema(et, "Adapter", SchemaMap) must beLeft(expected)
     }
 
   def e6 = {
     val expected =
       "Adapter event at index [2] failed: type parameter not provided - cannot determine event type"
-    BaseAdapter.lookupSchema(None, "Adapter", 2, SchemaMap) must beFailing(NonEmptyList(expected))
+    BaseAdapter.lookupSchema(None, "Adapter", 2, SchemaMap) must beLeft(expected)
   }
 
   def e7 = {
@@ -141,11 +141,12 @@ class AdapterSpec extends Specification with DataTables with ValidationMatchers 
       Shared.context)
     val validatedRawEventsList =
       List(
-        Success(rawEvent),
-        Failure(NonEmptyList("This is a failure string-1")),
-        Failure(NonEmptyList("This is a failure string-2")))
-    val expected = NonEmptyList("This is a failure string-1", "This is a failure string-2")
-    BaseAdapter.rawEventsListProcessor(validatedRawEventsList) must beFailing(expected)
+        Validated.Valid(rawEvent),
+        Validated.Invalid(NonEmptyList.one("This is a failure string-1")),
+        Validated.Invalid(NonEmptyList.one("This is a failure string-2"))
+      )
+    val expected = NonEmptyList.of("This is a failure string-1", "This is a failure string-2")
+    BaseAdapter.rawEventsListProcessor(validatedRawEventsList) must beInvalid(expected)
   }
 
   def e8 = {
@@ -155,8 +156,9 @@ class AdapterSpec extends Specification with DataTables with ValidationMatchers 
       Shared.contentType.some,
       Shared.cljSource,
       Shared.context)
-    val validatedRawEventsList = List(Success(rawEvent), Success(rawEvent), Success(rawEvent))
-    val expected = NonEmptyList(
+    val validatedRawEventsList =
+      List(Validated.Valid(rawEvent), Validated.Valid(rawEvent), Validated.Valid(rawEvent))
+    val expected = NonEmptyList.of(
       RawEvent(
         Shared.api,
         Map("tv" -> "com.adapter-v1", "e" -> "ue", "p" -> "srv"),
@@ -176,7 +178,7 @@ class AdapterSpec extends Specification with DataTables with ValidationMatchers 
         Shared.cljSource,
         Shared.context)
     )
-    BaseAdapter.rawEventsListProcessor(validatedRawEventsList) must beSuccessful(expected)
+    BaseAdapter.rawEventsListProcessor(validatedRawEventsList) must beValid(expected)
   }
 
   def e9 =

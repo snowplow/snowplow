@@ -12,13 +12,11 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.loaders
 
-import org.specs2.{ScalaCheck, Specification}
-import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
-import scalaz._
-import Scalaz._
+import cats.syntax.option._
+import org.specs2.Specification
+import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
-class TsvLoaderSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck {
+class TsvLoaderSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
   This is a specification to test the TsvLoader functionality
   toCollectorPayload should return a CollectorPayload for a normal TSV                                      $e1
@@ -34,11 +32,11 @@ class TsvLoaderSpec extends Specification with DataTables with ValidationMatcher
       source = CollectorSource("tsv", "UTF-8", None),
       context = CollectorContext(None, None, None, None, Nil, None)
     )
-    TsvLoader("com.amazon.aws.cloudfront/wd_access_log").toCollectorPayload("a\tb") must beSuccessful(
+    TsvLoader("com.amazon.aws.cloudfront/wd_access_log").toCollectorPayload("a\tb") must beValid(
       expected.some)
   }
 
   def e2 =
-    TsvLoader("com.amazon.aws.cloudfront/wd_access_log").toCollectorPayload("#Version: 1.0") must beSuccessful(
+    TsvLoader("com.amazon.aws.cloudfront/wd_access_log").toCollectorPayload("#Version: 1.0") must beValid(
       None)
 }

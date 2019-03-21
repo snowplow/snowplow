@@ -16,8 +16,8 @@ package web
 
 import java.net.URI
 
-import scalaz._
-import Scalaz._
+import cats.syntax.either._
+import cats.syntax.option._
 
 import utils.{ConversionUtils => CU}
 
@@ -33,12 +33,13 @@ object PageEnrichments {
    */
   def extractPageUri(
     fromReferer: Option[String],
-    fromTracker: Option[String]): Validation[String, Option[URI]] =
+    fromTracker: Option[String]
+  ): Either[String, Option[URI]] =
     (fromReferer, fromTracker) match {
       case (Some(r), None) => CU.stringToUri(r)
       case (None, Some(t)) => CU.stringToUri(t)
       case (Some(r), Some(t)) => CU.stringToUri(t) // Tracker URL takes precedence
-      case (None, None) => None.success // No page URI available. Not a failable offence
+      case (None, None) => None.asRight // No page URI available. Not a failable offence
     }
 
   /**
@@ -48,19 +49,20 @@ object PageEnrichments {
    * @return Validation boxing a pair of optional strings corresponding to the two fields
    */
   def parseCrossDomain(
-    qsMap: Map[String, String]): Validation[String, (Option[String], Option[String])] =
+    qsMap: Map[String, String]
+  ): Either[String, (Option[String], Option[String])] =
     qsMap.get("_sp") match {
-      case Some("") => (None, None).success
+      case Some("") => (None, None).asRight
       case Some(sp) =>
         val crossDomainElements = sp.split("\\.")
 
         val duid = CU.makeTsvSafe(crossDomainElements(0)).some
         val tstamp = crossDomainElements.lift(1) match {
           case Some(spDtm) => EventEnrichments.extractTimestamp("sp_dtm", spDtm).map(_.some)
-          case None => None.success
+          case None => None.asRight
         }
 
         tstamp.map(duid -> _)
-      case None => (None -> None).success
+      case None => (None -> None).asRight
     }
 }

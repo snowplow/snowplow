@@ -15,19 +15,20 @@ package enrichments
 
 import java.net.URI
 
+import cats.data.{NonEmptyList, ValidatedNel}
+import cats.implicits._
+import com.github.fge.jsonschema.core.report.ProcessingMessage
 import com.snowplowanalytics.iglu.client.{Resolver, SchemaCriterion, SchemaKey}
 import com.snowplowanalytics.iglu.client.validation.ValidatableJsonMethods._
 import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
 import io.circe._
 import io.circe.jackson._
-import scalaz._
-import Scalaz._
 
 import registry._
 import registry.apirequest.{ApiRequestEnrichment, ApiRequestEnrichmentConfig}
 import registry.pii.PiiPseudonymizerEnrichment
 import registry.sqlquery.{SqlQueryEnrichment, SqlQueryEnrichmentConfig}
-import utils.ScalazCirceUtils
+import utils.CirceUtils
 
 /** Companion which holds a constructor for the EnrichmentRegistry. */
 object EnrichmentRegistry {
@@ -45,36 +46,37 @@ object EnrichmentRegistry {
    * @todo remove all the JsonNode round-tripping when we have ValidatableJValue
    */
   def parse(node: Json, localMode: Boolean)(
-    implicit resolver: Resolver): ValidatedNelMessage[EnrichmentRegistry] = {
-    // Check schema, validate against schema, convert to List[JValue]
-    val enrichments: ValidatedNelMessage[List[Json]] = for {
-      d <- circeToJackson(node).verifySchemaAndValidate(EnrichmentConfigSchemaCriterion, true)
-    } yield
-      jacksonToCirce(d).asArray match {
-        case Some(array) => array.toList
-        case _ =>
-          throw new Exception(
-            "Enrichments JSON not an array - the enrichments JSON schema should" +
-              " prevent this happening")
+    implicit resolver: Resolver
+  ): ValidatedNel[ProcessingMessage, EnrichmentRegistry] =
+    (for {
+      validated <- circeToJackson(node).verifySchemaAndValidate(
+        EnrichmentConfigSchemaCriterion,
+        true) match {
+        case scalaz.Success(j) => j.asRight
+        case scalaz.Failure(e) => NonEmptyList.of(e.head, e.tail: _*).asLeft
       }
-
-    // Check each enrichment validates against its own schema
-    val configs: ValidatedNelMessage[EnrichmentMap] = (for {
-      jsons <- enrichments
-    } yield
-      for {
-        json <- jsons
-      } yield
-        for {
-          pair <- circeToJackson(json).validateAndIdentifySchema(dataOnly = true)
-          conf <- buildEnrichmentConfig(pair._1, jacksonToCirce(pair._2), localMode)
-        } yield conf)
-      .flatMap(_.sequenceU) // Swap nested List[scalaz.Validation[...]
-      .map(_.flatten.toMap) // Eliminate our Option boxing (drop Nones)
-
-    // Build an EnrichmentRegistry from the Map
-    configs.bimap(e => NonEmptyList(e.toString.toProcessingMessage), s => EnrichmentRegistry(s))
-  }
+      enrichments <- jacksonToCirce(validated).asArray match {
+        case Some(array) => array.toList.asRight
+        case _ =>
+          NonEmptyList
+            .one(
+              "Enrichments JSON is not an array, the schema should prevent this from happening".toProcessingMessage
+            )
+            .asLeft
+      }
+      configs <- enrichments
+        .map { json =>
+          for {
+            pair <- circeToJackson(json).validateAndIdentifySchema(dataOnly = true) match {
+              case scalaz.Success(p) => p.asRight
+              case scalaz.Failure(e) => NonEmptyList.of(e.head, e.tail: _*).asLeft
+            }
+            conf <- buildEnrichmentConfig(pair._1, jacksonToCirce(pair._2), localMode).toEither
+          } yield conf
+        }
+        .sequence
+        .map(_.flatten.toMap)
+    } yield configs).map(EnrichmentRegistry.apply).toValidated
 
   /**
    * Builds an Enrichment from a Json if it has a recognized name field and matches a schema key
@@ -88,57 +90,57 @@ object EnrichmentRegistry {
     schemaKey: SchemaKey,
     enrichmentConfig: Json,
     localMode: Boolean
-  ): ValidatedNelMessage[Option[Tuple2[String, Enrichment]]] = {
-
-    val enabled = ScalazCirceUtils.extract[Boolean](enrichmentConfig, "enabled").toValidationNel
-
-    enabled match {
-      case Success(false) => None.success.toValidationNel // Enrichment is disabled
-      case e => {
-        val name = ScalazCirceUtils.extract[String](enrichmentConfig, "name").toValidationNel
-        name.flatMap(nm => {
-
-          if (nm == "ip_lookups") {
-            IpLookupsEnrichment.parse(enrichmentConfig, schemaKey, localMode).map((nm, _).some)
-          } else if (nm == "anon_ip") {
-            AnonIpEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-          } else if (nm == "referer_parser") {
-            RefererParserEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-          } else if (nm == "campaign_attribution") {
-            CampaignAttributionEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-          } else if (nm == "user_agent_utils_config") {
-            UserAgentUtilsEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-          } else if (nm == "ua_parser_config") {
-            UaParserEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+  ): ValidatedNel[ProcessingMessage, Option[(String, Enrichment)]] =
+    CirceUtils.extract[Boolean](enrichmentConfig, "enabled").toEither match {
+      case Right(false) => None.validNel // Enrichment is disabled
+      case e =>
+        val name = CirceUtils
+          .extract[String](enrichmentConfig, "name")
+          .leftMap(_.toProcessingMessage)
+          .toValidatedNel
+          .toEither
+        name.flatMap { nm =>
+          (if (nm == "ip_lookups") {
+             IpLookupsEnrichment.parse(enrichmentConfig, schemaKey, localMode).map((nm, _).some)
+           } else if (nm == "anon_ip") {
+             AnonIpEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+           } else if (nm == "referer_parser") {
+             RefererParserEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+           } else if (nm == "campaign_attribution") {
+             CampaignAttributionEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+           } else if (nm == "user_agent_utils_config") {
+             UserAgentUtilsEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+           } else if (nm == "ua_parser_config") {
+             UaParserEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "yauaa_enrichment_config") {
             YauaaEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-          } else if (nm == "currency_conversion_config") {
-            CurrencyConversionEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-          } else if (nm == "javascript_script_config") {
-            JavascriptScriptEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-          } else if (nm == "event_fingerprint_config") {
-            EventFingerprintEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-          } else if (nm == "cookie_extractor_config") {
-            CookieExtractorEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-          } else if (nm == "http_header_extractor_config") {
-            HttpHeaderExtractorEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-          } else if (nm == "weather_enrichment_config") {
-            WeatherEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-          } else if (nm == "api_request_enrichment_config") {
-            ApiRequestEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-          } else if (nm == "sql_query_enrichment_config") {
-            SqlQueryEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-          } else if (nm == "pii_enrichment_config") {
-            PiiPseudonymizerEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-          } else if (nm == "iab_spiders_and_robots_enrichment") {
-            IabEnrichment.parse(enrichmentConfig, schemaKey, localMode).map((nm, _).some)
-          } else {
-            None.success // Enrichment is not recognized yet
-          }
-        })
-      }
+           } else if (nm == "currency_conversion_config") {
+             CurrencyConversionEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+           } else if (nm == "javascript_script_config") {
+             JavascriptScriptEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+           } else if (nm == "event_fingerprint_config") {
+             EventFingerprintEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+           } else if (nm == "cookie_extractor_config") {
+             CookieExtractorEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+           } else if (nm == "http_header_extractor_config") {
+             HttpHeaderExtractorEnrichmentConfig
+               .parse(enrichmentConfig, schemaKey)
+               .map((nm, _).some)
+           } else if (nm == "weather_enrichment_config") {
+             WeatherEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+           } else if (nm == "api_request_enrichment_config") {
+             ApiRequestEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+           } else if (nm == "sql_query_enrichment_config") {
+             SqlQueryEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+           } else if (nm == "pii_enrichment_config") {
+             PiiPseudonymizerEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+           } else if (nm == "iab_spiders_and_robots_enrichment") {
+             IabEnrichment.parse(enrichmentConfig, schemaKey, localMode).map((nm, _).some)
+           } else {
+             None.validNel // Enrichment is not recognized yet
+           }).toEither
+        }.toValidated
     }
-  }
 }
 
 /**

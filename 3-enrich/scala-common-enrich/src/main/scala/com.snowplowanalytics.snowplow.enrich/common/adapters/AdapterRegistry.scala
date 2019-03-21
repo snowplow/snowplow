@@ -13,9 +13,9 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 
+import cats.data.{NonEmptyList, ValidatedNel}
+import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.Resolver
-import scalaz._
-import Scalaz._
 
 import loaders.CollectorPayload
 import registry._
@@ -102,7 +102,9 @@ class AdapterRegistry(remoteAdapters: Map[(String, String), RemoteAdapter] = Map
    * @param resolver (implicit) The Iglu resolver used for schema lookup and validation
    * @return either a NEL of RawEvents on Success, or a NEL of Strings on Failure
    */
-  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
+  def toRawEvents(payload: CollectorPayload)(
+    implicit resolver: Resolver
+  ): ValidatedNel[String, NonEmptyList[RawEvent]] =
     (payload.api.vendor, payload.api.version) match {
       case (Vendor.Snowplow, "tp1") => SpTp1Adapter.toRawEvents(payload)
       case (Vendor.Snowplow, "tp2") => SpTp2Adapter.toRawEvents(payload)
@@ -126,6 +128,6 @@ class AdapterRegistry(remoteAdapters: Map[(String, String), RemoteAdapter] = Map
       case (Vendor.Vero, "v1") => VeroAdapter.toRawEvents(payload)
       case (Vendor.HubSpot, "v1") => HubSpotAdapter.toRawEvents(payload)
       case _ =>
-        s"Payload with vendor ${payload.api.vendor} and version ${payload.api.version} not supported by this version of Scala Common Enrich".failNel
+        s"Payload with vendor ${payload.api.vendor} and version ${payload.api.version} not supported by this version of Scala Common Enrich".invalidNel
     }
 }

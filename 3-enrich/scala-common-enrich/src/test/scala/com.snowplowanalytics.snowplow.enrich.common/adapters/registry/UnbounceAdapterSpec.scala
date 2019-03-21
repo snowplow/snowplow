@@ -14,21 +14,16 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
+import cats.data.NonEmptyList
+import cats.syntax.option._
 import org.joda.time.DateTime
-import org.specs2.{ScalaCheck, Specification}
-import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
-import scalaz._
-import Scalaz._
+import org.specs2.Specification
+import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
 import SpecHelpers._
 
-class UnbounceAdapterSpec
-    extends Specification
-    with DataTables
-    with ValidationMatchers
-    with ScalaCheck {
+class UnbounceAdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
     This is a specification to test the UnbounceAdapter functionality
     toRawEvents must return a Success Nel if the query string is valid                            $e1
@@ -111,22 +106,22 @@ class UnbounceAdapterSpec
           |}
         |}
       |}""".stripMargin.replaceAll("[\n\r]", "")
-    val expected = NonEmptyList(
+    val expected = NonEmptyList.one(
       RawEvent(
         Shared.api,
         Map("tv" -> "com.unbounce-v1", "e" -> "ue", "p" -> "srv", "ue_pr" -> expectedJson),
         ContentType.some,
         Shared.cljSource,
         Shared.context))
-    UnbounceAdapter.toRawEvents(payload) must beSuccessful(expected)
+    UnbounceAdapter.toRawEvents(payload) must beValid(expected)
   }
 
   def e2 = {
     val params = toNameValuePairs("schema" -> "iglu:com.unbounce/test/jsonschema/1-0-0")
     val payload =
       CollectorPayload(Shared.api, params, ContentType.some, None, Shared.cljSource, Shared.context)
-    UnbounceAdapter.toRawEvents(payload) must beFailing(
-      NonEmptyList("Request body is empty: no Unbounce events to process"))
+    UnbounceAdapter.toRawEvents(payload) must beInvalid(
+      NonEmptyList.one("Request body is empty: no Unbounce events to process"))
   }
 
   def e3 = {
@@ -134,7 +129,7 @@ class UnbounceAdapterSpec
       "page_id=f7afd389-65a3-45fa-8bad-b7a42236044c&page_name=Test-Webhook&variant=a&page_url=http%3A%2F%2Funbouncepages.com%2Ftest-webhook-1&data.json=%7B%22email%22%3A%5B%22test%40snowplowanalytics.com%22%5D%2C%22ip_address%22%3A%5B%22200.121.220.179%22%5D%2C%22time_submitted%22%3A%5B%2204%3A17%20PM%20UTC%22%5D%7D"
     val payload =
       CollectorPayload(Shared.api, Nil, None, body.some, Shared.cljSource, Shared.context)
-    UnbounceAdapter.toRawEvents(payload) must beFailing(NonEmptyList(
+    UnbounceAdapter.toRawEvents(payload) must beInvalid(NonEmptyList.one(
       "Request body provided but content type empty, expected application/x-www-form-urlencoded for Unbounce"))
   }
 
@@ -144,7 +139,7 @@ class UnbounceAdapterSpec
     val ct = "application/json"
     val payload =
       CollectorPayload(Shared.api, Nil, ct.some, body.some, Shared.cljSource, Shared.context)
-    UnbounceAdapter.toRawEvents(payload) must beFailing(NonEmptyList(
+    UnbounceAdapter.toRawEvents(payload) must beInvalid(NonEmptyList.one(
       "Content type of application/json provided, expected application/x-www-form-urlencoded for Unbounce"))
   }
 
@@ -158,8 +153,8 @@ class UnbounceAdapterSpec
       body.some,
       Shared.cljSource,
       Shared.context)
-    val expected = NonEmptyList("Unbounce event body is empty: nothing to process")
-    UnbounceAdapter.toRawEvents(payload) must beFailing(expected)
+    val expected = NonEmptyList.one("Unbounce event body is empty: nothing to process")
+    UnbounceAdapter.toRawEvents(payload) must beInvalid(expected)
   }
 
   def e6 = {
@@ -173,8 +168,8 @@ class UnbounceAdapterSpec
       body.some,
       Shared.cljSource,
       Shared.context)
-    val expected = NonEmptyList("Unbounce event data does not have 'data.json' as a key")
-    UnbounceAdapter.toRawEvents(payload) must beFailing(expected)
+    val expected = NonEmptyList.one("Unbounce event data does not have 'data.json' as a key")
+    UnbounceAdapter.toRawEvents(payload) must beInvalid(expected)
   }
 
   def e7 = {
@@ -188,8 +183,8 @@ class UnbounceAdapterSpec
       body.some,
       Shared.cljSource,
       Shared.context)
-    val expected = NonEmptyList("Unbounce event data is empty: nothing to process")
-    UnbounceAdapter.toRawEvents(payload) must beFailing(expected)
+    val expected = NonEmptyList.one("Unbounce event data is empty: nothing to process")
+    UnbounceAdapter.toRawEvents(payload) must beInvalid(expected)
   }
 
   def e8 = {
@@ -203,10 +198,10 @@ class UnbounceAdapterSpec
       body.some,
       Shared.cljSource,
       Shared.context)
-    val expected = NonEmptyList(
+    val expected = NonEmptyList.one(
       """Unbounce event string failed to parse into JSON: [expected " got '{"emai...' (line 1, column 2)]"""
     )
-    UnbounceAdapter.toRawEvents(payload) must beFailing(expected)
+    UnbounceAdapter.toRawEvents(payload) must beInvalid(expected)
   }
 
   def e9 = {
@@ -220,8 +215,8 @@ class UnbounceAdapterSpec
       body.some,
       Shared.cljSource,
       Shared.context)
-    val expected = NonEmptyList("Unbounce context data missing 'page_id'")
-    UnbounceAdapter.toRawEvents(payload) must beFailing(expected)
+    val expected = NonEmptyList.one("Unbounce context data missing 'page_id'")
+    UnbounceAdapter.toRawEvents(payload) must beInvalid(expected)
   }
 
   def e10 = {
@@ -235,8 +230,8 @@ class UnbounceAdapterSpec
       body.some,
       Shared.cljSource,
       Shared.context)
-    val expected = NonEmptyList("Unbounce context data missing 'page_name'")
-    UnbounceAdapter.toRawEvents(payload) must beFailing(expected)
+    val expected = NonEmptyList.one("Unbounce context data missing 'page_name'")
+    UnbounceAdapter.toRawEvents(payload) must beInvalid(expected)
   }
 
   def e11 = {
@@ -250,8 +245,8 @@ class UnbounceAdapterSpec
       body.some,
       Shared.cljSource,
       Shared.context)
-    val expected = NonEmptyList("Unbounce context data missing 'variant'")
-    UnbounceAdapter.toRawEvents(payload) must beFailing(expected)
+    val expected = NonEmptyList.one("Unbounce context data missing 'variant'")
+    UnbounceAdapter.toRawEvents(payload) must beInvalid(expected)
   }
 
   def e12 = {
@@ -265,7 +260,7 @@ class UnbounceAdapterSpec
       body.some,
       Shared.cljSource,
       Shared.context)
-    val expected = NonEmptyList("Unbounce context data missing 'page_url'")
-    UnbounceAdapter.toRawEvents(payload) must beFailing(expected)
+    val expected = NonEmptyList.one("Unbounce context data missing 'page_url'")
+    UnbounceAdapter.toRawEvents(payload) must beInvalid(expected)
   }
 }

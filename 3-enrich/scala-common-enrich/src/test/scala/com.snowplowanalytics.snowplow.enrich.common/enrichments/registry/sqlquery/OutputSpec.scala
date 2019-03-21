@@ -17,9 +17,8 @@ import java.sql.Date
 import io.circe._
 import org.joda.time.DateTime
 import org.specs2.Specification
-import org.specs2.scalaz.ValidationMatchers
 
-class OutputSpec extends Specification with ValidationMatchers {
+class OutputSpec extends Specification {
   def is = s2"""
   This is a specification to test the Output of SQL Query Enrichment
   Parse Integer without type hint        $e1

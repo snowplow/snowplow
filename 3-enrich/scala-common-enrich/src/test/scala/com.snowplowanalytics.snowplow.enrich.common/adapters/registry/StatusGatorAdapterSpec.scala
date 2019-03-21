@@ -14,20 +14,15 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
+import cats.data.NonEmptyList
+import cats.syntax.option._
 import org.joda.time.DateTime
-import org.specs2.{ScalaCheck, Specification}
-import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
-import scalaz._
-import Scalaz._
+import org.specs2.Specification
+import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
 
-class StatusGatorAdapterSpec
-    extends Specification
-    with DataTables
-    with ValidationMatchers
-    with ScalaCheck {
+class StatusGatorAdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
     This is a specification to test the StatusgatorAdapter functionality
     toRawEvents must return a Success Nel if every event in the payload is successful          $e1
@@ -81,21 +76,21 @@ class StatusGatorAdapterSpec
           |}
         |}""".stripMargin.replaceAll("[\n\r]", "")
 
-    val expected = NonEmptyList(
+    val expected = NonEmptyList.one(
       RawEvent(
         Shared.api,
         Map("tv" -> "com.statusgator-v1", "e" -> "ue", "p" -> "srv", "ue_pr" -> expectedJson),
         ContentType.some,
         Shared.cljSource,
         Shared.context))
-    StatusGatorAdapter.toRawEvents(payload) must beSuccessful(expected)
+    StatusGatorAdapter.toRawEvents(payload) must beValid(expected)
   }
 
   def e2 = {
     val payload =
       CollectorPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
-    StatusGatorAdapter.toRawEvents(payload) must beFailing(
-      NonEmptyList("Request body is empty: no StatusGator events to process"))
+    StatusGatorAdapter.toRawEvents(payload) must beInvalid(
+      NonEmptyList.one("Request body is empty: no StatusGator events to process"))
   }
 
   def e3 = {
@@ -103,7 +98,7 @@ class StatusGatorAdapterSpec
       "service_name=CloudFlare&favicon_url=https%3A%2F%2Fdwxjd9cd6rwno.cloudfront.net%2Ffavicons%2Fcloudflare.ico&status_page_url=https%3A%2F%2Fwww.cloudflarestatus.com%2F&home_page_url=http%3A%2F%2Fwww.cloudflare.com&current_status=up&last_status=warn&occurred_at=2016-05-19T09%3A26%3A31%2B00%3A00"
     val payload =
       CollectorPayload(Shared.api, Nil, None, body.some, Shared.cljSource, Shared.context)
-    StatusGatorAdapter.toRawEvents(payload) must beFailing(NonEmptyList(
+    StatusGatorAdapter.toRawEvents(payload) must beInvalid(NonEmptyList.one(
       "Request body provided but content type empty, expected application/x-www-form-urlencoded for StatusGator"))
   }
 
@@ -113,7 +108,7 @@ class StatusGatorAdapterSpec
     val ct = "application/json"
     val payload =
       CollectorPayload(Shared.api, Nil, ct.some, body.some, Shared.cljSource, Shared.context)
-    StatusGatorAdapter.toRawEvents(payload) must beFailing(NonEmptyList(
+    StatusGatorAdapter.toRawEvents(payload) must beInvalid(NonEmptyList.one(
       "Content type of application/json provided, expected application/x-www-form-urlencoded for StatusGator"))
   }
 
@@ -126,8 +121,8 @@ class StatusGatorAdapterSpec
       body.some,
       Shared.cljSource,
       Shared.context)
-    val expected = NonEmptyList("StatusGator event body is empty: nothing to process")
-    StatusGatorAdapter.toRawEvents(payload) must beFailing(expected)
+    val expected = NonEmptyList.one("StatusGator event body is empty: nothing to process")
+    StatusGatorAdapter.toRawEvents(payload) must beInvalid(expected)
   }
 
   def e6 = {
@@ -140,8 +135,8 @@ class StatusGatorAdapterSpec
       body.some,
       Shared.cljSource,
       Shared.context)
-    val expected = NonEmptyList(
+    val expected = NonEmptyList.one(
       "StatusGator incorrect event string : [Illegal character in query at index 18: http://localhost/?{service_name=CloudFlare&favicon_url=https%3A%2F%2Fdwxjd9cd6rwno.cloudfront.net%2Ffavicons%2Fcloudflare.ico&status_page_url=https%3A%2F%2Fwww.cloudflarestatus.com%2F&home_page_url=http%3A%2F%2Fwww.cloudflare.com&current_status=up&last_status=warn&occurred_at=2016-05-19T09%3A26%3A31%2B00%3A00]")
-    StatusGatorAdapter.toRawEvents(payload) must beFailing(expected)
+    StatusGatorAdapter.toRawEvents(payload) must beInvalid(expected)
   }
 }

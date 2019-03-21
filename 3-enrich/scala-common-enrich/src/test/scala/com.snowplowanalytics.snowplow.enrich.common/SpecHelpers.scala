@@ -12,6 +12,7 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common
 
+import cats.syntax.either._
 import com.snowplowanalytics.iglu.client.Resolver
 import org.apache.http.NameValuePair
 import org.apache.http.message.BasicNameValuePair
@@ -50,7 +51,7 @@ object SpecHelpers {
    */
   val IgluResolver = (for {
     json <- JsonUtils.extractJsonNode(igluConfigField, igluConfig)
-    reso <- Resolver.parse(json)
+    reso <- Resolver.parse(json).toEither.leftMap(_.head)
   } yield reso)
     .getOrElse(throw new RuntimeException("Could not build an Iglu resolver, should never happen"))
 

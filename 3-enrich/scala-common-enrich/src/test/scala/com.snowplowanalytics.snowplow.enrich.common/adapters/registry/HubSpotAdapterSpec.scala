@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
  *
+ *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
  * You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
@@ -14,21 +15,16 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
+import cats.data.NonEmptyList
+import cats.syntax.option._
 import io.circe.literal._
 import org.joda.time.DateTime
-import org.specs2.{ScalaCheck, Specification}
-import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
-import scalaz._
-import Scalaz._
+import org.specs2.Specification
+import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
 
-class HubSpotAdapterSpec
-    extends Specification
-    with DataTables
-    with ValidationMatchers
-    with ScalaCheck {
+class HubSpotAdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
   This is a specification to test the HubSpotAdapter functionality
   payloadBodyToEvents must return a Success list of event JSON's from a valid payload body           $e1
@@ -62,14 +58,14 @@ class HubSpotAdapterSpec
       "subscriptionType": "company.change",
       "eventId": 16
     }"""
-    HubSpotAdapter.payloadBodyToEvents(bodyStr) must beSuccessful(List(expected))
+    HubSpotAdapter.payloadBodyToEvents(bodyStr) must beRight(List(expected))
   }
 
   def e2 =
     "SPEC NAME" || "INPUT" | "EXPECTED OUTPUT" |
       "Failure, parse exception" !! """{"something:"some"}""" ! """HubSpot payload failed to parse into JSON: [expected : got 'some"}' (line 1, column 14)]""" |> {
       (_, input, expected) =>
-        HubSpotAdapter.payloadBodyToEvents(input) must beFailing(expected)
+        HubSpotAdapter.payloadBodyToEvents(input) must beLeft(expected)
     }
 
   def e3 = {
@@ -82,7 +78,7 @@ class HubSpotAdapterSpec
       bodyStr.some,
       Shared.cljSource,
       Shared.context)
-    val expected = NonEmptyList(
+    val expected = NonEmptyList.one(
       RawEvent(
         Shared.api,
         Map(
@@ -95,7 +91,7 @@ class HubSpotAdapterSpec
         Shared.cljSource,
         Shared.context
       ))
-    HubSpotAdapter.toRawEvents(payload) must beSuccessful(expected)
+    HubSpotAdapter.toRawEvents(payload) must beValid(expected)
   }
 
   def e4 = {
@@ -109,21 +105,21 @@ class HubSpotAdapterSpec
       Shared.cljSource,
       Shared.context)
     val expected = "HubSpot event at index [0] failed: type parameter [contact] not recognized"
-    HubSpotAdapter.toRawEvents(payload) must beFailing(NonEmptyList(expected))
+    HubSpotAdapter.toRawEvents(payload) must beInvalid(NonEmptyList.one(expected))
   }
 
   def e5 = {
     val payload =
       CollectorPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
-    HubSpotAdapter.toRawEvents(payload) must beFailing(
-      NonEmptyList("Request body is empty: no HubSpot events to process"))
+    HubSpotAdapter.toRawEvents(payload) must beInvalid(
+      NonEmptyList.one("Request body is empty: no HubSpot events to process"))
   }
 
   def e6 = {
     val payload =
       CollectorPayload(Shared.api, Nil, None, "stub".some, Shared.cljSource, Shared.context)
-    HubSpotAdapter.toRawEvents(payload) must beFailing(
-      NonEmptyList(
+    HubSpotAdapter.toRawEvents(payload) must beInvalid(
+      NonEmptyList.one(
         "Request body provided but content type empty, expected application/json for HubSpot"))
   }
 
@@ -135,7 +131,7 @@ class HubSpotAdapterSpec
       "stub".some,
       Shared.cljSource,
       Shared.context)
-    HubSpotAdapter.toRawEvents(payload) must beFailing(NonEmptyList(
+    HubSpotAdapter.toRawEvents(payload) must beInvalid(NonEmptyList.one(
       "Content type of application/x-www-form-urlencoded provided, expected application/json for HubSpot"))
   }
 }

@@ -13,13 +13,15 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry
 
+import cats.data.{NonEmptyList, ValidatedNel}
+import cats.implicits._
+import com.github.fge.jsonschema.core.report.ProcessingMessage
 import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
+import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
 import io.circe._
-import scalaz._
-import Scalaz._
 
 import utils.MapTransformer.SourceMap
-import utils.ScalazCirceUtils
+import utils.CirceUtils
 
 /** Companion object. Lets us create a CampaignAttributionEnrichment from a Json */
 object CampaignAttributionEnrichment extends ParseableEnrichment {
@@ -35,44 +37,40 @@ object CampaignAttributionEnrichment extends ParseableEnrichment {
 
   /**
    * Creates a CampaignAttributionEnrichment instance from a JValue.
-   * @param config The referer_parser enrichment JSON
+   * @param c The referer_parser enrichment JSON
    * @param schemaKey provided for the enrichment, must be supported by this enrichment
    * @return a configured CampaignAttributionEnrichment instance
    */
   def parse(
-    config: Json,
+    c: Json,
     schemaKey: SchemaKey
-  ): ValidatedNelMessage[CampaignAttributionEnrichment] =
-    isParseable(config, schemaKey).flatMap(conf => {
-      (for {
-        medium <- ScalazCirceUtils
-          .extract[List[String]](config, "parameters", "fields", "mktMedium")
-        source <- ScalazCirceUtils
-          .extract[List[String]](config, "parameters", "fields", "mktSource")
-        term <- ScalazCirceUtils.extract[List[String]](config, "parameters", "fields", "mktTerm")
-        content <- ScalazCirceUtils
-          .extract[List[String]](config, "parameters", "fields", "mktContent")
-        campaign <- ScalazCirceUtils
-          .extract[List[String]](config, "parameters", "fields", "mktCampaign")
-
-        customClickMap = ScalazCirceUtils
-          .extract[Map[String, String]](config, "parameters", "fields", "mktClickId")
-          .fold(
+  ): ValidatedNel[ProcessingMessage, CampaignAttributionEnrichment] =
+    isParseable(c, schemaKey)
+      .leftMap(e => NonEmptyList.one(e.toProcessingMessage))
+      .flatMap { _ =>
+        (
+          CirceUtils.extract[List[String]](c, "parameters", "fields", "mktMedium").toValidatedNel,
+          CirceUtils.extract[List[String]](c, "parameters", "fields", "mktSource").toValidatedNel,
+          CirceUtils.extract[List[String]](c, "parameters", "fields", "mktTerm").toValidatedNel,
+          CirceUtils.extract[List[String]](c, "parameters", "fields", "mktContent").toValidatedNel,
+          CirceUtils.extract[List[String]](c, "parameters", "fields", "mktCampaign").toValidatedNel
+        ).mapN { (medium, source, term, content, campaign) =>
             // Assign empty Map on missing property for backwards compatibility with schema version 1-0-0
-            e => Map(),
-            s => s
-          )
-
-        enrich = CampaignAttributionEnrichment(
-          medium,
-          source,
-          term,
-          content,
-          campaign,
-          (DefaultNetworkMap ++ customClickMap).toList)
-      } yield enrich).toValidationNel
-    })
-
+            val customClickMap = CirceUtils
+              .extract[Map[String, String]](c, "parameters", "fields", "mktClickId")
+              .fold(e => Map(), s => s)
+            CampaignAttributionEnrichment(
+              medium,
+              source,
+              term,
+              content,
+              campaign,
+              (DefaultNetworkMap ++ customClickMap).toList)
+          }
+          .toEither
+          .leftMap(_.map(_.toProcessingMessage))
+      }
+      .toValidated
 }
 
 /**
@@ -128,7 +126,7 @@ final case class CampaignAttributionEnrichment(
    * @param nvPairs The querystring to extract marketing fields from
    * @return the MarketingCampaign or an error message, boxed in a Scalaz Validation
    */
-  def extractMarketingFields(nvPairs: SourceMap): ValidationNel[String, MarketingCampaign] = {
+  def extractMarketingFields(nvPairs: SourceMap): MarketingCampaign = {
     val medium = getFirstParameter(mediumParameters, nvPairs)
     val source = getFirstParameter(sourceParameters, nvPairs)
     val term = getFirstParameter(termParameters, nvPairs)
@@ -136,12 +134,12 @@ final case class CampaignAttributionEnrichment(
     val campaign = getFirstParameter(campaignParameters, nvPairs)
 
     val (clickId, network) =
-      Unzip[Option].unzip(
-        clickIdParameters
-          .find(pair => nvPairs.contains(pair._1))
-          .map(pair => (nvPairs(pair._1), pair._2)))
+      clickIdParameters
+        .find(pair => nvPairs.contains(pair._1))
+        .map(pair => (nvPairs(pair._1), pair._2))
+        .separate
 
-    MarketingCampaign(medium, source, term, content, campaign, clickId, network).success.toValidationNel
+    MarketingCampaign(medium, source, term, content, campaign, clickId, network)
   }
 
 }

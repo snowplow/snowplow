@@ -14,21 +14,16 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
+import cats.data.{NonEmptyList, Validated}
+import cats.syntax.option._
 import org.joda.time.DateTime
-import org.specs2.{ScalaCheck, Specification}
-import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
-import scalaz._
-import Scalaz._
+import org.specs2.Specification
+import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource, TsvLoader}
 import SpecHelpers._
 
-class CloudfrontAccessLogAdapterSpec
-    extends Specification
-    with DataTables
-    with ValidationMatchers
-    with ScalaCheck {
+class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
   This is a specification to test the CloudfrontAccessLogAdapter functionality
   toRawEvents should return a NEL containing one RawEvent if the line contains 12 fields   $e1
@@ -111,10 +106,10 @@ class CloudfrontAccessLogAdapterSpec
             |}
           |}""".stripMargin.replaceAll("[\n\r]", "")
 
-    actual must beSuccessful(
+    actual must beValid(
       Some(
-        Success(
-          NonEmptyList(
+        Validated.Valid(
+          NonEmptyList.one(
             RawEvent(
               Shared.api,
               Expected.static ++ Map("ue_pr" -> expectedJson),
@@ -156,10 +151,10 @@ class CloudfrontAccessLogAdapterSpec
             |}
           |}""".stripMargin.replaceAll("[\n\r]", "")
 
-    actual must beSuccessful(
+    actual must beValid(
       Some(
-        Success(
-          NonEmptyList(
+        Validated.Valid(
+          NonEmptyList.one(
             RawEvent(
               Shared.api,
               Expected.static ++ Map("ue_pr" -> expectedJson),
@@ -204,10 +199,10 @@ class CloudfrontAccessLogAdapterSpec
             |}
           |}""".stripMargin.replaceAll("[\n\r]", "")
 
-    actual must beSuccessful(
+    actual must beValid(
       Some(
-        Success(
-          NonEmptyList(
+        Validated.Valid(
+          NonEmptyList.one(
             RawEvent(
               Shared.api,
               Expected.static ++ Map("ue_pr" -> expectedJson),
@@ -253,10 +248,10 @@ class CloudfrontAccessLogAdapterSpec
             |}
           |}""".stripMargin.replaceAll("[\n\r]", "")
 
-    actual must beSuccessful(
+    actual must beValid(
       Some(
-        Success(
-          NonEmptyList(
+        Validated.Valid(
+          NonEmptyList.one(
             RawEvent(
               Shared.api,
               Expected.static ++ Map("ue_pr" -> expectedJson),
@@ -306,10 +301,10 @@ class CloudfrontAccessLogAdapterSpec
             |}
           |}""".stripMargin.replaceAll("[\n\r]", "")
 
-    actual must beSuccessful(
+    actual must beValid(
       Some(
-        Success(
-          NonEmptyList(
+        Validated.Valid(
+          NonEmptyList.one(
             RawEvent(
               Shared.api,
               Expected.static ++ Map("ue_pr" -> expectedJson),
@@ -360,10 +355,10 @@ class CloudfrontAccessLogAdapterSpec
             |}
           |}""".stripMargin.replaceAll("[\n\r]", "")
 
-    actual must beSuccessful(
+    actual must beValid(
       Some(
-        Success(
-          NonEmptyList(
+        Validated.Valid(
+          NonEmptyList.one(
             RawEvent(
               Shared.api,
               Expected.static ++ Map("ue_pr" -> expectedJson),
@@ -416,10 +411,10 @@ class CloudfrontAccessLogAdapterSpec
             |}
           |}""".stripMargin.replaceAll("[\n\r]", "")
 
-    actual must beSuccessful(
+    actual must beValid(
       Some(
-        Success(
-          NonEmptyList(
+        Validated.Valid(
+          NonEmptyList.one(
             RawEvent(
               Shared.api,
               Expected.static ++ Map("ue_pr" -> expectedJson),
@@ -440,8 +435,9 @@ class CloudfrontAccessLogAdapterSpec
         Shared.context)
     val actual = CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(payload)
 
-    actual must beFailing(
-      NonEmptyList("Access log TSV line contained 5 fields, expected 12, 15, 18, 19, 23, 24 or 26"))
+    actual must beInvalid(
+      NonEmptyList.one(
+        "Access log TSV line contained 5 fields, expected 12, 15, 18, 19, 23, 24 or 26"))
   }
 
   def e9 = {
@@ -456,8 +452,8 @@ class CloudfrontAccessLogAdapterSpec
         Shared.context)
     val actual = CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(payload)
 
-    actual must beFailing(
-      NonEmptyList(
+    actual must beInvalid(
+      NonEmptyList.of(
         "Unexpected exception converting Cloudfront web distribution access log date [a] and time [b] to timestamp: [Invalid format: \"aTb+00:00\"]",
         "Field [scBytes]: cannot convert [d] to Int"
       ))

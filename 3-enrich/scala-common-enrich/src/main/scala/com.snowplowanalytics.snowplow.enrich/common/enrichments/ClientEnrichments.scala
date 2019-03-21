@@ -15,10 +15,7 @@ package enrichments
 
 import java.lang.{Integer => JInteger}
 
-import scala.util.control.NonFatal
-
-import scalaz._
-import Scalaz._
+import cats.syntax.either._
 
 /**
  * Contains enrichments related to the client - where the client is the software which is using the
@@ -40,17 +37,14 @@ object ClientEnrichments {
    * @param res The packed string holding the screen dimensions
    * @return the ResolutionTuple or an error message, boxed in a Scalaz Validation
    */
-  val extractViewDimensions: (String, String) => Validation[String, (JInteger, JInteger)] =
+  val extractViewDimensions: (String, String) => Either[String, (JInteger, JInteger)] =
     (field, res) =>
       res match {
         case ResRegex(width, height) =>
-          try {
-            (width.toInt: JInteger, height.toInt: JInteger).success
-          } catch {
-            case NonFatal(e) =>
-              "Field [%s]: view dimensions [%s] exceed Integer's max range".format(field, res).fail
-          }
-        case _ => "Field [%s]: [%s] does not contain valid view dimensions".format(field, res).fail
+          Either
+            .catchNonFatal((width.toInt: JInteger, height.toInt: JInteger))
+            .leftMap(_ => s"Field [$field]: view dimensions [$res] exceed Integer's max range")
+        case _ => s"Field [$field]: [$res] does not contain valid view dimensions".asLeft
     }
 
 }

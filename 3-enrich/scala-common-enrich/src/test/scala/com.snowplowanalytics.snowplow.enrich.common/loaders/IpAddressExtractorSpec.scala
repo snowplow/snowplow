@@ -14,9 +14,8 @@ package com.snowplowanalytics.snowplow.enrich.common.loaders
 
 import org.specs2.mutable.Specification
 import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
 
-class IpAddressExtractorSpec extends Specification with DataTables with ValidationMatchers {
+class IpAddressExtractorSpec extends Specification with DataTables {
 
   val Default = "255.255.255.255"
 
