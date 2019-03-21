@@ -16,9 +16,9 @@ import cats.syntax.either._
 import com.snowplowanalytics.iglu.client.SchemaKey
 import io.circe.parser._
 import org.specs2.Specification
-import org.specs2.scalaz.ValidationMatchers
+import org.specs2.matcher.ValidatedMatchers
 
-class SqlQueryEnrichmentSpec extends Specification with ValidationMatchers {
+class SqlQueryEnrichmentSpec extends Specification with ValidatedMatchers {
   def is = s2"""
   This is a specification to test the SqlQueryEnrichment configuration
   Extract correct configuration       $e1
@@ -119,7 +119,7 @@ class SqlQueryEnrichmentSpec extends Specification with ValidationMatchers {
         }
       }""").toOption.get
 
-    SqlQueryEnrichmentConfig.parse(configuration, SCHEMA_KEY) must beSuccessful(config)
+    SqlQueryEnrichmentConfig.parse(configuration, SCHEMA_KEY) must beValid(config)
   }
 
   def e2 = {
@@ -181,7 +181,7 @@ class SqlQueryEnrichmentSpec extends Specification with ValidationMatchers {
         }
       }""").toOption.get
 
-    SqlQueryEnrichmentConfig.parse(configuration, SCHEMA_KEY) must beFailing
+    SqlQueryEnrichmentConfig.parse(configuration, SCHEMA_KEY) must beInvalid
   }
 
   def e3 = {
@@ -242,6 +242,6 @@ class SqlQueryEnrichmentSpec extends Specification with ValidationMatchers {
         }
       }""").toOption.get
 
-    SqlQueryEnrichmentConfig.parse(configuration, SCHEMA_KEY) must beSuccessful
+    SqlQueryEnrichmentConfig.parse(configuration, SCHEMA_KEY) must beValid
   }
 }

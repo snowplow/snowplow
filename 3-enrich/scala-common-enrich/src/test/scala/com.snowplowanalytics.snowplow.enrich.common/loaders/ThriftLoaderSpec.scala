@@ -13,20 +13,18 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
+import cats.syntax.option._
 import org.apache.commons.codec.binary.Base64
 import org.joda.time.DateTime
 import org.specs2.{ScalaCheck, Specification}
-import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
-import scalaz._
-import Scalaz._
+import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import SpecHelpers._
 
 class ThriftLoaderSpec
     extends Specification
     with DataTables
-    with ValidationMatchers
+    with ValidatedMatchers
     with ScalaCheck {
   def is = s2"""
   This is a specification to test the ThriftLoader functionality
@@ -168,15 +166,15 @@ class ThriftLoaderSpec
               CollectorContext(timestamp.some, ipAddress, userAgent, refererUri, headers, userId)
           )
 
-          canonicalEvent must beSuccessful(expected.some)
+          canonicalEvent must beValid(expected.some)
         }
     }
 
   // A bit of fun: the chances of generating a valid Thrift CollectorPayload at random are
   // so low that we can just use ScalaCheck here
   def e2 =
-    check { (raw: String) =>
-      ThriftLoader.toCollectorPayload(Base64.decodeBase64(raw)) must beFailing
+    prop { (raw: String) =>
+      ThriftLoader.toCollectorPayload(Base64.decodeBase64(raw)) must beInvalid
     }
 
 }

@@ -13,13 +13,14 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry
 
+import cats.data.ValidatedNel
+import cats.syntax.either._
+import com.github.fge.jsonschema.core.report.ProcessingMessage
 import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
 import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
 import io.circe._
-import scalaz._
-import Scalaz._
 
-import utils.ScalazCirceUtils
+import utils.CirceUtils
 
 /** Companion object. Lets us create a AnonIpEnrichment from a Json. */
 object AnonIpEnrichment extends ParseableEnrichment {
@@ -29,19 +30,16 @@ object AnonIpEnrichment extends ParseableEnrichment {
 
   /**
    * Creates an AnonIpEnrichment instance from a JValue.
-   * @param config The anon_ip enrichment JSON
+   * @param c The anon_ip enrichment JSON
    * @param schemaKey provided for the enrichment, must be supported by this enrichment
    * @return a configured AnonIpEnrichment instance
    */
-  def parse(config: Json, schemaKey: SchemaKey): ValidatedNelMessage[AnonIpEnrichment] =
-    isParseable(config, schemaKey).flatMap(conf => {
-      (for {
-        param <- ScalazCirceUtils.extract[Int](config, "parameters", "anonOctets")
-        octets <- AnonOctets.fromInt(param)
-        enrich = AnonIpEnrichment(octets)
-      } yield enrich).toValidationNel
-    })
-
+  def parse(config: Json, schemaKey: SchemaKey): ValidatedNel[ProcessingMessage, AnonIpEnrichment] =
+    (for {
+      _ <- isParseable(config, schemaKey)
+      param <- CirceUtils.extract[Int](config, "parameters", "anonOctets").toEither
+      octets <- AnonOctets.fromInt(param)
+    } yield AnonIpEnrichment(octets)).leftMap(_.toProcessingMessage).toValidatedNel
 }
 
 /** How many octets to anonymize? */
@@ -58,13 +56,10 @@ object AnonOctets extends Enumeration {
    * @param anonOctets A String holding the number of IP address octets to anonymize
    * @return a Validation-boxed AnonOctets
    */
-  def fromInt(anonOctets: Int): ValidatedMessage[AnonOctets] =
-    try {
-      AnonOctets(anonOctets).success
-    } catch {
-      case nse: NoSuchElementException =>
-        "IP address octets to anonymize must be 1, 2, 3 or 4".toProcessingMessage.fail
-    }
+  def fromInt(anonOctets: Int): Either[String, AnonOctets] =
+    Either
+      .catchNonFatal(AnonOctets(anonOctets))
+      .leftMap(e => s"IP address octets to anonymize must be 1, 2, 3 or 4: ${e.getMessage}")
 }
 
 /**

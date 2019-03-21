@@ -18,11 +18,10 @@ import java.sql.PreparedStatement
 import scala.collection.immutable.IntMap
 import scala.util.control.NonFatal
 
-import cats.syntax.either._
+import cats.data.ValidatedNel
+import cats.data.Validated._
+import cats.implicits._
 import io.circe._
-import io.gatling.jsonpath.JsonPath
-import scalaz._
-import Scalaz._
 
 import utils.JsonPath._
 import outputs.EnrichedEvent
@@ -47,20 +46,13 @@ case class Input(placeholder: Int, pojo: Option[PojoInput], json: Option[JsonInp
     case _ => ()
   }
 
-  // We could short-circuit enrichment process on invalid JSONPath,
-  // but it won't give user meaningful error message
-  val validatedJsonPath = json.map(_.jsonPath).map(compileQuery) match {
-    case Some(compiledQuery) => compiledQuery
-    case None => "No JSON Input with JSONPath was given".failure
-  }
-
   /**
    * Get placeholder/input value pair from specific `event` for composing
    * @param event currently enriching event
    * @return validated pair of placeholder's postition and extracted value ready to be set on
    * PreparedStatement
    */
-  def getFromEvent(event: EnrichedEvent): ValidationNel[Throwable, (Int, Option[ExtractedValue])] =
+  def getFromEvent(event: EnrichedEvent): Either[Throwable, (Int, Option[ExtractedValue])] =
     pojo match {
       case Some(pojoInput) =>
         getFieldType(pojoInput.field) match {
@@ -68,16 +60,16 @@ case class Input(placeholder: Int, pojo: Option[PojoInput], json: Option[JsonInp
             try {
               val anyRef = event.getClass.getMethod(pojoInput.field).invoke(event)
               val option = Option(anyRef.asInstanceOf[placeholderType.PlaceholderType])
-              (placeholder, option.map(placeholderType.Value.apply)).successNel
+              (placeholder, option.map(placeholderType.Value.apply)).asRight
             } catch {
               case NonFatal(e) =>
-                InvalidInput("SQL Query Enrichment: Extracting from POJO failed: " + e.toString).failureNel
+                InvalidInput("SQL Query Enrichment: Extracting from POJO failed: " + e.toString).asLeft
             }
           case None =>
-            InvalidInput("SQL Query Enrichment: Wrong POJO input field was specified").failureNel
+            InvalidInput("SQL Query Enrichment: Wrong POJO input field was specified").asLeft
         }
 
-      case None => (placeholder, none).successNel
+      case None => (placeholder, none).asRight
     }
 
   /**
@@ -92,13 +84,13 @@ case class Input(placeholder: Int, pojo: Option[PojoInput], json: Option[JsonInp
     derived: List[Json],
     custom: List[Json],
     unstruct: Option[Json]
-  ): ValidationNel[Throwable, (Int, Option[ExtractedValue])] =
+  ): ValidatedNel[Throwable, (Int, Option[ExtractedValue])] =
     json match {
       case Some(jsonInput) =>
         jsonInput
           .extract(derived, custom, unstruct)
           .map(json => (placeholder, json.flatMap(extractFromJson)))
-      case None => (placeholder, none).successNel
+      case None => (placeholder, none).validNel
     }
 }
 
@@ -130,23 +122,20 @@ case class JsonInput(field: String, schemaCriterion: String, jsonPath: String) {
     derived: List[Json],
     custom: List[Json],
     unstruct: Option[Json]
-  ): ValidationNel[Throwable, Option[Json]] = {
+  ): ValidatedNel[Throwable, Option[Json]] = {
     val validatedJson = field match {
-      case "derived_contexts" => getBySchemaCriterion(derived, schemaCriterion).successNel
-      case "contexts" => getBySchemaCriterion(custom, schemaCriterion).successNel
-      case "unstruct_event" => getBySchemaCriterion(unstruct.toList, schemaCriterion).successNel
+      case "derived_contexts" => getBySchemaCriterion(derived, schemaCriterion).validNel
+      case "contexts" => getBySchemaCriterion(custom, schemaCriterion).validNel
+      case "unstruct_event" => getBySchemaCriterion(unstruct.toList, schemaCriterion).validNel
       case other =>
         InvalidInput(
           s"SQL Query Enrichment: wrong field [$other] passed to Input.getFromJson. " +
-            "Should be one of: derived_contexts, contexts, unstruct_event").failureNel
+            "Should be one of: derived_contexts, contexts, unstruct_event").invalidNel
     }
 
-    val validatedJsonPath: Validation[Throwable, JsonPath] = compileQuery(jsonPath) match {
-      case Success(compiledQuery) => compiledQuery.success
-      case Failure(error) => new Exception(error).failure
-    }
+    val validatedJsonPath = compileQuery(jsonPath).leftMap(new Exception(_)).toValidatedNel
 
-    (validatedJsonPath.toValidationNel |@| validatedJson) { (jsonPath, validJson) =>
+    (validatedJsonPath, validatedJson).mapN { (jsonPath, validJson) =>
       validJson
         .map(jsonPath.circeQuery) // Query context/UE (always valid)
         .map(wrapArray) // Check if array
@@ -246,19 +235,18 @@ object Input {
     derivedContexts: List[Json],
     customContexts: List[Json],
     unstructEvent: Option[Json]
-  ): ValidationNel[Throwable, PlaceholderMap] = {
-    val eventInputs = inputs.map(_.getFromEvent(event))
+  ): ValidatedNel[Throwable, PlaceholderMap] = {
+    val eventInputs = inputs.map(_.getFromEvent(event)).map(_.toValidatedNel)
     val jsonInputs = inputs.map(_.getFromJson(derivedContexts, customContexts, unstructEvent))
 
-    val pairs = (eventInputs ++ jsonInputs).sequenceU
-      .asInstanceOf[ValidationNel[Throwable, List[(Int, Option[ExtractedValue])]]]
+    val pairs = (eventInputs ++ jsonInputs).sequence
       .map(_.collect { case (position, Some(value)) => (position, value) })
 
     // Fail if some indexes are missing
     pairs.map(list => IntMap(list: _*)) match {
-      case Success(map) if isConsistent(map) => Some(map).successNel
-      case Success(map) => None.success
-      case Failure(err) => err.failure
+      case Valid(map) if isConsistent(map) => Some(map).valid
+      case Valid(map) => None.valid
+      case Invalid(err) => err.invalid
     }
   }
 
@@ -272,7 +260,7 @@ object Input {
     val sortedKeys = intMap.keys.toList.sorted
     val (_, result) = sortedKeys.foldLeft((0, true)) {
       case ((prev, accum), cur) =>
-        (cur, prev.succ == cur && accum)
+        (cur, (prev + 1) == cur && accum)
     }
     result && sortedKeys.headOption.map(_ == 1).getOrElse(true)
   }

@@ -13,11 +13,15 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry
 
+import cats.data.ValidatedNel
+import cats.syntax.either._
+import com.github.fge.jsonschema.core.report.ProcessingMessage
 import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
+import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
 import io.circe._
 import io.circe.syntax._
 
-import utils.ScalazCirceUtils
+import utils.CirceUtils
 
 object HttpHeaderExtractorEnrichmentConfig extends ParseableEnrichment {
 
@@ -38,13 +42,13 @@ object HttpHeaderExtractorEnrichmentConfig extends ParseableEnrichment {
   def parse(
     config: Json,
     schemaKey: SchemaKey
-  ): ValidatedNelMessage[HttpHeaderExtractorEnrichment] =
-    isParseable(config, schemaKey).flatMap(conf => {
-      (for {
-        headersPattern <- ScalazCirceUtils.extract[String](config, "parameters", "headersPattern")
-        enrich = HttpHeaderExtractorEnrichment(headersPattern)
-      } yield enrich).toValidationNel
-    })
+  ): ValidatedNel[ProcessingMessage, HttpHeaderExtractorEnrichment] =
+    (for {
+      _ <- isParseable(config, schemaKey)
+      headersPattern <- CirceUtils.extract[String](config, "parameters", "headersPattern").toEither
+    } yield HttpHeaderExtractorEnrichment(headersPattern))
+      .leftMap(_.toProcessingMessage)
+      .toValidatedNel
 }
 
 /**

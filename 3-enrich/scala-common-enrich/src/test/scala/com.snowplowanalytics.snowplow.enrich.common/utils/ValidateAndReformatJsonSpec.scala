@@ -14,9 +14,8 @@ package com.snowplowanalytics.snowplow.enrich.common.utils
 
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
 
-class ValidateAndReformatJsonSpec extends Specification with DataTables with ValidationMatchers {
+class ValidateAndReformatJsonSpec extends Specification with DataTables {
   def is = s2"""
   This is a specification to test the validateAndReformatJson function
   extracting and reformatting (where necessary) valid JSONs with work $e1
@@ -36,7 +35,7 @@ class ValidateAndReformatJsonSpec extends Specification with DataTables with Val
       {
         "a": 23
       }""" ! """{"a":23}""" |> { (_, str, expected) =>
-      JsonUtils.validateAndReformatJson(FieldName, str) must beSuccessful(expected)
+      JsonUtils.validateAndReformatJson(FieldName, str) must beRight(expected)
     }
 
   def err1 = s"Field [$FieldName]: invalid JSON [] with parsing error: exhausted input"
@@ -54,7 +53,7 @@ class ValidateAndReformatJsonSpec extends Specification with DataTables with Val
       "Random noise" !! "^45fj_" ! err2("^45fj_", "^45fj_", 1, 1) |
       "Bad key" !! """{9:"a"}""" ! err3("""{9:"a"}""", """9:"a"}""", 1, 2) |> {
       (_, str, expected) =>
-        JsonUtils.validateAndReformatJson(FieldName, str) must beFailing(expected)
+        JsonUtils.validateAndReformatJson(FieldName, str) must beLeft(expected)
     }
 
 }

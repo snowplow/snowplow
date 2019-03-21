@@ -20,13 +20,14 @@ import java.nio.charset.StandardCharsets.UTF_8
 import scala.collection.JavaConversions._
 import scala.util.{Try, Success => TS, Failure => TF}
 
+import cats.data.{NonEmptyList, ValidatedNel}
 import cats.syntax.either._
+import cats.syntax.option._
+import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
 import io.circe._
 import io.circe.syntax._
 import org.apache.http.client.utils.URLEncodedUtils
-import scalaz._
-import Scalaz._
 
 import loaders.CollectorPayload
 import utils.{JsonUtils => JU}
@@ -64,15 +65,17 @@ object MailgunAdapter extends Adapter {
    * @param resolver (implicit) The Iglu resolver used for schema lookup and validation. Not used
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
+  def toRawEvents(payload: CollectorPayload)(
+    implicit resolver: Resolver
+  ): ValidatedNel[String, NonEmptyList[RawEvent]] =
     (payload.body, payload.contentType) match {
-      case (None, _) => s"Request body is empty: no $VendorName events to process".failureNel
+      case (None, _) => s"Request body is empty: no $VendorName events to process".invalidNel
       case (_, None) =>
-        s"Request body provided but content type empty, expected $ContentTypesStr for $VendorName".failureNel
+        s"Request body provided but content type empty, expected $ContentTypesStr for $VendorName".invalidNel
       case (_, Some(ct)) if !ContentTypes.exists(ct.startsWith(_)) =>
-        s"Content type of $ct provided, expected $ContentTypesStr for $VendorName".failureNel
+        s"Content type of $ct provided, expected $ContentTypesStr for $VendorName".invalidNel
       case (Some(body), _) if (body.isEmpty) =>
-        s"$VendorName event body is empty: nothing to process".failureNel
+        s"$VendorName event body is empty: nothing to process".invalidNel
       case (Some(body), Some(ct)) =>
         val params = toMap(payload.querystring)
         Try {
@@ -83,37 +86,36 @@ object MailgunAdapter extends Adapter {
         } match {
           case TF(e) =>
             val message = JU.stripInstanceEtc(e.getMessage).orNull
-            s"$VendorName adapter could not parse body: [$message]".failureNel
+            s"$VendorName adapter could not parse body: [$message]".invalidNel
           case TS(bodyMap) =>
             bodyMap
               .get("event")
-              .map {
-                case eventType =>
-                  for {
-                    schemaUri <- lookupSchema(eventType.some, VendorName, EventSchemaMap)
-                    event <- payloadBodyToEvent(bodyMap)
-                    mEvent <- mutateMailgunEvent(event)
-                  } yield
-                    NonEmptyList(
-                      RawEvent(
-                        api = payload.api,
-                        parameters = toUnstructEventParams(
-                          TrackerVersion,
-                          params,
-                          schemaUri,
-                          cleanupJsonEventValues(
-                            mEvent,
-                            ("event", eventType).some,
-                            List("timestamp")),
-                          "srv"),
-                        contentType = payload.contentType,
-                        source = payload.source,
-                        context = payload.context
-                      )
+              .map { eventType =>
+                (for {
+                  schemaUri <- lookupSchema(eventType.some, VendorName, EventSchemaMap)
+                  event <- payloadBodyToEvent(bodyMap)
+                  mEvent <- mutateMailgunEvent(event)
+                } yield
+                  NonEmptyList.one(
+                    RawEvent(
+                      api = payload.api,
+                      parameters = toUnstructEventParams(
+                        TrackerVersion,
+                        params,
+                        schemaUri,
+                        cleanupJsonEventValues(
+                          mEvent,
+                          ("event", eventType).some,
+                          List("timestamp")),
+                        "srv"),
+                      contentType = payload.contentType,
+                      source = payload.source,
+                      context = payload.context
                     )
+                  )).toValidatedNel
               }
               .getOrElse(
-                s"No $VendorName event parameter provided: cannot determine event type".failureNel)
+                s"No $VendorName event parameter provided: cannot determine event type".invalidNel)
         }
     }
 
@@ -122,7 +124,7 @@ object MailgunAdapter extends Adapter {
    * @param json parsed event fields as a JValue
    * @return The mutated event.
    */
-  private def mutateMailgunEvent(json: Json): Validated[Json] = {
+  private def mutateMailgunEvent(json: Json): Either[String, Json] = {
     val attachmentCountKey = "attachmentCount"
     val camelCase = camelize(json)
     camelCase.asObject match {
@@ -137,8 +139,8 @@ object MailgunAdapter extends Adapter {
           case Some(ac) => withFilteredFields.add(attachmentCountKey, Json.fromInt(ac))
           case _ => withFilteredFields
         }
-        Json.fromJsonObject(finalJsonObject).successNel
-      case _ => s"$VendorName event string is not a json object".failureNel
+        Json.fromJsonObject(finalJsonObject).asRight
+      case _ => s"$VendorName event string is not a json object".asLeft
     }
   }
 
@@ -186,11 +188,11 @@ object MailgunAdapter extends Adapter {
    * Converts a querystring payload into an event
    * @param bodyMap The converted map from the querystring
    */
-  private def payloadBodyToEvent(bodyMap: Map[String, String]): Validated[Json] =
+  private def payloadBodyToEvent(bodyMap: Map[String, String]): Either[String, Json] =
     (bodyMap.get("timestamp"), bodyMap.get("token"), bodyMap.get("signature")) match {
-      case (None, _, _) => s"$VendorName event data missing 'timestamp'".failureNel
-      case (_, None, _) => s"$VendorName event data missing 'token'".failureNel
-      case (_, _, None) => s"$VendorName event data missing 'signature'".failureNel
-      case (Some(timestamp), Some(token), Some(signature)) => bodyMap.asJson.success
+      case (None, _, _) => s"$VendorName event data missing 'timestamp'".asLeft
+      case (_, None, _) => s"$VendorName event data missing 'token'".asLeft
+      case (_, _, None) => s"$VendorName event data missing 'signature'".asLeft
+      case (Some(timestamp), Some(token), Some(signature)) => bodyMap.asJson.asRight
     }
 }

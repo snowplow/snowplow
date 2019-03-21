@@ -15,7 +15,6 @@ package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.apireq
 import com.twitter.util.SynchronizedLruMap
 import io.circe._
 import org.joda.time.DateTime
-import scalaz._
 
 /**
  * LRU cache
@@ -25,14 +24,14 @@ import scalaz._
 case class Cache(size: Int, ttl: Int) {
 
   // URI -> Validated[JSON]
-  private val cache = new SynchronizedLruMap[String, (Validation[Throwable, Json], Int)](size)
+  private val cache = new SynchronizedLruMap[String, (Either[Throwable, Json], Int)](size)
 
   /**
    * Get a value if it's not outdated
    * @param url HTTP URL
    * @return validated JSON as it was returned from API server
    */
-  def get(url: String): Option[Validation[Throwable, Json]] =
+  def get(url: String): Option[Either[Throwable, Json]] =
     cache.get(url) match {
       case Some((value, created)) if ttl == 0 => Some(value)
       case Some((value, created)) => {
@@ -51,7 +50,7 @@ case class Cache(size: Int, ttl: Int) {
    * @param key all inputs Map
    * @param value context object (with Iglu URI, not just plain JSON)
    */
-  def put(key: String, value: Validation[Throwable, Json]): Unit = {
+  def put(key: String, value: Either[Throwable, Json]): Unit = {
     val now = (new DateTime().getMillis / 1000).toInt
     cache.put(key, (value, now))
     ()

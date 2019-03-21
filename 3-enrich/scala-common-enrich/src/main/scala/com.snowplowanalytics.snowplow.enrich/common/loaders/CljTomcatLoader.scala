@@ -15,8 +15,8 @@ package loaders
 
 import java.nio.charset.StandardCharsets.UTF_8
 
-import scalaz._
-import Scalaz._
+import cats.data.ValidatedNel
+import cats.implicits._
 
 import utils.ConversionUtils
 
@@ -64,7 +64,7 @@ object CljTomcatLoader extends Loader[String] {
    * @return either a set of validation errors or an Option-boxed CanonicalInput object, wrapped
    * in a Scalaz ValidatioNel.
    */
-  def toCollectorPayload(line: String): ValidatedMaybeCollectorPayload = {
+  def toCollectorPayload(line: String): ValidatedNel[String, Option[CollectorPayload]] = {
     def build(
       qs: String,
       date: String,
@@ -75,36 +75,41 @@ object CljTomcatLoader extends Loader[String] {
       objct: String,
       ct: Option[String],
       bdy: Option[String]
-    ): ValidatedMaybeCollectorPayload = {
+    ): ValidatedNel[String, Option[CollectorPayload]] = {
       val querystring = parseQuerystring(CloudfrontLoader.toOption(qs), CollectorEncoding)
       val timestamp = CloudfrontLoader.toTimestamp(date, time)
       val contentType = (for {
         enc <- ct
         raw = ConversionUtils.decodeString(CollectorEncoding, "Content type", enc)
-      } yield raw).sequenceU
+      } yield raw).sequence
       val body = (for {
         b64 <- bdy
         raw = ConversionUtils.decodeBase64Url("Body", b64)
-      } yield raw).sequenceU
+      } yield raw).sequence
       val api = CollectorApi.parse(objct)
 
-      (timestamp.toValidationNel |@| querystring.toValidationNel |@| api.toValidationNel |@| contentType.toValidationNel |@| body.toValidationNel) {
-        (t, q, a, c, b) =>
-          CollectorPayload(
-            q,
-            CollectorName,
-            CollectorEncoding.toString,
-            None, // No hostname for CljTomcat
-            Some(t),
-            CloudfrontLoader.toOption(ip),
-            CloudfrontLoader.toOption(ua),
-            CloudfrontLoader.toOption(refr),
-            Nil, // No headers for CljTomcat
-            None, // No collector-set user ID for CljTomcat
-            a, // API vendor and version
-            c, // We may have content type
-            b // We may have request body
-          ).some
+      (
+        timestamp.toValidatedNel,
+        querystring.toValidatedNel,
+        api.toValidatedNel,
+        contentType.toValidatedNel,
+        body.toValidatedNel
+      ).mapN { (t, q, a, c, b) =>
+        CollectorPayload(
+          q,
+          CollectorName,
+          CollectorEncoding.toString,
+          None, // No hostname for CljTomcat
+          Some(t),
+          CloudfrontLoader.toOption(ip),
+          CloudfrontLoader.toOption(ua),
+          CloudfrontLoader.toOption(refr),
+          Nil, // No headers for CljTomcat
+          None, // No collector-set user ID for CljTomcat
+          a, // API vendor and version
+          c, // We may have content type
+          b // We may have request body
+        ).some
       }
     }
 
@@ -131,7 +136,7 @@ object CljTomcatLoader extends Loader[String] {
       // C.1 Not a POST request
       case CljTomcatRegex(_, _, _, _, _, op, _, _, _, _, _, _, _, _) if op.toUpperCase != "POST" =>
         (s"Operation must be POST, not ${op.toUpperCase}, if request content type and/or " +
-          "body are provided").failNel[Option[CollectorPayload]]
+          "body are provided").invalidNel
 
       // C.2 A POST, let's check we can discern API format
       // TODO: we should check for nulls/"-"s for ct and body below
@@ -140,8 +145,7 @@ object CljTomcatLoader extends Loader[String] {
 
       // D. Row not recognised
       case _ =>
-        "Line does not match raw event format for Clojure Collector"
-          .failNel[Option[CollectorPayload]]
+        "Line does not match raw event format for Clojure Collector".invalidNel
     }
   }
 }

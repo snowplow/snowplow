@@ -13,9 +13,8 @@
 package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
 import org.specs2.Specification
-import org.specs2.scalaz.ValidationMatchers
 
-class EventFingerprintEnrichmentSpec extends Specification with ValidationMatchers {
+class EventFingerprintEnrichmentSpec extends Specification {
   def is = s2"""
   This is a specification to test the EventFingerprintEnrichment
   getEventFingerprint should combine fields into a hash                       $e1
@@ -26,7 +25,7 @@ class EventFingerprintEnrichmentSpec extends Specification with ValidationMatche
 
   val standardConfig =
     EventFingerprintEnrichment(
-      EventFingerprintEnrichmentConfig.getAlgorithm("MD5").toOption.get,
+      EventFingerprintEnrichmentConfig.getAlgorithm("MD5").right.get,
       List("stm", "eid"))
 
   def e1 = {

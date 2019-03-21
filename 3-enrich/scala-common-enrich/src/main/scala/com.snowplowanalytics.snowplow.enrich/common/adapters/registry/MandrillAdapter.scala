@@ -19,13 +19,13 @@ import java.nio.charset.StandardCharsets.UTF_8
 
 import scala.collection.JavaConversions._
 
+import cats.data.{NonEmptyList, ValidatedNel}
 import cats.syntax.either._
+import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
 import io.circe._
 import io.circe.parser._
 import org.apache.http.client.utils.URLEncodedUtils
-import scalaz._
-import Scalaz._
 
 import loaders.CollectorPayload
 
@@ -67,25 +67,27 @@ object MandrillAdapter extends Adapter {
    * @param resolver (implicit) The Iglu resolver used for schema lookup and validation. Not used
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
+  def toRawEvents(payload: CollectorPayload)(
+    implicit resolver: Resolver
+  ): ValidatedNel[String, NonEmptyList[RawEvent]] =
     (payload.body, payload.contentType) match {
-      case (None, _) => s"Request body is empty: no $VendorName events to process".failNel
+      case (None, _) => s"Request body is empty: no $VendorName events to process".invalidNel
       case (_, None) =>
-        s"Request body provided but content type empty, expected $ContentType for $VendorName".failNel
+        s"Request body provided but content type empty, expected $ContentType for $VendorName".invalidNel
       case (_, Some(ct)) if ct != ContentType =>
-        s"Content type of $ct provided, expected $ContentType for $VendorName".failNel
+        s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel
       case (Some(body), _) =>
         payloadBodyToEvents(body) match {
-          case Failure(str) => str.failNel
-          case Success(list) =>
+          case Left(str) => str.invalidNel
+          case Right(list) =>
             // Create our list of Validated RawEvents
-            val rawEventsList: List[Validated[RawEvent]] =
+            val rawEventsList: List[ValidatedNel[String, RawEvent]] =
               for {
                 (event, index) <- list.zipWithIndex
               } yield {
                 val eventOpt = event.hcursor.get[String]("event").toOption
                 for {
-                  schema <- lookupSchema(eventOpt, VendorName, index, EventSchemaMap)
+                  schema <- lookupSchema(eventOpt, VendorName, index, EventSchemaMap).toValidatedNel
                 } yield {
                   val formattedEvent =
                     cleanupJsonEventValues(event, eventOpt.map(("event", _)), List("ts"))
@@ -118,25 +120,25 @@ object MandrillAdapter extends Adapter {
    */
   private[registry] def payloadBodyToEvents(
     rawEventString: String
-  ): Validation[String, List[Json]] = {
+  ): Either[String, List[Json]] = {
     val bodyMap = toMap(
       URLEncodedUtils.parse(URI.create("http://localhost/?" + rawEventString), UTF_8).toList)
     bodyMap match {
       case map if map.size != 1 =>
-        s"Mapped $VendorName body has invalid count of keys: ${map.size}".fail
+        s"Mapped $VendorName body has invalid count of keys: ${map.size}".asLeft
       case map =>
         map.get("mandrill_events") match {
-          case None => s"Mapped $VendorName body does not have 'mandrill_events' as a key".fail
-          case Some("") => s"$VendorName events string is empty: nothing to process".fail
+          case None => s"Mapped $VendorName body does not have 'mandrill_events' as a key".asLeft
+          case Some("") => s"$VendorName events string is empty: nothing to process".asLeft
           case Some(dStr) =>
             parse(dStr) match {
               case Right(json) =>
                 json.asArray match {
-                  case Some(array) => array.toList.success
-                  case _ => s"Could not resolve $VendorName payload into a JSON array".fail
+                  case Some(array) => array.toList.asRight
+                  case _ => s"Could not resolve $VendorName payload into a JSON array".asLeft
                 }
               case Left(e) =>
-                s"$VendorName events couldn't be parsed as JSON: [${e.getMessage}]".fail
+                s"$VendorName events couldn't be parsed as JSON: [${e.getMessage}]".asLeft
             }
         }
     }

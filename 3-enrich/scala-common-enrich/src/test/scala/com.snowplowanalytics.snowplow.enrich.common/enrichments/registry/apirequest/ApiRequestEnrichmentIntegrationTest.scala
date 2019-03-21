@@ -21,7 +21,6 @@ import io.circe.literal._
 import io.circe.parser._
 import io.circe.syntax._
 import org.specs2.Specification
-import org.specs2.scalaz.ValidationMatchers
 import org.specs2.matcher.Matcher
 
 import outputs.EnrichedEvent
@@ -54,7 +53,7 @@ object ApiRequestEnrichmentIntegrationTest {
 }
 
 import ApiRequestEnrichmentIntegrationTest._
-class ApiRequestEnrichmentIntegrationTest extends Specification with ValidationMatchers {
+class ApiRequestEnrichmentIntegrationTest extends Specification {
   def is =
     skipAllUnless(continuousIntegration) ^
       s2"""
@@ -257,15 +256,16 @@ class ApiRequestEnrichmentIntegrationTest extends Specification with ValidationM
     val event = new EnrichedEvent
     event.setApp_id("lookup-test")
     event.setUser_id("snowplower")
-    val context = config.flatMap(_.lookup(event, Nil, Nil, Nil))
-    context must beSuccessful.like {
+    val context = config.toEither.flatMap(_.lookup(event, Nil, Nil, Nil).toEither)
+    context must beRight.like {
       case context =>
         context must contain(IntegrationTests.correctResultContext) and (context must have size (1))
     }
   }
 
   def e2 = {
-    val config = ApiRequestEnrichmentConfig.parse(IntegrationTests.configuration2, SCHEMA_KEY)
+    val config =
+      ApiRequestEnrichmentConfig.parse(IntegrationTests.configuration2, SCHEMA_KEY).toEither
     val event = new EnrichedEvent
     event.setApp_id("lookup test")
     event.setUser_id("snowplower")
@@ -276,28 +276,28 @@ class ApiRequestEnrichmentIntegrationTest extends Specification with ValidationM
         event,
         List(IntegrationTests.weatherContext),
         List(IntegrationTests.customContexts),
-        List(IntegrationTests.unstructEvent)))
+        List(IntegrationTests.unstructEvent)).toEither)
     config.flatMap(
       _.lookup(
         event,
         List(IntegrationTests.weatherContext),
         List(IntegrationTests.customContexts),
-        List(IntegrationTests.unstructEvent)))
+        List(IntegrationTests.unstructEvent)).toEither)
 
     val context = config.flatMap(
       _.lookup(
         event,
         List(IntegrationTests.weatherContext),
         List(IntegrationTests.customContexts),
-        List(IntegrationTests.unstructEvent)))
+        List(IntegrationTests.unstructEvent)).toEither)
 
-    context must beSuccessful.like {
+    context must beRight.like {
       case context =>
         context must contain(
           beJson(IntegrationTests.correctResultContext2),
           beJson(IntegrationTests.correctResultContext3)) and (context must have size (2))
     } and {
-      config must beSuccessful.like {
+      config must beRight.like {
         case c => c.cache.actualLoad must beEqualTo(1)
       }
     }

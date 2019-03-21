@@ -17,10 +17,10 @@ import java.util.UUID
 
 import scala.util.control.NonFatal
 
+import cats.syntax.either._
+import cats.syntax.option._
 import org.joda.time.{DateTime, DateTimeZone, Period}
 import org.joda.time.format.DateTimeFormat
-import scalaz._
-import Scalaz._
 
 /** Holds the enrichments related to events. */
 object EventEnrichments {
@@ -48,15 +48,15 @@ object EventEnrichments {
    * @param Optional collectorTstamp
    * @return Validation boxing the result of making the timestamp Redshift-compatible
    */
-  def formatCollectorTstamp(collectorTstamp: Option[DateTime]): Validation[String, String] =
+  def formatCollectorTstamp(collectorTstamp: Option[DateTime]): Either[String, String] =
     collectorTstamp match {
-      case None => "No collector_tstamp set".fail
+      case None => "No collector_tstamp set".asLeft
       case Some(t) =>
         val formattedTimestamp = toTimestamp(t)
         if (formattedTimestamp.startsWith("-") || t.getYear > 9999 || t.getYear < 0) {
-          s"Collector timestamp [${t.getMillis}] formatted as [$formattedTimestamp] which isn't Redshift-compatible".fail
+          s"Collector timestamp [${t.getMillis}] formatted as [$formattedTimestamp] which isn't Redshift-compatible".asLeft
         } else {
-          formattedTimestamp.success
+          formattedTimestamp.asRight
         }
     }
 
@@ -78,8 +78,8 @@ object EventEnrichments {
     dvceCreatedTstamp: Option[String],
     collectorTstamp: Option[String],
     trueTstamp: Option[String]
-  ): Validation[String, Option[String]] = trueTstamp match {
-    case Some(ttm) => Some(ttm).success
+  ): Either[String, Option[String]] = trueTstamp match {
+    case Some(ttm) => Some(ttm).asRight
     case None =>
       try {
         ((dvceSentTstamp, dvceCreatedTstamp, collectorTstamp) match {
@@ -92,9 +92,9 @@ object EventEnrichments {
               ct.some
             }
           case _ => collectorTstamp
-        }).success
+        }).asRight
       } catch {
-        case NonFatal(e) => s"Exception calculating derived timestamp: [$e]".fail
+        case NonFatal(e) => s"Exception calculating derived timestamp: [${e.getMessage}]".asLeft
       }
   }
 
@@ -104,18 +104,18 @@ object EventEnrichments {
    * @param tstamp The timestamp as stored in the Tracker Protocol
    * @return a Tuple of two Strings (date and time), or an error message if the format was invalid
    */
-  val extractTimestamp: (String, String) => ValidatedString = (field, tstamp) =>
+  val extractTimestamp: (String, String) => Either[String, String] = (field, tstamp) =>
     try {
       val dt = new DateTime(tstamp.toLong)
       val timestampString = toTimestamp(dt)
       if (timestampString.startsWith("-") || dt.getYear > 9999 || dt.getYear < 0) {
-        s"Field [$field]: [$tstamp] is formatted as [$timestampString] which isn't Redshift-compatible".fail
+        s"Field [$field]: [$tstamp] is formatted as [$timestampString] which isn't Redshift-compatible".asLeft
       } else {
-        timestampString.success
+        timestampString.asRight
       }
     } catch {
       case nfe: NumberFormatException =>
-        "Field [%s]: [%s] is not in the expected format (ms since epoch)".format(field, tstamp).fail
+        s"Field [$field]: [$tstamp] is not in the expected format (ms since epoch)".asLeft
   }
 
   /**
@@ -125,17 +125,17 @@ object EventEnrichments {
    * @param eventCode The event code
    * @return the event type, or an error message if not recognised, boxed in a Scalaz Validation
    */
-  val extractEventType: (String, String) => ValidatedString = (field, code) =>
+  val extractEventType: (String, String) => Either[String, String] = (field, code) =>
     code match {
-      case "se" => "struct".success
-      case "ev" => "struct".success // Leave in for legacy.
-      case "ue" => "unstruct".success
-      case "ad" => "ad_impression".success // Leave in for legacy.
-      case "tr" => "transaction".success
-      case "ti" => "transaction_item".success
-      case "pv" => "page_view".success
-      case "pp" => "page_ping".success
-      case ec => "Field [%s]: [%s] is not a recognised event code".format(field, ec).fail
+      case "se" => "struct".asRight
+      case "ev" => "struct".asRight // Leave in for legacy.
+      case "ue" => "unstruct".asRight
+      case "ad" => "ad_impression".asRight // Leave in for legacy.
+      case "tr" => "transaction".asRight
+      case "ti" => "transaction_item".asRight
+      case "pv" => "page_view".asRight
+      case "pp" => "page_ping".asRight
+      case ec => s"Field [$field]: [$ec] is not a recognised event code".asLeft
   }
 
   /**

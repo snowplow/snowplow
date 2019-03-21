@@ -17,12 +17,12 @@ import java.sql.{ResultSet, ResultSetMetaData}
 
 import scala.collection.mutable.ListBuffer
 
+import cats.data.EitherT
+import cats.implicits._
 import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
 import org.joda.time.DateTime
-import scalaz._
-import Scalaz._
 
 /**
  * Container class for output preferences.
@@ -53,10 +53,10 @@ case class Output(json: JsonOutput, expectedRows: String) {
    * @param resultSet rows fetched from DB
    * @return list of successful Self-describing JSON Objects or error
    */
-  def convert(resultSet: ResultSet): ThrowableXor[List[Json]] = {
-    val buffer = ListBuffer.empty[ThrowableXor[JsonObject]]
+  def convert(resultSet: ResultSet): EitherThrowable[List[Json]] = {
+    val buffer = ListBuffer.empty[EitherThrowable[JsonObject]]
     while (resultSet.next()) { buffer += parse(resultSet) }
-    val parsedJsons = buffer.result().sequenceU
+    val parsedJsons = buffer.result().sequence
     resultSet.close()
 
     for {
@@ -71,7 +71,7 @@ case class Output(json: JsonOutput, expectedRows: String) {
    * @param jsons list of JSON Objects derived from SQL rows (row is always JSON Object)
    * @return validated list of described JSONs
    */
-  def envelope(jsons: List[JsonObject]): ThrowableXor[List[Json]] =
+  def envelope(jsons: List[JsonObject]): EitherThrowable[List[Json]] =
     (describeMode, expectedRowsMode) match {
       case (AllRows, AtLeastOne) =>
         AtLeastOne
@@ -99,7 +99,7 @@ case class Output(json: JsonOutput, expectedRows: String) {
    * @param resultSet single column result
    * @return successful raw JSON Object or throwable in case of error
    */
-  def parse(resultSet: ResultSet): ThrowableXor[JsonObject] =
+  def parse(resultSet: ResultSet): EitherThrowable[JsonObject] =
     json.transform(resultSet)
 
   /**
@@ -150,7 +150,7 @@ object Output {
      *         of rows matches expectation or [[InvalidDbResponse]] as
      *         left disjunction if amount is lower or higher than expected
      */
-    def collect(resultSet: List[JsonObject]): ThrowableXor[List[JsonObject]]
+    def collect(resultSet: List[JsonObject]): EitherThrowable[List[JsonObject]]
   }
 
   /**
@@ -158,36 +158,38 @@ object Output {
    * processing
    */
   case object ExactlyOne extends ExpectedRowsMode {
-    def collect(resultSet: List[JsonObject]): ThrowableXor[List[JsonObject]] =
+    def collect(resultSet: List[JsonObject]): EitherThrowable[List[JsonObject]] =
       resultSet match {
-        case List(one) => List(one).right
-        case other => InvalidDbResponse(s"SQL Query Enrichment: exactly one row was expected").left
+        case List(one) => List(one).asRight
+        case other =>
+          InvalidDbResponse(s"SQL Query Enrichment: exactly one row was expected").asLeft
       }
   }
 
   /** Either one or zero rows is expected. 2+ rows will throw an error */
   case object AtMostOne extends ExpectedRowsMode {
-    def collect(resultSet: List[JsonObject]): ThrowableXor[List[JsonObject]] =
+    def collect(resultSet: List[JsonObject]): EitherThrowable[List[JsonObject]] =
       resultSet match {
-        case List(one) => List(one).right
-        case List() => Nil.right
-        case other => InvalidDbResponse(s"SQL Query Enrichment: at most one row was expected").left
+        case List(one) => List(one).asRight
+        case List() => Nil.asRight
+        case other =>
+          InvalidDbResponse(s"SQL Query Enrichment: at most one row was expected").asLeft
       }
   }
 
   /** Always successful */
   case object AtLeastZero extends ExpectedRowsMode {
-    def collect(resultSet: List[JsonObject]): ThrowableXor[List[JsonObject]] =
-      resultSet.right
+    def collect(resultSet: List[JsonObject]): EitherThrowable[List[JsonObject]] =
+      resultSet.asRight
   }
 
   /** More that 1 rows are expected 0 rows will throw an error */
   case object AtLeastOne extends ExpectedRowsMode {
-    def collect(resultSet: List[JsonObject]): ThrowableXor[List[JsonObject]] =
+    def collect(resultSet: List[JsonObject]): EitherThrowable[List[JsonObject]] =
       resultSet match {
         case Nil =>
-          InvalidDbResponse(s"SQL Query Enrichment: at least one row was expected. 0 given instead").left
-        case other => other.right
+          InvalidDbResponse(s"SQL Query Enrichment: at least one row was expected. 0 given instead").asLeft
+        case other => other.asRight
       }
   }
 }
@@ -224,16 +226,16 @@ case class JsonOutput(schema: String, describes: String, propertyNames: String) 
    * @return JSON object as right disjunction in case of success or throwable as left disjunction in
    * case of any error
    */
-  def transform(resultSet: ResultSet): ThrowableXor[JsonObject] = {
-    val fields = for {
-      rsMeta <- getMetaData(resultSet).liftM[ListT]
-      idx <- ListT[ThrowableXor, Int](getColumnCount(rsMeta).map((x: Int) => (1 to x).toList))
-      colLabel <- getColumnLabel(idx, rsMeta).liftM[ListT]
-      colType <- getColumnType(idx, rsMeta).liftM[ListT]
-      value <- getColumnValue(colType, idx, resultSet).liftM[ListT]
-    } yield propertyNameMode.transform(colLabel) -> value
+  def transform(resultSet: ResultSet): EitherThrowable[JsonObject] = {
+    val fields: List[Either[Throwable, (String, Json)]] = (for {
+      rsMeta <- EitherT.fromEither[List](getMetaData(resultSet))
+      idx <- EitherT(getColumnCount(rsMeta).map((x: Int) => (1 to x).toList).sequence)
+      colLabel <- EitherT.fromEither[List](getColumnLabel(idx, rsMeta))
+      colType <- EitherT.fromEither[List](getColumnType(idx, rsMeta))
+      value <- EitherT.fromEither[List](getColumnValue(colType, idx, resultSet))
+    } yield propertyNameMode.transform(colLabel) -> value).value
 
-    fields.toList.map(x => JsonObject(x: _*))
+    fields.sequence.map(x => JsonObject(x: _*))
   }
 
 }
@@ -291,29 +293,29 @@ object JsonOutput {
   )
 
   /** Lift failing ResultSet#getMetaData into scalaz disjunction with Throwable as left-side */
-  def getMetaData(rs: ResultSet): ThrowableXor[ResultSetMetaData] =
-    \/.fromTryCatch(rs.getMetaData)
+  def getMetaData(rs: ResultSet): EitherThrowable[ResultSetMetaData] =
+    Either.catchNonFatal(rs.getMetaData)
 
   /**
    * Lift failing ResultSetMetaData#getColumnCount into scalaz disjunction with Throwable as
    * left-side
    */
-  def getColumnCount(rsMeta: ResultSetMetaData): ThrowableXor[Int] =
-    \/.fromTryCatch(rsMeta.getColumnCount)
+  def getColumnCount(rsMeta: ResultSetMetaData): EitherThrowable[Int] =
+    Either.catchNonFatal(rsMeta.getColumnCount)
 
   /**
    * Lift failing ResultSetMetaData#getColumnLabel into scalaz disjunction with Throwable as
    * left-side
    */
-  def getColumnLabel(column: Int, rsMeta: ResultSetMetaData): ThrowableXor[String] =
-    \/.fromTryCatch(rsMeta.getColumnLabel(column))
+  def getColumnLabel(column: Int, rsMeta: ResultSetMetaData): EitherThrowable[String] =
+    Either.catchNonFatal(rsMeta.getColumnLabel(column))
 
   /**
    * Lift failing ResultSetMetaData#getColumnClassName into scalaz disjunction with Throwable as
    * left-side
    */
-  def getColumnType(column: Int, rsMeta: ResultSetMetaData): ThrowableXor[String] =
-    \/.fromTryCatch(rsMeta.getColumnClassName(column))
+  def getColumnType(column: Int, rsMeta: ResultSetMetaData): EitherThrowable[String] =
+    Either.catchNonFatal(rsMeta.getColumnClassName(column))
 
   /**
    * Get value from ResultSet using column number
@@ -322,9 +324,9 @@ object JsonOutput {
    * @param rs result set fetched from DB
    * @return JSON in case of success or Throwable in case of SQL error
    */
-  def getColumnValue(datatype: String, columnIdx: Int, rs: ResultSet): ThrowableXor[Json] =
+  def getColumnValue(datatype: String, columnIdx: Int, rs: ResultSet): EitherThrowable[Json] =
     for {
-      value <- (\/ fromTryCatch rs.getObject(columnIdx)).map(Option.apply)
+      value <- Either.catchNonFatal(rs.getObject(columnIdx)).map(Option.apply)
     } yield value.map(getValue(_, datatype)).getOrElse(Json.Null)
 
   /**

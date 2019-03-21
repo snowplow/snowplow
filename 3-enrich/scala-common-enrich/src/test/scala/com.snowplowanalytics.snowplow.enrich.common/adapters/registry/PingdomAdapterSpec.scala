@@ -14,22 +14,17 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
+import cats.data.NonEmptyList
+import cats.syntax.option._
 import io.circe.literal._
 import org.joda.time.DateTime
-import org.specs2.{ScalaCheck, Specification}
-import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
-import scalaz._
-import Scalaz._
+import org.specs2.Specification
+import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
 import SpecHelpers._
 
-class PingdomAdapterSpec
-    extends Specification
-    with DataTables
-    with ValidationMatchers
-    with ScalaCheck {
+class PingdomAdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
   This is a specification to test the PingdomAdapter functionality
   reformatParameters should return either an updated JSON without the 'action' field or the same JSON $e1
@@ -65,7 +60,7 @@ class PingdomAdapterSpec
     val nvPairs = toNameValuePairs("p" -> "(u'apps',)")
     val expected =
       "Pingdom name-value pair [p -> apps]: Passed regex - Collector is not catching unicode wrappers anymore"
-    PingdomAdapter.reformatMapParams(nvPairs) must beFailing(NonEmptyList(expected))
+    PingdomAdapter.reformatMapParams(nvPairs) must beLeft(NonEmptyList.one(expected))
   }
 
   def e3 = {
@@ -87,13 +82,13 @@ class PingdomAdapterSpec
       Shared.cljSource,
       Shared.context
     )
-    PingdomAdapter.toRawEvents(payload) must beSuccessful(NonEmptyList(expected))
+    PingdomAdapter.toRawEvents(payload) must beValid(NonEmptyList.one(expected))
   }
 
   def e4 = {
     val payload = CollectorPayload(Shared.api, Nil, None, None, Shared.cljSource, Shared.context)
     val expected = "Pingdom payload querystring is empty: nothing to process"
-    PingdomAdapter.toRawEvents(payload) must beFailing(NonEmptyList(expected))
+    PingdomAdapter.toRawEvents(payload) must beInvalid(NonEmptyList.one(expected))
   }
 
   def e5 = {
@@ -102,6 +97,6 @@ class PingdomAdapterSpec
       CollectorPayload(Shared.api, querystring, None, None, Shared.cljSource, Shared.context)
     val expected =
       "Pingdom payload querystring does not have 'message' as a key"
-    PingdomAdapter.toRawEvents(payload) must beFailing(NonEmptyList(expected))
+    PingdomAdapter.toRawEvents(payload) must beInvalid(NonEmptyList.one(expected))
   }
 }

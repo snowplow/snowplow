@@ -12,15 +12,13 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.enrichments
 
+import cats.syntax.either._
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
-import scalaz._
-import Scalaz._
 
-class ExtractEventTypeSpec extends Specification with DataTables with ValidationMatchers {
+class ExtractEventTypeSpec extends Specification with DataTables {
   def is = s2"""
   This is a specification to test the extractEventType function
   extractEventType should return the event name for any valid event code         $e1
@@ -43,7 +41,7 @@ class ExtractEventTypeSpec extends Specification with DataTables with Validation
       "structured event" !! "se" ! "struct" |
       "structured event (legacy)" !! "ev" ! "struct" |
       "ad impression (legacy)" !! "ad" ! "ad_impression" |> { (_, input, expected) =>
-      EventEnrichments.extractEventType(FieldName, input) must beSuccessful(expected)
+      EventEnrichments.extractEventType(FieldName, input) must beRight(expected)
     }
 
   def e2 =
@@ -52,7 +50,7 @@ class ExtractEventTypeSpec extends Specification with DataTables with Validation
       "empty string" !! "" ! err("") |
       "unrecognized #1" !! "e" ! err("e") |
       "unrecognized #2" !! "evnt" ! err("evnt") |> { (_, input, expected) =>
-      EventEnrichments.extractEventType(FieldName, input) must beFailing(expected)
+      EventEnrichments.extractEventType(FieldName, input) must beLeft(expected)
     }
 
   val SeventiesTstamp = Some(new DateTime(0, DateTimeZone.UTC))
@@ -60,11 +58,11 @@ class ExtractEventTypeSpec extends Specification with DataTables with Validation
   val FarAwayTstamp = SeventiesTstamp.map(_.plusYears(10000))
   def e3 =
 // format: off
-    "SPEC NAME"          || "INPUT VAL"     | "EXPECTED OUTPUT"                                                                                     |
-    "None"               !! None            ! "No collector_tstamp set".fail                                                                        |
-    "Negative timestamp" !! BCTstamp        ! "Collector timestamp [-63113904000000] formatted as [-0030-01-01 00:00:00.000] which isn't Redshift-compatible".fail |
-    ">10k timestamp"     !! FarAwayTstamp   ! "Collector timestamp [315569520000000] formatted as [11970-01-01 00:00:00.000] which isn't Redshift-compatible".fail |
-    "Valid timestamp"    !! SeventiesTstamp ! "1970-01-01 00:00:00.000".success                                                                     |> {
+    "SPEC NAME"          || "INPUT VAL"     | "EXPECTED OUTPUT" |
+    "None"               !! None            ! "No collector_tstamp set".asLeft |
+    "Negative timestamp" !! BCTstamp        ! "Collector timestamp [-63113904000000] formatted as [-0030-01-01 00:00:00.000] which isn't Redshift-compatible".asLeft |
+    ">10k timestamp"     !! FarAwayTstamp   ! "Collector timestamp [315569520000000] formatted as [11970-01-01 00:00:00.000] which isn't Redshift-compatible".asLeft |
+    "Valid timestamp"    !! SeventiesTstamp ! "1970-01-01 00:00:00.000".asRight |> {
 // format: on
       (_, input, expected) =>
         EventEnrichments.formatCollectorTstamp(input) must_== (expected)
@@ -72,14 +70,14 @@ class ExtractEventTypeSpec extends Specification with DataTables with Validation
 
   def e4 =
     "SPEC NAME" || "INPUT VAL" | "EXPECTED OUTPUT" |
-      "Not long" !! (("f", "v")) ! "Field [f]: [v] is not in the expected format (ms since epoch)".fail |
-      "Too long" !! (("f", "1111111111111111")) ! "Field [f]: [1111111111111111] is formatted as [37179-09-17 07:18:31.111] which isn't Redshift-compatible".fail |
-      "Valid ts" !! (("f", "1")) ! "1970-01-01 00:00:00.001".success |> { (_, input, expected) =>
+      "Not long" !! (("f", "v")) ! "Field [f]: [v] is not in the expected format (ms since epoch)".asLeft |
+      "Too long" !! (("f", "1111111111111111")) ! "Field [f]: [1111111111111111] is formatted as [37179-09-17 07:18:31.111] which isn't Redshift-compatible".asLeft |
+      "Valid ts" !! (("f", "1")) ! "1970-01-01 00:00:00.001".asRight |> { (_, input, expected) =>
       EventEnrichments.extractTimestamp(input._1, input._2) must_== (expected)
     }
 }
 
-class DerivedTimestampSpec extends Specification with DataTables with ValidationMatchers {
+class DerivedTimestampSpec extends Specification with DataTables {
   def is =
     "This is a specification to test the getDerivedTimestamp function" ^
       p ^
@@ -99,6 +97,6 @@ class DerivedTimestampSpec extends Specification with DataTables with Validation
           Option(sent),
           Option(created),
           Option(collected),
-          Option(truth)) must beSuccessful(Option(expected))
+          Option(truth)) must beRight(Option(expected))
     }
 }

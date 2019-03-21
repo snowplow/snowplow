@@ -17,6 +17,8 @@ import java.sql._
 
 import scala.collection.immutable.IntMap
 
+import cats.syntax.either._
+
 import Input.ExtractedValue
 
 /**
@@ -49,7 +51,7 @@ case class Db(postgresql: Option[PostgresqlDb] = None, mysql: Option[MysqlDb] = 
   def createStatement(
     sql: String,
     placeholderMap: IntMap[ExtractedValue]
-  ): ThrowableXor[PreparedStatement] =
+  ): EitherThrowable[PreparedStatement] =
     realDb.createEmptyStatement(sql).map { preparedStatement =>
       placeholderMap.foreach {
         case (index, value) =>
@@ -59,10 +61,10 @@ case class Db(postgresql: Option[PostgresqlDb] = None, mysql: Option[MysqlDb] = 
     }
 
   /** Get amount of placeholders (?-signs) in Prepared Statement */
-  def getPlaceholderCount(sql: String): ThrowableXor[Int] =
+  def getPlaceholderCount(sql: String): EitherThrowable[Int] =
     realDb.createEmptyStatement(sql).flatMap(realDb.getPlaceholderCount)
 
   /** Execute PreparedStatement */
-  def execute(preparedStatement: PreparedStatement): ThrowableXor[ResultSet] =
+  def execute(preparedStatement: PreparedStatement): EitherThrowable[ResultSet] =
     realDb.execute(preparedStatement)
 }

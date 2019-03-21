@@ -15,41 +15,41 @@ package loaders
 
 import java.nio.charset.StandardCharsets.UTF_8
 
+import cats.data.ValidatedNel
+import cats.syntax.option._
+import cats.syntax.validated._
 import org.specs2.mutable.Specification
 import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
-import scalaz._
-import Scalaz._
 
 import SpecHelpers._
 
 object LoaderSpec {
   val loader = new Loader[String] {
     // Make our trait whole
-    def toCollectorPayload(line: String): ValidatedMaybeCollectorPayload = "FAIL".failNel
+    def toCollectorPayload(line: String): ValidatedNel[String, Option[CollectorPayload]] =
+      "FAIL".invalidNel
   }
 }
 
-class LoaderSpec extends Specification with DataTables with ValidationMatchers {
+class LoaderSpec extends Specification with DataTables {
   import LoaderSpec._
 
   "getLoader" should {
     "return the CloudfrontLoader" in {
-      Loader.getLoader("cloudfront") must beSuccessful(CloudfrontLoader)
+      Loader.getLoader("cloudfront") must beRight(CloudfrontLoader)
     }
 
     "return the CljTomcatLoader" in {
-      Loader.getLoader("clj-tomcat") must beSuccessful(CljTomcatLoader)
+      Loader.getLoader("clj-tomcat") must beRight(CljTomcatLoader)
     }
 
     "return the ThriftLoader" in {
-      Loader.getLoader("thrift") must beSuccessful(ThriftLoader)
+      Loader.getLoader("thrift") must beRight(ThriftLoader)
     }
 
     "return the NDJSON loader" in {
-      Loader.getLoader("ndjson/example.test/v1") must beSuccessful(NdjsonLoader("example.test/v1"))
+      Loader.getLoader("ndjson/example.test/v1") must beRight(NdjsonLoader("example.test/v1"))
     }
-
   }
 
   "extractGetPayload" should {
@@ -74,7 +74,7 @@ class LoaderSpec extends Specification with DataTables with ValidationMatchers {
           "tid" -> "483686") |
         "Empty querystring" !! None ! toNameValuePairs() |> { (_, qs, expected) =>
         {
-          loader.parseQuerystring(qs, Encoding) must beSuccessful(expected)
+          loader.parseQuerystring(qs, Encoding) must beRight(expected)
         }
       }
     }

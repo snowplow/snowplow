@@ -15,16 +15,17 @@ package enrichments.registry
 
 import scala.util.control.NonFatal
 
+import cats.data.ValidatedNel
+import cats.implicits._
+import com.github.fge.jsonschema.core.report.ProcessingMessage
 import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
 import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
 import org.mozilla.javascript._
 import io.circe._
 import io.circe.parser._
-import scalaz._
-import Scalaz._
 
 import outputs.EnrichedEvent
-import utils.{ConversionUtils, ScalazCirceUtils}
+import utils.{CirceUtils, ConversionUtils}
 
 /** Lets us create a JavascriptScriptEnrichment from a Json. */
 object JavascriptScriptEnrichmentConfig extends ParseableEnrichment {
@@ -38,22 +39,23 @@ object JavascriptScriptEnrichmentConfig extends ParseableEnrichment {
 
   /**
    * Creates a JavascriptScriptEnrichment instance from a JValue.
-   * @param config The JavaScript script enrichment JSON
+   * @param c The JavaScript script enrichment JSON
    * @param schemaKey provided for the enrichment, must be supported by this enrichment
    * @return a configured JavascriptScriptEnrichment instance
    */
-  def parse(config: Json, schemaKey: SchemaKey): ValidatedNelMessage[JavascriptScriptEnrichment] =
-    isParseable(config, schemaKey).flatMap(conf => {
-      (for {
-        encoded <- ScalazCirceUtils.extract[String](config, "parameters", "script")
-        raw <- ConversionUtils
-          .decodeBase64Url("script", encoded)
-          .toProcessingMessage // TODO: shouldn't be URL-safe
-        compiled <- JavascriptScriptEnrichment.compile(raw).toProcessingMessage
-        enrich = JavascriptScriptEnrichment(compiled)
-      } yield enrich).toValidationNel
-    })
-
+  def parse(
+    c: Json,
+    schemaKey: SchemaKey
+  ): ValidatedNel[ProcessingMessage, JavascriptScriptEnrichment] =
+    (for {
+      _ <- isParseable(c, schemaKey)
+      encoded <- CirceUtils.extract[String](c, "parameters", "script").toEither
+      raw <- ConversionUtils.decodeBase64Url("script", encoded)
+      compiled <- JavascriptScriptEnrichment.compile(raw)
+    } yield JavascriptScriptEnrichment(compiled))
+      .leftMap(_.toProcessingMessage)
+      .toEitherNel
+      .toValidated
 }
 
 object JavascriptScriptEnrichment {
@@ -67,30 +69,26 @@ object JavascriptScriptEnrichment {
    * Appends an invocation to the script and then attempts to compile it.
    * @param script the JavaScript process() function as a String
    */
-  private[registry] def compile(script: String): Validation[String, Script] = {
-    // Script mustn't be null
-    if (Option(script).isEmpty) {
-      return "JavaScript script for evaluation is null".fail
-    }
+  private[registry] def compile(script: String): Either[String, Script] =
+    Option(script) match {
+      case Some(s) =>
+        val invoke =
+          s"""|// User-supplied script
+              |${script}
+              |
+              |// Immediately invoke using reserved args
+              |var ${Variables.Out} = JSON.stringify(process(${Variables.In}));
+              |
+              |// Don't return anything
+              |null;
+              |""".stripMargin
 
-    val invoke =
-      s"""|// User-supplied script
-          |${script}
-          |
-          |// Immediately invoke using reserved args
-          |var ${Variables.Out} = JSON.stringify(process(${Variables.In}));
-          |
-          |// Don't return anything
-          |null;
-          |""".stripMargin
-
-    val cx = Context.enter()
-    try {
-      cx.compileString(invoke, "user-defined-script", 0, null).success
-    } catch {
-      case NonFatal(se) => s"Error compiling JavaScript script: [${se}]".fail
+        val cx = Context.enter()
+        Either
+          .catchNonFatal(cx.compileString(invoke, "user-defined-script", 0, null))
+          .leftMap(e => s"Error compiling JavaScript script: [${e.getMessage}]")
+      case None => "JavaScript script for evaluation is null".asLeft
     }
-  }
 
   /**
    * Run the process function as stored in the CompiledScript against the supplied EnrichedEvent.
@@ -101,7 +99,7 @@ object JavascriptScriptEnrichment {
   private[registry] def process(
     script: Script,
     event: EnrichedEvent
-  ): Validation[String, List[Json]] = {
+  ): Either[String, List[Json]] = {
     val cx = Context.enter()
     val scope = cx.initStandardObjects
 
@@ -109,27 +107,27 @@ object JavascriptScriptEnrichment {
       scope.put(Variables.In, scope, Context.javaToJS(event, scope))
       val retVal = script.exec(cx, scope)
       if (Option(retVal).isDefined) {
-        return s"Evaluated JavaScript script should not return a value; returned: [$retVal]".fail
+        return s"Evaluated JavaScript script should not return a value; returned: [$retVal]".asLeft
       }
     } catch {
       case NonFatal(nf) =>
-        return s"Evaluating JavaScript script threw an exception: [$nf]".fail
+        return s"Evaluating JavaScript script threw an exception: [$nf]".asLeft
     } finally {
       Context.exit()
     }
 
     Option(scope.get(Variables.Out)) match {
-      case None => Nil.success
+      case None => Nil.asRight
       case Some(obj) =>
         parse(obj.asInstanceOf[String]) match {
           case Right(js) =>
             js.asArray match {
-              case Some(array) => array.toList.success
-              case None => s"JavaScript script must return an Array; got [$obj]".fail
+              case Some(array) => array.toList.asRight
+              case None => s"JavaScript script must return an Array; got [$obj]".asLeft
             }
           case Left(e) =>
             ("Could not convert object returned from JavaScript script to Json: " +
-              s"[${e.getMessage}]").fail
+              s"[${e.getMessage}]").asLeft
         }
     }
   }
@@ -142,16 +140,11 @@ object JavascriptScriptEnrichment {
 final case class JavascriptScriptEnrichment(script: Script) extends Enrichment {
 
   /**
-   * Run the process function as stored in the CompiledScript
-   * against the supplied EnrichedEvent.
-   *
-   * @param event The enriched event to
-   *        pass into our process function
-   * @return a Validation boxing either a
-   *         JSON array of contexts on Success,
-   *         or an error String on Failure
+   * Run the process function as stored in the CompiledScript against the supplied EnrichedEvent.
+   * @param event The enriched event to pass into our process function
+   * @return either a JSON array of contexts on Success, or an error String on Failure
    */
-  def process(event: EnrichedEvent): Validation[String, List[Json]] =
+  def process(event: EnrichedEvent): Either[String, List[Json]] =
     JavascriptScriptEnrichment.process(script, event)
 
 }

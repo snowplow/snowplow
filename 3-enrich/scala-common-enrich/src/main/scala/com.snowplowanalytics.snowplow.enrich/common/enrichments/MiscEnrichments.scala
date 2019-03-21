@@ -13,10 +13,9 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 
+import cats.syntax.either._
 import io.circe._
 import io.circe.syntax._
-import scalaz._
-import Scalaz._
 
 import generated.ProjectSettings
 import utils.{ConversionUtils => CU}
@@ -38,26 +37,25 @@ object MiscEnrichments {
    * @param platform The code for the platform generating this event.
    * @return a Scalaz ValidatedString.
    */
-  val extractPlatform: (String, String) => ValidatedString = (field, platform) => {
+  val extractPlatform: (String, String) => Either[String, String] = (field, platform) =>
     platform match {
-      case "web" => "web".success // Web, including Mobile Web
-      case "iot" => "iot".success // Internet of Things (e.g. Arduino tracker)
-      case "app" => "app".success // General App
-      case "mob" => "mob".success // Mobile / Tablet
-      case "pc" => "pc".success // Desktop / Laptop / Netbook
-      case "cnsl" => "cnsl".success // Games Console
-      case "tv" => "tv".success // Connected TV
-      case "srv" => "srv".success // Server-side App
-      case p => "Field [%s]: [%s] is not a supported tracking platform".format(field, p).fail
-    }
+      case "web" => "web".asRight // Web, including Mobile Web
+      case "iot" => "iot".asRight // Internet of Things (e.g. Arduino tracker)
+      case "app" => "app".asRight // General App
+      case "mob" => "mob".asRight // Mobile / Tablet
+      case "pc" => "pc".asRight // Desktop / Laptop / Netbook
+      case "cnsl" => "cnsl".asRight // Games Console
+      case "tv" => "tv".asRight // Connected TV
+      case "srv" => "srv".asRight // Server-side App
+      case p => s"Field [$field]: [$p] is not a supported tracking platform".asLeft
   }
 
   /** Identity transform. Straight passthrough. */
-  val identity: (String, String) => ValidatedString = (field, value) => value.success
+  val identity: (String, String) => Either[String, String] = (field, value) => value.asRight
 
   /** Make a String TSV safe */
-  val toTsvSafe: (String, String) => ValidatedString = (field, value) =>
-    CU.makeTsvSafe(value).success
+  val toTsvSafe: (String, String) => Either[String, String] = (field, value) =>
+    CU.makeTsvSafe(value).asRight
 
   /**
    * The X-Forwarded-For header can contain a comma-separated list of IPs especially if it has
@@ -65,9 +63,9 @@ object MiscEnrichments {
    * Here we retrieve the first one as it is supposed to be the client one, c.f.
    * https://en.m.wikipedia.org/wiki/X-Forwarded-For#Format
    */
-  val extractIp: (String, String) => ValidatedString = (field, value) => {
+  val extractIp: (String, String) => Either[String, String] = (field, value) => {
     val lastIp = Option(value).map(_.split("[,|, ]").head).orNull
-    CU.makeTsvSafe(lastIp).success
+    CU.makeTsvSafe(lastIp).asRight
   }
 
   /**

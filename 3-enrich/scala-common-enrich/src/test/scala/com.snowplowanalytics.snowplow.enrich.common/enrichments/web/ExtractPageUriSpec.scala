@@ -14,13 +14,11 @@ package com.snowplowanalytics.snowplow.enrich.common.enrichments.web
 
 import java.net.URI
 
+import cats.syntax.option._
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
-import scalaz._
-import Scalaz._
 
-class ExtractPageUriSpec extends Specification with DataTables with ValidationMatchers {
+class ExtractPageUriSpec extends Specification with DataTables {
   def is = s2"""
   This is a specification to test the extractPageUri function
   extractPageUri should return a None when no page URI provided                             $e1
@@ -30,7 +28,7 @@ class ExtractPageUriSpec extends Specification with DataTables with ValidationMa
 
   // No URI
   def e1 =
-    PageEnrichments.extractPageUri(None, None) must beSuccessful(None)
+    PageEnrichments.extractPageUri(None, None) must beRight(None)
 
   // Valid URI combinations
   val originalUri = "http://www.mysite.com/shop/session/_internal/checkout"
@@ -46,7 +44,7 @@ class ExtractPageUriSpec extends Specification with DataTables with ValidationMa
       "collector and tracker URIs differ - use tracker" !! originalUri.some ! customUri.some ! customURI.some |> {
 
       (_, fromReferer, fromTracker, expected) =>
-        PageEnrichments.extractPageUri(fromReferer, fromTracker) must beSuccessful(expected)
+        PageEnrichments.extractPageUri(fromReferer, fromTracker) must beRight(expected)
     }
 
   // Truncate
@@ -55,6 +53,6 @@ class ExtractPageUriSpec extends Specification with DataTables with ValidationMa
 
   // See https://github.com/snowplow/snowplow/issues/268 for background behind this test
   def e3 =
-    PageEnrichments.extractPageUri(originalUri.some, truncatedUri.some) must beSuccessful(
+    PageEnrichments.extractPageUri(originalUri.some, truncatedUri.some) must beRight(
       truncatedURI.some)
 }
