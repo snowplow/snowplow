@@ -15,11 +15,9 @@ package enrichments.registry
 
 import java.net.URI
 
+import cats.syntax.either._
 import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
-import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
 import io.circe._
-import scalaz._
-import Scalaz._
 
 /** Trait inherited by every enrichment config case class */
 trait Enrichment {
@@ -44,14 +42,12 @@ trait ParseableEnrichment {
    * @param schemaKey The schemaKey which needs to be checked
    * @return The JSON or an error message, boxed
    */
-  def isParseable(config: Json, schemaKey: SchemaKey): ValidatedNelMessage[Json] =
+  def isParseable(config: Json, schemaKey: SchemaKey): Either[String, Json] =
     if (supportedSchema.matches(schemaKey)) {
-      config.success
+      config.asRight
     } else {
       ("Schema key %s is not supported. A '%s' enrichment must have schema '%s'.")
         .format(schemaKey, supportedSchema.name, supportedSchema)
-        .toProcessingMessage
-        .fail
-        .toValidationNel
+        .asLeft
     }
 }

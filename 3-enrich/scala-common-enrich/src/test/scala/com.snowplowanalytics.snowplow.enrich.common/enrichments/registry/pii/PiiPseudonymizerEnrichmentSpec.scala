@@ -17,23 +17,23 @@ package pii
 
 import java.net.URI
 
+import cats.data.ValidatedNel
 import cats.syntax.either._
+import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.{Resolver, SchemaCriterion}
 import com.snowplowanalytics.iglu.client.repositories.RepositoryRefConfig
 import io.circe.parser._
 import org.joda.time.DateTime
 import org.apache.commons.codec.digest.DigestUtils
 import org.specs2.Specification
-import org.specs2.scalaz.ValidationMatchers
-import scalaz._
-import Scalaz._
+import org.specs2.matcher.ValidatedMatchers
 
 import SpecHelpers.toNameValuePairs
 import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
 import outputs.EnrichedEvent
 import utils.TestResourcesRepositoryRef
 
-class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatchers {
+class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatchers {
   def is = s2"""
     This is a specification to test PII
     Hashing configured scalar fields in POJO should work                                                         $e1
@@ -46,8 +46,8 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
     Hashing configured JSON fields in POJO should not create new fields                                          $e8
   """
 
-  def commonSetup(enrichmentMap: EnrichmentMap): List[ValidatedEnrichedEvent] = {
-    val enrichmentRegistry = EnrichmentRegistry(enrichmentMap)
+  def commonSetup(enrichmentMap: EnrichmentMap): List[ValidatedNel[String, EnrichedEvent]] = {
+    val registry = EnrichmentRegistry(enrichmentMap)
     val context =
       CollectorContext(
         Some(DateTime.parse("2017-07-14T03:39:39.000+00:00")),
@@ -125,7 +125,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
       source,
       context
     )
-    val input: ValidatedMaybeCollectorPayload = Some(collectorPayload).successNel
+    val input = Some(collectorPayload).validNel
     val rrc = new RepositoryRefConfig("test-schema", 1, List("com.snowplowanalytics.snowplow"))
     val repos = TestResourcesRepositoryRef(rrc, "src/test/resources/iglu-schemas")
     implicit val resolver = new Resolver(repos = List(repos))
@@ -172,7 +172,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
     expected.collector_tstamp = "2017-07-14 03:39:39.000"
     output.size must_== 1
     val out = output.head
-    out must beSuccessful.like {
+    out must beValid.like {
       case enrichedEvent =>
         (enrichedEvent.app_id must_== expected.app_id) and
           (enrichedEvent.user_id must_== expected.user_id) and
@@ -231,7 +231,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
     expected.collector_tstamp = "2017-07-14 03:39:39.000"
     output.size must_== 1
     val out = output.head
-    out must beSuccessful.like {
+    out must beValid.like {
       case enrichedEvent =>
         val contextJ = parse(enrichedEvent.contexts).toOption.get.hcursor
         val contextJFirstElement = contextJ.downField("data").downArray
@@ -301,7 +301,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
     expected.collector_tstamp = "2017-07-14 03:39:39.000"
     output.size must_== 1
     val out = output.head
-    out must beSuccessful.like {
+    out must beValid.like {
       case enrichedEvent =>
         val contextJ = parse(enrichedEvent.contexts).toOption.get.hcursor.downField("data")
         val firstElem = contextJ.downArray.downField("data")
@@ -345,7 +345,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
     expected.collector_tstamp = "2017-07-14 03:39:39.000"
     output.size must_== 1
     val out = output.head
-    out must beSuccessful.like {
+    out must beValid.like {
       case enrichedEvent =>
         val contextJ = parse(enrichedEvent.contexts).toOption.get.hcursor.downField("data")
         val firstElem = contextJ.downArray.downField("data")
@@ -390,7 +390,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
     expected.collector_tstamp = "2017-07-14 03:39:39.000"
     output.size must_== 1
     val out = output.head
-    out must beSuccessful.like {
+    out must beValid.like {
       case enrichedEvent =>
         val contextJ = parse(enrichedEvent.contexts).toOption.get.hcursor.downField("data")
         val firstElem = contextJ.downArray.downField("data")
@@ -435,7 +435,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
     expected.collector_tstamp = "2017-07-14 03:39:39.000"
     output.size must_== 1
     val out = output.head
-    out must beSuccessful.like {
+    out must beValid.like {
       case enrichedEvent =>
         val contextJ = parse(enrichedEvent.contexts).toOption.get.hcursor.downField("data")
         val firstElem = contextJ.downArray.downField("data")
@@ -497,7 +497,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
 
     output.size must_== 1
     val out = output.head
-    out must beSuccessful.like {
+    out must beValid.like {
       case enrichedEvent =>
         val contextJ = parse(enrichedEvent.contexts).toOption.get.hcursor.downField("data")
         val firstElem = contextJ.downArray.downField("data")
@@ -552,7 +552,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
     expected.collector_tstamp = "2017-07-14 03:39:39.000"
     output.size must_== 1
     val out = output(0)
-    out must beSuccessful.like {
+    out must beValid.like {
       case enrichedEvent => {
         val contextJ = parse(enrichedEvent.contexts).toOption.get.hcursor.downField("data")
         val firstElem = contextJ.downArray.downField("data")

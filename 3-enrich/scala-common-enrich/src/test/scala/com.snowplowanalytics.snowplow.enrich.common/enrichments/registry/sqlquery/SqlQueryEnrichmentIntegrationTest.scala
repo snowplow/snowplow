@@ -21,7 +21,6 @@ import io.circe.literal._
 import io.circe.parser._
 import io.circe.syntax._
 import org.specs2.Specification
-import org.specs2.scalaz.ValidationMatchers
 
 import outputs.EnrichedEvent
 
@@ -61,7 +60,7 @@ object SqlQueryEnrichmentIntegrationTest {
 }
 
 import SqlQueryEnrichmentIntegrationTest._
-class SqlQueryEnrichmentIntegrationTest extends Specification with ValidationMatchers {
+class SqlQueryEnrichmentIntegrationTest extends Specification {
   def is =
     skipAllUnless(continuousIntegration) ^
       s2"""
@@ -117,7 +116,7 @@ class SqlQueryEnrichmentIntegrationTest extends Specification with ValidationMat
     val event = new EnrichedEvent
 
     val config = SqlQueryEnrichmentConfig.parse(configuration, SCHEMA_KEY)
-    val context = config.flatMap(_.lookup(event, Nil, Nil, Nil))
+    val context = config.toEither.flatMap(_.lookup(event, Nil, Nil, Nil).toEither)
 
     val correctContext = json"""
       {
@@ -127,7 +126,7 @@ class SqlQueryEnrichmentIntegrationTest extends Specification with ValidationMat
         }
       }"""
 
-    context must beSuccessful.like {
+    context must beRight.like {
       case List(json) => json must beEqualTo(correctContext)
     }
   }
@@ -304,10 +303,10 @@ class SqlQueryEnrichmentIntegrationTest extends Specification with ValidationMat
         "1-0-0"),
       """ {"applicationName": "ue_test_london"} """)
 
-    val config = SqlQueryEnrichmentConfig.parse(configuration, SCHEMA_KEY)
+    val config = SqlQueryEnrichmentConfig.parse(configuration, SCHEMA_KEY).toEither
 
     val context1 =
-      config.flatMap(_.lookup(event1, List(weatherContext1), List(geoContext1), List(ue1)))
+      config.flatMap(_.lookup(event1, List(weatherContext1), List(geoContext1), List(ue1)).toEither)
     val result_context1 = json"""
       {
         "schema":"iglu:com.acme/demographic/jsonschema/1-0-0",
@@ -319,7 +318,7 @@ class SqlQueryEnrichmentIntegrationTest extends Specification with ValidationMat
       }"""
 
     val context2 =
-      config.flatMap(_.lookup(event2, List(weatherContext2), List(geoContext2), List(ue2)))
+      config.flatMap(_.lookup(event2, List(weatherContext2), List(geoContext2), List(ue2)).toEither)
     val result_context2 = json"""
       {
         "schema":"iglu:com.acme/demographic/jsonschema/1-0-0",
@@ -331,7 +330,7 @@ class SqlQueryEnrichmentIntegrationTest extends Specification with ValidationMat
       }"""
 
     val context3 =
-      config.flatMap(_.lookup(event3, List(weatherContext3), List(geoContext3), List(ue3)))
+      config.flatMap(_.lookup(event3, List(weatherContext3), List(geoContext3), List(ue3)).toEither)
     val result_context3 = json"""
       {
         "schema":"iglu:com.acme/demographic/jsonschema/1-0-0",
@@ -342,8 +341,11 @@ class SqlQueryEnrichmentIntegrationTest extends Specification with ValidationMat
         }
       }"""
 
-    val context4 = config.flatMap(
-      _.lookup(event4, List(weatherContext4), List(geoContext4, clientSession4), List(ue4)))
+    val context4 = config.flatMap(_.lookup(
+      event4,
+      List(weatherContext4),
+      List(geoContext4, clientSession4),
+      List(ue4)).toEither)
     val result_context4 = json"""
       {
         "schema":"iglu:com.acme/demographic/jsonschema/1-0-0",
@@ -354,20 +356,20 @@ class SqlQueryEnrichmentIntegrationTest extends Specification with ValidationMat
         }
       }"""
 
-    val res1 = context1 must beSuccessful.like {
+    val res1 = context1 must beRight.like {
       case List(ctx) => ctx must beEqualTo(result_context1)
     }
-    val res2 = context2 must beSuccessful.like {
+    val res2 = context2 must beRight.like {
       case List(ctx) => ctx must beEqualTo(result_context2)
     }
-    val res3 = context3 must beSuccessful.like {
+    val res3 = context3 must beRight.like {
       case List(ctx) => ctx must beEqualTo(result_context3)
     }
-    val res4 = context4 must beSuccessful.like {
+    val res4 = context4 must beRight.like {
       case List(ctx) => ctx must beEqualTo(result_context4)
     }
     val cache = config.map(_.cache.actualLoad) must
-      beSuccessful.like { case size => size must beEqualTo(3) }
+      beRight.like { case size => size must beEqualTo(3) }
 
     res1.and(res2).and(res3).and(res4).and(cache)
   }

@@ -16,19 +16,18 @@ package enrichments.registry.sqlquery
 import scala.collection.immutable.IntMap
 
 import cats.syntax.either._
+import cats.syntax.option._
 import io.circe._
 import io.circe.literal._
 import io.circe.parser._
 import io.circe.syntax._
 import org.specs2.Specification
-import org.specs2.scalaz.ValidationMatchers
-import scalaz._
-import Scalaz._
+import org.specs2.matcher.ValidatedMatchers
 
 import outputs.EnrichedEvent
 import Input._
 
-class InputSpec extends Specification with ValidationMatchers {
+class InputSpec extends Specification with ValidatedMatchers {
   def is = s2"""
   This is a specification to test the Inputs and placeholder-map building of SQL Query Enrichment
   Create template context from POJO inputs                 $e1
@@ -133,7 +132,7 @@ class InputSpec extends Specification with ValidationMatchers {
     event.setTrue_tstamp("20")
 
     val placeholderMap = Input.buildPlaceholderMap(List(input1, input2), event, Nil, Nil, None)
-    placeholderMap must beSuccessful(
+    placeholderMap must beValid(
       Some(IntMap(1 -> StringPlaceholder.Value("chuwy"), 2 -> StringPlaceholder.Value("20"))))
   }
 
@@ -147,7 +146,7 @@ class InputSpec extends Specification with ValidationMatchers {
       customContexts = List(cookieContext, overriderContext),
       unstructEvent = Some(unstructEvent)
     )
-    placeholderMap must beSuccessful(None)
+    placeholderMap must beValid(None)
   }
 
   def e8 = {
@@ -161,9 +160,7 @@ class InputSpec extends Specification with ValidationMatchers {
       unstructEvent = Some(unstructEvent)
     )
 
-    utils.JsonPath.testMe
-
-    placeholderMap must beSuccessful(
+    placeholderMap must beValid(
       Some(
         IntMap(
           1 -> StringPlaceholder.Value("someValue"),
@@ -193,7 +190,7 @@ class InputSpec extends Specification with ValidationMatchers {
       derivedContexts = Nil,
       customContexts = List(overriderContext),
       unstructEvent = None)
-    templateContext must beSuccessful(Some(IntMap(1 -> DoublePlaceholder.Value(43.1))))
+    templateContext must beValid(Some(IntMap(1 -> DoublePlaceholder.Value(43.1))))
   }
 
   def e4 = {
@@ -219,7 +216,7 @@ class InputSpec extends Specification with ValidationMatchers {
       derivedContexts = Nil,
       customContexts = List(Json.fromValues(Nil)),
       unstructEvent = None)
-    templateContext must beFailing.like {
+    templateContext must beInvalid.like {
       case errors => errors.toList must have length 3
     }
   }
@@ -228,7 +225,7 @@ class InputSpec extends Specification with ValidationMatchers {
     val event = new EnrichedEvent
     val pojoInput = Input(1, pojo = PojoInput("app_id").some, json = None)
     val templateContext = pojoInput.getFromEvent(event)
-    templateContext must beSuccessful.like {
+    templateContext must beRight.like {
       case map => map must beEqualTo((1, None))
     }
   }
@@ -237,13 +234,13 @@ class InputSpec extends Specification with ValidationMatchers {
     val event = new EnrichedEvent
     val pojoInput = Input(1, pojo = PojoInput("unknown_property").some, json = None)
     val templateContext = pojoInput.getFromEvent(event)
-    templateContext must beFailing
+    templateContext must beLeft
   }
 
   def e9 = {
     val event = new EnrichedEvent
     val placeholderMap = Input.buildPlaceholderMap(List(), event, Nil, Nil, None)
-    placeholderMap must beSuccessful.like {
+    placeholderMap must beValid.like {
       case opt =>
         opt must beSome.like {
           case map => map must beEqualTo(IntMap.empty[Input.PlaceholderMap])
@@ -281,18 +278,17 @@ class InputSpec extends Specification with ValidationMatchers {
     event.setBr_viewwidth(800)
     event.setGeo_longitude(32.3f)
 
-    val appid = Input(3, Some(PojoInput("app_id")), None).getFromEvent(event) must beSuccessful
-      .like {
-        case (3, Some(StringPlaceholder.Value("enrichment-test"))) => ok
-        case _ => ko
-      }
+    val appid = Input(3, Some(PojoInput("app_id")), None).getFromEvent(event) must beRight.like {
+      case (3, Some(StringPlaceholder.Value("enrichment-test"))) => ok
+      case _ => ko
+    }
     val viewwidth = Input(1, Some(PojoInput("br_viewwidth")), None)
-      .getFromEvent(event) must beSuccessful.like {
+      .getFromEvent(event) must beRight.like {
       case (1, Some(IntPlaceholder.Value(800))) => ok
       case _ => ko
     }
     val longitude = Input(1, Some(PojoInput("geo_longitude")), None)
-      .getFromEvent(event) must beSuccessful.like {
+      .getFromEvent(event) must beRight.like {
       case (1, Some(FloatPlaceholder.Value(32.3f))) => ok
       case _ => ko
     }

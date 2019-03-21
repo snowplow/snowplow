@@ -13,16 +13,16 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry.apirequest
 
+import cats.data.ValidatedNel
+import cats.syntax.option._
 import io.circe._
 import io.circe.literal._
 import org.specs2.Specification
-import org.specs2.scalaz.ValidationMatchers
-import scalaz._
-import Scalaz._
+import org.specs2.matcher.ValidatedMatchers
 
 import outputs.EnrichedEvent
 
-class InputSpec extends Specification with ValidationMatchers {
+class InputSpec extends Specification with ValidatedMatchers {
   def is = s2"""
   This is a specification to test the Inputs and template context building of API Request Enrichment
   Create template context from POJO inputs              $e1
@@ -116,7 +116,7 @@ class InputSpec extends Specification with ValidationMatchers {
     event.setUser_id("chuwy")
     event.setTrue_tstamp("20")
     val templateContext = Input.buildTemplateContext(List(input1, input2), event, Nil, Nil, None)
-    templateContext must beSuccessful(Some(Map("user" -> "chuwy", "time" -> "20")))
+    templateContext must beValid(Some(Map("user" -> "chuwy", "time" -> "20")))
   }
 
   def e2 = {
@@ -129,7 +129,7 @@ class InputSpec extends Specification with ValidationMatchers {
       customContexts = List(cookieContext, overriderContext),
       unstructEvent = Some(unstructEvent)
     )
-    templateContext must beSuccessful(
+    templateContext must beValid(
       Some(
         Map("nullableValue" -> "null", "overridenValue" -> "43.1", "unstructValue" -> "COMPLETED")))
   }
@@ -156,7 +156,7 @@ class InputSpec extends Specification with ValidationMatchers {
       derivedContexts = Nil,
       customContexts = List(jsonLatitudeContext),
       unstructEvent = None)
-    templateContext must beSuccessful(Some(Map("latitude" -> "43.1")))
+    templateContext must beValid(Some(Map("latitude" -> "43.1")))
   }
 
   def e4 = {
@@ -184,7 +184,7 @@ class InputSpec extends Specification with ValidationMatchers {
       customContexts = List(Json.fromJsonObject(JsonObject.empty)),
       unstructEvent = None
     )
-    templateContext must beFailing.like {
+    templateContext must beInvalid.like {
       case errors => errors.toList must have length (3)
     }
   }
@@ -192,8 +192,8 @@ class InputSpec extends Specification with ValidationMatchers {
   def e5 = {
     val event = new EnrichedEvent
     val pojoInput = Input("someKey", pojo = PojoInput("app_id").some, json = None)
-    val templateContext: ValidationNel[String, Option[Any]] = pojoInput.getFromEvent(event)
-    templateContext must beSuccessful.like {
+    val templateContext: ValidatedNel[String, Option[Any]] = pojoInput.getFromEvent(event)
+    templateContext must beValid.like {
       case map => map must beNone
     }
   }
@@ -201,8 +201,8 @@ class InputSpec extends Specification with ValidationMatchers {
   def e6 = {
     val event = new EnrichedEvent
     val pojoInput = Input("someKey", pojo = PojoInput("unknown_property").some, json = None)
-    val templateContext: ValidationNel[String, Option[Any]] = pojoInput.getFromEvent(event)
-    templateContext must beFailing
+    val templateContext: ValidatedNel[String, Option[Any]] = pojoInput.getFromEvent(event)
+    templateContext must beInvalid
   }
 
   def e7 = {
@@ -218,7 +218,7 @@ class InputSpec extends Specification with ValidationMatchers {
     event.setUser_id("chuwy")
     // time in true_tstamp won't be found
     val request = enrichment.lookup(event, Nil, Nil, Nil)
-    request must beSuccessful.like {
+    request must beValid.like {
       case response => response must be(Nil)
     }
   }
@@ -239,7 +239,7 @@ class InputSpec extends Specification with ValidationMatchers {
       "data": { "somekey": "somevalue" }
     }"""
 
-    input.getFromJson(Nil, List(obj), None) must beSuccessful.like {
+    input.getFromJson(Nil, List(obj), None) must beValid.like {
       case option =>
         option must beSome.like {
           case context => context must beEqualTo(Map("permissive" -> "somevalue"))

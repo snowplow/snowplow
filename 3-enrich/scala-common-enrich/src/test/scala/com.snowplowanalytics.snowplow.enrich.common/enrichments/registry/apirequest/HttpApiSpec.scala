@@ -14,10 +14,10 @@ package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry.apirequest
 
 import org.specs2.Specification
-import org.specs2.scalaz.ValidationMatchers
+import org.specs2.matcher.ValidatedMatchers
 import org.specs2.mock.Mockito
 
-class HttpApiSpec extends Specification with ValidationMatchers with Mockito {
+class HttpApiSpec extends Specification with ValidatedMatchers with Mockito {
   def is = s2"""
   This is a specification to test the HTTP API of API Request Enrichment
   Fail to build request string without all keys $e1
@@ -56,6 +56,6 @@ class HttpApiSpec extends Specification with ValidationMatchers with Mockito {
 
     val event = new outputs.EnrichedEvent
     val request = enrichment.lookup(event, Nil, Nil, Nil)
-    request must beFailing
+    request must beInvalid
   }
 }

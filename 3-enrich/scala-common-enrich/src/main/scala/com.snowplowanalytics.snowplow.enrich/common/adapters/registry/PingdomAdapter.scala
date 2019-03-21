@@ -14,13 +14,12 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-import org.apache.http.NameValuePair
-
+import cats.data.{NonEmptyList, ValidatedNel}
 import cats.syntax.either._
+import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
 import io.circe._
-import scalaz._
-import Scalaz._
+import org.apache.http.NameValuePair
 
 import loaders.CollectorPayload
 
@@ -54,18 +53,20 @@ object PingdomAdapter extends Adapter {
    * @param resolver (implicit) The Iglu resolver used for schema lookup and validation. Not used
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
+  def toRawEvents(payload: CollectorPayload)(
+    implicit r: Resolver
+  ): ValidatedNel[String, NonEmptyList[RawEvent]] =
     (payload.querystring) match {
-      case Nil => s"$VendorName payload querystring is empty: nothing to process".failNel
+      case Nil => s"$VendorName payload querystring is empty: nothing to process".invalidNel
       case qs =>
         reformatMapParams(qs) match {
-          case Failure(f) => f.fail
-          case Success(s) =>
+          case Left(f) => f.invalid
+          case Right(s) =>
             s.get("message") match {
               case None =>
-                s"$VendorName payload querystring does not have 'message' as a key".failNel
+                s"$VendorName payload querystring does not have 'message' as a key".invalidNel
               case Some(event) =>
-                for {
+                (for {
                   parsedEvent <- parseJsonSafe(event)
                   schema <- {
                     val eventOpt = parsedEvent.hcursor.downField("action").as[String].toOption
@@ -74,7 +75,7 @@ object PingdomAdapter extends Adapter {
                 } yield {
                   val formattedEvent = reformatParameters(parsedEvent)
                   val qsParams = s - "message"
-                  NonEmptyList(
+                  NonEmptyList.one(
                     RawEvent(
                       api = payload.api,
                       parameters = toUnstructEventParams(
@@ -86,8 +87,9 @@ object PingdomAdapter extends Adapter {
                       contentType = payload.contentType,
                       source = payload.source,
                       context = payload.context
-                    ))
-                }
+                    )
+                  )
+                }).toValidatedNel
             }
         }
     }
@@ -104,32 +106,28 @@ object PingdomAdapter extends Adapter {
    */
   private[registry] def reformatMapParams(
     params: List[NameValuePair]
-  ): Validated[Map[String, String]] = {
+  ): Either[NonEmptyList[String], Map[String, String]] = {
     val formatted = params.map { value =>
       (value.getName, value.getValue) match {
         case (k, PingdomValueRegex(v)) =>
           (s"$VendorName name-value pair [$k -> $v]: Passed regex - Collector is not catching " +
-            "unicode wrappers anymore").failNel
-        case (k, v) => (k -> v).successNel
+            "unicode wrappers anymore").asLeft
+        case other => other.asRight
       }
     }
 
-    val successes: List[(String, String)] =
-      for {
-        Success(s) <- formatted
-      } yield s
-
-    val failures: List[String] =
-      for {
-        Failure(NonEmptyList(f)) <- formatted
-      } yield f
+    val successes: List[(String, String)] = formatted.collect { case Right(s) => s }
+    val failures: List[String] = formatted.collect { case Left(f) => f }
 
     (successes, failures) match {
-      case (s :: ss, Nil) => (s :: ss).toMap.successNel // No Failures collected.
-      case (_, f :: fs) => NonEmptyList(f, fs: _*).fail // Some Failures, return only those.
+      case (s :: ss, Nil) => (s :: ss).toMap.asRight // No Failures collected.
+      case (_, f :: fs) => NonEmptyList.of(f, fs: _*).asLeft // Some Failures, return only those.
       case (Nil, Nil) =>
-        ("Empty parameters list was passed - should never happen: empty " +
-          "querystring is not being caught").failNel
+        NonEmptyList
+          .one(
+            "Empty parameters list was passed - should never happen: empty " +
+              "querystring is not being caught")
+          .asLeft
     }
   }
 

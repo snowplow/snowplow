@@ -14,11 +14,11 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
+import cats.data.{NonEmptyList, ValidatedNel}
+import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
 import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormat
-import scalaz._
-import Scalaz._
 
 import loaders.CollectorPayload
 import utils._
@@ -47,41 +47,39 @@ object CallrailAdapter extends Adapter {
     val bools = List("first_call", "answered")
     val ints = List("duration")
     val dateTimes: JsonUtils.DateTimeFields =
-      Some((NonEmptyList("datetime"), CallrailDateTimeFormat))
+      Some((NonEmptyList.of("datetime"), CallrailDateTimeFormat))
     buildFormatter(bools, ints, dateTimes)
   }
 
   /**
-   * Converts a CollectorPayload instance into raw events.
-   * A CallRail payload only contains a single event.
-   *
-   * @param payload The CollectorPaylod containing one or more
-   *        raw events as collected by a Snowplow collector
-   * @param resolver (implicit) The Iglu resolver used for
-   *        schema lookup and validation. Not used
-   * @return a Validation boxing either a NEL of RawEvents on
-   *         Success, or a NEL of Failure Strings
+   * Converts a CollectorPayload instance into raw events. A CallRail payload only contains a single
+   * event.
+   * @param payload The CollectorPaylod containing one or more raw events
+   * @param resolver (implicit) The Iglu resolver used for schema lookup and validation. Not used
+   * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = {
-
+  def toRawEvents(payload: CollectorPayload)(
+    implicit resolver: Resolver
+  ): ValidatedNel[String, NonEmptyList[RawEvent]] = {
     val params = toMap(payload.querystring)
     if (params.isEmpty) {
-      "Querystring is empty: no CallRail event to process".failNel
+      "Querystring is empty: no CallRail event to process".invalidNel
     } else {
-
-      NonEmptyList(
-        RawEvent(
-          api = payload.api,
-          parameters = toUnstructEventParams(
-            TrackerVersion,
-            params,
-            SchemaUris.CallComplete,
-            CallrailFormatter,
-            "srv"),
-          contentType = payload.contentType,
-          source = payload.source,
-          context = payload.context
-        )).success
+      NonEmptyList
+        .of(
+          RawEvent(
+            api = payload.api,
+            parameters = toUnstructEventParams(
+              TrackerVersion,
+              params,
+              SchemaUris.CallComplete,
+              CallrailFormatter,
+              "srv"),
+            contentType = payload.contentType,
+            source = payload.source,
+            context = payload.context
+          ))
+        .valid
     }
   }
 }

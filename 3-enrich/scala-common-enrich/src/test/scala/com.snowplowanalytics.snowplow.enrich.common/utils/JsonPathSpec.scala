@@ -15,9 +15,8 @@ package com.snowplowanalytics.snowplow.enrich.common.utils
 import io.circe._
 import io.circe.syntax._
 import org.specs2.Specification
-import org.specs2.scalaz.ValidationMatchers
 
-class JsonPathSpec extends Specification with ValidationMatchers {
+class JsonPathSpec extends Specification {
   def is = s2"""
   This is a specification to test the JSONPath utils
   Test JSONPath query                     $e1
@@ -69,24 +68,24 @@ class JsonPathSpec extends Specification with ValidationMatchers {
 
   def e1 =
     JsonPath.query("$.store.book[1].price", someJson) must
-      beSuccessful(List(Json.fromDoubleOrNull(12.99)))
+      beRight(List(Json.fromDoubleOrNull(12.99)))
 
   def e2 =
-    JsonPath.query("$.store.book[5].price", someJson) must beSuccessful(Nil)
+    JsonPath.query("$.store.book[5].price", someJson) must beRight(Nil)
 
   def e3 =
-    JsonPath.query("$.store.unicorns", someJson) must beSuccessful(Nil)
+    JsonPath.query("$.store.unicorns", someJson) must beRight(Nil)
 
   def e4 =
-    JsonPath.query(".notJsonPath", someJson) must beFailing.like {
+    JsonPath.query(".notJsonPath", someJson) must beLeft.like {
       case f => f must beEqualTo("`$' expected but `.' found")
     }
 
   def e5 =
-    JsonPath.query("$.store.book[a]", someJson) must beFailing.like {
+    JsonPath.query("$.store.book[a]", someJson) must beLeft.like {
       case f => f must beEqualTo("`:' expected but `a' found")
     }
 
   def e6 =
-    JsonPath.query("$.store.book[2]", Json.fromString("somestring")) must beSuccessful(List())
+    JsonPath.query("$.store.book[2]", Json.fromString("somestring")) must beRight(List())
 }

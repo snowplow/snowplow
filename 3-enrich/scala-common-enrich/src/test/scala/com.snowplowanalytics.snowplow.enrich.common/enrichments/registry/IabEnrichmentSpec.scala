@@ -16,16 +16,10 @@ import java.net.URI
 
 import io.circe.literal._
 import org.joda.time.DateTime
-import org.specs2.{ScalaCheck, Specification}
+import org.specs2.Specification
 import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
-import scalaz._
 
-class IabEnrichmentSpec
-    extends Specification
-    with DataTables
-    with ValidationMatchers
-    with ScalaCheck {
+class IabEnrichmentSpec extends Specification with DataTables {
 
   def is =
     s2"""
@@ -59,8 +53,8 @@ class IabEnrichmentSpec
         expectedReason,
         expectedPrimaryImpact) =>
         {
-          validConfig.performCheck(userAgent, ipAddress, DateTime.now()) must beLike {
-            case Success(check) =>
+          validConfig.performCheck(userAgent, ipAddress, DateTime.now()) must beRight.like {
+            case check =>
               check.spiderOrRobot must_== expectedSpiderOrRobot and
                 (check.category must_== expectedCategory) and
                 (check.reason must_== expectedReason) and
@@ -70,10 +64,10 @@ class IabEnrichmentSpec
     }
 
   def e2 =
-    validConfig.performCheck("", "foo//bar", DateTime.now()) must beFailing
+    validConfig.performCheck("", "foo//bar", DateTime.now()) must beLeft
 
   def e3 =
-    validConfig.getIabContext(None, None, None) must beFailing
+    validConfig.getIabContext(None, None, None) must beLeft
 
   def e4 = {
     val responseJson = json"""
@@ -87,7 +81,8 @@ class IabEnrichmentSpec
           }
       }
     """
-    validConfig.getIabContext(Some("Xdroid"), Some("192.168.0.1"), Some(DateTime.now())) must beSuccessful(
+    validConfig
+      .getIabContext(Some("Xdroid"), Some("192.168.0.1"), Some(DateTime.now())) must beRight(
       responseJson)
   }
 

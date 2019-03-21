@@ -16,11 +16,10 @@ package enrichments
 import com.snowplowanalytics.iglu.client.SchemaKey
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
 
 import outputs.EnrichedEvent
 
-class SchemaEnrichmentTest extends Specification with DataTables with ValidationMatchers {
+class SchemaEnrichmentTest extends Specification with DataTables {
 
   implicit val resolver = SpecHelpers.IgluResolver
   val signupFormSubmitted =
@@ -72,7 +71,7 @@ class SchemaEnrichmentTest extends Specification with DataTables with Validation
         "1-0-0") |> { (_, event, expected) =>
       {
         val schema = SchemaEnrichment.extractSchema(event)
-        schema must beSuccessful(expected)
+        schema must beRight(expected)
       }
     }
 
@@ -89,7 +88,7 @@ class SchemaEnrichmentTest extends Specification with DataTables with Validation
       "invalid key" !! unstructEvent(invalidKeyPayload) |> { (_, event) =>
       {
         val schema = SchemaEnrichment.extractSchema(event)
-        schema must beFailing
+        schema must beLeft
       }
     }
 

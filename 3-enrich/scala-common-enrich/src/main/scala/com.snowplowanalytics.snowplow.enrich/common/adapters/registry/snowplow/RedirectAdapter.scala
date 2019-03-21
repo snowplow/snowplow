@@ -15,11 +15,12 @@ package adapters
 package registry
 package snowplow
 
+import cats.data.{NonEmptyList, ValidatedNel}
+import cats.syntax.either._
+import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
 import io.circe._
 import io.circe.syntax._
-import scalaz._
-import Scalaz._
 
 import loaders.CollectorPayload
 import utils.{JsonUtils => JU}
@@ -57,28 +58,30 @@ object RedirectAdapter extends Adapter {
    * @param resolver (implicit) The Iglu resolver used for schema lookup and validation. Not used
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = {
+  def toRawEvents(payload: CollectorPayload)(
+    implicit resolver: Resolver
+  ): ValidatedNel[String, NonEmptyList[RawEvent]] = {
     val originalParams = toMap(payload.querystring)
     if (originalParams.isEmpty) {
-      "Querystring is empty: cannot be a valid URI redirect".failNel
+      "Querystring is empty: cannot be a valid URI redirect".invalidNel
     } else {
       originalParams.get("u") match {
-        case None => "Querystring does not contain u parameter: not a valid URI redirect".failNel
+        case None => "Querystring does not contain u parameter: not a valid URI redirect".invalidNel
         case Some(u) =>
           val json = buildUriRedirect(u)
-          val newParams =
+          val newParams: Either[String, Map[String, String]] =
             if (originalParams.contains("e")) {
               // Already have an event so add the URI redirect as a context (more fiddly)
-              def newCo = Map("co" -> toContext(json).noSpaces).successNel
+              def newCo = Map("co" -> toContext(json).noSpaces)
               (originalParams.get("cx"), originalParams.get("co")) match {
-                case (None, None) => newCo
-                case (None, Some(co)) if co == "" => newCo
+                case (None, None) => newCo.asRight
+                case (None, Some(co)) if co == "" => newCo.asRight
                 case (None, Some(co)) => addToExistingCo(json, co).map(str => Map("co" -> str))
                 case (Some(cx), _) => addToExistingCx(json, cx).map(str => Map("cx" -> str))
               }
             } else {
               // Add URI redirect as an unstructured event
-              Map("e" -> "ue", "ue_pr" -> toUnstructEvent(json).noSpaces).successNel
+              Map("e" -> "ue", "ue_pr" -> toUnstructEvent(json).noSpaces).asRight
             }
 
           val fixedParams = Map(
@@ -86,9 +89,9 @@ object RedirectAdapter extends Adapter {
             "p" -> originalParams.getOrElse("p", TrackerPlatform) // Required field
           )
 
-          for {
+          (for {
             np <- newParams
-            ev = NonEmptyList(
+            ev = NonEmptyList.one(
               RawEvent(
                 api = payload.api,
                 parameters = (originalParams - "u") ++ np ++ fixedParams,
@@ -96,7 +99,7 @@ object RedirectAdapter extends Adapter {
                 source = payload.source,
                 context = payload.context
               ))
-          } yield ev
+          } yield ev).leftMap(e => NonEmptyList.one(e)).toValidated
       }
     }
   }
@@ -120,9 +123,9 @@ object RedirectAdapter extends Adapter {
    * @param existing The existing contexts as a non-Base64-encoded stringified JSON
    * @return an updated non-Base64-encoded self-describing contexts stringified JSON
    */
-  private def addToExistingCo(newContext: Json, existing: String): Validated[String] =
+  private def addToExistingCo(newContext: Json, existing: String): Either[String, String] =
     for {
-      json <- JU.extractJson("co|cx", existing).toValidationNel: Validated[Json]
+      json <- JU.extractJson("co|cx", existing)
       merged = json.hcursor
         .downField("data")
         .withFocus(_.mapArray(newContext +: _))
@@ -131,23 +134,16 @@ object RedirectAdapter extends Adapter {
     } yield merged.noSpaces
 
   /**
-   * Adds a context to an existing Base64-encoded
-   * self-describing contexts stringified JSON.
-   *
-   * Does the minimal amount of validation required
-   * to ensure the context can be safely added, or
+   * Adds a context to an existing Base64-encoded self-describing contexts stringified JSON.
+   * Does the minimal amount of validation required to ensure the context can be safely added, or
    * returns a Failure.
-   *
-   * @param new The context to add to the
-   *        existing list of contexts
-   * @param existing The existing contexts as a
-   *        non-Base64-encoded stringified JSON
-   * @return an updated non-Base64-encoded self-
-   *         describing contexts stringified JSON
+   * @param new The context to add to the existing list of contexts
+   * @param existing The existing contexts as a non-Base64-encoded stringified JSON
+   * @return an updated non-Base64-encoded self-describing contexts stringified JSON
    */
-  private def addToExistingCx(newContext: Json, existing: String): Validated[String] =
+  private def addToExistingCx(newContext: Json, existing: String): Either[String, String] =
     for {
-      decoded <- CU.decodeBase64Url("cx", existing).toValidationNel: Validated[String]
+      decoded <- CU.decodeBase64Url("cx", existing)
       added <- addToExistingCo(newContext, decoded)
       recoded = CU.encodeBase64Url(added)
     } yield recoded

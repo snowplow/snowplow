@@ -15,8 +15,10 @@ package utils
 
 import java.lang.reflect.Method
 
-import scalaz._
-import Scalaz._
+import cats.data.ValidatedNel
+import cats.instances.int._
+import cats.syntax.either._
+import cats.syntax.validated._
 
 /**
  * The problem we're trying to solve: converting maps to classes in Scala
@@ -66,7 +68,7 @@ object MapTransformer {
 
   // A transformation takes a Key and Value and returns a Scalaz Validation with String for Failure
   // and anything for Success
-  type TransformFunc = Function2[Key, Value, Validation[String, _]]
+  type TransformFunc = Function2[Key, Value, Either[String, _]]
 
   // Our source map
   type SourceMap = Map[Key, Value]
@@ -84,11 +86,11 @@ object MapTransformer {
    * @return a ValidationNel containing either a Nel of error Strings, or the new object
    */
   def generate[T <: AnyRef](sourceMap: SourceMap, transformMap: TransformMap)(
-    implicit m: Manifest[T]): Validated[T] = {
+    implicit m: Manifest[T]): ValidatedNel[String, T] = {
     val newInst = m.runtimeClass.newInstance()
     val result = _transform(newInst, sourceMap, transformMap, getSetters(m.runtimeClass))
     // On success, replace the field count with the new instance
-    result.flatMap(s => newInst.asInstanceOf[T].success)
+    result.map(s => newInst.asInstanceOf[T])
   }
 
   /**
@@ -112,7 +114,7 @@ object MapTransformer {
      * @param transformMap Determines how the data should be transformed before storing in the obj
      * @return a ValidationNel containing a Nel of error Strings, or the count of updated fields
      */
-    def transform(sourceMap: SourceMap, transformMap: TransformMap): ValidationNel[String, Int] =
+    def transform(sourceMap: SourceMap, transformMap: TransformMap): ValidatedNel[String, Int] =
       _transform[T](obj, sourceMap, transformMap, setters)
   }
 
@@ -130,48 +132,45 @@ object MapTransformer {
     sourceMap: SourceMap,
     transformMap: TransformMap,
     setters: SettersMap
-  ): ValidationNel[String, Int] = {
-    val results: List[Validation[String, Int]] = sourceMap.map {
+  ): ValidatedNel[String, Int] = {
+    val results: List[Either[String, Int]] = sourceMap.map {
       case (key, in) =>
-        if (transformMap.contains(key)) {
-          val (func, field) = transformMap(key)
-          val out = func(key, in)
-
-          out match {
-            case Success(s) =>
-              field match {
-                case f: String =>
-                  val result = s.asInstanceOf[AnyRef]
-                  setters(f).invoke(obj, result)
-                  1.success[String] // +1 to the count of fields successfully set
-                case Tuple2(f1: String, f2: String) =>
-                  val result = s.asInstanceOf[Tuple2[AnyRef, AnyRef]]
-                  setters(f1).invoke(obj, result._1)
-                  setters(f2).invoke(obj, result._2)
-                  2.success[String] // +2 to the count of fields successfully set
-                case Tuple3(f1: String, f2: String, f3: String) =>
-                  val result = s.asInstanceOf[Tuple3[AnyRef, AnyRef, AnyRef]]
-                  setters(f1).invoke(obj, result._1)
-                  setters(f2).invoke(obj, result._2)
-                  setters(f3).invoke(obj, result._3)
-                  3.success[String] // +3 to the count of fields successfully set
-                case Tuple4(f1: String, f2: String, f3: String, f4: String) =>
-                  val result = s.asInstanceOf[Tuple4[AnyRef, AnyRef, AnyRef, AnyRef]]
-                  setters(f1).invoke(obj, result._1)
-                  setters(f2).invoke(obj, result._2)
-                  setters(f3).invoke(obj, result._3)
-                  setters(f4).invoke(obj, result._4)
-                  4.success[String] // +4 to the count of fields successfully set
-              }
-            case Failure(e) =>
-              e.fail[Int]
-          }
-        } else {
-          0.success[String] // Key not found: zero fields updated
+        transformMap.get(key) match {
+          case Some((func, field)) =>
+            func(key, in) match {
+              //weird issue with type inference when using map
+              case Left(e) => e.asLeft[Int]
+              case Right(s) =>
+                field match {
+                  case f: String =>
+                    val result = s.asInstanceOf[AnyRef]
+                    setters(f).invoke(obj, result)
+                    1.asRight // +1 to the count of fields successfully set
+                  case Tuple2(f1: String, f2: String) =>
+                    val result = s.asInstanceOf[Tuple2[AnyRef, AnyRef]]
+                    setters(f1).invoke(obj, result._1)
+                    setters(f2).invoke(obj, result._2)
+                    2.asRight // +2 to the count of fields successfully set
+                  case Tuple3(f1: String, f2: String, f3: String) =>
+                    val result = s.asInstanceOf[Tuple3[AnyRef, AnyRef, AnyRef]]
+                    setters(f1).invoke(obj, result._1)
+                    setters(f2).invoke(obj, result._2)
+                    setters(f3).invoke(obj, result._3)
+                    3.asRight // +3 to the count of fields successfully set
+                  case Tuple4(f1: String, f2: String, f3: String, f4: String) =>
+                    val result = s.asInstanceOf[Tuple4[AnyRef, AnyRef, AnyRef, AnyRef]]
+                    setters(f1).invoke(obj, result._1)
+                    setters(f2).invoke(obj, result._2)
+                    setters(f3).invoke(obj, result._3)
+                    setters(f4).invoke(obj, result._4)
+                    4.asRight // +4 to the count of fields successfully set
+                }
+            }
+          case None => 0.asRight // Key not found: zero fields updated
         }
     }.toList
 
-    results.foldLeft(0.successNel[String])(_ +++ _.toValidationNel)
+    results.foldLeft(0.validNel[String]) { case (acc, e) => acc.combine(e.toValidatedNel) }
   }
 
   /**

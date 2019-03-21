@@ -14,21 +14,16 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
+import cats.data.NonEmptyList
+import cats.syntax.option._
 import io.circe.literal._
 import org.joda.time.DateTime
-import org.specs2.{ScalaCheck, Specification}
-import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
-import scalaz._
-import Scalaz._
+import org.specs2.Specification
+import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
 
-class MandrillAdapterSpec
-    extends Specification
-    with DataTables
-    with ValidationMatchers
-    with ScalaCheck {
+class MandrillAdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
   This is a specification to test the MandrillAdapter functionality
   payloadBodyToEvents must return a Success List[JValue] for a valid events string                      $e1
@@ -60,7 +55,7 @@ class MandrillAdapterSpec
   def e1 = {
     val bodyStr = "mandrill_events=%5B%7B%22event%22%3A%20%22subscribe%22%7D%5D"
     val expected = List(json"""{"event": "subscribe"}""")
-    MandrillAdapter.payloadBodyToEvents(bodyStr) must beSuccessful(expected)
+    MandrillAdapter.payloadBodyToEvents(bodyStr) must beRight(expected)
   }
 
   def e2 =
@@ -69,13 +64,13 @@ class MandrillAdapterSpec
       "Failure, too many key-value pairs" !! "mandrill_events=some&mandrill_extra=some" ! "Mapped Mandrill body has invalid count of keys: 2" |
       "Failure, incorrect key" !! "events_mandrill=something" ! "Mapped Mandrill body does not have 'mandrill_events' as a key" |> {
       (_, str, expected) =>
-        MandrillAdapter.payloadBodyToEvents(str) must beFailing(expected)
+        MandrillAdapter.payloadBodyToEvents(str) must beLeft(expected)
     }
 
   def e3 = {
     val bodyStr = "mandrill_events=%5B%7B%22event%22%3A%22click%7D%5D"
     val expected = "Mandrill events couldn't be parsed as JSON: [exhausted input]"
-    MandrillAdapter.payloadBodyToEvents(bodyStr) must beFailing(expected)
+    MandrillAdapter.payloadBodyToEvents(bodyStr) must beLeft(expected)
   }
 
   def e4 = { // Spec for nine seperate events being passed and returned.
@@ -88,7 +83,7 @@ class MandrillAdapterSpec
       bodyStr.some,
       Shared.cljSource,
       Shared.context)
-    val expected = NonEmptyList(
+    val expected = NonEmptyList.of(
       RawEvent(
         Shared.api,
         Map(
@@ -198,7 +193,7 @@ class MandrillAdapterSpec
         Shared.context
       )
     )
-    MandrillAdapter.toRawEvents(payload) must beSuccessful(expected)
+    MandrillAdapter.toRawEvents(payload) must beValid(expected)
   }
 
   def e5 = { // Spec for nine seperate events where two have incorrect event names and one does not have event as a parameter
@@ -211,26 +206,26 @@ class MandrillAdapterSpec
       bodyStr.some,
       Shared.cljSource,
       Shared.context)
-    val expected = NonEmptyList(
+    val expected = NonEmptyList.of(
       "Mandrill event at index [0] failed: type parameter [sending] not recognized",
       "Mandrill event at index [1] failed: type parameter [deferred] not recognized",
       "Mandrill event at index [2] failed: type parameter not provided - cannot determine event type"
     )
-    MandrillAdapter.toRawEvents(payload) must beFailing(expected)
+    MandrillAdapter.toRawEvents(payload) must beInvalid(expected)
   }
 
   def e6 = {
     val payload =
       CollectorPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
-    MandrillAdapter.toRawEvents(payload) must beFailing(
-      NonEmptyList("Request body is empty: no Mandrill events to process"))
+    MandrillAdapter.toRawEvents(payload) must beInvalid(
+      NonEmptyList.one("Request body is empty: no Mandrill events to process"))
   }
 
   def e7 = {
     val body = "mandrill_events=%5B%7B%22event%22%3A%20%22subscribe%22%7D%5D"
     val payload =
       CollectorPayload(Shared.api, Nil, None, body.some, Shared.cljSource, Shared.context)
-    MandrillAdapter.toRawEvents(payload) must beFailing(NonEmptyList(
+    MandrillAdapter.toRawEvents(payload) must beInvalid(NonEmptyList.one(
       "Request body provided but content type empty, expected application/x-www-form-urlencoded for Mandrill"))
   }
 
@@ -239,7 +234,7 @@ class MandrillAdapterSpec
     val ct = "application/x-www-form-urlencoded; charset=utf-8"
     val payload =
       CollectorPayload(Shared.api, Nil, ct.some, body.some, Shared.cljSource, Shared.context)
-    MandrillAdapter.toRawEvents(payload) must beFailing(NonEmptyList(
+    MandrillAdapter.toRawEvents(payload) must beInvalid(NonEmptyList.one(
       "Content type of application/x-www-form-urlencoded; charset=utf-8 provided, expected application/x-www-form-urlencoded for Mandrill"))
   }
 }

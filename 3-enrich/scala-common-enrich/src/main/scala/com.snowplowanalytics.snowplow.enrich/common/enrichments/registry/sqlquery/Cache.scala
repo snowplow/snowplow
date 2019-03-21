@@ -31,14 +31,14 @@ import Input.ExtractedValue
 case class Cache(size: Int, ttl: Int) {
 
   private val cache =
-    new SynchronizedLruMap[IntMap[ExtractedValue], (ThrowableXor[List[Json]], Int)](size)
+    new SynchronizedLruMap[IntMap[ExtractedValue], (EitherThrowable[List[Json]], Int)](size)
 
   /**
    * Get a value if it's not outdated
    * @param key HTTP URL
    * @return validated JSON as it was fetched from DB if found
    */
-  def get(key: IntMap[ExtractedValue]): Option[ThrowableXor[List[Json]]] =
+  def get(key: IntMap[ExtractedValue]): Option[EitherThrowable[List[Json]]] =
     cache.get(key) match {
       case Some((value, _)) if ttl == 0 => Some(value)
       case Some((value, created)) =>
@@ -56,7 +56,7 @@ case class Cache(size: Int, ttl: Int) {
    * @param key all inputs Map
    * @param value context object (with Iglu URI, not just plain JSON)
    */
-  def put(key: IntMap[ExtractedValue], value: ThrowableXor[List[Json]]): Unit = {
+  def put(key: IntMap[ExtractedValue], value: EitherThrowable[List[Json]]): Unit = {
     val now = (new DateTime().getMillis / 1000).toInt
     cache.put(key, (value, now))
     ()
