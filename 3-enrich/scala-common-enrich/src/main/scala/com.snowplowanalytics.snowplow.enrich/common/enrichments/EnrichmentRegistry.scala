@@ -131,9 +131,10 @@ object EnrichmentRegistry {
    * @return ValidatedNelMessage boxing Option boxing Tuple2 containing
    *         the Enrichment object and the schemaKey
    */
-  private def buildEnrichmentConfig(schemaKey: SchemaKey,
-                                    enrichmentConfig: JValue,
-                                    localMode: Boolean): ValidatedNelMessage[Option[Tuple2[String, Enrichment]]] = {
+  private def buildEnrichmentConfig(
+    schemaKey: SchemaKey,
+    enrichmentConfig: JValue,
+    localMode: Boolean): ValidatedNelMessage[Option[Tuple2[String, List[Enrichment]]]] = {
 
     val enabled = ScalazJson4sUtils.extract[Boolean](enrichmentConfig, "enabled").toValidationNel
 
@@ -144,37 +145,37 @@ object EnrichmentRegistry {
         name.flatMap(nm => {
 
           if (nm == "ip_lookups") {
-            IpLookupsEnrichment.parse(enrichmentConfig, schemaKey, localMode).map((nm, _).some)
+            IpLookupsEnrichment.parse(enrichmentConfig, schemaKey, localMode).map(List(_)).map((nm, _).some)
           } else if (nm == "anon_ip") {
-            AnonIpEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+            AnonIpEnrichment.parse(enrichmentConfig, schemaKey).map(List(_)).map((nm, _).some)
           } else if (nm == "referer_parser") {
-            RefererParserEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+            RefererParserEnrichment.parse(enrichmentConfig, schemaKey).map(List(_)).map((nm, _).some)
           } else if (nm == "campaign_attribution") {
-            CampaignAttributionEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+            CampaignAttributionEnrichment.parse(enrichmentConfig, schemaKey).map(List(_)).map((nm, _).some)
           } else if (nm == "user_agent_utils_config") {
-            UserAgentUtilsEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+            UserAgentUtilsEnrichmentConfig.parse(enrichmentConfig, schemaKey).map(List(_)).map((nm, _).some)
           } else if (nm == "ua_parser_config") {
-            UaParserEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+            UaParserEnrichmentConfig.parse(enrichmentConfig, schemaKey).map(List(_)).map((nm, _).some)
           } else if (nm == "currency_conversion_config") {
-            CurrencyConversionEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+            CurrencyConversionEnrichmentConfig.parse(enrichmentConfig, schemaKey).map(List(_)).map((nm, _).some)
           } else if (nm == "javascript_script_config") {
-            JavascriptScriptEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+            JavascriptScriptEnrichmentConfig.parse(enrichmentConfig, schemaKey).map(List(_)).map((nm, _).some)
           } else if (nm == "event_fingerprint_config") {
-            EventFingerprintEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+            EventFingerprintEnrichmentConfig.parse(enrichmentConfig, schemaKey).map(List(_)).map((nm, _).some)
           } else if (nm == "cookie_extractor_config") {
-            CookieExtractorEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+            CookieExtractorEnrichmentConfig.parse(enrichmentConfig, schemaKey).map(List(_)).map((nm, _).some)
           } else if (nm == "http_header_extractor_config") {
-            HttpHeaderExtractorEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+            HttpHeaderExtractorEnrichmentConfig.parse(enrichmentConfig, schemaKey).map(List(_)).map((nm, _).some)
           } else if (nm == "weather_enrichment_config") {
-            WeatherEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+            WeatherEnrichmentConfig.parse(enrichmentConfig, schemaKey).map(List(_)).map((nm, _).some)
           } else if (nm == "api_request_enrichment_config") {
             ApiRequestEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "sql_query_enrichment_config") {
-            SqlQueryEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+            SqlQueryEnrichmentConfig.parse(enrichmentConfig, schemaKey).map(List(_)).map((nm, _).some)
           } else if (nm == "pii_enrichment_config") {
-            PiiPseudonymizerEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+            PiiPseudonymizerEnrichment.parse(enrichmentConfig, schemaKey).map(List(_)).map((nm, _).some)
           } else if (nm == "iab_spiders_and_robots_enrichment") {
-            IabEnrichment.parse(enrichmentConfig, schemaKey, localMode).map((nm, _).some)
+            IabEnrichment.parse(enrichmentConfig, schemaKey, localMode).map(List(_)).map((nm, _).some)
           } else {
             None.success // Enrichment is not recognized yet
           }
@@ -206,7 +207,7 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    * local path.
    */
   val filesToCache: List[(URI, String)] =
-    configs.values.flatMap(_.filesToCache).toList
+    configs.values.flatten.flatMap(_.filesToCache).toList
 
   /**
    * Returns an Option boxing the AnonIpEnrichment
@@ -322,8 +323,8 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    *
    * @return Option boxing the ApiRequestEnrichment instance
    */
-  def getApiRequestEnrichment: Option[ApiRequestEnrichment] =
-    getEnrichment[ApiRequestEnrichment]("api_request_enrichment_config")
+  def getApiRequestEnrichment: Option[List[ApiRequestEnrichment]] =
+    getEnrichments[ApiRequestEnrichment]("api_request_enrichment_config")
 
   /**
    * Returns an Option boxing the SqlQueryEnrichment
@@ -362,6 +363,17 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    */
   private def getEnrichment[A <: Enrichment: Manifest](name: String): Option[A] =
     configs.get(name).map(cast[A](_))
+
+  /**
+   * Returns an Option boxing an Enrichment
+   * config value if present, or None if not
+   *
+   * @tparam A Expected type of the enrichment to get
+   * @param name The name of the enrichment to get
+   * @return Option boxing the enrichment
+   */
+  private def getEnrichments[A <: Enrichment: Manifest](name: String): Option[List[A]] =
+    configs.get(name).map(cast[List[A]](_))
 
   /**
    * Adapted from http://stackoverflow.com/questions/6686992/scala-asinstanceof-with-parameterized-types

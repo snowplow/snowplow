@@ -59,7 +59,7 @@ package object common {
    * keys are enrichment names and
    * whose values are enrichments
    */
-  type EnrichmentMap = Map[String, Enrichment]
+  type EnrichmentMap = Map[String, List[Enrichment]]
 
   /**
    * Type alias for a `ValidationNel`

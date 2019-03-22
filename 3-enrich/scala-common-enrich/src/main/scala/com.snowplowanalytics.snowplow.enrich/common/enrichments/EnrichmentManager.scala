@@ -527,12 +527,18 @@ object EnrichmentManager {
 
     // Derive some contexts with custom API Request enrichment
     val apiRequestContexts = registry.getApiRequestEnrichment match {
-      case Some(enrichment) =>
-        (customContexts, unstructEvent, sqlQueryContexts) match {
-          case (Success(cctx), Success(ue), Success(sctx)) =>
-            enrichment.lookup(event, preparedDerivedContexts ++ sctx, cctx, ue)
-          case _ => Nil.success // Skip. Unstruct event or custom context corrupted (event enrichment will fail anyway)
-        }
+      case Some(enrichments) =>
+        enrichments
+          .map { enrichment =>
+            (customContexts, unstructEvent, sqlQueryContexts) match {
+              case (Success(cctx), Success(ue), Success(sctx)) =>
+                enrichment.lookup(event, preparedDerivedContexts ++ sctx, cctx, ue)
+              case _ =>
+                Nil.success // Skip. Unstruct event or custom context corrupted (event enrichment will fail anyway)
+            }
+          }
+          .reduceLeft(_ +++ _)
+
       case None => Nil.success
     }
 

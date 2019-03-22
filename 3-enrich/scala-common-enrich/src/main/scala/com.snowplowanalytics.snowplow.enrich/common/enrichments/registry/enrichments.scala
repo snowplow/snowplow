@@ -23,9 +23,6 @@ import java.net.URI
 import scalaz._
 import Scalaz._
 
-// Maven Artifact
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion
-
 // json4s
 import org.json4s.JValue
 

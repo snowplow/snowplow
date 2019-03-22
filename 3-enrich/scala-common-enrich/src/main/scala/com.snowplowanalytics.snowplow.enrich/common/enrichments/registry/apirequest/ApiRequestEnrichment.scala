@@ -16,9 +16,6 @@ package enrichments
 package registry
 package apirequest
 
-// Maven Artifact
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion
-
 // Java
 import java.util.UUID
 
@@ -33,10 +30,12 @@ import org.json4s.jackson.JsonMethods.fromJsonNode
 
 // Iglu
 import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
+import com.github.fge.jsonschema.core.report.ProcessingMessage
+import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
 
 // This project
-import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
-import com.snowplowanalytics.snowplow.enrich.common.utils.ScalazJson4sUtils
+import common.outputs.EnrichedEvent
+import common.utils.ScalazJson4sUtils
 
 /**
  * Lets us create an ApiRequestEnrichmentConfig from a JValue
@@ -49,27 +48,36 @@ object ApiRequestEnrichmentConfig extends ParseableEnrichment {
     SchemaCriterion("com.snowplowanalytics.snowplow.enrichments",
                     "api_request_enrichment_config",
                     "jsonschema",
-                    1,
+                    2,
                     0,
                     0)
 
   /**
    * Creates an ApiRequestEnrichment instance from a JValue.
    *
-   * @param config The enrichment JSON
+   * @param config    The enrichment JSON
    * @param schemaKey The SchemaKey provided for the enrichment
-   *        Must be a supported SchemaKey for this enrichment
+   *                  Must be a supported SchemaKey for this enrichment
    * @return a configured ApiRequestEnrichment instance
    */
-  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[ApiRequestEnrichment] =
-    isParseable(config, schemaKey).flatMap(conf => {
-      (for {
-        inputs  <- ScalazJson4sUtils.extract[List[Input]](config, "parameters", "inputs")
-        httpApi <- ScalazJson4sUtils.extract[HttpApi](config, "parameters", "api", "http")
-        outputs <- ScalazJson4sUtils.extract[List[Output]](config, "parameters", "outputs")
-        cache   <- ScalazJson4sUtils.extract[Cache](config, "parameters", "cache")
-      } yield ApiRequestEnrichment(inputs, httpApi, outputs, cache)).toValidationNel
-    })
+  def parse(config: JValue, schemaKey: SchemaKey): ValidationNel[ProcessingMessage, List[ApiRequestEnrichment]] =
+    isParseable(config, schemaKey)
+      .flatMap(enrichmentConfig => {
+        enrichmentConfig \ "instances" match {
+          case JArray(instances) =>
+            instances
+              .map(config =>
+                (for {
+                  inputs  <- ScalazJson4sUtils.extract[List[Input]](config, "parameters", "inputs")
+                  httpApi <- ScalazJson4sUtils.extract[HttpApi](config, "parameters", "api", "http")
+                  outputs <- ScalazJson4sUtils.extract[List[Output]](config, "parameters", "outputs")
+                  cache   <- ScalazJson4sUtils.extract[Cache](config, "parameters", "cache")
+                } yield List(ApiRequestEnrichment(inputs, httpApi, outputs, cache))).toValidationNel)
+              .reduceLeft(_ +++ _)
+          case _ =>
+            ("api request enrichment configuration does not contain array under `instance`").toProcessingMessage.fail.toValidationNel
+        }
+      })
 }
 
 case class ApiRequestEnrichment(inputs: List[Input], api: HttpApi, outputs: List[Output], cache: Cache)
