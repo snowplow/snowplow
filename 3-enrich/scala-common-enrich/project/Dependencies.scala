@@ -65,8 +65,7 @@ object Dependencies {
     val gatlingJsonpath  = "0.6.4"
     val scalaUri         = "1.4.3"
     // Scala (test only)
-    val specs2           = "2.3.13"
-    val scalazSpecs2     = "0.2"
+    val specs2           = "4.5.1"
     val scalaCheck       = "1.10.0"
     val scaldingArgs     = "0.13.0"
     val mockito          = "1.10.19"
@@ -114,9 +113,9 @@ object Dependencies {
     val scalaj           = "org.scalaj"                 %% "scalaj-http"                   % V.scalaj
     val gatlingJsonpath  = "io.gatling"                 %% "jsonpath"                      % V.gatlingJsonpath
     // Scala (test only)
-    val specs2           = "org.specs2"                 %% "specs2"                        % V.specs2         % "test"
-    val scalaCheck       = "org.scalacheck"             %% "scalacheck"                    % V.scalaCheck     % "test"
-    val scaldingArgs     = "com.twitter"                %% "scalding-args"                 % V.scaldingArgs   % "test"
-    val mockito          = "org.mockito"                %  "mockito-core"                  % V.mockito        % "test"
+    val specs2           = "org.specs2"                 %% "specs2-core"                   % V.specs2         % "test"
+    val specs2Cats       = "org.specs2"                 %% "specs2-cats"                   % V.specs2         % "test"
+    val specs2Scalacheck = "org.specs2"                 %% "specs2-scalacheck"             % V.specs2         % "test"
+    val specs2Mock       = "org.specs2"                 %% "specs2-mock"                   % V.specs2         % "test"
   }
 }
