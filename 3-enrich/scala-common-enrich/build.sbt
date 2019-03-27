@@ -65,8 +65,8 @@ lazy val root = project
       Dependencies.Libraries.gatlingJsonpath,
       // Scala (test only)
       Dependencies.Libraries.specs2,
-      Dependencies.Libraries.scalaCheck,
-      Dependencies.Libraries.scaldingArgs,
-      Dependencies.Libraries.mockito
+      Dependencies.Libraries.specs2Cats,
+      Dependencies.Libraries.specs2Scalacheck,
+      Dependencies.Libraries.specs2Mock
     ) ++ Dependencies.Libraries.circeDeps
   )
