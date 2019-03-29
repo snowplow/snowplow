@@ -18,10 +18,15 @@ import javax.mail.internet.ContentType
 
 import scala.util.Try
 
+import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
+import cats.effect.Clock
 import cats.syntax.either._
 import cats.syntax.validated._
-import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
+import io.circe.Json
 import io.circe.parser._
 
 import loaders.CollectorPayload
@@ -40,19 +45,24 @@ object SendgridAdapter extends Adapter {
   // Tracker version for a Sendgrid Tracking webhook
   private val TrackerVersion = "com.sendgrid-v3"
 
+  private val Vendor = "com.sendgrid"
+  private val Format = "jsonschema"
+  private val SchemaVersion = SchemaVer.Full(2, 0, 0)
+
   // Schemas for reverse-engineering a Snowplow unstructured event
   private val EventSchemaMap = Map(
-    "processed" -> SchemaKey("com.sendgrid", "processed", "jsonschema", "2-0-0").toSchemaUri,
-    "dropped" -> SchemaKey("com.sendgrid", "dropped", "jsonschema", "2-0-0").toSchemaUri,
-    "delivered" -> SchemaKey("com.sendgrid", "delivered", "jsonschema", "2-0-0").toSchemaUri,
-    "deferred" -> SchemaKey("com.sendgrid", "deferred", "jsonschema", "2-0-0").toSchemaUri,
-    "bounce" -> SchemaKey("com.sendgrid", "bounce", "jsonschema", "2-0-0").toSchemaUri,
-    "open" -> SchemaKey("com.sendgrid", "open", "jsonschema", "2-0-0").toSchemaUri,
-    "click" -> SchemaKey("com.sendgrid", "click", "jsonschema", "2-0-0").toSchemaUri,
-    "spamreport" -> SchemaKey("com.sendgrid", "spamreport", "jsonschema", "2-0-0").toSchemaUri,
-    "unsubscribe" -> SchemaKey("com.sendgrid", "unsubscribe", "jsonschema", "2-0-0").toSchemaUri,
-    "group_unsubscribe" -> SchemaKey("com.sendgrid", "group_unsubscribe", "jsonschema", "2-0-0").toSchemaUri,
-    "group_resubscribe" -> SchemaKey("com.sendgrid", "group_resubscribe", "jsonschema", "2-0-0").toSchemaUri
+    "processed" -> SchemaKey(Vendor, "processed", Format, SchemaVersion).toSchemaUri,
+    "dropped" -> SchemaKey(Vendor, "dropped", Format, SchemaVersion).toSchemaUri,
+    "delivered" -> SchemaKey(Vendor, "delivered", Format, SchemaVersion).toSchemaUri,
+    "deferred" -> SchemaKey(Vendor, "deferred", Format, SchemaVersion).toSchemaUri,
+    "bounce" -> SchemaKey(Vendor, "bounce", Format, SchemaVersion).toSchemaUri,
+    "open" -> SchemaKey(Vendor, "open", Format, SchemaVersion).toSchemaUri,
+    "click" -> SchemaKey(Vendor, "click", Format, SchemaVersion).toSchemaUri,
+    "spamreport" -> SchemaKey(Vendor, "spamreport", Format, SchemaVersion).toSchemaUri,
+    "unsubscribe" -> SchemaKey(Vendor, "unsubscribe", Format, SchemaVersion).toSchemaUri,
+    "group_unsubscribe" ->
+      SchemaKey(Vendor, "group_unsubscribe", Format, SchemaVersion).toSchemaUri,
+    "group_resubscribe" -> SchemaKey(Vendor, "group_resubscribe", Format, SchemaVersion).toSchemaUri
   )
 
   /**
@@ -102,21 +112,26 @@ object SendgridAdapter extends Adapter {
    * a single event. We expect the name parameter to be 1 of 6 options otherwise we have an
    * unsupported event type.
    * @param payload The CollectorPayload containing one or more raw events
-   * @param resolver (implicit) The Iglu resolver used for schema lookup and validation. Not used
+   * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(
-    implicit resolver: Resolver
-  ): ValidatedNel[String, NonEmptyList[RawEvent]] =
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
+    payload: CollectorPayload,
+    client: Client[F, Json]
+  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
     (payload.body, payload.contentType) match {
-      case (None, _) => s"Request body is empty: no $VendorName event to process".invalidNel
-      case (_, None) =>
-        s"Request body provided but content type empty, expected $ContentType for $VendorName".invalidNel
+      case (None, _) => Monad[F].pure(
+        s"Request body is empty: no $VendorName event to process".invalidNel)
+      case (_, None) => Monad[F].pure(
+        s"Request body provided but content type empty, expected $ContentType for $VendorName"
+          .invalidNel)
       case (_, Some(ct)) if Try(new ContentType(ct).getBaseType).getOrElse(ct) != ContentType =>
-        s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel
+        Monad[F].pure(
+          s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel)
       case (Some(body), _) =>
+        val _ = client
         val events = payloadBodyToEvents(body, payload)
-        rawEventsListProcessor(events)
+        Monad[F].pure(rawEventsListProcessor(events))
     }
 
 }

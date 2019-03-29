@@ -21,11 +21,9 @@ import cats.data.ValidatedNel
 import cats.implicits._
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode, TextNode}
-import com.github.fge.jsonschema.core.report.ProcessingMessage
 import com.jayway.jsonpath.{Configuration, JsonPath => JJsonPath}
 import com.jayway.jsonpath.MapFunction
-import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
-import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SchemaVer}
 import io.circe._
 import io.circe.jackson._
 import io.circe.syntax._
@@ -51,7 +49,7 @@ object PiiPseudonymizerEnrichment extends ParseableEnrichment {
   def parse(
     config: Json,
     schemaKey: SchemaKey
-  ): ValidatedNel[ProcessingMessage, PiiPseudonymizerEnrichment] = {
+  ): ValidatedNel[String, PiiPseudonymizerEnrichment] = {
     for {
       conf <- matchesSchema(config, schemaKey)
       emitIdentificationEvent = CirceUtils
@@ -66,7 +64,7 @@ object PiiPseudonymizerEnrichment extends ParseableEnrichment {
         .toEither
       piiFieldList <- extractFields(piiFields)
     } yield PiiPseudonymizerEnrichment(piiFieldList, emitIdentificationEvent, piiStrategy)
-  }.leftMap(_.toProcessingMessage).toValidatedNel
+  }.toValidatedNel
 
   private[pii] def getHashFunction(strategyFunction: String): Either[String, DigestFunction] =
     strategyFunction match {
@@ -108,7 +106,7 @@ object PiiPseudonymizerEnrichment extends ParseableEnrichment {
     val schemaCriterion = CirceUtils
       .extract[String](jsonField, "schemaCriterion")
       .toEither
-      .flatMap(sc => SchemaCriterion.parse(sc).leftMap(_.getMessage).toEither)
+      .flatMap(sc => SchemaCriterion.parse(sc).toRight(s"Could not parse schema criterion $sc"))
       .toValidatedNel
     val jsonPath = CirceUtils.extract[String](jsonField, "jsonPath").toValidatedNel
     val mutator = CirceUtils
@@ -165,13 +163,17 @@ final case class PiiStrategyPseudonymize(
  * @param emitIdentificationEvent whether to emit an identification event
  * @param strategy the pseudonymization strategy to use
  */
-case class PiiPseudonymizerEnrichment(
+final case class PiiPseudonymizerEnrichment(
   fieldList: List[PiiField],
   emitIdentificationEvent: Boolean,
   strategy: PiiStrategy
 ) extends Enrichment {
-  private val UnstructEventSchema =
-    SchemaKey("com.snowplowanalytics.snowplow", "unstruct_event", "jsonschema", "1-0-0").toSchemaUri
+  private val UnstructEventSchema = SchemaKey(
+    "com.snowplowanalytics.snowplow",
+    "unstruct_event",
+    "jsonschema",
+    SchemaVer.Full(1, 0, 0)
+  ).toSchemaUri
   def transformer(event: EnrichedEvent): Unit = {
     val modifiedFields = fieldList.flatMap(_.transform(event, strategy))
 
@@ -269,9 +271,8 @@ final case class PiiJson(
     (for {
       schema <- fieldsObj.get("schema")
       schemaStr <- schema.asString
-      parsedSchemaMatches <- SchemaKey.parse(schemaStr).map(schemaCriterion.matches).toOption
-      data <- fieldsObj.get("data")
-      if parsedSchemaMatches
+      parsedSchemaMatches <- SchemaKey.fromUri(schemaStr).map(schemaCriterion.matches).toOption
+      data <- fieldsObj.get("data") if parsedSchemaMatches
       updated = jsonPathReplace(data, strategy, schemaStr)
     } yield
       (

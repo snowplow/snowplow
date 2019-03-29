@@ -17,14 +17,18 @@ package registry
 import java.net.URI
 import java.nio.charset.StandardCharsets.UTF_8
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.util.{Try, Success => TS, Failure => TF}
 
+import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
+import cats.effect.Clock
 import cats.syntax.either._
 import cats.syntax.option._
 import cats.syntax.validated._
-import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import io.circe._
 import io.circe.syntax._
 import org.apache.http.client.utils.URLEncodedUtils
@@ -47,47 +51,55 @@ object MailgunAdapter extends Adapter {
   private val ContentTypes = List("application/x-www-form-urlencoded", "multipart/form-data")
   private val ContentTypesStr = ContentTypes.mkString(" or ")
 
+  private val Vendor = "com.mailgun"
+  private val Format = "jsonschema"
+  private val SchemaVersion = SchemaVer.Full(1, 0, 0)
+
   // Schemas for reverse-engineering a Snowplow unstructured event
   private val EventSchemaMap = Map(
-    "bounced" -> SchemaKey("com.mailgun", "message_bounced", "jsonschema", "1-0-0").toSchemaUri,
-    "clicked" -> SchemaKey("com.mailgun", "message_clicked", "jsonschema", "1-0-0").toSchemaUri,
-    "complained" -> SchemaKey("com.mailgun", "message_complained", "jsonschema", "1-0-0").toSchemaUri,
-    "delivered" -> SchemaKey("com.mailgun", "message_delivered", "jsonschema", "1-0-0").toSchemaUri,
-    "dropped" -> SchemaKey("com.mailgun", "message_dropped", "jsonschema", "1-0-0").toSchemaUri,
-    "opened" -> SchemaKey("com.mailgun", "message_opened", "jsonschema", "1-0-0").toSchemaUri,
-    "unsubscribed" -> SchemaKey("com.mailgun", "recipient_unsubscribed", "jsonschema", "1-0-0").toSchemaUri
+    "bounced" -> SchemaKey(Vendor, "message_bounced", Format, SchemaVersion).toSchemaUri,
+    "clicked" -> SchemaKey(Vendor, "message_clicked", Format, SchemaVersion).toSchemaUri,
+    "complained" -> SchemaKey(Vendor, "message_complained", Format, SchemaVersion).toSchemaUri,
+    "delivered" -> SchemaKey(Vendor, "message_delivered", Format, SchemaVersion).toSchemaUri,
+    "dropped" -> SchemaKey(Vendor, "message_dropped", Format, SchemaVersion).toSchemaUri,
+    "opened" -> SchemaKey(Vendor, "message_opened", Format, SchemaVersion).toSchemaUri,
+    "unsubscribed" -> SchemaKey(Vendor, "recipient_unsubscribed", Format, SchemaVersion).toSchemaUri
   )
 
   /**
    * A Mailgun Tracking payload contains one single event in the body of the payload, stored within
    * a HTTP encoded string.
    * @param payload The CollectorPayload containing one or more raw events
-   * @param resolver (implicit) The Iglu resolver used for schema lookup and validation. Not used
+   * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(
-    implicit resolver: Resolver
-  ): ValidatedNel[String, NonEmptyList[RawEvent]] =
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
+    payload: CollectorPayload,
+    client: Client[F, Json]
+  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
     (payload.body, payload.contentType) match {
-      case (None, _) => s"Request body is empty: no $VendorName events to process".invalidNel
-      case (_, None) =>
-        s"Request body provided but content type empty, expected $ContentTypesStr for $VendorName".invalidNel
-      case (_, Some(ct)) if !ContentTypes.exists(ct.startsWith(_)) =>
-        s"Content type of $ct provided, expected $ContentTypesStr for $VendorName".invalidNel
-      case (Some(body), _) if (body.isEmpty) =>
-        s"$VendorName event body is empty: nothing to process".invalidNel
+      case (None, _) => Monad[F].pure(
+        s"Request body is empty: no $VendorName events to process".invalidNel)
+      case (_, None) => Monad[F].pure(
+        s"Request body provided but content type empty, expected $ContentTypesStr for $VendorName"
+          .invalidNel)
+      case (_, Some(ct)) if !ContentTypes.exists(ct.startsWith(_)) => Monad[F].pure(
+        s"Content type of $ct provided, expected $ContentTypesStr for $VendorName".invalidNel)
+      case (Some(body), _) if (body.isEmpty) => Monad[F].pure(
+        s"$VendorName event body is empty: nothing to process".invalidNel)
       case (Some(body), Some(ct)) =>
+        val _ = client
         val params = toMap(payload.querystring)
         Try {
           getBoundary(ct)
             .map(parseMultipartForm(body, _))
             .getOrElse(
-              toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).toList))
+              toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).asScala.toList))
         } match {
           case TF(e) =>
             val message = JU.stripInstanceEtc(e.getMessage).orNull
-            s"$VendorName adapter could not parse body: [$message]".invalidNel
-          case TS(bodyMap) =>
+            Monad[F].pure(s"$VendorName adapter could not parse body: [$message]".invalidNel)
+          case TS(bodyMap) => Monad[F].pure(
             bodyMap
               .get("event")
               .map { eventType =>
@@ -116,6 +128,7 @@ object MailgunAdapter extends Adapter {
               }
               .getOrElse(
                 s"No $VendorName event parameter provided: cannot determine event type".invalidNel)
+          )
         }
     }
 
@@ -193,6 +206,6 @@ object MailgunAdapter extends Adapter {
       case (None, _, _) => s"$VendorName event data missing 'timestamp'".asLeft
       case (_, None, _) => s"$VendorName event data missing 'token'".asLeft
       case (_, _, None) => s"$VendorName event data missing 'signature'".asLeft
-      case (Some(timestamp), Some(token), Some(signature)) => bodyMap.asJson.asRight
+      case (Some(_), Some(_), Some(_)) => bodyMap.asJson.asRight
     }
 }

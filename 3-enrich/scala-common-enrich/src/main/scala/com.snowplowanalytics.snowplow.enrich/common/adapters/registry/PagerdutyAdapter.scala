@@ -14,10 +14,14 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
+import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
+import cats.effect.Clock
 import cats.syntax.either._
 import cats.syntax.validated._
-import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import io.circe._
 import io.circe.parser._
 
@@ -38,7 +42,8 @@ object PagerdutyAdapter extends Adapter {
   private val ContentType = "application/json"
 
   // Event-Schema Map for reverse-engineering a Snowplow unstructured event
-  private val Incident = SchemaKey("com.pagerduty", "incident", "jsonschema", "1-0-0").toSchemaUri
+  private val Incident =
+    SchemaKey("com.pagerduty", "incident", "jsonschema", SchemaVer.Full(1, 0, 0)).toSchemaUri
   private val EventSchemaMap = Map(
     "incident.trigger" -> Incident,
     "incident.acknowledge" -> Incident,
@@ -54,22 +59,26 @@ object PagerdutyAdapter extends Adapter {
    * many events in one. We expect the type parameter to be 1 of 7 options otherwise we have an
    * unsupported event type.
    * @param payload The CollectorPaylod containing one or more raw events
-   * @param resolver (implicit) The Iglu resolver used for schema lookup and validation. Not used
+   * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(
-    implicit resolver: Resolver
-  ): ValidatedNel[String, NonEmptyList[RawEvent]] =
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
+    payload: CollectorPayload,
+    client: Client[F, Json]
+  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
     (payload.body, payload.contentType) match {
-      case (None, _) => s"Request body is empty: no $VendorName events to process".invalidNel
-      case (_, None) =>
-        s"Request body provided but content type empty, expected $ContentType for $VendorName".invalidNel
-      case (_, Some(ct)) if ct != ContentType =>
-        s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel
+      case (None, _) => Monad[F].pure(
+        s"Request body is empty: no $VendorName events to process".invalidNel)
+      case (_, None) => Monad[F].pure(
+        s"Request body provided but content type empty, expected $ContentType for $VendorName"
+          .invalidNel)
+      case (_, Some(ct)) if ct != ContentType => Monad[F].pure(
+        s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel)
       case (Some(body), _) =>
         payloadBodyToEvents(body) match {
-          case Left(str) => str.invalidNel
+          case Left(str) => Monad[F].pure(str.invalidNel)
           case Right(list) =>
+            val _ = client
             // Create our list of Validated RawEvents
             val rawEventsList: List[ValidatedNel[String, RawEvent]] =
               for {
@@ -98,7 +107,7 @@ object PagerdutyAdapter extends Adapter {
               }
 
             // Processes the List for Failures and Successes and returns ValidatedRawEvents
-            rawEventsListProcessor(rawEventsList)
+            Monad[F].pure(rawEventsListProcessor(rawEventsList))
         }
     }
 

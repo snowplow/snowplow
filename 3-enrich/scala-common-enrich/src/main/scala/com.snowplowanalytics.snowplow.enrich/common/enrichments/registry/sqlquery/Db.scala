@@ -17,8 +17,6 @@ import java.sql._
 
 import scala.collection.immutable.IntMap
 
-import cats.syntax.either._
-
 import Input.ExtractedValue
 
 /**

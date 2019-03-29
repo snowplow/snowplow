@@ -19,11 +19,9 @@ import scala.util.control.NonFatal
 
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.implicits._
-import com.github.fge.jsonschema.core.report.ProcessingMessage
 import com.snowplowanalytics.forex.oerclient._
 import com.snowplowanalytics.forex.{Forex, ForexConfig}
-import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
-import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
 import io.circe._
 import org.joda.time.DateTime
 
@@ -45,9 +43,9 @@ object CurrencyConversionEnrichmentConfig extends ParseableEnrichment {
   def parse(
     c: Json,
     schemaKey: SchemaKey
-  ): ValidatedNel[ProcessingMessage, CurrencyConversionEnrichment] =
+  ): ValidatedNel[String, CurrencyConversionEnrichment] =
     isParseable(c, schemaKey)
-      .leftMap(e => NonEmptyList.one(e.toProcessingMessage))
+      .leftMap(e => NonEmptyList.one(e))
       .flatMap { _ =>
         (
           CirceUtils.extract[String](c, "parameters", "apiKey").toValidatedNel,
@@ -69,7 +67,6 @@ object CurrencyConversionEnrichmentConfig extends ParseableEnrichment {
             CurrencyConversionEnrichment(accountType, apiKey, baseCurrency, rateAt)
           }
           .toEither
-          .leftMap(_.map(_.toProcessingMessage))
       }
       .toValidated
 }

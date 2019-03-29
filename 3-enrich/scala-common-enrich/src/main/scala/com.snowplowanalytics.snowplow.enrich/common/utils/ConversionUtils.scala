@@ -20,7 +20,7 @@ import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.util.Try
 import scala.util.control.NonFatal
 
@@ -243,9 +243,9 @@ object ConversionUtils {
    * Parses a string to create a [[URI]].
    * Parsing is relaxed, i.e. even if a URL is not correctly percent-encoded or not RFC 3986-compliant, it can be parsed.
    * @param uri String containing the URI to parse.
-   * @return [[Validation]] wrapping the result of the parsing:
-   * - [[Success]] with the parsed URI if there was no error or with [[None]] if the input was `null`.
-   * - [[Failure]] with the error message if something went wrong.
+   * @return either:
+   * - the parsed URI if there was no error or with [[None]] if the input was `null`.
+   * - the error message if something went wrong.
    */
   def stringToUri(uri: String): Either[String, Option[URI]] =
     Either.catchNonFatal(
@@ -273,7 +273,7 @@ object ConversionUtils {
    * @param encoding Encoding of the URI
    */
   def extractQuerystring(uri: URI, encoding: Charset): Either[String, Map[String, String]] =
-    Try(URLEncodedUtils.parse(uri, encoding).map(p => (p.getName -> p.getValue))).recoverWith {
+    Try(URLEncodedUtils.parse(uri, encoding).asScala.map(p => (p.getName -> p.getValue))).recoverWith {
       case NonFatal(_) =>
         Try(Url.parse(uri.toString).query.params).map(l => l.map(t => (t._1, t._2.getOrElse(""))))
     } match {
@@ -296,7 +296,7 @@ object ConversionUtils {
         val jint: JInteger = str.toInt
         jint.asRight
       } catch {
-        case nfe: NumberFormatException =>
+        case _: NumberFormatException =>
           "Field [%s]: cannot convert [%s] to Int".format(field, str).asLeft
       }
   }
@@ -351,7 +351,7 @@ object ConversionUtils {
     try {
       BigDecimal(str).setScale(2, BigDecimal.RoundingMode.HALF_EVEN).toDouble.asRight
     } catch {
-      case nfe: NumberFormatException =>
+      case _: NumberFormatException =>
         "Field [%s]: cannot convert [%s] to Double".format(field, str).asLeft
   }
 

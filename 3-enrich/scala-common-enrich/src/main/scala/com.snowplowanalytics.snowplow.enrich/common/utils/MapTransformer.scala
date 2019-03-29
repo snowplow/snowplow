@@ -90,7 +90,7 @@ object MapTransformer {
     val newInst = m.runtimeClass.newInstance()
     val result = _transform(newInst, sourceMap, transformMap, getSetters(m.runtimeClass))
     // On success, replace the field count with the new instance
-    result.map(s => newInst.asInstanceOf[T])
+    result.map(_ => newInst.asInstanceOf[T])
   }
 
   /**

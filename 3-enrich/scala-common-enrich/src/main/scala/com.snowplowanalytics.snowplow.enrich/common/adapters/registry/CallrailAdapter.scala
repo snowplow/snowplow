@@ -14,9 +14,14 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
+import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
+import cats.effect.Clock
 import cats.syntax.validated._
-import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
+import io.circe.Json
 import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormat
 
@@ -35,7 +40,12 @@ object CallrailAdapter extends Adapter {
 
   // Schemas for reverse-engineering a Snowplow unstructured event
   private object SchemaUris {
-    val CallComplete = SchemaKey("com.callrail", "call_complete", "jsonschema", "1-0-2").toSchemaUri
+    val CallComplete = SchemaKey(
+      "com.callrail",
+      "call_complete",
+      "jsonschema",
+      SchemaVer.Full(1, 0, 2)
+    ).toSchemaUri
   }
 
   // Datetime format used by CallRail (as we will need to massage)
@@ -55,17 +65,19 @@ object CallrailAdapter extends Adapter {
    * Converts a CollectorPayload instance into raw events. A CallRail payload only contains a single
    * event.
    * @param payload The CollectorPaylod containing one or more raw events
-   * @param resolver (implicit) The Iglu resolver used for schema lookup and validation. Not used
+   * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(
-    implicit resolver: Resolver
-  ): ValidatedNel[String, NonEmptyList[RawEvent]] = {
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
+    payload: CollectorPayload,
+    client: Client[F, Json]
+  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] = {
+    val _ = client
     val params = toMap(payload.querystring)
     if (params.isEmpty) {
-      "Querystring is empty: no CallRail event to process".invalidNel
+      Monad[F].pure("Querystring is empty: no CallRail event to process".invalidNel)
     } else {
-      NonEmptyList
+      Monad[F].pure(NonEmptyList
         .of(
           RawEvent(
             api = payload.api,
@@ -79,7 +91,7 @@ object CallrailAdapter extends Adapter {
             source = payload.source,
             context = payload.context
           ))
-        .valid
+        .valid)
     }
   }
 }

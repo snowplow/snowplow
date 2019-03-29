@@ -14,12 +14,16 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
+import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.data.Validated._
+import cats.effect.Clock
 import cats.syntax.either._
 import cats.syntax.eq._
 import cats.syntax.validated._
-import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
@@ -33,12 +37,20 @@ import utils.{JsonUtils => JU}
 trait Adapter {
 
   // The Iglu schema URI for a Snowplow unstructured event
-  private val UnstructEvent =
-    SchemaKey("com.snowplowanalytics.snowplow", "unstruct_event", "jsonschema", "1-0-0").toSchemaUri
+  private val UnstructEvent = SchemaKey(
+    "com.snowplowanalytics.snowplow",
+    "unstruct_event",
+    "jsonschema",
+    SchemaVer.Full(1, 0, 0)
+  ).toSchemaUri
 
   // The Iglu schema URI for a Snowplow custom contexts
-  private val Contexts =
-    SchemaKey("com.snowplowanalytics.snowplow", "contexts", "jsonschema", "1-0-1").toSchemaUri
+  private val Contexts = SchemaKey(
+    "com.snowplowanalytics.snowplow",
+    "contexts",
+    "jsonschema",
+    SchemaVer.Full(1, 0, 1)
+  ).toSchemaUri
 
   // Signature for a Formatter function
   type FormatterFunc = (RawEventParameters) => Json
@@ -110,11 +122,13 @@ trait Adapter {
    * Converts a CollectorPayload instance into raw events.
    * @param payload The CollectorPaylod containing one or more raw events as collected by a
    * Snowplow collector
-   * @param resolver (implicit) The Iglu resolver used for schema lookup and validation
+   * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(
-    implicit resolver: Resolver): ValidatedNel[String, NonEmptyList[RawEvent]]
+  def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
+    payload: CollectorPayload,
+    client: Client[F, Json]
+  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]]
 
   /**
    * Converts a NonEmptyList of name:value pairs into a Map.
@@ -320,7 +334,8 @@ trait Adapter {
   protected[registry] def lookupSchema(
     eventOpt: Option[String],
     vendor: String,
-    eventSchemaMap: Map[String, String]): Either[String, String] =
+    eventSchemaMap: Map[String, String]
+  ): Either[String, String] =
     eventOpt match {
       case None =>
         s"$vendor event failed: type parameter not provided - cannot determine event type".asLeft

@@ -15,9 +15,7 @@ package enrichments.registry
 
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.implicits._
-import com.github.fge.jsonschema.core.report.ProcessingMessage
-import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
-import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
 import io.circe._
 import org.apache.commons.codec.digest.DigestUtils
 
@@ -44,16 +42,16 @@ object EventFingerprintEnrichmentConfig extends ParseableEnrichment {
   def parse(
     c: Json,
     schemaKey: SchemaKey
-  ): ValidatedNel[ProcessingMessage, EventFingerprintEnrichment] =
+  ): ValidatedNel[String, EventFingerprintEnrichment] =
     (for {
-      _ <- isParseable(c, schemaKey).leftMap(e => NonEmptyList.one(e.toProcessingMessage))
+      _ <- isParseable(c, schemaKey).leftMap(e => NonEmptyList.one(e))
       // better-monadic-for
       paramsAndAlgo <- (
         CirceUtils.extract[List[String]](c, "parameters", "excludeParameters").toValidatedNel,
         CirceUtils.extract[String](c, "parameters", "hashAlgorithm").toValidatedNel
-      ).mapN { (_, _) }.toEither.leftMap(_.map(_.toProcessingMessage))
+      ).mapN { (_, _) }.toEither
       algorithm <- getAlgorithm(paramsAndAlgo._2)
-        .leftMap(e => NonEmptyList.one(e.toProcessingMessage))
+        .leftMap(e => NonEmptyList.one(e))
     } yield EventFingerprintEnrichment(algorithm, paramsAndAlgo._1)).toValidated
 
   /**
