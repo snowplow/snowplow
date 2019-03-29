@@ -19,10 +19,11 @@ import java.nio.charset.StandardCharsets.UTF_8
 
 import scala.collection.JavaConversions._
 
+import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
-import cats.syntax.either._
 import cats.syntax.validated._
-import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.core.SchemaKey
 import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
@@ -53,23 +54,26 @@ object IgluAdapter extends Adapter {
    * Iglu-compatible self-describing event passed in on the querystring.
    * @param payload The CollectorPaylod containing one or more raw events as collected by a Snowplow
    * collector
-   * @param resolver (implicit) The Iglu resolver used for schema lookup and validation. Not used
+   * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(
-    implicit resolver: Resolver
-  ): ValidatedNel[String, NonEmptyList[RawEvent]] = {
+  override def toRawEvents[F[_]: Monad](
+    payload: CollectorPayload,
+    client: Client[F, Json]
+  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] = {
+    val _ = client
     val params = toMap(payload.querystring)
     (params.get("schema"), payload.body, payload.contentType) match {
-      case (_, Some(body), None) =>
-        s"$VendorName event failed: ContentType must be set for a POST payload".invalidNel
+      case (_, Some(_), None) => Monad[F].pure(
+        s"$VendorName event failed: ContentType must be set for a POST payload".invalidNel)
       case (None, Some(body), Some(contentType)) =>
-        payloadSdJsonToEvent(payload, body, contentType, params)
-      case (Some(schemaUri), Some(body), Some(contentType)) =>
-        payloadToEventWithSchema(payload, schemaUri, params)
-      case (Some(schemaUri), None, _) => payloadToEventWithSchema(payload, schemaUri, params)
-      case (_, _, _) =>
-        s"$VendorName event failed: is not a sd-json or a valid GET or POST request".invalidNel
+        Monad[F].pure(payloadSdJsonToEvent(payload, body, contentType, params))
+      case (Some(schemaUri), Some(_), Some(_)) =>
+        Monad[F].pure(payloadToEventWithSchema(payload, schemaUri, params))
+      case (Some(schemaUri), None, _) =>
+        Monad[F].pure(payloadToEventWithSchema(payload, schemaUri, params))
+      case (_, _, _) => Monad[F].pure(
+        s"$VendorName event failed: is not a sd-json or a valid GET or POST request".invalidNel)
     }
   }
 
@@ -110,8 +114,8 @@ object IgluAdapter extends Adapter {
         val cursor = parsed.hcursor
         (cursor.get[String]("schema").toOption, cursor.downField("data").focus) match {
           case (Some(schemaUri), Some(data)) =>
-            SchemaKey.parse(schemaUri).toEither match {
-              case Left(procMsg) => procMsg.getMessage.invalidNel
+            SchemaKey.fromUri(schemaUri) match {
+              case Left(parseError) => parseError.code.invalidNel
               case _ =>
                 NonEmptyList
                   .one(
@@ -146,8 +150,8 @@ object IgluAdapter extends Adapter {
     schemaUri: String,
     params: Map[String, String]
   ): ValidatedNel[String, NonEmptyList[RawEvent]] =
-    SchemaKey.parse(schemaUri).toEither match {
-      case Left(procMsg) => procMsg.getMessage.invalidNel
+    SchemaKey.fromUri(schemaUri) match {
+      case Left(parseError) => parseError.code.invalidNel
       case Right(_) =>
         (payload.body, payload.contentType) match {
           case (None, _) =>

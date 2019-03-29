@@ -20,12 +20,14 @@ import java.nio.charset.StandardCharsets.UTF_8
 import scala.collection.JavaConversions._
 import scala.util.{Try, Success => TS, Failure => TF}
 
+import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.instances.either._
 import cats.syntax.either._
 import cats.syntax.option._
 import cats.syntax.validated._
-import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import io.circe._
 import io.circe.parser._
 import io.circe.optics.JsonPath._
@@ -49,40 +51,48 @@ object OlarkAdapter extends Adapter {
   // Expected content type for a request body
   private val ContentType = "application/x-www-form-urlencoded"
 
+  private val Vendor = "com.olark"
+  private val Format = "jsonschema"
+  private val SchemaVersion = SchemaVer.Full(1, 0, 0)
+
   // Schemas for reverse-engineering a Snowplow unstructured event
   private val EventSchemaMap = Map(
-    "transcript" -> SchemaKey("com.olark", "transcript", "jsonschema", "1-0-0").toSchemaUri,
-    "offline_message" -> SchemaKey("com.olark", "offline_message", "jsonschema", "1-0-0").toSchemaUri
+    "transcript" -> SchemaKey(Vendor, "transcript", Format, SchemaVersion).toSchemaUri,
+    "offline_message" -> SchemaKey(Vendor, "offline_message", Format, SchemaVersion).toSchemaUri
   )
 
   /**
    * Converts a CollectorPayload instance into raw events. An Olark Tracking payload contains one
    * single event in the body of the payload, stored within a HTTP encoded string.
    * @param payload The CollectorPayload containing one or more raw events
-   * @param resolver (implicit) The Iglu resolver used for schema lookup and validation. Not used
+   * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(
-    implicit resolver: Resolver
-  ): ValidatedNel[String, NonEmptyList[RawEvent]] =
+  override def toRawEvents[F[_]: Monad](
+    payload: CollectorPayload,
+    client: Client[F, Json]
+  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
     (payload.body, payload.contentType) match {
-      case (None, _) => s"Request body is empty: no $VendorName events to process".invalidNel
-      case (_, None) =>
-        s"Request body provided but content type empty, expected $ContentType for $VendorName".invalidNel
-      case (_, Some(ct)) if ct != ContentType =>
-        s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel
+      case (None, _) => Monad[F].pure(
+        s"Request body is empty: no $VendorName events to process".invalidNel)
+      case (_, None) => Monad[F].pure(
+        s"Request body provided but content type empty, expected $ContentType for $VendorName"
+          .invalidNel)
+      case (_, Some(ct)) if ct != ContentType => Monad[F].pure(
+        s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel)
       case (Some(body), _) if (body.isEmpty) =>
-        s"$VendorName event body is empty: nothing to process".invalidNel
+        Monad[F].pure(s"$VendorName event body is empty: nothing to process".invalidNel)
       case (Some(body), _) =>
+        val _ = client
         val qsParams = toMap(payload.querystring)
         Try {
           toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).toList)
         } match {
           case TF(e) =>
             val message = JU.stripInstanceEtc(e.getMessage).orNull
-            s"$VendorName could not parse body: [$message]".invalidNel
+            Monad[F].pure(s"$VendorName could not parse body: [$message]".invalidNel)
           case TS(bodyMap) =>
-            (for {
+            Monad[F].pure((for {
               event <- payloadBodyToEvent(bodyMap)
               eventType = event.hcursor.get[Json]("operators").toOption match {
                 case Some(_) => "transcript"
@@ -104,7 +114,7 @@ object OlarkAdapter extends Adapter {
                   source = payload.source,
                   context = payload.context
                 )
-              )).toValidatedNel
+              )).toValidatedNel)
         }
     }
 

@@ -19,13 +19,20 @@ import java.util.Map.{Entry => JMapEntry}
 
 import scala.collection.JavaConversions._
 
-import cats.data.{NonEmptyList, Validated, ValidatedNel}
+import cats.Monad
+import cats.data.{EitherT, NonEmptyList, Validated, ValidatedNel}
 import cats.data.Validated._
+import cats.effect.Clock
 import cats.syntax.either._
+import cats.syntax.functor._
 import cats.syntax.validated._
-import com.snowplowanalytics.iglu.client.{Resolver, SchemaCriterion}
-import com.snowplowanalytics.iglu.client.validation.ValidatableJsonMethods._
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SelfDescribingData}
+import com.snowplowanalytics.iglu.core.circe.instances._
 import com.fasterxml.jackson.databind.JsonNode
+import io.circe.Json
+import io.circe.jackson._
 
 import loaders.CollectorPayload
 import utils.{JsonUtils => JU}
@@ -49,40 +56,46 @@ object Tp2Adapter extends Adapter {
   /**
    * Converts a CollectorPayload instance into N raw events.
    * @param payload The CollectorPaylod containing one or more raw events
-   * @param resolver (implicit) The Iglu resolver used for schema lookup and validation
+   * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(
-    implicit resolver: Resolver
-  ): ValidatedNel[String, NonEmptyList[RawEvent]] = {
+  def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
+    payload: CollectorPayload,
+    client: Client[F, Json]
+  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] = {
     val qsParams = toMap(payload.querystring)
 
     // Verify: body + content type set; content type matches expected; body contains expected JSON Schema; body passes schema validation
-    val validatedParamsNel: ValidatedNel[String, NonEmptyList[RawEventParameters]] =
+    val validatedParamsNel: F[ValidatedNel[String, NonEmptyList[RawEventParameters]]] =
       (payload.body, payload.contentType) match {
-        case (None, _) if qsParams.isEmpty =>
-          s"Request body and querystring parameters empty, expected at least one populated".invalidNel
-        case (_, Some(ct)) if !ContentTypes.list.contains(ct) =>
+        case (None, _) if qsParams.isEmpty => Monad[F].pure(
+          s"Request body and querystring parameters empty, expected at least one populated"
+            .invalidNel
+        )
+        case (_, Some(ct)) if !ContentTypes.list.contains(ct) => Monad[F].pure(
           s"Content type of ${ct} provided, expected one of: ${ContentTypes.str}".invalidNel
-        case (Some(_), None) =>
-          s"Request body provided but content type empty, expected one of: ${ContentTypes.str}".invalidNel
-        case (None, Some(ct)) => s"Content type of ${ct} provided but request body empty".invalidNel
-        case (None, None) => NonEmptyList.one(qsParams).valid
+        )
+        case (Some(_), None) => Monad[F].pure(
+          s"Request body provided but content type empty, expected one of: ${ContentTypes.str}"
+            .invalidNel
+        )
+        case (None, Some(ct)) =>
+          Monad[F].pure(s"Content type of ${ct} provided but request body empty".invalidNel)
+        case (None, None) => Monad[F].pure(NonEmptyList.one(qsParams).valid)
         case (Some(bdy), Some(_)) => // Build our NEL of parameters
           (for {
-            json <- extractAndValidateJson("Body", PayloadDataSchema, bdy)
-            nel <- toParametersNel(json, qsParams)
+            json <- extractAndValidateJson("Body", PayloadDataSchema, bdy, client)
+            nel <- EitherT.fromEither(toParametersNel(json, qsParams))
           } yield nel).toValidated
       }
 
-    // Validated NEL of parameters -> Validated NEL of raw events
-    for {
-      paramsNel <- validatedParamsNel
-    } yield
-      for {
-        params <- paramsNel
-        p = payload // Alias to save typing
-      } yield RawEvent(p.api, params, p.contentType, p.source, p.context)
+    validatedParamsNel.map { f =>
+      f.map { params =>
+        params.map { p =>
+          RawEvent(payload.api, p, payload.contentType, payload.source, payload.context)
+        }
+      }
+    }
   }
 
   /**
@@ -90,17 +103,17 @@ object Tp2Adapter extends Adapter {
    * take the form Map[String, String].
    * Takes a second set of parameters to merge with the generated parameters (the second set takes
    * precedence in case of a clash).
-   * @param instance The JSON Node to convert
+   * @param instance The JSON to convert
    * @param mergeWith A second set of parameters to merge (and possibly overwrite) parameters
    * from the instance
    * @return a NEL of Map[String, String] parameters on Succeess, a NEL of Strings on Failure
    */
   private def toParametersNel(
-    instance: JsonNode,
+    instance: Json,
     mergeWith: RawEventParameters
   ): Either[NonEmptyList[String], NonEmptyList[RawEventParameters]] = {
     val events: List[List[Validated[String, (String, String)]]] = for {
-      event <- instance.iterator.toList
+      event <- circeToJackson(instance).iterator.toList
     } yield
       for {
         entry <- event.fields.toList
@@ -122,7 +135,7 @@ object Tp2Adapter extends Adapter {
 
     (successes, failures) match {
       case (s :: ss, Nil) => NonEmptyList.of(s, ss: _*).asRight // No Failures collected
-      case (s :: ss, f :: fs) =>
+      case (_ :: _, f :: fs) =>
         // Some Failures, return those. Should never happen, unless JSON Schema changed
         NonEmptyList.of(f, fs: _*).asLeft
       case (Nil, _) =>
@@ -158,21 +171,27 @@ object Tp2Adapter extends Adapter {
    * @param field The name of the field containing the JSON instance
    * @param schemaCriterion The schema that we expected this self-describing JSON to conform to
    * @param instance A JSON instance as String
-   * @param resolver Our implicit Iglu Resolver, for schema lookups
+   * @param client Our Iglu client, for schema lookups
    * @return an Option-boxed Validation containing either a Nel of JsonNodes error message on
    * Failure, or a singular JsonNode on success
    */
-  private def extractAndValidateJson(
+  private def extractAndValidateJson[F[_]: Monad: RegistryLookup: Clock](
     field: String,
     schemaCriterion: SchemaCriterion,
-    instance: String
-  )(implicit resolver: Resolver): Either[NonEmptyList[String], JsonNode] =
+    instance: String,
+    client: Client[F, Json]
+  ): EitherT[F, NonEmptyList[String], Json] =
     for {
-      j <- JU.extractJsonNode(field, instance).leftMap(NonEmptyList.one)
-      v <- j
-        .verifySchemaAndValidate(schemaCriterion, true)
-        .leftMap(nel => NonEmptyList.of(nel.head, nel.tail: _*).map(_.toString))
-        .toEither
-    } yield v
-
+      j <- EitherT.fromEither(JU.extractJson(field, instance).leftMap(NonEmptyList.one))
+      sd <- EitherT.fromEither(
+        SelfDescribingData.parse(j).leftMap(parseError => NonEmptyList.one(parseError.code)))
+      _ <- client.check(sd).leftMap(e => NonEmptyList.one(e.toString))
+        .subflatMap { _ =>
+          schemaCriterion.matches(sd.schema) match {
+            case true => ().asRight
+            case false => NonEmptyList.one(
+              s"Schema criterion $schemaCriterion does not match schema ${sd.schema}").asLeft
+          }
+        }
+    } yield j
 }

@@ -14,11 +14,14 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
+import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.syntax.apply._
 import cats.syntax.either._
 import cats.syntax.validated._
-import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
+import io.circe.Json
 import io.circe.parser._
 import org.joda.time.{DateTime, DateTimeZone}
 
@@ -35,36 +38,31 @@ object UrbanAirshipAdapter extends Adapter {
   // Tracker version for an UrbanAirship Connect API
   private val TrackerVersion = "com.urbanairship.connect-v1"
 
+  private val Vendor = "com.urbanairship.connect"
+  private val Format = "jsonschema"
+  private val SchemaVersion = SchemaVer.Full(1, 0, 0)
+
   // Schemas for reverse-engineering a Snowplow unstructured event
   private val EventSchemaMap = Map(
-    "CLOSE" -> SchemaKey("com.urbanairship.connect", "CLOSE", "jsonschema", "1-0-0").toSchemaUri,
-    "CUSTOM" -> SchemaKey("com.urbanairship.connect", "CUSTOM", "jsonschema", "1-0-0").toSchemaUri,
-    "FIRST_OPEN" -> SchemaKey("com.urbanairship.connect", "FIRST_OPEN", "jsonschema", "1-0-0").toSchemaUri,
-    "IN_APP_MESSAGE_DISPLAY" -> SchemaKey(
-      "com.urbanairship.connect",
-      "IN_APP_MESSAGE_DISPLAY",
-      "jsonschema",
-      "1-0-0").toSchemaUri,
-    "IN_APP_MESSAGE_EXPIRATION" -> SchemaKey(
-      "com.urbanairship.connect",
-      "IN_APP_MESSAGE_EXPIRATION",
-      "jsonschema",
-      "1-0-0").toSchemaUri,
-    "IN_APP_MESSAGE_RESOLUTION" -> SchemaKey(
-      "com.urbanairship.connect",
-      "IN_APP_MESSAGE_RESOLUTION",
-      "jsonschema",
-      "1-0-0").toSchemaUri,
-    "LOCATION" -> SchemaKey("com.urbanairship.connect", "LOCATION", "jsonschema", "1-0-0").toSchemaUri,
-    "OPEN" -> SchemaKey("com.urbanairship.connect", "OPEN", "jsonschema", "1-0-0").toSchemaUri,
-    "PUSH_BODY" -> SchemaKey("com.urbanairship.connect", "PUSH_BODY", "jsonschema", "1-0-0").toSchemaUri,
-    "REGION" -> SchemaKey("com.urbanairship.connect", "REGION", "jsonschema", "1-0-0").toSchemaUri,
-    "RICH_DELETE" -> SchemaKey("com.urbanairship.connect", "RICH_DELETE", "jsonschema", "1-0-0").toSchemaUri,
-    "RICH_DELIVERY" -> SchemaKey("com.urbanairship.connect", "RICH_DELIVERY", "jsonschema", "1-0-0").toSchemaUri,
-    "RICH_HEAD" -> SchemaKey("com.urbanairship.connect", "RICH_HEAD", "jsonschema", "1-0-0").toSchemaUri,
-    "SEND" -> SchemaKey("com.urbanairship.connect", "SEND", "jsonschema", "1-0-0").toSchemaUri,
-    "TAG_CHANGE" -> SchemaKey("com.urbanairship.connect", "TAG_CHANGE", "jsonschema", "1-0-0").toSchemaUri,
-    "UNINSTALL" -> SchemaKey("com.urbanairship.connect", "UNINSTALL", "jsonschema", "1-0-0").toSchemaUri
+    "CLOSE" -> SchemaKey(Vendor, "CLOSE", Format, SchemaVersion).toSchemaUri,
+    "CUSTOM" -> SchemaKey(Vendor, "CUSTOM", Format, SchemaVersion).toSchemaUri,
+    "FIRST_OPEN" -> SchemaKey(Vendor, "FIRST_OPEN", Format, SchemaVersion).toSchemaUri,
+    "IN_APP_MESSAGE_DISPLAY" ->
+      SchemaKey(Vendor, "IN_APP_MESSAGE_DISPLAY", Format, SchemaVersion).toSchemaUri,
+    "IN_APP_MESSAGE_EXPIRATION" ->
+      SchemaKey(Vendor, "IN_APP_MESSAGE_EXPIRATION", Format, SchemaVersion).toSchemaUri,
+    "IN_APP_MESSAGE_RESOLUTION" ->
+      SchemaKey(Vendor, "IN_APP_MESSAGE_RESOLUTION", Format, SchemaVersion).toSchemaUri,
+    "LOCATION" -> SchemaKey(Vendor, "LOCATION", Format, SchemaVersion).toSchemaUri,
+    "OPEN" -> SchemaKey(Vendor, "OPEN", Format, SchemaVersion).toSchemaUri,
+    "PUSH_BODY" -> SchemaKey(Vendor, "PUSH_BODY", Format, SchemaVersion).toSchemaUri,
+    "REGION" -> SchemaKey(Vendor, "REGION", Format, SchemaVersion).toSchemaUri,
+    "RICH_DELETE" -> SchemaKey(Vendor, "RICH_DELETE", Format, SchemaVersion).toSchemaUri,
+    "RICH_DELIVERY" -> SchemaKey(Vendor, "RICH_DELIVERY", Format, SchemaVersion).toSchemaUri,
+    "RICH_HEAD" -> SchemaKey(Vendor, "RICH_HEAD", Format, SchemaVersion).toSchemaUri,
+    "SEND" -> SchemaKey(Vendor, "SEND", Format, SchemaVersion).toSchemaUri,
+    "TAG_CHANGE" -> SchemaKey(Vendor, "TAG_CHANGE", Format, SchemaVersion).toSchemaUri,
+    "UNINSTALL" -> SchemaKey(Vendor, "UNINSTALL", Format, SchemaVersion).toSchemaUri
   )
 
   /**
@@ -117,19 +115,22 @@ object UrbanAirshipAdapter extends Adapter {
    * contains a single event. We expect the name parameter to match the supported events, else
    * we have an unsupported event type.
    * @param payload The CollectorPayload containing one or more raw events
-   * @param resolver (implicit) The Iglu resolver used for schema lookup and validation. Not used
+   * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(
-    implicit resolver: Resolver
-  ): ValidatedNel[String, NonEmptyList[RawEvent]] =
+  override def toRawEvents[F[_]: Monad](
+    payload: CollectorPayload,
+    client: Client[F, Json]
+  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
     (payload.body, payload.contentType) match {
-      case (None, _) => s"Request body is empty: no $VendorName event to process".invalidNel
-      case (_, Some(ct)) =>
-        s"Content type of $ct provided, expected None for $VendorName".invalidNel
+      case (None, _) => Monad[F].pure(
+        s"Request body is empty: no $VendorName event to process".invalidNel)
+      case (_, Some(ct)) => Monad[F].pure(
+        s"Content type of $ct provided, expected None for $VendorName".invalidNel)
       case (Some(body), _) =>
+        val _ = client
         val event = payloadBodyToEvent(body, payload)
-        rawEventsListProcessor(List(event))
+        Monad[F].pure(rawEventsListProcessor(List(event)))
     }
 
 }

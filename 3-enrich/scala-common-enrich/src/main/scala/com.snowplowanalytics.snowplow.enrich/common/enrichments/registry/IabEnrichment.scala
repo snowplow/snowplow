@@ -18,9 +18,7 @@ import java.net.{InetAddress, URI, UnknownHostException}
 
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.implicits._
-import com.github.fge.jsonschema.core.report.ProcessingMessage
-import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
-import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
 import com.snowplowanalytics.iab.spidersandrobotsclient.IabClient
 import io.circe._
 import io.circe.generic.auto._
@@ -50,9 +48,9 @@ object IabEnrichment extends ParseableEnrichment {
     c: Json,
     schemaKey: SchemaKey,
     localMode: Boolean
-  ): ValidatedNel[ProcessingMessage, IabEnrichment] =
+  ): ValidatedNel[String, IabEnrichment] =
     isParseable(c, schemaKey)
-      .leftMap(e => NonEmptyList.one(e.toProcessingMessage))
+      .leftMap(e => NonEmptyList.one(e))
       .flatMap { _ =>
         (
           getIabDbFromName(c, "ipFile"),
@@ -74,7 +72,7 @@ object IabEnrichment extends ParseableEnrichment {
   private def getIabDbFromName(
     config: Json,
     name: String
-  ): ValidatedNel[ProcessingMessage, IabDatabase] = {
+  ): ValidatedNel[String, IabDatabase] = {
     val uri = CirceUtils.extract[String](config, "parameters", name, "uri")
     val db = CirceUtils.extract[String](config, "parameters", name, "database")
 
@@ -82,7 +80,7 @@ object IabEnrichment extends ParseableEnrichment {
     (for {
       uriAndDb <- (uri.toValidatedNel, db.toValidatedNel).mapN { (_, _) }.toEither
       uri <- getDatabaseUri(uriAndDb._1, uriAndDb._2).leftMap(NonEmptyList.one)
-    } yield IabDatabase(name, uri, uriAndDb._2)).leftMap(_.map(_.toProcessingMessage)).toValidated
+    } yield IabDatabase(name, uri, uriAndDb._2)).toValidated
   }
 
   /**
@@ -166,7 +164,7 @@ final case class IabEnrichment(
         result.getPrimaryImpact.toString
       ).asRight
     } catch {
-      case exc: UnknownHostException => s"IP address $ipAddress was invald".asLeft
+      case _: UnknownHostException => s"IP address $ipAddress was invald".asLeft
     }
 
   /**

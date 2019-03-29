@@ -17,11 +17,9 @@ import java.net.URI
 
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.implicits._
-import com.github.fge.jsonschema.core.report.ProcessingMessage
 import com.snowplowanalytics.maxmind.iplookups.IpLookups
 import com.snowplowanalytics.maxmind.iplookups.model.{IpLocation, IpLookupResult => IpLookupRes}
-import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
-import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
 import io.circe._
 
 import utils.{CirceUtils, ConversionUtils}
@@ -42,9 +40,9 @@ object IpLookupsEnrichment extends ParseableEnrichment {
     c: Json,
     schemaKey: SchemaKey,
     localMode: Boolean
-  ): ValidatedNel[ProcessingMessage, IpLookupsEnrichment] =
+  ): ValidatedNel[String, IpLookupsEnrichment] =
     isParseable(c, schemaKey)
-      .leftMap(e => NonEmptyList.one(e.toProcessingMessage))
+      .leftMap(e => NonEmptyList.one(e))
       .flatMap { _ =>
         (
           getArgumentFromName(c, "geo").sequence,
@@ -65,7 +63,7 @@ object IpLookupsEnrichment extends ParseableEnrichment {
   private def getArgumentFromName(
     conf: Json,
     name: String
-  ): Option[ValidatedNel[ProcessingMessage, (String, URI, String)]] =
+  ): Option[ValidatedNel[String, (String, URI, String)]] =
     if (conf.hcursor.downField("parameters").downField(name).focus.isDefined) {
       val uri = CirceUtils.extract[String](conf, "parameters", name, "uri")
       val db = CirceUtils.extract[String](conf, "parameters", name, "database")
@@ -74,7 +72,7 @@ object IpLookupsEnrichment extends ParseableEnrichment {
       (for {
         uriAndDb <- (uri.toValidatedNel, db.toValidatedNel).mapN { (_, _) }.toEither
         uri <- getMaxmindUri(uriAndDb._1, uriAndDb._2).leftMap(NonEmptyList.one)
-      } yield (name, uri, uriAndDb._2)).leftMap(_.map(_.toProcessingMessage)).toValidated.some
+      } yield (name, uri, uriAndDb._2)).toValidated.some
     } else None
 
   /**

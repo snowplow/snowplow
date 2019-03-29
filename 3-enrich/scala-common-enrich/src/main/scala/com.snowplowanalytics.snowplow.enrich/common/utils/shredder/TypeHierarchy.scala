@@ -12,18 +12,6 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.utils.shredder
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.github.fge.jackson.JacksonUtils
-import io.circe.generic.auto._
-import io.circe.jackson._
-import io.circe.syntax._
-import scalaz._
-
-/** Companion object contains helpers. */
-object TypeHierarchy {
-  private val NodeFactory = JacksonUtils.nodeFactory()
-}
-
 /** Expresses the hierarchy of types for this type. */
 final case class TypeHierarchy(
   val rootId: String,
@@ -34,30 +22,15 @@ final case class TypeHierarchy(
 ) {
 
   /**
-   * Converts a TypeHierarchy into a JSON containing each element.
-   * @return the TypeHierarchy as a Jackson JsonNode
-   */
-  def toJsonNode: JsonNode =
-    circeToJackson(this.asJson)
-
-  /**
    * Completes a partial TypeHierarchy with the supplied refTree elements, and uses
    * the final refTree to replace the refParent too.
    * @param refTree the rest of the type tree to append onto existing refTree
    * @return the completed TypeHierarchy
    */
-  def complete(refTree: List[String]): TypeHierarchy =
-    partialHierarchyLens.set(this, refTree)
-
-  /** A Scalaz Lens to complete the refTree within a TypeHierarchy object. */
-  private val partialHierarchyLens: Lens[TypeHierarchy, List[String]] =
-    Lens.lensu((ph, rt) => {
-      val full = ph.refTree ++ rt
-      ph.copy(
-        refTree = full,
-        refParent = secondTail(full)
-      )
-    }, _.refTree)
+  def complete(refTree: List[String]): TypeHierarchy = {
+    val full = this.refTree ++ refTree
+    this.copy(refTree = full, refParent = secondTail(full))
+  }
 
   /**
    * Get the last-but-one element ("tail-tail") from a list.

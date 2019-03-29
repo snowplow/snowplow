@@ -20,7 +20,7 @@ import scala.util.control.NonFatal
 
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.implicits._
-import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
 import com.snowplowanalytics.snowplow.CollectorPayload.thrift.model1.{
   CollectorPayload => CollectorPayload1
 }
@@ -48,7 +48,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
    */
   def toCollectorPayload(line: Array[Byte]): ValidatedNel[String, Option[CollectorPayload]] =
     try {
-      var schema = new SchemaSniffer
+      val schema = new SchemaSniffer
       this.synchronized {
         thriftDeserializer.deserialize(
           schema,
@@ -57,10 +57,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
       }
 
       if (schema.isSetSchema) {
-        val actualSchema = SchemaKey.parse(schema.getSchema) match {
-          case scalaz.Success(s) => s.asRight
-          case scalaz.Failure(e) => e.toString.asLeft
-        }
+        val actualSchema = SchemaKey.fromUri(schema.getSchema).leftMap(_.code)
         (for {
           as <- actualSchema.leftMap(NonEmptyList.one)
           res <- if (ExpectedSchema.matches(as)) {
@@ -87,7 +84,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
    * a Scalaz ValidatioNel.
    */
   private def convertSchema1(line: Array[Byte]): ValidatedNel[String, Option[CollectorPayload]] = {
-    var collectorPayload = new CollectorPayload1
+    val collectorPayload = new CollectorPayload1
     this.synchronized {
       thriftDeserializer.deserialize(
         collectorPayload,
@@ -145,7 +142,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
   private def convertOldSchema(
     line: Array[Byte]
   ): ValidatedNel[String, Option[CollectorPayload]] = {
-    var snowplowRawEvent = new SnowplowRawEvent
+    val snowplowRawEvent = new SnowplowRawEvent
     this.synchronized {
       thriftDeserializer.deserialize(
         snowplowRawEvent,

@@ -58,7 +58,7 @@ object Dependencies {
     val circe            = "0.11.1"
     val circeOptics      = "0.11.0"
     val circeJackson     = "0.11.1"
-    val igluClient       = "0.5.0"
+    val igluClient       = "0.6.0-M3"
     val scalaForex       = "0.5.0"
     val scalaWeather     = "0.3.0"
     val scalaj           = "2.3.0"

@@ -27,7 +27,7 @@ import utils.HttpClient
  * @param authentication auth preferences
  * @param timeout time in milliseconds after which request can be considered failed
  */
-case class HttpApi(method: String, uri: String, timeout: Int, authentication: Authentication) {
+final case class HttpApi(method: String, uri: String, timeout: Int, authentication: Authentication) {
   import HttpApi._
 
   private val authUser = for {

@@ -15,14 +15,15 @@ package enrichments
 
 import java.net.URI
 
-import cats.data.{NonEmptyList, ValidatedNel}
+import cats.Monad
+import cats.data.{EitherT, NonEmptyList, ValidatedNel}
+import cats.effect.Clock
 import cats.implicits._
-import com.github.fge.jsonschema.core.report.ProcessingMessage
-import com.snowplowanalytics.iglu.client.{Resolver, SchemaCriterion, SchemaKey}
-import com.snowplowanalytics.iglu.client.validation.ValidatableJsonMethods._
-import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SelfDescribingData}
+import com.snowplowanalytics.iglu.core.circe.instances._
 import io.circe._
-import io.circe.jackson._
 
 import registry._
 import registry.apirequest.{ApiRequestEnrichment, ApiRequestEnrichmentConfig}
@@ -38,40 +39,44 @@ object EnrichmentRegistry {
 
   /**
    * Constructs our EnrichmentRegistry from the supplied JSON JValue.
-   * @param node A JValue representing an array of enrichment JSONs
+   * @param json A Json representing an array of enrichment JSONs
    * @param localMode Whether to use the local MaxMind data file, enabled for tests
-   * @param resolver (implicit) The Iglu resolver used for schema lookup and validation
+   * @param client The Iglu client used for schema lookup and validation
    * @return Validation boxing an EnrichmentRegistry object containing enrichments configured from
    * node
-   * @todo remove all the JsonNode round-tripping when we have ValidatableJValue
    */
-  def parse(node: Json, localMode: Boolean)(
-    implicit resolver: Resolver
-  ): ValidatedNel[ProcessingMessage, EnrichmentRegistry] =
+  def parse[F[_]: Monad: RegistryLookup: Clock](
+    json: Json,
+    client: Client[F, Json],
+    localMode: Boolean
+  ): F[ValidatedNel[String, EnrichmentRegistry]] =
     (for {
-      validated <- circeToJackson(node).verifySchemaAndValidate(
-        EnrichmentConfigSchemaCriterion,
-        true) match {
-        case scalaz.Success(j) => j.asRight
-        case scalaz.Failure(e) => NonEmptyList.of(e.head, e.tail: _*).asLeft
-      }
-      enrichments <- jacksonToCirce(validated).asArray match {
+      sd <- EitherT.fromEither[F](
+        SelfDescribingData.parse(json).leftMap(parseError => NonEmptyList.one(parseError.code)))
+      _ <- client.check(sd).leftMap(e => NonEmptyList.one(e.toString))
+        .subflatMap { _ =>
+          EnrichmentConfigSchemaCriterion.matches(sd.schema) match {
+            case true => ().asRight
+            case false => NonEmptyList.one(
+              s"Schema criterion $EnrichmentConfigSchemaCriterion does not match schema ${sd.schema}"
+            ).asLeft
+          }
+        }
+      enrichments <- EitherT.fromEither[F](json.asArray match {
         case Some(array) => array.toList.asRight
         case _ =>
           NonEmptyList
-            .one(
-              "Enrichments JSON is not an array, the schema should prevent this from happening".toProcessingMessage
-            )
+            .one("Enrichments JSON is not an array, the schema should prevent this from happening")
             .asLeft
-      }
+      })
       configs <- enrichments
         .map { json =>
           for {
-            pair <- circeToJackson(json).validateAndIdentifySchema(dataOnly = true) match {
-              case scalaz.Success(p) => p.asRight
-              case scalaz.Failure(e) => NonEmptyList.of(e.head, e.tail: _*).asLeft
-            }
-            conf <- buildEnrichmentConfig(pair._1, jacksonToCirce(pair._2), localMode).toEither
+            sd <- EitherT.fromEither[F](
+              SelfDescribingData.parse(json).leftMap(pe => NonEmptyList.one(pe.code)))
+            _ <- client.check(sd).leftMap(e => NonEmptyList.one(e.toString))
+            conf <- EitherT.fromEither[F](
+              buildEnrichmentConfig(sd.schema, sd.data, localMode).toEither)
           } yield conf
         }
         .sequence
@@ -90,13 +95,12 @@ object EnrichmentRegistry {
     schemaKey: SchemaKey,
     enrichmentConfig: Json,
     localMode: Boolean
-  ): ValidatedNel[ProcessingMessage, Option[(String, Enrichment)]] =
+  ): ValidatedNel[String, Option[(String, Enrichment)]] =
     CirceUtils.extract[Boolean](enrichmentConfig, "enabled").toEither match {
       case Right(false) => None.validNel // Enrichment is disabled
-      case e =>
+      case _ =>
         val name = CirceUtils
           .extract[String](enrichmentConfig, "name")
-          .leftMap(_.toProcessingMessage)
           .toValidatedNel
           .toEither
         name.flatMap { nm =>

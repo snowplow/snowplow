@@ -14,11 +14,13 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
+import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.syntax.either._
 import cats.syntax.option._
 import cats.syntax.validated._
-import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import io.circe._
 import io.circe.parser._
 
@@ -29,22 +31,23 @@ object VeroAdapter extends Adapter {
   // Vendor name for Failure Message
   private val VendorName = "Vero"
 
-  // Expected content type for a request body
-  private val ContentType = "application/json"
-
   // Tracker version for an Vero webhook
   private val TrackerVersion = "com.getvero-v1"
 
+  private val Vendor = "com.getvero"
+  private val Format = "jsonschema"
+  private val SchemaVersion = SchemaVer.Full(1, 0, 0)
+
   // Schemas for reverse-engineering a Snowplow unstructured event
   private val EventSchemaMap = Map(
-    "bounced" -> SchemaKey("com.getvero", "bounced", "jsonschema", "1-0-0").toSchemaUri,
-    "clicked" -> SchemaKey("com.getvero", "clicked", "jsonschema", "1-0-0").toSchemaUri,
-    "delivered" -> SchemaKey("com.getvero", "delivered", "jsonschema", "1-0-0").toSchemaUri,
-    "opened" -> SchemaKey("com.getvero", "opened", "jsonschema", "1-0-0").toSchemaUri,
-    "sent" -> SchemaKey("com.getvero", "sent", "jsonschema", "1-0-0").toSchemaUri,
-    "unsubscribed" -> SchemaKey("com.getvero", "unsubscribed", "jsonschema", "1-0-0").toSchemaUri,
-    "user_created" -> SchemaKey("com.getvero", "created", "jsonschema", "1-0-0").toSchemaUri,
-    "user_updated" -> SchemaKey("com.getvero", "updated", "jsonschema", "1-0-0").toSchemaUri
+    "bounced" -> SchemaKey(Vendor, "bounced", Format, SchemaVersion).toSchemaUri,
+    "clicked" -> SchemaKey(Vendor, "clicked", Format, SchemaVersion).toSchemaUri,
+    "delivered" -> SchemaKey(Vendor, "delivered", Format, SchemaVersion).toSchemaUri,
+    "opened" -> SchemaKey(Vendor, "opened", Format, SchemaVersion).toSchemaUri,
+    "sent" -> SchemaKey(Vendor, "sent", Format, SchemaVersion).toSchemaUri,
+    "unsubscribed" -> SchemaKey(Vendor, "unsubscribed", Format, SchemaVersion).toSchemaUri,
+    "user_created" -> SchemaKey(Vendor, "created", Format, SchemaVersion).toSchemaUri,
+    "user_updated" -> SchemaKey(Vendor, "updated", Format, SchemaVersion).toSchemaUri
   )
 
   /**
@@ -90,18 +93,20 @@ object VeroAdapter extends Adapter {
    * event. We expect the type parameter to match the supported events, otherwise we have an
    * unsupported event type.
    * @param payload The CollectorPayload containing one or more raw events
-   * @param resolver (implicit) The Iglu resolver used for schema lookup and validation. Not used
+   * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  override def toRawEvents(
-    payload: CollectorPayload
-  )(implicit resolver: Resolver): ValidatedNel[String, NonEmptyList[RawEvent]] =
+  override def toRawEvents[F[_]: Monad](
+    payload: CollectorPayload,
+    client: Client[F, Json]
+  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
     (payload.body, payload.contentType) match {
-      case (None, _) => s"Request body is empty: no $VendorName event to process".invalidNel
-      case (Some(body), _) => {
+      case (None, _) => Monad[F].pure(
+        s"Request body is empty: no $VendorName event to process".invalidNel)
+      case (Some(body), _) =>
+        val _ = client
         val event = payloadBodyToEvent(body, payload)
-        rawEventsListProcessor(List(event.toValidatedNel))
-      }
+        Monad[F].pure(rawEventsListProcessor(List(event.toValidatedNel)))
     }
 
   /**

@@ -15,10 +15,12 @@ package adapters
 package registry
 package snowplow
 
+import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.syntax.either._
 import cats.syntax.validated._
-import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import io.circe._
 import io.circe.syntax._
 
@@ -45,28 +47,34 @@ object RedirectAdapter extends Adapter {
 
   // Schema for a URI redirect. Could end up being an event or a context
   // depending on what else is in the payload
-  private object SchemaUris {
-    val UriRedirect =
-      SchemaKey("com.snowplowanalytics.snowplow", "uri_redirect", "jsonschema", "1-0-0").toSchemaUri
-  }
+  val UriRedirect =
+    SchemaKey(
+      "com.snowplowanalytics.snowplow",
+      "uri_redirect",
+      "jsonschema",
+      SchemaVer.Full(1, 0, 0)
+    ).toSchemaUri
 
   /**
    * Converts a CollectorPayload instance into raw events. Assumes we have a GET querystring with
    * a u parameter for the URI redirect and other parameters per the Snowplow Tracker Protocol.
    * @param payload The CollectorPaylod containing one or more raw events as collected by a
    * Snowplow collector
-   * @param resolver (implicit) The Iglu resolver used for schema lookup and validation. Not used
+   * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(
-    implicit resolver: Resolver
-  ): ValidatedNel[String, NonEmptyList[RawEvent]] = {
+  override def toRawEvents[F[_]: Monad](
+    payload: CollectorPayload,
+    client: Client[F, Json]
+  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] = {
+    val _ = client
     val originalParams = toMap(payload.querystring)
     if (originalParams.isEmpty) {
-      "Querystring is empty: cannot be a valid URI redirect".invalidNel
+      Monad[F].pure("Querystring is empty: cannot be a valid URI redirect".invalidNel)
     } else {
       originalParams.get("u") match {
-        case None => "Querystring does not contain u parameter: not a valid URI redirect".invalidNel
+        case None => Monad[F].pure(
+          "Querystring does not contain u parameter: not a valid URI redirect".invalidNel)
         case Some(u) =>
           val json = buildUriRedirect(u)
           val newParams: Either[String, Map[String, String]] =
@@ -89,7 +97,7 @@ object RedirectAdapter extends Adapter {
             "p" -> originalParams.getOrElse("p", TrackerPlatform) // Required field
           )
 
-          (for {
+          Monad[F].pure((for {
             np <- newParams
             ev = NonEmptyList.one(
               RawEvent(
@@ -99,7 +107,7 @@ object RedirectAdapter extends Adapter {
                 source = payload.source,
                 context = payload.context
               ))
-          } yield ev).leftMap(e => NonEmptyList.one(e)).toValidated
+          } yield ev).leftMap(e => NonEmptyList.one(e)).toValidated)
       }
     }
   }
@@ -111,7 +119,7 @@ object RedirectAdapter extends Adapter {
    */
   private def buildUriRedirect(uri: String): Json =
     Json.obj(
-      "schema" := SchemaUris.UriRedirect,
+      "schema" := UriRedirect,
       "data" := Json.obj("uri" := uri)
     )
 
