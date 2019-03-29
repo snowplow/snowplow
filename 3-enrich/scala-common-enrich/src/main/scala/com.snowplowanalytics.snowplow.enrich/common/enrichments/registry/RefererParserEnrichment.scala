@@ -17,9 +17,7 @@ import java.net.URI
 
 import cats.data.ValidatedNel
 import cats.syntax.either._
-import com.github.fge.jsonschema.core.report.ProcessingMessage
-import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
-import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
 import com.snowplowanalytics.refererparser.scala.{Parser => RefererParser}
 import com.snowplowanalytics.refererparser.scala.Referer
 import io.circe._
@@ -41,12 +39,11 @@ object RefererParserEnrichment extends ParseableEnrichment {
   def parse(
     c: Json,
     schemaKey: SchemaKey
-  ): ValidatedNel[ProcessingMessage, RefererParserEnrichment] =
+  ): ValidatedNel[String, RefererParserEnrichment] =
     (for {
       _ <- isParseable(c, schemaKey)
       param <- CirceUtils.extract[List[String]](c, "parameters", "internalDomains").toEither
     } yield RefererParserEnrichment(param))
-      .leftMap(_.toProcessingMessage)
       .toValidatedNel
 }
 

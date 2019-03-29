@@ -89,7 +89,7 @@ object JsonUtils {
       val dt = DateTime.parse(str, fromFormat)
       toJsonSchemaDateTime(dt)
     } catch {
-      case iae: IllegalArgumentException => str
+      case _: IllegalArgumentException => str
     }
 
   /**

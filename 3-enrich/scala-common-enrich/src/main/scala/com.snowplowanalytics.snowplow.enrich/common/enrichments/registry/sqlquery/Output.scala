@@ -161,7 +161,7 @@ object Output {
     def collect(resultSet: List[JsonObject]): EitherThrowable[List[JsonObject]] =
       resultSet match {
         case List(one) => List(one).asRight
-        case other =>
+        case _ =>
           InvalidDbResponse(s"SQL Query Enrichment: exactly one row was expected").asLeft
       }
   }
@@ -172,7 +172,7 @@ object Output {
       resultSet match {
         case List(one) => List(one).asRight
         case List() => Nil.asRight
-        case other =>
+        case _ =>
           InvalidDbResponse(s"SQL Query Enrichment: at most one row was expected").asLeft
       }
   }

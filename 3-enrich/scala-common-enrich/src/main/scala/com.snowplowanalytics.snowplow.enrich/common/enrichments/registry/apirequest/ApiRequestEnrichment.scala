@@ -18,12 +18,9 @@ import java.util.UUID
 
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.implicits._
-import com.github.fge.jsonschema.core.report.ProcessingMessage
-import com.snowplowanalytics.iglu.client.{JsonSchemaPair, SchemaCriterion, SchemaKey}
-import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SelfDescribingData}
 import io.circe._
 import io.circe.generic.auto._
-import io.circe.jackson._
 import io.circe.syntax._
 
 import outputs.EnrichedEvent
@@ -51,9 +48,9 @@ object ApiRequestEnrichmentConfig extends ParseableEnrichment {
   def parse(
     c: Json,
     schemaKey: SchemaKey
-  ): ValidatedNel[ProcessingMessage, ApiRequestEnrichment] =
+  ): ValidatedNel[String, ApiRequestEnrichment] =
     isParseable(c, schemaKey)
-      .leftMap(e => NonEmptyList.one(e.toProcessingMessage))
+      .leftMap(e => NonEmptyList.one(e))
       .flatMap { _ =>
         // input ctor throws exception
         val inputs: ValidatedNel[String, List[Input]] = Either.catchNonFatal {
@@ -71,7 +68,6 @@ object ApiRequestEnrichmentConfig extends ParseableEnrichment {
             ApiRequestEnrichment(inputs, api, outputs, cache)
           }
           .toEither
-          .leftMap(_.map(_.toProcessingMessage))
       }
       .toValidated
 }
@@ -94,8 +90,8 @@ final case class ApiRequestEnrichment(
   def lookup(
     event: EnrichedEvent,
     derivedContexts: List[Json],
-    customContexts: List[JsonSchemaPair],
-    unstructEvent: List[JsonSchemaPair]
+    customContexts: List[SelfDescribingData[Json]],
+    unstructEvent: List[SelfDescribingData[Json]]
   ): ValidatedNel[String, List[Json]] = {
     // Note that [[JsonSchemaPairs]] have specific structure - it is a pair,
     // where first element is [[SchemaKey]], second element is JSON Object
@@ -167,15 +163,13 @@ object ApiRequestEnrichment {
    * @param pairs list of pairs consisting of schema and Json nodes
    * @return list of regular Json
    */
-  def transformRawPairs(pairs: List[JsonSchemaPair]): List[Json] =
-    pairs.map {
-      case (schema, node) =>
-        val uri = schema.toSchemaUri
-        val data = jacksonToCirce(node)
-        Json.obj(
-          "schema" := Json.fromString(uri),
-          "data" := data.hcursor.downField("data").focus.getOrElse(data)
-        )
+  def transformRawPairs(pairs: List[SelfDescribingData[Json]]): List[Json] =
+    pairs.map { p =>
+      val uri = p.schema.toSchemaUri
+      Json.obj(
+        "schema" := Json.fromString(uri),
+        "data" := p.data.hcursor.downField("data").focus.getOrElse(p.data)
+      )
     }
 
   /**

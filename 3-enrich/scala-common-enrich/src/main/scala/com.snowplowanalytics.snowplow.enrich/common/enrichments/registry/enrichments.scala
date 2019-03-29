@@ -16,7 +16,7 @@ package enrichments.registry
 import java.net.URI
 
 import cats.syntax.either._
-import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
 import io.circe._
 
 /** Trait inherited by every enrichment config case class */

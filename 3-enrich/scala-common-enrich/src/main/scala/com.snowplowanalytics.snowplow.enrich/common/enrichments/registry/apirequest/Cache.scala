@@ -21,7 +21,7 @@ import org.joda.time.DateTime
  * @param size amount of objects
  * @param ttl time in seconds to live
  */
-case class Cache(size: Int, ttl: Int) {
+final case class Cache(size: Int, ttl: Int) {
 
   // URI -> Validated[JSON]
   private val cache = new SynchronizedLruMap[String, (Either[Throwable, Json], Int)](size)
@@ -33,7 +33,7 @@ case class Cache(size: Int, ttl: Int) {
    */
   def get(url: String): Option[Either[Throwable, Json]] =
     cache.get(url) match {
-      case Some((value, created)) if ttl == 0 => Some(value)
+      case Some((value, _)) if ttl == 0 => Some(value)
       case Some((value, created)) => {
         val now = (new DateTime().getMillis / 1000).toInt
         if (now - created < ttl) Some(value)

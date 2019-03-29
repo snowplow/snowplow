@@ -14,10 +14,12 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
+import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.syntax.either._
 import cats.syntax.validated._
-import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import io.circe._
 import org.apache.http.NameValuePair
 
@@ -38,11 +40,16 @@ object PingdomAdapter extends Adapter {
   // believe are incorrectly handled Python unicode strings.
   private val PingdomValueRegex = """\(u'(.+)',\)""".r
 
+  private val Vendor = "com.pingdom"
+  private val Format = "jsonschema"
+  private val SchemaVersion = SchemaVer.Full(1, 0, 0)
+
   // Schemas for reverse-engineering a Snowplow unstructured event
   private val EventSchemaMap = Map(
-    "assign" -> SchemaKey("com.pingdom", "incident_assign", "jsonschema", "1-0-0").toSchemaUri,
-    "notify_user" -> SchemaKey("com.pingdom", "incident_notify_user", "jsonschema", "1-0-0").toSchemaUri,
-    "notify_of_close" -> SchemaKey("com.pingdom", "incident_notify_of_close", "jsonschema", "1-0-0").toSchemaUri
+    "assign" -> SchemaKey(Vendor, "incident_assign", Format, SchemaVersion).toSchemaUri,
+    "notify_user" -> SchemaKey(Vendor, "incident_notify_user", Format, SchemaVersion).toSchemaUri,
+    "notify_of_close" ->
+      SchemaKey(Vendor, "incident_notify_of_close", Format, SchemaVersion).toSchemaUri
   )
 
   /**
@@ -50,29 +57,32 @@ object PingdomAdapter extends Adapter {
    * a single event. We expect the name parameter to be one of two types otherwise we have an
    * unsupported event type.
    * @param payload The CollectorPayload containing one or more raw events
-   * @param resolver (implicit) The Iglu resolver used for schema lookup and validation. Not used
+   * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(
-    implicit r: Resolver
-  ): ValidatedNel[String, NonEmptyList[RawEvent]] =
+  override def toRawEvents[F[_]: Monad](
+    payload: CollectorPayload,
+    client: Client[F, Json]
+  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
     (payload.querystring) match {
-      case Nil => s"$VendorName payload querystring is empty: nothing to process".invalidNel
+      case Nil => Monad[F].pure(
+        s"$VendorName payload querystring is empty: nothing to process".invalidNel)
       case qs =>
         reformatMapParams(qs) match {
-          case Left(f) => f.invalid
+          case Left(f) => Monad[F].pure(f.invalid)
           case Right(s) =>
             s.get("message") match {
-              case None =>
-                s"$VendorName payload querystring does not have 'message' as a key".invalidNel
+              case None => Monad[F].pure(
+                s"$VendorName payload querystring does not have 'message' as a key".invalidNel)
               case Some(event) =>
-                (for {
+                Monad[F].pure((for {
                   parsedEvent <- parseJsonSafe(event)
                   schema <- {
                     val eventOpt = parsedEvent.hcursor.downField("action").as[String].toOption
                     lookupSchema(eventOpt, VendorName, EventSchemaMap)
                   }
                 } yield {
+                  val _ = client
                   val formattedEvent = reformatParameters(parsedEvent)
                   val qsParams = s - "message"
                   NonEmptyList.one(
@@ -89,7 +99,7 @@ object PingdomAdapter extends Adapter {
                       context = payload.context
                     )
                   )
-                }).toValidatedNel
+                }).toValidatedNel)
             }
         }
     }

@@ -19,10 +19,12 @@ import java.nio.charset.StandardCharsets.UTF_8
 
 import scala.collection.JavaConversions._
 
+import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.syntax.either._
 import cats.syntax.validated._
-import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import io.circe._
 import io.circe.parser._
 import org.apache.http.client.utils.URLEncodedUtils
@@ -43,17 +45,21 @@ object MandrillAdapter extends Adapter {
   // Expected content type for a request body
   private val ContentType = "application/x-www-form-urlencoded"
 
+  private val Vendor = "com.mandrill"
+  private val Format = "jsonschema"
+  private val SchemaVersion = SchemaVer.Full(1, 0, 1)
+
   // Schemas for reverse-engineering a Snowplow unstructured event
   private val EventSchemaMap = Map(
-    "hard_bounce" -> SchemaKey("com.mandrill", "message_bounced", "jsonschema", "1-0-1").toSchemaUri,
-    "click" -> SchemaKey("com.mandrill", "message_clicked", "jsonschema", "1-0-1").toSchemaUri,
-    "deferral" -> SchemaKey("com.mandrill", "message_delayed", "jsonschema", "1-0-1").toSchemaUri,
-    "spam" -> SchemaKey("com.mandrill", "message_marked_as_spam", "jsonschema", "1-0-1").toSchemaUri,
-    "open" -> SchemaKey("com.mandrill", "message_opened", "jsonschema", "1-0-1").toSchemaUri,
-    "reject" -> SchemaKey("com.mandrill", "message_rejected", "jsonschema", "1-0-0").toSchemaUri,
-    "send" -> SchemaKey("com.mandrill", "message_sent", "jsonschema", "1-0-0").toSchemaUri,
-    "soft_bounce" -> SchemaKey("com.mandrill", "message_soft_bounced", "jsonschema", "1-0-1").toSchemaUri,
-    "unsub" -> SchemaKey("com.mandrill", "recipient_unsubscribed", "jsonschema", "1-0-1").toSchemaUri
+    "hard_bounce" -> SchemaKey(Vendor, "message_bounced", Vendor, SchemaVersion).toSchemaUri,
+    "click" -> SchemaKey(Vendor, "message_clicked", Format, SchemaVersion).toSchemaUri,
+    "deferral" -> SchemaKey(Vendor, "message_delayed", Format, SchemaVersion).toSchemaUri,
+    "spam" -> SchemaKey(Vendor, "message_marked_as_spam", Format, SchemaVersion).toSchemaUri,
+    "open" -> SchemaKey(Vendor, "message_opened", Format, SchemaVersion).toSchemaUri,
+    "reject" -> SchemaKey(Vendor, "message_rejected", Format, SchemaVer.Full(1, 0, 0)).toSchemaUri,
+    "send" -> SchemaKey(Vendor, "message_sent", Format, SchemaVer.Full(1, 0, 0)).toSchemaUri,
+    "soft_bounce" -> SchemaKey(Vendor, "message_soft_bounced", Format, SchemaVersion).toSchemaUri,
+    "unsub" -> SchemaKey(Vendor, "recipient_unsubscribed", Format, SchemaVersion).toSchemaUri
   )
 
   /**
@@ -64,22 +70,26 @@ object MandrillAdapter extends Adapter {
    * unsupported event type.
    * @param payload The CollectorPayload containing one or more raw events as collected by a
    * Snowplow collector
-   * @param resolver (implicit) The Iglu resolver used for schema lookup and validation. Not used
+   * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(
-    implicit resolver: Resolver
-  ): ValidatedNel[String, NonEmptyList[RawEvent]] =
+  override def toRawEvents[F[_]: Monad](
+    payload: CollectorPayload,
+    client: Client[F, Json]
+  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
     (payload.body, payload.contentType) match {
-      case (None, _) => s"Request body is empty: no $VendorName events to process".invalidNel
-      case (_, None) =>
-        s"Request body provided but content type empty, expected $ContentType for $VendorName".invalidNel
-      case (_, Some(ct)) if ct != ContentType =>
-        s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel
+      case (None, _) => Monad[F].pure(
+        s"Request body is empty: no $VendorName events to process".invalidNel)
+      case (_, None) => Monad[F].pure(
+        s"Request body provided but content type empty, expected $ContentType for $VendorName"
+          .invalidNel)
+      case (_, Some(ct)) if ct != ContentType => Monad[F].pure(
+        s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel)
       case (Some(body), _) =>
         payloadBodyToEvents(body) match {
-          case Left(str) => str.invalidNel
+          case Left(str) => Monad[F].pure(str.invalidNel)
           case Right(list) =>
+            val _ = client
             // Create our list of Validated RawEvents
             val rawEventsList: List[ValidatedNel[String, RawEvent]] =
               for {
@@ -107,7 +117,7 @@ object MandrillAdapter extends Adapter {
                 }
               }
             // Processes the List for Failures and Successes and returns ValidatedRawEvents
-            rawEventsListProcessor(rawEventsList)
+            Monad[F].pure(rawEventsListProcessor(rawEventsList))
         }
     }
 

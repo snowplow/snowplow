@@ -18,12 +18,9 @@ import scala.collection.immutable.IntMap
 
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.implicits._
-import com.github.fge.jsonschema.core.report.ProcessingMessage
-import com.snowplowanalytics.iglu.client.{JsonSchemaPair, SchemaCriterion, SchemaKey}
-import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SelfDescribingData}
 import io.circe._
 import io.circe.generic.auto._
-import io.circe.jackson._
 import io.circe.syntax._
 
 import outputs.EnrichedEvent
@@ -50,9 +47,9 @@ object SqlQueryEnrichmentConfig extends ParseableEnrichment {
   def parse(
     c: Json,
     schemaKey: SchemaKey
-  ): ValidatedNel[ProcessingMessage, SqlQueryEnrichment] =
+  ): ValidatedNel[String, SqlQueryEnrichment] =
     isParseable(c, schemaKey)
-      .leftMap(e => NonEmptyList.one(e.toProcessingMessage))
+      .leftMap(e => NonEmptyList.one(e))
       .flatMap { _ =>
         // input ctor throws exception
         val inputs: ValidatedNel[String, List[Input]] = Either.catchNonFatal(
@@ -74,12 +71,12 @@ object SqlQueryEnrichmentConfig extends ParseableEnrichment {
           CirceUtils.extract[Query](c, "parameters", "query").toValidatedNel,
           output,
           CirceUtils.extract[Cache](c, "parameters", "cache").toValidatedNel
-        ).mapN { SqlQueryEnrichment(_, _, _, _, _) }.toEither.leftMap(_.map(_.toProcessingMessage))
+        ).mapN { SqlQueryEnrichment(_, _, _, _, _) }.toEither
       }
       .toValidated
 }
 
-case class SqlQueryEnrichment(
+final case class SqlQueryEnrichment(
   inputs: List[Input],
   db: Db,
   query: Query,
@@ -101,8 +98,8 @@ case class SqlQueryEnrichment(
   def lookup(
     event: EnrichedEvent,
     derivedContexts: List[Json],
-    customContexts: List[JsonSchemaPair],
-    unstructEvent: List[JsonSchemaPair]
+    customContexts: List[SelfDescribingData[Json]],
+    unstructEvent: List[SelfDescribingData[Json]]
   ): ValidatedNel[String, List[Json]] = {
     val jsonCustomContexts = transformRawPairs(customContexts)
     val jsonUnstructEvent = transformRawPairs(unstructEvent).headOption
@@ -192,16 +189,14 @@ object SqlQueryEnrichment {
    * @param pairs list of pairs consisting of schema and Json nodes
    * @return list of regular JObjects
    */
-  def transformRawPairs(pairs: List[JsonSchemaPair]): List[Json] =
-    pairs.map {
-      case (schema, node) =>
-        val uri = schema.toSchemaUri
-        val data = jacksonToCirce(node)
-        data.hcursor.downField("data").focus.map { json =>
-          Json.obj(
-            "schema" := Json.fromString(uri),
-            "data" := json
-          )
-        }
+  def transformRawPairs(pairs: List[SelfDescribingData[Json]]): List[Json] =
+    pairs.map { p =>
+      val uri = p.schema.toSchemaUri
+      p.data.hcursor.downField("data").focus.map { json =>
+        Json.obj(
+          "schema" := Json.fromString(uri),
+          "data" := json
+        )
+      }
     }.flatten
 }
