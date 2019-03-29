@@ -345,8 +345,8 @@ object EnrichmentManager {
     // Finalize the currency conversion
     val currency: Either[NonEmptyList[String], Unit] = {
       registry.getCurrencyConversionEnrichment match {
-        case Some(currency) => {
-          event.base_currency = currency.baseCurrency
+        case Some(currency) =>
+          event.base_currency = currency.baseCurrency.getCode
           // Note that stringToMaybeDouble is applied to either-valid-or-null event POJO
           // properties, so we don't expect any of these four vals to be a Failure
           val trTax = CU.stringToMaybeDouble("tr_tx", event.tr_tax).toValidatedNel
@@ -374,7 +374,6 @@ object EnrichmentManager {
             event.ti_price_base = price.orNull
           }
           ().asRight
-        }
         case None => ().asRight
       }
     }
