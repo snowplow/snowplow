@@ -13,9 +13,13 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 
+import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
+import cats.effect.Clock
 import cats.syntax.validated._
-import com.snowplowanalytics.iglu.client.Resolver
+import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
+import com.snowplowanalytics.iglu.client.Client
+import io.circe.Json
 
 import loaders.CollectorPayload
 import registry._
@@ -26,8 +30,8 @@ import registry.snowplow.{
 }
 
 /**
- * The AdapterRegistry lets us convert a CollectorPayload
- * into one or more RawEvents, using a given adapter.
+ * The AdapterRegistry lets us convert a CollectorPayload into one or more RawEvents, using a given
+ * adapter.
  */
 class AdapterRegistry(remoteAdapters: Map[(String, String), RemoteAdapter] = Map.empty) {
 
@@ -97,37 +101,41 @@ class AdapterRegistry(remoteAdapters: Map[(String, String), RemoteAdapter] = Map
   }
 
   /**
-   * Router to determine which adapter to use
+   * Router to determine which adapter we use to convert the CollectorPayload into one or more
+   * RawEvents.
    * @param payload The CollectorPayload we are transforming
-   * @param resolver (implicit) The Iglu resolver used for schema lookup and validation
-   * @return either a NEL of RawEvents on Success, or a NEL of Strings on Failure
+   * @param client The Iglu client used for schema lookup and validation
+   * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Strings on
+   * Failure
    */
-  def toRawEvents(payload: CollectorPayload)(
-    implicit resolver: Resolver
-  ): ValidatedNel[String, NonEmptyList[RawEvent]] =
+  def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
+    payload: CollectorPayload,
+    client: Client[F, Json]
+  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
     (payload.api.vendor, payload.api.version) match {
-      case (Vendor.Snowplow, "tp1") => SpTp1Adapter.toRawEvents(payload)
-      case (Vendor.Snowplow, "tp2") => SpTp2Adapter.toRawEvents(payload)
-      case (Vendor.Redirect, "tp2") => SpRedirectAdapter.toRawEvents(payload)
-      case (Vendor.Iglu, "v1") => IgluAdapter.toRawEvents(payload)
-      case (Vendor.Callrail, "v1") => CallrailAdapter.toRawEvents(payload)
+      case (Vendor.Snowplow, "tp1") => SpTp1Adapter.toRawEvents(payload, client)
+      case (Vendor.Snowplow, "tp2") => SpTp2Adapter.toRawEvents(payload, client)
+      case (Vendor.Redirect, "tp2") => SpRedirectAdapter.toRawEvents(payload, client)
+      case (Vendor.Iglu, "v1") => IgluAdapter.toRawEvents(payload, client)
+      case (Vendor.Callrail, "v1") => CallrailAdapter.toRawEvents(payload, client)
       case (Vendor.Cloudfront, "wd_access_log") =>
-        CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(payload)
-      case (Vendor.Mailchimp, "v1") => MailchimpAdapter.toRawEvents(payload)
-      case (Vendor.Mailgun, "v1") => MailgunAdapter.toRawEvents(payload)
-      case (Vendor.GoogleAnalytics, "v1") => GoogleAnalyticsAdapter.toRawEvents(payload)
-      case (Vendor.Mandrill, "v1") => MandrillAdapter.toRawEvents(payload)
-      case (Vendor.Olark, "v1") => OlarkAdapter.toRawEvents(payload)
-      case (Vendor.Pagerduty, "v1") => PagerdutyAdapter.toRawEvents(payload)
-      case (Vendor.Pingdom, "v1") => PingdomAdapter.toRawEvents(payload)
-      case (Vendor.Sendgrid, "v3") => SendgridAdapter.toRawEvents(payload)
-      case (Vendor.StatusGator, "v1") => StatusGatorAdapter.toRawEvents(payload)
-      case (Vendor.Unbounce, "v1") => UnbounceAdapter.toRawEvents(payload)
-      case (Vendor.UrbanAirship, "v1") => UrbanAirshipAdapter.toRawEvents(payload)
-      case (Vendor.Marketo, "v1") => MarketoAdapter.toRawEvents(payload)
-      case (Vendor.Vero, "v1") => VeroAdapter.toRawEvents(payload)
-      case (Vendor.HubSpot, "v1") => HubSpotAdapter.toRawEvents(payload)
-      case _ =>
-        s"Payload with vendor ${payload.api.vendor} and version ${payload.api.version} not supported by this version of Scala Common Enrich".invalidNel
+        CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(payload, client)
+      case (Vendor.Mailchimp, "v1") => MailchimpAdapter.toRawEvents(payload, client)
+      case (Vendor.Mailgun, "v1") => MailgunAdapter.toRawEvents(payload, client)
+      case (Vendor.GoogleAnalytics, "v1") => GoogleAnalyticsAdapter.toRawEvents(payload, client)
+      case (Vendor.Mandrill, "v1") => MandrillAdapter.toRawEvents(payload, client)
+      case (Vendor.Olark, "v1") => OlarkAdapter.toRawEvents(payload, client)
+      case (Vendor.Pagerduty, "v1") => PagerdutyAdapter.toRawEvents(payload, client)
+      case (Vendor.Pingdom, "v1") => PingdomAdapter.toRawEvents(payload, client)
+      case (Vendor.Sendgrid, "v3") => SendgridAdapter.toRawEvents(payload, client)
+      case (Vendor.StatusGator, "v1") => StatusGatorAdapter.toRawEvents(payload, client)
+      case (Vendor.Unbounce, "v1") => UnbounceAdapter.toRawEvents(payload, client)
+      case (Vendor.UrbanAirship, "v1") => UrbanAirshipAdapter.toRawEvents(payload, client)
+      case (Vendor.Marketo, "v1") => MarketoAdapter.toRawEvents(payload, client)
+      case (Vendor.Vero, "v1") => VeroAdapter.toRawEvents(payload, client)
+      case (Vendor.HubSpot, "v1") => HubSpotAdapter.toRawEvents(payload, client)
+      case _ => Monad[F].pure(
+        (s"Payload with vendor ${payload.api.vendor} and version ${payload.api.version} not " +
+          "supported by this version of Scala Common Enrich").invalidNel)
     }
 }

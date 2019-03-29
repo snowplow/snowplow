@@ -12,10 +12,7 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.outputs
 
-import com.snowplowanalytics.iglu.client.ProcessingMessageNel
-import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
 import io.circe._
-import io.circe.jackson._
 import io.circe.syntax._
 import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.format.DateTimeFormat
@@ -32,7 +29,7 @@ object BadRow {
    * @return a BadRow
    */
   def apply(line: String, errors: NonEmptyList[String]): BadRow =
-    BadRow(line, errors.map(_.toProcessingMessage), System.currentTimeMillis())
+    BadRow(line, errors, System.currentTimeMillis())
 
   /**
    * For rows which are so too long to send to Kinesis and so cannot contain their own original line
@@ -50,7 +47,7 @@ object BadRow {
       .obj(
         "size" := Json.fromLong(size),
         "errors" := Json.arr(
-          errors.toList.map(e => jacksonToCirce(e.toProcessingMessage.asJson)): _*),
+          errors.toList.map(Json.fromString): _*),
         "failure_tstamp" := Json.fromLong(tstamp)
       )
       .noSpaces
@@ -64,7 +61,7 @@ object BadRow {
  */
 final case class BadRow(
   val line: String,
-  val errors: ProcessingMessageNel,
+  val errors: NonEmptyList[String],
   val tstamp: Long = System.currentTimeMillis()
 ) {
 
@@ -79,7 +76,7 @@ final case class BadRow(
   def toJson: Json =
     Json.obj(
       "line" := Json.fromString(line),
-      "errors" := Json.arr(errors.toList.map(e => jacksonToCirce(e.asJson)): _*),
+      "errors" := Json.arr(errors.toList.map(Json.fromString): _*),
       "failure_tstamp" := getTimestamp(tstamp)
     )
 

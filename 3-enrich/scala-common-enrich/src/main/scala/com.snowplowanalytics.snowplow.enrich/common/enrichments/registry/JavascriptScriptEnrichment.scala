@@ -17,9 +17,7 @@ import scala.util.control.NonFatal
 
 import cats.data.ValidatedNel
 import cats.implicits._
-import com.github.fge.jsonschema.core.report.ProcessingMessage
-import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
-import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
 import org.mozilla.javascript._
 import io.circe._
 import io.circe.parser._
@@ -46,14 +44,13 @@ object JavascriptScriptEnrichmentConfig extends ParseableEnrichment {
   def parse(
     c: Json,
     schemaKey: SchemaKey
-  ): ValidatedNel[ProcessingMessage, JavascriptScriptEnrichment] =
+  ): ValidatedNel[String, JavascriptScriptEnrichment] =
     (for {
       _ <- isParseable(c, schemaKey)
       encoded <- CirceUtils.extract[String](c, "parameters", "script").toEither
       raw <- ConversionUtils.decodeBase64Url("script", encoded)
       compiled <- JavascriptScriptEnrichment.compile(raw)
     } yield JavascriptScriptEnrichment(compiled))
-      .leftMap(_.toProcessingMessage)
       .toEitherNel
       .toValidated
 }
@@ -74,7 +71,7 @@ object JavascriptScriptEnrichment {
       case Some(s) =>
         val invoke =
           s"""|// User-supplied script
-              |${script}
+              |$s
               |
               |// Immediately invoke using reserved args
               |var ${Variables.Out} = JSON.stringify(process(${Variables.In}));

@@ -17,9 +17,7 @@ import java.lang.{Float => JFloat}
 
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.implicits._
-import com.github.fge.jsonschema.core.report.ProcessingMessage
-import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
-import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
 import com.snowplowanalytics.weather.providers.openweather.OwmCacheClient
 import com.snowplowanalytics.weather.providers.openweather.Responses._
 import io.circe._
@@ -39,9 +37,9 @@ object WeatherEnrichmentConfig extends ParseableEnrichment {
       1,
       0)
 
-  def parse(c: Json, schemaKey: SchemaKey): ValidatedNel[ProcessingMessage, WeatherEnrichment] =
+  def parse(c: Json, schemaKey: SchemaKey): ValidatedNel[String, WeatherEnrichment] =
     isParseable(c, schemaKey)
-      .leftMap(e => NonEmptyList.one(e.toProcessingMessage))
+      .leftMap(e => NonEmptyList.one(e))
       .flatMap { _ =>
         (
           CirceUtils.extract[String](c, "parameters", "apiKey").toValidatedNel,
@@ -49,7 +47,7 @@ object WeatherEnrichmentConfig extends ParseableEnrichment {
           CirceUtils.extract[Int](c, "parameters", "geoPrecision").toValidatedNel,
           CirceUtils.extract[String](c, "parameters", "apiHost").toValidatedNel,
           CirceUtils.extract[Int](c, "parameters", "timeout").toValidatedNel
-        ).mapN { WeatherEnrichment(_, _, _, _, _) }.toEither.leftMap(_.map(_.toProcessingMessage))
+        ).mapN { WeatherEnrichment(_, _, _, _, _) }.toEither
       }
       .toValidated
 }

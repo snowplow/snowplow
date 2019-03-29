@@ -12,14 +12,14 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.apirequest
 
-case class ValueNotFoundException(message: String) extends Throwable {
+final case class ValueNotFoundException(message: String) extends Throwable {
   override def toString = s"Value not found $message"
 }
 
-case class JsonPathException(message: String) extends Throwable {
+final case class JsonPathException(message: String) extends Throwable {
   override def toString = s"JSONPath error $message"
 }
 
-case class InvalidStateException(message: String) extends Throwable {
+final case class InvalidStateException(message: String) extends Throwable {
   override def toString = message
 }
