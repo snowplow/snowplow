@@ -15,9 +15,7 @@ package enrichments.registry
 
 import cats.data.ValidatedNel
 import cats.syntax.either._
-import com.github.fge.jsonschema.core.report.ProcessingMessage
-import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
-import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
 import io.circe._
 import io.circe.syntax._
 import org.apache.http.message.BasicHeaderValueParser
@@ -38,11 +36,11 @@ object CookieExtractorEnrichmentConfig extends ParseableEnrichment {
   def parse(
     config: Json,
     schemaKey: SchemaKey
-  ): ValidatedNel[ProcessingMessage, CookieExtractorEnrichment] =
+  ): ValidatedNel[String, CookieExtractorEnrichment] =
     (for {
       _ <- isParseable(config, schemaKey)
       cookieNames <- CirceUtils.extract[List[String]](config, "parameters", "cookies").toEither
-    } yield CookieExtractorEnrichment(cookieNames)).leftMap(_.toProcessingMessage).toValidatedNel
+    } yield CookieExtractorEnrichment(cookieNames)).toValidatedNel
 }
 
 /**

@@ -245,7 +245,7 @@ object Input {
     // Fail if some indexes are missing
     pairs.map(list => IntMap(list: _*)) match {
       case Valid(map) if isConsistent(map) => Some(map).valid
-      case Valid(map) => None.valid
+      case Valid(_) => None.valid
       case Invalid(err) => err.invalid
     }
   }

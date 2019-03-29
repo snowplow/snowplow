@@ -16,9 +16,13 @@ package enrichments
 import java.nio.charset.Charset
 import java.net.URI
 
+import cats.Monad
 import cats.data.{NonEmptyList, Validated, ValidatedNel}
+import cats.effect.Clock
 import cats.implicits._
-import com.snowplowanalytics.iglu.client.{JsonSchemaPair, Resolver}
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
+import com.snowplowanalytics.iglu.core.SelfDescribingData
 import io.circe.Json
 import org.joda.time.DateTime
 
@@ -44,17 +48,19 @@ object EnrichmentManager {
   /**
    * Runs our enrichment process.
    * @param registry Contains configuration for all enrichments to apply
+   * @param client Our Iglu client, for schema lookups and validation
    * @param hostEtlVersion ETL version
    * @param etlTstamp ETL timestamp
    * @param raw Our canonical input to enrich
    * @return a MaybeCanonicalOutput - i.e. a ValidationNel containing either failure Strings
    */
-  def enrichEvent(
+  def enrichEvent[F[_]: Monad: RegistryLookup: Clock](
     registry: EnrichmentRegistry,
+    client: Client[F, Json],
     hostEtlVersion: String,
     etlTstamp: DateTime,
     raw: RawEvent
-  )(implicit resolver: Resolver): ValidatedNel[String, EnrichedEvent] = {
+  ): F[ValidatedNel[String, EnrichedEvent]] = {
     // 1. Enrichments not expected to fail
 
     // Let's start populating the CanonicalOutput
@@ -296,7 +302,7 @@ object EnrichmentManager {
     })
 
     // Parse the useragent using user-agent-utils
-    val client: Either[String, Unit] = {
+    val uaUtils: Either[String, Unit] = {
       registry.getUserAgentUtilsEnrichment match {
         case Some(uap) => {
           Option(event.useragent) match {
@@ -447,23 +453,23 @@ object EnrichmentManager {
     })
 
     // Validate custom contexts
-    val customContexts: ValidatedNel[String, List[JsonSchemaPair]] =
-      Shredder.extractAndValidateCustomContexts(event).leftMap(_.map(_.toString))
+    val customContexts: F[ValidatedNel[String, List[SelfDescribingData[Json]]]] =
+      Shredder.extractAndValidateCustomContexts(event, client)
 
     // Validate unstructured event
-    val unstructEvent: ValidatedNel[String, List[JsonSchemaPair]] =
-      Shredder.extractAndValidateUnstructEvent(event).leftMap(_.map(_.toString))
+    val unstructEvent: F[ValidatedNel[String, List[SelfDescribingData[Json]]]] =
+      Shredder.extractAndValidateUnstructEvent(event, client)
 
     // Extract the event vendor/name/format/version
-    val extractSchema: Either[String, Unit] = SchemaEnrichment
-      .extractSchema(event)
-      .map { schemaKey =>
+    val extractSchema: F[Either[String, Unit]] = SchemaEnrichment
+      .extractSchema(event, client)
+      .map { _.map { schemaKey =>
         event.event_vendor = schemaKey.vendor
         event.event_name = schemaKey.name
         event.event_format = schemaKey.format
-        event.event_version = schemaKey.version
+        event.event_version = schemaKey.version.asString
         ().asRight
-      }
+      } }
 
     // Execute the JavaScript scripting enrichment
     val jsScript: Either[String, List[Json]] = registry.getJavascriptScriptEnrichment match {
@@ -516,40 +522,45 @@ object EnrichmentManager {
     } ++ jsScript.getOrElse(Nil) ++ cookieExtractorContext ++ httpHeaderExtractorContext
 
     // Derive some contexts with custom SQL Query enrichment
-    val sqlQueryContexts: ValidatedNel[String, List[Json]] = registry.getSqlQueryEnrichment match {
-      case Some(enrichment) =>
-        (customContexts, unstructEvent) match {
-          case (Validated.Valid(cctx), Validated.Valid(ue)) =>
-            enrichment.lookup(event, preparedDerivedContexts, cctx, ue)
-          case _ =>
-            // Skip. Unstruct event or custom context corrupted (event enrichment will fail anyway)
-            Nil.validNel
-        }
-      case None => Nil.validNel
-    }
+    val sqlQueryContexts: F[ValidatedNel[String, List[Json]]] =
+      registry.getSqlQueryEnrichment match {
+        case Some(enrichment) =>
+          customContexts.product(unstructEvent).map(_ match {
+            case (Validated.Valid(cctx), Validated.Valid(ue)) =>
+              enrichment.lookup(event, preparedDerivedContexts, cctx, ue)
+            case _ =>
+              // Skip. Unstruct event or custom context corrupted (event enrichment will fail)
+              Nil.validNel
+          })
+        case None => Monad[F].pure(Nil.validNel)
+      }
 
     // Derive some contexts with custom API Request enrichment
-    val apiRequestContexts: ValidatedNel[String, List[Json]] =
+    val apiRequestContexts: F[ValidatedNel[String, List[Json]]] =
       registry.getApiRequestEnrichment match {
         case Some(enrichment) =>
-          (customContexts, unstructEvent, sqlQueryContexts) match {
-            case (Validated.Valid(cctx), Validated.Valid(ue), Validated.Valid(sctx)) =>
+          customContexts.product(unstructEvent).product(sqlQueryContexts).map(_ match {
+            case ((Validated.Valid(cctx), Validated.Valid(ue)), Validated.Valid(sctx)) =>
               enrichment.lookup(event, preparedDerivedContexts ++ sctx, cctx, ue)
             case _ =>
               // Skip. Unstruct event or custom context corrupted, event enrichment will fail anyway
               Nil.validNel
-          }
-        case None => Nil.validNel
+          })
+        case None => Monad[F].pure(Nil.validNel)
       }
 
     // Assemble prepared derived contexts with fetched via API Request
-    val derived_contexts: List[Json] =
-      apiRequestContexts.getOrElse(Nil) ++
-        sqlQueryContexts.getOrElse(Nil) ++
-        preparedDerivedContexts
+    val derivedContexts: F[List[Json]] = for {
+      api <- apiRequestContexts
+      sql <- sqlQueryContexts
+    } yield api.getOrElse(Nil) ++ sql.getOrElse(Nil) ++ preparedDerivedContexts
 
-    if (derived_contexts.nonEmpty) {
-      event.derived_contexts = ME.formatDerivedContexts(derived_contexts)
+    val formatDerivedContexts: F[Unit] = derivedContexts.map { d =>
+      if (d.nonEmpty) {
+        event.derived_contexts = ME.formatDerivedContexts(d)
+      } else {
+        ()
+      }
     }
 
     val piiTransform = registry.getPiiPseudonymizerEnrichment match {
@@ -558,38 +569,46 @@ object EnrichmentManager {
     }
 
     // Collect our errors on Failure, or return our event on Success
-    // Broken into 2 parts due to 22 argument limit on tuples
-    val first = (
-      useragent.toValidatedNel,
-      collectorTstamp.toValidatedNel,
-      derivedTstamp.toValidatedNel,
-      client.toValidatedNel,
-      uaParser.toValidatedNel,
-      collectorVersionSet.toValidatedNel,
-      pageUri.toValidatedNel,
-      crossDomain.toValidatedNel,
-      geoLocation.toValidatedNel,
-      refererUri.toValidatedNel,
-      transform,
-      currency.toValidated,
-      secondPassTransform,
-      pageQsMap.toValidatedNel,
-      jsScript.toValidatedNel,
-      campaign.toValidatedNel,
+    (
       customContexts,
       unstructEvent,
       apiRequestContexts,
       sqlQueryContexts,
-      extractSchema.toValidatedNel,
-      weatherContext.toValidatedNel
-    ).mapN((_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _) => ())
+      extractSchema,
+      formatDerivedContexts
+    ).mapN { (cc, ue, api, sql, es, _) =>
+      val first = (
+        useragent.toValidatedNel,
+        collectorTstamp.toValidatedNel,
+        derivedTstamp.toValidatedNel,
+        uaUtils.toValidatedNel,
+        uaParser.toValidatedNel,
+        collectorVersionSet.toValidatedNel,
+        pageUri.toValidatedNel,
+        crossDomain.toValidatedNel,
+        geoLocation.toValidatedNel,
+        refererUri.toValidatedNel,
+        transform,
+        currency.toValidated,
+        secondPassTransform,
+        pageQsMap.toValidatedNel,
+        jsScript.toValidatedNel,
+        campaign.toValidatedNel,
+        cc,
+        ue,
+        api,
+        sql,
+        es.toValidatedNel,
+        weatherContext.toValidatedNel
+      ).mapN((_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _) => ())
 
-    val second = (
-      yauaaContext.toValidatedNel,
-      iabContext.toValidatedNel,
-      piiTransform.valid
-    ).mapN((_, _) => ())
+      val second =(
+        yauaaContext.toValidatedNel,
+        iabContext.toValidatedNel,
+        piiTransform.valid
+      ).mapN((_, _) => ())
 
-    (first, second).mapN((_, _) => event)
+      (first, second).mapN((_, _) => event)
+    }
   }
 }

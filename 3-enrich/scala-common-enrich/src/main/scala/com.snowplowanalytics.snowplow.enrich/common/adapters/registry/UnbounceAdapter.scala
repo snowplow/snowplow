@@ -20,11 +20,13 @@ import java.nio.charset.StandardCharsets.UTF_8
 import scala.util.{Try, Success => TS, Failure => TF}
 import scala.collection.JavaConversions._
 
+import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.syntax.apply._
 import cats.syntax.either._
 import cats.syntax.validated._
-import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import io.circe._
 import io.circe.parser._
 import org.apache.http.client.utils.URLEncodedUtils
@@ -46,41 +48,45 @@ object UnbounceAdapter extends Adapter {
   // Expected content type for a request body
   private val ContentType = "application/x-www-form-urlencoded"
 
-  private val AcceptedQueryParameters = Set("nuid", "aid", "cv", "eid", "ttm", "url")
-
   // Schema for Unbounce event context
   private val ContextSchema = Map(
-    "form_post" -> SchemaKey("com.unbounce", "form_post", "jsonschema", "1-0-0").toSchemaUri
+    "form_post" -> SchemaKey("com.unbounce", "form_post", "jsonschema", SchemaVer.Full(1, 0, 0))
+      .toSchemaUri
   )
 
   /**
    * Converts a CollectorPayload instance into raw events. An Unbounce Tracking payload contains one
    * single event in the body of the payload, stored within a HTTP encoded string.
    * @param payload The CollectorPayload containing one or more raw events
-   * @param resolver (implicit) The Iglu resolver used for schema lookup and validation. Not used
+   * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(
-    implicit resolver: Resolver
-  ): ValidatedNel[String, NonEmptyList[RawEvent]] =
+  override def toRawEvents[F[_]: Monad](
+    payload: CollectorPayload,
+    client: Client[F, Json]
+  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
     (payload.body, payload.contentType) match {
-      case (None, _) => s"Request body is empty: no $VendorName events to process".invalidNel
-      case (_, None) =>
-        s"Request body provided but content type empty, expected $ContentType for $VendorName".invalidNel
-      case (_, Some(ct)) if ct != ContentType =>
-        s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel
+      case (None, _) => Monad[F].pure(
+        s"Request body is empty: no $VendorName events to process".invalidNel)
+      case (_, None) => Monad[F].pure(
+        s"Request body provided but content type empty, expected $ContentType for $VendorName"
+          .invalidNel)
+      case (_, Some(ct)) if ct != ContentType => Monad[F].pure(
+        s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel)
       case (Some(body), _) =>
-        if (body.isEmpty) s"$VendorName event body is empty: nothing to process".invalidNel
+        if (body.isEmpty) Monad[F].pure(
+          s"$VendorName event body is empty: nothing to process".invalidNel)
         else {
+          val _ = client
           val qsParams = toMap(payload.querystring)
           Try {
             toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).toList)
           } match {
             case TF(e) =>
               val msg = JU.stripInstanceEtc(e.getMessage).orNull
-              s"$VendorName incorrect event string : [$msg]".invalidNel
+              Monad[F].pure(s"$VendorName incorrect event string : [$msg]".invalidNel)
             case TS(bodyMap) =>
-              (
+              Monad[F].pure((
                 payloadBodyToEvent(bodyMap).toValidatedNel,
                 lookupSchema(Some("form_post"), VendorName, ContextSchema).toValidatedNel
               ).mapN { (event, schema) =>
@@ -94,7 +100,7 @@ object UnbounceAdapter extends Adapter {
                     context = payload.context
                   )
                 )
-              }
+              })
           }
         }
     }
@@ -115,7 +121,7 @@ object UnbounceAdapter extends Adapter {
         s"$VendorName event data does not have 'data.json' as a key".asLeft
       case (_, _, _, _, Some(dataJson)) if dataJson.isEmpty =>
         s"$VendorName event data is empty: nothing to process".asLeft
-      case (Some(pageId), Some(pageName), Some(variant), Some(pageUrl), Some(dataJson)) =>
+      case (Some(_), Some(_), Some(_), Some(_), Some(dataJson)) =>
         val event = (bodyMap - "data.json" - "data.xml").toList
         parse(dataJson)
           .map { dJs =>

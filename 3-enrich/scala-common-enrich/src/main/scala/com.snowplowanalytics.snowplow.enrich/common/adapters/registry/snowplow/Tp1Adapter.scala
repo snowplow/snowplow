@@ -15,9 +15,11 @@ package adapters
 package registry
 package snowplow
 
+import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.syntax.validated._
-import com.snowplowanalytics.iglu.client.Resolver
+import com.snowplowanalytics.iglu.client.Client
+import io.circe.Json
 
 import loaders.CollectorPayload
 
@@ -28,17 +30,19 @@ object Tp1Adapter extends Adapter {
    * Converts a CollectorPayload instance into raw events. Tracker Protocol 1 only supports a single
    * event in a payload.
    * @param payload The CollectorPaylod containing one or more raw events
-   * @param resolver (implicit) The Iglu resolver used for schema lookup and validation. Not used
+   * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(
-    implicit resolver: Resolver
-  ): ValidatedNel[String, NonEmptyList[RawEvent]] = {
+  override def toRawEvents[F[_]: Monad](
+    payload: CollectorPayload,
+    client: Client[F, Json]
+  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] = {
+    val _ = client
     val params = toMap(payload.querystring)
     if (params.isEmpty) {
-      "Querystring is empty: no raw event to process".invalidNel
+      Monad[F].pure("Querystring is empty: no raw event to process".invalidNel)
     } else {
-      NonEmptyList
+      Monad[F].pure(NonEmptyList
         .one(
           RawEvent(
             api = payload.api,
@@ -48,6 +52,7 @@ object Tp1Adapter extends Adapter {
             context = payload.context
           ))
         .valid
+      )
     }
   }
 }

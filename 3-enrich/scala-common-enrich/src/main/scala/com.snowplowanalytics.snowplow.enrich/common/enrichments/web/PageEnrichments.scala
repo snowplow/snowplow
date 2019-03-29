@@ -38,7 +38,7 @@ object PageEnrichments {
     (fromReferer, fromTracker) match {
       case (Some(r), None) => CU.stringToUri(r)
       case (None, Some(t)) => CU.stringToUri(t)
-      case (Some(r), Some(t)) => CU.stringToUri(t) // Tracker URL takes precedence
+      case (Some(_), Some(t)) => CU.stringToUri(t) // Tracker URL takes precedence
       case (None, None) => None.asRight // No page URI available. Not a failable offence
     }
 

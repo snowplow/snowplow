@@ -17,9 +17,7 @@ import java.net.URI
 
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.implicits._
-import com.github.fge.jsonschema.core.report.ProcessingMessage
-import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
-import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
 import io.circe._
 import io.circe.syntax._
 import ua_parser.Parser
@@ -34,11 +32,11 @@ object UaParserEnrichmentConfig extends ParseableEnrichment {
 
   private val localRulefile = "./ua-parser-rules.yml"
 
-  def parse(c: Json, schemaKey: SchemaKey): ValidatedNel[ProcessingMessage, UaParserEnrichment] =
+  def parse(c: Json, schemaKey: SchemaKey): ValidatedNel[String, UaParserEnrichment] =
     (for {
       _ <- isParseable(c, schemaKey).leftMap(NonEmptyList.one)
       rules <- getCustomRules(c).toEither
-    } yield UaParserEnrichment(rules)).leftMap(_.map(_.toProcessingMessage)).toValidated
+    } yield UaParserEnrichment(rules)).toValidated
 
   private def getCustomRules(conf: Json): ValidatedNel[String, Option[(URI, String)]] =
     if (conf.hcursor.downField("parameters").downField("uri").focus.isDefined) {
