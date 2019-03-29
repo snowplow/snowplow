@@ -63,7 +63,7 @@ object Dependencies {
     val scalaForex       = "0.5.0"
     val scalaWeather     = "0.3.0"
     val scalaj           = "2.3.0"
-    val gatlingJsonpath  = "0.6.4"
+    val gatlingJsonpath  = "0.6.14"
     val scalaUri         = "1.4.3"
     // Scala (test only)
     val specs2           = "4.5.1"
