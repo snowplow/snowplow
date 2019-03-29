@@ -51,10 +51,10 @@ object MiscEnrichments {
   }
 
   /** Identity transform. Straight passthrough. */
-  val identity: (String, String) => Either[String, String] = (field, value) => value.asRight
+  val identity: (String, String) => Either[String, String] = (_, value) => value.asRight
 
   /** Make a String TSV safe */
-  val toTsvSafe: (String, String) => Either[String, String] = (field, value) =>
+  val toTsvSafe: (String, String) => Either[String, String] = (_, value) =>
     CU.makeTsvSafe(value).asRight
 
   /**
@@ -63,7 +63,7 @@ object MiscEnrichments {
    * Here we retrieve the first one as it is supposed to be the client one, c.f.
    * https://en.m.wikipedia.org/wiki/X-Forwarded-For#Format
    */
-  val extractIp: (String, String) => Either[String, String] = (field, value) => {
+  val extractIp: (String, String) => Either[String, String] = (_, value) => {
     val lastIp = Option(value).map(_.split("[,|, ]").head).orNull
     CU.makeTsvSafe(lastIp).asRight
   }

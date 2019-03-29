@@ -14,11 +14,15 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
+import cats.Monad
 import cats.data.{Kleisli, NonEmptyList, ValidatedNel}
+import cats.effect.Clock
 import cats.instances.option._
 import cats.syntax.either._
 import cats.syntax.validated._
-import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import io.circe._
 import io.circe.parser._
 import org.joda.time.DateTime
@@ -39,17 +43,30 @@ object HubSpotAdapter extends Adapter {
   // Expected content type for a request body
   private val ContentType = "application/json"
 
+  private val Vendor = "com.hubspot"
+  private val Format = "jsonschema"
+  private val SchemaVersion = SchemaVer.Full(1, 0, 0)
+
   // Event-Schema Map for reverse-engineering a Snowplow unstructured event
   private val EventSchemaMap = Map(
-    "contact.creation" -> SchemaKey("com.hubspot", "contact_creation", "jsonschema", "1-0-0").toSchemaUri,
-    "contact.deletion" -> SchemaKey("com.hubspot", "contact_deletion", "jsonschema", "1-0-0").toSchemaUri,
-    "contact.propertyChange" -> SchemaKey("com.hubspot", "contact_change", "jsonschema", "1-0-0").toSchemaUri,
-    "company.creation" -> SchemaKey("com.hubspot", "company_creation", "jsonschema", "1-0-0").toSchemaUri,
-    "company.deletion" -> SchemaKey("com.hubspot", "company_deletion", "jsonschema", "1-0-0").toSchemaUri,
-    "company.propertyChange" -> SchemaKey("com.hubspot", "company_change", "jsonschema", "1-0-0").toSchemaUri,
-    "deal.creation" -> SchemaKey("com.hubspot", "deal_creation", "jsonschema", "1-0-0").toSchemaUri,
-    "deal.deletion" -> SchemaKey("com.hubspot", "deal_deletion", "jsonschema", "1-0-0").toSchemaUri,
-    "deal.propertyChange" -> SchemaKey("com.hubspot", "deal_change", "jsonschema", "1-0-0").toSchemaUri
+    "contact.creation" ->
+      SchemaKey(Vendor, "contact_creation", Format, SchemaVersion).toSchemaUri,
+    "contact.deletion" ->
+      SchemaKey(Vendor, "contact_deletion", Format, SchemaVersion).toSchemaUri,
+    "contact.propertyChange" ->
+      SchemaKey(Vendor, "contact_change", Format, SchemaVersion).toSchemaUri,
+    "company.creation" ->
+      SchemaKey(Vendor, "company_creation", Format, SchemaVersion).toSchemaUri,
+    "company.deletion" ->
+      SchemaKey(Vendor, "company_deletion", Format, SchemaVersion).toSchemaUri,
+    "company.propertyChange" ->
+      SchemaKey(Vendor, "company_change", Format, SchemaVersion).toSchemaUri,
+    "deal.creation" ->
+      SchemaKey(Vendor, "deal_creation", Format, SchemaVersion).toSchemaUri,
+    "deal.deletion" ->
+      SchemaKey(Vendor, "deal_deletion", Format, SchemaVersion).toSchemaUri,
+    "deal.propertyChange" ->
+      SchemaKey(Vendor, "deal_change", Format, SchemaVersion).toSchemaUri
   )
 
   /**
@@ -57,22 +74,27 @@ object HubSpotAdapter extends Adapter {
    * many events in one. We expect the type parameter to be 1 of 9 options otherwise we have an
    * unsupported event type.
    * @param payload CollectorPayload containing one or more raw events
-   * @param resolver (implicit) The Iglu resolver used for schema lookup and validation. Not used
+   * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(
-    implicit resolver: Resolver
-  ): ValidatedNel[String, NonEmptyList[RawEvent]] =
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
+    payload: CollectorPayload,
+    client: Client[F, Json]
+  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
     (payload.body, payload.contentType) match {
-      case (None, _) => s"Request body is empty: no $VendorName events to process".invalidNel
-      case (_, None) =>
-        s"Request body provided but content type empty, expected $ContentType for $VendorName".invalidNel
-      case (_, Some(ct)) if ct != ContentType =>
-        s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel
+      case (None, _) =>
+        Monad[F].pure(s"Request body is empty: no $VendorName events to process".invalidNel)
+      case (_, None) => Monad[F].pure(
+        s"Request body provided but content type empty, expected $ContentType for $VendorName"
+          .invalidNel
+      )
+      case (_, Some(ct)) if ct != ContentType => Monad[F].pure(
+        s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel)
       case (Some(body), _) =>
         payloadBodyToEvents(body) match {
-          case Left(str) => str.invalidNel
+          case Left(str) => Monad[F].pure(str.invalidNel)
           case Right(list) =>
+            val _ = client
             // Create our list of Validated RawEvents
             val rawEventsList: List[ValidatedNel[String, RawEvent]] =
               for {
@@ -99,7 +121,7 @@ object HubSpotAdapter extends Adapter {
                 }
               }
             // Processes the List for Failures and Successes and returns ValidatedRawEvents
-            rawEventsListProcessor(rawEventsList)
+            Monad[F].pure(rawEventsListProcessor(rawEventsList))
         }
     }
 

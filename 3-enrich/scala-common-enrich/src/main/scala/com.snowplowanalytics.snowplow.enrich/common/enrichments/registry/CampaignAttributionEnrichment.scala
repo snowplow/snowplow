@@ -15,9 +15,7 @@ package enrichments.registry
 
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.implicits._
-import com.github.fge.jsonschema.core.report.ProcessingMessage
-import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
-import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
 import io.circe._
 
 import utils.MapTransformer.SourceMap
@@ -44,9 +42,9 @@ object CampaignAttributionEnrichment extends ParseableEnrichment {
   def parse(
     c: Json,
     schemaKey: SchemaKey
-  ): ValidatedNel[ProcessingMessage, CampaignAttributionEnrichment] =
+  ): ValidatedNel[String, CampaignAttributionEnrichment] =
     isParseable(c, schemaKey)
-      .leftMap(e => NonEmptyList.one(e.toProcessingMessage))
+      .leftMap(e => NonEmptyList.one(e))
       .flatMap { _ =>
         (
           CirceUtils.extract[List[String]](c, "parameters", "fields", "mktMedium").toValidatedNel,
@@ -58,7 +56,7 @@ object CampaignAttributionEnrichment extends ParseableEnrichment {
             // Assign empty Map on missing property for backwards compatibility with schema version 1-0-0
             val customClickMap = CirceUtils
               .extract[Map[String, String]](c, "parameters", "fields", "mktClickId")
-              .fold(e => Map(), s => s)
+              .fold(_ => Map(), s => s)
             CampaignAttributionEnrichment(
               medium,
               source,
@@ -68,7 +66,6 @@ object CampaignAttributionEnrichment extends ParseableEnrichment {
               (DefaultNetworkMap ++ customClickMap).toList)
           }
           .toEither
-          .leftMap(_.map(_.toProcessingMessage))
       }
       .toValidated
 }

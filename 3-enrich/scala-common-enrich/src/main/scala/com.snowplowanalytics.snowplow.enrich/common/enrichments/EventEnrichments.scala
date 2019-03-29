@@ -114,7 +114,7 @@ object EventEnrichments {
         timestampString.asRight
       }
     } catch {
-      case nfe: NumberFormatException =>
+      case _: NumberFormatException =>
         s"Field [$field]: [$tstamp] is not in the expected format (ms since epoch)".asLeft
   }
 

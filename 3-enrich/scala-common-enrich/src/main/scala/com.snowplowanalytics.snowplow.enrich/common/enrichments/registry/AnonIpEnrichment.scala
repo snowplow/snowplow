@@ -15,9 +15,7 @@ package enrichments.registry
 
 import cats.data.ValidatedNel
 import cats.syntax.either._
-import com.github.fge.jsonschema.core.report.ProcessingMessage
-import com.snowplowanalytics.iglu.client.{SchemaCriterion, SchemaKey}
-import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
 import io.circe._
 
 import utils.CirceUtils
@@ -34,12 +32,12 @@ object AnonIpEnrichment extends ParseableEnrichment {
    * @param schemaKey provided for the enrichment, must be supported by this enrichment
    * @return a configured AnonIpEnrichment instance
    */
-  def parse(config: Json, schemaKey: SchemaKey): ValidatedNel[ProcessingMessage, AnonIpEnrichment] =
+  def parse(config: Json, schemaKey: SchemaKey): ValidatedNel[String, AnonIpEnrichment] =
     (for {
       _ <- isParseable(config, schemaKey)
       param <- CirceUtils.extract[Int](config, "parameters", "anonOctets").toEither
       octets <- AnonOctets.fromInt(param)
-    } yield AnonIpEnrichment(octets)).leftMap(_.toProcessingMessage).toValidatedNel
+    } yield AnonIpEnrichment(octets)).toValidatedNel
 }
 
 /** How many octets to anonymize? */

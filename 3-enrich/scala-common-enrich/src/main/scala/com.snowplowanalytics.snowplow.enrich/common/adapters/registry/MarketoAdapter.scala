@@ -14,10 +14,14 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
+import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
+import cats.effect.Clock
 import cats.syntax.either._
 import cats.syntax.validated._
-import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import io.circe._
 import io.circe.parser._
 import org.joda.time.DateTimeZone
@@ -34,15 +38,12 @@ object MarketoAdapter extends Adapter {
   // Vendor name for Failure Message
   private val VendorName = "Marketo"
 
-  // Expected content type for a request body
-  private val ContentType = "application/json"
-
   // Tracker version for an Marketo webhook
   private val TrackerVersion = "com.marketo-v1"
 
   // Schemas for reverse-engineering a Snowplow unstructured event
   private val EventSchemaMap = Map(
-    "event" -> SchemaKey("com.marketo", "event", "jsonschema", "2-0-0").toSchemaUri
+    "event" -> SchemaKey("com.marketo", "event", "jsonschema", SchemaVer.Full(2, 0, 0)).toSchemaUri
   )
 
   // Datetime format used by Marketo
@@ -104,17 +105,20 @@ object MarketoAdapter extends Adapter {
    * We expect the type parameter to match the supported events, else
    * we have an unsupported event type.
    * @param payload The CollectorPayload containing one or more raw events
-   * @param resolver (implicit) The Iglu resolver used for schema lookup and validation. Not used
+   * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  override def toRawEvents(payload: CollectorPayload)(
-    implicit r: Resolver
-  ): ValidatedNel[String, NonEmptyList[RawEvent]] =
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
+    payload: CollectorPayload,
+    client: Client[F, Json]
+  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
     (payload.body, payload.contentType) match {
-      case (None, _) => s"Request body is empty: no $VendorName event to process".invalidNel
+      case (None, _) => Monad[F].pure(
+        s"Request body is empty: no $VendorName event to process".invalidNel)
       case (Some(body), _) =>
+        val _ = client
         val event = payloadBodyToEvent(body, payload)
-        rawEventsListProcessor(List(event))
+        Monad[F].pure(rawEventsListProcessor(List(event)))
     }
 
   private[registry] def reformatParameters(json: Json): Json =

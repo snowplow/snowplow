@@ -12,4 +12,4 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.sqlquery
 
-case class Query(sql: String)
+final case class Query(sql: String)
