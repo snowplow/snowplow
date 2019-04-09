@@ -1,3 +1,17 @@
+Version 0.6.0 (2019-xx-xx)
+--------------------------
+Abstract over Parser creation (#72)
+Expose Medium in Referer (#71)
+Provide a way to create a Parser using cats.Eval (#67)
+Bump circe to 0.11.1 (#65)
+Bump cats-effect to 1.2.0 (#64)
+Bump cats-core to 1.6.0 (#63)
+Bump specs2 to 4.4.1 (#66)
+Bump SBT to 1.2.8 (#68)
+Use sbt-tpolecat (#62)
+Modify Gitter badge (#58)
+Extend copyright to 2019 (#69)
+
 Version 0.5.0 (2019-01-08)
 --------------------------
 Make the Medium enumeration public (#47)

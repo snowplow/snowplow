@@ -10,6 +10,14 @@ The implementation uses a JSON version of the shared 'database' of known referer
 
 The Scala implementation is a core component of [Snowplow][snowplow], the open-source web-scale analytics platform.
 
+### Installation
+
+You can add the following to your SBT config:
+
+```scala
+val refererParser = "com.snowplowanalytics" %% "referer-parser" % "0.6.0"
+```
+
 ### Usage
 
 All effects within the Scala implementation are wrapped in `Sync` from [cats-effect][cats-effect]. In these examples we use `IO`, but anything that implements `Sync` can be used.
@@ -60,21 +68,9 @@ More examples can be seen in [ParseTest.scala][parsetest-scala]. See [Parser.sca
 [parsetest-scala]: src/test/scala/com/snowplowanalytics/refererparser/ParseTest.scala
 [parser-scala]: src/main/scala/com/snowplowanalytics/refererparser/Parser.scala
 
-### Installation
-
-Add this to your SBT config:
-
-```scala
-val refererParser = "com.snowplowanalytics" %% "referer-parser" % "0.5.0"
-```
-
 ## Contributing
 
-1. Fork it
-2. Create your feature branch (`git checkout -b my-new-feature`)
-3. Commit your changes (`git commit -am 'Add some feature'`)
-4. Push to the branch (`git push origin my-new-feature`)
-5. Create new Pull Request
+Check out [our contributing guide](CONTRIBUTING.md).
 
 ## Copyright and license
 
