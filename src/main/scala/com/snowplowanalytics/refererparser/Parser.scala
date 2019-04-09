@@ -86,24 +86,26 @@ class Parser private (referers: Map[String, RefererLookup]) {
       if (// Check for internal domains
         pageHost.exists(_.equals(host)) ||
         internalDomains.map(_.trim()).contains(host)) {
-        Some(InternalReferer)
+        Some(InternalReferer(InternalMedium))
       } else {
         Some(
           lookupReferer(host, path)
             .map(lookup => {
               lookup.medium match {
-                case UnknownMedium => UnknownReferer
+                case UnknownMedium => UnknownReferer(UnknownMedium)
                 case SearchMedium =>
                   SearchReferer(
+                    SearchMedium,
                     lookup.source,
-                    query.flatMap(q => extractSearchTerm(q, lookup.parameters)))
-                case InternalMedium => InternalReferer
-                case SocialMedium   => SocialReferer(lookup.source)
-                case EmailMedium    => EmailReferer(lookup.source)
-                case PaidMedium     => PaidReferer(lookup.source)
+                    query.flatMap(q => extractSearchTerm(q, lookup.parameters))
+                  )
+                case InternalMedium => InternalReferer(InternalMedium)
+                case SocialMedium   => SocialReferer(SocialMedium, lookup.source)
+                case EmailMedium    => EmailReferer(EmailMedium, lookup.source)
+                case PaidMedium     => PaidReferer(PaidMedium, lookup.source)
               }
             })
-            .getOrElse(UnknownReferer))
+            .getOrElse(UnknownReferer(UnknownMedium)))
       }
     } else {
       None

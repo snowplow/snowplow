@@ -27,7 +27,7 @@ class CustomRefererJsonTest extends Specification {
   "Custom referer list" should {
     "give correct referer" in {
       val refererUri = "https://www.example.org/?query=hello+world"
-      val expected   = Some(SearchReferer("Example", Some("hello world")))
+      val expected   = Some(SearchReferer(SearchMedium, "Example", Some("hello world")))
       expected shouldEqual ioParser.parse(refererUri)
       expected shouldEqual evalParser.parse(refererUri)
     }

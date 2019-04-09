@@ -95,11 +95,11 @@ class ParseTest extends Specification with DataTables { def is =
     }
 
   def genExpected(medium: Medium, source: Option[String], term: Option[String]) = medium match {
-    case UnknownMedium  => UnknownReferer
-    case SearchMedium   => SearchReferer(source.get, term)
-    case InternalMedium => InternalReferer
-    case SocialMedium   => SocialReferer(source.get)
-    case EmailMedium    => EmailReferer(source.get)
-    case PaidMedium     => PaidReferer(source.get)
+    case UnknownMedium  => UnknownReferer(UnknownMedium)
+    case SearchMedium   => SearchReferer(SearchMedium, source.get, term)
+    case InternalMedium => InternalReferer(InternalMedium)
+    case SocialMedium   => SocialReferer(SocialMedium, source.get)
+    case EmailMedium    => EmailReferer(EmailMedium, source.get)
+    case PaidMedium     => PaidReferer(PaidMedium, source.get)
   }
 }

@@ -28,7 +28,7 @@ class CorruptedRefererQuerystringTest extends Specification {
     "identify the search engine but not the search term" in {
       val refererUri =
         "http://www.google.com/search?q=Psychic+Bazaar&sugexp=chrome,mod=3&sourceid=chrome&ie=UTF-8"
-      val expected = Some(SearchReferer("Google", Some("Psychic Bazaar")))
+      val expected = Some(SearchReferer(SearchMedium, "Google", Some("Psychic Bazaar")))
       ioParser.parse(refererUri, "") must_== expected
       evalParser.parse(refererUri, "") must_== expected
     }

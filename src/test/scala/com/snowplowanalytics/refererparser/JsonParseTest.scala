@@ -66,12 +66,12 @@ class JsonParseTest extends Specification {
     s"extract the expected details from referer with spec" in {
       for (test <- tests) yield {
         val expected = Medium.fromString(test.medium) match {
-          case Some(UnknownMedium)  => Some(UnknownReferer)
-          case Some(SearchMedium)   => Some(SearchReferer(test.source.get, test.term))
-          case Some(InternalMedium) => Some(InternalReferer)
-          case Some(SocialMedium)   => Some(SocialReferer(test.source.get))
-          case Some(EmailMedium)    => Some(EmailReferer(test.source.get))
-          case Some(PaidMedium)     => Some(PaidReferer(test.source.get))
+          case Some(UnknownMedium)  => Some(UnknownReferer(UnknownMedium))
+          case Some(SearchMedium)   => Some(SearchReferer(SearchMedium, test.source.get, test.term))
+          case Some(InternalMedium) => Some(InternalReferer(InternalMedium))
+          case Some(SocialMedium)   => Some(SocialReferer(SocialMedium, test.source.get))
+          case Some(EmailMedium)    => Some(EmailReferer(EmailMedium, test.source.get))
+          case Some(PaidMedium)     => Some(PaidReferer(PaidMedium, test.source.get))
           case _                    => throw new Exception(s"Bad medium: ${test.medium}")
         }
         val ioActual   = ioParser.parse(new URI(test.uri), Some(pageHost), internalDomains)
