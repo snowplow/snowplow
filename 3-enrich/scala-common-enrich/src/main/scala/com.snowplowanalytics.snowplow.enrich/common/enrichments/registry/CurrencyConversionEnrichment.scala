@@ -14,15 +14,17 @@ package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry
 
 import java.net.UnknownHostException
+import java.time.ZonedDateTime
 
 import scala.util.control.NonFatal
 
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.implicits._
-import com.snowplowanalytics.forex.oerclient._
-import com.snowplowanalytics.forex.{Forex, ForexConfig}
+import com.snowplowanalytics.forex.Forex
+import com.snowplowanalytics.forex.model._
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
 import io.circe._
+import org.joda.money.CurrencyUnit
 import org.joda.time.DateTime
 
 import utils.CirceUtils
@@ -48,7 +50,10 @@ object CurrencyConversionEnrichmentConfig extends ParseableEnrichment {
       .flatMap { _ =>
         (
           CirceUtils.extract[String](c, "parameters", "apiKey").toValidatedNel,
-          CirceUtils.extract[String](c, "parameters", "baseCurrency").toValidatedNel,
+          CirceUtils.extract[String](c, "parameters", "baseCurrency")
+            .toEither
+            .flatMap(bc => Either.catchNonFatal(CurrencyUnit.of(bc)).leftMap(_.getMessage))
+            .toValidatedNel,
           CirceUtils
             .extract[String](c, "parameters", "accountType")
             .toEither
@@ -79,10 +84,10 @@ object CurrencyConversionEnrichmentConfig extends ParseableEnrichment {
 final case class CurrencyConversionEnrichment(
   accountType: AccountType,
   apiKey: String,
-  baseCurrency: String,
+  baseCurrency: CurrencyUnit,
   rateAt: String
 ) extends Enrichment {
-  val fx = Forex(ForexConfig(), OerClientConfig(apiKey, accountType))
+  val fx = Forex.unsafeGetForex(ForexConfig(apiKey, accountType, baseCurrency = baseCurrency)).value
 
   /**
    * Attempt to convert if the initial currency and value are both defined
@@ -92,15 +97,16 @@ final case class CurrencyConversionEnrichment(
    * otherwise Validation[Option[_]] boxing the result of the conversion
    */
   private def performConversion(
-    initialCurrency: Option[String],
+    initialCurrency: Option[CurrencyUnit],
     value: Option[Double],
-    tstamp: DateTime
+    tstamp: ZonedDateTime
   ): Either[String, Option[String]] =
     (initialCurrency, value) match {
       case (Some(ic), Some(v)) =>
         fx.convert(v, ic)
           .to(baseCurrency)
           .at(tstamp)
+          .value
           .bimap(
             l => {
               val errorType = l.errorType.getClass.getSimpleName.replace("$", "")
@@ -134,10 +140,11 @@ final case class CurrencyConversionEnrichment(
     collectorTstamp match {
       case Some(tstamp) =>
         try {
-          val newCurrencyTr = performConversion(trCurrency, trTotal, tstamp)
-          val newCurrencyTi = performConversion(tiCurrency, tiPrice, tstamp)
-          val newTrTax = performConversion(trCurrency, trTax, tstamp)
-          val newTrShipping = performConversion(trCurrency, trShipping, tstamp)
+          val zdt = tstamp.toGregorianCalendar().toZonedDateTime()
+          val newCurrencyTr = performConversion(trCurrency.map(CurrencyUnit.of), trTotal, zdt)
+          val newCurrencyTi = performConversion(tiCurrency.map(CurrencyUnit.of), tiPrice, zdt)
+          val newTrTax = performConversion(trCurrency.map(CurrencyUnit.of), trTax, zdt)
+          val newTrShipping = performConversion(trCurrency.map(CurrencyUnit.of), trShipping, zdt)
           (
             newCurrencyTr.toValidatedNel,
             newTrTax.toValidatedNel,
