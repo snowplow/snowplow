@@ -15,12 +15,11 @@ package enrichments.registry
 
 import java.net.URI
 
-import cats.data.ValidatedNel
-import cats.syntax.either._
+import cats.data.{NonEmptyList, ValidatedNel}
+import cats.implicits._
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
-import com.snowplowanalytics.refererparser.scala.{Parser => RefererParser}
-import com.snowplowanalytics.refererparser.scala.Referer
-import io.circe._
+import com.snowplowanalytics.refererparser._
+import io.circe.Json
 
 import utils.{ConversionUtils => CU}
 import utils.CirceUtils
@@ -40,19 +39,28 @@ object RefererParserEnrichment extends ParseableEnrichment {
     c: Json,
     schemaKey: SchemaKey
   ): ValidatedNel[String, RefererParserEnrichment] =
-    (for {
-      _ <- isParseable(c, schemaKey)
-      param <- CirceUtils.extract[List[String]](c, "parameters", "internalDomains").toEither
-    } yield RefererParserEnrichment(param))
-      .toValidatedNel
+    isParseable(c, schemaKey)
+      .leftMap(e => NonEmptyList.one(e))
+      .flatMap { _ =>
+        (
+          CirceUtils.extract[String](c, "parameters", "xx")
+            .toEither
+            .flatMap(f => Parser.unsafeCreate(f).value.leftMap(_.getMessage))
+            .toValidatedNel,
+          CirceUtils.extract[List[String]](c, "parameters", "internalDomains").toValidatedNel
+        ).mapN { (parser, domains) => RefererParserEnrichment(parser, domains) }
+        .toEither
+      }.toValidated
 }
 
 /**
  * Config for a referer_parser enrichment
  * @param domains List of internal domains
  */
-final case class RefererParserEnrichment(domains: List[String]) extends Enrichment {
-
+final case class RefererParserEnrichment(
+  parser: Parser,
+  domains: List[String]
+) extends Enrichment {
   /**
    * Extract details about the referer (sic). Uses the referer-parser library.
    * @param uri The referer URI to extract referer details from
@@ -60,8 +68,10 @@ final case class RefererParserEnrichment(domains: List[String]) extends Enrichme
    * @return a Tuple3 containing referer medium, source and term, all Strings
    */
   def extractRefererDetails(uri: URI, pageHost: String): Option[Referer] =
-    RefererParser.parse(uri, pageHost, domains).map { r =>
-      val fixedTerm = r.term.flatMap(CU.fixTabsNewlines)
-      r.copy(term = fixedTerm)
+    parser.parse(uri, Option(pageHost), domains).map {
+      case SearchReferer(s, t) =>
+        val fixedTerm = t.flatMap(CU.fixTabsNewlines)
+        SearchReferer(s, fixedTerm)
+      case o => o
     }
 }
