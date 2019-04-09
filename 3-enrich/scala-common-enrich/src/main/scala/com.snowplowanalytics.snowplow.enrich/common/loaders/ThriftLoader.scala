@@ -15,7 +15,7 @@ package loaders
 
 import java.nio.charset.Charset
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.util.control.NonFatal
 
 import cats.data.{NonEmptyList, ValidatedNel}
@@ -102,7 +102,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
     val refererUri = Option(collectorPayload.refererUri)
     val networkUserId = Option(collectorPayload.networkUserId)
 
-    val headers = Option(collectorPayload.headers).map(_.toList).getOrElse(Nil)
+    val headers = Option(collectorPayload.headers).map(_.asScala.toList).getOrElse(Nil)
 
     val ip = IpAddressExtractor.extractIpAddress(headers, collectorPayload.ipAddress).some // Required
 
@@ -160,7 +160,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
     val refererUri = Option(snowplowRawEvent.refererUri)
     val networkUserId = Option(snowplowRawEvent.networkUserId)
 
-    val headers = Option(snowplowRawEvent.headers).map(_.toList).getOrElse(Nil)
+    val headers = Option(snowplowRawEvent.headers).map(_.asScala.toList).getOrElse(Nil)
 
     val ip = IpAddressExtractor.extractIpAddress(headers, snowplowRawEvent.ipAddress).some // Required
 
