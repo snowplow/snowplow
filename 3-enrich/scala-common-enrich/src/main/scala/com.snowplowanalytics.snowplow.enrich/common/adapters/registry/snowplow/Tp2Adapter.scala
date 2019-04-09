@@ -17,7 +17,7 @@ package snowplow
 
 import java.util.Map.{Entry => JMapEntry}
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 import cats.Monad
 import cats.data.{EitherT, NonEmptyList, Validated, ValidatedNel}
@@ -113,10 +113,10 @@ object Tp2Adapter extends Adapter {
     mergeWith: RawEventParameters
   ): Either[NonEmptyList[String], NonEmptyList[RawEventParameters]] = {
     val events: List[List[Validated[String, (String, String)]]] = for {
-      event <- circeToJackson(instance).iterator.toList
+      event <- circeToJackson(instance).iterator.asScala.toList
     } yield
       for {
-        entry <- event.fields.toList
+        entry <- event.fields.asScala.toList
       } yield toParameter(entry)
 
     val failures: List[String] = events.flatten.collect { case Invalid(f) => f }

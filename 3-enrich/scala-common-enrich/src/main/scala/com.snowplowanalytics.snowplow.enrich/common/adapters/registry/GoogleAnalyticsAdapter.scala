@@ -18,12 +18,14 @@ package registry
 import java.net.URI
 import java.nio.charset.StandardCharsets.UTF_8
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 import cats.{Applicative, Functor, Monad}
 import cats.data.{NonEmptyList, ValidatedNel}
+import cats.effect.Clock
 import cats.implicits._
 import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import io.circe._
 import io.circe.syntax._
@@ -387,7 +389,7 @@ object GoogleAnalyticsAdapter extends Adapter {
 
   // List of schemas for which we need to re attach the currency
   private val compositeContextsWithCU: List[SchemaKey] =
-    compositeContextData.filter(_.translationTable.containsKey("cu")).map(_.schemaKey)
+    compositeContextData.filter(_.translationTable.contains("cu")).map(_.schemaKey)
 
   // mechanism used to filter out composite contexts that might have been built unnecessarily
   // e.g. if the field cd is in the payload it can be a screen name or a custom dimension
@@ -434,7 +436,7 @@ object GoogleAnalyticsAdapter extends Adapter {
    * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  override def toRawEvents[F[_]: Monad](
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
     payload: CollectorPayload,
     client: Client[F, Json]
   ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
@@ -459,7 +461,7 @@ object GoogleAnalyticsAdapter extends Adapter {
     payload: CollectorPayload
   ): ValidatedNel[String, RawEvent] = {
     val params = toMap(
-      URLEncodedUtils.parse(URI.create(s"http://localhost/?$bodyPart"), UTF_8).toList)
+      URLEncodedUtils.parse(URI.create(s"http://localhost/?$bodyPart"), UTF_8).asScala.toList)
     params.get("t") match {
       case None => s"No $VendorName t parameter provided: cannot determine hit type".invalidNel
       case Some(hitType) =>

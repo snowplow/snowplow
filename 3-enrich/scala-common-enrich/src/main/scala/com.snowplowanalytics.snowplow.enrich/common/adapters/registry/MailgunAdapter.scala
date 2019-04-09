@@ -17,15 +17,17 @@ package registry
 import java.net.URI
 import java.nio.charset.StandardCharsets.UTF_8
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.util.{Try, Success => TS, Failure => TF}
 
 import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
+import cats.effect.Clock
 import cats.syntax.either._
 import cats.syntax.option._
 import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import io.circe._
 import io.circe.syntax._
@@ -71,7 +73,7 @@ object MailgunAdapter extends Adapter {
    * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  override def toRawEvents[F[_]: Monad](
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
     payload: CollectorPayload,
     client: Client[F, Json]
   ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
@@ -92,7 +94,7 @@ object MailgunAdapter extends Adapter {
           getBoundary(ct)
             .map(parseMultipartForm(body, _))
             .getOrElse(
-              toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).toList))
+              toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).asScala.toList))
         } match {
           case TF(e) =>
             val message = JU.stripInstanceEtc(e.getMessage).orNull
