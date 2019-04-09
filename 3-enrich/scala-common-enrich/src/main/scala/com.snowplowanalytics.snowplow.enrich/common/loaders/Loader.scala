@@ -16,7 +16,7 @@ package loaders
 import java.net.URI
 import java.nio.charset.Charset
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 import cats.data.ValidatedNel
 import cats.syntax.either._
@@ -71,7 +71,7 @@ abstract class Loader[T] {
     case Some(q) =>
       Either
         .catchNonFatal(URLEncodedUtils.parse(URI.create("http://localhost/?" + q), enc))
-        .map(_.toList)
+        .map(_.asScala.toList)
         .leftMap(e =>
           "Exception extracting name-value pairs from querystring [%s] with encoding [%s]: [%s]"
             .format(q, enc, e.getMessage))

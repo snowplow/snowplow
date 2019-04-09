@@ -17,13 +17,15 @@ package registry
 import java.net.URI
 import java.nio.charset.StandardCharsets.UTF_8
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
+import cats.effect.Clock
 import cats.syntax.either._
 import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import io.circe._
 import io.circe.parser._
@@ -73,7 +75,7 @@ object MandrillAdapter extends Adapter {
    * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  override def toRawEvents[F[_]: Monad](
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
     payload: CollectorPayload,
     client: Client[F, Json]
   ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
@@ -131,8 +133,8 @@ object MandrillAdapter extends Adapter {
   private[registry] def payloadBodyToEvents(
     rawEventString: String
   ): Either[String, List[Json]] = {
-    val bodyMap = toMap(
-      URLEncodedUtils.parse(URI.create("http://localhost/?" + rawEventString), UTF_8).toList)
+    val bodyMap = toMap(URLEncodedUtils
+      .parse(URI.create("http://localhost/?" + rawEventString), UTF_8).asScala.toList)
     bodyMap match {
       case map if map.size != 1 =>
         s"Mapped $VendorName body has invalid count of keys: ${map.size}".asLeft

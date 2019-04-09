@@ -17,14 +17,16 @@ package registry
 import java.net.URI
 import java.nio.charset.StandardCharsets.UTF_8
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
+import cats.effect.Clock
 import cats.syntax.either._
 import cats.syntax.option._
 import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import io.circe._
 import org.apache.http.client.utils.URLEncodedUtils
@@ -79,7 +81,7 @@ object MailchimpAdapter extends Adapter {
    * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  override def toRawEvents[F[_]: Monad](
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
     payload: CollectorPayload,
     client: Client[F, Json]
   ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
@@ -94,7 +96,7 @@ object MailchimpAdapter extends Adapter {
       )
       case (Some(body), _) =>
         val params = toMap(
-          URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).toList)
+          URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).asScala.toList)
         params.get("type") match {
           case None => Monad[F].pure(
             s"No $VendorName type parameter provided: cannot determine event type".invalidNel)
