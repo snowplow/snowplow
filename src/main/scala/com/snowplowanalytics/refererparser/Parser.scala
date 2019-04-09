@@ -19,30 +19,43 @@ import java.net.{URI, URLDecoder}
 
 import scala.io.Source
 
-import cats.Eval
+import cats.{Eval, Id}
 import cats.effect.Sync
 import cats.syntax.either._
 import cats.syntax.functor._
 
-/**
- * Parser object - contains one-time initialization of the JSON database of referers, and parse()
- * methods to generate a Referer object from a referer URL.
- */
-object Parser {
-  def create[F[_]: Sync](filePath: String): F[Either[Exception, Parser]] =
-    Sync[F]
-      .delay { Source.fromFile(filePath).mkString }
-      .map(rawJson =>
-        ParseReferers.loadJsonFromString(rawJson).map(referers => new Parser(referers)))
-
-  def unsafeCreate(filePath: String): Eval[Either[Exception, Parser]] =
-    Eval
-      .later { Source.fromFile(filePath).mkString }
-      .map(rawJson =>
-        ParseReferers.loadJsonFromString(rawJson).map(referers => new Parser(referers)))
+trait CreateParser[F[_]] {
+  def create(filePath: String): F[Either[Exception, Parser]]
 }
 
-class Parser private (referers: Map[String, RefererLookup]) {
+object CreateParser {
+  def apply[F[_]](implicit ev: CreateParser[F]): CreateParser[F] = ev
+
+  implicit def syncCreateParser[F[_]: Sync]: CreateParser[F] = new CreateParser[F] {
+    def create(filePath: String): F[Either[Exception, Parser]] =
+      Sync[F]
+        .delay { Source.fromFile(filePath).mkString }
+        .map(rawJson =>
+          ParseReferers.loadJsonFromString(rawJson).map(referers => new Parser(referers)))
+  }
+
+  implicit def evalCreateParser: CreateParser[Eval] = new CreateParser[Eval] {
+    def create(filePath: String): Eval[Either[Exception, Parser]] =
+      Eval
+        .later { Source.fromFile(filePath).mkString }
+        .map(rawJson =>
+          ParseReferers.loadJsonFromString(rawJson).map(referers => new Parser(referers)))
+  }
+
+  implicit def idCreateParser: CreateParser[Id] = new CreateParser[Id] {
+    def create(filePath: String): Id[Either[Exception, Parser]] = {
+      val rawJson = Source.fromFile(filePath).mkString
+      ParseReferers.loadJsonFromString(rawJson).map(referers => new Parser(referers))
+    }
+  }
+}
+
+class Parser private[refererparser] (referers: Map[String, RefererLookup]) {
 
   private def toUri(uri: String): Option[URI] = {
     if (uri == "")

@@ -16,17 +16,17 @@
 
 package com.snowplowanalytics.refererparser
 
+import cats.Eval
 import cats.effect.IO
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
 
 class ParseTest extends Specification with DataTables { def is =
-
   "This is a specification to test the parse function"
 
   val resource = getClass.getResource("/referers.json").getPath
-  val ioParser = Parser.create[IO](resource).unsafeRunSync().fold(throw _, identity)
-  val evalParser = Parser.unsafeCreate(resource).value.fold(throw _, identity)
+  val ioParser = CreateParser[IO].create(resource).unsafeRunSync().fold(throw _, identity)
+  val evalParser = CreateParser[Eval].create(resource).value.fold(throw _, identity)
 
   // Aliases
   val pageHost = "www.snowplowanalytics.com"

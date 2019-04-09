@@ -19,6 +19,7 @@ import java.net.URI
 
 import scala.io.Source._
 
+import cats.Eval
 import cats.effect.IO
 import io.circe._
 import io.circe.parser._
@@ -59,8 +60,8 @@ class JsonParseTest extends Specification {
     List("www.subdomain1.snowplowanalytics.com", "www.subdomain2.snowplowanalytics.com")
 
   val resource   = getClass.getResource("/referers.json").getPath
-  val ioParser   = Parser.create[IO](resource).unsafeRunSync().fold(throw _, identity)
-  val evalParser = Parser.unsafeCreate(resource).value.fold(throw _, identity)
+  val ioParser   = CreateParser[IO].create(resource).unsafeRunSync().fold(throw _, identity)
+  val evalParser = CreateParser[Eval].create(resource).value.fold(throw _, identity)
 
   "parse" should {
     s"extract the expected details from referer with spec" in {

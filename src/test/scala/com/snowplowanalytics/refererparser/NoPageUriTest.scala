@@ -15,6 +15,7 @@
  */
 package com.snowplowanalytics.refererparser
 
+import cats.Eval
 import cats.effect.IO
 import org.specs2.mutable.Specification
 
@@ -26,8 +27,8 @@ class NoPageUriTest extends Specification {
     SearchReferer(SearchMedium, "Google", Some("gateway oracle cards denise linn")))
 
   val resource   = getClass.getResource("/referers.json").getPath
-  val ioParser   = Parser.create[IO](resource).unsafeRunSync().fold(throw _, identity)
-  val evalParser = Parser.unsafeCreate(resource).value.fold(throw _, identity)
+  val ioParser   = CreateParser[IO].create(resource).unsafeRunSync().fold(throw _, identity)
+  val evalParser = CreateParser[Eval].create(resource).value.fold(throw _, identity)
 
   "An empty page URI" should {
     "not interfere with the referer parsing" in {
