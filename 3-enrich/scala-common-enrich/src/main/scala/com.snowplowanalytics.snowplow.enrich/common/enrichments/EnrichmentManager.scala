@@ -23,6 +23,7 @@ import cats.implicits._
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core.SelfDescribingData
+import com.snowplowanalytics.refererparser._
 import io.circe.Json
 import org.joda.time.DateTime
 
@@ -395,13 +396,26 @@ object EnrichmentManager {
 
       // Set the referrer details
       registry.getRefererParserEnrichment match {
-        case Some(rp) => {
+        case Some(rp) =>
           for (refr <- rp.extractRefererDetails(u, event.page_urlhost)) {
-            event.refr_medium = CU.makeTsvSafe(refr.medium.toString)
-            event.refr_source = CU.makeTsvSafe(refr.source.orNull)
-            event.refr_term = CU.makeTsvSafe(refr.term.orNull)
+            refr match {
+              case UnknownReferer => event.refr_medium = CU.makeTsvSafe("unknown")
+              case SearchReferer(source, term) =>
+                event.refr_medium = CU.makeTsvSafe("search")
+                event.refr_source = CU.makeTsvSafe(source)
+                event.refr_term = CU.makeTsvSafe(term.orNull)
+              case InternalReferer => event.refr_medium = CU.makeTsvSafe("internal")
+              case SocialReferer(source) =>
+                event.refr_medium = CU.makeTsvSafe("social")
+                event.refr_source = CU.makeTsvSafe(source)
+              case EmailReferer(source) =>
+                event.refr_medium = CU.makeTsvSafe("email")
+                event.refr_source = CU.makeTsvSafe(source)
+              case PaidReferer(source) =>
+                event.refr_medium = CU.makeTsvSafe("paid")
+                event.refr_source = CU.makeTsvSafe(source)
+            }
           }
-        }
         case None => ().asRight
       }
     }
