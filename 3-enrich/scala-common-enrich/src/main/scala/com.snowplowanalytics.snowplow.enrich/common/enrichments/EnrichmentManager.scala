@@ -399,20 +399,20 @@ object EnrichmentManager {
         case Some(rp) =>
           for (refr <- rp.extractRefererDetails(u, event.page_urlhost)) {
             refr match {
-              case UnknownReferer => event.refr_medium = CU.makeTsvSafe("unknown")
-              case SearchReferer(source, term) =>
-                event.refr_medium = CU.makeTsvSafe("search")
+              case UnknownReferer(medium) => event.refr_medium = CU.makeTsvSafe(medium.value)
+              case SearchReferer(medium, source, term) =>
+                event.refr_medium = CU.makeTsvSafe(medium.value)
                 event.refr_source = CU.makeTsvSafe(source)
                 event.refr_term = CU.makeTsvSafe(term.orNull)
-              case InternalReferer => event.refr_medium = CU.makeTsvSafe("internal")
-              case SocialReferer(source) =>
-                event.refr_medium = CU.makeTsvSafe("social")
+              case InternalReferer(medium) => event.refr_medium = CU.makeTsvSafe(medium.value)
+              case SocialReferer(medium, source) =>
+                event.refr_medium = CU.makeTsvSafe(medium.value)
                 event.refr_source = CU.makeTsvSafe(source)
-              case EmailReferer(source) =>
-                event.refr_medium = CU.makeTsvSafe("email")
+              case EmailReferer(medium, source) =>
+                event.refr_medium = CU.makeTsvSafe(medium.value)
                 event.refr_source = CU.makeTsvSafe(source)
-              case PaidReferer(source) =>
-                event.refr_medium = CU.makeTsvSafe("paid")
+              case PaidReferer(medium, source) =>
+                event.refr_medium = CU.makeTsvSafe(medium.value)
                 event.refr_source = CU.makeTsvSafe(source)
             }
           }
