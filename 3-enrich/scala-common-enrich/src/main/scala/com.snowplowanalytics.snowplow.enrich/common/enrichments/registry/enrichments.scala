@@ -15,12 +15,41 @@ package enrichments.registry
 
 import java.net.URI
 
+import cats.data.ValidatedNel
 import cats.syntax.either._
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
 import io.circe._
 
+import utils.ConversionUtils
+
 /** Trait inherited by every enrichment config case class */
-trait Enrichment {
+trait Enrichment
+
+sealed trait EnrichmentConf {
+  def filesToCache: List[(URI, String)]
+}
+final case class RefererParserConf(
+  filesToCache: List[(URI, String)],
+  internalDomains: List[String]
+) extends EnrichmentConf
+
+/** Trait to hold helpers relating to enrichment config */
+trait ParseableEnrichment {
+
+  /** The schemas supported by this enrichment */
+  def supportedSchema: SchemaCriterion
+
+  /**
+   * Tentatively parses an enrichment configuration and sends back the files that need to be cached
+   * prior to the EnrichmentRegistry construction.
+   * @param config Json configuration for the enrichment
+   * @param schemaKey Version of the schema we want to run
+   * @return the configuration for this enrichment as well as the list of files it needs cached
+   */
+  def parse(
+    config: Json,
+    schemaKey: SchemaKey
+  ): ValidatedNel[String, EnrichmentConf]
 
   /**
    * Gets the list of files the enrichment requires cached locally. The default implementation
@@ -30,11 +59,6 @@ trait Enrichment {
    * the file.
    */
   def filesToCache: List[(URI, String)] = List.empty
-}
-
-/** Trait to hold helpers relating to enrichment config */
-trait ParseableEnrichment {
-  val supportedSchema: SchemaCriterion
 
   /**
    * Tests whether a JSON is parseable by a specific EnrichmentConfig constructor
@@ -50,4 +74,18 @@ trait ParseableEnrichment {
         .format(schemaKey, supportedSchema.name, supportedSchema)
         .asLeft
     }
+
+  /**
+   * Convert the path to a file from a String to a URI.
+   * @param uri URI to a database file
+   * @param database Name of the database
+   * @return an Either-boxed URI
+   */
+  protected def getDatabaseUri(uri: String, database: String): Either[String, URI] =
+    ConversionUtils
+      .stringToUri(uri + (if (uri.endsWith("/")) "" else "/") + database)
+      .flatMap {
+        case Some(u) => u.asRight
+        case None => "URI to IAB file must be provided".asLeft
+      }
 }
