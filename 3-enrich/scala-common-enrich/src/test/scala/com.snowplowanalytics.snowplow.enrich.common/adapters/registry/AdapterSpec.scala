@@ -14,10 +14,13 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
+import cats.Monad
 import cats.data.{NonEmptyList, Validated}
+import cats.effect.Clock
 import cats.syntax.option._
 import cats.syntax.validated._
-import com.snowplowanalytics.iglu.client.Resolver
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import io.circe._
 import io.circe.literal._
 import org.joda.time.DateTime
@@ -44,10 +47,9 @@ class AdapterSpec extends Specification with DataTables with ValidatedMatchers {
 
   // TODO: add test for buildFormatter()
 
-  implicit val resolver = SpecHelpers.IgluResolver
-
   object BaseAdapter extends Adapter {
-    def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver) = "Base".invalidNel
+    def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
+      payload: CollectorPayload, client: Client[F, Json]) = Monad[F].pure("Base".invalidNel)
   }
 
   object Shared {
