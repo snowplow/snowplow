@@ -12,48 +12,39 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common
 
-import cats.syntax.either._
-import com.snowplowanalytics.iglu.client.Resolver
+import cats.Eval
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.lrumap.CreateLruMap._
+import io.circe.Json
+import io.circe.literal._
 import org.apache.http.NameValuePair
 import org.apache.http.message.BasicNameValuePair
 
-import utils.JsonUtils
-
 object SpecHelpers {
 
-  // Internal
-  private val igluConfigField = "Iglu config field"
-
   // Standard Iglu configuration
-  private val igluConfig =
-    """|{
-          |"schema": "iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-0",
-          |"data": {
-            |"cacheSize": 500,
-            |"repositories": [
-              |{
-                |"name": "Iglu Central",
-                |"priority": 0,
-                |"vendorPrefixes": [ "com.snowplowanalytics" ],
-                |"connection": {
-                  |"http": {
-                    |"uri": "http://iglucentral.com"
-                  |}
-                |}
-              |}
-            |]
-          |}
-        |}""".stripMargin.replaceAll("[\n\r]", "")
+  private val igluConfig =json"""{
+    "schema": "iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-0",
+    "data": {
+      "cacheSize": 500,
+      "repositories": [
+        {
+          "name": "Iglu Central",
+          "priority": 0,
+          "vendorPrefixes": [ "com.snowplowanalytics" ],
+          "connection": {
+            "http": {
+              "uri": "http://iglucentral.com"
+            }
+          }
+        }
+      ]
+    }
+  }"""
 
-  /**
-   * Builds an Iglu resolver from
-   * the above Iglu configuration.
-   */
-  val IgluResolver = (for {
-    json <- JsonUtils.extractJsonNode(igluConfigField, igluConfig)
-    reso <- Resolver.parse(json).toEither.leftMap(_.head)
-  } yield reso)
-    .getOrElse(throw new RuntimeException("Could not build an Iglu resolver, should never happen"))
+  /** Builds an Iglu client from the above Iglu configuration. */
+  val client: Client[Eval, Json] = Client.parseDefault[Eval](igluConfig).value.value
+    .getOrElse(throw new RuntimeException("invalid resolver configuration"))
 
   private type NvPair = Tuple2[String, String]
 

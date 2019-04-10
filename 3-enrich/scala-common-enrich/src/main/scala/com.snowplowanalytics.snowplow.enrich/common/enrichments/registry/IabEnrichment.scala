@@ -25,7 +25,7 @@ import io.circe.generic.auto._
 import io.circe.syntax._
 import org.joda.time.DateTime
 
-import utils.{CirceUtils, ConversionUtils}
+import utils.CirceUtils
 
 /** Companion object. Lets us create an IabEnrichment instance from a Json. */
 object IabEnrichment extends ParseableEnrichment {
@@ -82,20 +82,6 @@ object IabEnrichment extends ParseableEnrichment {
       uri <- getDatabaseUri(uriAndDb._1, uriAndDb._2).leftMap(NonEmptyList.one)
     } yield IabDatabase(name, uri, uriAndDb._2)).toValidated
   }
-
-  /**
-   * Convert the path to the IAB file from a String to a Validation[URI].
-   * @param uri URI to the IAB database file
-   * @param database Name of the IAB database
-   * @return a Validation-boxed URI
-   */
-  private def getDatabaseUri(uri: String, database: String): Either[String, URI] =
-    ConversionUtils
-      .stringToUri(uri + (if (uri.endsWith("/")) "" else "/") + database)
-      .flatMap {
-        case Some(u) => u.asRight
-        case None => "URI to IAB file must be provided".asLeft
-      }
 }
 
 /**

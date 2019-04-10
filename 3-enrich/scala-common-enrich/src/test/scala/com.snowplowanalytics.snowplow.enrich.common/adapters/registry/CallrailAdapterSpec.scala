@@ -30,8 +30,6 @@ class CallrailAdapterSpec extends Specification with DataTables with ValidatedMa
   toRawEvents should return a Validation Failure if there are no parameters on the querystring      $e2
   """
 
-  implicit val resolver = SpecHelpers.IgluResolver
-
   object Shared {
     val api = CollectorApi("com.callrail", "v1")
     val source = CollectorSource("clj-tomcat", "UTF-8", None)
@@ -94,7 +92,7 @@ class CallrailAdapterSpec extends Specification with DataTables with ValidatedMa
       "nuid" -> "-"
     )
     val payload = CollectorPayload(Shared.api, params, None, None, Shared.source, Shared.context)
-    val actual = CallrailAdapter.toRawEvents(payload)
+    val actual = CallrailAdapter.toRawEvents(payload, SpecHelpers.client).value
 
     val expectedJson =
       """|{

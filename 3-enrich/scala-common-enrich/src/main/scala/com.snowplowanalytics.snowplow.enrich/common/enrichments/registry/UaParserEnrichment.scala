@@ -23,7 +23,7 @@ import io.circe.syntax._
 import ua_parser.Parser
 import ua_parser.Client
 
-import utils.{CirceUtils, ConversionUtils}
+import utils.CirceUtils
 
 /** Companion object. Lets us create a UaParserEnrichment from a Json. */
 object UaParserEnrichmentConfig extends ParseableEnrichment {
@@ -45,19 +45,11 @@ object UaParserEnrichmentConfig extends ParseableEnrichment {
           CirceUtils.extract[String](conf, "parameters", "uri").toValidatedNel,
           CirceUtils.extract[String](conf, "parameters", "database").toValidatedNel
         ).mapN((_, _)).toEither
-        source <- getUri(uriAndDb._1, uriAndDb._2).leftMap(NonEmptyList.one)
+        source <- getDatabaseUri(uriAndDb._1, uriAndDb._2).leftMap(NonEmptyList.one)
       } yield (source, localRulefile)).toValidated.map(_.some)
     } else {
       None.validNel
     }
-
-  private def getUri(uri: String, database: String): Either[String, URI] =
-    ConversionUtils
-      .stringToUri(uri + (if (uri.endsWith("/")) "" else "/") + database)
-      .flatMap {
-        case Some(u) => u.asRight
-        case None => "A valid URI to ua-parser regex file must be provided".asLeft
-      }
 }
 
 /** Config for an ua_parser_config enrichment. Uses uap-java library to parse client attributes */

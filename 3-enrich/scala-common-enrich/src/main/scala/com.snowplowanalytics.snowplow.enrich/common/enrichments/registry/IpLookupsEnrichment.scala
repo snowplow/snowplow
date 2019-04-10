@@ -22,7 +22,7 @@ import com.snowplowanalytics.maxmind.iplookups.model.{IpLocation, IpLookupResult
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
 import io.circe._
 
-import utils.{CirceUtils, ConversionUtils}
+import utils.CirceUtils
 
 /** Companion object. Lets us create an IpLookupsEnrichment instance from a Json. */
 object IpLookupsEnrichment extends ParseableEnrichment {
@@ -71,23 +71,9 @@ object IpLookupsEnrichment extends ParseableEnrichment {
       // better-monadic-for
       (for {
         uriAndDb <- (uri.toValidatedNel, db.toValidatedNel).mapN { (_, _) }.toEither
-        uri <- getMaxmindUri(uriAndDb._1, uriAndDb._2).leftMap(NonEmptyList.one)
+        uri <- getDatabaseUri(uriAndDb._1, uriAndDb._2).leftMap(NonEmptyList.one)
       } yield (name, uri, uriAndDb._2)).toValidated.some
     } else None
-
-  /**
-   * Convert the Maxmind file from a String to a Validation[URI].
-   * @param maxmindFile A String holding the URI to the hosted MaxMind file
-   * @param database Name of the MaxMind database
-   * @return a Validation-boxed URI
-   */
-  private def getMaxmindUri(uri: String, database: String): Either[String, URI] =
-    ConversionUtils
-      .stringToUri(uri + "/" + database)
-      .flatMap {
-        case Some(u) => u.asRight
-        case None => "URI to MaxMind file must be provided".asLeft
-      }
 }
 
 /**
