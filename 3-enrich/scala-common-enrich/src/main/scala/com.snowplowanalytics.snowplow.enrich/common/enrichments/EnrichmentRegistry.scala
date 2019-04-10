@@ -23,6 +23,7 @@ import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SelfDescribingData}
 import com.snowplowanalytics.iglu.core.circe.instances._
+import com.snowplowanalytics.refererparser.CreateParser
 import io.circe._
 
 import registry._
@@ -49,7 +50,7 @@ object EnrichmentRegistry {
     json: Json,
     client: Client[F, Json],
     localMode: Boolean
-  ): F[ValidatedNel[String, EnrichmentRegistry]] =
+  ): F[ValidatedNel[String, List[EnrichmentConf]]] =
     (for {
       sd <- EitherT.fromEither[F](
         SelfDescribingData.parse(json).leftMap(parseError => NonEmptyList.one(parseError.code)))
@@ -75,8 +76,7 @@ object EnrichmentRegistry {
             sd <- EitherT.fromEither[F](
               SelfDescribingData.parse(json).leftMap(pe => NonEmptyList.one(pe.code)))
             _ <- client.check(sd).leftMap(e => NonEmptyList.one(e.toString))
-            conf <- EitherT.fromEither[F](
-              buildEnrichmentConfig(sd.schema, sd.data, localMode).toEither)
+            conf <- buildEnrichmentConfig[F](sd.schema, sd.data, localMode)
           } yield conf
         }
         .sequence
@@ -91,59 +91,77 @@ object EnrichmentRegistry {
    * @return ValidatedNelMessage boxing Option boxing Tuple2 containing the Enrichment object and
    * the schemaKey
    */
-  private def buildEnrichmentConfig(
+  private def buildEnrichmentConfig[F[_]: Monad: CreateParser](
     schemaKey: SchemaKey,
     enrichmentConfig: Json,
     localMode: Boolean
-  ): ValidatedNel[String, Option[(String, Enrichment)]] =
+  ): EitherT[F, NonEmptyList[String], Option[(String, Enrichment)]] =
     CirceUtils.extract[Boolean](enrichmentConfig, "enabled").toEither match {
-      case Right(false) => None.validNel // Enrichment is disabled
+      case Right(false) => EitherT.rightT(None) // Enrichment is disabled
       case _ =>
-        val name = CirceUtils
-          .extract[String](enrichmentConfig, "name")
-          .toValidatedNel
-          .toEither
-        name.flatMap { nm =>
-          (if (nm == "ip_lookups") {
-             IpLookupsEnrichment.parse(enrichmentConfig, schemaKey, localMode).map((nm, _).some)
-           } else if (nm == "anon_ip") {
-             AnonIpEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-           } else if (nm == "referer_parser") {
-             RefererParserEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-           } else if (nm == "campaign_attribution") {
-             CampaignAttributionEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-           } else if (nm == "user_agent_utils_config") {
-             UserAgentUtilsEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-           } else if (nm == "ua_parser_config") {
-             UaParserEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-          } else if (nm == "yauaa_enrichment_config") {
-            YauaaEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-           } else if (nm == "currency_conversion_config") {
-             CurrencyConversionEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-           } else if (nm == "javascript_script_config") {
-             JavascriptScriptEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-           } else if (nm == "event_fingerprint_config") {
-             EventFingerprintEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-           } else if (nm == "cookie_extractor_config") {
-             CookieExtractorEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-           } else if (nm == "http_header_extractor_config") {
-             HttpHeaderExtractorEnrichmentConfig
-               .parse(enrichmentConfig, schemaKey)
-               .map((nm, _).some)
-           } else if (nm == "weather_enrichment_config") {
-             WeatherEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-           } else if (nm == "api_request_enrichment_config") {
-             ApiRequestEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-           } else if (nm == "sql_query_enrichment_config") {
-             SqlQueryEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-           } else if (nm == "pii_enrichment_config") {
-             PiiPseudonymizerEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-           } else if (nm == "iab_spiders_and_robots_enrichment") {
-             IabEnrichment.parse(enrichmentConfig, schemaKey, localMode).map((nm, _).some)
-           } else {
-             None.validNel // Enrichment is not recognized yet
-           }).toEither
-        }.toValidated
+        for {
+          nm <- EitherT.fromEither[F](CirceUtils
+            .extract[String](enrichmentConfig, "name")
+            .toValidatedNel
+            .toEither)
+          e = {
+            val v: F[ValidatedNel[String, Option[(String, Enrichment)]]] = if (nm == "ip_lookups") {
+              Monad[F].pure(
+                IpLookupsEnrichment.parse(enrichmentConfig, schemaKey, localMode).map((nm, _).some))
+            } else if (nm == "anon_ip") {
+              Monad[F].pure(
+                AnonIpEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some))
+            } else if (nm == "referer_parser") {
+              RefererParserEnrichment.parse[F](enrichmentConfig, schemaKey).map(_.map((nm, _).some))
+            } else if (nm == "campaign_attribution") {
+              Monad[F].pure(
+                CampaignAttributionEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some))
+            } else if (nm == "user_agent_utils_config") {
+              Monad[F].pure(
+                UserAgentUtilsEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some))
+            } else if (nm == "yauaa_enrichment_config") {
+              Monad[F].pure(YauaaEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some))
+            } else if (nm == "ua_parser_config") {
+              Monad[F].pure(
+                UaParserEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some))
+            } else if (nm == "currency_conversion_config") {
+              Monad[F].pure(CurrencyConversionEnrichmentConfig
+                .parse(enrichmentConfig, schemaKey).map((nm, _).some))
+            } else if (nm == "javascript_script_config") {
+              Monad[F].pure(JavascriptScriptEnrichmentConfig
+                .parse(enrichmentConfig, schemaKey).map((nm, _).some))
+            } else if (nm == "event_fingerprint_config") {
+              Monad[F].pure(EventFingerprintEnrichmentConfig
+                .parse(enrichmentConfig, schemaKey).map((nm, _).some))
+            } else if (nm == "cookie_extractor_config") {
+              Monad[F].pure(CookieExtractorEnrichmentConfig
+                .parse(enrichmentConfig, schemaKey).map((nm, _).some))
+            } else if (nm == "http_header_extractor_config") {
+              Monad[F].pure(HttpHeaderExtractorEnrichmentConfig
+                .parse(enrichmentConfig, schemaKey)
+                .map((nm, _).some))
+            } else if (nm == "weather_enrichment_config") {
+              Monad[F].pure(
+                WeatherEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some))
+            } else if (nm == "api_request_enrichment_config") {
+              Monad[F].pure(
+                ApiRequestEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some))
+            } else if (nm == "sql_query_enrichment_config") {
+              Monad[F].pure(
+                SqlQueryEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some))
+            } else if (nm == "pii_enrichment_config") {
+              Monad[F].pure(
+                PiiPseudonymizerEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some))
+            } else if (nm == "iab_spiders_and_robots_enrichment") {
+              Monad[F].pure(
+                IabEnrichment.parse(enrichmentConfig, schemaKey, localMode).map((nm, _).some))
+            } else {
+              Monad[F].pure(None.validNel) // Enrichment is not recognized yet
+            }
+            v
+          }
+          enrichment <- EitherT(e.map(_.toEither))
+        } yield enrichment
     }
 }
 

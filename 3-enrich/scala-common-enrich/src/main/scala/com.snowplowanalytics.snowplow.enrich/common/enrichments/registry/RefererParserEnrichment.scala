@@ -15,7 +15,8 @@ package enrichments.registry
 
 import java.net.URI
 
-import cats.data.{NonEmptyList, ValidatedNel}
+import cats.Monad
+import cats.data.{EitherT, NonEmptyList, ValidatedNel}
 import cats.implicits._
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
 import com.snowplowanalytics.refererparser._
@@ -26,41 +27,57 @@ import utils.CirceUtils
 
 /** Companion object. Lets us create a RefererParserEnrichment from a Json */
 object RefererParserEnrichment extends ParseableEnrichment {
-  val supportedSchema =
+  override val supportedSchema =
     SchemaCriterion("com.snowplowanalytics.snowplow", "referer_parser", "jsonschema", 1, 0)
 
+  private val localFile = "./referer-parser.json"
+
   /**
-   * Creates a RefererParserEnrichment instance from a Json.
+   * Creates a RefererParserConf from a Json.
    * @param c The referer_parser enrichment JSON
    * @param schemaKey provided for the enrichment, must be supported by this enrichment
-   * @return a configured RefererParserEnrichment instance
+   * @return a referer parser enrichment configuration
    */
-  def parse(
+  override def parse(
     c: Json,
     schemaKey: SchemaKey
-  ): ValidatedNel[String, RefererParserEnrichment] =
-    isParseable(c, schemaKey)
-      .leftMap(e => NonEmptyList.one(e))
-      .flatMap { _ =>
-        (
-          CirceUtils.extract[String](c, "parameters", "xx")
-            .toEither
-            .flatMap(f => Parser.unsafeCreate(f).value.leftMap(_.getMessage))
-            .toValidatedNel,
-          CirceUtils.extract[List[String]](c, "parameters", "internalDomains").toValidatedNel
-        ).mapN { (parser, domains) => RefererParserEnrichment(parser, domains) }
-        .toEither
-      }.toValidated
+  ): ValidatedNel[String, RefererParserConf] = (for {
+    _ <- isParseable(c, schemaKey).leftMap(NonEmptyList.one)
+    // better-monadic-for
+    conf <-
+      (
+        CirceUtils.extract[String](c, "parameters", "uri").toValidatedNel,
+        CirceUtils.extract[String](c, "parameters", "database").toValidatedNel,
+        CirceUtils.extract[List[String]](c, "parameters", "internalDomains").toValidatedNel
+      ).mapN { (uri, db, domains) => (uri, db, domains) }
+      .toEither
+    source <- getDatabaseUri(conf._1, conf._2).leftMap(NonEmptyList.one)
+  } yield RefererParserConf(List((source, localFile)), conf._3)).toValidated
+
+  /**
+   * Creates a RefererParserEnrichment from a RefererParserConf
+   * @param conf Configuration for the referer parser enrichment
+   * @return a referer parser enrichment
+   */
+  def apply[F[_]: Monad: CreateParser](
+    conf: RefererParserConf
+  ): EitherT[F, String, RefererParserEnrichment] = for {
+    db <- EitherT.fromEither[F](
+      conf.filesToCache.headOption.toRight("No files to cache"))
+    p <- EitherT(CreateParser[F].create(db._2)).leftMap(_.getMessage)
+  } yield RefererParserEnrichment(p, conf.internalDomains)
 }
 
 /**
  * Config for a referer_parser enrichment
+ * @param parser Referer parser
  * @param domains List of internal domains
  */
 final case class RefererParserEnrichment(
   parser: Parser,
   domains: List[String]
 ) extends Enrichment {
+
   /**
    * Extract details about the referer (sic). Uses the referer-parser library.
    * @param uri The referer URI to extract referer details from
@@ -69,9 +86,9 @@ final case class RefererParserEnrichment(
    */
   def extractRefererDetails(uri: URI, pageHost: String): Option[Referer] =
     parser.parse(uri, Option(pageHost), domains).map {
-      case SearchReferer(s, t) =>
+      case SearchReferer(m, s, t) =>
         val fixedTerm = t.flatMap(CU.fixTabsNewlines)
-        SearchReferer(s, fixedTerm)
+        SearchReferer(m, s, fixedTerm)
       case o => o
     }
 }
