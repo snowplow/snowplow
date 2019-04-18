@@ -56,7 +56,8 @@ import registry.{
   UserAgentUtilsEnrichment,
   UserAgentUtilsEnrichmentConfig,
   WeatherEnrichment,
-  WeatherEnrichmentConfig
+  WeatherEnrichmentConfig,
+  YauaaEnrichment
 }
 import registry.apirequest.{ApiRequestEnrichment, ApiRequestEnrichmentConfig}
 import registry.pii.PiiPseudonymizerEnrichment
@@ -133,57 +134,53 @@ object EnrichmentRegistry {
    */
   private def buildEnrichmentConfig(schemaKey: SchemaKey,
                                     enrichmentConfig: JValue,
-                                    localMode: Boolean): ValidatedNelMessage[Option[Tuple2[String, Enrichment]]] = {
-
+                                    localMode: Boolean): ValidatedNelMessage[Option[(String, Enrichment)]] = {
     val enabled = ScalazJson4sUtils.extract[Boolean](enrichmentConfig, "enabled").toValidationNel
-
     enabled match {
       case Success(false) => None.success.toValidationNel // Enrichment is disabled
-      case e => {
+      case _ =>
         val name = ScalazJson4sUtils.extract[String](enrichmentConfig, "name").toValidationNel
-        name.flatMap(nm => {
-
-          if (nm == "ip_lookups") {
-            IpLookupsEnrichment.parse(enrichmentConfig, schemaKey, localMode).map((nm, _).some)
-          } else if (nm == "anon_ip") {
-            AnonIpEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-          } else if (nm == "referer_parser") {
-            RefererParserEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-          } else if (nm == "campaign_attribution") {
-            CampaignAttributionEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-          } else if (nm == "user_agent_utils_config") {
-            UserAgentUtilsEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-          } else if (nm == "ua_parser_config") {
-            UaParserEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-          } else if (nm == "currency_conversion_config") {
-            CurrencyConversionEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-          } else if (nm == "javascript_script_config") {
-            JavascriptScriptEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-          } else if (nm == "event_fingerprint_config") {
-            EventFingerprintEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-          } else if (nm == "cookie_extractor_config") {
-            CookieExtractorEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-          } else if (nm == "http_header_extractor_config") {
-            HttpHeaderExtractorEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-          } else if (nm == "weather_enrichment_config") {
-            WeatherEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-          } else if (nm == "api_request_enrichment_config") {
-            ApiRequestEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-          } else if (nm == "sql_query_enrichment_config") {
-            SqlQueryEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-          } else if (nm == "pii_enrichment_config") {
-            PiiPseudonymizerEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-          } else if (nm == "iab_spiders_and_robots_enrichment") {
-            IabEnrichment.parse(enrichmentConfig, schemaKey, localMode).map((nm, _).some)
-          } else {
-            None.success // Enrichment is not recognized yet
-          }
+        name.flatMap(nm =>
+          nm match {
+            case "ip_lookups" =>
+              IpLookupsEnrichment.parse(enrichmentConfig, schemaKey, localMode).map((nm, _).some)
+            case "anon_ip" =>
+              AnonIpEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+            case "referer_parser" =>
+              RefererParserEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+            case "campaign_attribution" =>
+              CampaignAttributionEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+            case "user_agent_utils_config" =>
+              UserAgentUtilsEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+            case "ua_parser_config" =>
+              UaParserEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+            case "yauaa_enrichment_config" =>
+              YauaaEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+            case "currency_conversion_config" =>
+              CurrencyConversionEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+            case "javascript_script_config" =>
+              JavascriptScriptEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+            case "event_fingerprint_config" =>
+              EventFingerprintEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+            case "cookie_extractor_config" =>
+              CookieExtractorEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+            case "http_header_extractor_config" =>
+              HttpHeaderExtractorEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+            case "weather_enrichment_config" =>
+              WeatherEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+            case "api_request_enrichment_config" =>
+              ApiRequestEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+            case "sql_query_enrichment_config" =>
+              SqlQueryEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+            case "pii_enrichment_config" =>
+              PiiPseudonymizerEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+            case "iab_spiders_and_robots_enrichment" =>
+              IabEnrichment.parse(enrichmentConfig, schemaKey, localMode).map((nm, _).some)
+            case _ =>
+              None.success.toValidationNel // Enrichment is not recognized yet
         })
-      }
     }
-
   }
-
 }
 
 /**
@@ -270,6 +267,15 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    */
   def getUaParserEnrichment: Option[UaParserEnrichment] =
     getEnrichment[UaParserEnrichment]("ua_parser_config")
+
+  /**
+   * If the JSON with the config for the enrichment is present,
+   * returns the instance of [[YauaaEnrichment]] case class,
+   * already instantiated in [[EnrichmentRegistry.buildEnrichmentConfig]].
+   * If no config exists for the enrichment, [[None]] is returned.
+   */
+  def getYauaaEnrichment: Option[YauaaEnrichment] =
+    getEnrichment[YauaaEnrichment]("yauaa_enrichment_config")
 
   /**
    * Returns an Option boxing the JavascriptScriptEnrichment

@@ -174,6 +174,7 @@ class SnowplowRawEventLzoSpec extends Specification with EnrichJobSpec {
         false,
         false,
         false,
+        false,
         false)
 
       "correctly output 1 page view" in {

@@ -179,6 +179,7 @@ class LzoGoogleAnalyticsEventSpec extends Specification with EnrichJobSpec {
         false,
         false,
         false,
+        false,
         false)
 
       "correctly output 1 google analytics page view" in {
