@@ -31,9 +31,6 @@ import scala.util.control.NonFatal
 // Apache HTTP
 import org.apache.http.client.utils.URLEncodedUtils
 
-// Apache Commons
-import org.apache.commons.lang3.exception.ExceptionUtils
-
 // Apache Commons Codec
 import org.apache.commons.codec.binary.Base64
 
@@ -42,7 +39,10 @@ import scalaz._
 import Scalaz._
 
 // Scala URI
-import com.netaporter.uri.Uri
+import io.lemonlabs.uri.{Uri, Url}
+import io.lemonlabs.uri.config.UriConfig
+import io.lemonlabs.uri.decoding.PercentDecoder
+import io.lemonlabs.uri.encoding.percentEncode
 
 /**
  * General-purpose utils to help the
@@ -311,52 +311,35 @@ object ConversionUtils {
     URLEncoder.encode(str, enc)
 
   /**
-   * A wrapper around Java's
-   * URI.create().
+   * Parses a string to create a [[URI]].
+   * Parsing is relaxed, i.e. even if a URL is not correctly percent-encoded or not RFC 3986-compliant, it can be parsed.
    *
-   * Exceptions thrown by
-   * URI.create():
-   * 1. NullPointerException
-   *    if uri is null
-   * 2. IllegalArgumentException
-   *    if uri violates RFC 2396
-   *
-   * @param uri The URI string to
-   *        convert
-   * @param useNetaporter Whether to use the
-   *        com.netaporter.uri library
-   * @return an Option-boxed URI object, or an
-   *         error message, all
-   *         wrapped in a Validation
+   * @param uri String containing the URI to parse.
+   * @return [[Validation]] wrapping the result of the parsing:
+   *         - [[Success]] with the parsed URI if there was no error or with [[None]] if the input was `null`.
+   *         - [[Failure]] with the error message if something went wrong.
    */
-  def stringToUri(uri: String, useNetaporter: Boolean = false): Validation[String, Option[URI]] =
-    try {
-      val r = uri.replaceAll(" ", "%20") // Because so many raw URIs are bad, #346
-      Some(URI.create(r)).success
-    } catch {
-      case npe: NullPointerException => None.success
-      case iae: IllegalArgumentException =>
-        useNetaporter match {
-          case false => {
-            val netaporterUri = try {
-              Uri.parse(uri).success
-            } catch {
-              case NonFatal(e) =>
-                "Provided URI string [%s] could not be parsed by Netaporter: [%s]"
-                  .format(uri, ExceptionUtils.getRootCause(iae).getMessage)
-                  .fail
-            }
-            for {
-              parsedUri <- netaporterUri
-              finalUri  <- stringToUri(parsedUri.toString, true)
-            } yield finalUri
-          }
-          case true =>
-            "Provided URI string [%s] violates RFC 2396: [%s]"
-              .format(uri, ExceptionUtils.getRootCause(iae).getMessage)
-              .fail
+  def stringToUri(uri: String): Validation[String, Option[URI]] =
+    Try(
+      Option(uri) // to handle null
+        .map(_.replaceAll(" ", "%20"))
+        .map(URI.create)
+    ) match {
+      case util.Success(parsed) =>
+        parsed.success
+      case util.Failure(javaErr) =>
+        implicit val c =
+          UriConfig(decoder = PercentDecoder(ignoreInvalidPercentEncoding = true), encoder = percentEncode -- '+')
+        Uri
+          .parseTry(uri)
+          .map(_.toJavaURI) match {
+          case util.Success(javaURI) =>
+            Some(javaURI).success
+          case util.Failure(scalaErr) =>
+            "Provided URI [%s] could not be parsed, neither by Java parsing (error: [%s]) nor by Scala parsing (error: [%s])."
+              .format(uri, javaErr.getMessage, scalaErr.getMessage)
+              .failure
         }
-      case NonFatal(e) => "Unexpected error creating URI from string [%s]: [%s]".format(uri, e.getMessage).fail
     }
 
   /**
@@ -368,7 +351,7 @@ object ConversionUtils {
   def extractQuerystring(uri: URI, encoding: String): Validation[String, Map[String, String]] =
     Try(URLEncodedUtils.parse(uri, encoding).map(p => (p.getName -> p.getValue))).recoverWith {
       case NonFatal(_) =>
-        Try(Uri.parse(uri.toString).query.params).map(l => l.map(t => (t._1, t._2.getOrElse(""))))
+        Try(Url.parse(uri.toString).query.params).map(l => l.map(t => (t._1, t._2.getOrElse(""))))
     } match {
       case util.Success(s) => s.toMap.success
       case util.Failure(e) => s"Could not parse uri [$uri]. Uri parsing threw exception: [$e].".fail
