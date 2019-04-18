@@ -22,38 +22,109 @@ import Scalaz._
 
 // Specs2
 import org.specs2.{ScalaCheck, Specification}
+import org.specs2.mutable.{Specification => MutableSpecification}
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
-import org.scalacheck._
-import org.scalacheck.Arbitrary._
 
-class StringToUriSpec extends Specification with DataTables {
+class StringToUriSpec extends MutableSpecification with ValidationMatchers {
 
-  def is = s2"Parsing Strings into URIs should work $e1"
+  /** Helper to generate URLs with `chars` at different places in the path and in the query string, doubled, tripled, etc. */
+  private def generateUrlsWithChars(chars: String): List[String] = List(
+    s"http://www.example.com/a/b/$chars",
+    s"http://www.example.com/a$chars",
+    s"http://www.example.com/a$chars$chars",
+    s"http://www.example.com/a$chars$chars${chars}b/c",
+    s"http://www.example.com/a${chars}/c$chars${chars}d",
+    s"http://www.example.com/a${chars}b/456?d=e$chars${chars}f&g=h${chars}i&j=k",
+    s"http://www.example.com/a${chars}b/c?d=e&f=g$chars$chars${chars}h"
+  )
 
-  def e1 =
-    "SPEC NAME"     || "URI" | "EXPECTED" |
-      "Empty URI"   !! null ! None.success |
-      "Simple URI"  !! "https://google.com" ! Some(URI.create("https://google.com")).success |
-      "Complex URI" !! "http://www.google.com/search?q=gateway+oracle+cards+denise+linn&hl=en&client=safari" ! Some(
-        URI.create("http://www.google.com/search?q=gateway+oracle+cards+denise+linn&hl=en&client=safari")).success |
-      "Salvageable bad URI with raw spaces" !! "http://www.psychicbazaar.com/2-tarot-cards/genre/gothic/type/all/view/grid?n=24&utm_source=GoogleSearch&utm_medium=cpc&utm_campaign=uk-tarot--gothic-tarot&utm_term=bohemian gothic tarot&utm_content=33088202008&gclid=CN2LmteX2LkCFQKWtAodrSMASw" ! Some(
-        URI.create(
-          "http://www.psychicbazaar.com/2-tarot-cards/genre/gothic/type/all/view/grid?n=24&utm_source=GoogleSearch&utm_medium=cpc&utm_campaign=uk-tarot--gothic-tarot&utm_term=bohemian%20gothic%20tarot&utm_content=33088202008&gclid=CN2LmteX2LkCFQKWtAodrSMASw")).success |
-      "New salvageable bad URI" !! "http://adserver.adtech.de/adlink|3.0" ! Some(
-        URI.create("http://adserver.adtech.de/adlink%7C3.0")).success |
-      "Pipe in path"                                                  !! "http://www.example.com/a|b" ! Some(URI.create("http://www.example.com/a%7Cb")).success |
-      "Space in path"                                                 !! "http://www.example.com/a b" ! Some(URI.create("http://www.example.com/a%20b")).success |
-      "Pipe in qs"                                                    !! "http://www.example.com/?a=b|c" ! Some(URI.create("http://www.example.com/?a=b%7Cc")).success |
-      "Space in qs"                                                   !! "http://www.example.com/?a=b c" ! Some(URI.create("http://www.example.com/?a=b%20c")).success |
-      "Forward slash in qs"                                           !! "http://www.example.com/?a=b/c" ! Some(URI.create("http://www.example.com/?a=b/c")).success |
-      "Plus in qs"                                                    !! "http://www.example.com/?a=b+c" ! Some(URI.create("http://www.example.com/?a=b+c")).success |
-      "Salvageable URI with plus in qs"                               !! "http://www.example.com/|/?a=b+c" ! Some(
-        URI.create("http://www.example.com/%7C/?a=b%2Bc")).success |> { (_, uri, expected) =>
-      {
-        ConversionUtils.stringToUri(uri) must_== expected
-      }
+  "Parsing string into URI should" >> {
+    "work with null" >> {
+      ConversionUtils.stringToUri(null) must_== None.success
     }
+
+    "work with hostname having underscore" >> {
+      val url = "http://www.ex_ample.com"
+      ConversionUtils.stringToUri(url) must_== Some(URI.create(url)).success
+    }
+
+    "work with basic URL and not modify it" >> {
+      (List(
+        "http://www.example.com",
+        "http://www.example.com/",
+        "http://www.example.com/a",
+        "http://www.google.com/se+arch?q=gateway+oracle+cards+denise+linn&hl=en&client=safari"
+      ) ++ generateUrlsWithChars(""))
+        .map(url => ConversionUtils.stringToUri(url) must_== Some(URI.create(url)).success)
+    }
+
+    "work with URL with space and encode spaces as %20" >> {
+      val url = "http://www.example.com/sp a ce"
+      ConversionUtils.stringToUri(url) must_== Some(URI.create(url.replaceAll(" ", "%20"))).success
+    }
+
+    "work with correctly percent-encoded URL and not modify it" >> {
+      val url = "www.example.com/a%23b/?c=d%24e"
+      ConversionUtils.stringToUri(url) must_== Success(Some(URI.create(url)))
+    }
+
+    s"work with URL containing special characters or macros" >> {
+
+      /** Helper that encodes a URI in the same way as scala-uri. */
+      def encode(str: String) = {
+        val encoded = str
+          .replaceAll("%", "%25")
+          .replaceAll(" ", "%20")
+          .replaceAll("\\|", "%7C")
+          .replaceAll("\\$", "%24")
+          .replaceAll("\\{", "%7B")
+          .replaceAll("\\}", "%7D")
+          .replaceAll("\\[", "%5B")
+          .replaceAll("\\]", "%5D")
+          // 1st # is not encoded, all subsequent are
+          .replaceAll("#", "%23")
+          .replaceFirst("%23", "#")
+
+        // after a #, / ? = & are also encoded
+        encoded.indexOf("#") match {
+          case -1 => encoded
+          case i =>
+            val untilSharp = encoded.substring(0, i)
+            val afterSharpEncoded = encoded
+              .substring(i)
+              .replaceAll("\\?", "%3F")
+              .replaceAll("/", "%2F")
+              .replaceAll("=", "%3D")
+              .replaceAll("&", "%26")
+            untilSharp + afterSharpEncoded
+        }
+      }
+
+      val urls = generateUrlsWithChars("|") ++
+        generateUrlsWithChars("${a}") ++
+        generateUrlsWithChars("${a b}") ++
+        generateUrlsWithChars("$[a]") ++
+        generateUrlsWithChars("$[a b]") ++
+        generateUrlsWithChars("#{a}") ++
+        generateUrlsWithChars("#{a b}") ++
+        generateUrlsWithChars("#{{a}}") ++
+        generateUrlsWithChars("#{{a b}}") ++
+        generateUrlsWithChars("#a#") ++
+        generateUrlsWithChars("#a b#") ++
+        generateUrlsWithChars("##a##") ++
+        generateUrlsWithChars("##a b##") ++
+        generateUrlsWithChars("%a%") ++
+        generateUrlsWithChars("%a b%") ++
+        generateUrlsWithChars("%%a%%") ++
+        generateUrlsWithChars("%%a b%%") ++
+        generateUrlsWithChars("%%%a%%%") ++
+        generateUrlsWithChars("%%%a b%%%")
+
+      urls
+        .map(url => ConversionUtils.stringToUri(url) must_== Some(URI.create(encode(url))).success)
+    }
+  }
 }
 
 class ExplodeUriSpec extends Specification with DataTables {
