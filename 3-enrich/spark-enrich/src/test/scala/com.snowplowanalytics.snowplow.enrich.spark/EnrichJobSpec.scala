@@ -228,7 +228,8 @@ object EnrichJobSpec {
   private val igluCentralConfig = {
     val encoder = new Base64(true)
     new String(
-      encoder.encode("""|{
+      encoder.encode( //TODO: remove YAUAA Iglu when https://github.com/snowplow/iglu-central/pull/923 is merged
+        """|{
         |"schema": "iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-0",
         |"data": {
           |"cacheSize": 500,
@@ -240,6 +241,16 @@ object EnrichJobSpec {
             |"connection": {
               |"http": {
                 |"uri": "http://iglucentral.com"
+              |}
+            |}
+          |},
+          |{
+            |"name": "Iglu Central YAUAA enrichment",
+            |"priority": 1,
+            |"vendorPrefixes": [ "com.snowplowanalytics" ],
+            |"connection": {
+              |"http": {
+                |"uri": "http://iglucentral-dev.com.s3-website-us-east-1.amazonaws.com/yauaa_enrichment"
               |}
             |}
           |}
@@ -260,6 +271,7 @@ object EnrichJobSpec {
     resolverEnvVar.getOrElse(igluCentralConfig)
   }
 
+  /** Builds the JSON holding the configuration for all the enrichments. */
   def getEnrichments(
     anonOctets: String,
     anonOctetsEnabled: Boolean,
@@ -268,7 +280,8 @@ object EnrichJobSpec {
     javascriptScriptEnabled: Boolean,
     apiRequest: Boolean,
     sqlQuery: Boolean,
-    iabEnrichmentEnabled: Boolean
+    iabEnrichmentEnabled: Boolean,
+    yauaaEnrichmentEnabled: Boolean = false
   ): String = {
 
     /**
@@ -466,6 +479,14 @@ object EnrichJobSpec {
                 |}
               |},
               |{
+                |"schema": "iglu:com.snowplowanalytics.snowplow.enrichments/yauaa_enrichment_config/jsonschema/1-0-0",
+                |"data": {
+                  |"vendor": "com.snowplowanalytics.snowplow",
+                  |"name": "yauaa_enrichment_config",
+                  |"enabled": $yauaaEnrichmentEnabled
+                |}
+              |},
+              |{
                 |"schema": "iglu:com.snowplowanalytics.snowplow/campaign_attribution/jsonschema/1-0-1",
                 |"data": {
                   |"vendor": "com.snowplowanalytics.snowplow",
@@ -637,7 +658,8 @@ trait EnrichJobSpec extends SparkSpec {
     javascriptScriptEnabled: Boolean = false,
     apiRequestEnabled: Boolean = false,
     sqlQueryEnabled: Boolean = false,
-    iabEnrichmentEnabled: Boolean = false
+    iabEnrichmentEnabled: Boolean = false,
+    yauaaEnrichmentEnabled: Boolean = false
   ): Unit = {
     val input = mkTmpFile("input", lines)
     runEnrichJob(
@@ -650,7 +672,8 @@ trait EnrichJobSpec extends SparkSpec {
       javascriptScriptEnabled,
       apiRequestEnabled,
       sqlQueryEnabled,
-      iabEnrichmentEnabled
+      iabEnrichmentEnabled,
+      yauaaEnrichmentEnabled
     )
     deleteRecursively(input)
   }
@@ -670,7 +693,8 @@ trait EnrichJobSpec extends SparkSpec {
     javascriptScriptEnabled: Boolean,
     apiRequestEnabled: Boolean,
     sqlQueryEnabled: Boolean,
-    iabEnrichmentEnabled: Boolean
+    iabEnrichmentEnabled: Boolean,
+    yauaaEnrichmentEnabled: Boolean
   ): Unit = {
     val config = Array(
       "--input-folder",
@@ -690,7 +714,8 @@ trait EnrichJobSpec extends SparkSpec {
         javascriptScriptEnabled,
         apiRequestEnabled,
         sqlQueryEnabled,
-        iabEnrichmentEnabled
+        iabEnrichmentEnabled,
+        yauaaEnrichmentEnabled
       ),
       "--iglu-config",
       igluConfig,

@@ -505,10 +505,21 @@ object EnrichmentManager {
       case None => None.success
     }
 
+    // YAUAA enrichment
+    val yauaaContext = registry.getYauaaEnrichment match {
+      case Some(yauaaEnrichment) =>
+        yauaaEnrichment
+          .getYauaaContext(event.useragent)
+          .map(_.some)
+      case None => None.success
+    }
+
     // Assemble array of contexts prepared by built-in enrichments
     val preparedDerivedContexts = List(uaParser).collect {
       case Success(Some(context)) => context
     } ++ List(weatherContext).collect {
+      case Success(Some(context)) => context
+    } ++ List(yauaaContext).collect {
       case Success(Some(context)) => context
     } ++ List(iabContext).collect {
       case Success(Some(context)) => context
@@ -584,7 +595,8 @@ object EnrichmentManager {
 
     val third =
       (weatherContext.toValidationNel |@|
-        iabContext.toValidationNel) { (_, _) =>
+        yauaaContext.toValidationNel |@|
+        iabContext.toValidationNel) { (_, _, _) =>
         ()
       }
 
