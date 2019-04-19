@@ -97,6 +97,7 @@ class DerivedTimestampSpec extends Specification with DataTables {
           Option(sent),
           Option(created),
           Option(collected),
-          Option(truth)) must beRight(Option(expected))
+          Option(truth)
+        ) must beRight(Option(expected))
     }
 }

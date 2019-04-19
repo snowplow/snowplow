@@ -12,7 +12,6 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.utils.shredder
 
-import cats.syntax.either._
 import io.circe.generic.auto._
 import io.circe.parser._
 import io.circe.syntax._
@@ -35,7 +34,8 @@ class TypeHierarchySpec extends Specification {
         rootTstamp = CollectorTimestamp,
         refRoot = "events",
         refTree = List("events", "new_ticket"),
-        refParent = "events")
+        refParent = "events"
+      )
 
     val json = parse(s"""{
       "rootId": "$EventId",
@@ -58,6 +58,7 @@ class TypeHierarchySpec extends Specification {
         rootTstamp = CollectorTimestamp,
         refRoot = "events",
         refTree = List("events", "link_click", "elementClasses"),
-        refParent = "link_click")
+        refParent = "link_click"
+      )
   }
 }

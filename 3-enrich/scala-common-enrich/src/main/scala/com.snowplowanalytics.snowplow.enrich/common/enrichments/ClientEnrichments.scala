@@ -45,6 +45,6 @@ object ClientEnrichments {
             .catchNonFatal((width.toInt: JInteger, height.toInt: JInteger))
             .leftMap(_ => s"Field [$field]: view dimensions [$res] exceed Integer's max range")
         case _ => s"Field [$field]: [$res] does not contain valid view dimensions".asLeft
-    }
+      }
 
 }

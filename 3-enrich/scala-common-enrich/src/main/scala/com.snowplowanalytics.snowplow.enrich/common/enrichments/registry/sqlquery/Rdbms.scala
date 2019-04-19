@@ -43,7 +43,9 @@ trait Rdbms {
   def getConnection: EitherThrowable[Connection] = lastConnection match {
     case Right(c) if !c.isClosed => c.asRight
     case _ =>
-      try { lastConnection = DriverManager.getConnection(connectionString).asRight } catch {
+      try {
+        lastConnection = DriverManager.getConnection(connectionString).asRight
+      } catch {
         case e: SQLException => lastConnection = e.asLeft
       }
       lastConnection

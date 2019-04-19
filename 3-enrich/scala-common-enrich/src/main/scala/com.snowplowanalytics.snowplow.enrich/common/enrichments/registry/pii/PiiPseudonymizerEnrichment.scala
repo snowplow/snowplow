@@ -43,12 +43,14 @@ object PiiPseudonymizerEnrichment extends ParseableEnrichment {
       "jsonschema",
       2,
       0,
-      0)
+      0
+    )
 
-  def parse(
+  override def parse(
     config: Json,
-    schemaKey: SchemaKey
-  ): ValidatedNel[String, PiiPseudonymizerEnrichment] = {
+    schemaKey: SchemaKey,
+    localMode: Boolean = false
+  ): ValidatedNel[String, PiiPseudonymizerConf] = {
     for {
       conf <- matchesSchema(config, schemaKey)
       emitIdentificationEvent = CirceUtils
@@ -62,7 +64,7 @@ object PiiPseudonymizerEnrichment extends ParseableEnrichment {
         .extract[PiiStrategyPseudonymize](config, "parameters", "strategy")
         .toEither
       piiFieldList <- extractFields(piiFields)
-    } yield PiiPseudonymizerEnrichment(piiFieldList, emitIdentificationEvent, piiStrategy)
+    } yield PiiPseudonymizerConf(piiFieldList, emitIdentificationEvent, piiStrategy)
   }.toValidatedNel
 
   private[pii] def getHashFunction(strategyFunction: String): Either[String, DigestFunction] =
@@ -141,8 +143,8 @@ object PiiPseudonymizerEnrichment extends ParseableEnrichment {
 final case class PiiStrategyPseudonymize(
   functionName: String,
   hashFunction: DigestFunction,
-  salt: String)
-    extends PiiStrategy {
+  salt: String
+) extends PiiStrategy {
   val TextEncoding = "UTF-8"
   override def scramble(clearText: String): String = hash(clearText + salt)
   def hash(text: String): String = hashFunction(text.getBytes(TextEncoding))
@@ -158,9 +160,9 @@ final case class PiiStrategyPseudonymize(
  * effectively a scalar field in the EnrichedEvent, whereas a `json` is a "context" formatted field
  * and it can either contain a single value in the case of unstruct_event, or an array in the case
  * of derived_events and contexts.
- * @param fieldList a list of configured PiiFields
- * @param emitIdentificationEvent whether to emit an identification event
- * @param strategy the pseudonymization strategy to use
+ * @param a list of configured PiiFields
+ * @param whether to emit an identification event
+ * @param the pseudonymization strategy to use
  */
 final case class PiiPseudonymizerEnrichment(
   fieldList: List[PiiField],
@@ -209,13 +211,13 @@ final case class PiiScalar(fieldMutator: Mutator) extends PiiField {
  * @param schemaCriterion the schema for which the strategy will be applied
  * @param jsonPath the path where the strategy will be applied
  */
-final case class PiiJson(fieldMutator: Mutator, schemaCriterion: SchemaCriterion, jsonPath: String)
-    extends PiiField {
+final case class PiiJson(
+  fieldMutator: Mutator,
+  schemaCriterion: SchemaCriterion,
+  jsonPath: String
+) extends PiiField {
 
-  override def applyStrategy(
-    fieldValue: String,
-    strategy: PiiStrategy
-  ): (String, ModifiedFields) =
+  override def applyStrategy(fieldValue: String, strategy: PiiStrategy): (String, ModifiedFields) =
     (for {
       value <- Option(fieldValue)
       parsed <- parse(value).toOption
@@ -225,7 +227,8 @@ final case class PiiJson(fieldMutator: Mutator, schemaCriterion: SchemaCriterion
           val contextMapped = jObjectMap.map(mapContextTopFields(_, strategy))
           (
             Json.obj(contextMapped.mapValues(_._1).toList: _*),
-            contextMapped.values.map(_._2).flatten)
+            contextMapped.values.map(_._2).flatten
+          )
         }
         .getOrElse((parsed, List.empty[JsonModifiedField]))
     } yield (substituted.noSpaces, modifiedFields.toList)).getOrElse((null, List.empty))
@@ -249,10 +252,7 @@ final case class PiiJson(fieldMutator: Mutator, schemaCriterion: SchemaCriterion
   }
 
   /** Returns a modified context or unstruct event along with a list of modified fields. */
-  private def getModifiedContext(
-    jv: Json,
-    strategy: PiiStrategy
-  ): (Json, List[JsonModifiedField]) =
+  private def getModifiedContext(jv: Json, strategy: PiiStrategy): (Json, List[JsonModifiedField]) =
     jv.asObject
       .map { context =>
         val (obj, fields) = modifyObjectIfSchemaMatches(context.toList, strategy)
@@ -273,13 +273,14 @@ final case class PiiJson(fieldMutator: Mutator, schemaCriterion: SchemaCriterion
       schema <- fieldsObj.get("schema")
       schemaStr <- schema.asString
       parsedSchemaMatches <- SchemaKey.fromUri(schemaStr).map(schemaCriterion.matches).toOption
-      data <- fieldsObj.get("data") if parsedSchemaMatches
+      // withFilter generates an unused variable
+      _ <- if (parsedSchemaMatches) Some(()) else None
+      data <- fieldsObj.get("data")
       updated = jsonPathReplace(data, strategy, schemaStr)
-    } yield
-      (
-        JsonObject(fieldsObj.updated("schema", schema).updated("data", updated._1).toList: _*),
-        updated._2
-      )).getOrElse((JsonObject(context: _*), List()))
+    } yield (
+      JsonObject(fieldsObj.updated("schema", schema).updated("data", updated._1).toList: _*),
+      updated._2
+    )).getOrElse((JsonObject(context: _*), List()))
   }
 
   /**
@@ -328,7 +329,8 @@ private final case class ScrambleMapFunction(
               originalValue,
               newValue,
               jsonPath,
-              schema)
+              schema
+            )
             newValue
           case default: AnyRef => default
         }

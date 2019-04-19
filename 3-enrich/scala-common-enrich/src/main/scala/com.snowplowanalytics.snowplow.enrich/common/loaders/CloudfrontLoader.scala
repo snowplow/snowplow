@@ -121,9 +121,11 @@ object CloudfrontLoader extends Loader[String] {
   def toTimestamp(date: String, time: String): Either[String, DateTime] =
     Either
       .catchNonFatal(DateTime.parse("%sT%s+00:00".format(date, time)))
-      .leftMap(e =>
-        s"Unexpected exception converting date [$date] and time [$time] to timestamp:" +
-          s" [${e.getMessage}]")
+      .leftMap(
+        e =>
+          s"Unexpected exception converting date [$date] and time [$time] to timestamp:" +
+            s" [${e.getMessage}]"
+      )
 
   /**
    * Checks whether a String field is a hyphen "-", which is used by CloudFront to signal a null.

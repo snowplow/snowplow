@@ -75,8 +75,10 @@ object RedirectAdapter extends Adapter {
       Monad[F].pure("Querystring is empty: cannot be a valid URI redirect".invalidNel)
     } else {
       originalParams.get("u") match {
-        case None => Monad[F].pure(
-          "Querystring does not contain u parameter: not a valid URI redirect".invalidNel)
+        case None =>
+          Monad[F].pure(
+            "Querystring does not contain u parameter: not a valid URI redirect".invalidNel
+          )
         case Some(u) =>
           val json = buildUriRedirect(u)
           val newParams: Either[String, Map[String, String]] =
@@ -108,7 +110,8 @@ object RedirectAdapter extends Adapter {
                 contentType = payload.contentType,
                 source = payload.source,
                 context = payload.context
-              ))
+              )
+            )
           } yield ev).leftMap(e => NonEmptyList.one(e)).toValidated)
       }
     }

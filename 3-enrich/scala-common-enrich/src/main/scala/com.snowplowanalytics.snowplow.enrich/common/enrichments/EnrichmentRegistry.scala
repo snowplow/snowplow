@@ -13,12 +13,11 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 
-import java.net.URI
-
 import cats.Monad
 import cats.data.{EitherT, NonEmptyList, ValidatedNel}
 import cats.effect.Clock
 import cats.implicits._
+import com.snowplowanalytics.forex.CreateForex
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SelfDescribingData}
@@ -27,9 +26,9 @@ import com.snowplowanalytics.refererparser.CreateParser
 import io.circe._
 
 import registry._
-import registry.apirequest.{ApiRequestEnrichment, ApiRequestEnrichmentConfig}
+import registry.apirequest.ApiRequestEnrichment
 import registry.pii.PiiPseudonymizerEnrichment
-import registry.sqlquery.{SqlQueryEnrichment, SqlQueryEnrichmentConfig}
+import registry.sqlquery.SqlQueryEnrichment
 import utils.CirceUtils
 
 /** Companion which holds a constructor for the EnrichmentRegistry. */
@@ -53,14 +52,20 @@ object EnrichmentRegistry {
   ): F[ValidatedNel[String, List[EnrichmentConf]]] =
     (for {
       sd <- EitherT.fromEither[F](
-        SelfDescribingData.parse(json).leftMap(parseError => NonEmptyList.one(parseError.code)))
-      _ <- client.check(sd).leftMap(e => NonEmptyList.one(e.toString))
+        SelfDescribingData.parse(json).leftMap(parseError => NonEmptyList.one(parseError.code))
+      )
+      _ <- client
+        .check(sd)
+        .leftMap(e => NonEmptyList.one(e.toString))
         .subflatMap { _ =>
           EnrichmentConfigSchemaCriterion.matches(sd.schema) match {
             case true => ().asRight
-            case false => NonEmptyList.one(
-              s"Schema criterion $EnrichmentConfigSchemaCriterion does not match schema ${sd.schema}"
-            ).asLeft
+            case false =>
+              NonEmptyList
+                .one(
+                  s"Schema criterion $EnrichmentConfigSchemaCriterion does not match schema ${sd.schema}"
+                )
+                .asLeft
           }
         }
       enrichments <- EitherT.fromEither[F](json.asArray match {
@@ -74,254 +79,148 @@ object EnrichmentRegistry {
         .map { json =>
           for {
             sd <- EitherT.fromEither[F](
-              SelfDescribingData.parse(json).leftMap(pe => NonEmptyList.one(pe.code)))
+              SelfDescribingData.parse(json).leftMap(pe => NonEmptyList.one(pe.code))
+            )
             _ <- client.check(sd).leftMap(e => NonEmptyList.one(e.toString))
-            conf <- buildEnrichmentConfig[F](sd.schema, sd.data, localMode)
+            conf <- EitherT.fromEither[F](
+              buildEnrichmentConfig(sd.schema, sd.data, localMode).toEither
+            )
           } yield conf
         }
         .sequence
-        .map(_.flatten.toMap)
-    } yield configs).map(EnrichmentRegistry.apply).toValidated
+        .map(_.flatten)
+    } yield configs).toValidated
+
+  // todo: ValidatedNel?
+  def build[F[_]: Monad: CreateForex: CreateParser: CreateIabClient: CreateUaParser](
+    confs: List[EnrichmentConf]
+  ): EitherT[F, String, EnrichmentRegistry[F]] =
+    confs.foldLeft(EitherT.pure[F, String](EnrichmentRegistry[F]())) { (er, e) =>
+      e match {
+        case c: ApiRequestConf => er.map(_.copy(apiRequest = c.enrichment.some))
+        case c: PiiPseudonymizerConf => er.map(_.copy(piiPseudonymizer = c.enrichment.some))
+        case c: SqlQueryConf => er.map(_.copy(sqlQuery = c.enrichment.some))
+        case c: AnonIpConf => er.map(_.copy(anonIp = c.enrichment.some))
+        case c: CampaignAttributionConf => er.map(_.copy(campaignAttribution = c.enrichment.some))
+        case c: CookieExtractorConf => er.map(_.copy(cookieExtractor = c.enrichment.some))
+        case c: CurrencyConversionConf =>
+          for {
+            enrichment <- EitherT.right(c.enrichment[F])
+            registry <- er
+          } yield registry.copy(currencyConversion = enrichment.some)
+        case c: EventFingerprintConf => er.map(_.copy(eventFingerprint = c.enrichment.some))
+        case c: HttpHeaderExtractorConf => er.map(_.copy(httpHeaderExtractor = c.enrichment.some))
+        case c: IabConf =>
+          for {
+            enrichment <- EitherT.right(c.enrichment[F])
+            registry <- er
+          } yield registry.copy(iab = enrichment.some)
+        case c: IpLookupsConf => er.map(_.copy(ipLookups = c.enrichment.some))
+        case c: JavascriptScriptConf => er.map(_.copy(javascriptScript = c.enrichment.some))
+        case c: RefererParserConf =>
+          for {
+            enrichment <- c.enrichment[F]
+            registry <- er
+          } yield registry.copy(refererParser = enrichment.some)
+        case c: UaParserConf =>
+          for {
+            enrichment <- c.enrichment[F]
+            registry <- er
+          } yield registry.copy(uaParser = enrichment.some)
+        case c: UserAgentUtilsConf.type => er.map(_.copy(userAgentUtils = c.enrichment.some))
+        case c: WeatherConf => er.map(_.copy(weather = c.enrichment.some))
+      }
+    }
 
   /**
-   * Builds an Enrichment from a Json if it has a recognized name field and matches a schema key
-   * @param enrichmentConfig JValue with enrichment information
-   * @param schemaKey SchemaKey for the JValue
-   * @param localMode Whether to use the local MaxMind data file, enabled for tests
-   * @return ValidatedNelMessage boxing Option boxing Tuple2 containing the Enrichment object and
-   * the schemaKey
+   * Builds an EnrichmentConf from a Json if it has a recognized name field and matches a schema key
+   * @param enrichmentConfig Json with enrichment information
+   * @param schemaKey SchemaKey for the Json
+   * @param localMode Whether to use local data files, enabled for tests
+   * @return ValidatedNelMessage boxing Option boxing an enrichment configuration
    */
-  private def buildEnrichmentConfig[F[_]: Monad: CreateParser](
+  private def buildEnrichmentConfig(
     schemaKey: SchemaKey,
     enrichmentConfig: Json,
     localMode: Boolean
-  ): EitherT[F, NonEmptyList[String], Option[(String, Enrichment)]] =
+  ): ValidatedNel[String, Option[EnrichmentConf]] =
     CirceUtils.extract[Boolean](enrichmentConfig, "enabled").toEither match {
-      case Right(false) => EitherT.rightT(None) // Enrichment is disabled
+      case Right(false) => None.validNel // Enrichment is disabled
       case _ =>
-        for {
-          nm <- EitherT.fromEither[F](CirceUtils
+        (for {
+          nm <- CirceUtils
             .extract[String](enrichmentConfig, "name")
-            .toValidatedNel
-            .toEither)
-          e = {
-            val v: F[ValidatedNel[String, Option[(String, Enrichment)]]] = if (nm == "ip_lookups") {
-              Monad[F].pure(
-                IpLookupsEnrichment.parse(enrichmentConfig, schemaKey, localMode).map((nm, _).some))
-            } else if (nm == "anon_ip") {
-              Monad[F].pure(
-                AnonIpEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some))
-            } else if (nm == "referer_parser") {
-              RefererParserEnrichment.parse[F](enrichmentConfig, schemaKey).map(_.map((nm, _).some))
-            } else if (nm == "campaign_attribution") {
-              Monad[F].pure(
-                CampaignAttributionEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some))
-            } else if (nm == "user_agent_utils_config") {
-              Monad[F].pure(
-                UserAgentUtilsEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some))
-            } else if (nm == "yauaa_enrichment_config") {
-              Monad[F].pure(YauaaEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some))
-            } else if (nm == "ua_parser_config") {
-              Monad[F].pure(
-                UaParserEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some))
-            } else if (nm == "currency_conversion_config") {
-              Monad[F].pure(CurrencyConversionEnrichmentConfig
-                .parse(enrichmentConfig, schemaKey).map((nm, _).some))
-            } else if (nm == "javascript_script_config") {
-              Monad[F].pure(JavascriptScriptEnrichmentConfig
-                .parse(enrichmentConfig, schemaKey).map((nm, _).some))
-            } else if (nm == "event_fingerprint_config") {
-              Monad[F].pure(EventFingerprintEnrichmentConfig
-                .parse(enrichmentConfig, schemaKey).map((nm, _).some))
-            } else if (nm == "cookie_extractor_config") {
-              Monad[F].pure(CookieExtractorEnrichmentConfig
-                .parse(enrichmentConfig, schemaKey).map((nm, _).some))
-            } else if (nm == "http_header_extractor_config") {
-              Monad[F].pure(HttpHeaderExtractorEnrichmentConfig
-                .parse(enrichmentConfig, schemaKey)
-                .map((nm, _).some))
-            } else if (nm == "weather_enrichment_config") {
-              Monad[F].pure(
-                WeatherEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some))
-            } else if (nm == "api_request_enrichment_config") {
-              Monad[F].pure(
-                ApiRequestEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some))
-            } else if (nm == "sql_query_enrichment_config") {
-              Monad[F].pure(
-                SqlQueryEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some))
-            } else if (nm == "pii_enrichment_config") {
-              Monad[F].pure(
-                PiiPseudonymizerEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some))
-            } else if (nm == "iab_spiders_and_robots_enrichment") {
-              Monad[F].pure(
-                IabEnrichment.parse(enrichmentConfig, schemaKey, localMode).map((nm, _).some))
-            } else {
-              Monad[F].pure(None.validNel) // Enrichment is not recognized yet
-            }
-            v
+            .toValidatedNel[String, String]
+            .toEither
+          e = if (nm == "ip_lookups") {
+            IpLookupsEnrichment.parse(enrichmentConfig, schemaKey, localMode).map(_.some)
+          } else if (nm == "anon_ip") {
+            AnonIpEnrichment.parse(enrichmentConfig, schemaKey).map(_.some)
+          } else if (nm == "referer_parser") {
+            RefererParserEnrichment.parse(enrichmentConfig, schemaKey, localMode).map(_.some)
+          } else if (nm == "campaign_attribution") {
+            CampaignAttributionEnrichment.parse(enrichmentConfig, schemaKey).map(_.some)
+          } else if (nm == "user_agent_utils_config") {
+            UserAgentUtilsEnrichmentConfig.parse(enrichmentConfig, schemaKey).map(_.some)
+          } else if (nm == "ua_parser_config") {
+            UaParserEnrichment.parse(enrichmentConfig, schemaKey).map(_.some)
+          } else if (nm == "yauaa_enrichment_config") {
+            YauaaEnrichment.parse(enrichmentConfig, schemaKey).map(_.some)
+          } else if (nm == "currency_conversion_config") {
+            CurrencyConversionEnrichment
+              .parse(enrichmentConfig, schemaKey)
+              .map(_.some)
+          } else if (nm == "javascript_script_config") {
+            JavascriptScriptEnrichment
+              .parse(enrichmentConfig, schemaKey)
+              .map(_.some)
+          } else if (nm == "event_fingerprint_config") {
+            EventFingerprintEnrichment
+              .parse(enrichmentConfig, schemaKey)
+              .map(_.some)
+          } else if (nm == "cookie_extractor_config") {
+            CookieExtractorEnrichment
+              .parse(enrichmentConfig, schemaKey)
+              .map(_.some)
+          } else if (nm == "http_header_extractor_config") {
+            HttpHeaderExtractorEnrichment
+              .parse(enrichmentConfig, schemaKey)
+              .map(_.some)
+          } else if (nm == "weather_enrichment_config") {
+            WeatherEnrichment.parse(enrichmentConfig, schemaKey).map(_.some)
+          } else if (nm == "api_request_enrichment_config") {
+            ApiRequestEnrichment.parse(enrichmentConfig, schemaKey).map(_.some)
+          } else if (nm == "sql_query_enrichment_config") {
+            SqlQueryEnrichment.parse(enrichmentConfig, schemaKey).map(_.some)
+          } else if (nm == "pii_enrichment_config") {
+            PiiPseudonymizerEnrichment.parse(enrichmentConfig, schemaKey).map(_.some)
+          } else if (nm == "iab_spiders_and_robots_enrichment") {
+            IabEnrichment.parse(enrichmentConfig, schemaKey, localMode).map(_.some)
+          } else {
+            None.validNel // Enrichment is not recognized
           }
-          enrichment <- EitherT(e.map(_.toEither))
-        } yield enrichment
+          enrichment <- e.toEither
+        } yield enrichment).toValidated
     }
 }
 
-/**
- * A registry to hold all of our enrichment configurations.
- * In the future this may evolve to holding all of our enrichments themselves.
- * @param configs Map whose keys are enrichment names and whose values are the corresponding
- * enrichment objects
- */
-final case class EnrichmentRegistry(private val configs: EnrichmentMap) {
-
-  /**
-   * A list of all files required by enrichments in the registry. This is specified as a pair with
-   * the first element providing the source location of the file and the second indicating the
-   * expected local path.
-   */
-  val filesToCache: List[(URI, String)] =
-    configs.values.flatMap(_.filesToCache).toList
-
-  /**
-   * Returns an Option boxing the AnonIpEnrichment config value if present, or None if not
-   * @return Option boxing the AnonIpEnrichment instance
-   */
-  def getAnonIpEnrichment: Option[AnonIpEnrichment] =
-    getEnrichment[AnonIpEnrichment]("anon_ip")
-
-  /**
-   * Returns an Option boxing the IpLookupsEnrichment config value if present, or None if not
-   * @return Option boxing the IpLookupsEnrichment instance
-   */
-  def getIpLookupsEnrichment: Option[IpLookupsEnrichment] =
-    getEnrichment[IpLookupsEnrichment]("ip_lookups")
-
-  /**
-   * Returns an Option boxing the RefererParserEnrichment config value if present, or None if not
-   * @return Option boxing the RefererParserEnrichment instance
-   */
-  def getRefererParserEnrichment: Option[RefererParserEnrichment] =
-    getEnrichment[RefererParserEnrichment]("referer_parser")
-
-  /**
-   * Returns an Option boxing the CampaignAttributionEnrichment config value if present, or None if
-   * not
-   * @return Option boxing the CampaignAttributionEnrichment instance
-   */
-  def getCampaignAttributionEnrichment: Option[CampaignAttributionEnrichment] =
-    getEnrichment[CampaignAttributionEnrichment]("campaign_attribution")
-
-  /**
-   * Returns an Option boxing the CurrencyConversionEnrichment config value if present, or None if
-   * not
-   * @return Option boxing the CurrencyConversionEnrichment instance
-   */
-  def getCurrencyConversionEnrichment: Option[CurrencyConversionEnrichment] =
-    getEnrichment[CurrencyConversionEnrichment]("currency_conversion_config")
-
-  /**
-   * Returns an Option boxing the UserAgentUtilsEnrichment config value if present, or None if not
-   * @return Option boxing the UserAgentUtilsEnrichment instance
-   */
-  def getUserAgentUtilsEnrichment: Option[UserAgentUtilsEnrichment.type] =
-    getEnrichment[UserAgentUtilsEnrichment.type]("user_agent_utils_config")
-
-  /**
-   * Returns an Option boxing the UaParserEnrichment config value if present, or None if not
-   * @return Option boxing the UaParserEnrichment instance
-   */
-  def getUaParserEnrichment: Option[UaParserEnrichment] =
-    getEnrichment[UaParserEnrichment]("ua_parser_config")
-
-  /**
-   * If the JSON with the config for the enrichment is present,
-   * returns the instance of [[YauaaEnrichment]] case class,
-   * already instantiated in [[EnrichmentRegistry.buildEnrichmentConfig]].
-   * If no config exists for the enrichment, [[None]] is returned.
-   */
-  def getYauaaEnrichment: Option[YauaaEnrichment] =
-    getEnrichment[YauaaEnrichment]("yauaa_enrichment_config")
-
-  /**
-   * Returns an Option boxing the JavascriptScriptEnrichment config value if present, or None if not
-   * @return Option boxing the JavascriptScriptEnrichment instance
-   */
-  def getJavascriptScriptEnrichment: Option[JavascriptScriptEnrichment] =
-    getEnrichment[JavascriptScriptEnrichment]("javascript_script_config")
-
-  /**
-   * Returns an Option boxing the EventFingerprintEnrichment config value if present, or None if not
-   * @return Option boxing the EventFingerprintEnrichment instance
-   */
-  def getEventFingerprintEnrichment: Option[EventFingerprintEnrichment] =
-    getEnrichment[EventFingerprintEnrichment]("event_fingerprint_config")
-
-  /**
-   * Returns an Option boxing the CookieExtractorEnrichment config value if present, or None if not
-   * @return Option boxing the CookieExtractorEnrichment instance
-   */
-  def getCookieExtractorEnrichment: Option[CookieExtractorEnrichment] =
-    getEnrichment[CookieExtractorEnrichment]("cookie_extractor_config")
-
-  /**
-   * Returns an Option boxing the HttpHeaderExtractorEnrichment config value if present, or None if
-   * not
-   * @return Option boxing the HttpHeaderExtractorEnrichment instance
-   */
-  def getHttpHeaderExtractorEnrichment: Option[HttpHeaderExtractorEnrichment] =
-    getEnrichment[HttpHeaderExtractorEnrichment]("http_header_extractor_config")
-
-  /**
-   * Returns an Option boxing the WeatherEnrichment config value if present, or None if not
-   * @return Option boxing the WeatherEnrichment instance
-   */
-  def getWeatherEnrichment: Option[WeatherEnrichment] =
-    getEnrichment[WeatherEnrichment]("weather_enrichment_config")
-
-  /**
-   * Returns an Option boxing the ApiRequestEnrichment config value if present, or None if not
-   * @return Option boxing the ApiRequestEnrichment instance
-   */
-  def getApiRequestEnrichment: Option[ApiRequestEnrichment] =
-    getEnrichment[ApiRequestEnrichment]("api_request_enrichment_config")
-
-  /**
-   * Returns an Option boxing the SqlQueryEnrichment config value if present, or None if not
-   * @return Option boxing the SqlQueryEnrichment instance
-   */
-  def getSqlQueryEnrichment: Option[SqlQueryEnrichment] =
-    getEnrichment[SqlQueryEnrichment]("sql_query_enrichment_config")
-
-  /**
-   * Returns an Option boxing the PiiPseudonymizerEnrichment config value if present, or None if not
-   * @return Option boxing the PiiPseudonymizerEnrichment instance
-   */
-  def getPiiPseudonymizerEnrichment: Option[PiiPseudonymizerEnrichment] =
-    getEnrichment[PiiPseudonymizerEnrichment]("pii_enrichment_config")
-
-  /**
-   * Returns an Option boxing the IabEnrichment config value if present, or None if not
-   * @return Option boxing the IabEnrichment instance
-   */
-  def getIabEnrichment: Option[IabEnrichment] =
-    getEnrichment[IabEnrichment]("iab_spiders_and_robots_enrichment")
-
-  /**
-   * Returns an Option boxing an Enrichment config value if present, or None if not
-   * @tparam A Expected type of the enrichment to get
-   * @param name The name of the enrichment to get
-   * @return Option boxing the enrichment
-   */
-  private def getEnrichment[A <: Enrichment: Manifest](name: String): Option[A] =
-    configs.get(name).map(cast[A](_))
-
-  /**
-   * Adapted from
-   * http://stackoverflow.com/questions/6686992/scala-asinstanceof-with-parameterized-types
-   * Used to convert an Enrichment to a specific subtype of Enrichment
-   * @tparam A Type to cast to
-   * @param a The object to cast to type A
-   * @return a, converted to type A
-   */
-  private def cast[A <: AnyRef: Manifest](a: Any): A =
-    manifest.runtimeClass.cast(a).asInstanceOf[A]
-}
+/** A registry to hold all of our enrichments. */
+final case class EnrichmentRegistry[F[_]](
+  apiRequest: Option[ApiRequestEnrichment] = None,
+  piiPseudonymizer: Option[PiiPseudonymizerEnrichment] = None,
+  sqlQuery: Option[SqlQueryEnrichment] = None,
+  anonIp: Option[AnonIpEnrichment] = None,
+  campaignAttribution: Option[CampaignAttributionEnrichment] = None,
+  cookieExtractor: Option[CookieExtractorEnrichment] = None,
+  currencyConversion: Option[CurrencyConversionEnrichment[F]] = None,
+  eventFingerprint: Option[EventFingerprintEnrichment] = None,
+  httpHeaderExtractor: Option[HttpHeaderExtractorEnrichment] = None,
+  iab: Option[IabEnrichment] = None,
+  ipLookups: Option[IpLookupsEnrichment] = None,
+  javascriptScript: Option[JavascriptScriptEnrichment] = None,
+  refererParser: Option[RefererParserEnrichment] = None,
+  uaParser: Option[UaParserEnrichment] = None,
+  userAgentUtils: Option[UserAgentUtilsEnrichment.type] = None,
+  weather: Option[WeatherEnrichment] = None,
+  yauaa: Option[YauaaEnrichment] = None
+)

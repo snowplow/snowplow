@@ -112,7 +112,8 @@ object GoogleAnalyticsAdapter extends Adapter {
     ),
     "screenview" -> MPData(
       SchemaKey(Vendor, "screen_view", Format, SchemaVersion),
-      Map("cd" -> idTranslation("screenName"))),
+      Map("cd" -> idTranslation("screenName"))
+    ),
     "event" -> MPData(
       SchemaKey(Vendor, "event", Format, SchemaVersion),
       Map(
@@ -186,7 +187,8 @@ object GoogleAnalyticsAdapter extends Adapter {
     val ct = unstructEventData(PageViewHitType) :: List(
       MPData(
         SchemaKey(GaVendor, "undocumented", Format, SchemaVersion),
-        List("a", "jid", "gjid").map(e => e -> idTranslation(e)).toMap),
+        List("a", "jid", "gjid").map(e => e -> idTranslation(e)).toMap
+      ),
       MPData(
         SchemaKey(GaVendor, "private", Format, SchemaVersion),
         (List("_v", "_u", "_gid").map(e => e -> idTranslation(e.tail)) ++
@@ -205,7 +207,8 @@ object GoogleAnalyticsAdapter extends Adapter {
       ),
       MPData(
         SchemaKey(Vendor, "user", Format, SchemaVersion),
-        Map("cid" -> idTranslation("clientId"), "uid" -> idTranslation("userId"))),
+        Map("cid" -> idTranslation("clientId"), "uid" -> idTranslation("userId"))
+      ),
       MPData(
         SchemaKey(Vendor, "session", Format, SchemaVersion),
         Map(
@@ -243,7 +246,8 @@ object GoogleAnalyticsAdapter extends Adapter {
       ),
       MPData(
         SchemaKey(Vendor, "link", Format, SchemaVersion),
-        Map("linkid" -> idTranslation("id"))),
+        Map("linkid" -> idTranslation("id"))
+      ),
       MPData(
         SchemaKey(Vendor, "app", Format, SchemaVersion),
         Map(
@@ -264,13 +268,16 @@ object GoogleAnalyticsAdapter extends Adapter {
       ),
       MPData(
         SchemaKey(Vendor, "content_experiment", Format, SchemaVersion),
-        Map("xid" -> idTranslation("id"), "xvar" -> idTranslation("variant"))),
+        Map("xid" -> idTranslation("id"), "xvar" -> idTranslation("variant"))
+      ),
       MPData(
         SchemaKey(Vendor, "hit", Format, SchemaVersion),
-        Map("t" -> idTranslation("type"), "ni" -> booleanTranslation("nonInteractionHit"))),
+        Map("t" -> idTranslation("type"), "ni" -> booleanTranslation("nonInteractionHit"))
+      ),
       MPData(
         SchemaKey(Vendor, "promotion_action", Format, SchemaVersion),
-        Map("promoa" -> idTranslation("promotionAction")))
+        Map("promoa" -> idTranslation("promotionAction"))
+      )
     )
     ct.map(d => d.schemaKey -> d.translationTable).toMap
   }
@@ -384,7 +391,8 @@ object GoogleAnalyticsAdapter extends Adapter {
       Map(
         s"${valueInFieldNameIndicator}cg" -> intTranslation("index"),
         "cg" -> idTranslation("value")
-      ))
+      )
+    )
   )
 
   // List of schemas for which we need to re attach the currency
@@ -426,7 +434,7 @@ object GoogleAnalyticsAdapter extends Adapter {
       "iv" -> "ti_ca",
       "cu" -> (if (hitType == "transaction") "tr_cu" else "ti_cu"),
       "ua" -> "ua"
-  )
+    )
 
   /**
    * Converts a CollectorPayload instance of (possibly multiple) Google Analytics payloads into raw
@@ -446,8 +454,8 @@ object GoogleAnalyticsAdapter extends Adapter {
       rawEvents <- body.lines.map(parsePayload(_, payload)).toList.toNel
     } yield rawEvents) match {
       case Some(rawEvents) => Monad[F].pure(rawEvents.sequence)
-      case None => Monad[F].pure(
-        s"Request body is empty: no $VendorName events to process".invalidNel)
+      case None =>
+        Monad[F].pure(s"Request body is empty: no $VendorName events to process".invalidNel)
     }
 
   /**
@@ -461,7 +469,8 @@ object GoogleAnalyticsAdapter extends Adapter {
     payload: CollectorPayload
   ): ValidatedNel[String, RawEvent] = {
     val params = toMap(
-      URLEncodedUtils.parse(URI.create(s"http://localhost/?$bodyPart"), UTF_8).asScala.toList)
+      URLEncodedUtils.parse(URI.create(s"http://localhost/?$bodyPart"), UTF_8).asScala.toList
+    )
     params.get("t") match {
       case None => s"No $VendorName t parameter provided: cannot determine hit type".invalidNel
       case Some(hitType) =>
@@ -521,37 +530,6 @@ object GoogleAnalyticsAdapter extends Adapter {
             }
             .leftMap(NonEmptyList.one)
         } yield payload).toValidated
-      /**(
-          translationTable,
-          schemaVal,
-          simpleContexts,
-          compositeContexts
-        ).mapN { (trTable, schema, contexts, compContexts) =>
-          val contextJsons = (contexts.toList ++ compContexts)
-            .collect {
-              // an unnecessary pageview context might have been built so we need to remove it
-              case (s, d)
-                  if hitType != PageViewHitType ||
-                    s != unstructEventData(PageViewHitType).schemaKey =>
-                buildJson(s.toSchemaUri, d)
-            }
-          val contextParam =
-            if (contextJsons.isEmpty) Map.empty
-            else Map("co" -> toContexts(contextJsons).noSpaces)
-
-          translatePayload(params, trTable)
-            .map { e =>
-              val unstructEvent = toUnstructEvent(buildJson(schema, e)).noSpaces
-              RawEvent(
-                api = payload.api,
-                parameters = contextParam ++ mappings ++
-                  Map("e" -> "ue", "ue_pr" -> unstructEvent, "tv" -> Protocol, "p" -> "srv"),
-                contentType = payload.contentType,
-                source = payload.source,
-                context = payload.context
-              )
-            }
-        }**/
     }
   }
 
@@ -749,7 +727,8 @@ object GoogleAnalyticsAdapter extends Adapter {
    * @return the break down of the field or a failure if it couldn't be parsed
    */
   private[registry] def breakDownCompField(
-    fieldName: String): Either[String, (List[String], List[String])] =
+    fieldName: String
+  ): Either[String, (List[String], List[String])] =
     fieldName match {
       case compositeFieldRegex(grps @ _*) => splitEvenOdd(grps.toList.filter(_.nonEmpty)).asRight
       case s if s.isEmpty => "Cannot parse empty composite field name".asLeft
@@ -760,7 +739,11 @@ object GoogleAnalyticsAdapter extends Adapter {
 
   /** Splits a list in two based on the oddness or evenness of their indices */
   private def splitEvenOdd[T](list: List[T]): (List[T], List[T]) = {
-    def go(l: List[T], even: List[T], odd: List[T]): (List[T], List[T], List[T]) = l match {
+    def go(
+      l: List[T],
+      even: List[T],
+      odd: List[T]
+    ): (List[T], List[T], List[T]) = l match {
       case h1 :: h2 :: t => go(t, h1 :: even, h2 :: odd)
       case h :: Nil => (Nil, h :: even, odd)
       case Nil => (Nil, even, odd)
@@ -792,9 +775,7 @@ object GoogleAnalyticsAdapter extends Adapter {
       "data" := fields
     )
 
-  private def traverseMap[G[_]: Functor: Applicative, K, V](
-    m: Map[K, G[V]]
-  ): G[Map[K, V]] =
+  private def traverseMap[G[_]: Functor: Applicative, K, V](m: Map[K, G[V]]): G[Map[K, V]] =
     m.toList
       .traverse {
         case (name, vnel) =>

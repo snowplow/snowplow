@@ -22,22 +22,25 @@ import utils.CirceUtils
 
 /** Companion object. Lets us create a AnonIpEnrichment from a Json. */
 object AnonIpEnrichment extends ParseableEnrichment {
-
-  val supportedSchema =
+  override val supportedSchema =
     SchemaCriterion("com.snowplowanalytics.snowplow", "anon_ip", "jsonschema", 1, 0)
 
   /**
-   * Creates an AnonIpEnrichment instance from a JValue.
+   * Creates an AnonIpEnrichment instance from a Json.
    * @param c The anon_ip enrichment JSON
    * @param schemaKey provided for the enrichment, must be supported by this enrichment
-   * @return a configured AnonIpEnrichment instance
+   * @return an AnonIpEnrichment configuration
    */
-  def parse(config: Json, schemaKey: SchemaKey): ValidatedNel[String, AnonIpEnrichment] =
+  override def parse(
+    config: Json,
+    schemaKey: SchemaKey,
+    localMode: Boolean = false
+  ): ValidatedNel[String, AnonIpConf] =
     (for {
       _ <- isParseable(config, schemaKey)
       param <- CirceUtils.extract[Int](config, "parameters", "anonOctets").toEither
       octets <- AnonOctets.fromInt(param)
-    } yield AnonIpEnrichment(octets)).toValidatedNel
+    } yield AnonIpConf(octets)).toValidatedNel
 }
 
 /** How many octets to anonymize? */
@@ -64,9 +67,7 @@ object AnonOctets extends Enumeration {
  * Config for an anon_ip enrichment
  * @param octets The number of octets to anonymize
  */
-case class AnonIpEnrichment(
-  octets: AnonOctets.AnonOctets
-) extends Enrichment {
+final case class AnonIpEnrichment(octets: AnonOctets.AnonOctets) extends Enrichment {
 
   /**
    * Anonymize the supplied IP address. octets is the number of octets in the IP address to

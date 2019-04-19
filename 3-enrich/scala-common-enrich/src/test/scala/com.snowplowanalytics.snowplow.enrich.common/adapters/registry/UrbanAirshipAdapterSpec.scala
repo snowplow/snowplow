@@ -23,10 +23,9 @@ import org.specs2.matcher.ValidatedMatchers
 import org.specs2.mutable.Specification
 
 import loaders._
+import utils.Clock._
 
 class UrbanAirshipAdapterSpec extends Specification with ValidatedMatchers {
-
-  implicit val resolver = SpecHelpers.IgluResolver
 
   object Shared {
     val api = CollectorApi("com.urbanairship.connect", "v1")
@@ -70,8 +69,9 @@ class UrbanAirshipAdapterSpec extends Specification with ValidatedMatchers {
       None,
       validPayload.noSpaces.some,
       Shared.cljSource,
-      Shared.context)
-    val actual = UrbanAirshipAdapter.toRawEvents(payload)
+      Shared.context
+    )
+    val actual = UrbanAirshipAdapter.toRawEvents(payload, SpecHelpers.client).value
 
     val expectedUnstructEventJson = json"""{
       "schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
@@ -118,14 +118,15 @@ class UrbanAirshipAdapterSpec extends Specification with ValidatedMatchers {
         None,
         invalidEvent.noSpaces.some,
         Shared.cljSource,
-        Shared.context)
-      UrbanAirshipAdapter.toRawEvents(payload) must beInvalid
+        Shared.context
+      )
+      UrbanAirshipAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid
     }
 
     "reject unparsable json" in {
       val payload =
         CollectorPayload(Shared.api, Nil, None, """{ """.some, Shared.cljSource, Shared.context)
-      UrbanAirshipAdapter.toRawEvents(payload) must beInvalid
+      UrbanAirshipAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid
     }
 
     "reject badly formatted json" in {
@@ -136,8 +137,9 @@ class UrbanAirshipAdapterSpec extends Specification with ValidatedMatchers {
           None,
           """{ "value": "str" }""".some,
           Shared.cljSource,
-          Shared.context)
-      UrbanAirshipAdapter.toRawEvents(payload) must beInvalid
+          Shared.context
+        )
+      UrbanAirshipAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid
     }
 
     "reject content types" in {
@@ -147,11 +149,13 @@ class UrbanAirshipAdapterSpec extends Specification with ValidatedMatchers {
         "a/type".some,
         validPayload.noSpaces.some,
         Shared.cljSource,
-        Shared.context)
-      val res = UrbanAirshipAdapter.toRawEvents(payload)
+        Shared.context
+      )
+      val res = UrbanAirshipAdapter.toRawEvents(payload, SpecHelpers.client).value
 
       res must beInvalid(
-        NonEmptyList.one("Content type of a/type provided, expected None for UrbanAirship"))
+        NonEmptyList.one("Content type of a/type provided, expected None for UrbanAirship")
+      )
     }
 
     "populate content-type as None (it's not applicable)" in {
@@ -170,7 +174,8 @@ class UrbanAirshipAdapterSpec extends Specification with ValidatedMatchers {
       context mustEqual Shared.context.copy(
         timestamp = DateTime
           .parse("2015-11-13T16:31:52.393Z")
-          .some) // it should be set to the "processed" field by the adapter
+          .some
+      ) // it should be set to the "processed" field by the adapter
     }
 
     "return the correct unstruct_event json" in {

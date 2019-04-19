@@ -12,7 +12,6 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.apirequest
 
-import cats.syntax.either._
 import io.circe._
 import io.circe.literal._
 import org.specs2.Specification
@@ -51,7 +50,8 @@ class OutputSpec extends Specification {
   def e3 = {
     val output = Output(
       "iglu:com.snowplowanalytics/complex_schema/jsonschema/1-0-0",
-      Some(JsonOutput("$.objects[1].deepNesting[3]")))
+      Some(JsonOutput("$.objects[1].deepNesting[3]"))
+    )
     output.parseResponse("""
         |{
         |  "value": 32,
