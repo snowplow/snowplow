@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2017 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,7 +10,7 @@
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 # Author::    Alex Dean (mailto:support@snowplowanalytics.com)
-# Copyright:: Copyright (c) 2012-2014 Snowplow Analytics Ltd
+# Copyright:: Copyright (c) 2012-2019 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
 require 'set'
@@ -23,6 +23,7 @@ require 'contracts'
 require 'iglu-client'
 require 'securerandom'
 require 'tempfile'
+require 'rest-client'
 
 # Ruby class to execute Snowplow's Hive jobs against Amazon EMR
 # using Elasticity (https://github.com/rslifka/elasticity).
@@ -35,6 +36,9 @@ module Snowplow
       # Constants
       JAVA_PACKAGE = "com.snowplowanalytics.snowplow"
       PARTFILE_REGEXP = ".*part-.*"
+      PARTFILE_GROUPBY_REGEXP = ".*(part-)\\d+-(.*)"
+      ATOMIC_EVENTS_PARTFILE_GROUPBY_REGEXP = ".*\/atomic-events\/(part-)\\d+-(.*)"
+      SHREDDED_TYPES_PARTFILE_GROUPBY_REGEXP = ".*\/shredded-types\/vendor=(.+)\/name=(.+)\/.+\/version=(.+)\/(part-)\\d+-(.*)"
       STREAM_ENRICH_REGEXP = ".*\.gz"
       SUCCESS_REGEXP = ".*_SUCCESS"
       STANDARD_HOSTED_ASSETS = "s3://snowplow-hosted-assets"
@@ -55,10 +59,11 @@ module Snowplow
       include Monitoring::Logging
       include Snowplow::EmrEtlRunner::Utils
       include Snowplow::EmrEtlRunner::S3
+      include Snowplow::EmrEtlRunner::EMR
 
       # Initializes our wrapper for the Amazon EMR client.
-      Contract Bool, Bool, Bool, Bool, Bool, Bool, Bool, Bool, ArchiveStep, ArchiveStep, ConfigHash, ArrayOf[String], String, TargetsHash, RdbLoaderSteps => EmrJob
-      def initialize(debug, staging, enrich, staging_stream_enrich, shred, es, archive_raw, rdb_load, archive_enriched, archive_shredded, config, enrichments_array, resolver, targets, rdbloader_steps)
+      Contract Bool, Bool, Bool, Bool, Bool, Bool, Bool, Bool, ArchiveStep, ArchiveStep, ConfigHash, ArrayOf[String], String, TargetsHash, RdbLoaderSteps, Bool, String => EmrJob
+      def initialize(debug, staging, enrich, staging_stream_enrich, shred, es, archive_raw, rdb_load, archive_enriched, archive_shredded, config, enrichments_array, resolver, targets, rdbloader_steps, use_persistent_jobflow, persistent_jobflow_duration)
 
         logger.debug "Initializing EMR jobflow"
 
@@ -75,12 +80,12 @@ module Snowplow
           config[:storage][:versions][:rdb_loader])
 
         collector_format = config.dig(:collectors, :format)
-        run_tstamp = Time.new
-        run_id = run_tstamp.strftime("%Y-%m-%d-%H-%M-%S")
+        @run_tstamp = Time.new
+        run_id = @run_tstamp.strftime("%Y-%m-%d-%H-%M-%S")
         @run_id = run_id
         @rdb_loader_log_base = config[:aws][:s3][:buckets][:log] + "rdb-loader/#{@run_id}/"
         @rdb_loader_logs = []   # pairs of target name and associated log
-        etl_tstamp = (run_tstamp.to_f * 1000).to_i.to_s
+        etl_tstamp = (@run_tstamp.to_f * 1000).to_i.to_s
         output_codec = output_codec_from_compression_format(config.dig(:enrich, :output_compression))
         encrypted = config[:aws][:s3][:buckets][:encrypted]
 
@@ -98,7 +103,26 @@ module Snowplow
         end
 
         # Create a job flow
-        @jobflow = Elasticity::JobFlow.new
+        @use_persistent_jobflow = use_persistent_jobflow
+        @persistent_jobflow_duration_s = parse_duration(persistent_jobflow_duration)
+
+        found_persistent_jobflow = false
+        if use_persistent_jobflow
+          emr = Elasticity::EMR.new(:region => config[:aws][:emr][:region])
+          emr_jobflow_id = get_emr_jobflow_id(emr, config[:aws][:emr][:jobflow][:job_name])
+
+          if emr_jobflow_id.nil?
+            @jobflow = Elasticity::JobFlow.new
+          else
+            @jobflow = Elasticity::JobFlow.from_jobflow_id(emr_jobflow_id, config[:aws][:emr][:region])
+            found_persistent_jobflow = true
+          end
+
+          @jobflow.action_on_failure = "CANCEL_AND_WAIT"
+          @jobflow.keep_job_flow_alive_when_no_steps = true
+        else
+          @jobflow = Elasticity::JobFlow.new
+        end
 
         # Configure
         @jobflow.name                 = config[:aws][:emr][:jobflow][:job_name]
@@ -135,10 +159,20 @@ module Snowplow
         @jobflow.master_instance_type = config[:aws][:emr][:jobflow][:master_instance_type]
         @jobflow.slave_instance_type  = config[:aws][:emr][:jobflow][:core_instance_type]
 
+        @jobflow.timeout = 120
+
         s3_endpoint = get_s3_endpoint(config[:aws][:s3][:region])
         csbr = config[:aws][:s3][:buckets][:raw]
         csbe = config[:aws][:s3][:buckets][:enriched]
         csbs = config[:aws][:s3][:buckets][:shredded]
+
+        @pending_jobflow_steps = []
+
+        # Clear HDFS if persistent jobflow has been found
+        if found_persistent_jobflow
+          submit_jobflow_step(get_rmr_step([ENRICH_STEP_INPUT, ENRICH_STEP_OUTPUT, SHRED_STEP_OUTPUT], standard_assets_bucket, "Empty Snowplow HDFS"), use_persistent_jobflow)
+          submit_jobflow_step(get_hdfs_expunge_step, use_persistent_jobflow)
+        end
 
         # staging
         if staging
@@ -171,8 +205,8 @@ module Snowplow
               if encrypted
                 staging_step.arguments = staging_step.arguments + [ '--s3ServerSideEncryption' ]
               end
-              staging_step.name << ": Raw #{l} -> Raw Staging S3"
-              @jobflow.add_step(staging_step)
+              staging_step.name = "[staging] s3-dist-cp: Raw #{l} -> Raw Staging S3"
+              submit_jobflow_step(staging_step, use_persistent_jobflow)
             }
           end
         end
@@ -198,7 +232,7 @@ module Snowplow
 
           @jobflow.set_core_ebs_configuration(ebs_c)
         end
-        @jobflow.add_application("Hadoop")
+        @jobflow.add_application("Hadoop") unless found_persistent_jobflow
 
         if collector_format == 'thrift'
           if @legacy
@@ -206,7 +240,7 @@ module Snowplow
               Elasticity::HadoopBootstrapAction.new('-c', 'io.file.buffer.size=65536'),
               Elasticity::HadoopBootstrapAction.new('-m', 'mapreduce.user.classpath.first=true')
             ].each do |action|
-              @jobflow.add_bootstrap_action(action)
+              @jobflow.add_bootstrap_action(action) unless found_persistent_jobflow
             end
           else
             [{
@@ -221,7 +255,7 @@ module Snowplow
                 "mapreduce.user.classpath.first" => "true"
               }
             }].each do |config|
-              @jobflow.add_configuration(config)
+              @jobflow.add_configuration(config) unless found_persistent_jobflow
             end
           end
         end
@@ -230,7 +264,7 @@ module Snowplow
         bootstrap_actions = config[:aws][:emr][:bootstrap]
         unless bootstrap_actions.nil?
           bootstrap_actions.each do |bootstrap_action|
-            @jobflow.add_bootstrap_action(Elasticity::BootstrapAction.new(bootstrap_action))
+            @jobflow.add_bootstrap_action(Elasticity::BootstrapAction.new(bootstrap_action)) unless found_persistent_jobflow
           end
         end
 
@@ -243,32 +277,34 @@ module Snowplow
           "#{standard_assets_bucket}common/emr/snowplow-ami5-bootstrap-0.1.0.sh"
         end
         cc_version = get_cc_version(config.dig(:enrich, :versions, :spark_enrich))
-        @jobflow.add_bootstrap_action(Elasticity::BootstrapAction.new(bootstrap_script_location, cc_version))
+        @jobflow.add_bootstrap_action(Elasticity::BootstrapAction.new(bootstrap_script_location, cc_version)) unless found_persistent_jobflow
 
         # Install and launch HBase
         hbase = config[:aws][:emr][:software][:hbase]
         unless not hbase
           install_hbase_action = Elasticity::BootstrapAction.new("s3://#{config[:aws][:emr][:region]}.elasticmapreduce/bootstrap-actions/setup-hbase")
-          @jobflow.add_bootstrap_action(install_hbase_action)
+          @jobflow.add_bootstrap_action(install_hbase_action) unless found_persistent_jobflow
 
           start_hbase_step = Elasticity::CustomJarStep.new("/home/hadoop/lib/hbase-#{hbase}.jar")
           start_hbase_step.name = "Start HBase #{hbase}"
           start_hbase_step.arguments = [ 'emr.hbase.backup.Main', '--start-master' ]
-          @jobflow.add_step(start_hbase_step)
+
+          # NOTE: Presumes that HBase will remain available for a persistent cluster
+          submit_jobflow_step(start_hbase_step, use_persistent_jobflow) unless found_persistent_jobflow
         end
 
         # Install Lingual
         lingual = config[:aws][:emr][:software][:lingual]
         unless not lingual
           install_lingual_action = Elasticity::BootstrapAction.new("s3://files.concurrentinc.com/lingual/#{lingual}/lingual-client/install-lingual-client.sh")
-          @jobflow.add_bootstrap_action(install_lingual_action)
+          @jobflow.add_bootstrap_action(install_lingual_action) unless found_persistent_jobflow
         end
 
         # EMR configuration: Spark, YARN, etc
         configuration = config[:aws][:emr][:configuration]
         unless configuration.nil?
           configuration.each do |k, h|
-            @jobflow.add_configuration({"Classification" => k, "Properties" => h})
+            @jobflow.add_configuration({"Classification" => k, "Properties" => h}) unless found_persistent_jobflow
           end
         end
 
@@ -334,8 +370,8 @@ module Snowplow
           if encrypted
             compact_to_hdfs_step.arguments = compact_to_hdfs_step.arguments + [ '--s3ServerSideEncryption' ]
           end
-          compact_to_hdfs_step.name << ": Raw S3 -> Raw HDFS"
-          @jobflow.add_step(compact_to_hdfs_step)
+          compact_to_hdfs_step.name = "[enrich] s3-dist-cp: Raw S3 -> Raw HDFS"
+          submit_jobflow_step(compact_to_hdfs_step, use_persistent_jobflow)
 
           # 2. Enrichment
           enrich_asset = if assets[:enrich].nil?
@@ -348,9 +384,9 @@ module Snowplow
 
           enrich_step =
             if is_spark_enrich(enrich_version) then
-              @jobflow.add_application("Spark")
+              @jobflow.add_application("Spark") unless found_persistent_jobflow
               build_spark_step(
-                "Enrich Raw Events",
+                "[enrich] spark: Enrich Raw Events",
                 enrich_asset,
                 "enrich.spark.EnrichJob",
                 { :in     => glob_path(ENRICH_STEP_INPUT),
@@ -365,7 +401,7 @@ module Snowplow
               )
             else
               build_scalding_step(
-                "Enrich Raw Events",
+                "[enrich] scalding: Enrich Raw Events",
                 enrich_asset,
                 "enrich.hadoop.EtlJob",
                 { :in     => glob_path(ENRICH_STEP_INPUT),
@@ -385,21 +421,22 @@ module Snowplow
           unless empty?(s3, csbe[:good])
             raise DirectoryNotEmptyError, "Cannot safely add enrichment step to jobflow, #{csbe[:good]} is not empty"
           end
-          @jobflow.add_step(enrich_step)
+          submit_jobflow_step(enrich_step, use_persistent_jobflow)
 
           # We need to copy our enriched events from HDFS back to S3
           copy_to_s3_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
           copy_to_s3_step.arguments = [
-            "--src"        , ENRICH_STEP_OUTPUT,
-            "--dest"       , enrich_final_output,
-            "--srcPattern" , PARTFILE_REGEXP,
-            "--s3Endpoint" , s3_endpoint
+            "--src"       , ENRICH_STEP_OUTPUT,
+            "--dest"      , enrich_final_output,
+            "--groupBy"   , PARTFILE_GROUPBY_REGEXP,
+            "--targetSize", "24",
+            "--s3Endpoint", s3_endpoint
           ] + output_codec
           if encrypted
             copy_to_s3_step.arguments = copy_to_s3_step.arguments + [ '--s3ServerSideEncryption' ]
           end
-          copy_to_s3_step.name << ": Enriched HDFS -> S3"
-          @jobflow.add_step(copy_to_s3_step)
+          copy_to_s3_step.name = "[enrich] spark: Enriched HDFS -> S3"
+          submit_jobflow_step(copy_to_s3_step, use_persistent_jobflow)
 
           copy_success_file_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
           copy_success_file_step.arguments = [
@@ -411,8 +448,8 @@ module Snowplow
           if encrypted
             copy_success_file_step.arguments = copy_success_file_step.arguments + [ '--s3ServerSideEncryption' ]
           end
-          copy_success_file_step.name << ": Enriched HDFS _SUCCESS -> S3"
-          @jobflow.add_step(copy_success_file_step)
+          copy_success_file_step.name = "[enrich] spark: Enriched HDFS _SUCCESS -> S3"
+          submit_jobflow_step(copy_success_file_step, use_persistent_jobflow)
         end
 
         # Staging data produced by Stream Enrich
@@ -437,8 +474,8 @@ module Snowplow
           if encrypted
             staging_step.arguments = staging_step.arguments + [ '--s3ServerSideEncryption' ]
           end
-          staging_step.name << ": Stream Enriched #{csbe[:stream]} -> Enriched Staging S3"
-          @jobflow.add_step(staging_step)
+          staging_step.name = "[staging_stream_enrich] s3-dist-cp: Stream Enriched #{csbe[:stream]} -> Enriched Staging S3"
+          submit_jobflow_step(staging_step, use_persistent_jobflow)
         end
 
         if shred
@@ -462,7 +499,7 @@ module Snowplow
           # If we enriched, we free some space on HDFS by deleting the raw events
           # otherwise we need to copy the enriched events back to HDFS
           if enrich
-            @jobflow.add_step(get_rmr_step(ENRICH_STEP_INPUT, standard_assets_bucket))
+            submit_jobflow_step(get_rmr_step([ENRICH_STEP_INPUT], standard_assets_bucket, "Empty Raw HDFS"), use_persistent_jobflow)
           else
             src_pattern = if stream_enrich_mode then STREAM_ENRICH_REGEXP else PARTFILE_REGEXP end
 
@@ -477,16 +514,16 @@ module Snowplow
             if encrypted
               copy_to_hdfs_step.arguments = copy_to_hdfs_step.arguments + [ '--s3ServerSideEncryption' ]
             end
-            copy_to_hdfs_step.name << ": Enriched S3 -> HDFS"
-            @jobflow.add_step(copy_to_hdfs_step)
+            copy_to_hdfs_step.name = "[shred] s3-dist-cp: Enriched S3 -> HDFS"
+            submit_jobflow_step(copy_to_hdfs_step, use_persistent_jobflow)
           end
 
           shred_step =
             if is_rdb_shredder(config[:storage][:versions][:rdb_shredder]) then
-              @jobflow.add_application("Spark")
+              @jobflow.add_application("Spark") unless found_persistent_jobflow
               duplicate_storage_config = build_duplicate_storage_json(targets[:DUPLICATE_TRACKING], false)
               build_spark_step(
-                "Shred Enriched Events",
+                "[shred] spark: Shred Enriched Events",
                 assets[:shred],
                 "storage.spark.ShredJob",
                 { :in   => glob_path(ENRICH_STEP_OUTPUT),
@@ -500,7 +537,7 @@ module Snowplow
             else
               duplicate_storage_config = build_duplicate_storage_json(targets[:DUPLICATE_TRACKING])
               build_scalding_step(
-                "Shred Enriched Events",
+                "[shred] scalding: Shred Enriched Events",
                 assets[:shred],
                 "enrich.hadoop.ShredJob",
                 { :in          => glob_path(ENRICH_STEP_OUTPUT),
@@ -518,21 +555,53 @@ module Snowplow
           unless empty?(s3, csbs[:good])
             raise DirectoryNotEmptyError, "Cannot safely add shredding step to jobflow, #{csbs[:good]} is not empty"
           end
-          @jobflow.add_step(shred_step)
+          submit_jobflow_step(shred_step, use_persistent_jobflow)
 
           # We need to copy our shredded types from HDFS back to S3
-          copy_to_s3_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
-          copy_to_s3_step.arguments = [
-            "--src"        , SHRED_STEP_OUTPUT,
-            "--dest"       , shred_final_output,
-            "--srcPattern" , PARTFILE_REGEXP,
-            "--s3Endpoint" , s3_endpoint
-          ] + output_codec
-          if encrypted
-            copy_to_s3_step.arguments = copy_to_s3_step.arguments + [ '--s3ServerSideEncryption' ]
+          # Whether to combine the files outputted by the shred step
+          consolidate_shredded_output = config[:aws][:s3][:consolidate_shredded_output]
+          if consolidate_shredded_output
+            copy_atomic_events_to_s3_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
+            copy_atomic_events_to_s3_step.arguments = [
+              "--src"       , SHRED_STEP_OUTPUT,
+              "--dest"      , shred_final_output,
+              "--groupBy"   , ATOMIC_EVENTS_PARTFILE_GROUPBY_REGEXP,
+              "--targetSize", "24",
+              "--s3Endpoint", s3_endpoint
+            ] + output_codec
+            if encrypted
+              copy_atomic_events_to_s3_step.arguments = copy_atomic_events_to_s3_step.arguments + [ '--s3ServerSideEncryption' ]
+            end
+            copy_atomic_events_to_s3_step.name = "[shred] s3-dist-cp: Shredded atomic events HDFS -> S3"
+            submit_jobflow_step(copy_atomic_events_to_s3_step, use_persistent_jobflow)
+
+            copy_shredded_types_to_s3_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
+            copy_shredded_types_to_s3_step.arguments = [
+              "--src"       , SHRED_STEP_OUTPUT,
+              "--dest"      , shred_final_output,
+              "--groupBy"   , SHREDDED_TYPES_PARTFILE_GROUPBY_REGEXP,
+              "--targetSize", "24",
+              "--s3Endpoint", s3_endpoint
+            ] + output_codec
+            if encrypted
+              copy_shredded_types_to_s3_step.arguments = copy_shredded_types_to_s3_step.arguments + [ '--s3ServerSideEncryption' ]
+            end
+            copy_shredded_types_to_s3_step.name = "[shred] s3-dist-cp: Shredded types HDFS -> S3"
+            submit_jobflow_step(copy_shredded_types_to_s3_step, use_persistent_jobflow)
+          else
+            copy_to_s3_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
+            copy_to_s3_step.arguments = [
+              "--src"       , SHRED_STEP_OUTPUT,
+              "--dest"      , shred_final_output,
+              "--srcPattern", PARTFILE_REGEXP,
+              "--s3Endpoint", s3_endpoint
+            ] + output_codec
+            if encrypted
+              copy_to_s3_step.arguments = copy_to_s3_step.arguments + [ '--s3ServerSideEncryption' ]
+            end
+            copy_to_s3_step.name = "[shred] s3-dist-cp: Shredded HDFS -> S3"
+            submit_jobflow_step(copy_to_s3_step, use_persistent_jobflow)
           end
-          copy_to_s3_step.name << ": Shredded HDFS -> S3"
-          @jobflow.add_step(copy_to_s3_step)
 
           copy_success_file_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
           copy_success_file_step.arguments = [
@@ -544,13 +613,13 @@ module Snowplow
           if encrypted
             copy_success_file_step.arguments = copy_success_file_step.arguments + [ '--s3ServerSideEncryption' ]
           end
-          copy_success_file_step.name << ": Shredded HDFS _SUCCESS -> S3"
-          @jobflow.add_step(copy_success_file_step)
+          copy_success_file_step.name = "[shred] s3-dist-cp: Shredded HDFS _SUCCESS -> S3"
+          submit_jobflow_step(copy_success_file_step, use_persistent_jobflow)
         end
 
         if es
           get_elasticsearch_steps(config, assets, enrich, shred, targets[:FAILED_EVENTS]).each do |step|
-            @jobflow.add_step(step)
+            submit_jobflow_step(step, use_persistent_jobflow)
           end
         end
 
@@ -566,36 +635,36 @@ module Snowplow
           if encrypted
             archive_raw_step.arguments = archive_raw_step.arguments + [ '--s3ServerSideEncryption' ]
           end
-          archive_raw_step.name << ": Raw Staging S3 -> Raw Archive S3"
-          @jobflow.add_step(archive_raw_step)
+          archive_raw_step.name = "[archive_raw] s3-dist-cp: Raw Staging S3 -> Raw Archive S3"
+          submit_jobflow_step(archive_raw_step, use_persistent_jobflow)
         end
 
         if rdb_load
           rdb_loader_version = Gem::Version.new(config[:storage][:versions][:rdb_loader])
           skip_manifest = stream_enrich_mode && rdb_loader_version > RDB_LOADER_WITH_PROCESSING_MANIFEST
           get_rdb_loader_steps(config, targets[:ENRICHED_EVENTS], resolver, assets[:loader], rdbloader_steps, skip_manifest).each do |step|
-            @jobflow.add_step(step)
+            submit_jobflow_step(step, use_persistent_jobflow)
           end
         end
 
         if archive_enriched == 'pipeline'
-          archive_enriched_step = get_archive_step(csbe[:good], csbe[:archive], run_id, s3_endpoint, ": Enriched S3 -> Enriched Archive S3", encrypted)
-          @jobflow.add_step(archive_enriched_step)
+          archive_enriched_step = get_archive_step(csbe[:good], csbe[:archive], run_id, s3_endpoint, "[archive_enriched] s3-dist-cp: Enriched S3 -> Enriched Archive S3", encrypted)
+          submit_jobflow_step(archive_enriched_step, use_persistent_jobflow)
         elsif archive_enriched == 'recover'
           latest_run_id = get_latest_run_id(s3, csbe[:good])
-          archive_enriched_step = get_archive_step(csbe[:good], csbe[:archive], latest_run_id, s3_endpoint, ': Enriched S3 -> S3 Enriched Archive', encrypted)
-          @jobflow.add_step(archive_enriched_step)
+          archive_enriched_step = get_archive_step(csbe[:good], csbe[:archive], latest_run_id, s3_endpoint, '[archive_enriched] s3-dist-cp: Enriched S3 -> S3 Enriched Archive', encrypted)
+          submit_jobflow_step(archive_enriched_step, use_persistent_jobflow)
         else    # skip
           nil
         end
 
         if archive_shredded == 'pipeline'
-          archive_shredded_step = get_archive_step(csbs[:good], csbs[:archive], run_id, s3_endpoint, ": Shredded S3 -> Shredded Archive S3", encrypted)
-          @jobflow.add_step(archive_shredded_step)
+          archive_shredded_step = get_archive_step(csbs[:good], csbs[:archive], run_id, s3_endpoint, "[archive_shredded] s3-dist-cp: Shredded S3 -> Shredded Archive S3", encrypted)
+          submit_jobflow_step(archive_shredded_step, use_persistent_jobflow)
         elsif archive_shredded == 'recover'
           latest_run_id = get_latest_run_id(s3, csbs[:good], 'atomic-events')
-          archive_shredded_step = get_archive_step(csbs[:good], csbs[:archive], latest_run_id, s3_endpoint, ": Shredded S3 -> S3 Shredded Archive", encrypted)
-          @jobflow.add_step(archive_shredded_step)
+          archive_shredded_step = get_archive_step(csbs[:good], csbs[:archive], latest_run_id, s3_endpoint, "[archive_shredded] s3-dist-cp: Shredded S3 -> S3 Shredded Archive", encrypted)
+          submit_jobflow_step(archive_shredded_step, use_persistent_jobflow)
         else    # skip
           nil
         end
@@ -628,8 +697,7 @@ module Snowplow
                 :es_nodes_wan_only => target.data[:nodesWanOnly] ? "true" : "false"
               }).reject { |k, v| v.nil? }
             )
-            step_name = "Errors in #{source} -> Elasticsearch: #{target.data[:name]}"
-            step.name << ": #{step_name}"
+            step.name = "Errors in #{source} -> Elasticsearch: #{target.data[:name]}"
             step
           }
         }
@@ -650,15 +718,39 @@ module Snowplow
 
         snowplow_tracking_enabled = ! config[:monitoring][:snowplow].nil?
 
-        jobflow_id = @jobflow.run
+        @pending_jobflow_steps.each do |jobflow_step|
+          begin
+            retries ||= 0
+            # if the job flow is already running this triggers an HTTP call
+            @jobflow.add_step(jobflow_step)
+          rescue Elasticity::ThrottlingException, RestClient::RequestTimeout, RestClient::InternalServerError, RestClient::ServiceUnavailable, RestClient::SSLCertificateNotVerified
+            logger.warn "Got an error while trying to submit a jobflow step: #{jobflow_step.name}"
+            retries += 1
+            sleep(2 ** retries * 1)
+            retry if retries < 3
+          end
+        end
+
+        jobflow_id = @jobflow.jobflow_id
+        if jobflow_id.nil?
+          begin
+            retries ||= 0
+            jobflow_id = @jobflow.run
+          rescue Elasticity::ThrottlingException, RestClient::RequestTimeout, RestClient::InternalServerError, RestClient::ServiceUnavailable, RestClient::SSLCertificateNotVerified
+            logger.warn "Got an error while trying to submit the jobflow"
+            retries += 1
+            sleep(2 ** retries * 1)
+            retry if retries < 3
+          end
+        end
         logger.debug "EMR jobflow #{jobflow_id} started, waiting for jobflow to complete..."
 
         if snowplow_tracking_enabled
           Monitoring::Snowplow.parameterize(config)
-          Monitoring::Snowplow.instance.track_job_started(@jobflow)
+          Monitoring::Snowplow.instance.track_job_started(jobflow_id, @jobflow.cluster_status, cluster_step_status_for_run(@jobflow))
         end
 
-        status = wait_for()
+        status = wait_for
 
         if status.successful or status.rdb_loader_failure or status.rdb_loader_cancellation
           log_level = if status.successful
@@ -675,20 +767,34 @@ module Snowplow
         if status.successful
           logger.debug "EMR jobflow #{jobflow_id} completed successfully."
           if snowplow_tracking_enabled
-            Monitoring::Snowplow.instance.track_job_succeeded(@jobflow)
+            Monitoring::Snowplow.instance.track_job_succeeded(jobflow_id, @jobflow.cluster_status, cluster_step_status_for_run(@jobflow))
           end
 
         elsif status.bootstrap_failure
           if snowplow_tracking_enabled
-            Monitoring::Snowplow.instance.track_job_failed(@jobflow)
+            Monitoring::Snowplow.instance.track_job_failed(jobflow_id, @jobflow.cluster_status, cluster_step_status_for_run(@jobflow))
           end
           raise BootstrapFailureError, get_failure_details(jobflow_id)
 
         else
           if snowplow_tracking_enabled
-            Monitoring::Snowplow.instance.track_job_failed(@jobflow)
+            Monitoring::Snowplow.instance.track_job_failed(jobflow_id, @jobflow.cluster_status, cluster_step_status_for_run(@jobflow))
           end
           raise EmrExecutionError, get_failure_details(jobflow_id)
+        end
+
+        if @use_persistent_jobflow and
+            @persistent_jobflow_duration_s > 0 and
+            @jobflow.cluster_status.created_at + @persistent_jobflow_duration_s < @run_tstamp
+          logger.debug "EMR jobflow has expired and will be shutdown."
+          begin
+            retries ||= 0
+            @jobflow.shutdown
+          rescue Elasticity::ThrottlingException, RestClient::RequestTimeout, RestClient::InternalServerError, RestClient::ServiceUnavailable, RestClient::SSLCertificateNotVerified
+            retries += 1
+            sleep(2 ** retries * 1)
+            retry if retries < 3
+          end
         end
 
         nil
@@ -746,6 +852,18 @@ module Snowplow
 
     private
 
+      # Adds a step to the jobflow according to whether or not
+      # we are using a persistent cluster.
+      #
+      # Parameters:
+      # +jobflow_step+:: the step to add
+      # +use_persistent_jobflow+:: whether a persistent jobflow should be used
+      def submit_jobflow_step(jobflow_step, use_persistent_jobflow = false)
+        if use_persistent_jobflow
+          jobflow_step.action_on_failure = "CANCEL_AND_WAIT"
+        end
+        @pending_jobflow_steps << jobflow_step
+      end
 
       # Build an Elasticity RDB Loader step.
       #
@@ -792,7 +910,7 @@ module Snowplow
 
           rdb_loader_step = Elasticity::CustomJarStep.new(jar)
           rdb_loader_step.arguments = arguments
-          rdb_loader_step.name << ": Load #{name} Storage Target"
+          rdb_loader_step.name = "[rdb_load] Load #{name} Storage Target"
           rdb_loader_step
         }
       end
@@ -843,7 +961,7 @@ module Snowplow
         if encrypted
           archive_step.arguments = archive_step.arguments + [ '--s3ServerSideEncryption' ]
         end
-        archive_step.name << name
+        archive_step.name = name
         archive_step
       end
 
@@ -875,7 +993,7 @@ module Snowplow
 
         # Now create the Hadoop MR step for the jobflow
         scalding_step = Elasticity::ScaldingStep.new(jar, "#{JAVA_PACKAGE}.#{main_class}", arguments)
-        scalding_step.name << ": #{step_name}"
+        scalding_step.name = step_name
 
         scalding_step
       end
@@ -903,7 +1021,7 @@ module Snowplow
           'master' => 'yarn',
           'deploy-mode' => 'cluster'
         }
-        spark_step.name << ": #{step_name}"
+        spark_step.name = step_name
         spark_step
       end
 
@@ -913,7 +1031,7 @@ module Snowplow
       # Returns true if the jobflow completed without error,
       # false otherwise.
       Contract None => JobResult
-      def wait_for()
+      def wait_for
 
         success = false
         bootstrap_failure = false
@@ -924,20 +1042,22 @@ module Snowplow
         while true do
           begin
             # Count up running tasks and failures
-            statuses = @jobflow.cluster_step_status.map(&:state).inject([0, 0]) do |sum, state|
+            statuses = cluster_step_status_for_run(@jobflow).map(&:state).inject([0, 0]) do |sum, state|
               [ sum[0] + (@@running_states.include?(state) ? 1 : 0), sum[1] + (@@failed_states.include?(state) ? 1 : 0) ]
             end
 
             # If no step is still running, then quit
             if statuses[0] == 0
+              cluster_step_status = cluster_step_status_for_run(@jobflow)
+
               success = statuses[1] == 0 # True if no failures
-              bootstrap_failure = EmrJob.bootstrap_failure?(@jobflow)
-              rdb_loader_failure = EmrJob.rdb_loader_failure?(@jobflow.cluster_step_status)
-              rdb_loader_cancellation = EmrJob.rdb_loader_cancellation?(@jobflow.cluster_step_status)
+              bootstrap_failure = EmrJob.bootstrap_failure?(@jobflow, cluster_step_status)
+              rdb_loader_failure = EmrJob.rdb_loader_failure?(cluster_step_status)
+              rdb_loader_cancellation = EmrJob.rdb_loader_cancellation?(cluster_step_status)
               break
             else
               # Sleep a while before we check again
-              sleep(120)
+              sleep(30)
             end
 
           rescue SocketError => se
@@ -984,8 +1104,16 @@ module Snowplow
       Contract String => String
       def get_failure_details(jobflow_id)
 
-        cluster_step_status = @jobflow.cluster_step_status
-        cluster_status = @jobflow.cluster_status
+        cluster_step_status = cluster_step_status_for_run(@jobflow)
+        cluster_status =
+          begin
+            retries ||= 0
+            @jobflow.cluster_status
+          rescue Elasticity::ThrottlingException, RestClient::RequestTimeout, RestClient::InternalServerError, RestClient::ServiceUnavailable, RestClient::SSLCertificateNotVerified
+            retries += 1
+            sleep(2 ** retries * 1)
+            retry if retries < 3
+          end
 
         [
           "EMR jobflow #{jobflow_id} failed, check Amazon EMR console and Hadoop logs for details (help: https://github.com/snowplow/snowplow/wiki/Troubleshooting-jobs-on-Elastic-MapReduce). Data files not archived.",
@@ -1071,6 +1199,24 @@ module Snowplow
         Marshal.load(Marshal.dump(o))
       end
 
+      # Ensures we only look at the steps submitted in this run
+      # and not within prior persistent runs
+      #
+      # Parameters:
+      # +jobflow+:: The jobflow to extract steps from
+      def cluster_step_status_for_run(jobflow)
+        begin
+          retries ||= 0
+          jobflow.cluster_step_status
+            .select { |a| a.created_at >= @run_tstamp }
+            .sort_by { |a| a.created_at }
+        rescue Elasticity::ThrottlingException, RestClient::RequestTimeout, RestClient::InternalServerError, RestClient::ServiceUnavailable, RestClient::SSLCertificateNotVerified
+          retries += 1
+          sleep(2 ** retries * 1)
+          retry if retries < 3
+        end
+      end
+
       # Returns true if the jobflow failed at a rdb loader step
       Contract ArrayOf[Elasticity::ClusterStepStatus] => Bool
       def self.rdb_loader_failure?(cluster_step_statuses)
@@ -1086,18 +1232,25 @@ module Snowplow
       end
 
       # Returns true if the jobflow seems to have failed due to a bootstrap failure
-      Contract Elasticity::JobFlow => Bool
-      def self.bootstrap_failure?(jobflow)
+      Contract Elasticity::JobFlow, ArrayOf[Elasticity::ClusterStepStatus] => Bool
+      def self.bootstrap_failure?(jobflow, cluster_step_statuses)
         bootstrap_failure_indicator = /BOOTSTRAP_FAILURE|bootstrap action|Master instance startup failed/
-        jobflow.cluster_step_status.all? {|s| s.state == 'CANCELLED'} &&
+        cluster_step_statuses.all? { |s| s.state == 'CANCELLED' } &&
           (!(jobflow.cluster_status.last_state_change_reason =~ bootstrap_failure_indicator).nil?)
       end
 
-      Contract String, String => Elasticity::CustomJarStep
-      def get_rmr_step(location, bucket)
+      Contract ArrayOf[String], String, String => Elasticity::CustomJarStep
+      def get_rmr_step(locations, bucket, description)
         step = Elasticity::CustomJarStep.new("s3://#{@jobflow.region}.elasticmapreduce/libs/script-runner/script-runner.jar")
-        step.arguments = ["#{bucket}common/emr/snowplow-hadoop-fs-rmr-0.1.0.sh", location]
-        step.name << ": Empty Raw HDFS"
+        step.arguments = ["#{bucket}common/emr/snowplow-hadoop-fs-rmr-0.2.0.sh"] + locations
+        step.name = "[cleanup] #{description}"
+        step
+      end
+
+      def get_hdfs_expunge_step
+        step = Elasticity::CustomJarStep.new("command-runner.jar")
+        step.arguments = %W(hdfs dfs -expunge)
+        step.name = "[cleanup] Empty HDFS trash"
         step
       end
 

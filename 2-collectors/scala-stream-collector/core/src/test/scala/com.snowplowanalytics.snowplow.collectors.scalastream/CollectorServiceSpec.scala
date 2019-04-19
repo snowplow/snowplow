@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2019 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
  * you may not use this file except in compliance with the Apache License
@@ -88,11 +88,12 @@ class CollectorServiceSpec extends Specification {
 
     "preflightResponse" in {
       "return a response appropriate to cors preflight options requests" in {
-        service.preflightResponse(HttpRequest()) shouldEqual HttpResponse()
+        service.preflightResponse(HttpRequest(), CORSConfig(-1.seconds)) shouldEqual HttpResponse()
           .withHeaders(List(
             `Access-Control-Allow-Origin`(HttpOriginRange.`*`),
             `Access-Control-Allow-Credentials`(true),
-            `Access-Control-Allow-Headers`("Content-Type")
+            `Access-Control-Allow-Headers`("Content-Type"),
+            `Access-Control-Max-Age`(-1)
           ))
       }
     }

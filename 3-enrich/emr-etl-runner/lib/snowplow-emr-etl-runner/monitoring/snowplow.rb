@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,7 +10,7 @@
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 # Author::    Alex Dean (mailto:support@snowplowanalytics.com)
-# Copyright:: Copyright (c) 2012-2014 Snowplow Analytics Ltd
+# Copyright:: Copyright (c) 2012-2019 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
 require 'singleton'
@@ -101,26 +101,25 @@ module Snowplow
         end
 
         # Context for the entire job
-        Contract Elasticity::JobFlow => SnowplowTracker::SelfDescribingJson
-        def get_job_context(jobflow)
-          status = jobflow.cluster_status
+        Contract String, Elasticity::ClusterStatus => SnowplowTracker::SelfDescribingJson
+        def get_job_context(jobflow_id, jobflow_status)
           SnowplowTracker::SelfDescribingJson.new(
             JOB_STATUS_SCHEMA,
             {
-              :name => status.name,
-              :jobflow_id => jobflow.jobflow_id,
-              :state => status.state,
-              :created_at => to_jsonschema_compatible_timestamp(status.created_at),
-              :ended_at => to_jsonschema_compatible_timestamp(status.ended_at),
-              :last_state_change_reason => status.last_state_change_reason
+              :name => jobflow_status.name,
+              :jobflow_id => jobflow_id,
+              :state => jobflow_status.state,
+              :created_at => to_jsonschema_compatible_timestamp(jobflow_status.created_at),
+              :ended_at => to_jsonschema_compatible_timestamp(jobflow_status.ended_at),
+              :last_state_change_reason => jobflow_status.last_state_change_reason
             }
           )
         end
 
         # One context per job step
-        Contract Elasticity::JobFlow => ArrayOf[SnowplowTracker::SelfDescribingJson]
-        def get_job_step_contexts(jobflow)
-          jobflow.cluster_step_status.map { |step|
+        Contract ArrayOf[Elasticity::ClusterStepStatus] => ArrayOf[SnowplowTracker::SelfDescribingJson]
+        def get_job_step_contexts(jobflow_steps)
+          jobflow_steps.map { |step|
             SnowplowTracker::SelfDescribingJson.new(
               STEP_STATUS_SCHEMA,
               {
@@ -135,38 +134,38 @@ module Snowplow
         end
 
         # Track a job started event
-        Contract Elasticity::JobFlow => SnowplowTracker::Tracker
-        def track_job_started(jobflow)
+        Contract String, Elasticity::ClusterStatus, ArrayOf[Elasticity::ClusterStepStatus] => SnowplowTracker::Tracker
+        def track_job_started(jobflow_id, jobflow_status, jobflow_steps)
           @tracker.track_unstruct_event(
             SnowplowTracker::SelfDescribingJson.new(
               JOB_STARTED_SCHEMA,
               {}
             ),
-            [@@app_context, get_job_context(jobflow)] + get_job_step_contexts(jobflow)
+            [@@app_context, get_job_context(jobflow_id, jobflow_status)] + get_job_step_contexts(jobflow_steps)
           )
         end
 
         # Track a job succeeded event
-        Contract Elasticity::JobFlow => SnowplowTracker::Tracker
-        def track_job_succeeded(jobflow)
+        Contract String, Elasticity::ClusterStatus, ArrayOf[Elasticity::ClusterStepStatus] => SnowplowTracker::Tracker
+        def track_job_succeeded(jobflow_id, jobflow_status, jobflow_steps)
           @tracker.track_unstruct_event(
             SnowplowTracker::SelfDescribingJson.new(
               JOB_SUCCEEDED_SCHEMA,
               {}
             ),
-            [@@app_context, get_job_context(jobflow)] + get_job_step_contexts(jobflow)
+            [@@app_context, get_job_context(jobflow_id, jobflow_status)] + get_job_step_contexts(jobflow_steps)
           )
         end
 
         # Track a job failed event
-        Contract Elasticity::JobFlow => SnowplowTracker::Tracker
-        def track_job_failed(jobflow)
+        Contract String, Elasticity::ClusterStatus, ArrayOf[Elasticity::ClusterStepStatus] => SnowplowTracker::Tracker
+        def track_job_failed(jobflow_id, jobflow_status, jobflow_steps)
           @tracker.track_unstruct_event(
             SnowplowTracker::SelfDescribingJson.new(
               JOB_FAILED_SCHEMA,
               {}
             ),
-            [@@app_context, get_job_context(jobflow)] + get_job_step_contexts(jobflow)
+            [@@app_context, get_job_context(jobflow_id, jobflow_status)] + get_job_step_contexts(jobflow_steps)
           )
         end
 

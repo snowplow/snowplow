@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -55,6 +55,7 @@ object AdapterRegistry {
     val UrbanAirship    = "com.urbanairship.connect"
     val Marketo         = "com.marketo"
     val Vero            = "com.getvero"
+    val HubSpot         = "com.hubspot"
   }
 
   /**
@@ -91,6 +92,7 @@ object AdapterRegistry {
       case (Vendor.UrbanAirship, "v1")          => UrbanAirshipAdapter.toRawEvents(payload)
       case (Vendor.Marketo, "v1")               => MarketoAdapter.toRawEvents(payload)
       case (Vendor.Vero, "v1")                  => VeroAdapter.toRawEvents(payload)
+      case (Vendor.HubSpot, "v1")               => HubSpotAdapter.toRawEvents(payload)
       case _ =>
         s"Payload with vendor ${payload.api.vendor} and version ${payload.api.version} not supported by this version of Scala Common Enrich".failNel
     }

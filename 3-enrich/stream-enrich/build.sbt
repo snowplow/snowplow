@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -36,7 +36,7 @@ lazy val commonDependencies = Seq(
 lazy val buildSettings = Seq(
   organization  :=  "com.snowplowanalytics",
   name          :=  "snowplow-stream-enrich",
-  version       :=  "0.19.1",
+  version       :=  "0.20.0",
   description   :=  "The streaming Snowplow Enrichment process",
   scalaVersion  :=  "2.11.11",
   scalacOptions :=  BuildSettings.compilerOptions,
@@ -102,7 +102,7 @@ lazy val integrationTests = project.in(file("./integration-tests"))
   .settings(BuildSettings.addExampleConfToTestCp)
   .settings(libraryDependencies ++= Seq(
     // Test
-    Dependencies.Libraries.embeddedKafka,
+    Dependencies.Libraries.kafka,
     Dependencies.Libraries.jinJava
   ))
   .dependsOn(core % "test->test", kafka % "test->compile")

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2019 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
  * you may not use this file except in compliance with the Apache License
@@ -26,11 +26,12 @@ object Dependencies {
     // Java
     val awsSdk               = "1.11.290"
     val pubsub               = "0.37.0-beta"
-    val kafka                = "1.0.1"
+    val kafka                = "2.1.1"
     val nsqClient            = "1.2.0"
     val yodaTime             = "2.9.9"
     val slf4j                = "1.7.5"
     val config               = "1.3.1"
+    val prometheus           = "0.5.0"
     // Scala
     val snowplowCommonEnrich = "0.31.0"
     val igluClient           = "0.5.0"
@@ -55,6 +56,8 @@ object Dependencies {
     val slf4j                = "org.slf4j"             %  "slf4j-simple"           % V.slf4j
     val log4jOverSlf4j       = "org.slf4j"             %  "log4j-over-slf4j"       % V.slf4j
     val config               = "com.typesafe"          %  "config"                 % V.config
+    val prometheus           = "io.prometheus"         %  "simpleclient"           % V.prometheus
+    val prometheusCommon     = "io.prometheus"         %  "simpleclient_common"    % V.prometheus
 
     // Scala
     val snowplowCommonEnrich = "com.snowplowanalytics" %% "snowplow-common-enrich" % V.snowplowCommonEnrich

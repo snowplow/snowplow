@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2019 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -28,7 +28,7 @@ object Dependencies {
     // Java
     val awsSdk               = "1.11.290"
     val kinesisClient        = "1.9.0"
-    val kafkaClients         = "1.0.1"
+    val kafka                = "2.1.1"
     val nsqClient            = "1.2.0"
     val jackson              = "2.9.3"
     val commonsCodec         = "1.10"
@@ -40,13 +40,12 @@ object Dependencies {
     val json4s               = "3.2.11"
     val pureconfig           = "0.8.0"
     val snowplowRawEvent     = "0.1.0"
-    val snowplowCommonEnrich = "0.35.0"
+    val snowplowCommonEnrich = "0.36.0"
     val igluClient           = "0.5.0"
     val snowplowTracker      = "0.3.0"
     // Scala (test only)
     val specs2               = "2.3.13"
     val scalacheck           = "1.11.3"
-    val embeddedKafka        = "0.9.0"
     val jinJava              = "2.3.6"
   }
 
@@ -56,7 +55,7 @@ object Dependencies {
     val dynamodbSdk          = "com.amazonaws"                    %  "aws-java-sdk-dynamodb"     % V.awsSdk
     val s3Sdk                = "com.amazonaws"                    %  "aws-java-sdk-s3"           % V.awsSdk
     val kinesisClient        = "com.amazonaws"                    %  "amazon-kinesis-client"     % V.kinesisClient
-    val kafkaClients         = "org.apache.kafka"                 %  "kafka-clients"             % V.kafkaClients
+    val kafkaClients         = "org.apache.kafka"                 %  "kafka-clients"             % V.kafka
     val nsqClient            = "com.snowplowanalytics"            %  "nsq-java-client"           % V.nsqClient
     val jacksonCbor          = "com.fasterxml.jackson.dataformat" %  "jackson-dataformat-cbor"   % V.jackson
     val jacksonDatabind      = "com.fasterxml.jackson.core"       %  "jackson-databind"          % V.jackson
@@ -77,7 +76,7 @@ object Dependencies {
     // Scala (test only)
     val specs2               = "org.specs2"            %% "specs2"                    % V.specs2         % "test"
     val scalacheck           = "org.scalacheck"        %% "scalacheck"                % V.scalacheck     % "test"
-    val embeddedKafka        = "io.bfil"               %% "specs2-kafka"              % V.embeddedKafka  % "test"
+    val kafka                = "org.apache.kafka"      %% "kafka"                     % V.kafka          % "test"
     // Java (test only)
     val jinJava              = "com.hubspot.jinjava"   %  "jinjava"                   % V.jinJava        % "test"
   }

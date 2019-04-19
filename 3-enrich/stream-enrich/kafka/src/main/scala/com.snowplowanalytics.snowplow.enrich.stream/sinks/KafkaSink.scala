@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 Snowplow Analytics Ltd.
+ * Copyright (c) 2013-2019 Snowplow Analytics Ltd.
  * All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
@@ -21,6 +21,8 @@ package enrich.stream
 package sinks
 
 import java.util.Properties
+
+import scala.collection.JavaConverters._
 
 import org.apache.kafka.clients.producer._
 
@@ -47,6 +49,7 @@ object KafkaSink {
     bufferConfig: BufferConfig
   ): KafkaProducer[String, String] = {
     val properties = createProperties(kafkaConfig, bufferConfig)
+    properties.putAll(kafkaConfig.producerConf.getOrElse(Map()).asJava)
     new KafkaProducer[String, String](properties)
   }
 

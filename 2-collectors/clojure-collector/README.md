@@ -15,7 +15,7 @@ The Clojure Collector relies on [Tomcat][tomcat] for SnowPlow event logging, and
 
 ## Copyright and license
 
-The Clojure Collector is copyright 2012-2013 Snowplow Analytics Ltd.
+The Clojure Collector is copyright 2012-2019 Snowplow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0][license] (the "License");
 you may not use this software except in compliance with the License.

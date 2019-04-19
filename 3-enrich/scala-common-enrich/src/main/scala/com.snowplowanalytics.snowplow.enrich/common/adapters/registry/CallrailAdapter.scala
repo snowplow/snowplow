@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2014-2019 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -44,7 +44,7 @@ object CallrailAdapter extends Adapter {
 
   // Schemas for reverse-engineering a Snowplow unstructured event
   private object SchemaUris {
-    val CallComplete = SchemaKey("com.callrail", "call_complete", "jsonschema", "1-0-0").toSchemaUri
+    val CallComplete = SchemaKey("com.callrail", "call_complete", "jsonschema", "1-0-2").toSchemaUri
   }
 
   // Datetime format used by CallRail (as we will need to massage)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -65,7 +65,7 @@ object EnrichJobSpec {
   }
 
   val etlVersion =
-    s"spark-${generated.ProjectSettings.version}-common-${generated.ProjectSettings.commonEnrichVersion}"
+    s"spark-${generated.BuildInfo.version}-common-${generated.BuildInfo.commonEnrichVersion}"
 
   val etlTimestamp = "2001-09-09 01:46:40.000"
 

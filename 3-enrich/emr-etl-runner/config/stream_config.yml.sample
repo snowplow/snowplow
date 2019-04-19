@@ -18,6 +18,7 @@ aws:
         bad: ADD HERE        # e.g. s3://my-out-bucket/shredded/bad
         errors: ADD HERE     # Leave blank unless :continue_on_unexpected_error: set to true below
         archive: ADD HERE    # Where to archive shredded events to, e.g. s3://my-archive-bucket/shredded
+    consolidate_shredded_output: false # Whether to combine files when copying from hdfs to s3
   emr:
     ami_version: 5.9.0
     region: ADD HERE        # Always set this
@@ -54,7 +55,7 @@ aws:
     additional_info:        # Optional JSON string for selecting additional features
 enrich:
   versions:
-    spark_enrich: 1.16.0 # Version of the Spark Enrichment process
+    spark_enrich: 1.17.0 # Version of the Spark Enrichment process
   output_compression: GZIP # Stream mode supports only GZIP
 storage:
   versions:

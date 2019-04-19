@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2019 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
  * you may not use this file except in compliance with the Apache License
@@ -54,7 +54,7 @@ trait Service {
     contentType: Option[ContentType] = None
   ): (HttpResponse, List[Array[Byte]])
   def cookieName: Option[String]
-  def doNotTrackCookie: Option[HttpCookie]
+  def doNotTrackCookie: Option[DntCookieMatcher]
 }
 
 object CollectorService {
@@ -136,11 +136,15 @@ class CollectorService(
    * @return Response granting permissions to make the actual request
    */
   override def preflightResponse(request: HttpRequest): HttpResponse =
+    preflightResponse(request, config.cors)
+
+  def preflightResponse(request: HttpRequest, corsConfig: CORSConfig): HttpResponse =
     HttpResponse()
       .withHeaders(List(
         accessControlAllowOriginHeader(request),
         `Access-Control-Allow-Credentials`(true),
-        `Access-Control-Allow-Headers`("Content-Type")
+        `Access-Control-Allow-Headers`("Content-Type"),
+        `Access-Control-Max-Age`(corsConfig.accessControlMaxAge.toSeconds)
       ))
 
   override def flashCrossDomainPolicy: HttpResponse =
