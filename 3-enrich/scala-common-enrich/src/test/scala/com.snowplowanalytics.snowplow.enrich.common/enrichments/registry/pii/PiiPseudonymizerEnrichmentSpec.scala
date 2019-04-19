@@ -15,23 +15,26 @@ package enrichments
 package registry
 package pii
 
-import java.net.URI
-
+import cats.Eval
 import cats.data.ValidatedNel
-import cats.syntax.either._
+import cats.syntax.option._
 import cats.syntax.validated._
-import com.snowplowanalytics.iglu.client.{Resolver, SchemaCriterion}
-import com.snowplowanalytics.iglu.client.repositories.RepositoryRefConfig
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.client.resolver.Resolver
+import com.snowplowanalytics.iglu.client.resolver.registries.Registry
+import com.snowplowanalytics.iglu.client.validator.CirceValidator
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SchemaVer}
+import io.circe.Json
+import io.circe.literal._
 import io.circe.parser._
 import org.joda.time.DateTime
 import org.apache.commons.codec.digest.DigestUtils
 import org.specs2.Specification
 import org.specs2.matcher.ValidatedMatchers
 
-import SpecHelpers.toNameValuePairs
 import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
 import outputs.EnrichedEvent
-import utils.TestResourcesRepositoryRef
+import utils.Clock._
 
 class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatchers {
   def is = s2"""
@@ -46,8 +49,9 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
     Hashing configured JSON fields in POJO should not create new fields                                          $e8
   """
 
-  def commonSetup(enrichmentMap: EnrichmentMap): List[ValidatedNel[String, EnrichedEvent]] = {
-    val registry = EnrichmentRegistry(enrichmentMap)
+  def commonSetup(
+    enrichmentReg: EnrichmentRegistry[Eval]
+  ): List[ValidatedNel[String, EnrichedEvent]] = {
     val context =
       CollectorContext(
         Some(DateTime.parse("2017-07-14T03:39:39.000+00:00")),
@@ -55,11 +59,12 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
         None,
         None,
         Nil,
-        None)
+        None
+      )
     val source = CollectorSource("clj-tomcat", "UTF-8", None)
     val collectorPayload = CollectorPayload(
       CollectorApi("com.snowplowanalytics.snowplow", "tp2"),
-      toNameValuePairs(
+      SpecHelpers.toNameValuePairs(
         "e" -> "se",
         "aid" -> "ads",
         "uid" -> "john@acme.com",
@@ -126,23 +131,45 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
       context
     )
     val input = Some(collectorPayload).validNel
-    val rrc = new RepositoryRefConfig("test-schema", 1, List("com.snowplowanalytics.snowplow"))
-    val repos = TestResourcesRepositoryRef(rrc, "src/test/resources/iglu-schemas")
-    implicit val resolver = new Resolver(repos = List(repos))
-    EtlPipeline.processEvents(registry, s"spark-0.0.0", new DateTime(1500000000L), input)
+    val regConf = Registry.Config(
+      "test-schema",
+      0,
+      List("com.snowplowanalytics.snowplow", "com.acme", "com.mailgun")
+    )
+    val reg = Registry.Embedded(regConf, path = "/iglu-schemas")
+    val client = Client[Eval, Json](Resolver(List(reg), None), CirceValidator)
+    EtlPipeline
+      .processEvents[Eval](enrichmentReg, client, s"spark-0.0.0", new DateTime(1500000000L), input)
+      .value
   }
 
-  private val ipEnrichment = IpLookupsEnrichment(
-    Some(("geo", new URI("/ignored-in-local-mode/"), "GeoIP2-City.mmdb")),
-    Some(("isp", new URI("/ignored-in-local-mode/"), "GeoIP2-ISP.mmdb")),
-    None,
-    None,
-    true)
+  private val ipEnrichment = {
+    val js = json"""{
+      "enabled": true,
+      "parameters": {
+        "geo": {
+          "database": "GeoIP2-City.mmdb",
+          "uri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind"
+        },
+        "isp": {
+          "database": "GeoIP2-ISP.mmdb",
+          "uri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind"
+        }
+      }
+    }"""
+    val schemaKey = SchemaKey(
+      "com.snowplowanalytics.snowplow",
+      "ip_lookups",
+      "jsonschema",
+      SchemaVer.Full(2, 0, 0)
+    )
+    IpLookupsEnrichment.parse(js, schemaKey, true).toOption.get.enrichment
+  }
 
   def e1 = {
-    val enrichmentMap = Map(
-      "ip_lookups" -> ipEnrichment,
-      "pii_enrichment_config" -> PiiPseudonymizerEnrichment(
+    val enrichmentReg = EnrichmentRegistry[Eval](
+      ipLookups = ipEnrichment.some,
+      piiPseudonymizer = PiiPseudonymizerEnrichment(
         List(
           PiiScalar(fieldMutator = ScalarMutators.get("user_id").get),
           PiiScalar(
@@ -157,10 +184,11 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
         PiiStrategyPseudonymize(
           "SHA-256",
           hashFunction = DigestUtils.sha256Hex(_: Array[Byte]),
-          "pepper123")
-      )
+          "pepper123"
+        )
+      ).some
     )
-    val output = commonSetup(enrichmentMap = enrichmentMap)
+    val output = commonSetup(enrichmentReg)
     val expected = new EnrichedEvent()
     expected.app_id = "ads"
     expected.user_id = "7d8a4beae5bc9d314600667d2f410918f9af265017a6ade99f60a9c8f3aac6e9"
@@ -186,28 +214,24 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
   }
 
   def e2 = {
-    val enrichmentMap = Map(
-      "ip_lookups" -> ipEnrichment,
-      "pii_enrichment_config" -> PiiPseudonymizerEnrichment(
+    val enrichmentReg = EnrichmentRegistry[Eval](
+      ipLookups = ipEnrichment.some,
+      piiPseudonymizer = PiiPseudonymizerEnrichment(
         List(
           PiiJson(
             fieldMutator = JsonMutators.get("contexts").get,
-            schemaCriterion =
-              SchemaCriterion.parse("iglu:com.acme/email_sent/jsonschema/1-0-*").toOption.get,
+            schemaCriterion = SchemaCriterion("com.acme", "email_sent", "jsonschema", 1, 0),
             jsonPath = "$.emailAddress"
           ),
           PiiJson(
             fieldMutator = JsonMutators.get("contexts").get,
-            schemaCriterion =
-              SchemaCriterion.parse("iglu:com.acme/email_sent/jsonschema/1-1-0").toOption.get,
+            schemaCriterion = SchemaCriterion("com.acme", "email_sent", "jsonschema", 1, 1, 0),
             jsonPath = "$.data.emailAddress2"
           ),
           PiiJson(
             fieldMutator = JsonMutators.get("unstruct_event").get,
-            schemaCriterion = SchemaCriterion
-              .parse("iglu:com.mailgun/message_clicked/jsonschema/1-0-0")
-              .toOption
-              .get,
+            schemaCriterion =
+              SchemaCriterion("com.mailgun", "message_clicked", "jsonschema", 1, 0, 0),
             jsonPath = "$.ip"
           )
         ),
@@ -215,11 +239,12 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
         PiiStrategyPseudonymize(
           "SHA-256",
           hashFunction = DigestUtils.sha256Hex(_: Array[Byte]),
-          "pepper123")
-      )
+          "pepper123"
+        )
+      ).some
     )
 
-    val output = commonSetup(enrichmentMap = enrichmentMap)
+    val output = commonSetup(enrichmentReg)
     val expected = new EnrichedEvent()
     expected.app_id = "ads"
     expected.user_id = "john@acme.com"
@@ -270,14 +295,13 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
   }
 
   def e3 = {
-    val enrichmentMap = Map(
-      "ip_lookups" -> ipEnrichment,
-      "pii_enrichment_config" -> PiiPseudonymizerEnrichment(
+    val enrichmentReg = EnrichmentRegistry[Eval](
+      ipLookups = ipEnrichment.some,
+      piiPseudonymizer = PiiPseudonymizerEnrichment(
         List(
           PiiJson(
             fieldMutator = JsonMutators.get("contexts").get,
-            schemaCriterion =
-              SchemaCriterion.parse("iglu:com.acme/email_sent/jsonschema/1-*-*").toOption.get,
+            schemaCriterion = SchemaCriterion("com.acme", "email_sent", "jsonschema", 1),
             jsonPath = "$.field.that.does.not.exist.in.this.instance"
           )
         ),
@@ -285,11 +309,12 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
         PiiStrategyPseudonymize(
           "SHA-256",
           hashFunction = DigestUtils.sha256Hex(_: Array[Byte]),
-          "pepper123")
-      )
+          "pepper123"
+        )
+      ).some
     )
 
-    val output = commonSetup(enrichmentMap = enrichmentMap)
+    val output = commonSetup(enrichmentReg)
     val expected = new EnrichedEvent()
     expected.app_id = "ads"
     expected.user_id = "john@acme.com"
@@ -314,26 +339,27 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
   }
 
   def e4 = {
-    val enrichmentMap = Map(
-      "ip_lookups" -> ipEnrichment,
-      "pii_enrichment_config" -> PiiPseudonymizerEnrichment(
+    val enrichmentReg = EnrichmentRegistry[Eval](
+      ipLookups = ipEnrichment.some,
+      piiPseudonymizer = PiiPseudonymizerEnrichment(
         List(
           PiiJson(
             fieldMutator = JsonMutators.get("contexts").get,
-            schemaCriterion =
-              SchemaCriterion.parse("iglu:com.acme/email_sent/jsonschema/1-0-*").toOption.get,
-            jsonPath = "$.['emailAddress', 'emailAddress2', 'emailAddressNonExistent']" // Last case throws an exeption if misconfigured
+            schemaCriterion = SchemaCriterion("com.acme", "email_sent", "jsonschema", 1, 0),
+            // Last case throws an exeption if misconfigured
+            jsonPath = "$.['emailAddress', 'emailAddress2', 'emailAddressNonExistent']"
           )
         ),
         false,
         PiiStrategyPseudonymize(
           "SHA-256",
           hashFunction = DigestUtils.sha256Hex(_: Array[Byte]),
-          "pepper123")
-      )
+          "pepper123"
+        )
+      ).some
     )
 
-    val output = commonSetup(enrichmentMap = enrichmentMap)
+    val output = commonSetup(enrichmentReg)
     val expected = new EnrichedEvent()
     expected.app_id = "ads"
     expected.user_id = "john@acme.com"
@@ -360,14 +386,14 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
   }
 
   def e5 = {
-    val enrichmentMap = Map(
-      "ip_lookups" -> ipEnrichment,
-      "pii_enrichment_config" -> PiiPseudonymizerEnrichment(
+    val enrichmentReg = EnrichmentRegistry[Eval](
+      ipLookups = ipEnrichment.some,
+      piiPseudonymizer = PiiPseudonymizerEnrichment(
         List(
           PiiJson(
             fieldMutator = JsonMutators.get("contexts").get,
             schemaCriterion =
-              SchemaCriterion.parse("iglu:com.acme/email_sent/jsonschema/1-*-0").toOption.get,
+              SchemaCriterion("com.acme", "email_sent", "jsonschema", 1.some, None, 0.some),
             jsonPath = "$.emailAddress"
           )
         ),
@@ -375,10 +401,11 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
         PiiStrategyPseudonymize(
           "SHA-256",
           hashFunction = DigestUtils.sha256Hex(_: Array[Byte]),
-          "pepper123")
-      )
+          "pepper123"
+        )
+      ).some
     )
-    val output = commonSetup(enrichmentMap = enrichmentMap)
+    val output = commonSetup(enrichmentReg)
     val expected = new EnrichedEvent()
     expected.app_id = "ads"
     expected.user_id = "john@acme.com"
@@ -405,14 +432,13 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
   }
 
   def e6 = {
-    val enrichmentMap = Map(
-      "ip_lookups" -> ipEnrichment,
-      "pii_enrichment_config" -> PiiPseudonymizerEnrichment(
+    val enrichmentReg = EnrichmentRegistry[Eval](
+      ipLookups = ipEnrichment.some,
+      piiPseudonymizer = PiiPseudonymizerEnrichment(
         List(
           PiiJson(
             fieldMutator = JsonMutators.get("contexts").get,
-            schemaCriterion =
-              SchemaCriterion.parse("iglu:com.acme/email_sent/jsonschema/1-*-*").toOption.get,
+            schemaCriterion = SchemaCriterion("com.acme", "email_sent", "jsonschema", 1),
             jsonPath = "$.someInt"
           )
         ),
@@ -420,10 +446,11 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
         PiiStrategyPseudonymize(
           "SHA-256",
           hashFunction = DigestUtils.sha256Hex(_: Array[Byte]),
-          "pepper123")
-      )
+          "pepper123"
+        )
+      ).some
     )
-    val output = commonSetup(enrichmentMap = enrichmentMap)
+    val output = commonSetup(enrichmentReg)
     val expected = new EnrichedEvent()
     expected.app_id = "ads"
     expected.user_id = "john@acme.com"
@@ -449,9 +476,9 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
   }
 
   def e7 = {
-    val enrichmentMap = Map(
-      "ip_lookups" -> ipEnrichment,
-      "pii_enrichment_config" -> PiiPseudonymizerEnrichment(
+    val enrichmentReg = EnrichmentRegistry[Eval](
+      ipLookups = ipEnrichment.some,
+      piiPseudonymizer = PiiPseudonymizerEnrichment(
         List(
           PiiScalar(fieldMutator = ScalarMutators.get("user_id").get),
           PiiScalar(fieldMutator = ScalarMutators.get("user_ipaddress").get),
@@ -459,22 +486,18 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
           PiiScalar(fieldMutator = ScalarMutators.get("user_fingerprint").get),
           PiiJson(
             fieldMutator = JsonMutators.get("contexts").get,
-            schemaCriterion =
-              SchemaCriterion.parse("iglu:com.acme/email_sent/jsonschema/1-0-*").toOption.get,
+            schemaCriterion = SchemaCriterion("com.acme", "email_sent", "jsonschema", 1, 0),
             jsonPath = "$.emailAddress"
           ),
           PiiJson(
             fieldMutator = JsonMutators.get("contexts").get,
-            schemaCriterion =
-              SchemaCriterion.parse("iglu:com.acme/email_sent/jsonschema/1-1-0").toOption.get,
+            schemaCriterion = SchemaCriterion("com.acme", "email_sent", "jsonschema", 1, 1, 0),
             jsonPath = "$.data.emailAddress2"
           ),
           PiiJson(
             fieldMutator = JsonMutators.get("unstruct_event").get,
-            schemaCriterion = SchemaCriterion
-              .parse("iglu:com.mailgun/message_clicked/jsonschema/1-0-0")
-              .toOption
-              .get,
+            schemaCriterion =
+              SchemaCriterion("com.mailgun", "message_clicked", "jsonschema", 1, 0, 0),
             jsonPath = "$.ip"
           )
         ),
@@ -482,10 +505,11 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
         PiiStrategyPseudonymize(
           "SHA-256",
           hashFunction = DigestUtils.sha256Hex(_: Array[Byte]),
-          "pepper123")
-      )
+          "pepper123"
+        )
+      ).some
     )
-    val output = commonSetup(enrichmentMap = enrichmentMap)
+    val output = commonSetup(enrichmentReg)
     val expected = new EnrichedEvent()
     expected.app_id = "ads"
     expected.ip_domain = null
@@ -522,14 +546,13 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
   }
 
   def e8 = {
-    val enrichmentMap = Map(
-      ("ip_lookups" -> ipEnrichment),
-      ("pii_enrichment_config" -> PiiPseudonymizerEnrichment(
+    val enrichmentReg = EnrichmentRegistry[Eval](
+      ipLookups = ipEnrichment.some,
+      piiPseudonymizer = PiiPseudonymizerEnrichment(
         List(
           PiiJson(
             fieldMutator = JsonMutators.get("contexts").get,
-            schemaCriterion =
-              SchemaCriterion.parse("iglu:com.acme/email_sent/jsonschema/1-0-0").toOption.get,
+            schemaCriterion = SchemaCriterion("com.acme", "email_sent", "jsonschema", 1, 0, 0),
             jsonPath = "$.['emailAddress', 'nonExistentEmailAddress']"
           )
         ),
@@ -537,10 +560,11 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
         PiiStrategyPseudonymize(
           "SHA-256",
           hashFunction = DigestUtils.sha256Hex(_: Array[Byte]),
-          "pepper123")
-      ))
+          "pepper123"
+        )
+      ).some
     )
-    val output = commonSetup(enrichmentMap = enrichmentMap)
+    val output = commonSetup(enrichmentReg)
     val expected = new EnrichedEvent()
     expected.app_id = "ads"
     expected.user_id = "john@acme.com"

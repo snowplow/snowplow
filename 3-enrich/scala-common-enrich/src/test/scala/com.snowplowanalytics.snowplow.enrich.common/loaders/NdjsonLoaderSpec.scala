@@ -36,7 +36,8 @@ class NdjsonLoaderSpec extends Specification with ValidatedMatchers {
     "fail if multiple lines passed in as one line" in {
       val lines = List("""{"key":"value1"}""", """{"key":"value2"}""")
       NdjsonLoader("com.abc/v1").toCollectorPayload(lines.mkString("\n")) must beInvalid(
-        NonEmptyList.one("Too many lines! Expected single line"))
+        NonEmptyList.one("Too many lines! Expected single line")
+      )
     }
 
   }

@@ -138,8 +138,12 @@ object Shredder {
     event: EnrichedEvent,
     client: Client[F, Json]
   ): Option[F[ValidatedNel[String, List[Json]]]] =
-    extractAndValidateJson("ue_properties", UePropertiesSchema, Option(event.unstruct_event), client)
-      .map(_.map(_.map(_ :: Nil)))
+    extractAndValidateJson(
+      "ue_properties",
+      UePropertiesSchema,
+      Option(event.unstruct_event),
+      client
+    ).map(_.map(_.map(_ :: Nil)))
 
   /**
    * Extract list of contexts out of string. Extraction involves validation against schema
@@ -155,7 +159,12 @@ object Shredder {
     client: Client[F, Json]
   ): Option[F[ValidatedNel[String, List[Json]]]] =
     extractAndValidateJson(field, ContextsSchema, Option(json), client)
-      .map(_.map(_.map(_ :: Nil)))
+      .map(_.map(_.map { json =>
+        json.asArray match {
+          case Some(js) => js.toList
+          case None => json :: Nil
+        }
+      }))
 
   /**
    * Fetch Iglu Schema for each [[Json]] in [[ValidatedNelMessage]] and validate this node
@@ -167,16 +176,18 @@ object Shredder {
   private[shredder] def validate[F[_]: Monad: RegistryLookup: Clock](
     validatedJsons: ValidatedNel[String, List[Json]],
     client: Client[F, Json]
-  ): F[ValidatedNel[String, List[SelfDescribingData[Json]]]] = (for {
-    jsons <- EitherT.fromEither[F](validatedJsons.toEither)
-    validated <- jsons.map { json =>
-      for {
-        sd <- EitherT.fromEither[F](
-          SelfDescribingData.parse(json).leftMap(pe => NonEmptyList.one(pe.code)))
-        _ <- client.check(sd).leftMap(e => NonEmptyList.one(e.toString))
-      } yield sd
-    }.sequence
-  } yield validated).value.map(_.toValidated)
+  ): F[ValidatedNel[String, List[SelfDescribingData[Json]]]] =
+    (for {
+      jsons <- EitherT.fromEither[F](validatedJsons.toEither)
+      validated <- jsons.map { json =>
+        for {
+          sd <- EitherT.fromEither[F](
+            SelfDescribingData.parse(json).leftMap(pe => NonEmptyList.one(pe.code))
+          )
+          _ <- client.check(sd).leftMap(e => NonEmptyList.one(e.asJson.noSpaces))
+        } yield sd
+      }.sequence
+    } yield validated).value.map(_.toValidated)
 
   /**
    * Flatten Option[List] to List
@@ -253,16 +264,21 @@ object Shredder {
       (for {
         j <- EitherT.fromEither[F](extractJson(field, i).leftMap(e => NonEmptyList.one(e)))
         sd <- EitherT.fromEither[F](
-          SelfDescribingData.parse(j).leftMap(parseError => NonEmptyList.one(parseError.code)))
-       _ <- client.check(sd).leftMap(e => NonEmptyList.one(e.toString))
-         .subflatMap { _ =>
-           schemaCriterion.matches(sd.schema) match {
-             case true => ().asRight
-             case false => NonEmptyList.one(
-               s"Schema criterion $schemaCriterion does not match schema ${sd.schema}").asLeft
-           }
-         }
-      } yield j).toValidated
+          SelfDescribingData.parse(j).leftMap(parseError => NonEmptyList.one(parseError.code))
+        )
+        _ <- client
+          .check(sd)
+          .leftMap(e => NonEmptyList.one(e.asJson.noSpaces))
+          .subflatMap { _ =>
+            schemaCriterion.matches(sd.schema) match {
+              case true => ().asRight
+              case false =>
+                NonEmptyList
+                  .one(s"Schema criterion $schemaCriterion does not match schema ${sd.schema}")
+                  .asLeft
+            }
+          }
+      } yield sd.data).toValidated
     }
 
   /**
@@ -272,9 +288,6 @@ object Shredder {
    * @param instance The JSON instance itself
    * @return the pimped ScalazArgs
    */
-  private def extractJson(
-    field: String,
-    instance: String
-  ): Either[String, Json] =
+  private def extractJson(field: String, instance: String): Either[String, Json] =
     JsonUtils.extractJson(field, instance)
 }

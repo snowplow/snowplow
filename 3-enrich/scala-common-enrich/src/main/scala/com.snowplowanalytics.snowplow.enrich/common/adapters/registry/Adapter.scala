@@ -81,7 +81,7 @@ trait Adapter {
         Either
           .catchNonFatal(toStringField(v.toLong))
           .getOrElse(v)
-    }
+      }
 
   /**
    * Returns an updated event JSON where all of the timestamp fields (tsFieldKey:_) have been
@@ -190,7 +190,8 @@ trait Adapter {
       "tv" -> tracker,
       "e" -> "ue",
       "p" -> parameters.getOrElse("p", platform), // Required field
-      "ue_pr" -> json.noSpaces) ++
+      "ue_pr" -> json.noSpaces
+    ) ++
       parameters.filterKeys(AcceptedQueryParameters)
   }
 
@@ -241,19 +242,22 @@ trait Adapter {
     qsParams: RawEventParameters,
     schema: String,
     eventJson: JsonObject,
-    platform: String): RawEventParameters = {
+    platform: String
+  ): RawEventParameters = {
 
     val json = toUnstructEvent(
       Json.obj(
         "schema" := schema,
         "data" := eventJson
-      )).noSpaces
+      )
+    ).noSpaces
 
     Map(
       "tv" -> tracker,
       "e" -> "ue",
       "p" -> qsParams.getOrElse("p", platform), // Required field
-      "ue_pr" -> json) ++
+      "ue_pr" -> json
+    ) ++
       qsParams.filterKeys(AcceptedQueryParameters)
   }
 
@@ -273,19 +277,22 @@ trait Adapter {
     qsParams: RawEventParameters,
     schema: String,
     eventJson: Json,
-    platform: String): RawEventParameters = {
+    platform: String
+  ): RawEventParameters = {
 
     val json = toUnstructEvent(
       Json.obj(
         "schema" := schema,
         "data" := eventJson
-      )).noSpaces
+      )
+    ).noSpaces
 
     Map(
       "tv" -> tracker,
       "e" -> "ue",
       "p" -> qsParams.getOrElse("p", platform), // Required field
-      "ue_pr" -> json) ++
+      "ue_pr" -> json
+    ) ++
       qsParams.filterKeys(AcceptedQueryParameters)
   }
 
@@ -407,7 +414,8 @@ trait Adapter {
   private[registry] def camelCase(snakeOrDash: String) =
     snakeCaseOrDashTokenCapturingRegex.replaceAllIn(
       Character.toLowerCase(snakeOrDash.charAt(0)) + snakeOrDash.substring(1),
-      m => m.group(1).capitalize)
+      m => m.group(1).capitalize
+    )
 
   /**
    * Converts input field case to camel case recursively

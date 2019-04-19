@@ -23,7 +23,7 @@ import org.apache.http.message.BasicNameValuePair
 object SpecHelpers {
 
   // Standard Iglu configuration
-  private val igluConfig =json"""{
+  private val igluConfig = json"""{
     "schema": "iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-0",
     "data": {
       "cacheSize": 500,
@@ -43,7 +43,10 @@ object SpecHelpers {
   }"""
 
   /** Builds an Iglu client from the above Iglu configuration. */
-  val client: Client[Eval, Json] = Client.parseDefault[Eval](igluConfig).value.value
+  val client: Client[Eval, Json] = Client
+    .parseDefault[Eval](igluConfig)
+    .value
+    .value
     .getOrElse(throw new RuntimeException("invalid resolver configuration"))
 
   private type NvPair = Tuple2[String, String]

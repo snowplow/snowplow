@@ -66,14 +66,15 @@ package pii {
    */
   private[pii] final case class PiiModifiedFields(
     modifiedFields: ModifiedFields,
-    strategy: PiiStrategy)
+    strategy: PiiStrategy
+  )
 
   /** Case class for capturing scalar field modifications. */
   private[pii] final case class ScalarModifiedField(
     fieldName: String,
     originalValue: String,
-    modifiedValue: String)
-      extends ModifiedField
+    modifiedValue: String
+  ) extends ModifiedField
 
   /** Case class for capturing JSON field modifications. */
   private[pii] final case class JsonModifiedField(
@@ -81,15 +82,15 @@ package pii {
     originalValue: String,
     modifiedValue: String,
     jsonPath: String,
-    schema: String)
-      extends ModifiedField
+    schema: String
+  ) extends ModifiedField
 
   /**
    * PiiField trait. This corresponds to a configuration top-level field (i.e. either a scalar or a
    * JSON field) along with a function to apply that strategy to the EnrichedEvent POJO (A scalar
    * field is represented in config py "pojo")
    */
-  private[pii] trait PiiField {
+  trait PiiField {
 
     /**
      * The POJO mutator for this field

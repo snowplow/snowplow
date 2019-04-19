@@ -57,7 +57,8 @@ class JsonPathSpec extends Specification {
             "isbn" := Json.fromString("0-395-19395-8"),
             "price" := Json.fromDoubleOrNull(22.99)
           )
-        )),
+        )
+      ),
       "bicycles" := Json.obj(
         "color" := Json.fromString("red"),
         "price" := Json.fromDoubleOrNull(19.95)
@@ -78,12 +79,12 @@ class JsonPathSpec extends Specification {
 
   def e4 =
     JsonPath.query(".notJsonPath", someJson) must beLeft.like {
-      case f => f must beEqualTo("`$' expected but `.' found")
+      case f => f must beEqualTo("'$' expected but '.' found")
     }
 
   def e5 =
     JsonPath.query("$.store.book[a]", someJson) must beLeft.like {
-      case f => f must beEqualTo("`:' expected but `a' found")
+      case f => f must beEqualTo("':' expected but 'a' found")
     }
 
   def e6 =

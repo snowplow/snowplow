@@ -21,6 +21,7 @@ import org.specs2.Specification
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import utils.Clock._
 
 class StatusGatorAdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
@@ -33,8 +34,6 @@ class StatusGatorAdapterSpec extends Specification with DataTables with Validate
     toRawEvents must return a Failure String if the event string could not be parsed into JSON $e6
     """
 
-  implicit val resolver = SpecHelpers.IgluResolver
-
   object Shared {
     val api = CollectorApi("com.statusgator", "v1")
     val cljSource = CollectorSource("clj-tomcat", "UTF-8", None)
@@ -44,7 +43,8 @@ class StatusGatorAdapterSpec extends Specification with DataTables with Validate
       None,
       None,
       Nil,
-      None)
+      None
+    )
   }
 
   val ContentType = "application/x-www-form-urlencoded"
@@ -58,7 +58,8 @@ class StatusGatorAdapterSpec extends Specification with DataTables with Validate
       ContentType.some,
       body.some,
       Shared.cljSource,
-      Shared.context)
+      Shared.context
+    )
     val expectedJson =
       """|{
           |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
@@ -82,15 +83,18 @@ class StatusGatorAdapterSpec extends Specification with DataTables with Validate
         Map("tv" -> "com.statusgator-v1", "e" -> "ue", "p" -> "srv", "ue_pr" -> expectedJson),
         ContentType.some,
         Shared.cljSource,
-        Shared.context))
-    StatusGatorAdapter.toRawEvents(payload) must beValid(expected)
+        Shared.context
+      )
+    )
+    StatusGatorAdapter.toRawEvents(payload, SpecHelpers.client).value must beValid(expected)
   }
 
   def e2 = {
     val payload =
       CollectorPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
-    StatusGatorAdapter.toRawEvents(payload) must beInvalid(
-      NonEmptyList.one("Request body is empty: no StatusGator events to process"))
+    StatusGatorAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(
+      NonEmptyList.one("Request body is empty: no StatusGator events to process")
+    )
   }
 
   def e3 = {
@@ -98,8 +102,11 @@ class StatusGatorAdapterSpec extends Specification with DataTables with Validate
       "service_name=CloudFlare&favicon_url=https%3A%2F%2Fdwxjd9cd6rwno.cloudfront.net%2Ffavicons%2Fcloudflare.ico&status_page_url=https%3A%2F%2Fwww.cloudflarestatus.com%2F&home_page_url=http%3A%2F%2Fwww.cloudflare.com&current_status=up&last_status=warn&occurred_at=2016-05-19T09%3A26%3A31%2B00%3A00"
     val payload =
       CollectorPayload(Shared.api, Nil, None, body.some, Shared.cljSource, Shared.context)
-    StatusGatorAdapter.toRawEvents(payload) must beInvalid(NonEmptyList.one(
-      "Request body provided but content type empty, expected application/x-www-form-urlencoded for StatusGator"))
+    StatusGatorAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(
+      NonEmptyList.one(
+        "Request body provided but content type empty, expected application/x-www-form-urlencoded for StatusGator"
+      )
+    )
   }
 
   def e4 = {
@@ -108,8 +115,11 @@ class StatusGatorAdapterSpec extends Specification with DataTables with Validate
     val ct = "application/json"
     val payload =
       CollectorPayload(Shared.api, Nil, ct.some, body.some, Shared.cljSource, Shared.context)
-    StatusGatorAdapter.toRawEvents(payload) must beInvalid(NonEmptyList.one(
-      "Content type of application/json provided, expected application/x-www-form-urlencoded for StatusGator"))
+    StatusGatorAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(
+      NonEmptyList.one(
+        "Content type of application/json provided, expected application/x-www-form-urlencoded for StatusGator"
+      )
+    )
   }
 
   def e5 = {
@@ -120,9 +130,10 @@ class StatusGatorAdapterSpec extends Specification with DataTables with Validate
       ContentType.some,
       body.some,
       Shared.cljSource,
-      Shared.context)
+      Shared.context
+    )
     val expected = NonEmptyList.one("StatusGator event body is empty: nothing to process")
-    StatusGatorAdapter.toRawEvents(payload) must beInvalid(expected)
+    StatusGatorAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(expected)
   }
 
   def e6 = {
@@ -134,9 +145,11 @@ class StatusGatorAdapterSpec extends Specification with DataTables with Validate
       ContentType.some,
       body.some,
       Shared.cljSource,
-      Shared.context)
+      Shared.context
+    )
     val expected = NonEmptyList.one(
-      "StatusGator incorrect event string : [Illegal character in query at index 18: http://localhost/?{service_name=CloudFlare&favicon_url=https%3A%2F%2Fdwxjd9cd6rwno.cloudfront.net%2Ffavicons%2Fcloudflare.ico&status_page_url=https%3A%2F%2Fwww.cloudflarestatus.com%2F&home_page_url=http%3A%2F%2Fwww.cloudflare.com&current_status=up&last_status=warn&occurred_at=2016-05-19T09%3A26%3A31%2B00%3A00]")
-    StatusGatorAdapter.toRawEvents(payload) must beInvalid(expected)
+      "StatusGator incorrect event string : [Illegal character in query at index 18: http://localhost/?{service_name=CloudFlare&favicon_url=https%3A%2F%2Fdwxjd9cd6rwno.cloudfront.net%2Ffavicons%2Fcloudflare.ico&status_page_url=https%3A%2F%2Fwww.cloudflarestatus.com%2F&home_page_url=http%3A%2F%2Fwww.cloudflare.com&current_status=up&last_status=warn&occurred_at=2016-05-19T09%3A26%3A31%2B00%3A00]"
+    )
+    StatusGatorAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(expected)
   }
 }

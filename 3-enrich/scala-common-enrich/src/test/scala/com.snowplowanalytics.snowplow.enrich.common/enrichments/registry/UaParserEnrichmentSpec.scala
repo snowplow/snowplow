@@ -13,6 +13,8 @@ package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
 import java.net.URI
 
+import cats.Eval
+import cats.data.EitherT
 import io.circe.literal._
 import org.specs2.matcher.DataTables
 import org.specs2.mutable.Specification
@@ -34,25 +36,17 @@ class UaParserEnrichmentSpec extends Specification with DataTables {
   val testAgentJson =
     json"""{"schema":"iglu:com.snowplowanalytics.snowplow/ua_parser_context/jsonschema/1-0-0","data":{"useragentFamily":"UAP Test Family","useragentMajor":null,"useragentMinor":null,"useragentPatch":null,"useragentVersion":"UAP Test Family","osFamily":"UAP Test OS","osMajor":null,"osMinor":null,"osPatch":null,"osPatchMinor":null,"osVersion":"UAP Test OS","deviceFamily":"UAP Test Device"}}"""
 
-  "useragent parser enrichment" should {
-    "report files needing to be cached" in {
-      "Custom Rules" | "Cached Files" |
-        None !! List.empty |
-        Some(customRules) !! List(customRules) |> { (rules, cachedFiles) =>
-        UaParserEnrichment(rules).filesToCache must_== cachedFiles
-      }
-    }
-  }
-
   "useragent parser" should {
     "parse useragent according to configured rules" in {
       "Custom Rules" | "Input UserAgent" | "Parsed UserAgent" |
         None !! mobileSafariUserAgent !! mobileSafariJson |
         None !! safariUserAgent !! safariJson |
         Some(customRules) !! mobileSafariUserAgent !! testAgentJson |> { (rules, input, expected) =>
-        UaParserEnrichment(rules).extractUserAgent(input) must beRight.like {
-          case a => a must_== expected
-        }
+        (for {
+          c <- EitherT.rightT[Eval, String](UaParserConf(rules))
+          e <- c.enrichment[Eval]
+          res <- EitherT.fromEither[Eval](e.extractUserAgent(input))
+        } yield res).value.value must_== Right(expected)
       }
     }
   }
@@ -64,7 +58,11 @@ class UaParserEnrichmentSpec extends Specification with DataTables {
       "Custom Rules" | "Input UserAgent" | "Parsed UserAgent" |
         Some(badRulefile) !! mobileSafariUserAgent !! "Failed to initialize ua parser" |> {
         (rules, input, errorPrefix) =>
-          UaParserEnrichment(rules).extractUserAgent(input) must beLeft.like {
+          (for {
+            c <- EitherT.rightT[Eval, String](UaParserConf(rules))
+            e <- c.enrichment[Eval]
+            res = e.extractUserAgent(input)
+          } yield res).value.value must beLeft.like {
             case a => a must startWith(errorPrefix)
           }
       }

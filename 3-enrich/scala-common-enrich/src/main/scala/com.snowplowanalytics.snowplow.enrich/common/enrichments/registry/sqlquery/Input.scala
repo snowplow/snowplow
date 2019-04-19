@@ -34,7 +34,11 @@ import outputs.EnrichedEvent
  * @param pojo optional pojo source to take straight from EnrichedEvent
  * @param json optional JSON source to take from context or unstruct event
  */
-case class Input(placeholder: Int, pojo: Option[PojoInput], json: Option[JsonInput]) {
+case class Input(
+  placeholder: Int,
+  pojo: Option[PojoInput],
+  json: Option[JsonInput]
+) {
   import Input._
 
   // Constructor validation for mapping JSON to `Input` instance
@@ -98,7 +102,7 @@ case class Input(placeholder: Int, pojo: Option[PojoInput], json: Option[JsonInp
  * Describes how to take key from POJO source
  * @param field `EnrichedEvent` object field
  */
-case class PojoInput(field: String)
+final case class PojoInput(field: String)
 
 /**
  * @param field where to get this json, one of unstruct_event, contexts or derived_contexts
@@ -107,7 +111,11 @@ case class PojoInput(field: String)
  * @param jsonPath JSON Path statement to navigate to the field inside the JSON that you want to
  * use as the input
  */
-case class JsonInput(field: String, schemaCriterion: String, jsonPath: String) {
+final case class JsonInput(
+  field: String,
+  schemaCriterion: String,
+  jsonPath: String
+) {
   import Input._
 
   /**
@@ -130,7 +138,8 @@ case class JsonInput(field: String, schemaCriterion: String, jsonPath: String) {
       case other =>
         InvalidInput(
           s"SQL Query Enrichment: wrong field [$other] passed to Input.getFromJson. " +
-            "Should be one of: derived_contexts, contexts, unstruct_event").invalidNel
+            "Should be one of: derived_contexts, contexts, unstruct_event"
+        ).invalidNel
     }
 
     val validatedJsonPath = compileQuery(jsonPath).leftMap(new Exception(_)).toValidatedNel
@@ -288,7 +297,15 @@ object Input {
         .orElse(n.toLong.map(LongPlaceholder.Value))
         .getOrElse(DoublePlaceholder.Value(n.toDouble))
         .some,
-    s => StringPlaceholder.Value(s).some,
+    s =>
+      Either
+        .catchNonFatal(s.toInt)
+        .map(IntPlaceholder.Value)
+        .orElse(Either.catchNonFatal(s.toLong).map(LongPlaceholder.Value))
+        .orElse(Either.catchNonFatal(s.toDouble).map(DoublePlaceholder.Value))
+        .orElse(Either.catchNonFatal(s.toBoolean).map(BooleanPlaceholder.Value))
+        .getOrElse(StringPlaceholder.Value(s))
+        .some,
     _ => none,
     _ => none
   )

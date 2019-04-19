@@ -66,16 +66,20 @@ object IgluAdapter extends Adapter {
     val _ = client
     val params = toMap(payload.querystring)
     (params.get("schema"), payload.body, payload.contentType) match {
-      case (_, Some(_), None) => Monad[F].pure(
-        s"$VendorName event failed: ContentType must be set for a POST payload".invalidNel)
+      case (_, Some(_), None) =>
+        Monad[F].pure(
+          s"$VendorName event failed: ContentType must be set for a POST payload".invalidNel
+        )
       case (None, Some(body), Some(contentType)) =>
         Monad[F].pure(payloadSdJsonToEvent(payload, body, contentType, params))
       case (Some(schemaUri), Some(_), Some(_)) =>
         Monad[F].pure(payloadToEventWithSchema(payload, schemaUri, params))
       case (Some(schemaUri), None, _) =>
         Monad[F].pure(payloadToEventWithSchema(payload, schemaUri, params))
-      case (_, _, _) => Monad[F].pure(
-        s"$VendorName event failed: is not a sd-json or a valid GET or POST request".invalidNel)
+      case (_, _, _) =>
+        Monad[F].pure(
+          s"$VendorName event failed: is not a sd-json or a valid GET or POST request".invalidNel
+        )
     }
   }
 
@@ -128,7 +132,8 @@ object IgluAdapter extends Adapter {
                       contentType = payload.contentType,
                       source = payload.source,
                       context = payload.context
-                    ))
+                    )
+                  )
                   .valid
             }
           case (None, _) =>
@@ -166,11 +171,13 @@ object IgluAdapter extends Adapter {
                     (params - "schema"),
                     schemaUri,
                     IgluFormatter,
-                    "app"),
+                    "app"
+                  ),
                   contentType = payload.contentType,
                   source = payload.source,
                   context = payload.context
-                ))
+                )
+              )
               .valid
           case (Some(body), Some(contentType)) =>
             contentType match {

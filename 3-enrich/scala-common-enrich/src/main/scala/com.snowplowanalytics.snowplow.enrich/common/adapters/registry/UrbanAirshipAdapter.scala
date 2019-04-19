@@ -125,10 +125,10 @@ object UrbanAirshipAdapter extends Adapter {
     client: Client[F, Json]
   ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
     (payload.body, payload.contentType) match {
-      case (None, _) => Monad[F].pure(
-        s"Request body is empty: no $VendorName event to process".invalidNel)
-      case (_, Some(ct)) => Monad[F].pure(
-        s"Content type of $ct provided, expected None for $VendorName".invalidNel)
+      case (None, _) =>
+        Monad[F].pure(s"Request body is empty: no $VendorName event to process".invalidNel)
+      case (_, Some(ct)) =>
+        Monad[F].pure(s"Content type of $ct provided, expected None for $VendorName".invalidNel)
       case (Some(body), _) =>
         val _ = client
         val event = payloadBodyToEvent(body, payload)

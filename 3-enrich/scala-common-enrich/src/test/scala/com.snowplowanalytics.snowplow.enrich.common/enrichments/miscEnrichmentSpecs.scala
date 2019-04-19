@@ -23,7 +23,8 @@ class EtlVersionSpec extends MutSpecification {
     "be successfully returned using an x.y.z format" in {
       val anyString = "spark-x.x.x"
       MiscEnrichments.etlVersion(anyString) must beMatching(
-        s"${anyString}-common-\\d+\\.\\d+\\.\\d+(-\\w+)?".r)
+        s"${anyString}-common-\\d+\\.\\d+\\.\\d+(-\\w+)?".r
+      )
     }
   }
 }

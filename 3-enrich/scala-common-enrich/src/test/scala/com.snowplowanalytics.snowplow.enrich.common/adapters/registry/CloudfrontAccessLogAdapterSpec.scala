@@ -21,7 +21,7 @@ import org.specs2.Specification
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource, TsvLoader}
-import SpecHelpers._
+import utils.Clock._
 
 class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
@@ -37,7 +37,6 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
   toRawEvents should return a Validation Failure if the line contains an unparseable field $e9
   """
 
-  implicit val resolver = SpecHelpers.IgluResolver
   val loader = new TsvLoader("com.amazon.aws.cloudfront/wd_access_log")
 
   val doubleEncodedUa =
@@ -62,7 +61,8 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
         singleEncodedUa.some,
         None,
         Nil,
-        None)
+        None
+      )
   }
 
   object Expected {
@@ -83,7 +83,9 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
 
     val payload = loader.toCollectorPayload(input)
 
-    val actual = payload.map(_.map(CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(_)))
+    val actual = payload.map(
+      _.map(CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(_, SpecHelpers.client).value)
+    )
 
     val expectedJson =
       s"""|{
@@ -115,7 +117,12 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
               Expected.static ++ Map("ue_pr" -> expectedJson),
               None,
               Shared.source,
-              Shared.context)))))
+              Shared.context
+            )
+          )
+        )
+      )
+    )
   }
 
   def e2 = {
@@ -125,7 +132,9 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
 
     val payload = loader.toCollectorPayload(input)
 
-    val actual = payload.map(_.map(CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(_)))
+    val actual = payload.map(
+      _.map(CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(_, SpecHelpers.client).value)
+    )
 
     val expectedJson =
       s"""|{
@@ -160,7 +169,12 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
               Expected.static ++ Map("ue_pr" -> expectedJson),
               None,
               Shared.source,
-              Shared.context)))))
+              Shared.context
+            )
+          )
+        )
+      )
+    )
   }
 
   def e3 = {
@@ -170,7 +184,9 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
 
     val payload = loader.toCollectorPayload(input)
 
-    val actual = payload.map(_.map(CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(_)))
+    val actual = payload.map(
+      _.map(CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(_, SpecHelpers.client).value)
+    )
 
     val expectedJson =
       s"""|{
@@ -208,7 +224,12 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
               Expected.static ++ Map("ue_pr" -> expectedJson),
               None,
               Shared.source,
-              Shared.context)))))
+              Shared.context
+            )
+          )
+        )
+      )
+    )
   }
 
   def e4 = {
@@ -218,7 +239,9 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
 
     val payload = loader.toCollectorPayload(input)
 
-    val actual = payload.map(_.map(CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(_)))
+    val actual = payload.map(
+      _.map(CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(_, SpecHelpers.client).value)
+    )
 
     val expectedJson =
       s"""|{
@@ -257,7 +280,12 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
               Expected.static ++ Map("ue_pr" -> expectedJson),
               None,
               Shared.source,
-              Shared.context)))))
+              Shared.context
+            )
+          )
+        )
+      )
+    )
   }
 
   def e5 = {
@@ -267,7 +295,9 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
 
     val payload = loader.toCollectorPayload(input)
 
-    val actual = payload.map(_.map(CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(_)))
+    val actual = payload.map(
+      _.map(CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(_, SpecHelpers.client).value)
+    )
 
     val expectedJson =
       s"""|{
@@ -310,7 +340,12 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
               Expected.static ++ Map("ue_pr" -> expectedJson),
               None,
               Shared.source,
-              Shared.context)))))
+              Shared.context
+            )
+          )
+        )
+      )
+    )
   }
 
   def e6 = {
@@ -320,7 +355,9 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
 
     val payload = loader.toCollectorPayload(input)
 
-    val actual = payload.map(_.map(CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(_)))
+    val actual = payload.map(
+      _.map(CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(_, SpecHelpers.client).value)
+    )
 
     val expectedJson =
       s"""|{
@@ -364,7 +401,12 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
               Expected.static ++ Map("ue_pr" -> expectedJson),
               None,
               Shared.source,
-              Shared.context)))))
+              Shared.context
+            )
+          )
+        )
+      )
+    )
   }
 
   def e7 = {
@@ -374,7 +416,9 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
 
     val payload = loader.toCollectorPayload(input)
 
-    val actual = payload.map(_.map(CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(_)))
+    val actual = payload.map(
+      _.map(CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(_, SpecHelpers.client).value)
+    )
 
     val expectedJson =
       s"""|{
@@ -420,11 +464,16 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
               Expected.static ++ Map("ue_pr" -> expectedJson),
               None,
               Shared.source,
-              Shared.context)))))
+              Shared.context
+            )
+          )
+        )
+      )
+    )
   }
 
   def e8 = {
-    val params = toNameValuePairs()
+    val params = SpecHelpers.toNameValuePairs()
     val payload =
       CollectorPayload(
         Shared.api,
@@ -432,16 +481,19 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
         None,
         "2013-10-07\t23:35:30\tc\t\t".some,
         Shared.source,
-        Shared.context)
-    val actual = CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(payload)
+        Shared.context
+      )
+    val actual =
+      CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(payload, SpecHelpers.client).value
 
     actual must beInvalid(
-      NonEmptyList.one(
-        "Access log TSV line contained 5 fields, expected 12, 15, 18, 19, 23, 24 or 26"))
+      NonEmptyList
+        .one("Access log TSV line contained 5 fields, expected 12, 15, 18, 19, 23, 24 or 26")
+    )
   }
 
   def e9 = {
-    val params = toNameValuePairs()
+    val params = SpecHelpers.toNameValuePairs()
     val payload =
       CollectorPayload(
         Shared.api,
@@ -449,13 +501,16 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
         None,
         s"a\tb\tc\td\te\tf\tg\th\ti\t$url\tk\t$doubleEncodedQs".some,
         Shared.source,
-        Shared.context)
-    val actual = CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(payload)
+        Shared.context
+      )
+    val actual =
+      CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(payload, SpecHelpers.client).value
 
     actual must beInvalid(
       NonEmptyList.of(
         "Unexpected exception converting Cloudfront web distribution access log date [a] and time [b] to timestamp: [Invalid format: \"aTb+00:00\"]",
         "Field [scBytes]: cannot convert [d] to Int"
-      ))
+      )
+    )
   }
 }
