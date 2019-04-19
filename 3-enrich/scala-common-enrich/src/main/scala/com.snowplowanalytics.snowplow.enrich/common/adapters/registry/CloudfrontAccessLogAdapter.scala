@@ -127,27 +127,28 @@ object CloudfrontAccessLogAdapter {
 
             val validatedTstamp = toTimestamp(fields(0), fields(1)).map(Some(_)).toValidatedNel
 
-            (validatedTstamp, failures).mapN { (tstamp, _) =>
-              val parameters = toUnstructEventParams(
-                TrackerVersion,
-                qsParams,
-                s"iglu:com.amazon.aws.cloudfront/wd_access_log/jsonschema/$v",
-                ueJson,
-                "srv"
-              )
-              NonEmptyList.one(
-                RawEvent(
-                  api = payload.api,
-                  parameters = parameters,
-                  contentType = payload.contentType,
-                  source = payload.source,
-                  context = CollectorContext(tstamp, ip, userAgent, None, Nil, None)
+            (validatedTstamp, failures).mapN {
+              (tstamp, _) =>
+                val parameters = toUnstructEventParams(
+                  TrackerVersion,
+                  qsParams,
+                  s"iglu:com.amazon.aws.cloudfront/wd_access_log/jsonschema/$v",
+                  ueJson,
+                  "srv"
                 )
-              )
+                NonEmptyList.one(
+                  RawEvent(
+                    api = payload.api,
+                    parameters = parameters,
+                    contentType = payload.contentType,
+                    source = payload.source,
+                    context = CollectorContext(tstamp, ip, userAgent, None, Nil, None)
+                  )
+                )
             }.toEither
           }.toValidated)
-        case None => Monad[F].pure(
-          "Cloudfront TSV has no body - this should be impossible".invalidNel)
+        case None =>
+          Monad[F].pure("Cloudfront TSV has no body - this should be impossible".invalidNel)
       }
 
     /**
@@ -210,7 +211,8 @@ object CloudfrontAccessLogAdapter {
               buildJson(
                 errors,
                 tail,
-                json.add("csUriQuery", Json.fromString(ConversionUtils.singleEncodePcts(field))))
+                json.add("csUriQuery", Json.fromString(ConversionUtils.singleEncodePcts(field)))
+              )
             case (name, field) => buildJson(errors, tail, json.add(name, Json.fromString(field)))
           }
       }

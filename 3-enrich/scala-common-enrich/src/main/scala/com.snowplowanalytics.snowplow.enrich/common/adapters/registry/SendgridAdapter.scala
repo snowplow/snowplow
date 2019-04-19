@@ -120,14 +120,16 @@ object SendgridAdapter extends Adapter {
     client: Client[F, Json]
   ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
     (payload.body, payload.contentType) match {
-      case (None, _) => Monad[F].pure(
-        s"Request body is empty: no $VendorName event to process".invalidNel)
-      case (_, None) => Monad[F].pure(
-        s"Request body provided but content type empty, expected $ContentType for $VendorName"
-          .invalidNel)
+      case (None, _) =>
+        Monad[F].pure(s"Request body is empty: no $VendorName event to process".invalidNel)
+      case (_, None) =>
+        Monad[F].pure(
+          s"Request body provided but content type empty, expected $ContentType for $VendorName".invalidNel
+        )
       case (_, Some(ct)) if Try(new ContentType(ct).getBaseType).getOrElse(ct) != ContentType =>
         Monad[F].pure(
-          s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel)
+          s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel
+        )
       case (Some(body), _) =>
         val _ = client
         val events = payloadBodyToEvents(body, payload)

@@ -13,10 +13,9 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry.apirequest
 
-import cats.syntax.either._
-import com.snowplowanalytics.iglu.client.{JsonSchemaPair, SchemaKey}
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer, SelfDescribingData}
 import io.circe._
-import io.circe.jackson.{circeToJackson, jacksonToCirce}
+import io.circe.generic.auto._
 import io.circe.literal._
 import io.circe.parser._
 import io.circe.syntax._
@@ -37,18 +36,18 @@ object ApiRequestEnrichmentIntegrationTest {
    * Useful only if we're passing unstruct event or custom context (but not derived) straight into
    * ApiRequestEnrichment.lookup method
    */
-  def createPair(key: SchemaKey, validJson: String): JsonSchemaPair = {
+  def createPair(key: SchemaKey, validJson: String): SelfDescribingData[Json] = {
     val hierarchy = parse(
-      s"""{"rootId":null,"rootTstamp":null,"refRoot":"events","refTree":["events","${key.name}"],"refParent":"events"}""").toOption
-      .get
-    (
+      s"""{"rootId":null,"rootTstamp":null,"refRoot":"events","refTree":["events","${key.name}"],"refParent":"events"}"""
+    ).toOption.get
+    SelfDescribingData(
       key,
-      circeToJackson(
-        Json.obj(
-          "data" := parse(validJson).toOption.get,
-          "hierarchy" := hierarchy,
-          "schema" := jacksonToCirce(key.toJsonNode)
-        )))
+      Json.obj(
+        "data" := parse(validJson).toOption.get,
+        "hierarchy" := hierarchy,
+        "schema" := key.asJson
+      )
+    )
   }
 }
 
@@ -102,7 +101,8 @@ class ApiRequestEnrichmentIntegrationTest extends Specification {
           "ttl": 60
         }
       }
-    }""").toOption.get
+    }"""
+    ).toOption.get
 
     val correctResultContext = json"""{
       "schema": "iglu:com.acme/unauth/jsonschema/1-0-0",
@@ -181,7 +181,8 @@ class ApiRequestEnrichmentIntegrationTest extends Specification {
           "ttl": 60
         }
       }
-    }""").toOption.get
+    }"""
+    ).toOption.get
 
     // NOTE: akka-http 1.0 was sending "2014-11-10T08:38:30.000Z" as is with ':', this behavior was changed in 2.0
 
@@ -222,7 +223,12 @@ class ApiRequestEnrichmentIntegrationTest extends Specification {
 
     // JsonSchemaPair built by Shredder
     val customContexts = createPair(
-      SchemaKey("com.snowplowanalytics.snowplow", "geolocation_context", "jsonschema", "1-1-0"),
+      SchemaKey(
+        "com.snowplowanalytics.snowplow",
+        "geolocation_context",
+        "jsonschema",
+        SchemaVer.Full(1, 1, 0)
+      ),
       """
         |{"latitude": 32.1, "longitude": 41.1}
       """.stripMargin
@@ -230,7 +236,12 @@ class ApiRequestEnrichmentIntegrationTest extends Specification {
 
     // JsonSchemaPair built by Shredder
     val unstructEvent = createPair(
-      SchemaKey("com.snowplowanalytics.monitoring.batch", "emr_job_status", "jsonschema", "1-0-0"),
+      SchemaKey(
+        "com.snowplowanalytics.monitoring.batch",
+        "emr_job_status",
+        "jsonschema",
+        SchemaVer.Full(1, 0, 0)
+      ),
       """
         |{"name": "Snowplow ETL", "jobflow_id": "j-ZKIY4CKQRX72", "state": "RUNNING", "created_at": "2016-01-21T13:14:10.193+03:00"}
       """.stripMargin
@@ -242,7 +253,8 @@ class ApiRequestEnrichmentIntegrationTest extends Specification {
       "com.snowplowanalytics.snowplow.enrichments",
       "api_request_enrichment_config",
       "jsonschema",
-      "1-0-0")
+      SchemaVer.Full(1, 0, 0)
+    )
 
   /**
    * Helper matcher to print JSON
@@ -252,11 +264,14 @@ class ApiRequestEnrichmentIntegrationTest extends Specification {
   }
 
   def e1 = {
-    val config = ApiRequestEnrichmentConfig.parse(IntegrationTests.configuration, SCHEMA_KEY)
+    val enrichment = ApiRequestEnrichment
+      .parse(IntegrationTests.configuration, SCHEMA_KEY)
+      .map(_.enrichment)
+      .toEither
     val event = new EnrichedEvent
     event.setApp_id("lookup-test")
     event.setUser_id("snowplower")
-    val context = config.toEither.flatMap(_.lookup(event, Nil, Nil, Nil).toEither)
+    val context = enrichment.flatMap(_.lookup(event, Nil, Nil, Nil).toEither)
     context must beRight.like {
       case context =>
         context must contain(IntegrationTests.correctResultContext) and (context must have size (1))
@@ -264,40 +279,49 @@ class ApiRequestEnrichmentIntegrationTest extends Specification {
   }
 
   def e2 = {
-    val config =
-      ApiRequestEnrichmentConfig.parse(IntegrationTests.configuration2, SCHEMA_KEY).toEither
+    val enrichment = ApiRequestEnrichment
+      .parse(IntegrationTests.configuration2, SCHEMA_KEY)
+      .map(_.enrichment)
+      .toEither
     val event = new EnrichedEvent
     event.setApp_id("lookup test")
     event.setUser_id("snowplower")
 
     // Fill cache
-    config.flatMap(
+    enrichment.flatMap(
       _.lookup(
         event,
         List(IntegrationTests.weatherContext),
         List(IntegrationTests.customContexts),
-        List(IntegrationTests.unstructEvent)).toEither)
-    config.flatMap(
+        List(IntegrationTests.unstructEvent)
+      ).toEither
+    )
+    enrichment.flatMap(
       _.lookup(
         event,
         List(IntegrationTests.weatherContext),
         List(IntegrationTests.customContexts),
-        List(IntegrationTests.unstructEvent)).toEither)
+        List(IntegrationTests.unstructEvent)
+      ).toEither
+    )
 
-    val context = config.flatMap(
+    val context = enrichment.flatMap(
       _.lookup(
         event,
         List(IntegrationTests.weatherContext),
         List(IntegrationTests.customContexts),
-        List(IntegrationTests.unstructEvent)).toEither)
+        List(IntegrationTests.unstructEvent)
+      ).toEither
+    )
 
     context must beRight.like {
       case context =>
         context must contain(
           beJson(IntegrationTests.correctResultContext2),
-          beJson(IntegrationTests.correctResultContext3)) and (context must have size (2))
+          beJson(IntegrationTests.correctResultContext3)
+        ) and (context must have size (2))
     } and {
-      config must beRight.like {
+      enrichment must beRight.like {
         case c => c.cache.actualLoad must beEqualTo(1)
       }
     }

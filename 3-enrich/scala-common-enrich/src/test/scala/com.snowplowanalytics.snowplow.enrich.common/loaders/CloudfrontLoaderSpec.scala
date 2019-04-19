@@ -48,13 +48,17 @@ class CloudfrontLoaderSpec
   def e1 =
     "SPEC NAME" || "DATE" | "TIME" | "EXP. DATETIME" |
       "Valid with ms #1" !! "2003-12-04" ! "00:18:48.234" ! DateTime.parse(
-        "2003-12-04T00:18:48.234+00:00") |
+        "2003-12-04T00:18:48.234+00:00"
+      ) |
       "Valid with ms #2" !! "2011-08-29" ! "23:56:01.003" ! DateTime.parse(
-        "2011-08-29T23:56:01.003+00:00") |
+        "2011-08-29T23:56:01.003+00:00"
+      ) |
       "Valid without ms #1" !! "2013-05-12" ! "17:34:10" ! DateTime.parse(
-        "2013-05-12T17:34:10+00:00") |
+        "2013-05-12T17:34:10+00:00"
+      ) |
       "Valid without ms #2" !! "1980-04-01" ! "21:20:04" ! DateTime.parse(
-        "1980-04-01T21:20:04+00:00") |> { (_, date, time, expected) =>
+        "1980-04-01T21:20:04+00:00"
+      ) |> { (_, date, time, expected) =>
       {
         val actual = CloudfrontLoader.toTimestamp(date, time)
         actual must beRight(expected)
@@ -243,7 +247,8 @@ class CloudfrontLoaderSpec
     val raw =
       "2012-05-24  11:35:53  DFW3  3343  99.116.172.58 POST d3gs014xn8p70.cloudfront.net  /i  200 http://www.psychicbazaar.com/2-tarot-cards/genre/all/type/all?p=5 Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0  e=pv&page=Tarot%2520cards%2520-%2520Psychic%2520Bazaar&tid=344260&uid=288112e0a5003be2&vid=1&lang=en-US&refr=http%253A%252F%252Fwww.psychicbazaar.com%252F2-tarot-cards%252Fgenre%252Fall%252Ftype%252Fall%253Fp%253D4&f_pdf=1&f_qt=0&f_realp=0&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=1366x768&cookie=1"
     CloudfrontLoader.toCollectorPayload(raw) must beInvalid(
-      NonEmptyList.one("Only GET operations supported for CloudFront Collector, not POST"))
+      NonEmptyList.one("Only GET operations supported for CloudFront Collector, not POST")
+    )
   }
 
   // A bit of fun: the chances of generating a valid CloudFront row at random are
@@ -251,6 +256,7 @@ class CloudfrontLoaderSpec
   def e7 =
     prop { (raw: String) =>
       CloudfrontLoader.toCollectorPayload(raw) must beInvalid(
-        NonEmptyList.one("Line does not match CloudFront header or data row formats"))
+        NonEmptyList.one("Line does not match CloudFront header or data row formats")
+      )
     }
 }

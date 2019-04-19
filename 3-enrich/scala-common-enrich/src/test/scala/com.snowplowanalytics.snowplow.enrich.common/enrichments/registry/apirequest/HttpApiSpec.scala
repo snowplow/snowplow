@@ -39,7 +39,8 @@ class HttpApiSpec extends Specification with ValidatedMatchers with Mockito {
         anyString,
         "http://thishostdoesntexist31337:8123/{{  user }}/foo/{{ time}}/{{user}}",
         anyInt,
-        Authentication(None))
+        Authentication(None)
+      )
 
     val templateContext = Map("user" -> "admin", "time" -> "November 2015")
     val request = httpApi.buildUrl(templateContext)
@@ -52,7 +53,8 @@ class HttpApiSpec extends Specification with ValidatedMatchers with Mockito {
       Nil,
       HttpApi("GET", "http://thishostdoesntexist31337:8123/endpoint", 1000, Authentication(None)),
       List(Output("", Some(JsonOutput("")))),
-      Cache(1, 1))
+      Cache(1, 1)
+    )
 
     val event = new outputs.EnrichedEvent
     val request = enrichment.lookup(event, Nil, Nil, Nil)

@@ -30,11 +30,13 @@ case class Db(postgresql: Option[PostgresqlDb] = None, mysql: Option[MysqlDb] = 
     case (Some(_), Some(_)) =>
       throw new Exception(
         "SQL Query Enrichment Configuration: db must represent either " +
-          "postgresql OR mysql. Both present")
+          "postgresql OR mysql. Both present"
+      )
     case (None, None) =>
       throw new Exception(
         "SQL Query Enrichment Configuration: db must represent either " +
-          "postgresql OR mysql. None present")
+          "postgresql OR mysql. None present"
+      )
     case _ => List(postgresql, mysql).flatten.head
   }
 

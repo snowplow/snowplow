@@ -134,8 +134,10 @@ class AdapterRegistry(remoteAdapters: Map[(String, String), RemoteAdapter] = Map
       case (Vendor.Marketo, "v1") => MarketoAdapter.toRawEvents(payload, client)
       case (Vendor.Vero, "v1") => VeroAdapter.toRawEvents(payload, client)
       case (Vendor.HubSpot, "v1") => HubSpotAdapter.toRawEvents(payload, client)
-      case _ => Monad[F].pure(
-        (s"Payload with vendor ${payload.api.vendor} and version ${payload.api.version} not " +
-          "supported by this version of Scala Common Enrich").invalidNel)
+      case _ =>
+        Monad[F].pure(
+          (s"Payload with vendor ${payload.api.vendor} and version ${payload.api.version} not " +
+            "supported by this version of Scala Common Enrich").invalidNel
+        )
     }
 }

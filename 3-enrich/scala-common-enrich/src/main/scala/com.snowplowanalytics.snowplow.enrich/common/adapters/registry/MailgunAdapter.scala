@@ -78,15 +78,18 @@ object MailgunAdapter extends Adapter {
     client: Client[F, Json]
   ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
     (payload.body, payload.contentType) match {
-      case (None, _) => Monad[F].pure(
-        s"Request body is empty: no $VendorName events to process".invalidNel)
-      case (_, None) => Monad[F].pure(
-        s"Request body provided but content type empty, expected $ContentTypesStr for $VendorName"
-          .invalidNel)
-      case (_, Some(ct)) if !ContentTypes.exists(ct.startsWith(_)) => Monad[F].pure(
-        s"Content type of $ct provided, expected $ContentTypesStr for $VendorName".invalidNel)
-      case (Some(body), _) if (body.isEmpty) => Monad[F].pure(
-        s"$VendorName event body is empty: nothing to process".invalidNel)
+      case (None, _) =>
+        Monad[F].pure(s"Request body is empty: no $VendorName events to process".invalidNel)
+      case (_, None) =>
+        Monad[F].pure(
+          s"Request body provided but content type empty, expected $ContentTypesStr for $VendorName".invalidNel
+        )
+      case (_, Some(ct)) if !ContentTypes.exists(ct.startsWith(_)) =>
+        Monad[F].pure(
+          s"Content type of $ct provided, expected $ContentTypesStr for $VendorName".invalidNel
+        )
+      case (Some(body), _) if (body.isEmpty) =>
+        Monad[F].pure(s"$VendorName event body is empty: nothing to process".invalidNel)
       case (Some(body), Some(ct)) =>
         val _ = client
         val params = toMap(payload.querystring)
@@ -94,21 +97,24 @@ object MailgunAdapter extends Adapter {
           getBoundary(ct)
             .map(parseMultipartForm(body, _))
             .getOrElse(
-              toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).asScala.toList))
+              toMap(
+                URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).asScala.toList
+              )
+            )
         } match {
           case TF(e) =>
             val message = JU.stripInstanceEtc(e.getMessage).orNull
             Monad[F].pure(s"$VendorName adapter could not parse body: [$message]".invalidNel)
-          case TS(bodyMap) => Monad[F].pure(
-            bodyMap
-              .get("event")
-              .map { eventType =>
-                (for {
-                  schemaUri <- lookupSchema(eventType.some, VendorName, EventSchemaMap)
-                  event <- payloadBodyToEvent(bodyMap)
-                  mEvent <- mutateMailgunEvent(event)
-                } yield
-                  NonEmptyList.one(
+          case TS(bodyMap) =>
+            Monad[F].pure(
+              bodyMap
+                .get("event")
+                .map { eventType =>
+                  (for {
+                    schemaUri <- lookupSchema(eventType.some, VendorName, EventSchemaMap)
+                    event <- payloadBodyToEvent(bodyMap)
+                    mEvent <- mutateMailgunEvent(event)
+                  } yield NonEmptyList.one(
                     RawEvent(
                       api = payload.api,
                       parameters = toUnstructEventParams(
@@ -118,17 +124,20 @@ object MailgunAdapter extends Adapter {
                         cleanupJsonEventValues(
                           mEvent,
                           ("event", eventType).some,
-                          List("timestamp")),
-                        "srv"),
+                          List("timestamp")
+                        ),
+                        "srv"
+                      ),
                       contentType = payload.contentType,
                       source = payload.source,
                       context = payload.context
                     )
                   )).toValidatedNel
-              }
-              .getOrElse(
-                s"No $VendorName event parameter provided: cannot determine event type".invalidNel)
-          )
+                }
+                .getOrElse(
+                  s"No $VendorName event parameter provided: cannot determine event type".invalidNel
+                )
+            )
         }
     }
 

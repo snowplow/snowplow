@@ -39,7 +39,8 @@ class ParseCrossDomainSpec extends Specification with DataTables {
 
   def e4 =
     PageEnrichments.parseCrossDomain(Map("_sp" -> "abc.1426245561368")) must beRight(
-      ("abc".some, "2015-03-13 11:19:21.368".some))
+      ("abc".some, "2015-03-13 11:19:21.368".some)
+    )
 
   def e5 =
     PageEnrichments.parseCrossDomain(Map("_sp" -> "")) must beRight(None -> None)
