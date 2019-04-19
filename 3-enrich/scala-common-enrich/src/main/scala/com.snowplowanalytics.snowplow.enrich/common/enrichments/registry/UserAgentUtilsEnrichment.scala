@@ -22,20 +22,22 @@ import io.circe._
 import org.slf4j.LoggerFactory
 
 object UserAgentUtilsEnrichmentConfig extends ParseableEnrichment {
-  val supportedSchema =
+  override val supportedSchema =
     SchemaCriterion("com.snowplowanalytics.snowplow", "user_agent_utils_config", "jsonschema", 1, 0)
+
   private val log = LoggerFactory.getLogger(getClass())
 
-  // Creates a UserAgentUtilsEnrichment instance from a JValue
-  def parse(
+  override def parse(
     config: Json,
-    schemaKey: SchemaKey
-  ): ValidatedNel[String, UserAgentUtilsEnrichment.type] = {
+    schemaKey: SchemaKey,
+    localMode: Boolean = false
+  ): ValidatedNel[String, UserAgentUtilsConf.type] = {
     log.warn(
       s"user_agent_utils enrichment is deprecated. Please visit here for more information: " +
-        s"https://github.com/snowplow/snowplow/wiki/user-agent-utils-enrichment")
+        s"https://github.com/snowplow/snowplow/wiki/user-agent-utils-enrichment"
+    )
     isParseable(config, schemaKey)
-      .map(_ => UserAgentUtilsEnrichment)
+      .map(_ => UserAgentUtilsConf)
       .toValidatedNel
   }
 }

@@ -116,7 +116,7 @@ object EventEnrichments {
     } catch {
       case _: NumberFormatException =>
         s"Field [$field]: [$tstamp] is not in the expected format (ms since epoch)".asLeft
-  }
+    }
 
   /**
    * Turns an event code into a valid event type, e.g. "pv" -> "page_view". See the Tracker
@@ -136,7 +136,7 @@ object EventEnrichments {
       case "pv" => "page_view".asRight
       case "pp" => "page_ping".asRight
       case ec => s"Field [$field]: [$ec] is not a recognised event code".asLeft
-  }
+    }
 
   /**
    * Returns a unique event ID. The event ID is generated as a type 4 UUID, then converted

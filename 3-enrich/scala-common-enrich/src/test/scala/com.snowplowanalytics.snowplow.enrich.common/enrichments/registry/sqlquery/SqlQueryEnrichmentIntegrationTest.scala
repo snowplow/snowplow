@@ -13,10 +13,9 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry.sqlquery
 
-import cats.syntax.either._
-import com.snowplowanalytics.iglu.client.{JsonSchemaPair, SchemaKey}
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer, SelfDescribingData}
 import io.circe._
-import io.circe.jackson.{circeToJackson, jacksonToCirce}
+import io.circe.generic.auto._
 import io.circe.literal._
 import io.circe.parser._
 import io.circe.syntax._
@@ -37,19 +36,18 @@ object SqlQueryEnrichmentIntegrationTest {
    * SqlQueryEnrichment.lookup method
    * WARNING: this is REQUIRED to test custom contexts (not derived!) and unstruct event
    */
-  def createPair(key: SchemaKey, validJson: String): JsonSchemaPair = {
+  def createPair(key: SchemaKey, validJson: String): SelfDescribingData[Json] = {
     val hierarchy = parse(
-      s"""{"rootId":null,"rootTstamp":null,"refRoot":"events","refTree":["events","${key.name}"],"refParent":"events"}""").toOption
-      .get
-    (
+      s"""{"rootId":null,"rootTstamp":null,"refRoot":"events","refTree":["events","${key.name}"],"refParent":"events"}"""
+    ).toOption.get
+    SelfDescribingData(
       key,
-      circeToJackson(
-        Json.obj(
-          "data" := parse(validJson).toOption.get,
-          "hierarchy" := hierarchy,
-          "schema" := jacksonToCirce(key.toJsonNode)
-        )
-      ))
+      Json.obj(
+        "data" := parse(validJson).toOption.get,
+        "hierarchy" := hierarchy,
+        "schema" := key.asJson
+      )
+    )
   }
 
   def createDerived(key: SchemaKey, validJson: String): Json =
@@ -74,7 +72,8 @@ class SqlQueryEnrichmentIntegrationTest extends Specification {
       "com.snowplowanalytics.snowplow.enrichments",
       "sql_query_enrichment_config",
       "jsonschema",
-      "1-0-0")
+      SchemaVer.Full(1, 0, 0)
+    )
 
   def e1 = {
     val configuration = json"""
@@ -115,7 +114,7 @@ class SqlQueryEnrichmentIntegrationTest extends Specification {
 
     val event = new EnrichedEvent
 
-    val config = SqlQueryEnrichmentConfig.parse(configuration, SCHEMA_KEY)
+    val config = SqlQueryEnrichment.parse(configuration, SCHEMA_KEY).map(_.enrichment)
     val context = config.toEither.flatMap(_.lookup(event, Nil, Nil, Nil).toEither)
 
     val correctContext = json"""
@@ -225,85 +224,123 @@ class SqlQueryEnrichmentIntegrationTest extends Specification {
             "ttl": 60
           }
         }
-      }""").toOption.get
+      }"""
+    ).toOption.get
 
     val event1 = new EnrichedEvent
     event1.setGeo_city("Krasnoyarsk")
     val weatherContext1 = createDerived(
-      SchemaKey("org.openweathermap", "weather", "jsonschema", "1-0-0"),
+      SchemaKey("org.openweathermap", "weather", "jsonschema", SchemaVer.Full(1, 0, 0)),
       """{"main":{"humidity":78.0,"pressure":1010.0,"temp":260.91,"temp_min":260.15,"temp_max":261.15},"wind":{"speed":2.0,"deg":250.0,"var_end":270,"var_beg":200},"clouds":{"all":75},"weather":[{"main":"Snow","description":"light snow","id":600,"icon":"13d"},{"main":"Mist","description":"mist","id":701,"icon":"50d"}],"dt":"2016-01-07T10:10:34.000Z"}"""
     )
     event1.setUser_id("alice")
     val geoContext1 = createPair(
-      SchemaKey("com.snowplowanalytics.snowplow", "geolocation_context", "jsonschema", "1-1-0"),
-      """ {"latitude": 12.5, "longitude": 32.1, "speed": 10.0} """)
+      SchemaKey(
+        "com.snowplowanalytics.snowplow",
+        "geolocation_context",
+        "jsonschema",
+        SchemaVer.Full(1, 1, 0)
+      ),
+      """ {"latitude": 12.5, "longitude": 32.1, "speed": 10.0} """
+    )
     val ue1 = createPair(
       SchemaKey(
         "com.snowplowanalytics.monitoring.kinesis",
         "app_initialized",
         "jsonschema",
-        "1-0-0"),
-      """ {"applicationName": "ue_test_krsk"} """)
+        SchemaVer.Full(1, 0, 0)
+      ),
+      """ {"applicationName": "ue_test_krsk"} """
+    )
 
     val event2 = new EnrichedEvent
     event2.setGeo_city("London")
     val weatherContext2 = createDerived(
-      SchemaKey("org.openweathermap", "weather", "jsonschema", "1-0-0"),
+      SchemaKey("org.openweathermap", "weather", "jsonschema", SchemaVer.Full(1, 0, 0)),
       """{"main":{"humidity":78.0,"pressure":1010.0,"temp":260.91,"temp_min":260.15,"temp_max":261.15},"wind":{"speed":2.0,"deg":250.0,"var_end":270,"var_beg":200},"clouds":{"all":75},"weather":[{"main":"Snow","description":"light snow","id":600,"icon":"13d"},{"main":"Mist","description":"mist","id":701,"icon":"50d"}],"dt":"2016-01-08T10:00:34.000Z"}"""
     )
     event2.setUser_id("bob")
     val geoContext2 = createPair(
-      SchemaKey("com.snowplowanalytics.snowplow", "geolocation_context", "jsonschema", "1-1-0"),
-      """ {"latitude": 12.5, "longitude": 32.1, "speed": 25.0} """)
+      SchemaKey(
+        "com.snowplowanalytics.snowplow",
+        "geolocation_context",
+        "jsonschema",
+        SchemaVer.Full(1, 1, 0)
+      ),
+      """ {"latitude": 12.5, "longitude": 32.1, "speed": 25.0} """
+    )
     val ue2 = createPair(
       SchemaKey(
         "com.snowplowanalytics.monitoring.kinesis",
         "app_initialized",
         "jsonschema",
-        "1-0-0"),
-      """ {"applicationName": "ue_test_london"} """)
+        SchemaVer.Full(1, 0, 0)
+      ),
+      """ {"applicationName": "ue_test_london"} """
+    )
 
     val event3 = new EnrichedEvent
     event3.setGeo_city("New York")
     val weatherContext3 = createDerived(
-      SchemaKey("org.openweathermap", "weather", "jsonschema", "1-0-0"),
+      SchemaKey("org.openweathermap", "weather", "jsonschema", SchemaVer.Full(1, 0, 0)),
       """{"main":{"humidity":78.0,"pressure":1010.0,"temp":260.91,"temp_min":260.15,"temp_max":261.15},"wind":{"speed":2.0,"deg":250.0,"var_end":270,"var_beg":200},"clouds":{"all":75},"weather":[{"main":"Snow","description":"light snow","id":600,"icon":"13d"},{"main":"Mist","description":"mist","id":701,"icon":"50d"}],"dt":"2016-02-07T10:10:00.000Z"}"""
     )
     event3.setUser_id("eve")
     val geoContext3 = createPair(
-      SchemaKey("com.snowplowanalytics.snowplow", "geolocation_context", "jsonschema", "1-1-0"),
-      """ {"latitude": 12.5, "longitude": 32.1, "speed": 2.5} """)
+      SchemaKey(
+        "com.snowplowanalytics.snowplow",
+        "geolocation_context",
+        "jsonschema",
+        SchemaVer.Full(1, 1, 0)
+      ),
+      """ {"latitude": 12.5, "longitude": 32.1, "speed": 2.5} """
+    )
     val ue3 = createPair(
       SchemaKey(
         "com.snowplowanalytics.monitoring.kinesis",
         "app_initialized",
         "jsonschema",
-        "1-0-0"),
-      """ {"applicationName": "ue_test_ny"} """)
+        SchemaVer.Full(1, 0, 0)
+      ),
+      """ {"applicationName": "ue_test_ny"} """
+    )
 
     val event4 = new EnrichedEvent
     event4.setGeo_city("London")
     val weatherContext4 = createDerived(
-      SchemaKey("org.openweathermap", "weather", "jsonschema", "1-0-0"),
+      SchemaKey("org.openweathermap", "weather", "jsonschema", SchemaVer.Full(1, 0, 0)),
       """{"main":{"humidity":78.0,"pressure":1010.0,"temp":260.91,"temp_min":260.15,"temp_max":261.15},"wind":{"speed":2.0,"deg":250.0,"var_end":270,"var_beg":200},"clouds":{"all":75},"weather":[{"main":"Snow","description":"light snow","id":600,"icon":"13d"},{"main":"Mist","description":"mist","id":701,"icon":"50d"}],"dt":"2016-01-08T10:00:34.000Z"}"""
     )
     event4.setUser_id("eve") // This should be ignored because of clientSession4
     val clientSession4 = createPair(
-      SchemaKey("com.snowplowanalytics.snowplow", "client_session", "jsonschema", "1-0-1"),
+      SchemaKey(
+        "com.snowplowanalytics.snowplow",
+        "client_session",
+        "jsonschema",
+        SchemaVer.Full(1, 0, 1)
+      ),
       """ { "userId": "bob", "sessionId": "123e4567-e89b-12d3-a456-426655440000", "sessionIndex": 1, "previousSessionId": null, "storageMechanism": "SQLITE" } """
     )
     val geoContext4 = createPair(
-      SchemaKey("com.snowplowanalytics.snowplow", "geolocation_context", "jsonschema", "1-1-0"),
-      """ {"latitude": 12.5, "longitude": 32.1, "speed": 25.0} """)
+      SchemaKey(
+        "com.snowplowanalytics.snowplow",
+        "geolocation_context",
+        "jsonschema",
+        SchemaVer.Full(1, 1, 0)
+      ),
+      """ {"latitude": 12.5, "longitude": 32.1, "speed": 25.0} """
+    )
     val ue4 = createPair(
       SchemaKey(
         "com.snowplowanalytics.monitoring.kinesis",
         "app_initialized",
         "jsonschema",
-        "1-0-0"),
-      """ {"applicationName": "ue_test_london"} """)
+        SchemaVer.Full(1, 0, 0)
+      ),
+      """ {"applicationName": "ue_test_london"} """
+    )
 
-    val config = SqlQueryEnrichmentConfig.parse(configuration, SCHEMA_KEY).toEither
+    val config = SqlQueryEnrichment.parse(configuration, SCHEMA_KEY).toEither.map(_.enrichment)
 
     val context1 =
       config.flatMap(_.lookup(event1, List(weatherContext1), List(geoContext1), List(ue1)).toEither)
@@ -341,11 +378,9 @@ class SqlQueryEnrichmentIntegrationTest extends Specification {
         }
       }"""
 
-    val context4 = config.flatMap(_.lookup(
-      event4,
-      List(weatherContext4),
-      List(geoContext4, clientSession4),
-      List(ue4)).toEither)
+    val context4 = config.flatMap(
+      _.lookup(event4, List(weatherContext4), List(geoContext4, clientSession4), List(ue4)).toEither
+    )
     val result_context4 = json"""
       {
         "schema":"iglu:com.acme/demographic/jsonschema/1-0-0",

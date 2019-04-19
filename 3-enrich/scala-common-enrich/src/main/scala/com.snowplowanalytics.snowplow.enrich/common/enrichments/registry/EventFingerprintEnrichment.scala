@@ -21,27 +21,30 @@ import org.apache.commons.codec.digest.DigestUtils
 
 import utils.CirceUtils
 
-/** Lets us create an EventFingerprintEnrichmentConfig from a Json. */
-object EventFingerprintEnrichmentConfig extends ParseableEnrichment {
-
-  val supportedSchema =
+/** Lets us create an EventFingerprintEnrichment from a Json. */
+object EventFingerprintEnrichment extends ParseableEnrichment {
+  override val supportedSchema =
     SchemaCriterion(
       "com.snowplowanalytics.snowplow",
       "event_fingerprint_config",
       "jsonschema",
       1,
-      0)
+      0
+    )
+
+  private val UnitSeparator = "\u001f"
 
   /**
-   * Creates an EventFingerprintEnrichment instance from a JValue.
+   * Creates an EventFingerprintEnrichment instance from a Json.
    * @param c The enrichment JSON
    * @param schemaKey provided for the enrichment, must be supported fby this enrichment
-   * @return a configured EventFingerprintEnrichment instance
+   * @return a EventFingerprintEnrichment configuration
    */
-  def parse(
+  override def parse(
     c: Json,
-    schemaKey: SchemaKey
-  ): ValidatedNel[String, EventFingerprintEnrichment] =
+    schemaKey: SchemaKey,
+    localMode: Boolean = false
+  ): ValidatedNel[String, EventFingerprintConf] =
     (for {
       _ <- isParseable(c, schemaKey).leftMap(e => NonEmptyList.one(e))
       // better-monadic-for
@@ -51,7 +54,7 @@ object EventFingerprintEnrichmentConfig extends ParseableEnrichment {
       ).mapN { (_, _) }.toEither
       algorithm <- getAlgorithm(paramsAndAlgo._2)
         .leftMap(e => NonEmptyList.one(e))
-    } yield EventFingerprintEnrichment(algorithm, paramsAndAlgo._1)).toValidated
+    } yield EventFingerprintConf(algorithm, paramsAndAlgo._1)).toValidated
 
   /**
    * Look up the fingerprinting algorithm by name
@@ -64,11 +67,6 @@ object EventFingerprintEnrichmentConfig extends ParseableEnrichment {
       case other =>
         s"[$other] is not a supported event fingerprint generation algorithm".asLeft
     }
-
-}
-
-object EventFingerprintEnrichment {
-  private val UnitSeparator = "\u001f"
 }
 
 /**

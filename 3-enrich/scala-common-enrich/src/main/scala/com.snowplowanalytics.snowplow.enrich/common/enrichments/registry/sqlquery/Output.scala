@@ -41,7 +41,8 @@ case class Output(json: JsonOutput, expectedRows: String) {
     case "AT_LEAST_ZERO" => AtLeastZero
     case other =>
       throw new Exception(
-        s"SQL Query Enrichment: [$other] is unknown value for expectedRows property")
+        s"SQL Query Enrichment: [$other] is unknown value for expectedRows property"
+      )
   }
 
   /** `describe` object converted from String */
@@ -199,7 +200,11 @@ object Output {
  * Enrichment, so all these properties can go into primary
  * Output class as they can be used for *any* output)
  */
-case class JsonOutput(schema: String, describes: String, propertyNames: String) {
+case class JsonOutput(
+  schema: String,
+  describes: String,
+  propertyNames: String
+) {
   import JsonOutput._
   import Output._
 
@@ -288,8 +293,9 @@ object JsonOutput {
     "java.lang.Double" -> ((obj: Object) => Json.fromDoubleOrNull(obj.asInstanceOf[Double])),
     "java.lang.Float" -> ((obj: Object) => Json.fromDoubleOrNull(obj.asInstanceOf[Float].toDouble)),
     "java.lang.String" -> ((obj: Object) => Json.fromString(obj.asInstanceOf[String])),
-    "java.sql.Date" -> ((obj: Object) =>
-      Json.fromString(new DateTime(obj.asInstanceOf[java.sql.Date]).toString))
+    "java.sql.Date" -> (
+      (obj: Object) => Json.fromString(new DateTime(obj.asInstanceOf[java.sql.Date]).toString)
+    )
   )
 
   /** Lift failing ResultSet#getMetaData into scalaz disjunction with Throwable as left-side */
@@ -324,7 +330,11 @@ object JsonOutput {
    * @param rs result set fetched from DB
    * @return JSON in case of success or Throwable in case of SQL error
    */
-  def getColumnValue(datatype: String, columnIdx: Int, rs: ResultSet): EitherThrowable[Json] =
+  def getColumnValue(
+    datatype: String,
+    columnIdx: Int,
+    rs: ResultSet
+  ): EitherThrowable[Json] =
     for {
       value <- Either.catchNonFatal(rs.getObject(columnIdx)).map(Option.apply)
     } yield value.map(getValue(_, datatype)).getOrElse(Json.Null)

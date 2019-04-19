@@ -58,10 +58,12 @@ object SchemaEnrichment {
     client: Client[F, Json]
   ): F[Either[String, SchemaKey]] =
     Shredder.extractUnstructEvent(event, client) match {
-      case Some(f) => f.map {
-        case Validated.Valid(List(json)) => parseSchemaKey(json.asObject.flatMap(_.apply("schema")))
-        case _ => "Unstructured event couldn't be extracted".asLeft
-      }
+      case Some(f) =>
+        f.map {
+          case Validated.Valid(List(json)) =>
+            parseSchemaKey(json.asObject.flatMap(_.apply("schema")))
+          case _ => "Unstructured event couldn't be extracted".asLeft
+        }
       case _ => Monad[F].pure("Unstructured event couldn't be extracted".asLeft)
     }
 

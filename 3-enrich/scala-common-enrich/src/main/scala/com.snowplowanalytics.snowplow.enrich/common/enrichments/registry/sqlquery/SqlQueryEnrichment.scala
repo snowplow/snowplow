@@ -26,28 +26,29 @@ import io.circe.syntax._
 import outputs.EnrichedEvent
 import utils.CirceUtils
 
-/** Lets us create an SqlQueryEnrichmentConfig from a Json */
-object SqlQueryEnrichmentConfig extends ParseableEnrichment {
-
-  val supportedSchema =
+/** Lets us create an SqlQueryConf from a Json */
+object SqlQueryEnrichment extends ParseableEnrichment {
+  override val supportedSchema =
     SchemaCriterion(
       "com.snowplowanalytics.snowplow.enrichments",
       "sql_query_enrichment_config",
       "jsonschema",
       1,
       0,
-      0)
+      0
+    )
 
   /**
    * Creates an SqlQueryEnrichment instance from a Json.
    * @param c The enrichment JSON
    * @param schemaKey provided for the enrichment, must be supported by this enrichment
-   * @return a configured SqlQueryEnrichment instance
+   * @return a SqlQueryEnrichment configuration
    */
-  def parse(
+  override def parse(
     c: Json,
-    schemaKey: SchemaKey
-  ): ValidatedNel[String, SqlQueryEnrichment] =
+    schemaKey: SchemaKey,
+    localMode: Boolean = false
+  ): ValidatedNel[String, SqlQueryConf] =
     isParseable(c, schemaKey)
       .leftMap(e => NonEmptyList.one(e))
       .flatMap { _ =>
@@ -71,9 +72,27 @@ object SqlQueryEnrichmentConfig extends ParseableEnrichment {
           CirceUtils.extract[Query](c, "parameters", "query").toValidatedNel,
           output,
           CirceUtils.extract[Cache](c, "parameters", "cache").toValidatedNel
-        ).mapN { SqlQueryEnrichment(_, _, _, _, _) }.toEither
+        ).mapN { SqlQueryConf(_, _, _, _, _) }.toEither
       }
       .toValidated
+
+  /**
+   * Transform pairs of schema and node obtained from [[utils.shredder.Shredder]] into list of
+   * regular self-describing JObject representing custom context or unstructured event.
+   * If node isn't Self-describing (doesn't contain data key) it will be filtered out.
+   * @param pairs list of pairs consisting of schema and Json nodes
+   * @return list of regular JObjects
+   */
+  def transformRawPairs(pairs: List[SelfDescribingData[Json]]): List[Json] =
+    pairs.map { p =>
+      val uri = p.schema.toSchemaUri
+      p.data.hcursor.downField("data").focus.map { json =>
+        Json.obj(
+          "schema" := Json.fromString(uri),
+          "data" := json
+        )
+      }
+    }.flatten
 }
 
 final case class SqlQueryEnrichment(
@@ -90,9 +109,9 @@ final case class SqlQueryEnrichment(
    * JSON-value, etc. Successful Nil skipped lookup (unfilled placeholder for eg, empty response)
    * @param event currently enriching event
    * @param derivedContexts derived contexts as list of JSON objects
-   * @param customContexts custom contexts as [[JsonSchemaPairs]]
+   * @param customContexts custom contexts as SelfDescribingData
    * @param unstructEvent unstructured (self-describing) event as empty or single element
-   * [[JsonSchemaPairs]]
+   * SelfDescribingData
    * @return Nil if some inputs were missing, validated JSON contexts if lookup performed
    */
   def lookup(
@@ -177,26 +196,4 @@ final case class SqlQueryEnrichment(
         lastPlaceholderCount = newCount
         newCount.leftMap(_.toString)
       }
-}
-
-/** Companion object containing common methods for requests and manipulating data */
-object SqlQueryEnrichment {
-
-  /**
-   * Transform pairs of schema and node obtained from [[utils.shredder.Shredder]] into list of
-   * regular self-describing JObject representing custom context or unstructured event.
-   * If node isn't Self-describing (doesn't contain data key) it will be filtered out.
-   * @param pairs list of pairs consisting of schema and Json nodes
-   * @return list of regular JObjects
-   */
-  def transformRawPairs(pairs: List[SelfDescribingData[Json]]): List[Json] =
-    pairs.map { p =>
-      val uri = p.schema.toSchemaUri
-      p.data.hcursor.downField("data").focus.map { json =>
-        Json.obj(
-          "schema" := Json.fromString(uri),
-          "data" := json
-        )
-      }
-    }.flatten
 }

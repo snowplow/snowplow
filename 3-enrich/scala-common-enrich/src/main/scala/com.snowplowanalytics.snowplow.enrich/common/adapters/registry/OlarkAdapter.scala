@@ -75,35 +75,40 @@ object OlarkAdapter extends Adapter {
     client: Client[F, Json]
   ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
     (payload.body, payload.contentType) match {
-      case (None, _) => Monad[F].pure(
-        s"Request body is empty: no $VendorName events to process".invalidNel)
-      case (_, None) => Monad[F].pure(
-        s"Request body provided but content type empty, expected $ContentType for $VendorName"
-          .invalidNel)
-      case (_, Some(ct)) if ct != ContentType => Monad[F].pure(
-        s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel)
+      case (None, _) =>
+        Monad[F].pure(s"Request body is empty: no $VendorName events to process".invalidNel)
+      case (_, None) =>
+        Monad[F].pure(
+          s"Request body provided but content type empty, expected $ContentType for $VendorName".invalidNel
+        )
+      case (_, Some(ct)) if ct != ContentType =>
+        Monad[F].pure(
+          s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel
+        )
       case (Some(body), _) if (body.isEmpty) =>
         Monad[F].pure(s"$VendorName event body is empty: nothing to process".invalidNel)
       case (Some(body), _) =>
         val _ = client
         val qsParams = toMap(payload.querystring)
         Try {
-          toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).asScala.toList)
+          toMap(
+            URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).asScala.toList
+          )
         } match {
           case TF(e) =>
             val message = JU.stripInstanceEtc(e.getMessage).orNull
             Monad[F].pure(s"$VendorName could not parse body: [$message]".invalidNel)
           case TS(bodyMap) =>
-            Monad[F].pure((for {
-              event <- payloadBodyToEvent(bodyMap)
-              eventType = event.hcursor.get[Json]("operators").toOption match {
-                case Some(_) => "transcript"
-                case _ => "offline_message"
-              }
-              schema <- lookupSchema(eventType.some, VendorName, EventSchemaMap)
-              transformedEvent <- transformTimestamps(event)
-            } yield
-              NonEmptyList.one(
+            Monad[F].pure(
+              (for {
+                event <- payloadBodyToEvent(bodyMap)
+                eventType = event.hcursor.get[Json]("operators").toOption match {
+                  case Some(_) => "transcript"
+                  case _ => "offline_message"
+                }
+                schema <- lookupSchema(eventType.some, VendorName, EventSchemaMap)
+                transformedEvent <- transformTimestamps(event)
+              } yield NonEmptyList.one(
                 RawEvent(
                   api = payload.api,
                   parameters = toUnstructEventParams(
@@ -111,12 +116,14 @@ object OlarkAdapter extends Adapter {
                     qsParams,
                     schema,
                     camelize(transformedEvent),
-                    "srv"),
+                    "srv"
+                  ),
                   contentType = payload.contentType,
                   source = payload.source,
                   context = payload.context
                 )
-              )).toValidatedNel)
+              )).toValidatedNel
+            )
         }
     }
 

@@ -14,9 +14,8 @@ package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry.apirequest
 
 import cats.syntax.either._
-import com.snowplowanalytics.iglu.client.JsonSchemaPair
-import com.snowplowanalytics.iglu.client.SchemaKey
-import io.circe.jackson.circeToJackson
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer, SelfDescribingData}
+import io.circe.Json
 import io.circe.literal._
 import io.circe.parser._
 import org.specs2.Specification
@@ -39,7 +38,8 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
       "com.snowplowanalytics.snowplow.enrichments",
       "api_request_enrichment_config",
       "jsonschema",
-      "1-0-0")
+      SchemaVer.Full(1, 0, 0)
+    )
 
   def e1 = {
     val inputs = List(
@@ -51,7 +51,10 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
           JsonInput(
             "contexts",
             "iglu:com.snowplowanalytics.snowplow/client_session/jsonschema/1-*-*",
-            "$.userId"))),
+            "$.userId"
+          )
+        )
+      ),
       Input("client", pojo = Some(PojoInput("app_id")), json = None)
     )
     val api =
@@ -59,7 +62,8 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
         "GET",
         "http://api.acme.com/users/{{client}}/{{user}}?format=json",
         1000,
-        Authentication(Some(HttpBasic(Some("xxx"), None))))
+        Authentication(Some(HttpBasic(Some("xxx"), None)))
+      )
     val apiSpy = spy(api)
     val output = Output("iglu:com.acme/user/jsonschema/1-0-0", Some(JsonOutput("$.record")))
     val cache = Cache(3000, 60)
@@ -70,13 +74,14 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
       user_id = "some-fancy-user-id"
     }
 
-    val clientSession: JsonSchemaPair = (
+    val clientSession: SelfDescribingData[Json] = SelfDescribingData[Json](
       SchemaKey(
-        vendor = "com.snowplowanalytics.snowplow",
-        name = "client_session",
-        format = "jsonschema",
-        version = "1-0-1"),
-      circeToJackson(json"""{
+        "com.snowplowanalytics.snowplow",
+        "client_session",
+        "jsonschema",
+        SchemaVer.Full(1, 0, 1)
+      ),
+      json"""{
         "data": {
             "userId": "some-fancy-user-session-id",
             "sessionId": "42c8a55b-c0c2-4749-b9ac-09bb0d17d000",
@@ -84,7 +89,7 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
             "previousSessionId": null,
             "storageMechanism": "COOKIE_1"
         }
-      }""")
+      }"""
     )
 
     val configuration = parse(
@@ -139,9 +144,10 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
           "ttl": 60
         }
       }
-    }""").toOption.get
+    }"""
+    ).toOption.get
 
-    ApiRequestEnrichmentConfig.parse(configuration, SCHEMA_KEY) must beValid(config)
+    ApiRequestEnrichment.parse(configuration, SCHEMA_KEY) must beValid(config)
 
     val user = json"""{
       "schema": "iglu:com.acme/user/jsonschema/1-0-0",
@@ -214,7 +220,7 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
         }
       }
     }""").toOption.get
-    ApiRequestEnrichmentConfig.parse(configuration, SCHEMA_KEY) must beInvalid
+    ApiRequestEnrichment.parse(configuration, SCHEMA_KEY) must beInvalid
   }
 
   def e3 = {
@@ -267,8 +273,9 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
           "ttl": 60
         }
       }
-    }""").toOption.get
-    ApiRequestEnrichmentConfig.parse(configuration, SCHEMA_KEY) must beInvalid
+    }"""
+    ).toOption.get
+    ApiRequestEnrichment.parse(configuration, SCHEMA_KEY) must beInvalid
   }
 
   def e4 = {
@@ -281,7 +288,10 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
           JsonInput(
             "contexts",
             "iglu:com.snowplowanalytics.snowplow/client_session/jsonschema/1-*-*",
-            "$.userId"))),
+            "$.userId"
+          )
+        )
+      ),
       Input(key = "client", pojo = Some(PojoInput("app_id")), json = None)
     )
 
@@ -289,7 +299,8 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
       method = "POST",
       uri = "http://api.acme.com/users?format=json",
       timeout = 1000,
-      authentication = Authentication(Some(HttpBasic(Some("xxx"), None))))
+      authentication = Authentication(Some(HttpBasic(Some("xxx"), None)))
+    )
     val apiSpy = spy(api)
     val output =
       Output(schema = "iglu:com.acme/user/jsonschema/1-0-0", json = Some(JsonOutput("$.record")))
@@ -301,13 +312,14 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
       user_id = "some-fancy-user-id"
     }
 
-    val clientSession: JsonSchemaPair = (
+    val clientSession: SelfDescribingData[Json] = SelfDescribingData(
       SchemaKey(
-        vendor = "com.snowplowanalytics.snowplow",
-        name = "client_session",
-        format = "jsonschema",
-        version = "1-0-1"),
-      circeToJackson(json"""{
+        "com.snowplowanalytics.snowplow",
+        "client_session",
+        "jsonschema",
+        SchemaVer.Full(1, 0, 1)
+      ),
+      json"""{
         "data": {
             "userId": "some-fancy-user-session-id",
             "sessionId": "42c8a55b-c0c2-4749-b9ac-09bb0d17d000",
@@ -315,7 +327,7 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
             "previousSessionId": null,
             "storageMechanism": "COOKIE_1"
         }
-      }""")
+      }"""
     )
 
     val configuration = parse(
@@ -370,9 +382,10 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
           "ttl": 60
         }
       }
-   }""").toOption.get
+   }"""
+    ).toOption.get
 
-    ApiRequestEnrichmentConfig.parse(configuration, SCHEMA_KEY) must beValid(config)
+    ApiRequestEnrichment.parse(configuration, SCHEMA_KEY) must beValid(config)
 
     val user = json"""{
       "schema": "iglu:com.acme/user/jsonschema/1-0-0",
@@ -385,7 +398,14 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
     apiSpy.perform(
       url = "http://api.acme.com/users?format=json",
       body = Some(
-        """{"client":"some-fancy-app-id","user":"some-fancy-user-id","userSession":"some-fancy-user-session-id"}""")
+        """{"client":"some-fancy-app-id","user":"some-fancy-user-id","userSession":"some-fancy-user-session-id"}"""
+      )
+    ) returns """{"record": {"name": "Fancy User", "company": "Acme"}}""".asRight
+    apiSpy.perform(
+      url = "http://api.acme.com/users?format=json",
+      body = Some(
+        """{"user":"some-fancy-user-id","client":"some-fancy-app-id","userSession":"some-fancy-user-session-id"}"""
+      )
     ) returns """{"record": {"name": "Fancy User", "company": "Acme"}}""".asRight
 
     val enrichedContextResult = config.lookup(

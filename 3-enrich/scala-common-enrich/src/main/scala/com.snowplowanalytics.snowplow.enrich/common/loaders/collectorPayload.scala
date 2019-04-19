@@ -44,7 +44,8 @@ object CollectorPayload {
       contextUseragent,
       contextRefererUri,
       contextHeaders,
-      contextUserId)
+      contextUserId
+    )
     CollectorPayload(api, querystring, contentType, body, source, context)
   }
 }

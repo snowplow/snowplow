@@ -48,7 +48,7 @@ object MiscEnrichments {
       case "tv" => "tv".asRight // Connected TV
       case "srv" => "srv".asRight // Server-side App
       case p => s"Field [$field]: [$p] is not a supported tracking platform".asLeft
-  }
+    }
 
   /** Identity transform. Straight passthrough. */
   val identity: (String, String) => Either[String, String] = (_, value) => value.asRight

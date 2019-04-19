@@ -72,9 +72,11 @@ abstract class Loader[T] {
       Either
         .catchNonFatal(URLEncodedUtils.parse(URI.create("http://localhost/?" + q), enc))
         .map(_.asScala.toList)
-        .leftMap(e =>
-          "Exception extracting name-value pairs from querystring [%s] with encoding [%s]: [%s]"
-            .format(q, enc, e.getMessage))
+        .leftMap(
+          e =>
+            "Exception extracting name-value pairs from querystring [%s] with encoding [%s]: [%s]"
+              .format(q, enc, e.getMessage)
+        )
     case None => Nil.asRight
   }
 }

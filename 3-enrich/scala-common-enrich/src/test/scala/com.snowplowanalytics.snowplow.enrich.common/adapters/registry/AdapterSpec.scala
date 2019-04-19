@@ -49,7 +49,9 @@ class AdapterSpec extends Specification with DataTables with ValidatedMatchers {
 
   object BaseAdapter extends Adapter {
     def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
-      payload: CollectorPayload, client: Client[F, Json]) = Monad[F].pure("Base".invalidNel)
+      payload: CollectorPayload,
+      client: Client[F, Json]
+    ) = Monad[F].pure("Base".invalidNel)
   }
 
   object Shared {
@@ -61,7 +63,8 @@ class AdapterSpec extends Specification with DataTables with ValidatedMatchers {
       None,
       None,
       Nil,
-      None)
+      None
+    )
     val contentType = "application/x-www-form-urlencoded"
   }
 
@@ -80,7 +83,8 @@ class AdapterSpec extends Specification with DataTables with ValidatedMatchers {
       Map[String, String](),
       "iglu:foo",
       _ => Json.fromJsonObject(JsonObject.empty),
-      "app")
+      "app"
+    )
     params must_== Map(
       "tv" -> "tv",
       "e" -> "ue",
@@ -97,13 +101,15 @@ class AdapterSpec extends Specification with DataTables with ValidatedMatchers {
       "p" -> "srv",
       "eid" -> "321",
       "ttm" -> "2015-11-13T16:31:52.393Z",
-      "url" -> "http://localhost")
+      "url" -> "http://localhost"
+    )
     val params = BaseAdapter.toUnstructEventParams(
       "tv",
       shared,
       "iglu:foo",
       _ => Json.fromJsonObject(JsonObject.empty),
-      "app")
+      "app"
+    )
     params must_== shared ++ Map(
       "tv" -> "tv",
       "e" -> "ue",
@@ -140,7 +146,8 @@ class AdapterSpec extends Specification with DataTables with ValidatedMatchers {
       Map("tv" -> "com.adapter-v1", "e" -> "ue", "p" -> "srv"),
       Shared.contentType.some,
       Shared.cljSource,
-      Shared.context)
+      Shared.context
+    )
     val validatedRawEventsList =
       List(
         Validated.Valid(rawEvent),
@@ -157,7 +164,8 @@ class AdapterSpec extends Specification with DataTables with ValidatedMatchers {
       Map("tv" -> "com.adapter-v1", "e" -> "ue", "p" -> "srv"),
       Shared.contentType.some,
       Shared.cljSource,
-      Shared.context)
+      Shared.context
+    )
     val validatedRawEventsList =
       List(Validated.Valid(rawEvent), Validated.Valid(rawEvent), Validated.Valid(rawEvent))
     val expected = NonEmptyList.of(
@@ -166,19 +174,22 @@ class AdapterSpec extends Specification with DataTables with ValidatedMatchers {
         Map("tv" -> "com.adapter-v1", "e" -> "ue", "p" -> "srv"),
         Shared.contentType.some,
         Shared.cljSource,
-        Shared.context),
+        Shared.context
+      ),
       RawEvent(
         Shared.api,
         Map("tv" -> "com.adapter-v1", "e" -> "ue", "p" -> "srv"),
         Shared.contentType.some,
         Shared.cljSource,
-        Shared.context),
+        Shared.context
+      ),
       RawEvent(
         Shared.api,
         Map("tv" -> "com.adapter-v1", "e" -> "ue", "p" -> "srv"),
         Shared.contentType.some,
         Shared.cljSource,
-        Shared.context)
+        Shared.context
+      )
     )
     BaseAdapter.rawEventsListProcessor(validatedRawEventsList) must beValid(expected)
   }

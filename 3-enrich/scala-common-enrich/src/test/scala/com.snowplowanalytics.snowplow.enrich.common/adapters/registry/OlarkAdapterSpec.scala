@@ -21,6 +21,7 @@ import org.specs2.Specification
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import utils.Clock._
 
 class OlarkAdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
@@ -35,8 +36,6 @@ class OlarkAdapterSpec extends Specification with DataTables with ValidatedMatch
     payloadBodyToEvent must return a Failure if the event string failed to parse into JSON          $e8
     """
 
-  implicit val resolver = SpecHelpers.IgluResolver
-
   object Shared {
     val api = CollectorApi("com.olark", "v1")
     val cljSource = CollectorSource("clj-tomcat", "UTF-8", None)
@@ -46,7 +45,8 @@ class OlarkAdapterSpec extends Specification with DataTables with ValidatedMatch
       None,
       None,
       Nil,
-      None)
+      None
+    )
   }
 
   val ContentType = "application/x-www-form-urlencoded"
@@ -60,7 +60,8 @@ class OlarkAdapterSpec extends Specification with DataTables with ValidatedMatch
       ContentType.some,
       body.some,
       Shared.cljSource,
-      Shared.context)
+      Shared.context
+    )
     val expectedJson =
       """|{
           |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
@@ -132,8 +133,10 @@ class OlarkAdapterSpec extends Specification with DataTables with ValidatedMatch
         Map("tv" -> "com.olark-v1", "e" -> "ue", "p" -> "srv", "ue_pr" -> expectedJson),
         ContentType.some,
         Shared.cljSource,
-        Shared.context))
-    OlarkAdapter.toRawEvents(payload) must beValid(expected)
+        Shared.context
+      )
+    )
+    OlarkAdapter.toRawEvents(payload, SpecHelpers.client).value must beValid(expected)
   }
 
   def e2 = {
@@ -145,7 +148,8 @@ class OlarkAdapterSpec extends Specification with DataTables with ValidatedMatch
       ContentType.some,
       body.some,
       Shared.cljSource,
-      Shared.context)
+      Shared.context
+    )
     val expectedJson =
       """|{
           |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
@@ -193,15 +197,18 @@ class OlarkAdapterSpec extends Specification with DataTables with ValidatedMatch
         Map("tv" -> "com.olark-v1", "e" -> "ue", "p" -> "srv", "ue_pr" -> expectedJson),
         ContentType.some,
         Shared.cljSource,
-        Shared.context))
-    OlarkAdapter.toRawEvents(payload) must beValid(expected)
+        Shared.context
+      )
+    )
+    OlarkAdapter.toRawEvents(payload, SpecHelpers.client).value must beValid(expected)
   }
 
   def e3 = {
     val payload =
       CollectorPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
-    OlarkAdapter.toRawEvents(payload) must beInvalid(
-      NonEmptyList.one("Request body is empty: no Olark events to process"))
+    OlarkAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(
+      NonEmptyList.one("Request body is empty: no Olark events to process")
+    )
   }
 
   def e4 = {
@@ -209,8 +216,11 @@ class OlarkAdapterSpec extends Specification with DataTables with ValidatedMatch
       "data=%7B%22kind%22%3A%20%22Conversation%22%2C%20%22tags%22%3A%20%5B%22olark%22%2C%20%22customer%22%5D%2C%20%22items%22%3A%20%5B%7B%22body%22%3A%20%22Hi%20there.%20Need%20any%20help%3F%22%2C%20%22timestamp%22%3A%20%221307116657.1%22%2C%20%22kind%22%3A%20%22MessageToVisitor%22%2C%20%22nickname%22%3A%20%22John%22%2C%20%22operatorId%22%3A%20%221234%22%7D%2C%20%7B%22body%22%3A%20%22Yes%2C%20please%20help%20me%20with%20billing.%22%2C%20%22timestamp%22%3A%20%221307116661.25%22%2C%20%22kind%22%3A%20%22MessageToOperator%22%2C%20%22nickname%22%3A%20%22Bob%22%7D%5D%2C%20%22operators%22%3A%20%7B%221234%22%3A%20%7B%22username%22%3A%20%22jdoe%22%2C%20%22emailAddress%22%3A%20%22john%40example.com%22%2C%20%22kind%22%3A%20%22Operator%22%2C%20%22nickname%22%3A%20%22John%22%2C%20%22id%22%3A%20%221234%22%7D%7D%2C%20%22groups%22%3A%20%5B%7B%22kind%22%3A%20%22Group%22%2C%20%22name%22%3A%20%22My%20Sales%20Group%22%2C%20%22id%22%3A%20%220123456789abcdef%22%7D%5D%2C%20%22visitor%22%3A%20%7B%22ip%22%3A%20%22123.4.56.78%22%2C%20%22city%22%3A%20%22Palo%20Alto%22%2C%20%22kind%22%3A%20%22Visitor%22%2C%20%22conversationBeginPage%22%3A%20%22http%3A%2F%2Fwww.example.com%2Fpath%22%2C%20%22countryCode%22%3A%20%22US%22%2C%20%22country%22%3A%20%22United%20State%22%2C%20%22region%22%3A%20%22CA%22%2C%20%22chat_feedback%22%3A%20%7B%22overall_chat%22%3A%205%2C%20%22responsiveness%22%3A%205%2C%20%22friendliness%22%3A%205%2C%20%22knowledge%22%3A%205%2C%20%22comments%22%3A%20%22Very%20helpful%2C%20thanks%22%7D%2C%20%22operatingSystem%22%3A%20%22Windows%22%2C%20%22emailAddress%22%3A%20%22bob%40example.com%22%2C%20%22organization%22%3A%20%22Widgets%20Inc.%22%2C%20%22phoneNumber%22%3A%20%22%28555%29%20555-5555%22%2C%20%22fullName%22%3A%20%22Bob%20Doe%22%2C%20%22customFields%22%3A%20%7B%22favoriteColor%22%3A%20%22blue%22%2C%20%22myInternalCustomerId%22%3A%20%2212341234%22%7D%2C%20%22id%22%3A%20%229QRF9YWM5XW3ZSU7P9CGWRU89944341%22%2C%20%22browser%22%3A%20%22Chrome%2012.1%22%7D%2C%20%22id%22%3A%20%22EV695BI2930A6XMO32886MPT899443414%22%7D"
     val payload =
       CollectorPayload(Shared.api, Nil, None, body.some, Shared.cljSource, Shared.context)
-    OlarkAdapter.toRawEvents(payload) must beInvalid(NonEmptyList.one(
-      "Request body provided but content type empty, expected application/x-www-form-urlencoded for Olark"))
+    OlarkAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(
+      NonEmptyList.one(
+        "Request body provided but content type empty, expected application/x-www-form-urlencoded for Olark"
+      )
+    )
   }
 
   def e5 = {
@@ -219,8 +229,11 @@ class OlarkAdapterSpec extends Specification with DataTables with ValidatedMatch
     val ct = "application/json"
     val payload =
       CollectorPayload(Shared.api, Nil, ct.some, body.some, Shared.cljSource, Shared.context)
-    OlarkAdapter.toRawEvents(payload) must beInvalid(NonEmptyList.one(
-      "Content type of application/json provided, expected application/x-www-form-urlencoded for Olark"))
+    OlarkAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(
+      NonEmptyList.one(
+        "Content type of application/json provided, expected application/x-www-form-urlencoded for Olark"
+      )
+    )
   }
 
   def e6 = {
@@ -231,9 +244,10 @@ class OlarkAdapterSpec extends Specification with DataTables with ValidatedMatch
       ContentType.some,
       body.some,
       Shared.cljSource,
-      Shared.context)
+      Shared.context
+    )
     val expected = NonEmptyList.one("Olark event body is empty: nothing to process")
-    OlarkAdapter.toRawEvents(payload) must beInvalid(expected)
+    OlarkAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(expected)
   }
 
   def e7 = {
@@ -245,9 +259,10 @@ class OlarkAdapterSpec extends Specification with DataTables with ValidatedMatch
       ContentType.some,
       body.some,
       Shared.cljSource,
-      Shared.context)
+      Shared.context
+    )
     val expected = NonEmptyList.one("Olark event data does not have 'data' as a key")
-    OlarkAdapter.toRawEvents(payload) must beInvalid(expected)
+    OlarkAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(expected)
   }
 
   def e8 = {
@@ -259,9 +274,11 @@ class OlarkAdapterSpec extends Specification with DataTables with ValidatedMatch
       ContentType.some,
       body.some,
       Shared.cljSource,
-      Shared.context)
+      Shared.context
+    )
     val expected = NonEmptyList.one(
-      """Olark event string failed to parse into JSON: [expected json value got 'kind":...' (line 1, column 1)]""")
-    OlarkAdapter.toRawEvents(payload) must beInvalid(expected)
+      """Olark event string failed to parse into JSON: [expected json value got 'kind":...' (line 1, column 1)]"""
+    )
+    OlarkAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(expected)
   }
 }

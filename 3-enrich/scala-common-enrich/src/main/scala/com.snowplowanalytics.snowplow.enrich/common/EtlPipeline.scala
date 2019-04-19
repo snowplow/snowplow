@@ -49,7 +49,7 @@ object EtlPipeline {
    */
   def processEvents(
     adapterRegistry: AdapterRegistry,
-    enrichmentRegistry: EnrichmentRegistry,
+    enrichmentRegistry: EnrichmentRegistry[F],
     client: Client[F, Json],
     etlVersion: String,
     etlTstamp: DateTime,
@@ -66,20 +66,18 @@ object EtlPipeline {
 
     try {
       val e = for {
-          maybePayload <- input
-        } yield
-          for {
-            payload <- maybePayload
-          } yield
-            (for {
-              events <- EitherT(adapterRegistry.toRawEvents(payload, client).map(_.toEither))
-              enrichedEvents <-
-                events.map { e =>
-                  val r = EnrichmentManager
-                    .enrichEvent(registry, client, etlVersion, etlTstamp, e).map(_.toEither)
-                  EitherT(r)
-                }.sequence
-            } yield enrichedEvents).value.map(_.toValidated)
+        maybePayload <- input
+      } yield for {
+        payload <- maybePayload
+      } yield (for {
+        events <- EitherT(adapterRegistry.toRawEvents(payload, client).map(_.toEither))
+        enrichedEvents <- events.map { e =>
+          val r = EnrichmentManager
+            .enrichEvent(enrichmentRegistry, client, etlVersion, etlTstamp, e)
+            .map(_.toEither)
+          EitherT(r)
+        }.sequence
+      } yield enrichedEvents).value.map(_.toValidated)
 
       e.map(_.sequence).sequence.map(flattenToList)
     } catch {
