@@ -18,13 +18,9 @@
 import sbt._
 import Keys._
 
-// Bintray plugin
 import bintray.BintrayPlugin._
 import bintray.BintrayKeys._
-
-// Scalafmt plugin
-import com.lucidchart.sbt.scalafmt.ScalafmtPlugin._
-import com.lucidchart.sbt.scalafmt.ScalafmtCorePlugin.autoImport._
+import org.scalafmt.sbt.ScalafmtPlugin.autoImport._
 
 object BuildSettings {
 
@@ -83,7 +79,6 @@ object BuildSettings {
 
   lazy val formatting = Seq(
     scalafmtConfig    := file(".scalafmt.conf"),
-    scalafmtOnCompile := true,
-    scalafmtVersion   := "1.3.0"
+    scalafmtOnCompile := true
   )
 }
