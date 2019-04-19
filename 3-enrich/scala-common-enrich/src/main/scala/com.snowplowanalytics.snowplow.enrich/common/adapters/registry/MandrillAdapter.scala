@@ -53,7 +53,7 @@ object MandrillAdapter extends Adapter {
 
   // Schemas for reverse-engineering a Snowplow unstructured event
   private val EventSchemaMap = Map(
-    "hard_bounce" -> SchemaKey(Vendor, "message_bounced", Vendor, SchemaVersion).toSchemaUri,
+    "hard_bounce" -> SchemaKey(Vendor, "message_bounced", Format, SchemaVersion).toSchemaUri,
     "click" -> SchemaKey(Vendor, "message_clicked", Format, SchemaVersion).toSchemaUri,
     "deferral" -> SchemaKey(Vendor, "message_delayed", Format, SchemaVersion).toSchemaUri,
     "spam" -> SchemaKey(Vendor, "message_marked_as_spam", Format, SchemaVersion).toSchemaUri,
@@ -80,13 +80,16 @@ object MandrillAdapter extends Adapter {
     client: Client[F, Json]
   ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
     (payload.body, payload.contentType) match {
-      case (None, _) => Monad[F].pure(
-        s"Request body is empty: no $VendorName events to process".invalidNel)
-      case (_, None) => Monad[F].pure(
-        s"Request body provided but content type empty, expected $ContentType for $VendorName"
-          .invalidNel)
-      case (_, Some(ct)) if ct != ContentType => Monad[F].pure(
-        s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel)
+      case (None, _) =>
+        Monad[F].pure(s"Request body is empty: no $VendorName events to process".invalidNel)
+      case (_, None) =>
+        Monad[F].pure(
+          s"Request body provided but content type empty, expected $ContentType for $VendorName".invalidNel
+        )
+      case (_, Some(ct)) if ct != ContentType =>
+        Monad[F].pure(
+          s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel
+        )
       case (Some(body), _) =>
         payloadBodyToEvents(body) match {
           case Left(str) => Monad[F].pure(str.invalidNel)
@@ -111,7 +114,8 @@ object MandrillAdapter extends Adapter {
                       qsParams,
                       schema,
                       formattedEvent,
-                      "srv"),
+                      "srv"
+                    ),
                     contentType = payload.contentType,
                     source = payload.source,
                     context = payload.context
@@ -130,11 +134,13 @@ object MandrillAdapter extends Adapter {
    * @param rawEventString The encoded string from the Mandrill payload body
    * @return a list of single events formatted as JSONs or a Failure String
    */
-  private[registry] def payloadBodyToEvents(
-    rawEventString: String
-  ): Either[String, List[Json]] = {
-    val bodyMap = toMap(URLEncodedUtils
-      .parse(URI.create("http://localhost/?" + rawEventString), UTF_8).asScala.toList)
+  private[registry] def payloadBodyToEvents(rawEventString: String): Either[String, List[Json]] = {
+    val bodyMap = toMap(
+      URLEncodedUtils
+        .parse(URI.create("http://localhost/?" + rawEventString), UTF_8)
+        .asScala
+        .toList
+    )
     bodyMap match {
       case map if map.size != 1 =>
         s"Mapped $VendorName body has invalid count of keys: ${map.size}".asLeft

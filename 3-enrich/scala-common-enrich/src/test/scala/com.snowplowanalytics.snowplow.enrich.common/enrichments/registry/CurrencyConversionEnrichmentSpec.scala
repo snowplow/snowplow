@@ -12,9 +12,12 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
-import cats.data.{NonEmptyList, Validated}
+import cats.Eval
+import cats.data.{NonEmptyList, Validated, ValidatedNel}
 import cats.syntax.validated._
-import com.snowplowanalytics.forex.oerclient.DeveloperAccount
+import com.snowplowanalytics.forex.CreateForex._
+import com.snowplowanalytics.forex.model._
+import org.joda.money.CurrencyUnit
 import org.joda.time.DateTime
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
@@ -36,34 +39,43 @@ class CurrencyConversionEnrichmentSpec extends Specification with DataTables {
 
   lazy val validAppKey = sys.env
     .get(OerApiKey)
-    .getOrElse(throw new IllegalStateException(
-      s"No ${OerApiKey} environment variable found, test should have been skipped"))
-  val trCurrencyMissing = Validated.Invalid(
+    .getOrElse(
+      throw new IllegalStateException(
+        s"No ${OerApiKey} environment variable found, test should have been skipped"
+      )
+    )
+  type Result =
+    ValidatedNel[String, (Option[String], Option[String], Option[String], Option[String])]
+  val trCurrencyMissing: Result = Validated.Invalid(
     NonEmptyList.of(
       "Open Exchange Rates error, message: Currency [] is not supported by Joda money Currency not found in the API, invalid currency ",
       "Open Exchange Rates error, message: Currency [] is not supported by Joda money Currency not found in the API, invalid currency ",
       "Open Exchange Rates error, message: Currency [] is not supported by Joda money Currency not found in the API, invalid currency "
-    ))
-  val currencyInvalidRup = Validated.Invalid(
+    )
+  )
+  val currencyInvalidRup: Result = Validated.Invalid(
     NonEmptyList.of(
-      "Open Exchange Rates error, type: [IllegalCurrency], message: [Currency [RUP] is not supported by Joda money Currency not found in the API, invalid currency ]",
-      "Open Exchange Rates error, type: [IllegalCurrency], message: [Currency [RUP] is not supported by Joda money Currency not found in the API, invalid currency ]",
-      "Open Exchange Rates error, type: [IllegalCurrency], message: [Currency [RUP] is not supported by Joda money Currency not found in the API, invalid currency ]"
-    ))
-  val currencyInvalidHul =
-    "Open Exchange Rates error, type: [IllegalCurrency], message: [Currency [HUL] is not supported by Joda money Currency not found in the API, invalid currency ]".invalidNel
-  val invalidAppKeyFailure =
-    "Open Exchange Rates error, type: [OtherErrors], message: [Invalid App ID provided. Please sign up at https://openexchangerates.org/signup, or contact support@openexchangerates.org.]".invalidNel
+      "Unknown currency 'RUP'",
+      "Unknown currency 'RUP'",
+      "Unknown currency 'RUP'"
+    )
+  )
+  val currencyInvalidHul: Result = "Unknown currency 'HUL'".invalidNel
+  val invalidAppKeyFailure: Result =
+    "Open Exchange Rates error, type: [OtherErrors], message: [invalid_app_id]".invalidNel
   val coTstamp: DateTime = new DateTime(2011, 3, 13, 0, 0)
 
   def e1 =
     "SPEC NAME" || "TRANSACTION CURRENCY" | "API KEY" | "TOTAL AMOUNT" | "TOTAL TAX" | "SHIPPING" | "TRANSACTION ITEM CURRENCY" | "TRANSACTION ITEM PRICE" | "DATETIME" | "CONVERTED TUPLE" |
       "Invalid transaction currency" !! Some("RUP") ! validAppKey ! Some(11.00) ! Some(1.17) ! Some(
-        0.00) ! None ! Some(17.99) ! Some(coTstamp) ! currencyInvalidRup |
+        0.00
+      ) ! None ! Some(17.99) ! Some(coTstamp) ! currencyInvalidRup |
       "Invalid transaction item currency" !! None ! validAppKey ! Some(12.00) ! Some(0.7) ! Some(
-        0.00) ! Some("HUL") ! Some(1.99) ! Some(coTstamp) ! currencyInvalidHul |
+        0.00
+      ) ! Some("HUL") ! Some(1.99) ! Some(coTstamp) ! currencyInvalidHul |
       "Invalid OER API key" !! None ! "8A8A8A8A8A8A8A8A8A8A8A8AA8A8A8A8" ! Some(13.00) ! Some(3.67) ! Some(
-        0.00) ! Some("GBP") ! Some(2.99) ! Some(coTstamp) ! invalidAppKeyFailure |> {
+        0.00
+      ) ! Some("GBP") ! Some(2.99) ! Some(coTstamp) ! invalidAppKeyFailure |> {
       (
         _,
         trCurrency,
@@ -74,47 +86,57 @@ class CurrencyConversionEnrichmentSpec extends Specification with DataTables {
         tiCurrency,
         tiPrice,
         dateTime,
-        expected) =>
-        CurrencyConversionEnrichment(DeveloperAccount, apiKey, "EUR", "EOD_PRIOR")
-          .convertCurrencies(
+        expected
+      ) =>
+        (for {
+          e <- CurrencyConversionConf(DeveloperAccount, apiKey, CurrencyUnit.EUR).enrichment[Eval]
+          res <- e.convertCurrencies(
             trCurrency,
             trAmountTotal,
             trAmountTax,
             trAmountShipping,
             tiCurrency,
             tiPrice,
-            dateTime) must_== expected
+            dateTime
+          )
+        } yield res).value must_== expected
     }
 
   def e2 =
     "SPEC NAME" || "TRANSACTION CURRENCY" | "API KEY" | "TOTAL AMOUNT" | "TOTAL TAX" | "SHIPPING" | "TRANSACTION ITEM CURRENCY" | "TRANSACTION ITEM PRICE" | "DATETIME" | "CONVERTED TUPLE" |
       "All fields absent" !! None ! validAppKey ! None ! None ! None ! None ! None ! None ! "Collector timestamp missing".invalidNel |
       "All fields absent except currency" !! Some("GBP") ! validAppKey ! None ! None ! None ! Some(
-        "GBP") ! None ! None ! "Collector timestamp missing".invalidNel |
+        "GBP"
+      ) ! None ! None ! "Collector timestamp missing".invalidNel |
       "No transaction currency, tax, or shipping" !! Some("GBP") ! validAppKey ! Some(11.00) ! None ! None ! None ! None ! Some(
-        coTstamp) ! (Some("12.75"), None, None, None).valid |
+        coTstamp
+      ) ! (Some("12.75"), None, None, None).valid |
       "No transaction currency or total" !! Some("GBP") ! validAppKey ! None ! Some(2.67) ! Some(
-        0.00) ! None ! None ! Some(coTstamp) ! (None, Some("3.09"), Some("0.00"), None).valid |
+        0.00
+      ) ! None ! None ! Some(coTstamp) ! (None, Some("3.09"), Some("0.00"), None).valid |
       "No transaction currency" !! None ! validAppKey ! None ! None ! None ! Some("GBP") ! Some(
-        12.99) ! Some(coTstamp) ! (None, None, None, Some("15.05")).valid |
+        12.99
+      ) ! Some(coTstamp) ! (None, None, None, Some("15.05")).valid |
       "Transaction Item Null" !! Some("GBP") ! validAppKey ! Some(11.00) ! Some(2.67) ! Some(0.00) ! None ! None ! Some(
-        coTstamp) ! (Some("12.75"), Some("3.09"), Some("0.00"), None).valid |
+        coTstamp
+      ) ! (Some("12.75"), Some("3.09"), Some("0.00"), None).valid |
       "Valid APP ID and API key" !! None ! validAppKey ! Some(14.00) ! Some(4.67) ! Some(0.00) ! Some(
-        "GBP") ! Some(10.99) ! Some(coTstamp) ! (None, None, None, Some("12.74")).valid |
+        "GBP"
+      ) ! Some(10.99) ! Some(coTstamp) ! (None, None, None, Some("12.74")).valid |
       "Both Currency Null" !! None ! validAppKey ! Some(11.00) ! Some(2.67) ! Some(0.00) ! None ! Some(
-        12.99) ! Some(coTstamp) ! (None, None, None, None).valid |
+        12.99
+      ) ! Some(coTstamp) ! (None, None, None, None).valid |
       "Convert to the same currency" !! Some("EUR") ! validAppKey ! Some(11.00) ! Some(2.67) ! Some(
-        0.00) ! Some("EUR") ! Some(12.99) ! Some(coTstamp) ! (
+        0.00
+      ) ! Some("EUR") ! Some(12.99) ! Some(coTstamp) ! (
         Some("11.00"),
         Some("2.67"),
         Some("0.00"),
-        Some("12.99")).valid |
+        Some("12.99")
+      ).valid |
       "Valid APP ID and API key" !! Some("GBP") ! validAppKey ! Some(16.00) ! Some(2.67) ! Some(
-        0.00) ! None ! Some(10.00) ! Some(coTstamp) ! (
-        Some("18.54"),
-        Some("3.09"),
-        Some("0.00"),
-        None).valid |> {
+        0.00
+      ) ! None ! Some(10.00) ! Some(coTstamp) ! (Some("18.54"), Some("3.09"), Some("0.00"), None).valid |> {
       (
         _,
         trCurrency,
@@ -125,15 +147,20 @@ class CurrencyConversionEnrichmentSpec extends Specification with DataTables {
         tiCurrency,
         tiPrice,
         dateTime,
-        expected) =>
-        CurrencyConversionEnrichment(DeveloperAccount, apiKey, "EUR", "EOD_PRIOR")
-          .convertCurrencies(
+        expected
+      ) =>
+        (for {
+          c <- Eval.now(CurrencyConversionConf(DeveloperAccount, apiKey, CurrencyUnit.EUR))
+          e <- c.enrichment[Eval]
+          res <- e.convertCurrencies(
             trCurrency,
             trAmountTotal,
             trAmountTax,
             trAmountShipping,
             tiCurrency,
             tiPrice,
-            dateTime) must_== expected
+            dateTime
+          )
+        } yield res).value must_== expected
     }
 }

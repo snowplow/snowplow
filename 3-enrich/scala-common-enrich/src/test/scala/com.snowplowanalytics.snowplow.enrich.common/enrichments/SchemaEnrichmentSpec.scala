@@ -13,15 +13,15 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 
-import com.snowplowanalytics.iglu.client.SchemaKey
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
 
 import outputs.EnrichedEvent
+import utils.Clock._
 
-class SchemaEnrichmentTest extends Specification with DataTables {
+class SchemaEnrichmentSpec extends Specification with DataTables {
 
-  implicit val resolver = SpecHelpers.IgluResolver
   val signupFormSubmitted =
     """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.snowplowanalytics.snowplow-website/signup_form_submitted/jsonschema/1-0-0","data":{"name":"Χαριτίνη NEW Unicode test","email":"alex+test@snowplowanalytics.com","company":"SP","eventsPerMonth":"< 1 million","serviceType":"unsure"}}}"""
   val invalidPayload =
@@ -38,41 +38,46 @@ class SchemaEnrichmentTest extends Specification with DataTables {
         "com.snowplowanalytics.snowplow",
         "page_view",
         "jsonschema",
-        "1-0-0") |
+        SchemaVer.Full(1, 0, 0)
+      ) |
       "ping ping" !! event("page_ping") ! SchemaKey(
         "com.snowplowanalytics.snowplow",
         "page_ping",
         "jsonschema",
-        "1-0-0") |
+        SchemaVer.Full(1, 0, 0)
+      ) |
       "transaction" !! event("transaction") ! SchemaKey(
         "com.snowplowanalytics.snowplow",
         "transaction",
         "jsonschema",
-        "1-0-0") |
+        SchemaVer.Full(1, 0, 0)
+      ) |
       "transaction item" !! event("transaction_item") ! SchemaKey(
         "com.snowplowanalytics.snowplow",
         "transaction_item",
         "jsonschema",
-        "1-0-0") |
+        SchemaVer.Full(1, 0, 0)
+      ) |
       "struct event" !! event("struct") ! SchemaKey(
         "com.google.analytics",
         "event",
         "jsonschema",
-        "1-0-0") |
+        SchemaVer.Full(1, 0, 0)
+      ) |
       "invalid unstruct event" !! unstructEvent(invalidPayload) ! SchemaKey(
         "com.snowplowanalytics.snowplow-website",
         "signup_form_submitted",
         "jsonschema",
-        "1-0-0") |
+        SchemaVer.Full(1, 0, 0)
+      ) |
       "unstruct event" !! unstructEvent(signupFormSubmitted) ! SchemaKey(
         "com.snowplowanalytics.snowplow-website",
         "signup_form_submitted",
         "jsonschema",
-        "1-0-0") |> { (_, event, expected) =>
-      {
-        val schema = SchemaEnrichment.extractSchema(event)
-        schema must beRight(expected)
-      }
+        SchemaVer.Full(1, 0, 0)
+      ) |> { (_, event, expected) =>
+      val schema = SchemaEnrichment.extractSchema(event, SpecHelpers.client).value
+      schema must beRight(expected)
     }
 
   val nonSchemedPayload =
@@ -86,10 +91,8 @@ class SchemaEnrichmentTest extends Specification with DataTables {
       "missing event" !! event(null) |
       "not schemed" !! unstructEvent(nonSchemedPayload) |
       "invalid key" !! unstructEvent(invalidKeyPayload) |> { (_, event) =>
-      {
-        val schema = SchemaEnrichment.extractSchema(event)
-        schema must beLeft
-      }
+      val schema = SchemaEnrichment.extractSchema(event, SpecHelpers.client).value
+      schema must beLeft
     }
 
   def event(eventType: String) = {

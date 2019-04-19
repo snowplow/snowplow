@@ -10,10 +10,10 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.sqlquery
+package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
+package sqlquery
 
-import cats.syntax.either._
-import com.snowplowanalytics.iglu.client.SchemaKey
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import io.circe.parser._
 import org.specs2.Specification
 import org.specs2.matcher.ValidatedMatchers
@@ -31,7 +31,8 @@ class SqlQueryEnrichmentSpec extends Specification with ValidatedMatchers {
       "com.snowplowanalytics.snowplow.enrichments",
       "sql_query_enrichment_config",
       "jsonschema",
-      "1-0-0")
+      SchemaVer.Full(1, 0, 0)
+    )
 
   def e1 = {
     val inputs = List(
@@ -43,7 +44,10 @@ class SqlQueryEnrichmentSpec extends Specification with ValidatedMatchers {
           JsonInput(
             "contexts",
             "iglu:com.snowplowanalytics.snowplow/client_session/jsonschema/1-*-*",
-            "$.userId"))),
+            "$.userId"
+          )
+        )
+      ),
       Input(2, pojo = Some(PojoInput("app_id")), json = None)
     )
     val db = Db(
@@ -54,13 +58,17 @@ class SqlQueryEnrichmentSpec extends Specification with ValidatedMatchers {
           sslMode = true,
           "snowplow_enrich_ro",
           "1asIkJed",
-          "crm")),
-      mysql = None)
+          "crm"
+        )
+      ),
+      mysql = None
+    )
     val output = JsonOutput("iglu:com.acme/user/jsonschema/1-0-0", "ALL_ROWS", "CAMEL_CASE")
     val cache = Cache(3000, 60)
     val query = Query(
-      "SELECT username, email_address, date_of_birth FROM tbl_users WHERE user = ? AND client = ? LIMIT 1")
-    val config = SqlQueryEnrichment(inputs, db, query, Output(output, "AT_MOST_ONE"), cache)
+      "SELECT username, email_address, date_of_birth FROM tbl_users WHERE user = ? AND client = ? LIMIT 1"
+    )
+    val config = SqlQueryConf(inputs, db, query, Output(output, "AT_MOST_ONE"), cache)
 
     val configuration = parse(
       """
@@ -117,9 +125,10 @@ class SqlQueryEnrichmentSpec extends Specification with ValidatedMatchers {
             "ttl": 60
           }
         }
-      }""").toOption.get
+      }"""
+    ).toOption.get
 
-    SqlQueryEnrichmentConfig.parse(configuration, SCHEMA_KEY) must beValid(config)
+    SqlQueryEnrichment.parse(configuration, SCHEMA_KEY) must beValid(config)
   }
 
   def e2 = {
@@ -179,9 +188,10 @@ class SqlQueryEnrichmentSpec extends Specification with ValidatedMatchers {
             "ttl": 60
           }
         }
-      }""").toOption.get
+      }"""
+    ).toOption.get
 
-    SqlQueryEnrichmentConfig.parse(configuration, SCHEMA_KEY) must beInvalid
+    SqlQueryEnrichment.parse(configuration, SCHEMA_KEY) must beInvalid
   }
 
   def e3 = {
@@ -240,8 +250,9 @@ class SqlQueryEnrichmentSpec extends Specification with ValidatedMatchers {
             "ttl": 60
           }
         }
-      }""").toOption.get
+      }"""
+    ).toOption.get
 
-    SqlQueryEnrichmentConfig.parse(configuration, SCHEMA_KEY) must beValid
+    SqlQueryEnrichment.parse(configuration, SCHEMA_KEY) must beValid
   }
 }

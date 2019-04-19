@@ -44,16 +44,18 @@ object Tp1Adapter extends Adapter {
     if (params.isEmpty) {
       Monad[F].pure("Querystring is empty: no raw event to process".invalidNel)
     } else {
-      Monad[F].pure(NonEmptyList
-        .one(
-          RawEvent(
-            api = payload.api,
-            parameters = params,
-            contentType = payload.contentType,
-            source = payload.source,
-            context = payload.context
-          ))
-        .valid
+      Monad[F].pure(
+        NonEmptyList
+          .one(
+            RawEvent(
+              api = payload.api,
+              parameters = params,
+              contentType = payload.contentType,
+              source = payload.source,
+              context = payload.context
+            )
+          )
+          .valid
       )
     }
   }

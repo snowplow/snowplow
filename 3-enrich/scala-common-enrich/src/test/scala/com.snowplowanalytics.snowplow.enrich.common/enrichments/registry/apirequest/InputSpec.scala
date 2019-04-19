@@ -131,7 +131,9 @@ class InputSpec extends Specification with ValidatedMatchers {
     )
     templateContext must beValid(
       Some(
-        Map("nullableValue" -> "null", "overridenValue" -> "43.1", "unstructValue" -> "COMPLETED")))
+        Map("nullableValue" -> "null", "overridenValue" -> "43.1", "unstructValue" -> "COMPLETED")
+      )
+    )
   }
 
   def e3 = {
@@ -141,7 +143,9 @@ class InputSpec extends Specification with ValidatedMatchers {
       json = JsonInput(
         "contexts",
         "iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-1-*",
-        "$.latitude").some)
+        "$.latitude"
+      ).some
+    )
     val pojoLatitudeInput = Input("latitude", pojo = PojoInput("geo_latitude").some, json = None)
     val jsonLatitudeContext = json"""{
       "schema": "iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-1-0",
@@ -155,7 +159,8 @@ class InputSpec extends Specification with ValidatedMatchers {
       event,
       derivedContexts = Nil,
       customContexts = List(jsonLatitudeContext),
-      unstructEvent = None)
+      unstructEvent = None
+    )
     templateContext must beValid(Some(Map("latitude" -> "43.1")))
   }
 
@@ -166,14 +171,17 @@ class InputSpec extends Specification with ValidatedMatchers {
       json = JsonInput(
         "contexts",
         "iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-1-*",
-        "*.invalidJsonPath").some)
+        "*.invalidJsonPath"
+      ).some
+    )
     val invalidJsonFieldInput = Input(
       "latitude",
       pojo = None,
       json = JsonInput(
         "invalid_field",
         "iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-1-*",
-        "$.validJsonPath").some
+        "$.validJsonPath"
+      ).some
     )
     val pojoInput = Input("latitude", pojo = PojoInput("app_id").some, json = None)
 
@@ -213,7 +221,8 @@ class InputSpec extends Specification with ValidatedMatchers {
       List(input1, input2),
       HttpApi("GET", uriTemplate, 1000, Authentication(None)),
       List(Output("iglu:someschema", JsonOutput("$").some)),
-      Cache(10, 5))
+      Cache(10, 5)
+    )
     val event = new outputs.EnrichedEvent
     event.setUser_id("chuwy")
     // time in true_tstamp won't be found
@@ -231,7 +240,9 @@ class InputSpec extends Specification with ValidatedMatchers {
         JsonInput(
           "contexts",
           "iglu:com.snowplowanalytics/some_schema/jsonschema/*-*-*",
-          "$.somekey"))
+          "$.somekey"
+        )
+      )
     )
 
     val obj = json"""{

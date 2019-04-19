@@ -28,7 +28,7 @@ import utils.CirceUtils
 /** Companion object. Lets us create a RefererParserEnrichment from a Json */
 object RefererParserEnrichment extends ParseableEnrichment {
   override val supportedSchema =
-    SchemaCriterion("com.snowplowanalytics.snowplow", "referer_parser", "jsonschema", 1, 0)
+    SchemaCriterion("com.snowplowanalytics.snowplow", "referer_parser", "jsonschema", 2, 0)
 
   private val localFile = "./referer-parser.json"
 
@@ -40,19 +40,30 @@ object RefererParserEnrichment extends ParseableEnrichment {
    */
   override def parse(
     c: Json,
-    schemaKey: SchemaKey
-  ): ValidatedNel[String, RefererParserConf] = (for {
-    _ <- isParseable(c, schemaKey).leftMap(NonEmptyList.one)
-    // better-monadic-for
-    conf <-
-      (
+    schemaKey: SchemaKey,
+    localMode: Boolean
+  ): ValidatedNel[String, RefererParserConf] =
+    (for {
+      _ <- isParseable(c, schemaKey).leftMap(NonEmptyList.one)
+      // better-monadic-for
+      conf <- (
         CirceUtils.extract[String](c, "parameters", "uri").toValidatedNel,
         CirceUtils.extract[String](c, "parameters", "database").toValidatedNel,
         CirceUtils.extract[List[String]](c, "parameters", "internalDomains").toValidatedNel
-      ).mapN { (uri, db, domains) => (uri, db, domains) }
-      .toEither
-    source <- getDatabaseUri(conf._1, conf._2).leftMap(NonEmptyList.one)
-  } yield RefererParserConf(List((source, localFile)), conf._3)).toValidated
+      ).mapN { (uri, db, domains) =>
+        (uri, db, domains)
+      }.toEither
+      source <- getDatabaseUri(conf._1, conf._2).leftMap(NonEmptyList.one)
+    } yield RefererParserConf(file(source, conf._2, localFile, localMode), conf._3)).toValidated
+
+  private def file(
+    uri: URI,
+    db: String,
+    localFile: String,
+    localMode: Boolean
+  ): (URI, String) =
+    if (localMode) (uri, getClass.getResource(db).toURI.getPath)
+    else (uri, localFile)
 
   /**
    * Creates a RefererParserEnrichment from a RefererParserConf
@@ -61,11 +72,10 @@ object RefererParserEnrichment extends ParseableEnrichment {
    */
   def apply[F[_]: Monad: CreateParser](
     conf: RefererParserConf
-  ): EitherT[F, String, RefererParserEnrichment] = for {
-    db <- EitherT.fromEither[F](
-      conf.filesToCache.headOption.toRight("No files to cache"))
-    p <- EitherT(CreateParser[F].create(db._2)).leftMap(_.getMessage)
-  } yield RefererParserEnrichment(p, conf.internalDomains)
+  ): EitherT[F, String, RefererParserEnrichment] =
+    EitherT(CreateParser[F].create(conf.refererDatabase._2))
+      .leftMap(_.getMessage)
+      .map(p => RefererParserEnrichment(p, conf.internalDomains))
 }
 
 /**
@@ -73,10 +83,7 @@ object RefererParserEnrichment extends ParseableEnrichment {
  * @param parser Referer parser
  * @param domains List of internal domains
  */
-final case class RefererParserEnrichment(
-  parser: Parser,
-  domains: List[String]
-) extends Enrichment {
+final case class RefererParserEnrichment(parser: Parser, domains: List[String]) extends Enrichment {
 
   /**
    * Extract details about the referer (sic). Uses the referer-parser library.

@@ -85,8 +85,12 @@ object MapTransformer {
    * @param transformMap Determines how the data should be transformed before storing in the obj
    * @return a ValidationNel containing either a Nel of error Strings, or the new object
    */
-  def generate[T <: AnyRef](sourceMap: SourceMap, transformMap: TransformMap)(
-    implicit m: Manifest[T]): ValidatedNel[String, T] = {
+  def generate[T <: AnyRef](
+    sourceMap: SourceMap,
+    transformMap: TransformMap
+  )(
+    implicit m: Manifest[T]
+  ): ValidatedNel[String, T] = {
     val newInst = m.runtimeClass.newInstance()
     val result = _transform(newInst, sourceMap, transformMap, getSetters(m.runtimeClass))
     // On success, replace the field count with the new instance

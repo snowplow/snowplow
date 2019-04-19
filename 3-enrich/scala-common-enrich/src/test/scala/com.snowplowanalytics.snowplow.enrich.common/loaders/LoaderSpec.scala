@@ -63,15 +63,18 @@ class LoaderSpec extends Specification with DataTables {
         "Simple querystring #1" !! "e=pv&dtm=1376487150616&tid=483686".some ! toNameValuePairs(
           "e" -> "pv",
           "dtm" -> "1376487150616",
-          "tid" -> "483686") |
+          "tid" -> "483686"
+        ) |
         "Simple querystring #2" !! "page=Celestial%2520Tarot%2520-%2520Psychic%2520Bazaar&vp=1097x482&ds=1097x1973".some ! toNameValuePairs(
           "page" -> "Celestial%20Tarot%20-%20Psychic%20Bazaar",
           "vp" -> "1097x482",
-          "ds" -> "1097x1973") |
+          "ds" -> "1097x1973"
+        ) |
         "Superfluous ? ends up in first param's name" !! "?e=pv&dtm=1376487150616&tid=483686".some ! toNameValuePairs(
           "?e" -> "pv",
           "dtm" -> "1376487150616",
-          "tid" -> "483686") |
+          "tid" -> "483686"
+        ) |
         "Empty querystring" !! None ! toNameValuePairs() |> { (_, qs, expected) =>
         {
           loader.parseQuerystring(qs, Encoding) must beRight(expected)

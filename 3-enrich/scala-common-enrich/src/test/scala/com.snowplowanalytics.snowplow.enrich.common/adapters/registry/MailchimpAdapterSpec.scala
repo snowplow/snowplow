@@ -23,7 +23,7 @@ import org.specs2.Specification
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import loaders._
-import SpecHelpers._
+import utils.Clock._
 
 class MailchimpAdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
@@ -44,8 +44,6 @@ class MailchimpAdapterSpec extends Specification with DataTables with ValidatedM
   toRawEvents must return a Nel Failure if the request body does not contain a type parameter        $e14
   """
 
-  implicit val resolver = SpecHelpers.IgluResolver
-
   object Shared {
     val api = CollectorApi("com.mailchimp", "v1")
     val cljSource = CollectorSource("clj-tomcat", "UTF-8", None)
@@ -55,7 +53,8 @@ class MailchimpAdapterSpec extends Specification with DataTables with ValidatedM
       None,
       None,
       Nil,
-      None)
+      None
+    )
   }
 
   val ContentType = "application/x-www-form-urlencoded"
@@ -107,10 +106,12 @@ class MailchimpAdapterSpec extends Specification with DataTables with ValidatedM
     "SPEC NAME" || "PARAMS" | "EXPECTED OUTPUT" |
       "Return Updated Params" !! Map("type" -> "subscribe", "fired_at" -> "2014-10-22 13:50:00") ! Map(
         "type" -> "subscribe",
-        "fired_at" -> "2014-10-22T13:50:00.000Z") |
+        "fired_at" -> "2014-10-22T13:50:00.000Z"
+      ) |
       "Return Same Params" !! Map("type" -> "subscribe", "id" -> "some_id") ! Map(
         "type" -> "subscribe",
-        "id" -> "some_id") |> { (_, params, expected) =>
+        "id" -> "some_id"
+      ) |> { (_, params, expected) =>
       val actual = MailchimpAdapter.reformatParameters(params)
       actual mustEqual expected
     }
@@ -123,7 +124,8 @@ class MailchimpAdapterSpec extends Specification with DataTables with ValidatedM
       ContentType.some,
       body.some,
       Shared.cljSource,
-      Shared.context)
+      Shared.context
+    )
     val expectedJson =
       """|{
             |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
@@ -140,7 +142,7 @@ class MailchimpAdapterSpec extends Specification with DataTables with ValidatedM
             |}
           |}""".stripMargin.replaceAll("[\n\r]", "")
 
-    val actual = MailchimpAdapter.toRawEvents(payload)
+    val actual = MailchimpAdapter.toRawEvents(payload, SpecHelpers.client).value
     actual must beValid(
       NonEmptyList.one(
         RawEvent(
@@ -148,7 +150,10 @@ class MailchimpAdapterSpec extends Specification with DataTables with ValidatedM
           Map("tv" -> "com.mailchimp-v1", "e" -> "ue", "p" -> "srv", "ue_pr" -> expectedJson),
           ContentType.some,
           Shared.cljSource,
-          Shared.context)))
+          Shared.context
+        )
+      )
+    )
   }
 
   def e7 = {
@@ -159,7 +164,8 @@ class MailchimpAdapterSpec extends Specification with DataTables with ValidatedM
       ContentType.some,
       body.some,
       Shared.cljSource,
-      Shared.context)
+      Shared.context
+    )
     val expectedJson =
       """|{
             |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
@@ -177,7 +183,7 @@ class MailchimpAdapterSpec extends Specification with DataTables with ValidatedM
             |}
           |}""".stripMargin.replaceAll("[\n\r]", "")
 
-    val actual = MailchimpAdapter.toRawEvents(payload)
+    val actual = MailchimpAdapter.toRawEvents(payload, SpecHelpers.client).value
     actual must beValid(
       NonEmptyList.one(
         RawEvent(
@@ -185,7 +191,10 @@ class MailchimpAdapterSpec extends Specification with DataTables with ValidatedM
           Map("tv" -> "com.mailchimp-v1", "e" -> "ue", "p" -> "srv", "ue_pr" -> expectedJson),
           ContentType.some,
           Shared.cljSource,
-          Shared.context)))
+          Shared.context
+        )
+      )
+    )
   }
 
   def e8 =
@@ -204,9 +213,10 @@ class MailchimpAdapterSpec extends Specification with DataTables with ValidatedM
           ContentType.some,
           body.some,
           Shared.cljSource,
-          Shared.context)
+          Shared.context
+        )
         val expectedJson = "{\"schema\":\"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0\",\"data\":{\"schema\":\"" + expected + "\",\"data\":{\"type\":\"" + schema + "\"}}}"
-        val actual = MailchimpAdapter.toRawEvents(payload)
+        val actual = MailchimpAdapter.toRawEvents(payload, SpecHelpers.client).value
         actual must beValid(
           NonEmptyList.one(
             RawEvent(
@@ -214,7 +224,10 @@ class MailchimpAdapterSpec extends Specification with DataTables with ValidatedM
               Map("tv" -> "com.mailchimp-v1", "e" -> "ue", "p" -> "srv", "ue_pr" -> expectedJson),
               ContentType.some,
               Shared.cljSource,
-              Shared.context)))
+              Shared.context
+            )
+          )
+        )
     }
 
   def e9 =
@@ -229,22 +242,24 @@ class MailchimpAdapterSpec extends Specification with DataTables with ValidatedM
           ContentType.some,
           body.some,
           Shared.cljSource,
-          Shared.context)
-        val actual = MailchimpAdapter.toRawEvents(payload)
+          Shared.context
+        )
+        val actual = MailchimpAdapter.toRawEvents(payload, SpecHelpers.client).value
         actual must beInvalid(NonEmptyList.one(expected))
     }
 
   def e10 = {
     val body =
       "type=unsubscribe&fired_at=2014-10-22+13%3A10%3A40&data%5Baction%5D=unsub&data%5Breason%5D=manual&data%5Bid%5D=94826aa750&data%5Bemail%5D=josh%40snowplowanalytics.com&data%5Bemail_type%5D=html&data%5Bip_opt%5D=82.225.169.220&data%5Bweb_id%5D=203740265&data%5Bmerges%5D%5BEMAIL%5D=josh%40snowplowanalytics.com&data%5Bmerges%5D%5BFNAME%5D=Joshua&data%5Bmerges%5D%5BLNAME%5D=Beemster&data%5Blist_id%5D=f1243a3b12"
-    val qs = toNameValuePairs("nuid" -> "123")
+    val qs = SpecHelpers.toNameValuePairs("nuid" -> "123")
     val payload = CollectorPayload(
       Shared.api,
       qs,
       ContentType.some,
       body.some,
       Shared.cljSource,
-      Shared.context)
+      Shared.context
+    )
     val expectedJson =
       """|{
             |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
@@ -272,7 +287,7 @@ class MailchimpAdapterSpec extends Specification with DataTables with ValidatedM
             |}
           |}""".stripMargin.replaceAll("[\n\r]", "")
 
-    val actual = MailchimpAdapter.toRawEvents(payload)
+    val actual = MailchimpAdapter.toRawEvents(payload, SpecHelpers.client).value
     actual must beValid(
       NonEmptyList.one(
         RawEvent(
@@ -282,25 +297,32 @@ class MailchimpAdapterSpec extends Specification with DataTables with ValidatedM
             "e" -> "ue",
             "p" -> "srv",
             "ue_pr" -> expectedJson,
-            "nuid" -> "123"),
+            "nuid" -> "123"
+          ),
           ContentType.some,
           Shared.cljSource,
-          Shared.context)))
+          Shared.context
+        )
+      )
+    )
   }
 
   def e11 = {
     val payload =
       CollectorPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
-    val actual = MailchimpAdapter.toRawEvents(payload)
+    val actual = MailchimpAdapter.toRawEvents(payload, SpecHelpers.client).value
     actual must beInvalid(NonEmptyList.one("Request body is empty: no MailChimp event to process"))
   }
 
   def e12 = {
     val payload =
       CollectorPayload(Shared.api, Nil, None, "stub".some, Shared.cljSource, Shared.context)
-    val actual = MailchimpAdapter.toRawEvents(payload)
-    actual must beInvalid(NonEmptyList.one(
-      "Request body provided but content type empty, expected application/x-www-form-urlencoded for MailChimp"))
+    val actual = MailchimpAdapter.toRawEvents(payload, SpecHelpers.client).value
+    actual must beInvalid(
+      NonEmptyList.one(
+        "Request body provided but content type empty, expected application/x-www-form-urlencoded for MailChimp"
+      )
+    )
   }
 
   def e13 = {
@@ -310,10 +332,14 @@ class MailchimpAdapterSpec extends Specification with DataTables with ValidatedM
       "application/json".some,
       "stub".some,
       Shared.cljSource,
-      Shared.context)
-    val actual = MailchimpAdapter.toRawEvents(payload)
-    actual must beInvalid(NonEmptyList.one(
-      "Content type of application/json provided, expected application/x-www-form-urlencoded for MailChimp"))
+      Shared.context
+    )
+    val actual = MailchimpAdapter.toRawEvents(payload, SpecHelpers.client).value
+    actual must beInvalid(
+      NonEmptyList.one(
+        "Content type of application/json provided, expected application/x-www-form-urlencoded for MailChimp"
+      )
+    )
   }
 
   def e14 = {
@@ -324,9 +350,11 @@ class MailchimpAdapterSpec extends Specification with DataTables with ValidatedM
       ContentType.some,
       body.some,
       Shared.cljSource,
-      Shared.context)
-    val actual = MailchimpAdapter.toRawEvents(payload)
+      Shared.context
+    )
+    val actual = MailchimpAdapter.toRawEvents(payload, SpecHelpers.client).value
     actual must beInvalid(
-      NonEmptyList.one("No MailChimp type parameter provided: cannot determine event type"))
+      NonEmptyList.one("No MailChimp type parameter provided: cannot determine event type")
+    )
   }
 }

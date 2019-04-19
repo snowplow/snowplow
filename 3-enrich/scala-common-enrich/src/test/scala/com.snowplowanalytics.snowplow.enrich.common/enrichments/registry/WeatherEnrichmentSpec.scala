@@ -14,7 +14,7 @@ package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
 import java.lang.{Float => JFloat}
 
-import com.snowplowanalytics.iglu.client.SchemaKey
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import io.circe.generic.auto._
 import io.circe.literal._
 import org.joda.time.DateTime
@@ -31,18 +31,20 @@ class WeatherEnrichmentSpec extends Specification {
       s2"""
   This is a specification to test the WeatherEnrichment
   Fail event for null time          $e1
-  Fail event for invalid key        $e4
-  Weather enrichment client is lazy $e2
-  Extract weather stamp             $e3
-  Extract humidity                  $e5
-  Extract configuration             $e6
-  Check time stamp transformation   $e7
+  Fail event for invalid key        $e3
+  Extract weather stamp             $e2
+  Extract humidity                  $e4
+  Extract configuration             $e5
+  Check time stamp transformation   $e6
   """
 
   lazy val validAppKey = sys.env
     .get(OwmApiKey)
-    .getOrElse(throw new IllegalStateException(
-      s"No $OwmApiKey environment variable found, test should have been skipped"))
+    .getOrElse(
+      throw new IllegalStateException(
+        s"No $OwmApiKey environment variable found, test should have been skipped"
+      )
+    )
 
   object invalidEvent {
     var lat: JFloat = 70.98224f
@@ -57,76 +59,75 @@ class WeatherEnrichmentSpec extends Specification {
   }
 
   def e1 = {
-    val enr = WeatherEnrichment("KEY", 5200, 1, "history.openweathermap.org", 10)
+    val enr = WeatherConf("KEY", 5200, 1, "history.openweathermap.org", 10).enrichment
     val stamp = enr.getWeatherContext(
       Option(invalidEvent.lat),
       Option(invalidEvent.lon),
-      Option(invalidEvent.time))
+      Option(invalidEvent.time)
+    )
     stamp must beLeft.like { case e => e must contain("tstamp: None") }
   }
 
-  def e2 =
-    WeatherEnrichment("KEY", 0, 1, "history.openweathermap.org", 5) must not(
-      throwA[IllegalArgumentException])
-
-  def e3 = {
-    val enr = WeatherEnrichment(validAppKey, 5200, 1, "history.openweathermap.org", 10)
+  def e2 = {
+    val enr = WeatherConf(validAppKey, 5200, 1, "history.openweathermap.org", 10).enrichment
     val stamp =
       enr.getWeatherContext(Option(validEvent.lat), Option(validEvent.lon), Option(validEvent.time))
     stamp must beRight
   }
 
-  def e4 = {
-    val enr = WeatherEnrichment("KEY", 5200, 1, "history.openweathermap.org", 10)
+  def e3 = {
+    val enr = WeatherConf("KEY", 5200, 1, "history.openweathermap.org", 10).enrichment
     val stamp =
       enr.getWeatherContext(Option(validEvent.lat), Option(validEvent.lon), Option(validEvent.time))
     stamp must beLeft.like { case e => e must contain("AuthorizationError") }
   }
 
-  def e5 = {
-    val enr = WeatherEnrichment(validAppKey, 5200, 1, "history.openweathermap.org", 15)
+  def e4 = {
+    val enr = WeatherConf(validAppKey, 5200, 1, "history.openweathermap.org", 15).enrichment
     val stamp =
       enr.getWeatherContext(Option(validEvent.lat), Option(validEvent.lon), Option(validEvent.time))
     stamp must beRight.like {
       case weather =>
-        val temp = weather.hcursor.get[Double]("humidity")
+        val temp = weather.hcursor.downField("data").downField("main").get[Double]("humidity")
         temp must beRight(87.0d)
     }
   }
 
-  def e6 = {
-    val configJson = json"""
-      {
-          "enabled": true,
-          "vendor": "com.snowplowanalytics.snowplow.enrichments",
-          "name": "weather_enrichment_config",
-          "parameters": {
-              "apiKey": "{{KEY}}",
-              "cacheSize": 5100,
-              "geoPrecision": 1,
-              "apiHost": "history.openweathermap.org",
-              "timeout": 5
-          }
+  def e5 = {
+    val configJson = json"""{
+      "enabled": true,
+      "vendor": "com.snowplowanalytics.snowplow.enrichments",
+      "name": "weather_enrichment_config",
+      "parameters": {
+        "apiKey": "{{KEY}}",
+        "cacheSize": 5100,
+        "geoPrecision": 1,
+        "apiHost": "history.openweathermap.org",
+        "timeout": 5
       }
-    """
-    val config = WeatherEnrichmentConfig.parse(
+    }"""
+    val config = WeatherEnrichment.parse(
       configJson,
       SchemaKey(
         "com.snowplowanalytics.snowplow.enrichments",
         "weather_enrichment_config",
         "jsonschema",
-        "1-0-0"))
+        SchemaVer.Full(1, 0, 0)
+      )
+    )
     config.toEither must beRight(
-      WeatherEnrichment(
+      WeatherConf(
         apiKey = "{{KEY}}",
         geoPrecision = 1,
         cacheSize = 5100,
         apiHost = "history.openweathermap.org",
-        timeout = 5))
+        timeout = 5
+      )
+    )
   }
 
-  def e7 = {
-    val enr = WeatherEnrichment(validAppKey, 2, 1, "history.openweathermap.org", 15)
+  def e6 = {
+    val enr = WeatherConf(validAppKey, 2, 1, "history.openweathermap.org", 15).enrichment
     val stamp =
       enr.getWeatherContext(Option(validEvent.lat), Option(validEvent.lon), Option(validEvent.time))
     stamp must beRight.like { // successful request

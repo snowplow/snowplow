@@ -32,23 +32,29 @@ import utils.JsonPath._
  * @param pojo optional POJO source to take stright from `EnrichedEvent`
  * @param json optional JSON source to take from context or unstruct event
  */
-case class Input(key: String, pojo: Option[PojoInput], json: Option[JsonInput]) {
+case class Input(
+  key: String,
+  pojo: Option[PojoInput],
+  json: Option[JsonInput]
+) {
   import Input._
 
   // Constructor validation for mapping JSON to `Input` instance
   (pojo, json) match {
     case (None, None) =>
       throw new Exception(
-        "API Request Enrichment Input must represent either JSON OR POJO, none present")
+        "API Request Enrichment Input must represent either JSON OR POJO, none present"
+      )
     case (Some(_), Some(_)) =>
       throw new Exception(
-        "API Request Enrichment Input must represent either JSON OR POJO, both present")
+        "API Request Enrichment Input must represent either JSON OR POJO, both present"
+      )
     case _ =>
   }
 
   // We could short-circuit enrichment process on invalid JSONPath,
   // but it won't give user meaningful error message
-  val validatedJsonPath: Either[String, GatlingJsonPath] =
+  def validatedJsonPath: Either[String, GatlingJsonPath] =
     json.map(_.jsonPath).map(compileQuery) match {
       case Some(compiledQuery) => compiledQuery
       case None => "No JSON Input with JSONPath was given".asLeft
@@ -120,7 +126,11 @@ case class PojoInput(field: String)
  * @param jsonPath JSONPath statement to navigate to the field inside the JSON that you want to use
  * as the input
  */
-case class JsonInput(field: String, schemaCriterion: String, jsonPath: String)
+case class JsonInput(
+  field: String,
+  schemaCriterion: String,
+  jsonPath: String
+)
 
 /**
  * Companion object, containing common methods for input data manipulation and
@@ -170,7 +180,8 @@ object Input {
   ): TemplateContext = {
     val eventInputs = buildInputsMap(inputs.map(_.getFromEvent(event)))
     val jsonInputs = buildInputsMap(
-      inputs.map(_.getFromJson(derivedContexts, customContexts, unstructEvent)))
+      inputs.map(_.getFromJson(derivedContexts, customContexts, unstructEvent))
+    )
     (eventInputs.map(_.map(M.apply)) |+| jsonInputs.map(_.map(M.apply))).map(_.map(_.m))
   }
 
@@ -215,7 +226,8 @@ object Input {
         _.sequence // Swap List[Option[Map[K, V]]] with Option[List[Map[K, V]]]
           .map(_.foldLeft(List.empty[(String, String)]) { (acc, e) =>
             acc |+| e.toList
-          }.toMap)) // Reduce List[Map[K, V]] to Map[K, V]
+          }.toMap)
+      ) // Reduce List[Map[K, V]] to Map[K, V]
 
   /**
    * Helper function to stringify JValue to URL-friendly format
