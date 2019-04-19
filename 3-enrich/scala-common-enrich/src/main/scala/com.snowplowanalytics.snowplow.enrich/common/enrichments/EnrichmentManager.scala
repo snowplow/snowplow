@@ -595,7 +595,8 @@ object EnrichmentManager {
 
     val third =
       (weatherContext.toValidationNel |@|
-        iabContext.toValidationNel) { (_, _) =>
+        iabContext.toValidationNel |@|
+        openCageContext.toValidationNel) { (_, _, _) =>
         ()
       }
 
