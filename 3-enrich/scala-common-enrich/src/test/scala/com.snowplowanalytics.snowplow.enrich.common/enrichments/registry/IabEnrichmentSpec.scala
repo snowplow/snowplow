@@ -12,8 +12,8 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
-import java.net.URI
-
+import cats.Eval
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import io.circe.literal._
 import org.joda.time.DateTime
 import org.specs2.Specification
@@ -31,12 +31,37 @@ class IabEnrichmentSpec extends Specification with DataTables {
   """
 
   // When testing, localMode is set to true, so the URIs are ignored and the databases are loaded from test/resources
-  val validConfig = IabEnrichment(
-    Some(IabDatabase("ip", new URI("/ignored-in-local-mode/"), "ip_exclude_current_cidr.txt")),
-    Some(IabDatabase("ua_exclude", new URI("/ignored-in-local-mode/"), "exclude_current.txt")),
-    Some(IabDatabase("ua_include", new URI("/ignored-in-local-mode/"), "include_current.txt")),
-    true
-  )
+  val validConfig = IabEnrichment
+    .parse(
+      json"""{
+      "name": "iab_spiders_and_robots_enrichment",
+      "vendor": "com.snowplowanalytics.snowplow.enrichments",
+      "enabled": false,
+      "parameters": {
+        "ipFile": {
+          "database": "ip_exclude_current_cidr.txt",
+          "uri": "s3://my-private-bucket/iab"
+        },
+        "excludeUseragentFile": {
+          "database": "exclude_current.txt",
+          "uri": "s3://my-private-bucket/iab"
+        },
+        "includeUseragentFile": {
+          "database": "include_current.txt",
+          "uri": "s3://my-private-bucket/iab"
+        }
+      }
+    }""",
+      SchemaKey(
+        "com.snowplowanalytics.snowplow.enrichments",
+        "iab_spiders_and_robots_enrichment",
+        "jsonschema",
+        SchemaVer.Full(1, 0, 0)
+      ),
+      true
+    )
+    .toOption
+    .get
 
   def e1 =
     "SPEC NAME" || "USER AGENT" | "IP ADDRESS" | "EXPECTED SPIDER OR ROBOT" | "EXPECTED CATEGORY" | "EXPECTED REASON" | "EXPECTED PRIMARY IMPACT" |
@@ -51,23 +76,26 @@ class IabEnrichmentSpec extends Specification with DataTables {
         expectedSpiderOrRobot,
         expectedCategory,
         expectedReason,
-        expectedPrimaryImpact) =>
-        {
-          validConfig.performCheck(userAgent, ipAddress, DateTime.now()) must beRight.like {
-            case check =>
-              check.spiderOrRobot must_== expectedSpiderOrRobot and
-                (check.category must_== expectedCategory) and
-                (check.reason must_== expectedReason) and
-                (check.primaryImpact must_== expectedPrimaryImpact)
-          }
+        expectedPrimaryImpact
+      ) =>
+        (for {
+          e <- validConfig.enrichment[Eval]
+          res = e.performCheck(userAgent, ipAddress, DateTime.now())
+        } yield res).value must beRight.like {
+          case check =>
+            check.spiderOrRobot must_== expectedSpiderOrRobot and
+              (check.category must_== expectedCategory) and
+              (check.reason must_== expectedReason) and
+              (check.primaryImpact must_== expectedPrimaryImpact)
         }
     }
 
   def e2 =
-    validConfig.performCheck("", "foo//bar", DateTime.now()) must beLeft
+    validConfig.enrichment[Eval].map(_.performCheck("", "foo//bar", DateTime.now())).value must
+      beLeft
 
   def e3 =
-    validConfig.getIabContext(None, None, None) must beLeft
+    validConfig.enrichment[Eval].map(_.getIabContext(None, None, None)).value must beLeft
 
   def e4 = {
     val responseJson = json"""
@@ -82,8 +110,10 @@ class IabEnrichmentSpec extends Specification with DataTables {
       }
     """
     validConfig
-      .getIabContext(Some("Xdroid"), Some("192.168.0.1"), Some(DateTime.now())) must beRight(
-      responseJson)
+      .enrichment[Eval]
+      .map(_.getIabContext(Some("Xdroid"), Some("192.168.0.1"), Some(DateTime.now())))
+      .value must
+      beRight(responseJson)
   }
 
 }

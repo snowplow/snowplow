@@ -130,10 +130,7 @@ object JsonUtils {
    * @param str the String hopefully containing JSON
    * @return a Scalaz Validation, wrapping either an error String or the reformatted JSON String
    */
-  private[utils] def validateAndReformatJson(
-    field: String,
-    str: String
-  ): Either[String, String] =
+  private[utils] def validateAndReformatJson(field: String, str: String): Either[String, String] =
     extractJson(field, str).map(_.noSpaces)
 
   /**

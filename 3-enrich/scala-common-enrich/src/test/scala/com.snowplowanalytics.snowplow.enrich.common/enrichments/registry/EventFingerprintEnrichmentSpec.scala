@@ -25,8 +25,9 @@ class EventFingerprintEnrichmentSpec extends Specification {
 
   val standardConfig =
     EventFingerprintEnrichment(
-      EventFingerprintEnrichmentConfig.getAlgorithm("MD5").right.get,
-      List("stm", "eid"))
+      EventFingerprintEnrichment.getAlgorithm("MD5").right.get,
+      List("stm", "eid")
+    )
 
   def e1 = {
     val config = EventFingerprintEnrichment(
@@ -39,7 +40,8 @@ class EventFingerprintEnrichmentSpec extends Specification {
         "stm" -> "1000000000000",
         "e" -> "se",
         "se_ac" -> "buy"
-      )) must_== "15"
+      )
+    ) must_== "15"
   }
 
   def e2 = {
@@ -58,7 +60,8 @@ class EventFingerprintEnrichmentSpec extends Specification {
     )
 
     standardConfig.getEventFingerprint(permutedVersion) must_== standardConfig.getEventFingerprint(
-      initialVersion)
+      initialVersion
+    )
   }
 
   def e3 = {
@@ -75,14 +78,14 @@ class EventFingerprintEnrichmentSpec extends Specification {
     )
 
     standardConfig.getEventFingerprint(delayedVersion) must_== standardConfig.getEventFingerprint(
-      initialVersion)
+      initialVersion
+    )
   }
 
   def e4 = {
     val initialVersion = Map(
       "prefix" -> "suffix"
     )
-    val overlappingVersion = Map("prefi" -> "xsuffix")
 
     standardConfig.getEventFingerprint(initialVersion) should not be standardConfig
       .getEventFingerprint(initialVersion)

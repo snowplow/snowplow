@@ -28,16 +28,21 @@ import org.joda.time.{DateTime, DateTimeZone}
 import utils.CirceUtils
 
 /** Companion object. Lets us create an WeatherEnrichment instance from a Json */
-object WeatherEnrichmentConfig extends ParseableEnrichment {
-  val supportedSchema =
+object WeatherEnrichment extends ParseableEnrichment {
+  override val supportedSchema =
     SchemaCriterion(
       "com.snowplowanalytics.snowplow.enrichments",
       "weather_enrichment_config",
       "jsonschema",
       1,
-      0)
+      0
+    )
 
-  def parse(c: Json, schemaKey: SchemaKey): ValidatedNel[String, WeatherEnrichment] =
+  override def parse(
+    c: Json,
+    schemaKey: SchemaKey,
+    localMode: Boolean = false
+  ): ValidatedNel[String, WeatherConf] =
     isParseable(c, schemaKey)
       .leftMap(e => NonEmptyList.one(e))
       .flatMap { _ =>
@@ -47,29 +52,16 @@ object WeatherEnrichmentConfig extends ParseableEnrichment {
           CirceUtils.extract[Int](c, "parameters", "geoPrecision").toValidatedNel,
           CirceUtils.extract[String](c, "parameters", "apiHost").toValidatedNel,
           CirceUtils.extract[Int](c, "parameters", "timeout").toValidatedNel
-        ).mapN { WeatherEnrichment(_, _, _, _, _) }.toEither
+        ).mapN { WeatherConf(_, _, _, _, _) }.toEither
       }
       .toValidated
 }
 
 /**
  * Contains weather enrichments based on geo coordinates and time
- * @param apiKey weather provider API KEY
- * @param cacheSize amount of days with prefetched weather
- * @param geoPrecision rounder for geo lat/long floating, which allows to use more spatially
- * precise weather stamps
- * @param apiHost address of weather provider's API host
- * @param timeout timeout in seconds to fetch weather from server
+ * @param client OWM client to get the weather from
  */
-final case class WeatherEnrichment(
-  apiKey: String,
-  cacheSize: Int,
-  geoPrecision: Int,
-  apiHost: String,
-  timeout: Int
-) extends Enrichment {
-  private lazy val client = OwmCacheClient(apiKey, cacheSize, geoPrecision, apiHost, timeout)
-
+final case class WeatherEnrichment(client: OwmCacheClient) extends Enrichment {
   private val schemaUri = "iglu:org.openweathermap/weather/jsonschema/1-0-0"
 
   /**
@@ -157,7 +149,8 @@ final case class WeatherEnrichment(
       origin.rain,
       origin.snow,
       origin.weather,
-      time)
+      time
+    )
   }
 }
 

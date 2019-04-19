@@ -54,5 +54,6 @@ class ExtractPageUriSpec extends Specification with DataTables {
   // See https://github.com/snowplow/snowplow/issues/268 for background behind this test
   def e3 =
     PageEnrichments.extractPageUri(originalUri.some, truncatedUri.some) must beRight(
-      truncatedURI.some)
+      truncatedURI.some
+    )
 }

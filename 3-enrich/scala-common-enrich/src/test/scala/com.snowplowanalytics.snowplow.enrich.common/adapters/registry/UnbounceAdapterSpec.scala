@@ -21,7 +21,7 @@ import org.specs2.Specification
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
-import SpecHelpers._
+import utils.Clock._
 
 class UnbounceAdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
@@ -40,8 +40,6 @@ class UnbounceAdapterSpec extends Specification with DataTables with ValidatedMa
     payloadBodyToContext must return a Failure if the context data is missing 'page_url'          $e12
     """
 
-  implicit val resolver = SpecHelpers.IgluResolver
-
   object Shared {
     val api = CollectorApi("com.unbounce", "v1")
     val cljSource = CollectorSource("clj-tomcat", "UTF-8", None)
@@ -51,13 +49,14 @@ class UnbounceAdapterSpec extends Specification with DataTables with ValidatedMa
       None,
       None,
       Nil,
-      None)
+      None
+    )
   }
 
   val ContentType = "application/x-www-form-urlencoded"
 
   def e1 = {
-    val params = toNameValuePairs("schema" -> "iglu:com.unbounce/test/jsonschema/1-0-0")
+    val params = SpecHelpers.toNameValuePairs("schema" -> "iglu:com.unbounce/test/jsonschema/1-0-0")
     val body =
       "page_url=http%3A%2F%2Funbouncepages.com%2Fwayfaring-147%2F&page_name=Wayfaring&page_id=7648177d-7323-4330-b4f9-9951a52138b6&variant=a&data.json=%7B%22userfield1%22%3A%5B%22asdfasdf%22%5D%2C%22ip_address%22%3A%5B%2285.73.39.163%22%5D%2C%22page_uuid%22%3A%5B%227648177d-7323-4330-b4f9-9951a52138b6%22%5D%2C%22variant%22%3A%5B%22a%22%5D%2C%22time_submitted%22%3A%5B%2211%3A45+AM+UTC%22%5D%2C%22date_submitted%22%3A%5B%222017-11-15%22%5D%2C%22page_url%22%3A%5B%22http%3A%2F%2Funbouncepages.com%2Fwayfaring-147%2F%22%5D%2C%22page_name%22%3A%5B%22Wayfaring%22%5D%7D&data.xml=%3C%3Fxml+version%3D%221.0%22+encoding%3D%22UTF-8%22%3F%3E%3Cform_data%3E%3Cuserfield1%3Easdfasdf%3C%2Fuserfield1%3E%3Cip_address%3E85.73.39.163%3C%2Fip_address%3E%3Cpage_uuid%3E7648177d-7323-4330-b4f9-9951a52138b6%3C%2Fpage_uuid%3E%3Cvariant%3Ea%3C%2Fvariant%3E%3Ctime_submitted%3E11%3A45+AM+UTC%3C%2Ftime_submitted%3E%3Cdate_submitted%3E2017-11-15%3C%2Fdate_submitted%3E%3Cpage_url%3Ehttp%3A%2F%2Funbouncepages.com%2Fwayfaring-147%2F%3C%2Fpage_url%3E%3Cpage_name%3EWayfaring%3C%2Fpage_name%3E%3C%2Fform_data%3E"
     val payload = CollectorPayload(
@@ -66,7 +65,8 @@ class UnbounceAdapterSpec extends Specification with DataTables with ValidatedMa
       ContentType.some,
       body.some,
       Shared.cljSource,
-      Shared.context)
+      Shared.context
+    )
     val expectedJson =
       """{
         |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
@@ -112,16 +112,19 @@ class UnbounceAdapterSpec extends Specification with DataTables with ValidatedMa
         Map("tv" -> "com.unbounce-v1", "e" -> "ue", "p" -> "srv", "ue_pr" -> expectedJson),
         ContentType.some,
         Shared.cljSource,
-        Shared.context))
-    UnbounceAdapter.toRawEvents(payload) must beValid(expected)
+        Shared.context
+      )
+    )
+    UnbounceAdapter.toRawEvents(payload, SpecHelpers.client).value must beValid(expected)
   }
 
   def e2 = {
-    val params = toNameValuePairs("schema" -> "iglu:com.unbounce/test/jsonschema/1-0-0")
+    val params = SpecHelpers.toNameValuePairs("schema" -> "iglu:com.unbounce/test/jsonschema/1-0-0")
     val payload =
       CollectorPayload(Shared.api, params, ContentType.some, None, Shared.cljSource, Shared.context)
-    UnbounceAdapter.toRawEvents(payload) must beInvalid(
-      NonEmptyList.one("Request body is empty: no Unbounce events to process"))
+    UnbounceAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(
+      NonEmptyList.one("Request body is empty: no Unbounce events to process")
+    )
   }
 
   def e3 = {
@@ -129,8 +132,11 @@ class UnbounceAdapterSpec extends Specification with DataTables with ValidatedMa
       "page_id=f7afd389-65a3-45fa-8bad-b7a42236044c&page_name=Test-Webhook&variant=a&page_url=http%3A%2F%2Funbouncepages.com%2Ftest-webhook-1&data.json=%7B%22email%22%3A%5B%22test%40snowplowanalytics.com%22%5D%2C%22ip_address%22%3A%5B%22200.121.220.179%22%5D%2C%22time_submitted%22%3A%5B%2204%3A17%20PM%20UTC%22%5D%7D"
     val payload =
       CollectorPayload(Shared.api, Nil, None, body.some, Shared.cljSource, Shared.context)
-    UnbounceAdapter.toRawEvents(payload) must beInvalid(NonEmptyList.one(
-      "Request body provided but content type empty, expected application/x-www-form-urlencoded for Unbounce"))
+    UnbounceAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(
+      NonEmptyList.one(
+        "Request body provided but content type empty, expected application/x-www-form-urlencoded for Unbounce"
+      )
+    )
   }
 
   def e4 = {
@@ -139,12 +145,15 @@ class UnbounceAdapterSpec extends Specification with DataTables with ValidatedMa
     val ct = "application/json"
     val payload =
       CollectorPayload(Shared.api, Nil, ct.some, body.some, Shared.cljSource, Shared.context)
-    UnbounceAdapter.toRawEvents(payload) must beInvalid(NonEmptyList.one(
-      "Content type of application/json provided, expected application/x-www-form-urlencoded for Unbounce"))
+    UnbounceAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(
+      NonEmptyList.one(
+        "Content type of application/json provided, expected application/x-www-form-urlencoded for Unbounce"
+      )
+    )
   }
 
   def e5 = {
-    val params = toNameValuePairs("schema" -> "iglu:com.unbounce/test/jsonschema/1-0-0")
+    val params = SpecHelpers.toNameValuePairs("schema" -> "iglu:com.unbounce/test/jsonschema/1-0-0")
     val body = ""
     val payload = CollectorPayload(
       Shared.api,
@@ -152,13 +161,14 @@ class UnbounceAdapterSpec extends Specification with DataTables with ValidatedMa
       ContentType.some,
       body.some,
       Shared.cljSource,
-      Shared.context)
+      Shared.context
+    )
     val expected = NonEmptyList.one("Unbounce event body is empty: nothing to process")
-    UnbounceAdapter.toRawEvents(payload) must beInvalid(expected)
+    UnbounceAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(expected)
   }
 
   def e6 = {
-    val params = toNameValuePairs("schema" -> "iglu:com.unbounce/test/jsonschema/1-0-0")
+    val params = SpecHelpers.toNameValuePairs("schema" -> "iglu:com.unbounce/test/jsonschema/1-0-0")
     val body =
       "page_id=f7afd389-65a3-45fa-8bad-b7a42236044c&page_name=Test-Webhook&variant=a&page_url=http%3A%2F%2Funbouncepages.com%2Ftest-webhook-1"
     val payload = CollectorPayload(
@@ -167,13 +177,14 @@ class UnbounceAdapterSpec extends Specification with DataTables with ValidatedMa
       ContentType.some,
       body.some,
       Shared.cljSource,
-      Shared.context)
+      Shared.context
+    )
     val expected = NonEmptyList.one("Unbounce event data does not have 'data.json' as a key")
-    UnbounceAdapter.toRawEvents(payload) must beInvalid(expected)
+    UnbounceAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(expected)
   }
 
   def e7 = {
-    val params = toNameValuePairs("schema" -> "iglu:com.unbounce/test/jsonschema/1-0-0")
+    val params = SpecHelpers.toNameValuePairs("schema" -> "iglu:com.unbounce/test/jsonschema/1-0-0")
     val body =
       "page_id=f7afd389-65a3-45fa-8bad-b7a42236044c&page_name=Test-Webhook&variant=a&page_url=http%3A%2F%2Funbouncepages.com%2Ftest-webhook-1&data.json="
     val payload = CollectorPayload(
@@ -182,13 +193,14 @@ class UnbounceAdapterSpec extends Specification with DataTables with ValidatedMa
       ContentType.some,
       body.some,
       Shared.cljSource,
-      Shared.context)
+      Shared.context
+    )
     val expected = NonEmptyList.one("Unbounce event data is empty: nothing to process")
-    UnbounceAdapter.toRawEvents(payload) must beInvalid(expected)
+    UnbounceAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(expected)
   }
 
   def e8 = {
-    val params = toNameValuePairs("schema" -> "iglu:com.unbounce/test/jsonschema/1-0-0")
+    val params = SpecHelpers.toNameValuePairs("schema" -> "iglu:com.unbounce/test/jsonschema/1-0-0")
     val body =
       "page_id=f7afd389-65a3-45fa-8bad-b7a42236044c&page_name=Test-Webhook&variant=a&page_url=http%3A%2F%2Funbouncepages.com%2Ftest-webhook-1&data.json=%7B%7B%22email%22%3A%5B%22test%40snowplowanalytics.com%22%5D%2C%22ip_address%22%3A%5B%22200.121.220.179%22%5D%2C%22time_submitted%22%3A%5B%2204%3A17%20PM%20UTC%22%5D%7D"
     val payload = CollectorPayload(
@@ -197,15 +209,16 @@ class UnbounceAdapterSpec extends Specification with DataTables with ValidatedMa
       ContentType.some,
       body.some,
       Shared.cljSource,
-      Shared.context)
+      Shared.context
+    )
     val expected = NonEmptyList.one(
       """Unbounce event string failed to parse into JSON: [expected " got '{"emai...' (line 1, column 2)]"""
     )
-    UnbounceAdapter.toRawEvents(payload) must beInvalid(expected)
+    UnbounceAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(expected)
   }
 
   def e9 = {
-    val params = toNameValuePairs("schema" -> "iglu:com.unbounce/test/jsonschema/1-0-0")
+    val params = SpecHelpers.toNameValuePairs("schema" -> "iglu:com.unbounce/test/jsonschema/1-0-0")
     val body =
       "page_name=Test-Webhook&variant=a&page_url=http%3A%2F%2Funbouncepages.com%2Ftest-webhook-1&data.json=%7B%22email%22%3A%5B%22test%40snowplowanalytics.com%22%5D%2C%22ip_address%22%3A%5B%22200.121.220.179%22%5D%2C%22time_submitted%22%3A%5B%2204%3A17%20PM%20UTC%22%5D%7D"
     val payload = CollectorPayload(
@@ -214,13 +227,14 @@ class UnbounceAdapterSpec extends Specification with DataTables with ValidatedMa
       ContentType.some,
       body.some,
       Shared.cljSource,
-      Shared.context)
+      Shared.context
+    )
     val expected = NonEmptyList.one("Unbounce context data missing 'page_id'")
-    UnbounceAdapter.toRawEvents(payload) must beInvalid(expected)
+    UnbounceAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(expected)
   }
 
   def e10 = {
-    val params = toNameValuePairs("schema" -> "iglu:com.unbounce/test/jsonschema/1-0-0")
+    val params = SpecHelpers.toNameValuePairs("schema" -> "iglu:com.unbounce/test/jsonschema/1-0-0")
     val body =
       "page_id=f7afd389-65a3-45fa-8bad-b7a42236044c&variant=a&page_url=http%3A%2F%2Funbouncepages.com%2Ftest-webhook-1&data.json=%7B%22email%22%3A%5B%22test%40snowplowanalytics.com%22%5D%2C%22ip_address%22%3A%5B%22200.121.220.179%22%5D%2C%22time_submitted%22%3A%5B%2204%3A17%20PM%20UTC%22%5D%7D"
     val payload = CollectorPayload(
@@ -229,13 +243,14 @@ class UnbounceAdapterSpec extends Specification with DataTables with ValidatedMa
       ContentType.some,
       body.some,
       Shared.cljSource,
-      Shared.context)
+      Shared.context
+    )
     val expected = NonEmptyList.one("Unbounce context data missing 'page_name'")
-    UnbounceAdapter.toRawEvents(payload) must beInvalid(expected)
+    UnbounceAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(expected)
   }
 
   def e11 = {
-    val params = toNameValuePairs("schema" -> "iglu:com.unbounce/test/jsonschema/1-0-0")
+    val params = SpecHelpers.toNameValuePairs("schema" -> "iglu:com.unbounce/test/jsonschema/1-0-0")
     val body =
       "page_id=f7afd389-65a3-45fa-8bad-b7a42236044c&page_name=Test-Webhook&page_url=http%3A%2F%2Funbouncepages.com%2Ftest-webhook-1&data.json=%7B%22email%22%3A%5B%22test%40snowplowanalytics.com%22%5D%2C%22ip_address%22%3A%5B%22200.121.220.179%22%5D%2C%22time_submitted%22%3A%5B%2204%3A17%20PM%20UTC%22%5D%7D"
     val payload = CollectorPayload(
@@ -244,13 +259,14 @@ class UnbounceAdapterSpec extends Specification with DataTables with ValidatedMa
       ContentType.some,
       body.some,
       Shared.cljSource,
-      Shared.context)
+      Shared.context
+    )
     val expected = NonEmptyList.one("Unbounce context data missing 'variant'")
-    UnbounceAdapter.toRawEvents(payload) must beInvalid(expected)
+    UnbounceAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(expected)
   }
 
   def e12 = {
-    val params = toNameValuePairs("schema" -> "iglu:com.unbounce/test/jsonschema/1-0-0")
+    val params = SpecHelpers.toNameValuePairs("schema" -> "iglu:com.unbounce/test/jsonschema/1-0-0")
     val body =
       "page_id=f7afd389-65a3-45fa-8bad-b7a42236044c&page_name=Test-Webhook&variant=a&data.json=%7B%22email%22%3A%5B%22test%40snowplowanalytics.com%22%5D%2C%22ip_address%22%3A%5B%22200.121.220.179%22%5D%2C%22time_submitted%22%3A%5B%2204%3A17%20PM%20UTC%22%5D%7D"
     val payload = CollectorPayload(
@@ -259,8 +275,9 @@ class UnbounceAdapterSpec extends Specification with DataTables with ValidatedMa
       ContentType.some,
       body.some,
       Shared.cljSource,
-      Shared.context)
+      Shared.context
+    )
     val expected = NonEmptyList.one("Unbounce context data missing 'page_url'")
-    UnbounceAdapter.toRawEvents(payload) must beInvalid(expected)
+    UnbounceAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(expected)
   }
 }

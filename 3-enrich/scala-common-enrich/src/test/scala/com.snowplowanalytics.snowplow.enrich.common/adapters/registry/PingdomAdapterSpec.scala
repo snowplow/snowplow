@@ -22,7 +22,7 @@ import org.specs2.Specification
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
-import SpecHelpers._
+import utils.Clock._
 
 class PingdomAdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
@@ -34,8 +34,6 @@ class PingdomAdapterSpec extends Specification with DataTables with ValidatedMat
   toRawEvents must return a Failure Nel for a querystring which does not contain 'message' as a key   $e5
   """
 
-  implicit val resolver = SpecHelpers.IgluResolver
-
   object Shared {
     val api = CollectorApi("com.pingdom", "v1")
     val cljSource = CollectorSource("clj-tomcat", "UTF-8", None)
@@ -45,7 +43,8 @@ class PingdomAdapterSpec extends Specification with DataTables with ValidatedMat
       None,
       None,
       Nil,
-      None)
+      None
+    )
   }
 
   def e1 =
@@ -57,14 +56,14 @@ class PingdomAdapterSpec extends Specification with DataTables with ValidatedMat
     }
 
   def e2 = {
-    val nvPairs = toNameValuePairs("p" -> "(u'apps',)")
+    val nvPairs = SpecHelpers.toNameValuePairs("p" -> "(u'apps',)")
     val expected =
       "Pingdom name-value pair [p -> apps]: Passed regex - Collector is not catching unicode wrappers anymore"
     PingdomAdapter.reformatMapParams(nvPairs) must beLeft(NonEmptyList.one(expected))
   }
 
   def e3 = {
-    val querystring = toNameValuePairs(
+    val querystring = SpecHelpers.toNameValuePairs(
       "p" -> "apps",
       "message" -> """{"check": "1421338", "checkname": "Webhooks_Test", "host": "7eef51c2.ngrok.com", "action": "assign", "incidentid": 3, "description": "down"}"""
     )
@@ -82,21 +81,27 @@ class PingdomAdapterSpec extends Specification with DataTables with ValidatedMat
       Shared.cljSource,
       Shared.context
     )
-    PingdomAdapter.toRawEvents(payload) must beValid(NonEmptyList.one(expected))
+    PingdomAdapter.toRawEvents(payload, SpecHelpers.client).value must beValid(
+      NonEmptyList.one(expected)
+    )
   }
 
   def e4 = {
     val payload = CollectorPayload(Shared.api, Nil, None, None, Shared.cljSource, Shared.context)
     val expected = "Pingdom payload querystring is empty: nothing to process"
-    PingdomAdapter.toRawEvents(payload) must beInvalid(NonEmptyList.one(expected))
+    PingdomAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(
+      NonEmptyList.one(expected)
+    )
   }
 
   def e5 = {
-    val querystring = toNameValuePairs("p" -> "apps")
+    val querystring = SpecHelpers.toNameValuePairs("p" -> "apps")
     val payload =
       CollectorPayload(Shared.api, querystring, None, None, Shared.cljSource, Shared.context)
     val expected =
       "Pingdom payload querystring does not have 'message' as a key"
-    PingdomAdapter.toRawEvents(payload) must beInvalid(NonEmptyList.one(expected))
+    PingdomAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(
+      NonEmptyList.one(expected)
+    )
   }
 }

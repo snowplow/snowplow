@@ -13,14 +13,12 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry
 
-import java.net.UnknownHostException
 import java.time.ZonedDateTime
 
-import scala.util.control.NonFatal
-
+import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.implicits._
-import com.snowplowanalytics.forex.Forex
+import com.snowplowanalytics.forex.{CreateForex, Forex}
 import com.snowplowanalytics.forex.model._
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
 import io.circe._
@@ -30,27 +28,29 @@ import org.joda.time.DateTime
 import utils.CirceUtils
 
 /** Companion object. Lets us create an CurrencyConversionEnrichment instance from a Json. */
-object CurrencyConversionEnrichmentConfig extends ParseableEnrichment {
-
-  val supportedSchema =
+object CurrencyConversionEnrichment extends ParseableEnrichment {
+  override val supportedSchema =
     SchemaCriterion(
       "com.snowplowanalytics.snowplow",
       "currency_conversion_config",
       "jsonschema",
       1,
-      0)
+      0
+    )
 
-  // Creates a CurrencyConversionEnrichment instance from a JValue
-  def parse(
+  // Creates a CurrencyConversionConf from a Json
+  override def parse(
     c: Json,
-    schemaKey: SchemaKey
-  ): ValidatedNel[String, CurrencyConversionEnrichment] =
+    schemaKey: SchemaKey,
+    localMode: Boolean = false
+  ): ValidatedNel[String, CurrencyConversionConf] =
     isParseable(c, schemaKey)
       .leftMap(e => NonEmptyList.one(e))
       .flatMap { _ =>
         (
           CirceUtils.extract[String](c, "parameters", "apiKey").toValidatedNel,
-          CirceUtils.extract[String](c, "parameters", "baseCurrency")
+          CirceUtils
+            .extract[String](c, "parameters", "baseCurrency")
             .toEither
             .flatMap(bc => Either.catchNonFatal(CurrencyUnit.of(bc)).leftMap(_.getMessage))
             .toValidatedNel,
@@ -65,29 +65,36 @@ object CurrencyConversionEnrichmentConfig extends ParseableEnrichment {
               case s =>
                 s"accountType [$s] is not one of DEVELOPER, ENTERPRISE, and UNLIMITED".asLeft
             }
-            .toValidatedNel,
-          CirceUtils.extract[String](c, "parameters", "rateAt").toValidatedNel
-        ).mapN { (apiKey, baseCurrency, accountType, rateAt) =>
-            CurrencyConversionEnrichment(accountType, apiKey, baseCurrency, rateAt)
-          }
-          .toEither
+            .toValidatedNel
+        ).mapN { (apiKey, baseCurrency, accountType) =>
+          CurrencyConversionConf(accountType, apiKey, baseCurrency)
+        }.toEither
       }
       .toValidated
+
+  /**
+   * Creates a CurrencyConversionEnrichment from a CurrencyConversionConf
+   * @param conf Configuration for the currency conversion enrichment
+   * @return a currency conversion enrichment
+   */
+  def apply[F[_]: Monad: CreateForex](
+    conf: CurrencyConversionConf
+  ): F[CurrencyConversionEnrichment[F]] =
+    CreateForex[F]
+      .create(
+        ForexConfig(conf.apiKey, conf.accountType, baseCurrency = conf.baseCurrency)
+      )
+      .map(f => CurrencyConversionEnrichment(f, conf.baseCurrency))
 }
 
 /**
- * Configuration for a currency_conversion enrichment
- * @param apiKey OER authentication
- * @param baseCurrency Currency to which to convert
- * @param rateAt Which exchange rate to use - "EOD_PRIOR" for "end of previous day".
+ * Currency conversion enrichment
+ * @param forex Forex client
  */
-final case class CurrencyConversionEnrichment(
-  accountType: AccountType,
-  apiKey: String,
-  baseCurrency: CurrencyUnit,
-  rateAt: String
+final case class CurrencyConversionEnrichment[F[_]: Monad](
+  forex: Forex[F],
+  baseCurrency: CurrencyUnit
 ) extends Enrichment {
-  val fx = Forex.unsafeGetForex(ForexConfig(apiKey, accountType, baseCurrency = baseCurrency)).value
 
   /**
    * Attempt to convert if the initial currency and value are both defined
@@ -96,25 +103,33 @@ final case class CurrencyConversionEnrichment(
    * @return None.success if the inputs were not both defined,
    * otherwise Validation[Option[_]] boxing the result of the conversion
    */
+  import cats.data.EitherT
   private def performConversion(
-    initialCurrency: Option[CurrencyUnit],
+    initialCurrency: Option[Either[String, CurrencyUnit]],
     value: Option[Double],
     tstamp: ZonedDateTime
-  ): Either[String, Option[String]] =
+  ): F[Either[String, Option[String]]] =
     (initialCurrency, value) match {
       case (Some(ic), Some(v)) =>
-        fx.convert(v, ic)
-          .to(baseCurrency)
-          .at(tstamp)
-          .value
-          .bimap(
-            l => {
-              val errorType = l.errorType.getClass.getSimpleName.replace("$", "")
-              s"Open Exchange Rates error, type: [$errorType], message: [${l.errorMessage}]"
-            },
-            r => (r.getAmount().toPlainString()).some
+        (for {
+          cu <- EitherT.fromEither[F](ic)
+          res <- EitherT(
+            forex
+              .convert(v, cu)
+              .to(baseCurrency)
+              .at(tstamp)
+              .map(
+                _.bimap(
+                  l => {
+                    val errorType = l.errorType.getClass.getSimpleName.replace("$", "")
+                    s"Open Exchange Rates error, type: [$errorType], message: [${l.errorMessage}]"
+                  },
+                  r => (r.getAmount().toPlainString()).some
+                )
+              )
           )
-      case _ => None.asRight
+        } yield res).value
+      case _ => Monad[F].pure(None.asRight)
     }
 
   /**
@@ -136,28 +151,29 @@ final case class CurrencyConversionEnrichment(
     tiCurrency: Option[String],
     tiPrice: Option[Double],
     collectorTstamp: Option[DateTime]
-  ): ValidatedNel[String, (Option[String], Option[String], Option[String], Option[String])] =
+  ): F[ValidatedNel[String, (Option[String], Option[String], Option[String], Option[String])]] =
     collectorTstamp match {
       case Some(tstamp) =>
-        try {
-          val zdt = tstamp.toGregorianCalendar().toZonedDateTime()
-          val newCurrencyTr = performConversion(trCurrency.map(CurrencyUnit.of), trTotal, zdt)
-          val newCurrencyTi = performConversion(tiCurrency.map(CurrencyUnit.of), tiPrice, zdt)
-          val newTrTax = performConversion(trCurrency.map(CurrencyUnit.of), trTax, zdt)
-          val newTrShipping = performConversion(trCurrency.map(CurrencyUnit.of), trShipping, zdt)
-          (
-            newCurrencyTr.toValidatedNel,
-            newTrTax.toValidatedNel,
-            newTrShipping.toValidatedNel,
-            newCurrencyTi.toValidatedNel
-          ).mapN((_, _, _, _))
-        } catch {
-          case e: NoSuchElementException =>
-            "Base currency [%s] not supported: [%s]".format(baseCurrency, e).invalidNel
-          case f: UnknownHostException =>
-            "Could not connect to Open Exchange Rates: [%s]".format(f).invalidNel
-          case NonFatal(g) => "Unexpected exception converting currency: [%s]".format(g).invalidNel
-        }
-      case None => "Collector timestamp missing".invalidNel // This should never happen
+        val zdt = tstamp.toGregorianCalendar().toZonedDateTime()
+        val trCu =
+          trCurrency.map(c => Either.catchNonFatal(CurrencyUnit.of(c)).leftMap(_.getMessage))
+        val tiCu =
+          tiCurrency.map(c => Either.catchNonFatal(CurrencyUnit.of(c)).leftMap(_.getMessage))
+        (
+          performConversion(trCu, trTotal, zdt),
+          performConversion(trCu, trTax, zdt),
+          performConversion(trCu, trShipping, zdt),
+          performConversion(tiCu, tiPrice, zdt)
+        ).mapN(
+          (newCurrencyTr, newTrTax, newTrShipping, newCurrencyTi) =>
+            (
+              newCurrencyTr.toValidatedNel,
+              newTrTax.toValidatedNel,
+              newTrShipping.toValidatedNel,
+              newCurrencyTi.toValidatedNel
+            ).mapN((_, _, _, _))
+        )
+      // This should never happen
+      case None => Monad[F].pure("Collector timestamp missing".invalidNel)
     }
 }

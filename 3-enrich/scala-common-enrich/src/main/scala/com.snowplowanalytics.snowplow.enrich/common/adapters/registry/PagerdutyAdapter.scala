@@ -67,13 +67,16 @@ object PagerdutyAdapter extends Adapter {
     client: Client[F, Json]
   ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
     (payload.body, payload.contentType) match {
-      case (None, _) => Monad[F].pure(
-        s"Request body is empty: no $VendorName events to process".invalidNel)
-      case (_, None) => Monad[F].pure(
-        s"Request body provided but content type empty, expected $ContentType for $VendorName"
-          .invalidNel)
-      case (_, Some(ct)) if ct != ContentType => Monad[F].pure(
-        s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel)
+      case (None, _) =>
+        Monad[F].pure(s"Request body is empty: no $VendorName events to process".invalidNel)
+      case (_, None) =>
+        Monad[F].pure(
+          s"Request body provided but content type empty, expected $ContentType for $VendorName".invalidNel
+        )
+      case (_, Some(ct)) if ct != ContentType =>
+        Monad[F].pure(
+          s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel
+        )
       case (Some(body), _) =>
         payloadBodyToEvents(body) match {
           case Left(str) => Monad[F].pure(str.invalidNel)
@@ -97,7 +100,8 @@ object PagerdutyAdapter extends Adapter {
                       qsParams,
                       schema,
                       formattedEvent,
-                      "srv"),
+                      "srv"
+                    ),
                     contentType = payload.contentType,
                     source = payload.source,
                     context = payload.context

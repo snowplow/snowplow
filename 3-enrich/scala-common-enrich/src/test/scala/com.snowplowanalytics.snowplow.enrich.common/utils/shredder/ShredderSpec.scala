@@ -16,6 +16,7 @@ package utils.shredder
 import org.specs2.Specification
 
 import outputs.EnrichedEvent
+import utils.Clock._
 
 class ShredderSpec extends Specification {
   def is = s2"""
@@ -27,8 +28,6 @@ class ShredderSpec extends Specification {
   val EventId = "f81d4fae-7dec-11d0-a765-00a0c91e6bf6"
   val CollectorTimestamp = "2014-04-29 09:00:54.000"
 
-  implicit val resolver = SpecHelpers.IgluResolver
-
   def e1 =
     Shredder.makePartialHierarchy(EventId, CollectorTimestamp) must_==
       TypeHierarchy(
@@ -36,7 +35,8 @@ class ShredderSpec extends Specification {
         rootTstamp = CollectorTimestamp,
         refRoot = "events",
         refTree = List("events"),
-        refParent = "events")
+        refParent = "events"
+      )
 
   def e2 = {
     val event = {
@@ -51,6 +51,7 @@ class ShredderSpec extends Specification {
     }
 
     // TODO: check actual contents (have already confirmed in REPL)
-    Shredder.shred(event).toOption.get must have size (3)
+    //println(Shredder.shred(event, SpecHelpers.client).value)
+    Shredder.shred(event, SpecHelpers.client).value.toOption.get must have size (3)
   }
 }

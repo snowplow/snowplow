@@ -58,7 +58,8 @@ class MapTransformerSpec extends Specification with ValidatedMatchers {
     "vid" -> "1",
     "tv" -> "no-js-0.1.1",
     "res" -> "720x1080",
-    "missing" -> "Not in the transformation map")
+    "missing" -> "Not in the transformation map"
+  )
 
   val transformMap: TransformMap = Map(
     ("p", (MiscEnrichments.extractPlatform, "platform")),

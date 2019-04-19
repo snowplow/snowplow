@@ -21,31 +21,31 @@ import io.circe.syntax._
 
 import utils.CirceUtils
 
-object HttpHeaderExtractorEnrichmentConfig extends ParseableEnrichment {
-
-  val supportedSchema =
+object HttpHeaderExtractorEnrichment extends ParseableEnrichment {
+  override val supportedSchema =
     SchemaCriterion(
       "com.snowplowanalytics.snowplow.enrichments",
       "http_header_extractor_config",
       "jsonschema",
       1,
-      0)
+      0
+    )
 
   /**
-   * Creates a HttpHeaderExtractorEnrichment instance from a Json.
+   * Creates a HttpHeaderExtractorConf from a Json.
    * @param config The header_extractor enrichment JSON
    * @param schemaKey provided for the enrichment, must be supported by this enrichment
-   * @return a configured HeaderExtractorEnrichment instance
+   * @return a HeaderExtractor configuration
    */
-  def parse(
+  override def parse(
     config: Json,
-    schemaKey: SchemaKey
-  ): ValidatedNel[String, HttpHeaderExtractorEnrichment] =
+    schemaKey: SchemaKey,
+    localMode: Boolean = false
+  ): ValidatedNel[String, HttpHeaderExtractorConf] =
     (for {
       _ <- isParseable(config, schemaKey)
       headersPattern <- CirceUtils.extract[String](config, "parameters", "headersPattern").toEither
-    } yield HttpHeaderExtractorEnrichment(headersPattern))
-      .toValidatedNel
+    } yield HttpHeaderExtractorConf(headersPattern)).toValidatedNel
 }
 
 /**

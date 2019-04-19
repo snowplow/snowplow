@@ -16,7 +16,9 @@ package enrichments.registry
 import java.io.File
 import java.net.{InetAddress, URI, UnknownHostException}
 
+import cats.{Eval, Monad}
 import cats.data.{NonEmptyList, ValidatedNel}
+import cats.effect.Sync
 import cats.implicits._
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
 import com.snowplowanalytics.iab.spidersandrobotsclient.IabClient
@@ -29,26 +31,26 @@ import utils.CirceUtils
 
 /** Companion object. Lets us create an IabEnrichment instance from a Json. */
 object IabEnrichment extends ParseableEnrichment {
-
-  val supportedSchema = SchemaCriterion(
+  override val supportedSchema = SchemaCriterion(
     "com.snowplowanalytics.snowplow.enrichments",
     "iab_spiders_and_robots_enrichment",
     "jsonschema",
     1,
-    0)
+    0
+  )
 
   /**
-   * Creates an IabEnrichment instance from a Json.
+   * Creates an IabConf from a Json.
    * @param c The iab_spiders_and_robots_enrichment JSON
    * @param schemaKey provided for the enrichment, must be supported by this enrichment
    * @param localMode Whether to use the local IAB database file, enabled for tests
-   * @return a configured IabEnrichment instance
+   * @return a Iab configuration
    */
-  def parse(
+  override def parse(
     c: Json,
     schemaKey: SchemaKey,
     localMode: Boolean
-  ): ValidatedNel[String, IabEnrichment] =
+  ): ValidatedNel[String, IabConf] =
     isParseable(c, schemaKey)
       .leftMap(e => NonEmptyList.one(e))
       .flatMap { _ =>
@@ -57,10 +59,28 @@ object IabEnrichment extends ParseableEnrichment {
           getIabDbFromName(c, "excludeUseragentFile"),
           getIabDbFromName(c, "includeUseragentFile")
         ).mapN { (ip, exclude, include) =>
-          IabEnrichment(ip.some, exclude.some, include.some, localMode)
+          IabConf(
+            file(ip, localMode),
+            file(exclude, localMode),
+            file(include, localMode)
+          )
         }.toEither
       }
       .toValidated
+
+  private def file(db: IabDatabase, localMode: Boolean): (URI, String) =
+    if (localMode) (db.uri, getClass.getResource(db.db).toURI.getPath)
+    else (db.uri, s"./iab_${db.name}")
+
+  /**
+   * Creates an IabEnrichment from a IabConf
+   * @param conf Configuration for the iab enrichment
+   * @return an iab enrichment
+   */
+  def apply[F[_]: Monad: CreateIabClient](conf: IabConf): F[IabEnrichment] =
+    CreateIabClient[F]
+      .create(conf.ipFile._2, conf.excludeUaFile._2, conf.includeUaFile._2)
+      .map(IabEnrichment.apply)
 
   /**
    * Creates IabDatabase instances used in the IabEnrichment case class.
@@ -69,10 +89,7 @@ object IabEnrichment extends ParseableEnrichment {
    * @return None if the field does not exist, Some(Failure) if the URI is invalid, Some(Success) if
    * it is found
    */
-  private def getIabDbFromName(
-    config: Json,
-    name: String
-  ): ValidatedNel[String, IabDatabase] = {
+  private def getIabDbFromName(config: Json, name: String): ValidatedNel[String, IabDatabase] = {
     val uri = CirceUtils.extract[String](config, "parameters", name, "uri")
     val db = CirceUtils.extract[String](config, "parameters", name, "database")
 
@@ -91,41 +108,8 @@ object IabEnrichment extends ParseableEnrichment {
  * @param includeUaFile (Full URI to the IAB included user agent list, database name)
  * @param localMode Whether to use the local database file. Enabled for tests.
  */
-final case class IabEnrichment(
-  ipFile: Option[IabDatabase],
-  excludeUaFile: Option[IabDatabase],
-  includeUaFile: Option[IabDatabase],
-  localMode: Boolean
-) extends Enrichment {
-  private type DbEntry = Option[(Option[URI], String)]
-
+final case class IabEnrichment(iabClient: IabClient) extends Enrichment {
   private val schemaUri = "iglu:com.iab.snowplow/spiders_and_robots/jsonschema/1-0-0"
-
-  // Construct a Tuple3 of all IAB files
-  private val dbs: (DbEntry, DbEntry, DbEntry) = {
-    def db(iabDb: Option[IabDatabase]): DbEntry = iabDb.map {
-      case IabDatabase(name, uri, db) =>
-        if (localMode) {
-          (None, getClass.getResource(db).toURI.getPath)
-        } else {
-          (Some(uri), "./iab_" + name)
-        }
-    }
-
-    (db(ipFile), db(excludeUaFile), db(includeUaFile))
-  }
-
-  // Collect a cache of IAB files for local download
-  override val filesToCache: List[(URI, String)] =
-    (dbs._1 ++ dbs._2 ++ dbs._3).collect {
-      case (Some(uri), path) => (uri, path)
-    }.toList
-
-  // Create an IAB client based on the IAB files list
-  private lazy val iabClient = {
-    def file(db: DbEntry): File = new File(db.get._2)
-    new IabClient(file(dbs._1), file(dbs._2), file(dbs._3))
-  }
 
   /**
    * Get the IAB response containing information about whether an event is a spider or robot using
@@ -197,6 +181,40 @@ final case class IabEnrichment(
     )
 }
 
+trait CreateIabClient[F[_]] {
+  def create(
+    ipFile: String,
+    excludeUaFile: String,
+    includeUaFile: String
+  ): F[IabClient]
+}
+
+object CreateIabClient {
+  def apply[F[_]](implicit ev: CreateIabClient[F]): CreateIabClient[F] = ev
+
+  implicit def syncCreateIabClient[F[_]: Sync]: CreateIabClient[F] = new CreateIabClient[F] {
+    def create(
+      ipFile: String,
+      excludeUaFile: String,
+      includeUaFile: String
+    ): F[IabClient] =
+      Sync[F].delay {
+        new IabClient(new File(ipFile), new File(excludeUaFile), new File(includeUaFile))
+      }
+  }
+
+  implicit def evalCreateIabClient: CreateIabClient[Eval] = new CreateIabClient[Eval] {
+    def create(
+      ipFile: String,
+      excludeUaFile: String,
+      includeUaFile: String
+    ): Eval[IabClient] =
+      Eval.later {
+        new IabClient(new File(ipFile), new File(excludeUaFile), new File(includeUaFile))
+      }
+  }
+}
+
 /** Case class copy of `com.snowplowanalytics.iab.spidersandrobotsclient.IabResponse` */
 private[enrichments] final case class IabEnrichmentResponse(
   spiderOrRobot: Boolean,
@@ -206,4 +224,8 @@ private[enrichments] final case class IabEnrichmentResponse(
 )
 
 /** Case class representing an IAB database location */
-final case class IabDatabase(name: String, uri: URI, db: String)
+private[enrichments] final case class IabDatabase(
+  name: String,
+  uri: URI,
+  db: String
+)

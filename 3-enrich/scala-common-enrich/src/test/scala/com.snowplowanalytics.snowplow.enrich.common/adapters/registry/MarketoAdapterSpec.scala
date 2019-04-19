@@ -21,6 +21,7 @@ import org.specs2.Specification
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import utils.Clock._
 
 class MarketoAdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
@@ -28,8 +29,6 @@ class MarketoAdapterSpec extends Specification with DataTables with ValidatedMat
   toRawEvents must return a success for a valid "event" type payload body being passed                $e1
   toRawEvents must return a Failure Nel if the payload body is empty                                  $e2
   """
-
-  implicit val resolver = SpecHelpers.IgluResolver
 
   object Shared {
     val api = CollectorApi("com.marketo", "v1")
@@ -40,7 +39,8 @@ class MarketoAdapterSpec extends Specification with DataTables with ValidatedMat
       None,
       None,
       Nil,
-      None)
+      None
+    )
   }
 
   val ContentType = "application/json"
@@ -54,7 +54,8 @@ class MarketoAdapterSpec extends Specification with DataTables with ValidatedMat
       ContentType.some,
       bodyStr.some,
       Shared.cljSource,
-      Shared.context)
+      Shared.context
+    )
     val expected = NonEmptyList.one(
       RawEvent(
         Shared.api,
@@ -67,14 +68,16 @@ class MarketoAdapterSpec extends Specification with DataTables with ValidatedMat
         ContentType.some,
         Shared.cljSource,
         Shared.context
-      ))
-    MarketoAdapter.toRawEvents(payload) must beValid(expected)
+      )
+    )
+    MarketoAdapter.toRawEvents(payload, SpecHelpers.client).value must beValid(expected)
   }
 
   def e2 = {
     val payload =
       CollectorPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
-    MarketoAdapter.toRawEvents(payload) must beInvalid(
-      NonEmptyList.one("Request body is empty: no Marketo event to process"))
+    MarketoAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(
+      NonEmptyList.one("Request body is empty: no Marketo event to process")
+    )
   }
 }

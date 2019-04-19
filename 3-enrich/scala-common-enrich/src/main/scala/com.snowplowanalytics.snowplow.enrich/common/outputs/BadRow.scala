@@ -46,8 +46,7 @@ object BadRow {
     Json
       .obj(
         "size" := Json.fromLong(size),
-        "errors" := Json.arr(
-          errors.toList.map(Json.fromString): _*),
+        "errors" := Json.arr(errors.toList.map(Json.fromString): _*),
         "failure_tstamp" := Json.fromLong(tstamp)
       )
       .noSpaces

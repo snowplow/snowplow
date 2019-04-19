@@ -23,8 +23,7 @@ import utils.CirceUtils
 
 /** Companion object. Lets us create a CampaignAttributionEnrichment from a Json */
 object CampaignAttributionEnrichment extends ParseableEnrichment {
-
-  val supportedSchema =
+  override val supportedSchema =
     SchemaCriterion("com.snowplowanalytics.snowplow", "campaign_attribution", "jsonschema", 1, 0)
 
   val DefaultNetworkMap = Map(
@@ -34,15 +33,16 @@ object CampaignAttributionEnrichment extends ParseableEnrichment {
   )
 
   /**
-   * Creates a CampaignAttributionEnrichment instance from a JValue.
+   * Creates a CampaignAttributionConf instance from a Json.
    * @param c The referer_parser enrichment JSON
    * @param schemaKey provided for the enrichment, must be supported by this enrichment
-   * @return a configured CampaignAttributionEnrichment instance
+   * @return a CampaignAttributionEnrichment configuration
    */
-  def parse(
+  override def parse(
     c: Json,
-    schemaKey: SchemaKey
-  ): ValidatedNel[String, CampaignAttributionEnrichment] =
+    schemaKey: SchemaKey,
+    localMode: Boolean = false
+  ): ValidatedNel[String, CampaignAttributionConf] =
     isParseable(c, schemaKey)
       .leftMap(e => NonEmptyList.one(e))
       .flatMap { _ =>
@@ -53,19 +53,19 @@ object CampaignAttributionEnrichment extends ParseableEnrichment {
           CirceUtils.extract[List[String]](c, "parameters", "fields", "mktContent").toValidatedNel,
           CirceUtils.extract[List[String]](c, "parameters", "fields", "mktCampaign").toValidatedNel
         ).mapN { (medium, source, term, content, campaign) =>
-            // Assign empty Map on missing property for backwards compatibility with schema version 1-0-0
-            val customClickMap = CirceUtils
-              .extract[Map[String, String]](c, "parameters", "fields", "mktClickId")
-              .fold(_ => Map(), s => s)
-            CampaignAttributionEnrichment(
-              medium,
-              source,
-              term,
-              content,
-              campaign,
-              (DefaultNetworkMap ++ customClickMap).toList)
-          }
-          .toEither
+          // Assign empty Map on missing property for backwards compatibility with schema version 1-0-0
+          val customClickMap = CirceUtils
+            .extract[Map[String, String]](c, "parameters", "fields", "mktClickId")
+            .fold(_ => Map(), s => s)
+          CampaignAttributionConf(
+            medium,
+            source,
+            term,
+            content,
+            campaign,
+            (DefaultNetworkMap ++ customClickMap).toList
+          )
+        }.toEither
       }
       .toValidated
 }
@@ -97,7 +97,7 @@ final case class MarketingCampaign(
  * @param termParameters List of marketing term parameters
  * @param contentParameters List of marketing content parameters
  * @param campaignParameters List of marketing campaign parameters
- * @param mktClick: Map of click ID parameters to networks
+ * @param mktClick Map of click ID parameters to networks
  */
 final case class CampaignAttributionEnrichment(
   mediumParameters: List[String],

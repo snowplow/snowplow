@@ -33,6 +33,7 @@ import com.snowplowanalytics.iglu.core.circe.instances._
 import com.fasterxml.jackson.databind.JsonNode
 import io.circe.Json
 import io.circe.jackson._
+import io.circe.syntax._
 
 import loaders.CollectorPayload
 import utils.{JsonUtils => JU}
@@ -68,17 +69,18 @@ object Tp2Adapter extends Adapter {
     // Verify: body + content type set; content type matches expected; body contains expected JSON Schema; body passes schema validation
     val validatedParamsNel: F[ValidatedNel[String, NonEmptyList[RawEventParameters]]] =
       (payload.body, payload.contentType) match {
-        case (None, _) if qsParams.isEmpty => Monad[F].pure(
-          s"Request body and querystring parameters empty, expected at least one populated"
-            .invalidNel
-        )
-        case (_, Some(ct)) if !ContentTypes.list.contains(ct) => Monad[F].pure(
-          s"Content type of ${ct} provided, expected one of: ${ContentTypes.str}".invalidNel
-        )
-        case (Some(_), None) => Monad[F].pure(
-          s"Request body provided but content type empty, expected one of: ${ContentTypes.str}"
-            .invalidNel
-        )
+        case (None, _) if qsParams.isEmpty =>
+          Monad[F].pure(
+            s"Request body and querystring parameters empty, expected at least one populated".invalidNel
+          )
+        case (_, Some(ct)) if !ContentTypes.list.contains(ct) =>
+          Monad[F].pure(
+            s"Content type of ${ct} provided, expected one of: ${ContentTypes.str}".invalidNel
+          )
+        case (Some(_), None) =>
+          Monad[F].pure(
+            s"Request body provided but content type empty, expected one of: ${ContentTypes.str}".invalidNel
+          )
         case (None, Some(ct)) =>
           Monad[F].pure(s"Content type of ${ct} provided but request body empty".invalidNel)
         case (None, None) => Monad[F].pure(NonEmptyList.one(qsParams).valid)
@@ -114,10 +116,9 @@ object Tp2Adapter extends Adapter {
   ): Either[NonEmptyList[String], NonEmptyList[RawEventParameters]] = {
     val events: List[List[Validated[String, (String, String)]]] = for {
       event <- circeToJackson(instance).iterator.asScala.toList
-    } yield
-      for {
-        entry <- event.fields.asScala.toList
-      } yield toParameter(entry)
+    } yield for {
+      entry <- event.fields.asScala.toList
+    } yield toParameter(entry)
 
     val failures: List[String] = events.flatten.collect { case Invalid(f) => f }
 
@@ -126,12 +127,11 @@ object Tp2Adapter extends Adapter {
     // from conditionality would be miniscule
     val successes: List[RawEventParameters] = (for {
       params <- events
-    } yield
-      (for {
-        param <- params
-      } yield param).collect {
-        case Valid(p) => p
-      }.toMap ++ mergeWith) // Overwrite with mergeWith
+    } yield (for {
+      param <- params
+    } yield param).collect {
+      case Valid(p) => p
+    }.toMap ++ mergeWith) // Overwrite with mergeWith
 
     (successes, failures) match {
       case (s :: ss, Nil) => NonEmptyList.of(s, ss: _*).asRight // No Failures collected
@@ -153,7 +153,8 @@ object Tp2Adapter extends Adapter {
    * @return a Validation boxing either our parameter on Success, or an error String on Failure.
    */
   private def toParameter(
-    entry: JMapEntry[String, JsonNode]): Validated[String, Tuple2[String, String]] = {
+    entry: JMapEntry[String, JsonNode]
+  ): Validated[String, Tuple2[String, String]] = {
     val key = entry.getKey
     val rawValue = entry.getValue
 
@@ -184,14 +185,19 @@ object Tp2Adapter extends Adapter {
     for {
       j <- EitherT.fromEither(JU.extractJson(field, instance).leftMap(NonEmptyList.one))
       sd <- EitherT.fromEither(
-        SelfDescribingData.parse(j).leftMap(parseError => NonEmptyList.one(parseError.code)))
-      _ <- client.check(sd).leftMap(e => NonEmptyList.one(e.toString))
+        SelfDescribingData.parse(j).leftMap(parseError => NonEmptyList.one(parseError.code))
+      )
+      _ <- client
+        .check(sd)
+        .leftMap(e => NonEmptyList.one(e.asJson.noSpaces))
         .subflatMap { _ =>
           schemaCriterion.matches(sd.schema) match {
             case true => ().asRight
-            case false => NonEmptyList.one(
-              s"Schema criterion $schemaCriterion does not match schema ${sd.schema}").asLeft
+            case false =>
+              NonEmptyList
+                .one(s"Schema criterion $schemaCriterion does not match schema ${sd.schema}")
+                .asLeft
           }
         }
-    } yield j
+    } yield sd.data
 }

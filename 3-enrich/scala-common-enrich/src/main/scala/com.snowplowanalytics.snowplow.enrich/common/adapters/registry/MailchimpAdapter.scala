@@ -86,20 +86,25 @@ object MailchimpAdapter extends Adapter {
     client: Client[F, Json]
   ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
     (payload.body, payload.contentType) match {
-      case (None, _) => Monad[F].pure(
-        s"Request body is empty: no $VendorName event to process".invalidNel)
-      case (_, None) => Monad[F].pure(
-        s"Request body provided but content type empty, expected $ContentType for $VendorName"
-          .invalidNel)
-      case (_, Some(ct)) if ct != ContentType => Monad[F].pure(
-        s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel
-      )
+      case (None, _) =>
+        Monad[F].pure(s"Request body is empty: no $VendorName event to process".invalidNel)
+      case (_, None) =>
+        Monad[F].pure(
+          s"Request body provided but content type empty, expected $ContentType for $VendorName".invalidNel
+        )
+      case (_, Some(ct)) if ct != ContentType =>
+        Monad[F].pure(
+          s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel
+        )
       case (Some(body), _) =>
         val params = toMap(
-          URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).asScala.toList)
+          URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).asScala.toList
+        )
         params.get("type") match {
-          case None => Monad[F].pure(
-            s"No $VendorName type parameter provided: cannot determine event type".invalidNel)
+          case None =>
+            Monad[F].pure(
+              s"No $VendorName type parameter provided: cannot determine event type".invalidNel
+            )
           case Some(eventType) =>
             val _ = client
             val allParams = toMap(payload.querystring) ++ reformatParameters(params)
@@ -114,11 +119,13 @@ object MailchimpAdapter extends Adapter {
                     allParams,
                     schema,
                     MailchimpFormatter,
-                    "srv"),
+                    "srv"
+                  ),
                   contentType = payload.contentType,
                   source = payload.source,
                   context = payload.context
-                ))
+                )
+              )
             })
         }
     }

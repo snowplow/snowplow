@@ -14,12 +14,12 @@ package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
 import java.net.URI
 
-import cats.syntax.either._
-import com.snowplowanalytics.forex.oerclient.DeveloperAccount
-import com.snowplowanalytics.iglu.client.SchemaKey
+import com.snowplowanalytics.forex.model._
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SchemaVer}
 import io.circe.literal._
 import io.circe.parser._
 import org.apache.commons.codec.binary.Base64
+import org.joda.money.CurrencyUnit
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 import org.specs2.mutable.Specification
 
@@ -33,9 +33,14 @@ class EnrichmentConfigsSpec extends Specification with ValidatedMatchers with Da
           "anonOctets": 2
         }
       }"""
-      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "anon_ip", "jsonschema", "1-0-0")
+      val schemaKey = SchemaKey(
+        "com.snowplowanalytics.snowplow",
+        "anon_ip",
+        "jsonschema",
+        SchemaVer.Full(1, 0, 0)
+      )
       val result = AnonIpEnrichment.parse(ipAnonJson, schemaKey)
-      result must beValid(AnonIpEnrichment(AnonOctets(2)))
+      result must beValid(AnonIpConf(AnonOctets(2)))
 
     }
   }
@@ -55,26 +60,34 @@ class EnrichmentConfigsSpec extends Specification with ValidatedMatchers with Da
           }
         }
       }"""
-      val schemaKey =
-        SchemaKey("com.snowplowanalytics.snowplow", "ip_lookups", "jsonschema", "2-0-0")
-      val expected = IpLookupsEnrichment(
-        Some((
-          "geo",
-          new URI(
-            "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoIP2-City.mmdb"),
-          "GeoIP2-City.mmdb")),
+      val schemaKey = SchemaKey(
+        "com.snowplowanalytics.snowplow",
+        "ip_lookups",
+        "jsonschema",
+        SchemaVer.Full(2, 0, 0)
+      )
+      val expected = IpLookupsConf(
         Some(
           (
-            "isp",
             new URI(
-              "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoIP2-ISP.mmdb"),
-            "GeoIP2-ISP.mmdb")),
+              "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoIP2-City.mmdb"
+            ),
+            "./ip_geo"
+          )
+        ),
+        Some(
+          (
+            new URI(
+              "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoIP2-ISP.mmdb"
+            ),
+            "./ip_isp"
+          )
+        ),
         None,
-        None,
-        true
+        None
       )
 
-      val result = IpLookupsEnrichment.parse(ipToGeoJson, schemaKey, true)
+      val result = IpLookupsEnrichment.parse(ipToGeoJson, schemaKey, false)
       result must beValid(expected)
 
     }
@@ -88,15 +101,27 @@ class EnrichmentConfigsSpec extends Specification with ValidatedMatchers with Da
           "internalDomains": [
             "www.subdomain1.snowplowanalytics.com",
             "www.subdomain2.snowplowanalytics.com"
-          ]
+          ],
+          "database": "referer.json",
+          "uri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/referer"
         }
       }"""
-      val schemaKey =
-        SchemaKey("com.snowplowanalytics.snowplow", "referer_parser", "jsonschema", "1-0-0")
-      val expected =
-        RefererParserEnrichment(
-          List("www.subdomain1.snowplowanalytics.com", "www.subdomain2.snowplowanalytics.com"))
-      val result = RefererParserEnrichment.parse(refererParserJson, schemaKey)
+      val schemaKey = SchemaKey(
+        "com.snowplowanalytics.snowplow",
+        "referer_parser",
+        "jsonschema",
+        SchemaVer.Full(2, 0, 0)
+      )
+      val expected = RefererParserConf(
+        (
+          new URI(
+            "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/referer/referer.json"
+          ),
+          "./referer-parser.json"
+        ),
+        List("www.subdomain1.snowplowanalytics.com", "www.subdomain2.snowplowanalytics.com")
+      )
+      val result = RefererParserEnrichment.parse(refererParserJson, schemaKey, false)
       result must beValid(expected)
 
     }
@@ -122,10 +147,15 @@ class EnrichmentConfigsSpec extends Specification with ValidatedMatchers with Da
               }
             }
           }
-        }""").toOption.get
-      val schemaKey =
-        SchemaKey("com.snowplowanalytics.snowplow", "campaign_attribution", "jsonschema", "1-0-0")
-      val expected = CampaignAttributionEnrichment(
+        }"""
+        ).toOption.get
+      val schemaKey = SchemaKey(
+        "com.snowplowanalytics.snowplow",
+        "campaign_attribution",
+        "jsonschema",
+        SchemaVer.Full(1, 0, 0)
+      )
+      val expected = CampaignAttributionConf(
         List("utm_medium", "medium"),
         List("utm_source", "source"),
         List("utm_term"),
@@ -154,17 +184,22 @@ class EnrichmentConfigsSpec extends Specification with ValidatedMatchers with Da
         "com.snowplowanalytics.snowplow",
         "user_agent_utils_config",
         "jsonschema",
-        "1-0-0")
+        SchemaVer.Full(1, 0, 0)
+      )
       val result = UserAgentUtilsEnrichmentConfig.parse(userAgentUtilsEnrichmentJson, schemaKey)
-      result must beValid(UserAgentUtilsEnrichment)
+      result must beValid(UserAgentUtilsConf)
 
     }
   }
 
   "Parsing a valid ua_parser_config enrichment JSON" should {
     "successfully construct a UaParserEnrichment case class" in {
-      val schemaKey =
-        SchemaKey("com.snowplowanalytics.snowplow", "ua_parser_config", "jsonschema", "1-0-1")
+      val schemaKey = SchemaKey(
+        "com.snowplowanalytics.snowplow",
+        "ua_parser_config",
+        "jsonschema",
+        SchemaVer.Full(1, 0, 1)
+      )
       val configWithDefaultRules = json"""{
         "enabled": true,
         "parameters": {
@@ -185,8 +220,8 @@ class EnrichmentConfigsSpec extends Specification with ValidatedMatchers with Da
         configWithExternalRules !! Some((new URI(externalUri + database), "./ua-parser-rules.yml")) |> {
         (config, expected) =>
           {
-            val result = UaParserEnrichmentConfig.parse(config, schemaKey)
-            result must beValid(UaParserEnrichment(expected))
+            val result = UaParserEnrichment.parse(config, schemaKey)
+            result must beValid(UaParserConf(expected))
           }
       }
     }
@@ -207,10 +242,11 @@ class EnrichmentConfigsSpec extends Specification with ValidatedMatchers with Da
         "com.snowplowanalytics.snowplow",
         "currency_conversion_config",
         "jsonschema",
-        "1-0-0")
+        SchemaVer.Full(1, 0, 0)
+      )
       val result =
-        CurrencyConversionEnrichmentConfig.parse(currencyConversionEnrichmentJson, schemaKey)
-      result must beValid(CurrencyConversionEnrichment(DeveloperAccount, "---", "EUR", "EOD_PRIOR"))
+        CurrencyConversionEnrichment.parse(currencyConversionEnrichmentJson, schemaKey)
+      result must beValid(CurrencyConversionConf(DeveloperAccount, "---", CurrencyUnit.EUR))
     }
   }
 
@@ -235,8 +271,9 @@ class EnrichmentConfigsSpec extends Specification with ValidatedMatchers with Da
         "com.snowplowanalytics.snowplow",
         "javascript_script_config",
         "jsonschema",
-        "1-0-0")
-      val result = JavascriptScriptEnrichmentConfig.parse(javascriptScriptEnrichmentJson, schemaKey)
+        SchemaVer.Full(1, 0, 0)
+      )
+      val result = JavascriptScriptEnrichment.parse(javascriptScriptEnrichmentJson, schemaKey)
       result must beValid // TODO: check the result's contents by evaluating some JavaScript
     }
   }
@@ -254,9 +291,9 @@ class EnrichmentConfigsSpec extends Specification with ValidatedMatchers with Da
         "com.snowplowanalytics.snowplow",
         "event_fingerprint_config",
         "jsonschema",
-        "1-0-0")
-      val expectedExcludedParameters = List("stm")
-      val result = EventFingerprintEnrichmentConfig.parse(refererParserJson, schemaKey)
+        SchemaVer.Full(1, 0, 0)
+      )
+      val result = EventFingerprintEnrichment.parse(refererParserJson, schemaKey)
       result must beValid.like {
         case enr => enr.algorithm("sample") must beEqualTo("5e8ff9bf55ba3508199d22e984129be6")
       }
@@ -275,9 +312,10 @@ class EnrichmentConfigsSpec extends Specification with ValidatedMatchers with Da
         "com.snowplowanalytics.snowplow",
         "cookie_extractor_config",
         "jsonschema",
-        "1-0-0")
-      val result = CookieExtractorEnrichmentConfig.parse(cookieExtractorEnrichmentJson, schemaKey)
-      result must beValid(CookieExtractorEnrichment(List("foo", "bar")))
+        SchemaVer.Full(1, 0, 0)
+      )
+      val result = CookieExtractorEnrichment.parse(cookieExtractorEnrichmentJson, schemaKey)
+      result must beValid(CookieExtractorConf(List("foo", "bar")))
     }
   }
 
@@ -311,15 +349,15 @@ class EnrichmentConfigsSpec extends Specification with ValidatedMatchers with Da
              }
            }
          }""").toOption.get
-      val schemaKey =
-        SchemaKey(
-          "com.snowplowanalytics.snowplow.enrichments",
-          "pii_enrichment_config",
-          "jsonschema",
-          "2-0-0")
+      val schemaKey = SchemaKey(
+        "com.snowplowanalytics.snowplow.enrichments",
+        "pii_enrichment_config",
+        "jsonschema",
+        SchemaVer.Full(2, 0, 0)
+      )
       val result = PiiPseudonymizerEnrichment.parse(piiPseudonymizerEnrichmentJson, schemaKey)
       result must beValid.like {
-        case piiRes: PiiPseudonymizerEnrichment => {
+        case piiRes: PiiPseudonymizerConf => {
           (piiRes.strategy must haveClass[PiiStrategyPseudonymize]) and
             (piiRes.strategy
               .asInstanceOf[PiiStrategyPseudonymize]
@@ -336,8 +374,7 @@ class EnrichmentConfigsSpec extends Specification with ValidatedMatchers with Da
             (piiRes
               .fieldList(1)
               .asInstanceOf[PiiJson]
-              .schemaCriterion
-              .toString must_== "iglu:com.acme/email_sent/jsonschema/1-*-*") and
+              .schemaCriterion must_== SchemaCriterion("com.acme", "email_sent", "jsonschema", 1)) and
             (piiRes.fieldList(1).asInstanceOf[PiiJson].jsonPath must_== "$.emailAddress")
         }
       }
@@ -367,54 +404,24 @@ class EnrichmentConfigsSpec extends Specification with ValidatedMatchers with Da
         "com.snowplowanalytics.snowplow.enrichments",
         "iab_spiders_and_robots_enrichment",
         "jsonschema",
-        "1-0-0")
-      val expected = IabEnrichment(
-        Some(
-          IabDatabase(
-            "ipFile",
-            new URI("https://example.com/ip_exclude_current_cidr.txt"),
-            "ip_exclude_current_cidr.txt")),
-        Some(
-          IabDatabase(
-            "excludeUseragentFile",
-            new URI("https://example.com/exclude_current.txt"),
-            "exclude_current.txt")),
-        Some(
-          IabDatabase(
-            "includeUseragentFile",
-            new URI("https://example.com/include_current.txt"),
-            "include_current.txt")),
-        true
+        SchemaVer.Full(1, 0, 0)
       )
-      val result = IabEnrichment.parse(iabJson, schemaKey, true)
+      val expected = IabConf(
+        (
+          new URI("https://example.com/ip_exclude_current_cidr.txt"),
+          "./iab_ipFile"
+        ),
+        (
+          new URI("https://example.com/exclude_current.txt"),
+          "./iab_excludeUseragentFile"
+        ),
+        (
+          new URI("https://example.com/include_current.txt"),
+          "./iab_includeUseragentFile"
+        )
+      )
+      val result = IabEnrichment.parse(iabJson, schemaKey, false)
       result must beValid(expected)
-    }
-
-    "fail if a database file is missing" in {
-      val iabJson = json"""{
-        "enabled": true,
-        "parameters": {
-          "ipFile": {
-            "database": "ip_exclude_current_cidr.txt",
-            "uri": "https://example.com"
-          },
-          "excludeUseragentFile": {
-            "database": "DOES_NOT_EXIST",
-            "uri": "https://example.com"
-          },
-          "includeUseragentFile": {
-             "database": "include_current.txt",
-             "uri": "https://example.com"
-          }
-        }
-      }"""
-      val schemaKey = SchemaKey(
-        "com.snowplowanalytics.snowplow.enrichments",
-        "iab_spiders_and_robots_enrichment",
-        "jsonschema",
-        "1-0-0")
-      IabEnrichment.parse(iabJson, schemaKey, true) must throwA[NullPointerException]
-
     }
 
     "fail if the URI to a database file is invalid" in {
@@ -439,8 +446,9 @@ class EnrichmentConfigsSpec extends Specification with ValidatedMatchers with Da
         "com.snowplowanalytics.snowplow.enrichments",
         "iab_spiders_and_robots_enrichment",
         "jsonschema",
-        "1-0-0")
-      val result = IabEnrichment.parse(iabJson, schemaKey, true)
+        SchemaVer.Full(1, 0, 0)
+      )
+      val result = IabEnrichment.parse(iabJson, schemaKey, false)
       result must beInvalid
     }
   }
