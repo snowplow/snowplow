@@ -25,9 +25,8 @@ import io.circe.parser._
 import outputs.EnrichedEvent
 import utils.{CirceUtils, ConversionUtils}
 
-/** Lets us create a JavascriptScriptEnrichment from a Json. */
-object JavascriptScriptEnrichmentConfig extends ParseableEnrichment {
-  val supportedSchema =
+object JavascriptScriptEnrichment extends ParseableEnrichment {
+  override val supportedSchema =
     SchemaCriterion(
       "com.snowplowanalytics.snowplow",
       "javascript_script_config",
@@ -37,26 +36,23 @@ object JavascriptScriptEnrichmentConfig extends ParseableEnrichment {
     )
 
   /**
-   * Creates a JavascriptScriptEnrichment instance from a JValue.
+   * Creates a JavascriptScriptConf from a Json.
    * @param c The JavaScript script enrichment JSON
    * @param schemaKey provided for the enrichment, must be supported by this enrichment
-   * @return a configured JavascriptScriptEnrichment instance
+   * @return a JavascriptScript configuration
    */
-  def parse(
+  override def parse(
     c: Json,
-    schemaKey: SchemaKey
-  ): ValidatedNel[String, JavascriptScriptEnrichment] =
+    schemaKey: SchemaKey,
+    localMode: Boolean = false
+  ): ValidatedNel[String, JavascriptScriptConf] =
     (for {
       _ <- isParseable(c, schemaKey)
       encoded <- CirceUtils.extract[String](c, "parameters", "script").toEither
       raw <- ConversionUtils.decodeBase64Url("script", encoded)
-      compiled <- JavascriptScriptEnrichment.compile(raw)
-    } yield JavascriptScriptEnrichment(compiled))
-      .toEitherNel
-      .toValidated
-}
+      compiled <- compile(raw)
+    } yield JavascriptScriptConf(compiled)).toValidatedNel
 
-object JavascriptScriptEnrichment {
   object Variables {
     private val prefix = "$snowplow31337" // To avoid collisions
     val In = s"${prefix}In"
@@ -87,6 +83,23 @@ object JavascriptScriptEnrichment {
           .leftMap(e => s"Error compiling JavaScript script: [${e.getMessage}]")
       case None => "JavaScript script for evaluation is null".asLeft
     }
+}
+
+/**
+ * Config for an JavaScript script enrichment
+ * @param script The compiled script ready for
+ */
+final case class JavascriptScriptEnrichment(script: Script) extends Enrichment {
+
+  /**
+   * Run the process function as stored in the CompiledScript against the supplied EnrichedEvent.
+   * @param event The enriched event to pass into our process function
+   * @return either a JSON array of contexts on Success, or an error String on Failure
+   */
+  def process(event: EnrichedEvent): Either[String, List[Json]] =
+    process(script, event)
+
+  import JavascriptScriptEnrichment.Variables
 
   /**
    * Run the process function as stored in the CompiledScript against the supplied EnrichedEvent.
@@ -129,20 +142,5 @@ object JavascriptScriptEnrichment {
         }
     }
   }
-}
-
-/**
- * Config for an JavaScript script enrichment
- * @param script The compiled script ready for
- */
-final case class JavascriptScriptEnrichment(script: Script) extends Enrichment {
-
-  /**
-   * Run the process function as stored in the CompiledScript against the supplied EnrichedEvent.
-   * @param event The enriched event to pass into our process function
-   * @return either a JSON array of contexts on Success, or an error String on Failure
-   */
-  def process(event: EnrichedEvent): Either[String, List[Json]] =
-    JavascriptScriptEnrichment.process(script, event)
 
 }

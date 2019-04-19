@@ -17,7 +17,7 @@ import java.nio.charset.Charset
 import java.net.URI
 
 import cats.Monad
-import cats.data.{NonEmptyList, Validated, ValidatedNel}
+import cats.data.{EitherT, NonEmptyList, Validated, ValidatedNel}
 import cats.effect.Clock
 import cats.implicits._
 import com.snowplowanalytics.iglu.client.Client
@@ -56,7 +56,7 @@ object EnrichmentManager {
    * @return a MaybeCanonicalOutput - i.e. a ValidationNel containing either failure Strings
    */
   def enrichEvent[F[_]: Monad: RegistryLookup: Clock](
-    registry: EnrichmentRegistry,
+    registry: EnrichmentRegistry[F],
     client: Client[F, Json],
     hostEtlVersion: String,
     etlTstamp: DateTime,
@@ -234,7 +234,7 @@ object EnrichmentManager {
     // enrichment doesn't fail to maintain the previous approach where failures were suppressed
     // c.f. https://github.com/snowplow/snowplow/issues/351
     val geoLocation: Either[String, Unit] = (for {
-      enrichment <- registry.getIpLookupsEnrichment
+      enrichment <- registry.ipLookups
       ip <- Option(event.user_ipaddress)
       result = {
         val ipLookupResult = enrichment.extractIpInformation(ip)
@@ -279,7 +279,7 @@ object EnrichmentManager {
     // Fetch IAB enrichment context (before anonymizing the IP address).
     // IAB enrichment is called only if the IP is v4 (and after removing the port if any)
     // and if the user agent is defined.
-    val iabContext: Either[String, Option[Json]] = registry.getIabEnrichment match {
+    val iabContext: Either[String, Option[Json]] = registry.iab match {
       case Some(iab) =>
         event.user_ipaddress match {
           case IPv4Regex(ipv4) if !List(null, "", s"\0").contains(event.useragent) =>
@@ -296,15 +296,17 @@ object EnrichmentManager {
     }
 
     // To anonymize the IP address
-    Option(event.user_ipaddress).map(ip =>
-      event.user_ipaddress = registry.getAnonIpEnrichment match {
-        case Some(anon) => anon.anonymizeIp(ip)
-        case None => ip
-    })
+    Option(event.user_ipaddress).map(
+      ip =>
+        event.user_ipaddress = registry.anonIp match {
+          case Some(anon) => anon.anonymizeIp(ip)
+          case None => ip
+        }
+    )
 
     // Parse the useragent using user-agent-utils
     val uaUtils: Either[String, Unit] = {
-      registry.getUserAgentUtilsEnrichment match {
+      registry.userAgentUtils match {
         case Some(uap) => {
           Option(event.useragent) match {
             case Some(ua) =>
@@ -332,7 +334,7 @@ object EnrichmentManager {
 
     // Create the ua_parser_context
     val uaParser: Either[String, Option[Json]] = {
-      registry.getUaParserEnrichment match {
+      registry.uaParser match {
         case Some(uap) =>
           Option(event.useragent) match {
             case Some(ua) => uap.extractUserAgent(ua).map(_.some)
@@ -343,8 +345,8 @@ object EnrichmentManager {
     }
 
     // Finalize the currency conversion
-    val currency: Either[NonEmptyList[String], Unit] = {
-      registry.getCurrencyConversionEnrichment match {
+    val currency: F[Either[NonEmptyList[String], Unit]] = {
+      registry.currencyConversion match {
         case Some(currency) =>
           event.base_currency = currency.baseCurrency.getCode
           // Note that stringToMaybeDouble is applied to either-valid-or-null event POJO
@@ -353,28 +355,33 @@ object EnrichmentManager {
           val tiPrice = CU.stringToMaybeDouble("ti_pr", event.ti_price).toValidatedNel
           val trTotal = CU.stringToMaybeDouble("tr_tt", event.tr_total).toValidatedNel
           val trShipping = CU.stringToMaybeDouble("tr_sh", event.tr_shipping).toValidatedNel
-          val convertedCu = ((trTotal, trTax, trShipping, tiPrice)
-            .mapN {
-              currency.convertCurrencies(
-                Option(event.tr_currency),
-                _,
-                _,
-                _,
-                Option(event.ti_currency),
-                _,
-                raw.context.timestamp)
-            })
-            .toEither
-            .flatMap(_.toEither)
-
-          for ((total, tax, shipping, price) <- convertedCu.toOption) {
-            event.tr_total_base = total.orNull
-            event.tr_tax_base = tax.orNull
-            event.tr_shipping_base = shipping.orNull
-            event.ti_price_base = price.orNull
-          }
-          ().asRight
-        case None => ().asRight
+          (for {
+            // better-monadic-for
+            convertedCu <- EitherT(
+              ((trTotal, trTax, trShipping, tiPrice)
+                .mapN {
+                  currency.convertCurrencies(
+                    Option(event.tr_currency),
+                    _,
+                    _,
+                    _,
+                    Option(event.ti_currency),
+                    _,
+                    raw.context.timestamp
+                  )
+                })
+                .toEither
+                .sequence
+                .map(_.flatMap(_.toEither))
+            )
+            _ = {
+              event.tr_total_base = convertedCu._1.orNull
+              event.tr_tax_base = convertedCu._2.orNull
+              event.tr_shipping_base = convertedCu._3.orNull
+              event.ti_price_base = convertedCu._4.orNull
+            }
+          } yield ()).value
+        case None => Monad[F].pure(().asRight)
       }
     }
 
@@ -395,7 +402,7 @@ object EnrichmentManager {
       event.refr_urlfragment = components.fragment.orNull
 
       // Set the referrer details
-      registry.getRefererParserEnrichment match {
+      registry.refererParser match {
         case Some(rp) =>
           for (refr <- rp.extractRefererDetails(u, event.page_urlhost)) {
             refr match {
@@ -430,7 +437,7 @@ object EnrichmentManager {
     // Marketing attribution
     val campaign: Either[String, Unit] = pageQsMap match {
       case Right(Some(qsMap)) =>
-        registry.getCampaignAttributionEnrichment match {
+        registry.campaignAttribution match {
           case Some(ce) =>
             val cmp = ce.extractMarketingFields(qsMap)
             event.mkt_medium = CU.makeTsvSafe(cmp.medium.orNull)
@@ -460,7 +467,7 @@ object EnrichmentManager {
     }
 
     // This enrichment cannot fail
-    (registry.getEventFingerprintEnrichment match {
+    (registry.eventFingerprint match {
       case Some(efe) => event.event_fingerprint = efe.getEventFingerprint(sourceMap)
       case _ => ()
     })
@@ -476,34 +483,36 @@ object EnrichmentManager {
     // Extract the event vendor/name/format/version
     val extractSchema: F[Either[String, Unit]] = SchemaEnrichment
       .extractSchema(event, client)
-      .map { _.map { schemaKey =>
-        event.event_vendor = schemaKey.vendor
-        event.event_name = schemaKey.name
-        event.event_format = schemaKey.format
-        event.event_version = schemaKey.version.asString
-        ().asRight
-      } }
+      .map {
+        _.map { schemaKey =>
+          event.event_vendor = schemaKey.vendor
+          event.event_name = schemaKey.name
+          event.event_format = schemaKey.format
+          event.event_version = schemaKey.version.asString
+          ().asRight
+        }
+      }
 
     // Execute the JavaScript scripting enrichment
-    val jsScript: Either[String, List[Json]] = registry.getJavascriptScriptEnrichment match {
+    val jsScript: Either[String, List[Json]] = registry.javascriptScript match {
       case Some(jse) => jse.process(event)
       case None => Nil.asRight
     }
 
     // Execute cookie extractor enrichment
-    val cookieExtractorContext: List[Json] = registry.getCookieExtractorEnrichment match {
+    val cookieExtractorContext: List[Json] = registry.cookieExtractor match {
       case Some(cee) => cee.extract(raw.context.headers)
       case None => Nil
     }
 
     // Execute header extractor enrichment
-    val httpHeaderExtractorContext: List[Json] = registry.getHttpHeaderExtractorEnrichment match {
+    val httpHeaderExtractorContext: List[Json] = registry.httpHeaderExtractor match {
       case Some(hee) => hee.extract(raw.context.headers)
       case None => Nil
     }
 
     // Fetch weather context
-    val weatherContext: Either[String, Option[Json]] = registry.getWeatherEnrichment match {
+    val weatherContext: Either[String, Option[Json]] = registry.weather match {
       case Some(we) =>
         we.getWeatherContext(
             Option(event.geo_latitude),
@@ -536,29 +545,34 @@ object EnrichmentManager {
 
     // Derive some contexts with custom SQL Query enrichment
     val sqlQueryContexts: F[ValidatedNel[String, List[Json]]] =
-      registry.getSqlQueryEnrichment match {
+      registry.sqlQuery match {
         case Some(enrichment) =>
-          customContexts.product(unstructEvent).map(_ match {
-            case (Validated.Valid(cctx), Validated.Valid(ue)) =>
-              enrichment.lookup(event, preparedDerivedContexts, cctx, ue)
-            case _ =>
-              // Skip. Unstruct event or custom context corrupted (event enrichment will fail)
-              Nil.validNel
-          })
+          customContexts
+            .product(unstructEvent)
+            .map(_ match {
+              case (Validated.Valid(cctx), Validated.Valid(ue)) =>
+                enrichment.lookup(event, preparedDerivedContexts, cctx, ue)
+              case _ =>
+                // Skip. Unstruct event or custom context corrupted (event enrichment will fail)
+                Nil.validNel
+            })
         case None => Monad[F].pure(Nil.validNel)
       }
 
     // Derive some contexts with custom API Request enrichment
     val apiRequestContexts: F[ValidatedNel[String, List[Json]]] =
-      registry.getApiRequestEnrichment match {
+      registry.apiRequest match {
         case Some(enrichment) =>
-          customContexts.product(unstructEvent).product(sqlQueryContexts).map(_ match {
-            case ((Validated.Valid(cctx), Validated.Valid(ue)), Validated.Valid(sctx)) =>
-              enrichment.lookup(event, preparedDerivedContexts ++ sctx, cctx, ue)
-            case _ =>
-              // Skip. Unstruct event or custom context corrupted, event enrichment will fail anyway
-              Nil.validNel
-          })
+          customContexts
+            .product(unstructEvent)
+            .product(sqlQueryContexts)
+            .map(_ match {
+              case ((Validated.Valid(cctx), Validated.Valid(ue)), Validated.Valid(sctx)) =>
+                enrichment.lookup(event, preparedDerivedContexts ++ sctx, cctx, ue)
+              case _ =>
+                // Skip. Unstruct event or custom context corrupted, event enrichment will fail anyway
+                Nil.validNel
+            })
         case None => Monad[F].pure(Nil.validNel)
       }
 
@@ -576,7 +590,7 @@ object EnrichmentManager {
       }
     }
 
-    val piiTransform = registry.getPiiPseudonymizerEnrichment match {
+    val piiTransform = registry.piiPseudonymizer match {
       case Some(enrichment) => enrichment.transformer(event)
       case None => Nil
     }
@@ -588,8 +602,9 @@ object EnrichmentManager {
       apiRequestContexts,
       sqlQueryContexts,
       extractSchema,
+      currency,
       formatDerivedContexts
-    ).mapN { (cc, ue, api, sql, es, _) =>
+    ).mapN { (cc, ue, api, sql, es, cu, _) =>
       val first = (
         useragent.toValidatedNel,
         collectorTstamp.toValidatedNel,
@@ -602,7 +617,7 @@ object EnrichmentManager {
         geoLocation.toValidatedNel,
         refererUri.toValidatedNel,
         transform,
-        currency.toValidated,
+        cu.toValidated,
         secondPassTransform,
         pageQsMap.toValidatedNel,
         jsScript.toValidatedNel,

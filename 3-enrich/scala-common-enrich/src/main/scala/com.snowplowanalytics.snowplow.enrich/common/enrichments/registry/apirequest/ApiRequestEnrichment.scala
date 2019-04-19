@@ -26,17 +26,16 @@ import io.circe.syntax._
 import outputs.EnrichedEvent
 import utils.CirceUtils
 
-/** Lets us create an ApiRequestEnrichmentConfig from a JValue */
-object ApiRequestEnrichmentConfig extends ParseableEnrichment {
-
-  val supportedSchema =
+object ApiRequestEnrichment extends ParseableEnrichment {
+  override val supportedSchema =
     SchemaCriterion(
       "com.snowplowanalytics.snowplow.enrichments",
       "api_request_enrichment_config",
       "jsonschema",
       1,
       0,
-      0)
+      0
+    )
 
   /**
    * Creates an ApiRequestEnrichment instance from a JValue.
@@ -45,10 +44,11 @@ object ApiRequestEnrichmentConfig extends ParseableEnrichment {
    * Must be a supported SchemaKey for this enrichment
    * @return a configured ApiRequestEnrichment instance
    */
-  def parse(
+  override def parse(
     c: Json,
-    schemaKey: SchemaKey
-  ): ValidatedNel[String, ApiRequestEnrichment] =
+    schemaKey: SchemaKey,
+    localMode: Boolean = false
+  ): ValidatedNel[String, ApiRequestConf] =
     isParseable(c, schemaKey)
       .leftMap(e => NonEmptyList.one(e))
       .flatMap { _ =>
@@ -65,11 +65,36 @@ object ApiRequestEnrichmentConfig extends ParseableEnrichment {
           CirceUtils.extract[List[Output]](c, "parameters", "outputs").toValidatedNel,
           CirceUtils.extract[Cache](c, "parameters", "cache").toValidatedNel
         ).mapN { (inputs, api, outputs, cache) =>
-            ApiRequestEnrichment(inputs, api, outputs, cache)
-          }
-          .toEither
+          ApiRequestConf(inputs, api, outputs, cache)
+        }.toEither
       }
       .toValidated
+
+  /**
+   * Transform pairs of schema and node obtained from [[utils.shredder.Shredder]] into list of
+   * regular self-describing instance representing custom context or unstruct event
+   * @param pairs list of pairs consisting of schema and Json nodes
+   * @return list of regular Json
+   */
+  def transformRawPairs(pairs: List[SelfDescribingData[Json]]): List[Json] =
+    pairs.map { p =>
+      val uri = p.schema.toSchemaUri
+      Json.obj(
+        "schema" := Json.fromString(uri),
+        "data" := p.data.hcursor.downField("data").focus.getOrElse(p.data)
+      )
+    }
+
+  /**
+   * Creates an UUID based on url and optional body.
+   * @param url URL to query
+   * @param body optional request body
+   * @return UUID that identifies of the request.
+   */
+  def cacheKey(url: String, body: Option[String]): String = {
+    val contentKey = url + body.getOrElse("")
+    UUID.nameUUIDFromBytes(contentKey.getBytes).toString
+  }
 }
 
 final case class ApiRequestEnrichment(
@@ -106,7 +131,8 @@ final case class ApiRequestEnrichment(
         event,
         derivedContexts,
         jsonCustomContexts,
-        jsonUnstructEvent)
+        jsonUnstructEvent
+      )
 
     (for {
       context <- templateContext.toEither
@@ -151,35 +177,5 @@ final case class ApiRequestEnrichment(
         json
     }
     value.flatMap(output.extract).map(output.describeJson)
-  }
-}
-
-/** Companion object containing common methods for requests and manipulating data */
-object ApiRequestEnrichment {
-
-  /**
-   * Transform pairs of schema and node obtained from [[utils.shredder.Shredder]] into list of
-   * regular self-describing instance representing custom context or unstruct event
-   * @param pairs list of pairs consisting of schema and Json nodes
-   * @return list of regular Json
-   */
-  def transformRawPairs(pairs: List[SelfDescribingData[Json]]): List[Json] =
-    pairs.map { p =>
-      val uri = p.schema.toSchemaUri
-      Json.obj(
-        "schema" := Json.fromString(uri),
-        "data" := p.data.hcursor.downField("data").focus.getOrElse(p.data)
-      )
-    }
-
-  /**
-   * Creates an UUID based on url and optional body.
-   * @param url URL to query
-   * @param body optional request body
-   * @return UUID that identifies of the request.
-   */
-  def cacheKey(url: String, body: Option[String]): String = {
-    val contentKey = url + body.getOrElse("")
-    UUID.nameUUIDFromBytes(contentKey.getBytes).toString
   }
 }

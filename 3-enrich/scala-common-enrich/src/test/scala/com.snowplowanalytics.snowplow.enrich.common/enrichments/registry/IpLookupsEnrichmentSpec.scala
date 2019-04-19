@@ -12,11 +12,11 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
-import java.net.URI
-
 import cats.syntax.option._
 import cats.syntax.either._
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import com.snowplowanalytics.maxmind.iplookups.model.IpLocation
+import io.circe.literal._
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
 
@@ -25,18 +25,36 @@ class IpLookupsEnrichmentSpec extends Specification with DataTables {
   This is a specification to test the IpLookupsEnrichment
   extractIpInformation should correctly extract location data from IP addresses where possible      $e1
   extractIpInformation should correctly extract ISP data from IP addresses where possible           $e2
-  an IpLookupsEnrichment instance should expose no database files to cache in local mode            $e3
-  an IpLookupsEnrichment instance should expose a list of database files to cache in non-local mode $e4
   """
 
   // When testing, localMode is set to true, so the URIs are ignored and the databases are loaded from test/resources
-  val config = IpLookupsEnrichment(
-    Some(("geo", new URI("/ignored-in-local-mode/"), "GeoIP2-City.mmdb")),
-    Some(("isp", new URI("/ignored-in-local-mode/"), "GeoIP2-ISP.mmdb")),
-    None,
-    None,
-    true
-  )
+  val config = IpLookupsEnrichment
+    .parse(
+      json"""{
+      "name": "ip_lookups",
+      "vendor": "com.snowplowanalytics.snowplow",
+      "enabled": true,
+      "parameters": {
+        "geo": {
+          "database": "GeoIP2-City.mmdb",
+          "uri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind"
+        },
+        "isp": {
+          "database": "GeoIP2-ISP.mmdb",
+          "uri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind"
+        }
+      }
+    }""",
+      SchemaKey(
+        "com.snowplowanalytics.snowplow",
+        "ip_lookups",
+        "jsonschema",
+        SchemaVer.Full(2, 0, 0)
+      ),
+      true
+    )
+    .toOption
+    .get
 
   def e1 =
     "SPEC NAME" || "IP ADDRESS" | "EXPECTED LOCATION" |
@@ -70,28 +88,14 @@ class IpLookupsEnrichmentSpec extends Specification with DataTables {
           metroCode   = None,
           regionName  = Some("Jilin Sheng")
         ).asRight.some |> { (_, ipAddress, expected) =>
-      config
+      config.enrichment
         .extractIpInformation(ipAddress)
         .ipLocation
         .map(_.leftMap(_.getClass.getSimpleName)) must_== expected
     }
 
   def e2 =
-    config.extractIpInformation("70.46.123.145").isp must_== "FDN Communications".asRight.some
-
-  def e3 = config.filesToCache must_== Nil
-
-  val configRemote = IpLookupsEnrichment(
-    Some(
-      ("geo", new URI("http://public-website.com/files/GeoLite2-City.mmdb"), "GeoLite2-City.mmdb")),
-    Some(("isp", new URI("s3://private-bucket/files/GeoIP2-ISP.mmdb"), "GeoIP2-ISP.mmdb")),
-    None,
-    None,
-    false
-  )
-
-  def e4 = configRemote.filesToCache must_== List(
-    (new URI("http://public-website.com/files/GeoLite2-City.mmdb"), "./ip_geo"),
-    (new URI("s3://private-bucket/files/GeoIP2-ISP.mmdb"), "./ip_isp")
-  )
+    config.enrichment
+      .extractIpInformation("70.46.123.145")
+      .isp must_== "FDN Communications".asRight.some
 }

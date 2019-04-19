@@ -110,7 +110,8 @@ case class JsonOutput(jsonPath: String) extends ApiOutput[Json] {
     query(path, json).map(wrapArray) match {
       case Right(js) if js.asArray.map(_.isEmpty).getOrElse(false) =>
         ValueNotFoundException(
-          s"Error: no values were found by JSON Path [$jsonPath] in [${json.noSpaces}]").asLeft
+          s"Error: no values were found by JSON Path [$jsonPath] in [${json.noSpaces}]"
+        ).asLeft
       case other => other.leftMap(JsonPathException.apply)
     }
 

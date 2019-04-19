@@ -14,6 +14,7 @@ package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry
 
 import cats.data.ValidatedNel
+import cats.data.Validated
 import cats.syntax.either._
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
 import io.circe._
@@ -24,22 +25,27 @@ import java.net.{Inet4Address, Inet6Address}
 import com.google.common.net.{InetAddresses => GuavaInetAddress}
 import scala.util.Try
 
-/** Companion object. Lets us create a AnonIpEnrichment from a Json. */
+/** Companion object. Lets us create a AnonIpConf from a Json. */
 object AnonIpEnrichment extends ParseableEnrichment {
-
-  val supportedSchema =
+  override val supportedSchema =
     SchemaCriterion("com.snowplowanalytics.snowplow", "anon_ip", "jsonschema", 1, 0)
 
   /**
-   * Creates an AnonIpEnrichment instance from a JValue.
+   * Creates an AnonIpEnrichment instance from a Json.
    * @param c The anon_ip enrichment JSON
    * @param schemaKey provided for the enrichment, must be supported by this enrichment
-   * @return a configured AnonIpEnrichment instance
+   * @return an AnonIpEnrichment configuration
    */
-  def parse(config: Json, schemaKey: SchemaKey): ValidatedNel[String, AnonIpConf] =
+  override def parse(
+    config: Json,
+    schemaKey: SchemaKey,
+    localMode: Boolean = false
+  ): ValidatedNel[String, AnonIpConf] =
     (for {
       _ <- isParseable(config, schemaKey)
-      paramIPv4Octet <- CirceUtils.extract[Int](config, "parameters", "anonOctets").toEither
+      paramIPv4Octet <- CirceUtils
+        .extract[Int](config, "parameters", "anonOctets")
+        .toEither
       paramIPv6Segment <- CirceUtils
         .extract[Int](config, "parameters", "anonSegments")
         .orElse(Validated.valid(paramIPv4Octet))
@@ -111,12 +117,21 @@ object AnonIPv6Segments extends Enumeration {
 }
 
 /**
- * Config for an anon_ip enrichment
+ * Instance of AnonIP Enrichment
  *
- * @param ipv4Octets The number of octets (IPv4) to anonymize
- * @param ipv6Segments The number of segments (IPv6) to anonymize
+ * Examples:
+ *
+ * val enrichment = AnonIpEnrichment(Three, Four)
+ * enrichment.anonymizeIp("94.15.223.151") => "94.x.x.x"
+ * enrichment.anonymizeIp("2605:2700:0:3::4713:93e3") => "2605:2700:0:3:x:x:x:x"
+ *
+ * For IPv6 either the form defined in RFC 2732
+ *  or the literal IPv6 address format defined in RFC 2373 is accepted
+ *
+ * @param ipv4Octets The number of octets (IPv4) to anonymize, starting from the right
+ * @param ipv6Segments The number of segments (IPv6) to anonymize, starting from the right
  */
-case class AnonIpEnrichment(
+final case class AnonIpEnrichment(
   ipv4Octets: AnonIPv4Octets.AnonIPv4Octets,
   ipv6Segments: AnonIPv6Segments.AnonIPv6Segments
 ) extends Enrichment {
@@ -127,29 +142,11 @@ case class AnonIpEnrichment(
   /**
    * Anonymize the supplied IP address.
    *
-   * ipv4Octets is the number of octets in the IPv4 address to anonymize, starting
-   * from the right (example below)
-   *
-   * ipv6Segments is the number of segments in the IPv6 address to anonymize, starting
-   * from the right (exaple below)
-   *
-   * example:
-   *
-   * val enrichment = AnonIpEnrichment(Three, Four)
-   * enrichment.anonymizeIp("94.15.223.151")
-   * => "94.x.x.x"
-   *
-   * enrichment.anonymizeIp("2605:2700:0:3::4713:93e3")
-   * => "2605:2700:0:3:x:x:x:x"
-   *
-   * For IPv6 either the form defined in RFC 2732
-   *  or the literal IPv6 address format defined in RFC 2373 is accepted
-   *
    * TODO: potentially update this to return
    * a Validation error or a null if the IP
    * address is somehow invalid or incomplete.
    *
-   * @param ip The IP address to anonymize
+   * @param ipOrNull The IP address to anonymize
    * @return the anonymized IP address
    */
   def anonymizeIp(ipOrNull: String): String =

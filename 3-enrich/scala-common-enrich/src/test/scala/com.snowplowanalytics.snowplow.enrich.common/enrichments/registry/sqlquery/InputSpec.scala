@@ -15,7 +15,6 @@ package enrichments.registry.sqlquery
 
 import scala.collection.immutable.IntMap
 
-import cats.syntax.either._
 import cats.syntax.option._
 import io.circe._
 import io.circe.literal._
@@ -48,14 +47,17 @@ class InputSpec extends Specification with ValidatedMatchers {
       Input(
         1,
         pojo = None,
-        json = JsonInput("contexts", "iglu:org.ietf/http_cookie/jsonschema/1-*-*", "$.value").some)
+        json = JsonInput("contexts", "iglu:org.ietf/http_cookie/jsonschema/1-*-*", "$.value").some
+      )
     val derInput = Input(
       2,
       pojo = None,
       json = JsonInput(
         "derived_contexts",
         "iglu:org.openweathermap/weather/jsonschema/1-0-*",
-        "$.main.humidity").some)
+        "$.main.humidity"
+      ).some
+    )
     val unstructInput =
       Input(
         3,
@@ -63,14 +65,18 @@ class InputSpec extends Specification with ValidatedMatchers {
         json = JsonInput(
           "unstruct_event",
           "iglu:com.snowplowanalytics.monitoring.batch/jobflow_step_status/jsonschema/1-0-0",
-          "$.state").some)
+          "$.state"
+        ).some
+      )
     val overrideHumidityInput = Input(
       2,
       pojo = None,
       json = JsonInput(
         "contexts",
         "iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-1-*",
-        "$.latitude").some)
+        "$.latitude"
+      ).some
+    )
 
     val derivedContext1 = json"""
       {
@@ -133,7 +139,8 @@ class InputSpec extends Specification with ValidatedMatchers {
 
     val placeholderMap = Input.buildPlaceholderMap(List(input1, input2), event, Nil, Nil, None)
     placeholderMap must beValid(
-      Some(IntMap(1 -> StringPlaceholder.Value("chuwy"), 2 -> StringPlaceholder.Value("20"))))
+      Some(IntMap(1 -> StringPlaceholder.Value("chuwy"), 2 -> StringPlaceholder.Value("20")))
+    )
   }
 
   def e2 = {
@@ -165,7 +172,8 @@ class InputSpec extends Specification with ValidatedMatchers {
         IntMap(
           1 -> StringPlaceholder.Value("someValue"),
           2 -> DoublePlaceholder.Value(43.1d),
-          3 -> StringPlaceholder.Value("COMPLETED"))
+          3 -> StringPlaceholder.Value("COMPLETED")
+        )
       )
     )
   }
@@ -178,7 +186,9 @@ class InputSpec extends Specification with ValidatedMatchers {
       json = JsonInput(
         "contexts",
         "iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-1-*",
-        "$.latitude").some)
+        "$.latitude"
+      ).some
+    )
     val pojoLatitudeInput = Input(1, pojo = PojoInput("geo_latitude").some, json = None)
     val event = new EnrichedEvent
     event.setGeo_latitude(42.0f)
@@ -189,7 +199,8 @@ class InputSpec extends Specification with ValidatedMatchers {
       event,
       derivedContexts = Nil,
       customContexts = List(overriderContext),
-      unstructEvent = None)
+      unstructEvent = None
+    )
     templateContext must beValid(Some(IntMap(1 -> DoublePlaceholder.Value(43.1))))
   }
 
@@ -200,14 +211,18 @@ class InputSpec extends Specification with ValidatedMatchers {
       json = JsonInput(
         "contexts",
         "iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-1-*",
-        "*.invalidJsonPath").some)
+        "*.invalidJsonPath"
+      ).some
+    )
     val invalidJsonFieldInput = Input(
       1,
       pojo = None,
       json = JsonInput(
         "invalid_field",
         "iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-1-*",
-        "$.validJsonPath").some)
+        "$.validJsonPath"
+      ).some
+    )
     val pojoInput = Input(1, pojo = PojoInput("app_id").some, json = None)
 
     val templateContext = Input.buildPlaceholderMap(
@@ -215,7 +230,8 @@ class InputSpec extends Specification with ValidatedMatchers {
       null,
       derivedContexts = Nil,
       customContexts = List(Json.fromValues(Nil)),
-      unstructEvent = None)
+      unstructEvent = None
+    )
     templateContext must beInvalid.like {
       case errors => errors.toList must have length 3
     }

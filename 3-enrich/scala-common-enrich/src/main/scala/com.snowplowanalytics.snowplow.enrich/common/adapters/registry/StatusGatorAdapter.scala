@@ -64,41 +64,49 @@ object StatusGatorAdapter extends Adapter {
     client: Client[F, Json]
   ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
     (payload.body, payload.contentType) match {
-      case (None, _) => Monad[F].pure(
-        s"Request body is empty: no $VendorName events to process".invalidNel)
-      case (_, None) => Monad[F].pure(
-        s"Request body provided but content type empty, expected $ContentType for $VendorName"
-          .invalidNel)
-      case (_, Some(ct)) if ct != ContentType => Monad[F].pure(
-        s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel)
-      case (Some(body), _) if (body.isEmpty) => Monad[F].pure(
-        s"$VendorName event body is empty: nothing to process".invalidNel)
+      case (None, _) =>
+        Monad[F].pure(s"Request body is empty: no $VendorName events to process".invalidNel)
+      case (_, None) =>
+        Monad[F].pure(
+          s"Request body provided but content type empty, expected $ContentType for $VendorName".invalidNel
+        )
+      case (_, Some(ct)) if ct != ContentType =>
+        Monad[F].pure(
+          s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel
+        )
+      case (Some(body), _) if (body.isEmpty) =>
+        Monad[F].pure(s"$VendorName event body is empty: nothing to process".invalidNel)
       case (Some(body), _) =>
         val _ = client
         val qsParams = toMap(payload.querystring)
         Try {
-          toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).asScala.toList)
+          toMap(
+            URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).asScala.toList
+          )
         } match {
           case TF(e) =>
             val msg = JU.stripInstanceEtc(e.getMessage).orNull
             Monad[F].pure(s"$VendorName incorrect event string : [$msg]".invalidNel)
           case TS(bodyMap) =>
-            Monad[F].pure(NonEmptyList
-              .one(
-                RawEvent(
-                  api = payload.api,
-                  parameters = toUnstructEventParams(
-                    TrackerVersion,
-                    qsParams,
-                    EventSchema,
-                    camelize(bodyMap.asJson),
-                    "srv"),
-                  contentType = payload.contentType,
-                  source = payload.source,
-                  context = payload.context
+            Monad[F].pure(
+              NonEmptyList
+                .one(
+                  RawEvent(
+                    api = payload.api,
+                    parameters = toUnstructEventParams(
+                      TrackerVersion,
+                      qsParams,
+                      EventSchema,
+                      camelize(bodyMap.asJson),
+                      "srv"
+                    ),
+                    contentType = payload.contentType,
+                    source = payload.source,
+                    context = payload.context
+                  )
                 )
-              )
-              .valid)
+                .valid
+            )
         }
     }
 }
