@@ -25,6 +25,7 @@ object Dependencies {
     // For Snowplow libs
     "Snowplow Analytics Maven repo" at "http://maven.snplow.com/releases/",
     "Snowplow Analytics Maven snapshot repo" at "http://maven.snplow.com/snapshots/",
+    "snowplow" at "https://snowplow.bintray.com/snowplow-maven",
     // For uaParser utils
     "user-agent-parser repo" at "https://clojars.org/repo/"
   )
@@ -59,7 +60,7 @@ object Dependencies {
     val circeOptics      = "0.11.0"
     val circeJackson     = "0.11.1"
     val igluClient       = "0.6.0-M6"
-    val scalaForex       = "0.7.0-M2"
+    val scalaForex       = "0.7.0-M3"
     val scalaWeather     = "0.3.0"
     val scalaj           = "2.3.0"
     val gatlingJsonpath  = "0.6.14"
