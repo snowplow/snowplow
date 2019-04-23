@@ -54,12 +54,8 @@ object Dependencies {
     val snowplowRawEvent = "0.1.0"
     val collectorPayload = "0.0.0"
     val schemaSniffer    = "0.0.0"
-<<<<<<< HEAD
     val refererParser    = "0.6.0"
-=======
-    val refererParser    = "0.6.0-M2"
->>>>>>> 004417c29... Scala Common Enrich: externalize referer-parser yml file (closes #3830)
-    val maxmindIplookups = "0.4.0"
+    val maxmindIplookups = "0.6.1"
     val circe            = "0.11.1"
     val circeOptics      = "0.11.0"
     val circeJackson     = "0.11.1"

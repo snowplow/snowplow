@@ -12,7 +12,7 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common
 
-import scalaz._
+import cats.data.NonEmptyList
 
 /**
  * The parent for our ETL-specific exceptions
@@ -42,7 +42,7 @@ trait EtlExceptionConstructors[E <: EtlException] {
    * @return a new EtlException of type E
    */
   def apply(errs: NonEmptyList[String]): E =
-    apply(errs.list)
+    apply(errs.toList)
 
   /**
    * Alternative constructor for the companion object.
@@ -75,7 +75,7 @@ object FatalEtlException extends EtlExceptionConstructors[FatalEtlException] {
 // TODO: delete when Cascading FailureTrap supports exclusions
 object FatalEtlError {
   def apply(errs: NonEmptyList[String]): FatalEtlError =
-    apply(errs.list)
+    apply(errs.toList)
 
   def apply(errs: List[String]): FatalEtlError =
     FatalEtlError(formatErrors(errs))

@@ -163,7 +163,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
       "jsonschema",
       SchemaVer.Full(2, 0, 0)
     )
-    IpLookupsEnrichment.parse(js, schemaKey, true).toOption.get.enrichment
+    IpLookupsEnrichment.parse(js, schemaKey, true).toOption.get.enrichment[Eval].value
   }
 
   def e1 = {

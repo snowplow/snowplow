@@ -90,6 +90,7 @@ object CurrencyConversionEnrichment extends ParseableEnrichment {
 /**
  * Currency conversion enrichment
  * @param forex Forex client
+ * @param baseCurrency the base currency to refer to
  */
 final case class CurrencyConversionEnrichment[F[_]: Monad](
   forex: Forex[F],
