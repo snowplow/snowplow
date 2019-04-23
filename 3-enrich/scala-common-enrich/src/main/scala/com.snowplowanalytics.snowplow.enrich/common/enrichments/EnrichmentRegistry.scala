@@ -22,6 +22,7 @@ import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SelfDescribingData}
 import com.snowplowanalytics.iglu.core.circe.instances._
+import com.snowplowanalytics.maxmind.iplookups.CreateIpLookups
 import com.snowplowanalytics.refererparser.CreateParser
 import io.circe._
 
@@ -92,7 +93,9 @@ object EnrichmentRegistry {
     } yield configs).toValidated
 
   // todo: ValidatedNel?
-  def build[F[_]: Monad: CreateForex: CreateParser: CreateIabClient: CreateUaParser](
+  def build[
+    F[_]: Monad: CreateForex: CreateParser: CreateIabClient: CreateIpLookups: CreateUaParser
+  ](
     confs: List[EnrichmentConf]
   ): EitherT[F, String, EnrichmentRegistry[F]] =
     confs.foldLeft(EitherT.pure[F, String](EnrichmentRegistry[F]())) { (er, e) =>
@@ -115,7 +118,11 @@ object EnrichmentRegistry {
             enrichment <- EitherT.right(c.enrichment[F])
             registry <- er
           } yield registry.copy(iab = enrichment.some)
-        case c: IpLookupsConf => er.map(_.copy(ipLookups = c.enrichment.some))
+        case c: IpLookupsConf =>
+          for {
+            enrichment <- EitherT.right(c.enrichment[F])
+            registry <- er
+          } yield registry.copy(ipLookups = enrichment.some)
         case c: JavascriptScriptConf => er.map(_.copy(javascriptScript = c.enrichment.some))
         case c: RefererParserConf =>
           for {
@@ -216,7 +223,7 @@ final case class EnrichmentRegistry[F[_]](
   eventFingerprint: Option[EventFingerprintEnrichment] = None,
   httpHeaderExtractor: Option[HttpHeaderExtractorEnrichment] = None,
   iab: Option[IabEnrichment] = None,
-  ipLookups: Option[IpLookupsEnrichment] = None,
+  ipLookups: Option[IpLookupsEnrichment[F]] = None,
   javascriptScript: Option[JavascriptScriptEnrichment] = None,
   refererParser: Option[RefererParserEnrichment] = None,
   uaParser: Option[UaParserEnrichment] = None,

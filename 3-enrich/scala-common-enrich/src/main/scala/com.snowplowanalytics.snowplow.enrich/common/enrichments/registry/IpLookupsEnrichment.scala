@@ -15,10 +15,11 @@ package enrichments.registry
 
 import java.net.URI
 
+import cats.Functor
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.implicits._
-import com.snowplowanalytics.maxmind.iplookups.IpLookups
-import com.snowplowanalytics.maxmind.iplookups.model.{IpLocation, IpLookupResult => IpLookupRes}
+import com.snowplowanalytics.maxmind.iplookups._
+import com.snowplowanalytics.maxmind.iplookups.model._
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
 import io.circe._
 
@@ -87,18 +88,33 @@ object IpLookupsEnrichment extends ParseableEnrichment {
         uri <- getDatabaseUri(uriAndDb._1, uriAndDb._2).leftMap(NonEmptyList.one)
       } yield IpLookupsDatabase(name, uri, uriAndDb._2)).toValidated.some
     } else None
+
+  /**
+   * Creates a IpLookupsEnrichment from a IpLookupsConf
+   * @param conf Configuration for the ip lookups enrichment
+   * @return an ip lookups enrichment
+   */
+  def apply[F[_]: Functor: CreateIpLookups](conf: IpLookupsConf): F[IpLookupsEnrichment[F]] =
+    CreateIpLookups[F]
+      .createFromFilenames(
+        conf.geoFile.map(_._2),
+        conf.ispFile.map(_._2),
+        conf.domainFile.map(_._2),
+        conf.connectionTypeFile.map(_._2),
+        memCache = true,
+        lruCacheSize = 20000
+      )
+      .map(i => IpLookupsEnrichment(i))
 }
 
 /**
  * Contains enrichments based on IP address.
  * @param ipLookups IP lookups client
  */
-final case class IpLookupsEnrichment(ipLookups: IpLookups) extends Enrichment {
+final case class IpLookupsEnrichment[F[_]](ipLookups: IpLookups[F]) extends Enrichment {
 
   /**
    * Extract the geo-location using the client IP address.
-   * If the IPv4 contains a port, it is removed before performing the lookup.
-   * @param geo The IpGeo lookup engine we will use to lookup the client's IP address
    * @param ip The client's IP address to use to lookup the client's geo-location
    * @return an IpLookupResult
    */
@@ -107,26 +123,7 @@ final case class IpLookupsEnrichment(ipLookups: IpLookups) extends Enrichment {
       case EnrichmentManager.IPv4Regex(ipv4WithoutPort) => ipLookups.performLookups(ipv4WithoutPort)
       case _ => ipLookups.performLookups(ip)
     }
-    IpLookupResult(res)
   }
-}
-
-final case class IpLookupResult(
-  ipLocation: Option[Either[Throwable, IpLocation]],
-  isp: Option[Either[Throwable, String]],
-  organization: Option[Either[Throwable, String]],
-  domain: Option[Either[Throwable, String]],
-  connectionType: Option[Either[Throwable, String]]
-)
-
-object IpLookupResult {
-  def apply(ilr: IpLookupRes): IpLookupResult = IpLookupResult(
-    ilr.ipLocation.map(_.toEither),
-    ilr.isp.map(_.toEither),
-    ilr.organization.map(_.toEither),
-    ilr.domain.map(_.toEither),
-    ilr.connectionType.map(_.toEither)
-  )
 }
 
 private[enrichments] final case class IpLookupsDatabase(
