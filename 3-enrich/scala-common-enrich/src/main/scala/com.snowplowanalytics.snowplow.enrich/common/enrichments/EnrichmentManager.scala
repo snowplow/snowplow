@@ -17,7 +17,7 @@ import java.nio.charset.Charset
 import java.net.URI
 
 import cats.Monad
-import cats.data.{EitherT, NonEmptyList, Validated, ValidatedNel}
+import cats.data.{EitherT, NonEmptyList, OptionT, Validated, ValidatedNel}
 import cats.effect.Clock
 import cats.implicits._
 import com.snowplowanalytics.iglu.client.Client
@@ -233,11 +233,11 @@ object EnrichmentManager {
     // If our IpToGeo enrichment is enabled, get the geo-location from the IP address
     // enrichment doesn't fail to maintain the previous approach where failures were suppressed
     // c.f. https://github.com/snowplow/snowplow/issues/351
-    val geoLocation: Either[String, Unit] = (for {
-      enrichment <- registry.ipLookups
-      ip <- Option(event.user_ipaddress)
+    val geoLocation: F[Unit] = (for {
+      enrichment <- OptionT.fromOption[F](registry.ipLookups)
+      ip <- OptionT.fromOption[F](Option(event.user_ipaddress))
+      ipLookupResult <- OptionT.liftF(enrichment.extractIpInformation(ip))
       result = {
-        val ipLookupResult = enrichment.extractIpInformation(ip)
         ipLookupResult.ipLocation.foreach(_.foreach { loc =>
           event.geo_country = loc.countryCode
           event.geo_region = loc.region.orNull
@@ -261,7 +261,7 @@ object EnrichmentManager {
           event.ip_netspeed = ct
         })
       }
-    } yield ().asRight).getOrElse(().asRight)
+    } yield ()).value.map(_.getOrElse(()))
 
     // Calculate the derived timestamp
     val derivedTstamp: Either[String, Unit] = EE
@@ -603,8 +603,9 @@ object EnrichmentManager {
       sqlQueryContexts,
       extractSchema,
       currency,
+      geoLocation,
       formatDerivedContexts
-    ).mapN { (cc, ue, api, sql, es, cu, _) =>
+    ).mapN { (cc, ue, api, sql, es, cu, geo, _) =>
       val first = (
         useragent.toValidatedNel,
         collectorTstamp.toValidatedNel,
@@ -614,7 +615,7 @@ object EnrichmentManager {
         collectorVersionSet.toValidatedNel,
         pageUri.toValidatedNel,
         crossDomain.toValidatedNel,
-        geoLocation.toValidatedNel,
+        geo.asRight.toValidatedNel,
         refererUri.toValidatedNel,
         transform,
         cu.toValidated,
