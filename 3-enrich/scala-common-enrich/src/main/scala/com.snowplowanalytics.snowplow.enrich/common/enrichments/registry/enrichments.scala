@@ -15,13 +15,13 @@ package enrichments.registry
 
 import java.net.URI
 
-import cats.Monad
+import cats.{Functor, Monad}
 import cats.data.{EitherT, ValidatedNel}
 import cats.syntax.either._
 import com.snowplowanalytics.forex.CreateForex
 import com.snowplowanalytics.forex.model.AccountType
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
-import com.snowplowanalytics.maxmind.iplookups.IpLookups
+import com.snowplowanalytics.maxmind.iplookups.CreateIpLookups
 import com.snowplowanalytics.refererparser.CreateParser
 import com.snowplowanalytics.weather.providers.openweather.OwmCacheClient
 import io.circe._
@@ -128,17 +128,8 @@ final case class IpLookupsConf(
 ) extends EnrichmentConf {
   override val filesToCache: List[(URI, String)] =
     List(geoFile, ispFile, domainFile, connectionTypeFile).flatten
-  def enrichment: IpLookupsEnrichment =
-    IpLookupsEnrichment(
-      IpLookups(
-        geoFile.map(_._2),
-        ispFile.map(_._2),
-        domainFile.map(_._2),
-        connectionTypeFile.map(_._2),
-        memCache = true,
-        lruCache = 20000
-      )
-    )
+  def enrichment[F[_]: Functor: CreateIpLookups]: F[IpLookupsEnrichment[F]] =
+    IpLookupsEnrichment[F](this)
 }
 final case class JavascriptScriptConf(script: Script) extends EnrichmentConf {
   override val filesToCache: List[(URI, String)] = Nil

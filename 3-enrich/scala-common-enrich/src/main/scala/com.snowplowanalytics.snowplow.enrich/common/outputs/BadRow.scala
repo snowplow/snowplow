@@ -12,12 +12,11 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.outputs
 
+import cats.data.NonEmptyList
 import io.circe._
 import io.circe.syntax._
 import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.format.DateTimeFormat
-import scalaz._
-import Scalaz._
 
 /** Alternate BadRow constructors */
 object BadRow {
