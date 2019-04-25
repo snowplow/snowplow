@@ -24,7 +24,7 @@ import utils.JsonPath.{query, wrapArray}
  * Base trait for API output format. Primary intention of these classes is to perform transformation
  * of API raw output to self-describing JSON instance
  */
-case class Output(schema: String, json: Option[JsonOutput]) {
+final case class Output(schema: String, json: Option[JsonOutput]) {
 
   /**
    * Transforming raw API response (text) to JSON (in future A => JSON) and extracting value by
@@ -98,7 +98,7 @@ sealed trait ApiOutput[A] {
  * Preference for extracting JSON from API output
  * @param jsonPath JSON Path to required value
  */
-case class JsonOutput(jsonPath: String) extends ApiOutput[Json] {
+final case class JsonOutput(jsonPath: String) extends ApiOutput[Json] {
   val path = jsonPath
 
   /**

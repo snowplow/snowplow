@@ -16,15 +16,18 @@ package apirequest
 
 import java.util.UUID
 
-import cats.data.{NonEmptyList, ValidatedNel}
+import cats.{Eval, Id, Monad}
+import cats.data.{EitherT, NonEmptyList, ValidatedNel}
+import cats.effect.Sync
 import cats.implicits._
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SelfDescribingData}
+import com.snowplowanalytics.lrumap._
 import io.circe._
 import io.circe.generic.auto._
 import io.circe.syntax._
 
 import outputs.EnrichedEvent
-import utils.CirceUtils
+import utils.{CirceUtils, HttpClient}
 
 object ApiRequestEnrichment extends ParseableEnrichment {
   override val supportedSchema =
@@ -95,13 +98,17 @@ object ApiRequestEnrichment extends ParseableEnrichment {
     val contentKey = url + body.getOrElse("")
     UUID.nameUUIDFromBytes(contentKey.getBytes).toString
   }
+
+  def apply[F[_]: CreateApiRequestEnrichment](conf: ApiRequestConf): F[ApiRequestEnrichment[F]] =
+    CreateApiRequestEnrichment[F].create(conf)
 }
 
-final case class ApiRequestEnrichment(
+final case class ApiRequestEnrichment[F[_]: Monad: HttpClient](
   inputs: List[Input],
   api: HttpApi,
   outputs: List[Output],
-  cache: Cache
+  ttl: Int,
+  cache: LruMap[F, String, (Either[Throwable, Json], Long)]
 ) extends Enrichment {
   import ApiRequestEnrichment._
 
@@ -117,11 +124,11 @@ final case class ApiRequestEnrichment(
     derivedContexts: List[Json],
     customContexts: List[SelfDescribingData[Json]],
     unstructEvent: List[SelfDescribingData[Json]]
-  ): ValidatedNel[String, List[Json]] = {
-    // Note that [[JsonSchemaPairs]] have specific structure - it is a pair,
-    // where first element is [[SchemaKey]], second element is JSON Object
-    // with keys: `data`, `schema` and `hierarchy` and `schema` contains again [[SchemaKey]]
-    // but as nested JSON object. `schema` and `hierarchy` can be ignored here
+  ): F[ValidatedNel[String, List[Json]]] = {
+    // Note that SelfDescribingData have specific structure - it is a pair,
+    // where first element is a SchemaKey, second element is a Json
+    // with keys: `data`, `schema` and `hierarchy` and `schema` contains again SchemaKey
+    // but as nested Json. `schema` and `hierarchy` can be ignored here
     val jsonCustomContexts = transformRawPairs(customContexts)
     val jsonUnstructEvent = transformRawPairs(unstructEvent).headOption
 
@@ -135,8 +142,8 @@ final case class ApiRequestEnrichment(
       )
 
     (for {
-      context <- templateContext.toEither
-      outputs <- getOutputs(context).leftMap(e => NonEmptyList.one(e))
+      context <- EitherT.fromEither[F](templateContext.toEither)
+      outputs <- EitherT(getOutputs(context)).leftMap(e => NonEmptyList.one(e))
     } yield outputs).toValidated
   }
 
@@ -147,14 +154,14 @@ final case class ApiRequestEnrichment(
    */
   private[apirequest] def getOutputs(
     validInputs: Option[Map[String, String]]
-  ): Either[String, List[Json]] = {
-    val result = for {
+  ): F[Either[String, List[Json]]] = {
+    val result: List[F[Either[String, Json]]] = for {
       templateContext <- validInputs.toList
       url <- api.buildUrl(templateContext).toList
       output <- outputs
       body = api.buildBody(templateContext)
-    } yield cachedOrRequest(url, body, output).leftMap(_.toString)
-    result.sequence
+    } yield cachedOrRequest(url, body, output).map(_.leftMap(_.toString))
+    result.sequence.map(_.sequence)
   }
 
   /**
@@ -167,15 +174,66 @@ final case class ApiRequestEnrichment(
     url: String,
     body: Option[String],
     output: Output
-  ): Either[Throwable, Json] = {
-    val key = cacheKey(url, body)
-    val value = cache.get(key) match {
-      case Some(cachedResponse) => cachedResponse
-      case None =>
-        val json = api.perform(url, body).flatMap(output.parseResponse)
-        cache.put(key, json)
-        json
-    }
-    value.flatMap(output.extract).map(output.describeJson)
+  ): F[Either[Throwable, Json]] =
+    for {
+      key <- Monad[F].pure(cacheKey(url, body))
+      gotten <- cache.get(key)
+      res <- gotten match {
+        case Some(response) =>
+          if (System.currentTimeMillis() / 1000 - response._2 < ttl) Monad[F].pure(response._1)
+          else put(key, url, body, output)
+        case None => put(key, url, body, output)
+      }
+      extracted = res.flatMap(output.extract)
+      described = extracted.map(output.describeJson)
+    } yield described
+
+  private def put(
+    key: String,
+    url: String,
+    body: Option[String],
+    output: Output
+  ): F[Either[Throwable, Json]] =
+    for {
+      response <- api.perform[F](url, body)
+      json = response.flatMap(output.parseResponse)
+      _ <- cache.put(key, (json, System.currentTimeMillis() / 1000))
+    } yield json
+}
+
+sealed trait CreateApiRequestEnrichment[F[_]] {
+  def create(conf: ApiRequestConf): F[ApiRequestEnrichment[F]]
+}
+
+object CreateApiRequestEnrichment {
+  def apply[F[_]](implicit ev: CreateApiRequestEnrichment[F]): CreateApiRequestEnrichment[F] = ev
+
+  implicit def syncCreateApiRequestEnrichment[F[_]: Sync: HttpClient](
+    implicit CLM: CreateLruMap[F, String, (Either[Throwable, Json], Long)]
+  ): CreateApiRequestEnrichment[F] = new CreateApiRequestEnrichment[F] {
+    override def create(conf: ApiRequestConf): F[ApiRequestEnrichment[F]] =
+      CLM
+        .create(conf.cache.size)
+        .map(c => ApiRequestEnrichment(conf.inputs, conf.api, conf.outputs, conf.cache.ttl, c))
+  }
+
+  implicit def evalCreateApiRequestEnrichment(
+    implicit CLM: CreateLruMap[Eval, String, (Either[Throwable, Json], Long)],
+    HTTP: HttpClient[Eval]
+  ): CreateApiRequestEnrichment[Eval] = new CreateApiRequestEnrichment[Eval] {
+    override def create(conf: ApiRequestConf): Eval[ApiRequestEnrichment[Eval]] =
+      CLM
+        .create(conf.cache.size)
+        .map(c => ApiRequestEnrichment(conf.inputs, conf.api, conf.outputs, conf.cache.ttl, c))
+  }
+
+  implicit def idCreateApiRequestEnrichment(
+    implicit CLM: CreateLruMap[Id, String, (Either[Throwable, Json], Long)],
+    HTTP: HttpClient[Id]
+  ): CreateApiRequestEnrichment[Id] = new CreateApiRequestEnrichment[Id] {
+    override def create(conf: ApiRequestConf): Id[ApiRequestEnrichment[Id]] =
+      CLM
+        .create(conf.cache.size)
+        .map(c => ApiRequestEnrichment(conf.inputs, conf.api, conf.outputs, conf.cache.ttl, c))
   }
 }
