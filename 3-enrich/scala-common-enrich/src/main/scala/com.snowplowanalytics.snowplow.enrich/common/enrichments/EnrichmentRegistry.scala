@@ -95,7 +95,7 @@ object EnrichmentRegistry {
 
   // todo: ValidatedNel?
   def build[
-    F[_]: Monad: CreateForex: CreateIabClient: CreateIpLookups: CreateOWM: CreateParser: CreateUaParser
+    F[_]: Monad: CreateForex: CreateIabClient: CreateIpLookups: CreateOWM: CreateParser: CreateUaParser: sqlquery.CreateSqlQueryEnrichment
   ](
     confs: List[EnrichmentConf]
   ): EitherT[F, String, EnrichmentRegistry[F]] =
@@ -103,7 +103,11 @@ object EnrichmentRegistry {
       e match {
         case c: ApiRequestConf => er.map(_.copy(apiRequest = c.enrichment.some))
         case c: PiiPseudonymizerConf => er.map(_.copy(piiPseudonymizer = c.enrichment.some))
-        case c: SqlQueryConf => er.map(_.copy(sqlQuery = c.enrichment.some))
+        case c: SqlQueryConf =>
+          for {
+            enrichment <- EitherT.right(c.enrichment[F])
+            registry <- er
+          } yield registry.copy(sqlQuery = enrichment.some)
         case c: AnonIpConf => er.map(_.copy(anonIp = c.enrichment.some))
         case c: CampaignAttributionConf => er.map(_.copy(campaignAttribution = c.enrichment.some))
         case c: CookieExtractorConf => er.map(_.copy(cookieExtractor = c.enrichment.some))
@@ -220,7 +224,7 @@ object EnrichmentRegistry {
 final case class EnrichmentRegistry[F[_]](
   apiRequest: Option[ApiRequestEnrichment] = None,
   piiPseudonymizer: Option[PiiPseudonymizerEnrichment] = None,
-  sqlQuery: Option[SqlQueryEnrichment] = None,
+  sqlQuery: Option[SqlQueryEnrichment[F]] = None,
   anonIp: Option[AnonIpEnrichment] = None,
   campaignAttribution: Option[CampaignAttributionEnrichment] = None,
   cookieExtractor: Option[CookieExtractorEnrichment] = None,

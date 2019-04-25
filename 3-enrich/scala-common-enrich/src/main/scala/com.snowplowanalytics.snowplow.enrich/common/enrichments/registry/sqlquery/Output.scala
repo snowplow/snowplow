@@ -30,7 +30,7 @@ import org.joda.time.DateTime
  * @param json JSON-preferences
  * @param expectedRows specifies amount of expected rows
  */
-case class Output(json: JsonOutput, expectedRows: String) {
+final case class Output(json: JsonOutput, expectedRows: String) {
   import Output._
 
   /** `expectedRows` object converted from String */
@@ -200,7 +200,7 @@ object Output {
  * Enrichment, so all these properties can go into primary
  * Output class as they can be used for *any* output)
  */
-case class JsonOutput(
+final case class JsonOutput(
   schema: String,
   describes: String,
   propertyNames: String
