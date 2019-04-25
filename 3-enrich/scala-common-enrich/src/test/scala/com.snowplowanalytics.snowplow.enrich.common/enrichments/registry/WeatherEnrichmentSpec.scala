@@ -14,6 +14,8 @@ package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
 import java.lang.{Float => JFloat}
 
+import cats.Eval
+import cats.data.EitherT
 import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import io.circe.generic.auto._
 import io.circe.literal._
@@ -59,34 +61,59 @@ class WeatherEnrichmentSpec extends Specification {
   }
 
   def e1 = {
-    val enr = WeatherConf("KEY", 5200, 1, "history.openweathermap.org", 10).enrichment
-    val stamp = enr.getWeatherContext(
-      Option(invalidEvent.lat),
-      Option(invalidEvent.lon),
-      Option(invalidEvent.time)
-    )
-    stamp must beLeft.like { case e => e must contain("tstamp: None") }
+    val res = for {
+      enr <- WeatherConf("history.openweathermap.org", "KEY", 10, 5200, 1).enrichment[Eval]
+      stamp <- EitherT(
+        enr.getWeatherContext(
+          Option(invalidEvent.lat),
+          Option(invalidEvent.lon),
+          Option(invalidEvent.time)
+        )
+      )
+    } yield stamp
+    res.value.value must beLeft.like { case e => e must contain("tstamp: None") }
   }
 
   def e2 = {
-    val enr = WeatherConf(validAppKey, 5200, 1, "history.openweathermap.org", 10).enrichment
-    val stamp =
-      enr.getWeatherContext(Option(validEvent.lat), Option(validEvent.lon), Option(validEvent.time))
-    stamp must beRight
+    val res = for {
+      enr <- WeatherConf("history.openweathermap.org", validAppKey, 10, 5200, 1).enrichment[Eval]
+      stamp <- EitherT(
+        enr.getWeatherContext(
+          Option(validEvent.lat),
+          Option(validEvent.lon),
+          Option(validEvent.time)
+        )
+      )
+    } yield stamp
+    res.value.value must beRight
   }
 
   def e3 = {
-    val enr = WeatherConf("KEY", 5200, 1, "history.openweathermap.org", 10).enrichment
-    val stamp =
-      enr.getWeatherContext(Option(validEvent.lat), Option(validEvent.lon), Option(validEvent.time))
-    stamp must beLeft.like { case e => e must contain("AuthorizationError") }
+    val res = for {
+      enr <- WeatherConf("history.openweathermap.org", "KEY", 10, 5200, 1).enrichment[Eval]
+      stamp <- EitherT(
+        enr.getWeatherContext(
+          Option(validEvent.lat),
+          Option(validEvent.lon),
+          Option(validEvent.time)
+        )
+      )
+    } yield stamp
+    res.value.value must beLeft.like { case e => e must contain("Check your API key") }
   }
 
   def e4 = {
-    val enr = WeatherConf(validAppKey, 5200, 1, "history.openweathermap.org", 15).enrichment
-    val stamp =
-      enr.getWeatherContext(Option(validEvent.lat), Option(validEvent.lon), Option(validEvent.time))
-    stamp must beRight.like {
+    val res = for {
+      enr <- WeatherConf("history.openweathermap.org", validAppKey, 15, 5200, 1).enrichment[Eval]
+      stamp <- EitherT(
+        enr.getWeatherContext(
+          Option(validEvent.lat),
+          Option(validEvent.lon),
+          Option(validEvent.time)
+        )
+      )
+    } yield stamp
+    res.value.value must beRight.like {
       case weather =>
         val temp = weather.hcursor.downField("data").downField("main").get[Double]("humidity")
         temp must beRight(87.0d)
@@ -117,20 +144,27 @@ class WeatherEnrichmentSpec extends Specification {
     )
     config.toEither must beRight(
       WeatherConf(
-        apiKey = "{{KEY}}",
-        geoPrecision = 1,
-        cacheSize = 5100,
         apiHost = "history.openweathermap.org",
-        timeout = 5
+        apiKey = "{{KEY}}",
+        timeout = 5,
+        cacheSize = 5100,
+        geoPrecision = 1
       )
     )
   }
 
   def e6 = {
-    val enr = WeatherConf(validAppKey, 2, 1, "history.openweathermap.org", 15).enrichment
-    val stamp =
-      enr.getWeatherContext(Option(validEvent.lat), Option(validEvent.lon), Option(validEvent.time))
-    stamp must beRight.like { // successful request
+    val res = for {
+      enr <- WeatherConf("history.openweathermap.org", validAppKey, 15, 2, 1).enrichment[Eval]
+      stamp <- EitherT(
+        enr.getWeatherContext(
+          Option(validEvent.lat),
+          Option(validEvent.lon),
+          Option(validEvent.time)
+        )
+      )
+    } yield stamp
+    res.value.value must beRight.like { // successful request
       case weather =>
         weather.hcursor.get[TransformedWeather]("data") must beRight.like {
           case w => w.dt must equalTo("2019-05-01T00:00:00.000Z")
