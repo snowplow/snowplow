@@ -160,10 +160,11 @@ final case class SqlQueryEnrichment[F[_]: Monad: DbExecutor](
       }
     } yield res
 
-  private def put(intMap: IntMap[Input.ExtractedValue]): F[EitherThrowable[List[Json]]] = for {
-    res <- query(intMap)
-    _ <- cache.put(intMap, (res, System.currentTimeMillis() / 1000))
-  } yield res
+  private def put(intMap: IntMap[Input.ExtractedValue]): F[EitherThrowable[List[Json]]] =
+    for {
+      res <- query(intMap)
+      _ <- cache.put(intMap, (res, System.currentTimeMillis() / 1000))
+    } yield res
 
   /**
    * Perform SQL query and convert result to JSON object

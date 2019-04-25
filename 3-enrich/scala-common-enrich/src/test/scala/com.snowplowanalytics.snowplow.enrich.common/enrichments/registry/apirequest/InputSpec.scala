@@ -11,8 +11,10 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich.common
-package enrichments.registry.apirequest
+package enrichments.registry
+package apirequest
 
+import cats.Eval
 import cats.data.ValidatedNel
 import cats.syntax.option._
 import io.circe._
@@ -217,16 +219,16 @@ class InputSpec extends Specification with ValidatedMatchers {
     val input1 = Input("user", Some(PojoInput("user_id")), None)
     val input2 = Input("time", Some(PojoInput("true_tstamp")), None)
     val uriTemplate = "http://thishostdoesntexist31337:8123/{{  user }}/foo/{{ time}}/{{user}}"
-    val enrichment = ApiRequestEnrichment(
+    val enrichment = ApiRequestConf(
       List(input1, input2),
       HttpApi("GET", uriTemplate, 1000, Authentication(None)),
       List(Output("iglu:someschema", JsonOutput("$").some)),
       Cache(10, 5)
-    )
+    ).enrichment[Eval]
     val event = new outputs.EnrichedEvent
     event.setUser_id("chuwy")
     // time in true_tstamp won't be found
-    val request = enrichment.lookup(event, Nil, Nil, Nil)
+    val request = enrichment.value.lookup(event, Nil, Nil, Nil).value
     request must beValid.like {
       case response => response must be(Nil)
     }
