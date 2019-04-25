@@ -21,7 +21,8 @@ import scala.annotation.tailrec
  */
 object IpAddressExtractor {
 
-  private val ipRegex            = """\"?\[?((?:[0-9a-f]|\.|\:+)+).*\]?\"?"""
+  private val ipRegex =
+    """\"?\[?(?:(?:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*)|((?:[0-9a-f]|\.|\:+)+).*)\]?\"?""" // 1 group IPv4 and 1 IPv6
   private val XForwardedForRegex = s"""^x-forwarded-for: $ipRegex.*""".r
   private val ForwardedForRegex  = s"""^forwarded: for=$ipRegex.*""".r
   private val CloudfrontRegex    = s"""^$ipRegex.*""".r
@@ -30,20 +31,29 @@ object IpAddressExtractor {
    * If a request has been forwarded, extract the original client IP address;
    * otherwise return the standard IP address
    *
+   * If both FORWARDED and X-FORWARDED-FOR are set,
+   * the IP contained in X-FORWARDED-FOR will be used.
+   *
    * @param headers List of headers potentially containing X-FORWARDED-FOR or FORWARDED
    * @param lastIp Fallback IP address if no X-FORWARDED-FOR or FORWARDED header exists
    * @return True client IP address
    */
   @tailrec
-  def extractIpAddress(headers: List[String], lastIp: String): String =
+  def extractIpAddress(headers: List[String], lastIp: String, maybeForwardedForIp: Option[String] = None): String =
     headers match {
       case h :: t =>
         h.toLowerCase match {
-          case XForwardedForRegex(originalIpAddress) => originalIpAddress
-          case ForwardedForRegex(originalIpAddress)  => originalIpAddress
-          case _                                     => extractIpAddress(t, lastIp)
+          case XForwardedForRegex(ipv4, ipv6) => Option(ipv4).getOrElse(ipv6)
+          case ForwardedForRegex(ipv4, ipv6) =>
+            val ip = Option(ipv4).getOrElse(ipv6)
+            extractIpAddress(t, lastIp, Some(ip))
+          case _ => extractIpAddress(t, lastIp)
         }
-      case Nil => lastIp
+      case Nil =>
+        maybeForwardedForIp match {
+          case Some(forwardedForIp) => forwardedForIp
+          case _                    => lastIp
+        }
     }
 
   /**
@@ -55,7 +65,7 @@ object IpAddressExtractor {
    * @return True client IP address
    */
   def extractIpAddress(xForwardedFor: String, lastIp: String): String = xForwardedFor match {
-    case CloudfrontRegex(originalIpAddress) => originalIpAddress
-    case _                                  => lastIp
+    case CloudfrontRegex(ipv4, ipv6) => Option(ipv4).getOrElse(ipv6)
+    case _                           => lastIp
   }
 }

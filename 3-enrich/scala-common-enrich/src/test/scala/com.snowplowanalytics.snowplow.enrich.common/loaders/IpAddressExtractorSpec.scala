@@ -19,7 +19,7 @@ import org.specs2.scalaz.ValidationMatchers
 
 class IpAddressExtractorSpec extends Specification with DataTables with ValidationMatchers {
 
-  val Default = "255.255.255"
+  val Default = "255.255.255.255"
 
   "extractIpAddress" should {
     "correctly extract an X-FORWARDED-FOR header" in {
@@ -47,6 +47,23 @@ class IpAddressExtractorSpec extends Specification with DataTables with Validati
             IpAddressExtractor.extractIpAddress(headers, Default) must_== expected
           }
       }
+    }
+
+    "prioritize X-Forwarded-For over Forwarded: for=" in {
+      val ipXForwarded   = "1.1.1.1"
+      val ipForwardedFor = "2.2.2.2"
+      IpAddressExtractor.extractIpAddress(List(s"Forwarded: for=$ipForwardedFor", s"X-Forwarded-For: $ipXForwarded"),
+                                          Default) must_== ipXForwarded
+    }
+
+    "remove port if any" in {
+      val ipv4         = "1.1.1.1"
+      val ipv4WithPort = s"$ipv4:8080"
+      IpAddressExtractor.extractIpAddress(List(s"X-Forwarded-For: $ipv4WithPort"), Default) must_== ipv4
+
+      val ipv6         = "1fff:0:a88:85a3::ac1f"
+      val ipv6WithPort = s"[$ipv6]:8001"
+      IpAddressExtractor.extractIpAddress(List(s"X-Forwarded-For: $ipv6WithPort"), Default) must_== ipv6
     }
 
     "correctly extract an X-FORWARDED-FOR Cloudfront field" in {
