@@ -69,7 +69,7 @@ trait Rdbms {
 }
 
 /** Class representing connection configuration for databases speaking PostgreSQL dialect */
-case class PostgresqlDb(
+final case class PostgresqlDb(
   host: String,
   port: Int,
   sslMode: Boolean,
@@ -87,7 +87,7 @@ case class PostgresqlDb(
 }
 
 /** Class representing connection configuration for databases speaking MySQL dialect */
-case class MysqlDb(
+final case class MysqlDb(
   host: String,
   port: Int,
   sslMode: Boolean,
