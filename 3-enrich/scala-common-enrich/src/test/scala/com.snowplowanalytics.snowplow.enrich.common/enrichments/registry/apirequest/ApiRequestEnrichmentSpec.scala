@@ -11,8 +11,10 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich.common
-package enrichments.registry.apirequest
+package enrichments.registry
+package apirequest
 
+import cats.Id
 import cats.syntax.either._
 import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer, SelfDescribingData}
 import io.circe.Json
@@ -21,8 +23,10 @@ import io.circe.parser._
 import org.specs2.Specification
 import org.specs2.matcher.ValidatedMatchers
 import org.specs2.mock.Mockito
+import scalaj.http.HttpRequest
 
 import outputs.EnrichedEvent
+import utils.HttpClient
 
 class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with Mockito {
   def is = s2"""
@@ -64,10 +68,13 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
         1000,
         Authentication(Some(HttpBasic(Some("xxx"), None)))
       )
-    val apiSpy = spy(api)
+    implicit val idHttpClient: HttpClient[Id] = new HttpClient[Id] {
+      override def getResponse(request: HttpRequest): Id[Either[Throwable, String]] =
+        """{"record": {"name": "Fancy User", "company": "Acme"}}""".asRight
+    }
     val output = Output("iglu:com.acme/user/jsonschema/1-0-0", Some(JsonOutput("$.record")))
     val cache = Cache(3000, 60)
-    val config = ApiRequestEnrichment(inputs, apiSpy, List(output), cache)
+    val config = ApiRequestConf(inputs, api, List(output), cache)
 
     val fakeEnrichedEvent = new EnrichedEvent {
       app_id = "some-fancy-app-id"
@@ -157,17 +164,14 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
       }
     }"""
 
-    apiSpy.perform(
-      url = "http://api.acme.com/users/some-fancy-app-id/some-fancy-user-id?format=json",
-      body = None
-    ) returns """{"record": {"name": "Fancy User", "company": "Acme"}}""".asRight
-
-    val enrichedContextResult = config.lookup(
-      event = fakeEnrichedEvent,
-      derivedContexts = List.empty,
-      customContexts = List(clientSession),
-      unstructEvent = List.empty
-    )
+    val enrichedContextResult = config
+      .enrichment[Id]
+      .lookup(
+        event = fakeEnrichedEvent,
+        derivedContexts = List.empty,
+        customContexts = List(clientSession),
+        unstructEvent = List.empty
+      )
 
     enrichedContextResult must beValid(List(user))
   }
@@ -301,11 +305,15 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
       timeout = 1000,
       authentication = Authentication(Some(HttpBasic(Some("xxx"), None)))
     )
-    val apiSpy = spy(api)
+
+    implicit val idHttpClient: HttpClient[Id] = new HttpClient[Id] {
+      override def getResponse(request: HttpRequest): Id[Either[Throwable, String]] =
+        """{"record": {"name": "Fancy User", "company": "Acme"}}""".asRight
+    }
     val output =
       Output(schema = "iglu:com.acme/user/jsonschema/1-0-0", json = Some(JsonOutput("$.record")))
     val cache = Cache(size = 3000, ttl = 60)
-    val config = ApiRequestEnrichment(inputs, apiSpy, List(output), cache)
+    val config = ApiRequestConf(inputs, api, List(output), cache)
 
     val fakeEnrichedEvent = new EnrichedEvent {
       app_id = "some-fancy-app-id"
@@ -395,25 +403,14 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
       }
     }"""
 
-    apiSpy.perform(
-      url = "http://api.acme.com/users?format=json",
-      body = Some(
-        """{"client":"some-fancy-app-id","user":"some-fancy-user-id","userSession":"some-fancy-user-session-id"}"""
+    val enrichedContextResult = config
+      .enrichment[Id]
+      .lookup(
+        event = fakeEnrichedEvent,
+        derivedContexts = List.empty,
+        customContexts = List(clientSession),
+        unstructEvent = List.empty
       )
-    ) returns """{"record": {"name": "Fancy User", "company": "Acme"}}""".asRight
-    apiSpy.perform(
-      url = "http://api.acme.com/users?format=json",
-      body = Some(
-        """{"user":"some-fancy-user-id","client":"some-fancy-app-id","userSession":"some-fancy-user-session-id"}"""
-      )
-    ) returns """{"record": {"name": "Fancy User", "company": "Acme"}}""".asRight
-
-    val enrichedContextResult = config.lookup(
-      event = fakeEnrichedEvent,
-      derivedContexts = List.empty,
-      customContexts = List(clientSession),
-      unstructEvent = List.empty
-    )
 
     enrichedContextResult must beValid(List(user))
   }

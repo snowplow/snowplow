@@ -571,12 +571,12 @@ object EnrichmentManager {
           for {
             derivedContexts <- preparedDerivedContexts
             otherContexts <- customContexts.product(unstructEvent).product(sqlQueryContexts)
-            lookupResult = otherContexts match {
+            lookupResult <- otherContexts match {
               case ((Validated.Valid(cctx), Validated.Valid(ue)), Validated.Valid(sctx)) =>
                 enrichment.lookup(event, derivedContexts ++ sctx, cctx, ue)
               case _ =>
                 // Skip. Unstruct event or custom context corrupted, event enrichment will fail anyway
-                Nil.validNel
+                Monad[F].pure(Nil.validNel)
             }
           } yield lookupResult
         case None => Monad[F].pure(Nil.validNel)
