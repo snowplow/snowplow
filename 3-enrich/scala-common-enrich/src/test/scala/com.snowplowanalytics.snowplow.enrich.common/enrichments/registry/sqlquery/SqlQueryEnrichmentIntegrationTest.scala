@@ -375,9 +375,7 @@ class SqlQueryEnrichmentIntegrationTest extends Specification {
     val res4 = context4 must beRight.like {
       case List(ctx) => ctx must beEqualTo(result_context4)
     }
-    val cache = config.map(_.cache.actualLoad) must
-      beRight.like { case size => size must beEqualTo(3) }
 
-    res1.and(res2).and(res3).and(res4).and(cache)
+    res1.and(res2).and(res3).and(res4)
   }
 }
