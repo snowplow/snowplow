@@ -34,7 +34,7 @@ import utils.ConversionUtils
 trait Enrichment
 
 sealed trait EnrichmentConf {
-  def filesToCache: List[(URI, String)]
+  def filesToCache: List[(URI, String)] = Nil
 }
 final case class ApiRequestConf(
   inputs: List[apirequest.Input],
@@ -42,7 +42,6 @@ final case class ApiRequestConf(
   outputs: List[apirequest.Output],
   cache: apirequest.Cache
 ) extends EnrichmentConf {
-  override val filesToCache: List[(URI, String)] = Nil
   def enrichment: apirequest.ApiRequestEnrichment =
     apirequest.ApiRequestEnrichment(inputs, api, outputs, cache)
 }
@@ -51,7 +50,6 @@ final case class PiiPseudonymizerConf(
   emitIdentificationEvent: Boolean,
   strategy: pii.PiiStrategy
 ) extends EnrichmentConf {
-  override val filesToCache: List[(URI, String)] = Nil
   def enrichment: pii.PiiPseudonymizerEnrichment =
     pii.PiiPseudonymizerEnrichment(fieldList, emitIdentificationEvent, strategy)
 }
@@ -62,12 +60,10 @@ final case class SqlQueryConf(
   output: sqlquery.Output,
   cache: sqlquery.Cache
 ) extends EnrichmentConf {
-  override val filesToCache: List[(URI, String)] = Nil
-  def enrichment: sqlquery.SqlQueryEnrichment =
-    sqlquery.SqlQueryEnrichment(inputs, db, query, output, cache)
+  def enrichment[F[_]: Monad: sqlquery.CreateSqlQuery]: F[sqlquery.SqlQueryEnrichment[F]] =
+    sqlquery.SqlQueryEnrichment[F](this)
 }
 final case class AnonIpConf(octets: AnonOctets.AnonOctets) extends EnrichmentConf {
-  override val filesToCache: List[(URI, String)] = Nil
   def enrichment: AnonIpEnrichment = AnonIpEnrichment(octets)
 }
 final case class CampaignAttributionConf(
@@ -78,7 +74,6 @@ final case class CampaignAttributionConf(
   campaignParameters: List[String],
   clickIdParameters: List[(String, String)]
 ) extends EnrichmentConf {
-  override val filesToCache: List[(URI, String)] = Nil
   def enrichment: CampaignAttributionEnrichment = CampaignAttributionEnrichment(
     mediumParameters,
     sourceParameters,
@@ -89,7 +84,6 @@ final case class CampaignAttributionConf(
   )
 }
 final case class CookieExtractorConf(cookieNames: List[String]) extends EnrichmentConf {
-  override val filesToCache: List[(URI, String)] = Nil
   def enrichment: CookieExtractorEnrichment = CookieExtractorEnrichment(cookieNames)
 }
 final case class CurrencyConversionConf(
@@ -97,18 +91,15 @@ final case class CurrencyConversionConf(
   apiKey: String,
   baseCurrency: CurrencyUnit
 ) extends EnrichmentConf {
-  override val filesToCache: List[(URI, String)] = Nil
   def enrichment[F[_]: Monad: CreateForex]: F[CurrencyConversionEnrichment[F]] =
     CurrencyConversionEnrichment[F](this)
 }
 final case class EventFingerprintConf(algorithm: String => String, excludedParameters: List[String])
     extends EnrichmentConf {
-  override val filesToCache: List[(URI, String)] = Nil
   def enrichment: EventFingerprintEnrichment =
     EventFingerprintEnrichment(algorithm, excludedParameters)
 }
 final case class HttpHeaderExtractorConf(headersPattern: String) extends EnrichmentConf {
-  override val filesToCache: List[(URI, String)] = Nil
   def enrichment: HttpHeaderExtractorEnrichment = HttpHeaderExtractorEnrichment(headersPattern)
 }
 final case class IabConf(
@@ -132,7 +123,6 @@ final case class IpLookupsConf(
     IpLookupsEnrichment[F](this)
 }
 final case class JavascriptScriptConf(script: Script) extends EnrichmentConf {
-  override val filesToCache: List[(URI, String)] = Nil
   def enrichment: JavascriptScriptEnrichment = JavascriptScriptEnrichment(script)
 }
 final case class RefererParserConf(refererDatabase: (URI, String), internalDomains: List[String])
@@ -147,7 +137,6 @@ final case class UaParserConf(uaDatabase: Option[(URI, String)]) extends Enrichm
     UaParserEnrichment[F](this)
 }
 final case object UserAgentUtilsConf extends EnrichmentConf {
-  override val filesToCache: List[(URI, String)] = Nil
   def enrichment: UserAgentUtilsEnrichment.type = UserAgentUtilsEnrichment
 }
 final case class WeatherConf(
@@ -157,7 +146,6 @@ final case class WeatherConf(
   cacheSize: Int,
   geoPrecision: Int
 ) extends EnrichmentConf {
-  override val filesToCache: List[(URI, String)] = Nil
   def enrichment[F[_]: Monad: CreateOWM]: EitherT[F, String, WeatherEnrichment[F]] =
     WeatherEnrichment[F](this)
 }

@@ -16,9 +16,12 @@ package sqlquery
 
 import scala.collection.immutable.IntMap
 
-import cats.data.{NonEmptyList, ValidatedNel}
+import cats.{Eval, Id, Monad}
+import cats.data.{EitherT, NonEmptyList, ValidatedNel}
+import cats.effect.Sync
 import cats.implicits._
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SelfDescribingData}
+import com.snowplowanalytics.lrumap._
 import io.circe._
 import io.circe.generic.auto._
 import io.circe.syntax._
@@ -93,14 +96,18 @@ object SqlQueryEnrichment extends ParseableEnrichment {
         )
       }
     }.flatten
+
+  def apply[F[_]: CreateSqlQueryEnrichment](conf: SqlQueryConf): F[SqlQueryEnrichment[F]] =
+    CreateSqlQueryEnrichment[F].create(conf)
 }
 
-final case class SqlQueryEnrichment(
+final case class SqlQueryEnrichment[F[_]: Monad: DbExecutor](
   inputs: List[Input],
   db: Db,
   query: Query,
   output: Output,
-  cache: Cache
+  ttl: Int,
+  cache: LruMap[F, IntMap[Input.ExtractedValue], (EitherThrowable[List[Json]], Long)]
 ) extends Enrichment {
   import SqlQueryEnrichment._
 
@@ -119,7 +126,7 @@ final case class SqlQueryEnrichment(
     derivedContexts: List[Json],
     customContexts: List[SelfDescribingData[Json]],
     unstructEvent: List[SelfDescribingData[Json]]
-  ): ValidatedNel[String, List[Json]] = {
+  ): F[ValidatedNel[String, List[Json]]] = {
     val jsonCustomContexts = transformRawPairs(customContexts)
     val jsonUnstructEvent = transformRawPairs(unstructEvent).headOption
 
@@ -131,9 +138,9 @@ final case class SqlQueryEnrichment(
         .flatMap(m => allPlaceholdersFilled(m).leftMap(NonEmptyList.one))
 
     placeholderMap match {
-      case Right(Some(intMap)) => get(intMap).leftMap(_.toString).toValidatedNel
-      case Right(None) => Nil.validNel
-      case Left(err) => err.map(_.toString).invalid
+      case Right(Some(intMap)) => EitherT(get(intMap)).leftMap(_.toString).toValidatedNel
+      case Right(None) => Monad[F].pure(Nil.validNel)
+      case Left(err) => Monad[F].pure(err.map(_.toString).invalid)
     }
   }
 
@@ -142,14 +149,21 @@ final case class SqlQueryEnrichment(
    * @param intMap IntMap of extracted values
    * @return validated list of Self-describing contexts
    */
-  def get(intMap: IntMap[Input.ExtractedValue]): EitherThrowable[List[Json]] =
-    cache.get(intMap) match {
-      case Some(response) => response
-      case None =>
-        val result = query(intMap)
-        cache.put(intMap, result)
-        result
-    }
+  def get(intMap: IntMap[Input.ExtractedValue]): F[EitherThrowable[List[Json]]] =
+    for {
+      gotten <- cache.get(intMap)
+      res <- gotten match {
+        case Some(response) =>
+          if (System.currentTimeMillis() / 1000 - response._2 < ttl) Monad[F].pure(response._1)
+          else put(intMap)
+        case None => put(intMap)
+      }
+    } yield res
+
+  private def put(intMap: IntMap[Input.ExtractedValue]): F[EitherThrowable[List[Json]]] = for {
+    res <- query(intMap)
+    _ <- cache.put(intMap, (res, System.currentTimeMillis() / 1000))
+  } yield res
 
   /**
    * Perform SQL query and convert result to JSON object
@@ -157,12 +171,12 @@ final case class SqlQueryEnrichment(
    * prepared statement
    * @return validated list of Self-describing contexts
    */
-  def query(intMap: IntMap[Input.ExtractedValue]): EitherThrowable[List[Json]] =
-    for {
-      sqlQuery <- db.createStatement(query.sql, intMap)
-      resultSet <- db.execute(sqlQuery)
-      context <- output.convert(resultSet)
-    } yield context
+  def query(intMap: IntMap[Input.ExtractedValue]): F[EitherThrowable[List[Json]]] =
+    (for {
+      sqlQuery <- EitherT.fromEither[F](db.createStatement(query.sql, intMap))
+      resultSet <- EitherT(db.execute[F](sqlQuery))
+      context <- EitherT.fromEither[F](output.convert(resultSet))
+    } yield context).value
 
   /**
    * Transform [[Input.PlaceholderMap]] to None if not enough input values were extracted
@@ -196,4 +210,47 @@ final case class SqlQueryEnrichment(
         lastPlaceholderCount = newCount
         newCount.leftMap(_.toString)
       }
+}
+
+sealed trait CreateSqlQueryEnrichment[F[_]] {
+  def create(conf: SqlQueryConf): F[SqlQueryEnrichment[F]]
+}
+
+object CreateSqlQueryEnrichment {
+  def apply[F[_]](implicit ev: CreateSqlQueryEnrichment[F]): CreateSqlQueryEnrichment[F] = ev
+
+  implicit def syncCreateSqlQueryEnrichment[F[_]: Sync: DbExecutor](
+    implicit CLM: CreateLruMap[F, IntMap[Input.ExtractedValue], (EitherThrowable[List[Json]], Long)]
+  ): CreateSqlQueryEnrichment[F] = new CreateSqlQueryEnrichment[F] {
+    override def create(conf: SqlQueryConf): F[SqlQueryEnrichment[F]] =
+      CLM
+        .create(conf.cache.size)
+        .map(
+          c => SqlQueryEnrichment(conf.inputs, conf.db, conf.query, conf.output, conf.cache.ttl, c)
+        )
+  }
+
+  implicit def evalCreateSqlQueryEnrichment(
+    implicit CLM: CreateLruMap[Eval, IntMap[Input.ExtractedValue], (EitherThrowable[List[Json]], Long)],
+    DB: DbExecutor[Eval]
+  ): CreateSqlQueryEnrichment[Eval] = new CreateSqlQueryEnrichment[Eval] {
+    override def create(conf: SqlQueryConf): Eval[SqlQueryEnrichment[Eval]] =
+      CLM
+        .create(conf.cache.size)
+        .map(
+          c => SqlQueryEnrichment(conf.inputs, conf.db, conf.query, conf.output, conf.cache.ttl, c)
+        )
+  }
+
+  implicit def idCreateSqlQueryEnrichment(
+    implicit CLM: CreateLruMap[Id, IntMap[Input.ExtractedValue], (EitherThrowable[List[Json]], Long)],
+    DB: DbExecutor[Id]
+  ): CreateSqlQueryEnrichment[Id] = new CreateSqlQueryEnrichment[Id] {
+    override def create(conf: SqlQueryConf): Id[SqlQueryEnrichment[Id]] =
+      CLM
+        .create(conf.cache.size)
+        .map(
+          c => SqlQueryEnrichment(conf.inputs, conf.db, conf.query, conf.output, conf.cache.ttl, c)
+        )
+  }
 }

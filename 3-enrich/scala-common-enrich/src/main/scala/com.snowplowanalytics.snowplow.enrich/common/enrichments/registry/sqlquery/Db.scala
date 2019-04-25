@@ -17,6 +17,9 @@ import java.sql._
 
 import scala.collection.immutable.IntMap
 
+import cats.{Eval, Id}
+import cats.effect.Sync
+
 import Input.ExtractedValue
 
 /**
@@ -65,6 +68,36 @@ case class Db(postgresql: Option[PostgresqlDb] = None, mysql: Option[MysqlDb] = 
     realDb.createEmptyStatement(sql).flatMap(realDb.getPlaceholderCount)
 
   /** Execute PreparedStatement */
-  def execute(preparedStatement: PreparedStatement): EitherThrowable[ResultSet] =
-    realDb.execute(preparedStatement)
+  def execute[F[_]: DbExecutor](
+    preparedStatement: PreparedStatement
+  ): F[EitherThrowable[ResultSet]] = DbExecutor[F].execute(realDb, preparedStatement)
+}
+
+trait DbExecutor[F[_]] {
+  def execute(rdbms: Rdbms, preparedStatement: PreparedStatement): F[EitherThrowable[ResultSet]]
+}
+
+object DbExecutor {
+  def apply[F[_]](implicit ev: DbExecutor[F]): DbExecutor[F] = ev
+
+  implicit def syncDbExecutor[F[_]: Sync]: DbExecutor[F] = new DbExecutor[F] {
+    override def execute(
+      rdbms: Rdbms,
+      preparedStatement: PreparedStatement
+    ): F[EitherThrowable[ResultSet]] = Sync[F].delay(rdbms.execute(preparedStatement))
+  }
+
+  implicit def evalDbExecutor: DbExecutor[Eval] = new DbExecutor[Eval] {
+    override def execute(
+      rdbms: Rdbms,
+      preparedStatement: PreparedStatement
+    ): Eval[EitherThrowable[ResultSet]] = Eval.later(rdbms.execute(preparedStatement))
+  }
+
+  implicit def idDbExecutor: DbExecutor[Id] = new DbExecutor[Id] {
+    override def execute(
+      rdbms: Rdbms,
+      preparedStatement: PreparedStatement
+    ): Id[EitherThrowable[ResultSet]] = rdbms.execute(preparedStatement)
+  }
 }
