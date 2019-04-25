@@ -24,6 +24,7 @@ import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SelfDescribi
 import com.snowplowanalytics.iglu.core.circe.instances._
 import com.snowplowanalytics.maxmind.iplookups.CreateIpLookups
 import com.snowplowanalytics.refererparser.CreateParser
+import com.snowplowanalytics.weather.providers.openweather.CreateOWM
 import io.circe._
 
 import registry._
@@ -94,7 +95,7 @@ object EnrichmentRegistry {
 
   // todo: ValidatedNel?
   def build[
-    F[_]: Monad: CreateForex: CreateParser: CreateIabClient: CreateIpLookups: CreateUaParser
+    F[_]: Monad: CreateForex: CreateIabClient: CreateIpLookups: CreateOWM: CreateParser: CreateUaParser
   ](
     confs: List[EnrichmentConf]
   ): EitherT[F, String, EnrichmentRegistry[F]] =
@@ -135,7 +136,11 @@ object EnrichmentRegistry {
             registry <- er
           } yield registry.copy(uaParser = enrichment.some)
         case c: UserAgentUtilsConf.type => er.map(_.copy(userAgentUtils = c.enrichment.some))
-        case c: WeatherConf => er.map(_.copy(weather = c.enrichment.some))
+        case c: WeatherConf =>
+          for {
+            enrichment <- c.enrichment[F]
+            registry <- er
+          } yield registry.copy(weather = enrichment.some)
       }
     }
 
@@ -228,6 +233,6 @@ final case class EnrichmentRegistry[F[_]](
   refererParser: Option[RefererParserEnrichment] = None,
   uaParser: Option[UaParserEnrichment] = None,
   userAgentUtils: Option[UserAgentUtilsEnrichment.type] = None,
-  weather: Option[WeatherEnrichment] = None,
+  weather: Option[WeatherEnrichment[F]] = None,
   yauaa: Option[YauaaEnrichment] = None
 )

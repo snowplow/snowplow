@@ -61,10 +61,11 @@ object Dependencies {
     val circeJackson     = "0.11.1"
     val igluClient       = "0.6.0-M6"
     val scalaForex       = "0.7.0-M3"
-    val scalaWeather     = "0.3.0"
+    val scalaWeather     = "0.5.0-M2"
     val scalaj           = "2.3.0"
     val gatlingJsonpath  = "0.6.14"
     val scalaUri         = "1.4.3"
+    val utilCollection   = "6.39.0"
     // Scala (test only)
     val specs2           = "4.5.1"
     val scalaCheck       = "1.10.0"
@@ -113,6 +114,7 @@ object Dependencies {
     val scalaWeather     = "com.snowplowanalytics"      %% "scala-weather"                 % V.scalaWeather
     val scalaj           = "org.scalaj"                 %% "scalaj-http"                   % V.scalaj
     val gatlingJsonpath  = "io.gatling"                 %% "jsonpath"                      % V.gatlingJsonpath
+    val utilCollection   = "com.twitter"                %% "util-collection"               % V.utilCollection
     // Scala (test only)
     val specs2           = "org.specs2"                 %% "specs2-core"                   % V.specs2         % "test"
     val specs2Cats       = "org.specs2"                 %% "specs2-cats"                   % V.specs2         % "test"
