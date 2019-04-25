@@ -12,53 +12,9 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.apirequest
 
-import com.twitter.util.SynchronizedLruMap
-import io.circe._
-import org.joda.time.DateTime
-
 /**
  * LRU cache
  * @param size amount of objects
  * @param ttl time in seconds to live
  */
-final case class Cache(size: Int, ttl: Int) {
-
-  // URI -> Validated[JSON]
-  private val cache = new SynchronizedLruMap[String, (Either[Throwable, Json], Int)](size)
-
-  /**
-   * Get a value if it's not outdated
-   * @param url HTTP URL
-   * @return validated JSON as it was returned from API server
-   */
-  def get(url: String): Option[Either[Throwable, Json]] =
-    cache.get(url) match {
-      case Some((value, _)) if ttl == 0 => Some(value)
-      case Some((value, created)) => {
-        val now = (new DateTime().getMillis / 1000).toInt
-        if (now - created < ttl) Some(value)
-        else {
-          cache.remove(url)
-          None
-        }
-      }
-      case _ => None
-    }
-
-  /**
-   * Put a value into cache with current timestamp
-   * @param key all inputs Map
-   * @param value context object (with Iglu URI, not just plain JSON)
-   */
-  def put(key: String, value: Either[Throwable, Json]): Unit = {
-    val now = (new DateTime().getMillis / 1000).toInt
-    cache.put(key, (value, now))
-    ()
-  }
-
-  /**
-   * Get actual size of cache
-   * @return number of elements in
-   */
-  private[apirequest] def actualLoad: Int = cache.size
-}
+final case class Cache(size: Int, ttl: Int)

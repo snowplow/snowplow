@@ -32,7 +32,7 @@ import utils.JsonPath._
  * @param pojo optional POJO source to take stright from `EnrichedEvent`
  * @param json optional JSON source to take from context or unstruct event
  */
-case class Input(
+final case class Input(
   key: String,
   pojo: Option[PojoInput],
   json: Option[JsonInput]
@@ -117,7 +117,7 @@ case class Input(
  * Describes how to take key from POJO source
  * @param field `EnrichedEvent` object field
  */
-case class PojoInput(field: String)
+final case class PojoInput(field: String)
 
 /**
  * @param field where to get this JSON, one of unstruct_event, contexts or derived_contexts
@@ -126,7 +126,7 @@ case class PojoInput(field: String)
  * @param jsonPath JSONPath statement to navigate to the field inside the JSON that you want to use
  * as the input
  */
-case class JsonInput(
+final case class JsonInput(
   field: String,
   schemaCriterion: String,
   jsonPath: String

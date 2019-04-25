@@ -13,6 +13,7 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry.apirequest
 
+import cats.Eval
 import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer, SelfDescribingData}
 import io.circe._
 import io.circe.generic.auto._
@@ -266,12 +267,12 @@ class ApiRequestEnrichmentIntegrationTest extends Specification {
   def e1 = {
     val enrichment = ApiRequestEnrichment
       .parse(IntegrationTests.configuration, SCHEMA_KEY)
-      .map(_.enrichment)
+      .map(_.enrichment[Eval].value)
       .toEither
     val event = new EnrichedEvent
     event.setApp_id("lookup-test")
     event.setUser_id("snowplower")
-    val context = enrichment.flatMap(_.lookup(event, Nil, Nil, Nil).toEither)
+    val context = enrichment.flatMap(_.lookup(event, Nil, Nil, Nil).value.toEither)
     context must beRight.like {
       case context =>
         context must contain(IntegrationTests.correctResultContext) and (context must have size (1))
@@ -281,7 +282,7 @@ class ApiRequestEnrichmentIntegrationTest extends Specification {
   def e2 = {
     val enrichment = ApiRequestEnrichment
       .parse(IntegrationTests.configuration2, SCHEMA_KEY)
-      .map(_.enrichment)
+      .map(_.enrichment[Eval].value)
       .toEither
     val event = new EnrichedEvent
     event.setApp_id("lookup test")
@@ -294,7 +295,7 @@ class ApiRequestEnrichmentIntegrationTest extends Specification {
         List(IntegrationTests.weatherContext),
         List(IntegrationTests.customContexts),
         List(IntegrationTests.unstructEvent)
-      ).toEither
+      ).value.toEither
     )
     enrichment.flatMap(
       _.lookup(
@@ -302,7 +303,7 @@ class ApiRequestEnrichmentIntegrationTest extends Specification {
         List(IntegrationTests.weatherContext),
         List(IntegrationTests.customContexts),
         List(IntegrationTests.unstructEvent)
-      ).toEither
+      ).value.toEither
     )
 
     val context = enrichment.flatMap(
@@ -311,7 +312,7 @@ class ApiRequestEnrichmentIntegrationTest extends Specification {
         List(IntegrationTests.weatherContext),
         List(IntegrationTests.customContexts),
         List(IntegrationTests.unstructEvent)
-      ).toEither
+      ).value.toEither
     )
 
     context must beRight.like {
@@ -320,10 +321,6 @@ class ApiRequestEnrichmentIntegrationTest extends Specification {
           beJson(IntegrationTests.correctResultContext2),
           beJson(IntegrationTests.correctResultContext3)
         ) and (context must have size (2))
-    } and {
-      enrichment must beRight.like {
-        case c => c.cache.actualLoad must beEqualTo(1)
-      }
     }
   }
 }
