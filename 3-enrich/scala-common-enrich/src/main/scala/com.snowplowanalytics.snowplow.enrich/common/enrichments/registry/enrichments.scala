@@ -23,7 +23,7 @@ import com.snowplowanalytics.forex.model.AccountType
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
 import com.snowplowanalytics.maxmind.iplookups.CreateIpLookups
 import com.snowplowanalytics.refererparser.CreateParser
-import com.snowplowanalytics.weather.providers.openweather.OwmCacheClient
+import com.snowplowanalytics.weather.providers.openweather.CreateOWM
 import io.circe._
 import org.joda.money.CurrencyUnit
 import org.mozilla.javascript.Script
@@ -154,15 +154,15 @@ final case object UserAgentUtilsConf extends EnrichmentConf {
   def enrichment: UserAgentUtilsEnrichment.type = UserAgentUtilsEnrichment
 }
 final case class WeatherConf(
-  apiKey: String,
-  cacheSize: Int,
-  geoPrecision: Int,
   apiHost: String,
-  timeout: Int
+  apiKey: String,
+  timeout: Int,
+  cacheSize: Int,
+  geoPrecision: Int
 ) extends EnrichmentConf {
   override val filesToCache: List[(URI, String)] = Nil
-  def enrichment: WeatherEnrichment =
-    WeatherEnrichment(OwmCacheClient(apiKey, cacheSize, geoPrecision, apiHost, timeout))
+  def enrichment[F[_]: Monad: CreateOWM]: EitherT[F, String, WeatherEnrichment[F]] =
+    WeatherEnrichment[F](this)
 }
 
 /** Trait to hold helpers relating to enrichment config */
