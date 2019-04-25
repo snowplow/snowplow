@@ -11,8 +11,10 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich.common
-package enrichments.registry.apirequest
+package enrichments.registry
+package apirequest
 
+import cats.Eval
 import org.specs2.Specification
 import org.specs2.matcher.ValidatedMatchers
 import org.specs2.mock.Mockito
@@ -49,15 +51,15 @@ class HttpApiSpec extends Specification with ValidatedMatchers with Mockito {
 
   // This one uses real actor system
   def e3 = {
-    val enrichment = ApiRequestEnrichment(
+    val enrichment = ApiRequestConf(
       Nil,
       HttpApi("GET", "http://thishostdoesntexist31337:8123/endpoint", 1000, Authentication(None)),
       List(Output("", Some(JsonOutput("")))),
       Cache(1, 1)
-    )
+    ).enrichment[Eval]
 
     val event = new outputs.EnrichedEvent
-    val request = enrichment.lookup(event, Nil, Nil, Nil)
+    val request = enrichment.value.lookup(event, Nil, Nil, Nil).value
     request must beInvalid
   }
 }

@@ -95,13 +95,17 @@ object EnrichmentRegistry {
 
   // todo: ValidatedNel?
   def build[
-    F[_]: Monad: CreateForex: CreateIabClient: CreateIpLookups: CreateOWM: CreateParser: CreateUaParser: sqlquery.CreateSqlQueryEnrichment
+    F[_]: Monad: CreateForex: CreateIabClient: CreateIpLookups: CreateOWM: CreateParser: CreateUaParser: sqlquery.CreateSqlQueryEnrichment: apirequest.CreateApiRequestEnrichment
   ](
     confs: List[EnrichmentConf]
   ): EitherT[F, String, EnrichmentRegistry[F]] =
     confs.foldLeft(EitherT.pure[F, String](EnrichmentRegistry[F]())) { (er, e) =>
       e match {
-        case c: ApiRequestConf => er.map(_.copy(apiRequest = c.enrichment.some))
+        case c: ApiRequestConf =>
+          for {
+            enrichment <- EitherT.right(c.enrichment[F])
+            registry <- er
+          } yield registry.copy(apiRequest = enrichment.some)
         case c: PiiPseudonymizerConf => er.map(_.copy(piiPseudonymizer = c.enrichment.some))
         case c: SqlQueryConf =>
           for {
@@ -222,7 +226,7 @@ object EnrichmentRegistry {
 
 /** A registry to hold all of our enrichments. */
 final case class EnrichmentRegistry[F[_]](
-  apiRequest: Option[ApiRequestEnrichment] = None,
+  apiRequest: Option[ApiRequestEnrichment[F]] = None,
   piiPseudonymizer: Option[PiiPseudonymizerEnrichment] = None,
   sqlQuery: Option[SqlQueryEnrichment[F]] = None,
   anonIp: Option[AnonIpEnrichment] = None,

@@ -28,6 +28,8 @@ import io.circe._
 import org.joda.money.CurrencyUnit
 import org.mozilla.javascript.Script
 
+import apirequest._
+import sqlquery._
 import utils.ConversionUtils
 
 /** Trait inherited by every enrichment config case class */
@@ -38,12 +40,12 @@ sealed trait EnrichmentConf {
 }
 final case class ApiRequestConf(
   inputs: List[apirequest.Input],
-  api: apirequest.HttpApi,
+  api: HttpApi,
   outputs: List[apirequest.Output],
   cache: apirequest.Cache
 ) extends EnrichmentConf {
-  def enrichment: apirequest.ApiRequestEnrichment =
-    apirequest.ApiRequestEnrichment(inputs, api, outputs, cache)
+  def enrichment[F[_]: CreateApiRequestEnrichment]: F[ApiRequestEnrichment[F]] =
+    ApiRequestEnrichment[F](this)
 }
 final case class PiiPseudonymizerConf(
   fieldList: List[pii.PiiField],
@@ -55,13 +57,13 @@ final case class PiiPseudonymizerConf(
 }
 final case class SqlQueryConf(
   inputs: List[sqlquery.Input],
-  db: sqlquery.Db,
-  query: sqlquery.Query,
+  db: Db,
+  query: Query,
   output: sqlquery.Output,
   cache: sqlquery.Cache
 ) extends EnrichmentConf {
-  def enrichment[F[_]: Monad: sqlquery.CreateSqlQuery]: F[sqlquery.SqlQueryEnrichment[F]] =
-    sqlquery.SqlQueryEnrichment[F](this)
+  def enrichment[F[_]: Monad: CreateSqlQueryEnrichment]: F[SqlQueryEnrichment[F]] =
+    SqlQueryEnrichment[F](this)
 }
 final case class AnonIpConf(octets: AnonOctets.AnonOctets) extends EnrichmentConf {
   def enrichment: AnonIpEnrichment = AnonIpEnrichment(octets)

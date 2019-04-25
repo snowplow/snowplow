@@ -52,10 +52,10 @@ final case class HttpApi(
    * @param body optional request body
    * @return self-describing JSON ready to be attached to event contexts
    */
-  def perform(url: String, body: Option[String] = None): Either[Throwable, String] = {
+  def perform[F[_]: HttpClient](url: String, body: Option[String]): F[Either[Throwable, String]] = {
     val req =
       HttpClient.buildRequest(url, authUser = authUser, authPassword = authPassword, body, method, None, None)
-    HttpClient.getBody(req)
+    HttpClient[F].getResponse(req)
   }
 
   /**
@@ -113,7 +113,7 @@ object HttpApi {
  * Helper class to configure authentication for HTTP API
  * @param httpBasic single possible auth type is http-basic
  */
-case class Authentication(httpBasic: Option[HttpBasic])
+final case class Authentication(httpBasic: Option[HttpBasic])
 
 /** Container for HTTP Basic auth credentials */
-case class HttpBasic(username: Option[String], password: Option[String])
+final case class HttpBasic(username: Option[String], password: Option[String])
