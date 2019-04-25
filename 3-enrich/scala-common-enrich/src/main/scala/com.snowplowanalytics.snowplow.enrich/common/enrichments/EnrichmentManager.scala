@@ -512,15 +512,15 @@ object EnrichmentManager {
     }
 
     // Fetch weather context
-    val weatherContext: Either[String, Option[Json]] = registry.weather match {
+    val weatherContext: F[Either[String, Option[Json]]] = registry.weather match {
       case Some(we) =>
         we.getWeatherContext(
             Option(event.geo_latitude),
             Option(event.geo_longitude),
             Option(event.derived_tstamp).map(EventEnrichments.fromTimestamp)
           )
-          .map(_.some)
-      case None => None.asRight
+          .map(_.map(_.some))
+      case None => Monad[F].pure(None.asRight)
     }
 
     // YAUAA enrichment
@@ -533,29 +533,34 @@ object EnrichmentManager {
     }
 
     // Assemble array of contexts prepared by built-in enrichments
-    val preparedDerivedContexts: List[Json] = List(uaParser).collect {
-      case Right(Some(context)) => context
-    } ++ List(weatherContext).collect {
-      case Success(Some(context)) => context
-    } ++ List(yauaaContext).collect {
-      case Success(Some(context)) => context
-    } ++ List(iabContext).collect {
-      case Right(Some(context)) => context
-    } ++ jsScript.getOrElse(Nil) ++ cookieExtractorContext ++ httpHeaderExtractorContext
+    val preparedDerivedContexts: F[List[Json]] = for {
+      w <- weatherContext
+      res = List(uaParser).collect {
+        case Right(Some(context)) => context
+      } ++ List(w).collect {
+        case Right(Some(context)) => context
+      } ++ List(yauaaContext).collect {
+        case Right(Some(context)) => context
+      } ++ List(iabContext).collect {
+        case Right(Some(context)) => context
+      } ++ jsScript.getOrElse(Nil) ++ cookieExtractorContext ++ httpHeaderExtractorContext
+    } yield res
 
     // Derive some contexts with custom SQL Query enrichment
     val sqlQueryContexts: F[ValidatedNel[String, List[Json]]] =
       registry.sqlQuery match {
         case Some(enrichment) =>
-          customContexts
-            .product(unstructEvent)
-            .map(_ match {
+          for {
+            derivedContexts <- preparedDerivedContexts
+            otherContexts <- customContexts.product(unstructEvent)
+            lookupResult = otherContexts match {
               case (Validated.Valid(cctx), Validated.Valid(ue)) =>
-                enrichment.lookup(event, preparedDerivedContexts, cctx, ue)
+                enrichment.lookup(event, derivedContexts, cctx, ue)
               case _ =>
                 // Skip. Unstruct event or custom context corrupted (event enrichment will fail)
                 Nil.validNel
-            })
+            }
+          } yield lookupResult
         case None => Monad[F].pure(Nil.validNel)
       }
 
@@ -563,16 +568,17 @@ object EnrichmentManager {
     val apiRequestContexts: F[ValidatedNel[String, List[Json]]] =
       registry.apiRequest match {
         case Some(enrichment) =>
-          customContexts
-            .product(unstructEvent)
-            .product(sqlQueryContexts)
-            .map(_ match {
+          for {
+            derivedContexts <- preparedDerivedContexts
+            otherContexts <- customContexts.product(unstructEvent).product(sqlQueryContexts)
+            lookupResult = otherContexts match {
               case ((Validated.Valid(cctx), Validated.Valid(ue)), Validated.Valid(sctx)) =>
-                enrichment.lookup(event, preparedDerivedContexts ++ sctx, cctx, ue)
+                enrichment.lookup(event, derivedContexts ++ sctx, cctx, ue)
               case _ =>
                 // Skip. Unstruct event or custom context corrupted, event enrichment will fail anyway
                 Nil.validNel
-            })
+            }
+          } yield lookupResult
         case None => Monad[F].pure(Nil.validNel)
       }
 
@@ -580,7 +586,8 @@ object EnrichmentManager {
     val derivedContexts: F[List[Json]] = for {
       api <- apiRequestContexts
       sql <- sqlQueryContexts
-    } yield api.getOrElse(Nil) ++ sql.getOrElse(Nil) ++ preparedDerivedContexts
+      prepDerivedContexts <- preparedDerivedContexts
+    } yield api.getOrElse(Nil) ++ sql.getOrElse(Nil) ++ prepDerivedContexts
 
     val formatDerivedContexts: F[Unit] = derivedContexts.map { d =>
       if (d.nonEmpty) {
@@ -604,8 +611,9 @@ object EnrichmentManager {
       extractSchema,
       currency,
       geoLocation,
+      weatherContext,
       formatDerivedContexts
-    ).mapN { (cc, ue, api, sql, es, cu, geo, _) =>
+    ).mapN { (cc, ue, api, sql, es, cu, geo, w, _) =>
       val first = (
         useragent.toValidatedNel,
         collectorTstamp.toValidatedNel,
@@ -628,7 +636,7 @@ object EnrichmentManager {
         api,
         sql,
         es.toValidatedNel,
-        weatherContext.toValidatedNel
+        w.toValidatedNel
       ).mapN((_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _) => ())
 
       val second =(

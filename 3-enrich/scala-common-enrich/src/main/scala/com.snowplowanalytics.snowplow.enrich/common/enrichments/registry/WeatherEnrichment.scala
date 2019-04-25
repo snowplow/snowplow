@@ -14,12 +14,16 @@ package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry
 
 import java.lang.{Float => JFloat}
+import java.time.{Instant, ZoneOffset, ZonedDateTime}
 
-import cats.data.{NonEmptyList, ValidatedNel}
+import scala.concurrent.duration.FiniteDuration
+
+import cats.Monad
+import cats.data.{EitherT, NonEmptyList, ValidatedNel}
 import cats.implicits._
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
-import com.snowplowanalytics.weather.providers.openweather.OwmCacheClient
-import com.snowplowanalytics.weather.providers.openweather.Responses._
+import com.snowplowanalytics.weather.providers.openweather._
+import com.snowplowanalytics.weather.providers.openweather.responses._
 import io.circe._
 import io.circe.generic.auto._
 import io.circe.syntax._
@@ -38,6 +42,7 @@ object WeatherEnrichment extends ParseableEnrichment {
       0
     )
 
+  import java.util.concurrent.TimeUnit
   override def parse(
     c: Json,
     schemaKey: SchemaKey,
@@ -47,21 +52,40 @@ object WeatherEnrichment extends ParseableEnrichment {
       .leftMap(e => NonEmptyList.one(e))
       .flatMap { _ =>
         (
-          CirceUtils.extract[String](c, "parameters", "apiKey").toValidatedNel,
-          CirceUtils.extract[Int](c, "parameters", "cacheSize").toValidatedNel,
-          CirceUtils.extract[Int](c, "parameters", "geoPrecision").toValidatedNel,
           CirceUtils.extract[String](c, "parameters", "apiHost").toValidatedNel,
-          CirceUtils.extract[Int](c, "parameters", "timeout").toValidatedNel
+          CirceUtils.extract[String](c, "parameters", "apiKey").toValidatedNel,
+          CirceUtils.extract[Int](c, "parameters", "timeout").toValidatedNel,
+          CirceUtils.extract[Int](c, "parameters", "cacheSize").toValidatedNel,
+          CirceUtils.extract[Int](c, "parameters", "geoPrecision").toValidatedNel
         ).mapN { WeatherConf(_, _, _, _, _) }.toEither
       }
       .toValidated
+
+  /**
+   * Creates a WeatherEnrichment from a WeatherConf
+   * @param conf Configuration for the weather enrichment
+   * @return a weather enrichment
+   */
+  def apply[F[_]: Monad: CreateOWM](conf: WeatherConf): EitherT[F, String, WeatherEnrichment[F]] =
+    EitherT(
+      CreateOWM[F]
+        .create(
+          conf.apiHost,
+          conf.apiKey,
+          FiniteDuration(conf.timeout.toLong, TimeUnit.SECONDS),
+          true,
+          conf.cacheSize,
+          conf.geoPrecision
+        )
+    ).leftMap(_.message)
+      .map(c => WeatherEnrichment(c))
 }
 
 /**
  * Contains weather enrichments based on geo coordinates and time
  * @param client OWM client to get the weather from
  */
-final case class WeatherEnrichment(client: OwmCacheClient) extends Enrichment {
+final case class WeatherEnrichment[F[_]: Monad](client: OWMCacheClient[F]) extends Enrichment {
   private val schemaUri = "iglu:org.openweathermap/weather/jsonschema/1-0-0"
 
   /**
@@ -78,11 +102,11 @@ final case class WeatherEnrichment(client: OwmCacheClient) extends Enrichment {
     latitude: Option[JFloat],
     longitude: Option[JFloat],
     time: Option[DateTime]
-  ): Either[String, Json] =
-    Either
-      .catchNonFatal(getWeather(latitude, longitude, time).map(addSchema))
-      .leftMap(_.getMessage)
-      .joinRight
+  ): F[Either[String, Json]] =
+    (for {
+      weather <- getWeather(latitude, longitude, time)
+      schemaed = addSchema(weather)
+    } yield schemaed).value
 
   /**
    * Get weather stamp as JSON received from OpenWeatherMap and extracted with Scala Weather
@@ -95,31 +119,21 @@ final case class WeatherEnrichment(client: OwmCacheClient) extends Enrichment {
     latitude: Option[JFloat],
     longitude: Option[JFloat],
     time: Option[DateTime]
-  ): Either[String, Json] =
+  ): EitherT[F, String, Json] =
     (latitude, longitude, time) match {
       case (Some(lat), Some(lon), Some(t)) =>
-        getCachedOrRequest(lat, lon, (t.getMillis / 1000).toInt).map { weatherStamp =>
-          val transformedWeather = transformWeather(weatherStamp)
-          transformedWeather.asJson
-        }
+        val ts = ZonedDateTime.ofInstant(Instant.ofEpochMilli(t.getMillis()), ZoneOffset.UTC)
+        for {
+          weather <- EitherT(client.cachingHistoryByCoords(lat, lon, ts))
+            .leftMap(_.getMessage)
+          transformed = transformWeather(weather)
+        } yield transformed.asJson
       case _ =>
-        ("One of required event fields missing. latitude: " +
-          s"$latitude, longitude: $longitude, tstamp: $time").asLeft
+        EitherT.leftT(
+          "One of required event fields missing. latitude: " +
+            s"$latitude, longitude: $longitude, tstamp: $time"
+        )
     }
-
-  /**
-   * Return weather, convert disjunction to validation and stringify error
-   * @param latitude event latitude
-   * @param longitude event longitude
-   * @param timestamp event timestamp
-   * @return optional weather stamp
-   */
-  private def getCachedOrRequest(
-    latitude: Float,
-    longitude: Float,
-    timestamp: Int
-  ): Either[String, Weather] =
-    client.getCachedOrRequest(latitude, longitude, timestamp).leftMap(_.toString)
 
   /**
    * Add Iglu URI to JSON Object
@@ -140,8 +154,7 @@ final case class WeatherEnrichment(client: OwmCacheClient) extends Enrichment {
    * @param origin original OpenWeatherMap Weather stamp
    * @return tranfsormed weather
    */
-  private[enrichments] def transformWeather(origin: Weather): TransformedWeather = {
-    val time = new DateTime(origin.dt.toLong * 1000, DateTimeZone.UTC).toString
+  private[enrichments] def transformWeather(origin: Weather): TransformedWeather =
     TransformedWeather(
       origin.main,
       origin.wind,
@@ -149,9 +162,8 @@ final case class WeatherEnrichment(client: OwmCacheClient) extends Enrichment {
       origin.rain,
       origin.snow,
       origin.weather,
-      time
+      new DateTime(origin.dt.toLong * 1000, DateTimeZone.UTC).toString()
     )
-  }
 }
 
 /**
