@@ -89,7 +89,7 @@ limitations under the License.
 [architecture-image]: https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/snowplow-architecture.png
 [architecture-doc]: https://github.com/snowplow/snowplow/wiki/Technical-architecture
 [talk-to-us]: https://github.com/snowplow/snowplow/wiki/Talk-to-us
-[contributing]: https://github.com/snowplow/snowplow/wiki/Contributing
+[contributing]: ./CONTRIBUTING.md
 
 [setup]: https://github.com/snowplow/snowplow/wiki/Setting-up-SnowPlow
 [tech-docs]: https://github.com/snowplow/snowplow/wiki/SnowPlow%20technical%20documentation
