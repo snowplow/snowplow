@@ -34,7 +34,7 @@ import outputs.EnrichedEvent
  * @param pojo optional pojo source to take straight from EnrichedEvent
  * @param json optional JSON source to take from context or unstruct event
  */
-case class Input(
+final case class Input(
   placeholder: Int,
   pojo: Option[PojoInput],
   json: Option[JsonInput]
