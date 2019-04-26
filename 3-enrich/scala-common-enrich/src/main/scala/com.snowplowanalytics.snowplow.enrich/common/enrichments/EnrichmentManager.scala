@@ -283,11 +283,12 @@ object EnrichmentManager {
     }
 
     // Fetch IAB enrichment context (before anonymizing the IP address).
-    // IAB enrichment is called only if the IP is v4, and after removing the port if any.
+    // IAB enrichment is called only if the IP is v4 (and after removing the port if any)
+    // and if the user agent is defined.
     val iabContext = registry.getIabEnrichment match {
       case Some(iab) =>
         event.user_ipaddress match {
-          case IPv4Regex(ipv4) =>
+          case IPv4Regex(ipv4) if !List(null, "", s"\0").contains(event.useragent) =>
             iab
               .getIabContext(Option(event.useragent),
                              Option(ipv4),
