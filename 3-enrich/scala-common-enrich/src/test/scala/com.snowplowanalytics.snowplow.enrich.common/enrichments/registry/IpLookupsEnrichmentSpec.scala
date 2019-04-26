@@ -69,6 +69,19 @@ class IpLookupsEnrichmentSpec extends Specification with DataTables with Validat
           postalCode  = None,
           metroCode   = None,
           regionName  = Some("Jilin Sheng")
+        ).success.some |
+      "valid IP address with port" !! "175.16.199.0:8080" !
+        IpLocation( // Taken from scala-maxmind-geoip. See that test suite for other valid IP addresses
+          countryCode = "CN",
+          countryName = "China",
+          region      = Some("22"),
+          city        = Some("Changchun"),
+          latitude    = 43.88F,
+          longitude   = 125.3228F,
+          timezone    = Some("Asia/Harbin"),
+          postalCode  = None,
+          metroCode   = None,
+          regionName  = Some("Jilin Sheng")
         ).success.some |> { (_, ipAddress, expected) =>
       config.extractIpInformation(ipAddress).ipLocation.map(_.leftMap(_.getClass.getSimpleName)) must_== expected
     }
