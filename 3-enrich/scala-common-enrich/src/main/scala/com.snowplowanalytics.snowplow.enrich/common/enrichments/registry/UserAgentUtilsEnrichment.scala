@@ -44,7 +44,7 @@ import utils.ScalazJson4sUtils
 object UserAgentUtilsEnrichmentConfig extends ParseableEnrichment {
 
   val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "user_agent_utils_config", "jsonschema", 1, 0)
-  private val log             = LoggerFactory.getLogger(getClass())
+  private val log     = LoggerFactory.getLogger(getClass())
 
   // Creates a UserAgentUtilsEnrichment instance from a JValue
   def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[UserAgentUtilsEnrichment.type] = {

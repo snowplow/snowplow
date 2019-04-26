@@ -47,6 +47,9 @@ import web.{PageEnrichments           => WPE}
  */
 object EnrichmentManager {
 
+  // Regex for IPv4 without port
+  val IPv4Regex = """(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*""".r
+
   /**
    * Runs our enrichment process.
    *
@@ -279,14 +282,19 @@ object EnrichmentManager {
       case f => f
     }
 
-    // Fetch IAB enrichment context (before anonymizing the IP address)
+    // Fetch IAB enrichment context (before anonymizing the IP address).
+    // IAB enrichment is called only if the IP is v4, and after removing the port if any.
     val iabContext = registry.getIabEnrichment match {
       case Some(iab) =>
-        iab
-          .getIabContext(Option(event.useragent),
-                         Option(event.user_ipaddress),
-                         Option(event.derived_tstamp).map(EventEnrichments.fromTimestamp))
-          .map(_.some)
+        event.user_ipaddress match {
+          case IPv4Regex(ipv4) =>
+            iab
+              .getIabContext(Option(event.useragent),
+                             Option(ipv4),
+                             Option(event.derived_tstamp).map(EventEnrichments.fromTimestamp))
+              .map(_.some)
+          case _ => None.success
+        }
       case None => None.success
     }
 
