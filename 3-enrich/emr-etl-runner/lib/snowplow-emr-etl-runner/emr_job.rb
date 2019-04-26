@@ -726,7 +726,7 @@ module Snowplow
           rescue Elasticity::ThrottlingException, RestClient::RequestTimeout, RestClient::InternalServerError, RestClient::ServiceUnavailable, RestClient::SSLCertificateNotVerified
             logger.warn "Got an error while trying to submit a jobflow step: #{jobflow_step.name}"
             retries += 1
-            sleep(2 ** retries * 1)
+            sleep(2 ** retries + 30)
             retry if retries < 3
           end
         end
@@ -739,7 +739,7 @@ module Snowplow
           rescue Elasticity::ThrottlingException, RestClient::RequestTimeout, RestClient::InternalServerError, RestClient::ServiceUnavailable, RestClient::SSLCertificateNotVerified
             logger.warn "Got an error while trying to submit the jobflow"
             retries += 1
-            sleep(2 ** retries * 1)
+            sleep(2 ** retries + 30)
             retry if retries < 3
           end
         end
@@ -747,7 +747,15 @@ module Snowplow
 
         if snowplow_tracking_enabled
           Monitoring::Snowplow.parameterize(config)
-          Monitoring::Snowplow.instance.track_job_started(jobflow_id, @jobflow.cluster_status, cluster_step_status_for_run(@jobflow))
+          cluster_status =
+            begin
+              retries ||= 0
+              @jobflow.cluster_status
+            rescue Elasticity::ThrottlingException, RestClient::RequestTimeout, RestClient::InternalServerError, RestClient::ServiceUnavailable, RestClient::SSLCertificateNotVerified
+              retries += 1
+              sleep(2 ** retries + 30)
+              retry if retries < 3
+          Monitoring::Snowplow.instance.track_job_started(jobflow_id, cluster_status, cluster_step_status_for_run(@jobflow))
         end
 
         status = wait_for
@@ -792,7 +800,7 @@ module Snowplow
             @jobflow.shutdown
           rescue Elasticity::ThrottlingException, RestClient::RequestTimeout, RestClient::InternalServerError, RestClient::ServiceUnavailable, RestClient::SSLCertificateNotVerified
             retries += 1
-            sleep(2 ** retries * 1)
+            sleep(2 ** retries + 30)
             retry if retries < 3
           end
         end
@@ -1111,7 +1119,7 @@ module Snowplow
             @jobflow.cluster_status
           rescue Elasticity::ThrottlingException, RestClient::RequestTimeout, RestClient::InternalServerError, RestClient::ServiceUnavailable, RestClient::SSLCertificateNotVerified
             retries += 1
-            sleep(2 ** retries * 1)
+            sleep(2 ** retries + 30)
             retry if retries < 3
           end
 
@@ -1212,7 +1220,7 @@ module Snowplow
             .sort_by { |a| a.created_at }
         rescue Elasticity::ThrottlingException, RestClient::RequestTimeout, RestClient::InternalServerError, RestClient::ServiceUnavailable, RestClient::SSLCertificateNotVerified
           retries += 1
-          sleep(2 ** retries * 1)
+          sleep(2 ** retries + 30)
           retry if retries < 3
         end
       end

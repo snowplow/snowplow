@@ -106,7 +106,7 @@ module Snowplow
           client.list_objects_v2(options)
         rescue AWS::S3::Errors::InternalError
           retries += 1
-          sleep(2 ** retries * 0.1)
+          sleep(2 ** retries + 10)
           retry if retries < 3
         end
       end
