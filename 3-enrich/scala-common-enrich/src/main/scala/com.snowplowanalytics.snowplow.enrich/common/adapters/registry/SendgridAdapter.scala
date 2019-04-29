@@ -14,10 +14,6 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-import javax.mail.internet.ContentType
-
-import scala.util.Try
-
 import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.effect.Clock
@@ -126,7 +122,7 @@ object SendgridAdapter extends Adapter {
         Monad[F].pure(
           s"Request body provided but content type empty, expected $ContentType for $VendorName".invalidNel
         )
-      case (_, Some(ct)) if Try(new ContentType(ct).getBaseType).getOrElse(ct) != ContentType =>
+      case (_, Some(ct)) if !ct.contains(ContentType) =>
         Monad[F].pure(
           s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel
         )
