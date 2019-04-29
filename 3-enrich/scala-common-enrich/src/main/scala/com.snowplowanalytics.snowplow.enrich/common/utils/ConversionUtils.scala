@@ -31,7 +31,6 @@ import io.lemonlabs.uri.config.UriConfig
 import io.lemonlabs.uri.decoding.PercentDecoder
 import io.lemonlabs.uri.encoding.percentEncode
 import org.apache.commons.codec.binary.Base64
-import org.apache.commons.lang3.exception.ExceptionUtils
 import org.apache.http.client.utils.URLEncodedUtils
 
 /** General-purpose utils to help the ETL process along. */
