@@ -19,7 +19,6 @@ import scala.util.matching.Regex
 
 import cats.data.ValidatedNel
 import cats.implicits._
-import org.apache.commons.lang3.StringUtils
 import org.joda.time.DateTime
 
 import utils.ConversionUtils.singleEncodePcts
@@ -146,7 +145,14 @@ object CloudfrontLoader extends Loader[String] {
    * @return the cleaned string
    */
   private[loaders] def toCleanUri(uri: String): String =
-    StringUtils.removeEnd(uri, "%")
+    uri
+      .foldLeft((new StringBuilder, 1)) {
+        case ((acc, cnt), c) =>
+          if (cnt == uri.length() && c == '%') (acc, cnt)
+          else (acc.append(c), cnt + 1)
+      }
+      ._1
+      .toString()
 
   private def toRegex(fields: List[String], additionalFields: Boolean = false): Regex = {
     val whitespaceRegex = "[\\s]+"

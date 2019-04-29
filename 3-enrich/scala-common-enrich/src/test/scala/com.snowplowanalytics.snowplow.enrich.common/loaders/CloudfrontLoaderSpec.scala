@@ -75,7 +75,8 @@ class CloudfrontLoaderSpec
       "URI with trailing % #1" !! "https://github.com/snowplow/snowplow/issues/494%" ! "https://github.com/snowplow/snowplow/issues/494" |
       "URI with trailing % #2" !! "http://bbc.co.uk%" ! "http://bbc.co.uk" |
       "URI without trailing % #1" !! "https://github.com/snowplow/snowplow/issues/494" ! "https://github.com/snowplow/snowplow/issues/494" |
-      "URI without trailing % #2" !! "http://bbc.co.uk" ! "http://bbc.co.uk" |> {
+      "URI without trailing % #2" !! "" ! "" |
+      "URI without trailing % #3" !! "http://bbc.co.uk" ! "http://bbc.co.uk" |> {
       (_, uri, expected) =>
         {
           val actual = CloudfrontLoader.toCleanUri(uri)
