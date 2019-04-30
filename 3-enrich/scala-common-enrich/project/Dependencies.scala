@@ -34,7 +34,7 @@ object Dependencies {
     val commonsCodec     = "1.12"
     val jodaTime         = "2.10.1"
     val useragent        = "1.21"
-    val jacksonDatabind  = "2.2.3"
+    val jacksonDatabind  = "2.9.8"
     val uaParser         = "1.4.0"
     val postgresDriver   = "9.4.1208.jre7"
     val mysqlConnector   = "5.1.39"
@@ -94,7 +94,7 @@ object Dependencies {
     ).map("io.circe" %% _ % V.circe)
     val cats             = "org.typelevel"              %% "cats-core"                     % V.cats
     val circeOptics      = "io.circe"                   %% "circe-optics"                  % V.circeOptics
-    val circeJackson     = "io.circe"                   %% "circe-jackson28"               % V.circeJackson
+    val circeJackson     = "io.circe"                   %% "circe-jackson29"               % V.circeJackson
     val scalaForex       = "com.snowplowanalytics"      %% "scala-forex"                   % V.scalaForex
     val refererParser    = "com.snowplowanalytics"      %% "scala-referer-parser"          % V.refererParser
     val maxmindIplookups = "com.snowplowanalytics"      %% "scala-maxmind-iplookups"       % V.maxmindIplookups
