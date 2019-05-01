@@ -70,8 +70,6 @@ before_install:
   - gem uninstall -i /home/travis/.rvm/gems/jruby-9.1.6.0 bundler -a -x
   - gem install bundler -v 1.15.4
   - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-addons:
-  postgresql: '9.3'
 services:
   - docker
   - postgresql
