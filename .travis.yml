@@ -63,8 +63,6 @@ before_install:
   - rvm install jruby-9.1.6.0
   - gem uninstall -i /home/travis/.rvm/gems/jruby-9.1.6.0 bundler -a -x
   - gem install bundler -v 1.15.4
-addons:
-  postgresql: '9.3'
 services:
   - docker
   - postgresql
