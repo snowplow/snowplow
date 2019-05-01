@@ -55,8 +55,8 @@ class WeatherEnrichmentSpec extends Specification {
   }
 
   object validEvent {
-    var lat: JFloat    = 20.713052f
-    var lon: JFloat    = 70.98224f
+    var lat: JFloat = 20.713052f
+    var lon: JFloat = 70.98224f
     var time: DateTime = new DateTime("2019-04-30T23:56:01.003+00:00")
   }
 
