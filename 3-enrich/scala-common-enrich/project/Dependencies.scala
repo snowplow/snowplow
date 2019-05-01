@@ -56,7 +56,7 @@ object Dependencies {
     val scalaWeather     = "0.5.0-M2"
     val scalaj           = "2.4.1"
     val gatlingJsonpath  = "0.6.14"
-    val scalaUri         = "1.4.3"
+    val scalaUri         = "1.4.5"
     val scalaLruMap      = "0.3.0-M3"
     // Thrift schemas
     val snowplowRawEvent = "0.1.0"
@@ -64,9 +64,6 @@ object Dependencies {
     val schemaSniffer    = "0.0.0"
     // Scala (test only)
     val specs2           = "4.5.1"
-    val scalaCheck       = "1.10.0"
-    val scaldingArgs     = "0.13.0"
-    val mockito          = "1.10.19"
   }
 
   object Libraries {
