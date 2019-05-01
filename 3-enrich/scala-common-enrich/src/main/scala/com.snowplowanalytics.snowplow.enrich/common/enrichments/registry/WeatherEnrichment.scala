@@ -15,6 +15,7 @@ package enrichments.registry
 
 import java.lang.{Float => JFloat}
 import java.time.{Instant, ZoneOffset, ZonedDateTime}
+import java.util.concurrent.TimeUnit
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -42,7 +43,6 @@ object WeatherEnrichment extends ParseableEnrichment {
       0
     )
 
-  import java.util.concurrent.TimeUnit
   override def parse(
     c: Json,
     schemaKey: SchemaKey,
