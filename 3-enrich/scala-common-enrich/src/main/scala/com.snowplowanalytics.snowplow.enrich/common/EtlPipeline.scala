@@ -32,7 +32,7 @@ import scalaz._
 import Scalaz._
 
 // This project
-import adapters.{AdapterRegistry, RawEvent}
+import adapters.AdapterRegistry
 import enrichments.{EnrichmentManager, EnrichmentRegistry}
 import outputs.EnrichedEvent
 
@@ -52,7 +52,8 @@ object EtlPipeline {
    * expects a raw CanonicalInput as its argument, not
    * a MaybeCanonicalInput.
    *
-   * @param registry Contains configuration for all
+   * @param adapterRegistry Contains all of the events adapters
+   * @param enrichmentRegistry Contains configuration for all
    *        enrichments to apply
    * @param etlVersion The ETL version
    * @param etlTstamp The ETL timestamp
@@ -64,7 +65,8 @@ object EtlPipeline {
    *         contained within the ValidatedMaybeCanonicalInput
    */
   def processEvents(
-    registry: EnrichmentRegistry,
+    adapterRegistry: AdapterRegistry,
+    enrichmentRegistry: EnrichmentRegistry,
     etlVersion: String,
     etlTstamp: DateTime,
     input: ValidatedMaybeCollectorPayload)(implicit resolver: Resolver): List[ValidatedEnrichedEvent] = {
@@ -85,11 +87,11 @@ object EtlPipeline {
             payload <- maybePayload
           } yield
             for {
-              events <- AdapterRegistry.toRawEvents(payload)
+              events <- adapterRegistry.toRawEvents(payload)
             } yield
               for {
                 event <- events
-                enriched = EnrichmentManager.enrichEvent(registry, etlVersion, etlTstamp, event)
+                enriched = EnrichmentManager.enrichEvent(enrichmentRegistry, etlVersion, etlTstamp, event)
               } yield enriched
 
       flattenToList[EnrichedEvent](e)

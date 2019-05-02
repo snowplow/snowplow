@@ -25,7 +25,7 @@ import java.io.File
 import java.net.URI
 
 import scalaz.Validation
-
+import common.adapters.AdapterRegistry
 import common.enrichments.EnrichmentRegistry
 import config.FileConfig
 import iglu.client.Resolver
@@ -41,10 +41,11 @@ object KafkaEnrich extends Enrich {
   override def getSource(
     streamsConfig: StreamsConfig,
     resolver: Resolver,
+    adapterRegistry: AdapterRegistry,
     enrichmentRegistry: EnrichmentRegistry,
     tracker: Option[Tracker]
   ): Validation[String, Source] =
-    KafkaSource.create(streamsConfig, resolver, enrichmentRegistry, tracker)
+    KafkaSource.create(streamsConfig, resolver, adapterRegistry, enrichmentRegistry, tracker)
 
   override val parser: scopt.OptionParser[FileConfig] = localParser
 

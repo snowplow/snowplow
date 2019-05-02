@@ -31,6 +31,7 @@ import scalaz._
 import Scalaz._
 
 import common.EtlPipeline
+import common.adapters.AdapterRegistry
 import common.enrichments.EnrichmentRegistry
 import common.loaders.ThriftLoader
 import common.outputs.{EnrichedEvent, BadRow}
@@ -202,6 +203,7 @@ object Enrich {
       implicit r: Resolver): List[Validation[BadRow, EnrichedEvent]] = {
     val collectorPayload = ThriftLoader.toCollectorPayload(data)
     val processedEvents = EtlPipeline.processEvents(
+      new AdapterRegistry,
       enrichmentRegistry,
       s"beam-enrich-${generated.BuildInfo.version}",
       new DateTime(System.currentTimeMillis),

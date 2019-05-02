@@ -28,7 +28,6 @@ import java.util.{List, UUID}
 import scala.util.control.Breaks._
 import scala.collection.JavaConversions._
 import scala.util.control.NonFatal
-
 import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import com.amazonaws.services.kinesis.AmazonKinesisClientBuilder
@@ -39,7 +38,7 @@ import com.amazonaws.services.kinesis.model.Record
 import org.apache.thrift.TDeserializer
 import scalaz._
 import Scalaz._
-
+import common.adapters.AdapterRegistry
 import common.enrichments.EnrichmentRegistry
 import iglu.client.Resolver
 import model.{Kinesis, StreamsConfig}
@@ -51,6 +50,7 @@ object KinesisSource {
   def createAndInitialize(
     config: StreamsConfig,
     igluResolver: Resolver,
+    adapterRegistry: AdapterRegistry,
     enrichmentRegistry: EnrichmentRegistry,
     tracker: Option[Tracker]
   ): Validation[String, KinesisSource] = for {
@@ -66,18 +66,19 @@ object KinesisSource {
         (_, _, _) => ()
       }.leftMap(_.toList.mkString("\n"))
     provider <- KinesisEnrich.getProvider(kinesisConfig.aws).validation
-  } yield new KinesisSource(igluResolver, enrichmentRegistry, tracker, config, kinesisConfig, provider)
+  } yield new KinesisSource(igluResolver, adapterRegistry, enrichmentRegistry, tracker, config, kinesisConfig, provider)
 }
 
 /** Source to read events from a Kinesis stream */
 class KinesisSource private (
   igluResolver: Resolver,
+  adapterRegistry: AdapterRegistry,
   enrichmentRegistry: EnrichmentRegistry,
   tracker: Option[Tracker],
   config: StreamsConfig,
   kinesisConfig: Kinesis,
   provider: AWSCredentialsProvider
-) extends Source(igluResolver, enrichmentRegistry, tracker, config.out.partitionKey) {
+) extends Source(igluResolver, adapterRegistry, enrichmentRegistry, tracker, config.out.partitionKey) {
 
   override val MaxRecordSize = Some(1000000L)
 

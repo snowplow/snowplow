@@ -24,8 +24,9 @@ package stream
 import java.io.File
 import java.net.URI
 
+import com.snowplowanalytics.snowplow.enrich.common.adapters.AdapterRegistry
+import common.adapters.registry.RemoteAdapter
 import scalaz.{Sink => _, Source => _, _}
-
 import common.enrichments.EnrichmentRegistry
 import config.FileConfig
 import iglu.client.Resolver
@@ -41,11 +42,12 @@ object NsqEnrich extends Enrich {
   override def getSource(
     streamsConfig: StreamsConfig,
     resolver: Resolver,
+    adapterRegistry: AdapterRegistry,
     enrichmentRegistry: EnrichmentRegistry,
     tracker: Option[Tracker]
   ): Validation[String, Source] =
     NsqSource
-      .create(streamsConfig, resolver, enrichmentRegistry, tracker)
+      .create(streamsConfig, resolver, adapterRegistry, enrichmentRegistry, tracker)
       .leftMap(_.getMessage)
 
   override val parser: scopt.OptionParser[FileConfig] = localParser

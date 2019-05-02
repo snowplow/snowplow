@@ -14,8 +14,6 @@ package com.snowplowanalytics.snowplow.enrich
 package common
 package utils
 
-import scalaj.http.HttpRequest
-
 import scala.util.control.NonFatal
 
 // Scalaz
@@ -26,6 +24,10 @@ import Scalaz._
 import scalaj.http._
 
 object HttpClient {
+
+  // The defaults are from scalaj library
+  val DEFAULT_CONNECTION_TIMEOUT_MS = 1000
+  val DEFAULT_READ_TIMEOUT_MS       = 5000
 
   /**
    * Blocking method to get body of HTTP response
@@ -50,6 +52,8 @@ object HttpClient {
    * @param authPassword optional password for basic auth
    * @param body optional request body
    * @param method HTTP method
+   * @param connectionTimeout connection timeout, if not set default is 1000ms
+   * @param readTimeout read timeout, if not set default is 5000ms
    * @return HTTP request
    */
   def buildRequest(
@@ -57,9 +61,11 @@ object HttpClient {
     authUser: Option[String],
     authPassword: Option[String],
     body: Option[String],
-    method: String = "GET"
+    method: String = "GET",
+    connectionTimeout: Option[Long],
+    readTimeout: Option[Long]
   ): HttpRequest = {
-    val req: HttpRequest = Http(uri).method(method)
+    val req: HttpRequest = Http(uri).method(method).maybeTimeout(connectionTimeout, readTimeout)
     req.maybeAuth(authUser, authPassword).maybePostData(body)
   }
 
@@ -68,6 +74,14 @@ object HttpClient {
     def maybeAuth(user: Option[String], password: Option[String]): HttpRequest =
       if (user.isDefined || password.isDefined) request.auth(user.getOrElse(""), password.getOrElse(""))
       else request
+
+    def maybeTimeout(connectionTimeout: Option[Long], readTimeout: Option[Long]): HttpRequest =
+      (connectionTimeout, readTimeout) match {
+        case (Some(ct), Some(rt)) => request.timeout(ct.toInt, rt.toInt)
+        case (Some(ct), None)     => request.timeout(ct.toInt, DEFAULT_READ_TIMEOUT_MS)
+        case (None, Some(rt))     => request.timeout(DEFAULT_CONNECTION_TIMEOUT_MS, rt.toInt)
+        case _                    => request.timeout(DEFAULT_CONNECTION_TIMEOUT_MS, DEFAULT_READ_TIMEOUT_MS)
+      }
 
     def maybePostData(body: Option[String]): HttpRequest =
       body.map(data => request.postData(data).header("content-type", "application/json")).getOrElse(request)

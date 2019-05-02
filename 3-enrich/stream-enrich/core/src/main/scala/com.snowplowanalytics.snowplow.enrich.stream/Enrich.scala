@@ -27,7 +27,6 @@ import java.net.URI
 import scala.io.Source
 import scala.util.Try
 import scala.sys.process._
-
 import com.typesafe.config.ConfigFactory
 import org.json4s.jackson.JsonMethods._
 import org.json4s.JsonDSL._
@@ -36,6 +35,8 @@ import pureconfig._
 import scalaz.{Sink => _, Source => _, _}
 import Scalaz._
 
+import common.adapters.AdapterRegistry
+import common.adapters.registry.RemoteAdapter
 import common.enrichments.EnrichmentRegistry
 import common.utils.JsonUtils
 import config._
@@ -60,8 +61,9 @@ trait Enrich {
       resolver           <- parseResolver(resolverArg)
       enrichmentRegistry <- parseEnrichmentRegistry(enrichmentsArg)(resolver, implicitly)
       _                  <- cacheFiles(enrichmentRegistry, forceDownload)
+      adapterRegistry     = new AdapterRegistry(prepareRemoteAdapters(enrichConfig.remoteAdapters))
       tracker = enrichConfig.monitoring.map(c => SnowplowTracking.initializeTracker(c.snowplow))
-      source <- getSource(enrichConfig.streams, resolver, enrichmentRegistry, tracker)
+      source <- getSource(enrichConfig.streams, resolver, adapterRegistry, enrichmentRegistry, tracker)
     } yield (tracker, source)
 
     trackerSource match {
@@ -85,6 +87,7 @@ trait Enrich {
   def getSource(
     streamsConfig: StreamsConfig,
     resolver: Resolver,
+    adapterRegistry: AdapterRegistry,
     enrichmentRegistry: EnrichmentRegistry,
     tracker: Option[Tracker]
   ): Validation[String, sources.Source]
@@ -245,4 +248,23 @@ a  * @param creds optionally necessary credentials to download the resolver
           }.toValidationNel
       }
       .sequenceU
+
+  /**
+    *  Sets up the Remote adapters for the ETL
+    * @param remoteAdaptersConfig List of configuration per remote adapter
+    * @return Mapping of vender-version and the adapter assigned for it
+    */
+  def prepareRemoteAdapters(remoteAdaptersConfig: Option[List[RemoteAdapterConfig]]) = {
+    remoteAdaptersConfig match {
+      case Some(configList) => configList.map { config =>
+        val adapter = new RemoteAdapter(
+          config.url,
+          config.connectionTimeout,
+          config.readTimeout
+        )
+        (config.vendor, config.version) -> adapter
+      }.toMap
+      case None => Map.empty[(String, String), RemoteAdapter]
+    }
+  }
 }
