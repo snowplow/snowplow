@@ -32,6 +32,7 @@ import org.apache.commons.codec.digest.DigestUtils
 // Snowplow
 import common.loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
 import common.outputs.EnrichedEvent
+import common.adapters.AdapterRegistry
 import utils.TestResourcesRepositoryRef
 import common.SpecHelpers.toNameValuePairs
 import common.utils.TestResourcesRepositoryRef
@@ -60,7 +61,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
   """
 
   def commonSetup(enrichmentMap: EnrichmentMap): List[ValidatedEnrichedEvent] = {
-    val registry = EnrichmentRegistry(enrichmentMap)
+    val enrichmentRegistry = EnrichmentRegistry(enrichmentMap)
     val context =
       CollectorContext(Some(DateTime.parse("2017-07-14T03:39:39.000+00:00")), Some("127.0.0.1"), None, None, Nil, None)
     val source = CollectorSource("clj-tomcat", "UTF-8", None)
@@ -135,8 +136,9 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidationMatche
     val input: ValidatedMaybeCollectorPayload = Some(collectorPayload).successNel
     val rrc                                   = new RepositoryRefConfig("test-schema", 1, List("com.snowplowanalytics.snowplow"))
     val repos                                 = TestResourcesRepositoryRef(rrc, "src/test/resources/iglu-schemas")
+    val adapterRegistry                       = new AdapterRegistry()
     implicit val resolver                     = new Resolver(repos = List(repos))
-    EtlPipeline.processEvents(registry, s"spark-0.0.0", new DateTime(1500000000L), input)
+    EtlPipeline.processEvents(adapterRegistry, enrichmentRegistry, s"spark-0.0.0", new DateTime(1500000000L), input)
   }
 
   private val ipEnrichment = IpLookupsEnrichment(Some(("geo", new URI("/ignored-in-local-mode/"), "GeoIP2-City.mmdb")),

@@ -20,6 +20,8 @@ package enrich
 package stream
 package sources
 
+import com.snowplowanalytics.snowplow.enrich.common.adapters.AdapterRegistry
+import common.adapters.registry.RemoteAdapter
 import iglu.client.Resolver
 import common.enrichments.EnrichmentRegistry
 import model.EnrichConfig
@@ -34,9 +36,10 @@ import sinks.Sink
 class TestSource(
   config: EnrichConfig,
   igluResolver: Resolver,
+  adapterRegistry: AdapterRegistry,
   enrichmentRegistry: EnrichmentRegistry,
   tracker: Option[Tracker]
-) extends Source(igluResolver, enrichmentRegistry, tracker, "") {
+) extends Source(igluResolver, adapterRegistry, enrichmentRegistry, tracker, "") {
 
   override val MaxRecordSize = None
 

@@ -33,7 +33,6 @@ import scala.util.control.NonFatal
 import scalaz.{Sink => _, _}
 import Scalaz._
 import org.apache.commons.codec.binary.Base64
-import org.joda.time.DateTime
 import org.json4s.{ThreadLocal => _, _}
 import org.json4s.JsonDSL._
 import org.json4s.DefaultFormats
@@ -45,8 +44,10 @@ import org.joda.time.format.DateTimeFormat
 
 import common.{EtlPipeline, ValidatedMaybeCollectorPayload}
 import common.enrichments.EnrichmentRegistry
+import common.adapters.AdapterRegistry
 import common.loaders.ThriftLoader
 import common.outputs.{BadRow, EnrichedEvent}
+
 import iglu.client.Resolver
 import scalatracker.Tracker
 import sinks._
@@ -104,6 +105,7 @@ object Source {
 /** Abstract base for the different sources we support. */
 abstract class Source(
   igluResolver: Resolver,
+  adapterRegistry: AdapterRegistry,
   enrichmentRegistry: EnrichmentRegistry,
   tracker: Option[Tracker],
   partitionKey: String
@@ -188,6 +190,7 @@ abstract class Source(
     Validation[(String, String), (String, String, Option[String])]] = {
     val canonicalInput: ValidatedMaybeCollectorPayload = ThriftLoader.toCollectorPayload(binaryData)
     val processedEvents: List[ValidationNel[String, EnrichedEvent]] = EtlPipeline.processEvents(
+      adapterRegistry,
       enrichmentRegistry,
       s"stream-enrich-${generated.BuildInfo.version}",
       new DateTime(System.currentTimeMillis),

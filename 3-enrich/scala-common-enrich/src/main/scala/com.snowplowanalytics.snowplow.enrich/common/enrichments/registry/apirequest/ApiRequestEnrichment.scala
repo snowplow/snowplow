@@ -16,9 +16,6 @@ package enrichments
 package registry
 package apirequest
 
-// Maven Artifact
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion
-
 // Java
 import java.util.UUID
 

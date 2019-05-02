@@ -60,7 +60,7 @@ case class HttpApi(method: String, uri: String, timeout: Int, authentication: Au
    * @return self-describing JSON ready to be attached to event contexts
    */
   def perform(url: String, body: Option[String] = None): Validation[Throwable, String] = {
-    val req = HttpClient.buildRequest(url, authUser = authUser, authPassword = authPassword, body, method)
+    val req = HttpClient.buildRequest(url, authUser = authUser, authPassword = authPassword, body, method, None, None)
     HttpClient.getBody(req)
   }
 

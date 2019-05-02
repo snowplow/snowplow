@@ -19,7 +19,8 @@ package enrich
 package stream
 
 // Scala
-import com.snowplowanalytics.snowplow.enrich.stream.model.StreamsConfig
+import common.adapters.AdapterRegistry
+import enrich.stream.model.StreamsConfig
 
 import scala.concurrent._
 import scala.concurrent.duration.Duration
@@ -63,9 +64,10 @@ trait KafkaIntegrationSpec
   def getMainApplicationFuture(
                                 configuration: StreamsConfig,
                                 resolver: Resolver,
-                                registry: EnrichmentRegistry,
+                                adapterRegistry: AdapterRegistry,
+                                enrichmentRegistry: EnrichmentRegistry,
                                 tracker: Option[Tracker]): Future[Unit] = Future {
-    KafkaEnrich.getSource(configuration, resolver, registry, tracker).toOption.get.run()
+    KafkaEnrich.getSource(configuration, resolver, adapterRegistry, enrichmentRegistry, tracker).toOption.get.run()
   }
 
   def producerTimeoutSec: Int
