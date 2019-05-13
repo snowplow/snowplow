@@ -68,7 +68,7 @@ daemonUser in Docker := "snowplow"
 
 lazy val scioVersion = "0.6.0"
 lazy val beamVersion = "2.5.0"
-lazy val sceVersion = "0.36.0"
+lazy val sceVersion = "0.37.0"
 lazy val scalaMacrosVersion = "2.1.0"
 lazy val slf4jVersion = "1.7.25"
 lazy val scalatestVersion = "3.0.5"
