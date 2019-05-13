@@ -19,6 +19,7 @@ import cats.data.ValidatedNel
 import cats.instances.int._
 import cats.syntax.either._
 import cats.syntax.validated._
+import com.snowplowanalytics.snowplow.badrows._
 
 /**
  * The problem we're trying to solve: converting maps to classes in Scala
@@ -66,9 +67,8 @@ object MapTransformer {
   type Value = String
   type Field = String
 
-  // A transformation takes a Key and Value and returns a Scalaz Validation with String for Failure
-  // and anything for Success
-  type TransformFunc = Function2[Key, Value, Either[String, _]]
+  // A transformation takes a Key and Value and returns either a failure or anything
+  type TransformFunc = Function2[Key, Value, Either[FailureDetails.EnrichmentStageIssue, _]]
 
   // Our source map
   type SourceMap = Map[Key, Value]
@@ -90,7 +90,7 @@ object MapTransformer {
     transformMap: TransformMap
   )(
     implicit m: Manifest[T]
-  ): ValidatedNel[String, T] = {
+  ): ValidatedNel[FailureDetails.EnrichmentStageIssue, T] = {
     val newInst = m.runtimeClass.newInstance()
     val result = _transform(newInst, sourceMap, transformMap, getSetters(m.runtimeClass))
     // On success, replace the field count with the new instance
@@ -118,7 +118,10 @@ object MapTransformer {
      * @param transformMap Determines how the data should be transformed before storing in the obj
      * @return a ValidationNel containing a Nel of error Strings, or the count of updated fields
      */
-    def transform(sourceMap: SourceMap, transformMap: TransformMap): ValidatedNel[String, Int] =
+    def transform(
+      sourceMap: SourceMap,
+      transformMap: TransformMap
+    ): ValidatedNel[FailureDetails.EnrichmentStageIssue, Int] =
       _transform[T](obj, sourceMap, transformMap, setters)
   }
 
@@ -136,8 +139,8 @@ object MapTransformer {
     sourceMap: SourceMap,
     transformMap: TransformMap,
     setters: SettersMap
-  ): ValidatedNel[String, Int] = {
-    val results: List[Either[String, Int]] = sourceMap.map {
+  ): ValidatedNel[FailureDetails.EnrichmentStageIssue, Int] = {
+    val results: List[Either[FailureDetails.EnrichmentStageIssue, Int]] = sourceMap.map {
       case (key, in) =>
         transformMap.get(key) match {
           case Some((func, field)) =>
@@ -174,7 +177,10 @@ object MapTransformer {
         }
     }.toList
 
-    results.foldLeft(0.validNel[String]) { case (acc, e) => acc.combine(e.toValidatedNel) }
+    results.foldLeft(0.validNel[FailureDetails.EnrichmentStageIssue]) {
+      case (acc, e) =>
+        acc.combine(e.toValidatedNel)
+    }
   }
 
   /**

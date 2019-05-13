@@ -16,12 +16,17 @@ package registry
 
 import cats.data.NonEmptyList
 import cats.syntax.option._
+
+import com.snowplowanalytics.snowplow.badrows.FailureDetails
+
 import io.circe.literal._
+
 import org.joda.time.DateTime
+
 import org.specs2.Specification
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
-import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import loaders._
 import utils.Clock._
 
 class PingdomAdapterSpec extends Specification with DataTables with ValidatedMatchers {
@@ -35,9 +40,9 @@ class PingdomAdapterSpec extends Specification with DataTables with ValidatedMat
   """
 
   object Shared {
-    val api = CollectorApi("com.pingdom", "v1")
-    val cljSource = CollectorSource("clj-tomcat", "UTF-8", None)
-    val context = CollectorContext(
+    val api = CollectorPayload.Api("com.pingdom", "v1")
+    val cljSource = CollectorPayload.Source("clj-tomcat", "UTF-8", None)
+    val context = CollectorPayload.Context(
       DateTime.parse("2013-08-29T00:18:48.000+00:00").some,
       "37.157.33.123".some,
       None,
@@ -58,7 +63,11 @@ class PingdomAdapterSpec extends Specification with DataTables with ValidatedMat
   def e2 = {
     val nvPairs = SpecHelpers.toNameValuePairs("p" -> "(u'apps',)")
     val expected =
-      "Pingdom name-value pair [p -> apps]: Passed regex - Collector is not catching unicode wrappers anymore"
+      FailureDetails.AdapterFailure.InputData(
+        "p",
+        "apps".some,
+        """should not pass regex \(u'(.+)',\)"""
+      )
     PingdomAdapter.reformatMapParams(nvPairs) must beLeft(NonEmptyList.one(expected))
   }
 
@@ -88,7 +97,12 @@ class PingdomAdapterSpec extends Specification with DataTables with ValidatedMat
 
   def e4 = {
     val payload = CollectorPayload(Shared.api, Nil, None, None, Shared.cljSource, Shared.context)
-    val expected = "Pingdom payload querystring is empty: nothing to process"
+    val expected =
+      FailureDetails.AdapterFailure.InputData(
+        "querystring",
+        None,
+        "empty querystring: no events to process"
+      )
     PingdomAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(
       NonEmptyList.one(expected)
     )
@@ -99,7 +113,11 @@ class PingdomAdapterSpec extends Specification with DataTables with ValidatedMat
     val payload =
       CollectorPayload(Shared.api, querystring, None, None, Shared.cljSource, Shared.context)
     val expected =
-      "Pingdom payload querystring does not have 'message' as a key"
+      FailureDetails.AdapterFailure.InputData(
+        "querystring",
+        "p=apps".some,
+        "no `message` parameter provided"
+      )
     PingdomAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(
       NonEmptyList.one(expected)
     )

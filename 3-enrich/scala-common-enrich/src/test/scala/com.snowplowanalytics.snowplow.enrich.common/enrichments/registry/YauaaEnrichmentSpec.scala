@@ -14,23 +14,13 @@ package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 package registry
 
-// Specs2
-import org.specs2.mutable.Specification
-import org.specs2.scalaz.ValidationMatchers
-
-// Scalaz
-import scalaz.Success
-
-// YAUAA
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
+import io.circe.parser._
 import nl.basjes.parse.useragent.UserAgent
+import org.specs2.matcher.ValidatedMatchers
+import org.specs2.mutable.Specification
 
-// Json4s
-import org.json4s.jackson.JsonMethods._
-
-// Iglu
-import com.snowplowanalytics.iglu.client.SchemaKey
-
-class YauaaEnrichmentSpec extends Specification with ValidationMatchers {
+class YauaaEnrichmentSpec extends Specification with ValidatedMatchers {
 
   import YauaaEnrichment.decapitalize
 
@@ -63,8 +53,9 @@ class YauaaEnrichmentSpec extends Specification with ValidationMatchers {
   val uaChromium =
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.22 (KHTML, like Gecko) Ubuntu Chromium/25.0.1364.160 Chrome/25.0.1364.160 Safari/537.22"
   val uaFirefox = "Mozilla/5.0 (Windows NT 6.1; rv:2.0b7pre) Gecko/20100921 Firefox/4.0b7pre"
-  val uaIE      = "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.0; Trident/5.0)"
-  val uaOpera   = "Mozilla/4.0 (compatible; MSIE 6.0; MSIE 5.5; Windows NT 5.0) Opera 7.02 Bork-edition [en]"
+  val uaIE = "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.0; Trident/5.0)"
+  val uaOpera =
+    "Mozilla/4.0 (compatible; MSIE 6.0; MSIE 5.5; Windows NT 5.0) Opera 7.02 Bork-edition [en]"
   val uaSafari =
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/536.30.1 (KHTML, like Gecko) Version/6.0.5 Safari/536.30.1"
 
@@ -83,12 +74,12 @@ class YauaaEnrichmentSpec extends Specification with ValidationMatchers {
     "detect correctly DeviceClass" >> {
       checkYauaaParsingForField(
         Map(
-          uaChromium     -> "Desktop",
-          uaGalaxyTab    -> "Tablet",
-          uaIpad         -> "Tablet",
-          uaNexusS       -> "Phone",
+          uaChromium -> "Desktop",
+          uaGalaxyTab -> "Tablet",
+          uaIpad -> "Tablet",
+          uaNexusS -> "Phone",
           uaPlaystation4 -> "Game Console",
-          uaGoogleBot    -> "Robot"
+          uaGoogleBot -> "Robot"
         ),
         UserAgent.DEVICE_CLASS
       )
@@ -97,15 +88,15 @@ class YauaaEnrichmentSpec extends Specification with ValidationMatchers {
     "detect correctly DeviceName" >> {
       checkYauaaParsingForField(
         Map(
-          uaGalaxyS9     -> "Samsung SM-G960F",
-          uaGalaxyS8     -> "Samsung SM-G892A",
-          uaXperiaXZ     -> "Sony G8231",
-          uaIphone7      -> "Apple iPhone",
-          uaIphoneX      -> "Apple iPhone",
-          uaNexusS       -> "Google Nexus S",
-          uaNexusOne     -> "Google Nexus ONE",
+          uaGalaxyS9 -> "Samsung SM-G960F",
+          uaGalaxyS8 -> "Samsung SM-G892A",
+          uaXperiaXZ -> "Sony G8231",
+          uaIphone7 -> "Apple iPhone",
+          uaIphoneX -> "Apple iPhone",
+          uaNexusS -> "Google Nexus S",
+          uaNexusOne -> "Google Nexus ONE",
           uaPlaystation4 -> "Sony PlayStation 4",
-          uaGoogleBot    -> "Google"
+          uaGoogleBot -> "Google"
         ),
         UserAgent.DEVICE_NAME
       )
@@ -114,12 +105,12 @@ class YauaaEnrichmentSpec extends Specification with ValidationMatchers {
     "detect correctly OperatingSystemClass" >> {
       checkYauaaParsingForField(
         Map(
-          uaChromium     -> "Desktop",
-          uaIE           -> "Desktop",
-          uaIpad         -> "Mobile",
-          uaNexusS       -> "Mobile",
+          uaChromium -> "Desktop",
+          uaIE -> "Desktop",
+          uaIpad -> "Mobile",
+          uaNexusS -> "Mobile",
           uaPlaystation4 -> "Game Console",
-          uaGoogleBot    -> "Cloud"
+          uaGoogleBot -> "Cloud"
         ),
         UserAgent.OPERATING_SYSTEM_CLASS
       )
@@ -128,12 +119,12 @@ class YauaaEnrichmentSpec extends Specification with ValidationMatchers {
     "detect correctly OperatingSystemName" >> {
       checkYauaaParsingForField(
         Map(
-          uaChromium  -> "Ubuntu",
-          uaIE        -> "Windows NT",
-          uaNexusOne  -> "Android",
-          uaIphoneX   -> "iOS",
-          uaIpad      -> "iOS",
-          uaSafari    -> "Mac OS X",
+          uaChromium -> "Ubuntu",
+          uaIE -> "Windows NT",
+          uaNexusOne -> "Android",
+          uaIphoneX -> "iOS",
+          uaIpad -> "iOS",
+          uaSafari -> "Mac OS X",
           uaGoogleBot -> "Google"
         ),
         UserAgent.OPERATING_SYSTEM_NAME
@@ -143,14 +134,14 @@ class YauaaEnrichmentSpec extends Specification with ValidationMatchers {
     "detect correctly LayoutEngineClass" >> {
       checkYauaaParsingForField(
         Map(
-          uaChrome       -> "Browser",
-          uaIE           -> "Browser",
-          uaNexusOne     -> "Browser",
-          uaIphoneX      -> "Browser",
-          uaIpad         -> "Browser",
-          uaSafari       -> "Browser",
+          uaChrome -> "Browser",
+          uaIE -> "Browser",
+          uaNexusOne -> "Browser",
+          uaIphoneX -> "Browser",
+          uaIpad -> "Browser",
+          uaSafari -> "Browser",
           uaPlaystation4 -> "Browser",
-          uaGoogleBot    -> "Robot"
+          uaGoogleBot -> "Robot"
         ),
         UserAgent.LAYOUT_ENGINE_CLASS
       )
@@ -159,14 +150,14 @@ class YauaaEnrichmentSpec extends Specification with ValidationMatchers {
     "detect correctly AgentClass" >> {
       checkYauaaParsingForField(
         Map(
-          uaChromium     -> "Browser",
-          uaIE           -> "Browser",
-          uaNexusOne     -> "Browser",
-          uaIphoneX      -> "Browser",
-          uaIpad         -> "Browser",
-          uaSafari       -> "Browser",
+          uaChromium -> "Browser",
+          uaIE -> "Browser",
+          uaNexusOne -> "Browser",
+          uaIphoneX -> "Browser",
+          uaIpad -> "Browser",
+          uaSafari -> "Browser",
           uaPlaystation4 -> "Browser",
-          uaGoogleBot    -> "Robot"
+          uaGoogleBot -> "Robot"
         ),
         UserAgent.AGENT_CLASS
       )
@@ -175,15 +166,15 @@ class YauaaEnrichmentSpec extends Specification with ValidationMatchers {
     "detect correctly AgentName" >> {
       checkYauaaParsingForField(
         Map(
-          uaChrome    -> "Chrome",
-          uaChromium  -> "Chromium",
-          uaFirefox   -> "Firefox",
-          uaIE        -> "Internet Explorer",
-          uaNexusOne  -> "Stock Android Browser",
-          uaIphoneX   -> "Safari",
-          uaIpad      -> "Safari",
-          uaOpera     -> "Opera",
-          uaSafari    -> "Safari",
+          uaChrome -> "Chrome",
+          uaChromium -> "Chromium",
+          uaFirefox -> "Firefox",
+          uaIE -> "Internet Explorer",
+          uaNexusOne -> "Stock Android Browser",
+          uaIphoneX -> "Safari",
+          uaIpad -> "Safari",
+          uaOpera -> "Opera",
+          uaSafari -> "Safari",
           uaGoogleBot -> "Googlebot"
         ),
         UserAgent.AGENT_NAME
@@ -192,14 +183,16 @@ class YauaaEnrichmentSpec extends Specification with ValidationMatchers {
 
     "create a JSON with the schema and the data" >> {
       val expected = parse(
-        s"""{"schema":"${yauaaEnrichment.contextSchema}","data":{"deviceBrand":"Samsung","deviceName":"Samsung SM-G960F","layoutEngineNameVersion":"Blink 62.0","operatingSystemNameVersion":"Android 8.0.0","operatingSystemVersionBuild":"R16NW","layoutEngineNameVersionMajor":"Blink 62","operatingSystemName":"Android","agentVersionMajor":"62","layoutEngineVersionMajor":"62","deviceClass":"Phone","agentNameVersionMajor":"Chrome 62","operatingSystemClass":"Mobile","layoutEngineName":"Blink","agentName":"Chrome","agentVersion":"62.0.3202.84","layoutEngineClass":"Browser","agentNameVersion":"Chrome 62.0.3202.84","operatingSystemVersion":"8.0.0","agentClass":"Browser","layoutEngineVersion":"62.0"}}""")
+        s"""{"schema":"${yauaaEnrichment.contextSchema}","data":{"deviceBrand":"Samsung","deviceName":"Samsung SM-G960F","layoutEngineNameVersion":"Blink 62.0","operatingSystemNameVersion":"Android 8.0.0","operatingSystemVersionBuild":"R16NW","layoutEngineNameVersionMajor":"Blink 62","operatingSystemName":"Android","agentVersionMajor":"62","layoutEngineVersionMajor":"62","deviceClass":"Phone","agentNameVersionMajor":"Chrome 62","operatingSystemClass":"Mobile","layoutEngineName":"Blink","agentName":"Chrome","agentVersion":"62.0.3202.84","layoutEngineClass":"Browser","agentNameVersion":"Chrome 62.0.3202.84","operatingSystemVersion":"8.0.0","agentClass":"Browser","layoutEngineVersion":"62.0"}}"""
+      ).toOption.get
       val actual = yauaaEnrichment
         .getYauaaContext(uaGalaxyS9)
-      actual shouldEqual Success(expected)
+      actual shouldEqual expected
 
       val defaultJson = parse(
-        s"""{"schema":"${yauaaEnrichment.contextSchema}","data":{"deviceClass":"${yauaaEnrichment.defaultDeviceClass}"}}""")
-      yauaaEnrichment.getYauaaContext("") shouldEqual Success(defaultJson)
+        s"""{"schema":"${yauaaEnrichment.contextSchema}","data":{"deviceClass":"${yauaaEnrichment.defaultDeviceClass}"}}"""
+      ).toOption.get
+      yauaaEnrichment.getYauaaContext("") shouldEqual defaultJson
     }
   }
 
@@ -229,10 +222,12 @@ class YauaaEnrichmentSpec extends Specification with ValidationMatchers {
 
   "Parsing the config JSON for YAUAA enrichment" should {
 
-    val schemaKey = SchemaKey(YauaaEnrichment.supportedSchema.vendor,
-                              YauaaEnrichment.supportedSchema.name,
-                              YauaaEnrichment.supportedSchema.format,
-                              "1-0-0")
+    val schemaKey = SchemaKey(
+      YauaaEnrichment.supportedSchema.vendor,
+      YauaaEnrichment.supportedSchema.name,
+      YauaaEnrichment.supportedSchema.format,
+      SchemaVer.Full(1, 0, 0)
+    )
 
     "successfully construct a YauaaEnrichment case class with the right cache size if specified" in {
       val cacheSize = 42
@@ -242,27 +237,21 @@ class YauaaEnrichmentSpec extends Specification with ValidationMatchers {
         "parameters": {
           "cacheSize": $cacheSize
         }
-      }""")
+      }""").toOption.get
 
-      val expected = YauaaEnrichment(Some(cacheSize))
-      val actual   = YauaaEnrichment.parse(yauaaConfigJson, schemaKey)
-      actual must beSuccessful(expected)
-      actual must beSuccessful.like {
-        case yauaaEnrich => yauaaEnrich.getCacheSize must be_===(cacheSize)
-      }
+      val expected = YauaaConf(Some(cacheSize))
+      val actual = YauaaEnrichment.parse(yauaaConfigJson, schemaKey)
+      actual must beValid(expected)
     }
 
     "successfully construct a YauaaEnrichment case class with a default cache size if none specified" in {
       val yauaaConfigJson = parse(s"""{
         "enabled": true
-      }""")
+      }""").toOption.get
 
-      val expected = YauaaEnrichment(None)
-      val actual   = YauaaEnrichment.parse(yauaaConfigJson, schemaKey)
-      actual must beSuccessful(expected)
-      actual must beSuccessful.like {
-        case yauaaEnrich => yauaaEnrich.getCacheSize must be_>(0)
-      }
+      val expected = YauaaConf(None)
+      val actual = YauaaEnrichment.parse(yauaaConfigJson, schemaKey)
+      actual must beValid(expected)
     }
   }
 }

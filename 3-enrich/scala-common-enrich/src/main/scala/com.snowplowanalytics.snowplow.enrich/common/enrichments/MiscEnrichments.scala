@@ -17,6 +17,8 @@ import cats.syntax.either._
 import io.circe._
 import io.circe.syntax._
 
+import com.snowplowanalytics.snowplow.badrows.{FailureDetails, Processor}
+
 import generated.ProjectSettings
 import utils.{ConversionUtils => CU}
 
@@ -25,11 +27,11 @@ object MiscEnrichments {
 
   /**
    * The version of this ETL. Appends this version to the supplied "host" ETL.
-   * @param hostEtlVersion The version of the host ETL running this library
+   * @param processor The version of the host ETL running this library
    * @return the complete ETL version
    */
-  def etlVersion(hostEtlVersion: String): String =
-    "%s-common-%s".format(hostEtlVersion, ProjectSettings.version)
+  def etlVersion(processor: Processor): String =
+    s"${processor.artifact}-${processor.version}-common-${ProjectSettings.version}"
 
   /**
    * Validate the specified platform.
@@ -37,25 +39,30 @@ object MiscEnrichments {
    * @param platform The code for the platform generating this event.
    * @return a Scalaz ValidatedString.
    */
-  val extractPlatform: (String, String) => Either[String, String] = (field, platform) =>
-    platform match {
-      case "web" => "web".asRight // Web, including Mobile Web
-      case "iot" => "iot".asRight // Internet of Things (e.g. Arduino tracker)
-      case "app" => "app".asRight // General App
-      case "mob" => "mob".asRight // Mobile / Tablet
-      case "pc" => "pc".asRight // Desktop / Laptop / Netbook
-      case "cnsl" => "cnsl".asRight // Games Console
-      case "tv" => "tv".asRight // Connected TV
-      case "srv" => "srv".asRight // Server-side App
-      case p => s"Field [$field]: [$p] is not a supported tracking platform".asLeft
-    }
-
-  /** Identity transform. Straight passthrough. */
-  val identity: (String, String) => Either[String, String] = (_, value) => value.asRight
+  val extractPlatform: (String, String) => Either[FailureDetails.EnrichmentStageIssue, String] =
+    (field, platform) =>
+      platform match {
+        case "web" => "web".asRight // Web, including Mobile Web
+        case "iot" => "iot".asRight // Internet of Things (e.g. Arduino tracker)
+        case "app" => "app".asRight // General App
+        case "mob" => "mob".asRight // Mobile / Tablet
+        case "pc" => "pc".asRight // Desktop / Laptop / Netbook
+        case "cnsl" => "cnsl".asRight // Games Console
+        case "tv" => "tv".asRight // Connected TV
+        case "srv" => "srv".asRight // Server-side App
+        case _ =>
+          val msg = "not recognized as a tracking platform"
+          val f = FailureDetails.EnrichmentFailureMessage.InputData(
+            field,
+            Option(platform),
+            msg
+          )
+          FailureDetails.EnrichmentFailure(None, f).asLeft
+      }
 
   /** Make a String TSV safe */
-  val toTsvSafe: (String, String) => Either[String, String] = (_, value) =>
-    CU.makeTsvSafe(value).asRight
+  val toTsvSafe: (String, String) => Either[FailureDetails.EnrichmentStageIssue, String] =
+    (_, value) => CU.makeTsvSafe(value).asRight
 
   /**
    * The X-Forwarded-For header can contain a comma-separated list of IPs especially if it has
@@ -63,10 +70,11 @@ object MiscEnrichments {
    * Here we retrieve the first one as it is supposed to be the client one, c.f.
    * https://en.m.wikipedia.org/wiki/X-Forwarded-For#Format
    */
-  val extractIp: (String, String) => Either[String, String] = (_, value) => {
-    val lastIp = Option(value).map(_.split("[,|, ]").head).orNull
-    CU.makeTsvSafe(lastIp).asRight
-  }
+  val extractIp: (String, String) => Either[FailureDetails.EnrichmentStageIssue, String] =
+    (_, value) => {
+      val lastIp = Option(value).map(_.split("[,|, ]").head).orNull
+      CU.makeTsvSafe(lastIp).asRight
+    }
 
   /**
    * Turn a list of custom contexts into a self-describing JSON

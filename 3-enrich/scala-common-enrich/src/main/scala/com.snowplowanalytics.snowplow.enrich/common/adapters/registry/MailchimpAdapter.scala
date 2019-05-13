@@ -14,11 +14,6 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-import java.net.URI
-import java.nio.charset.StandardCharsets.UTF_8
-
-import scala.collection.JavaConverters._
-
 import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.effect.Clock
@@ -28,22 +23,19 @@ import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
+import com.snowplowanalytics.snowplow.badrows._
 import io.circe._
-import org.apache.http.client.utils.URLEncodedUtils
 import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormat
 
 import loaders.CollectorPayload
-import utils.{JsonUtils => JU}
+import utils.{ConversionUtils, HttpClient, JsonUtils => JU}
 
 /**
  * Transforms a collector payload which conforms to a known version of the Mailchimp Tracking
  * webhook into raw events.
  */
 object MailchimpAdapter extends Adapter {
-  // Vendor name for Failure Message
-  private val VendorName = "MailChimp"
-
   // Expected content type for a request body
   private val ContentType = "application/x-www-form-urlencoded"
 
@@ -55,13 +47,13 @@ object MailchimpAdapter extends Adapter {
   private val SchemaVersion = SchemaVer.Full(1, 0, 0)
 
   // Schemas for reverse-engineering a Snowplow unstructured event
-  private val EventSchemaMap = Map(
-    "subscribe" -> SchemaKey(Vendor, "subscribe", Format, SchemaVersion).toSchemaUri,
-    "unsubscribe" -> SchemaKey(Vendor, "unsubscribe", Format, SchemaVersion).toSchemaUri,
-    "campaign" -> SchemaKey(Vendor, "campaign_sending_status", Format, SchemaVersion).toSchemaUri,
-    "cleaned" -> SchemaKey(Vendor, "cleaned_email", Format, SchemaVersion).toSchemaUri,
-    "upemail" -> SchemaKey(Vendor, "email_address_change", Format, SchemaVersion).toSchemaUri,
-    "profile" -> SchemaKey(Vendor, "profile_update", Format, SchemaVersion).toSchemaUri
+  private[registry] val EventSchemaMap = Map(
+    "subscribe" -> SchemaKey(Vendor, "subscribe", Format, SchemaVersion),
+    "unsubscribe" -> SchemaKey(Vendor, "unsubscribe", Format, SchemaVersion),
+    "campaign" -> SchemaKey(Vendor, "campaign_sending_status", Format, SchemaVersion),
+    "cleaned" -> SchemaKey(Vendor, "cleaned_email", Format, SchemaVersion),
+    "upemail" -> SchemaKey(Vendor, "email_address_change", Format, SchemaVersion),
+    "profile" -> SchemaKey(Vendor, "profile_update", Format, SchemaVersion)
   )
 
   // Datetime format used by MailChimp (as we will need to massage)
@@ -81,53 +73,59 @@ object MailchimpAdapter extends Adapter {
    * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
     payload: CollectorPayload,
     client: Client[F, Json]
-  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
+  ): F[
+    ValidatedNel[FailureDetails.AdapterFailureOrTrackerProtocolViolation, NonEmptyList[RawEvent]]
+  ] =
     (payload.body, payload.contentType) match {
       case (None, _) =>
-        Monad[F].pure(s"Request body is empty: no $VendorName event to process".invalidNel)
+        val failure = FailureDetails.AdapterFailure.InputData(
+          "body",
+          none,
+          "empty body: no events to process"
+        )
+        Monad[F].pure(failure.invalidNel)
       case (_, None) =>
+        val msg = s"no content type: expected $ContentType"
         Monad[F].pure(
-          s"Request body provided but content type empty, expected $ContentType for $VendorName".invalidNel
+          FailureDetails.AdapterFailure.InputData("contentType", none, msg).invalidNel
         )
       case (_, Some(ct)) if ct != ContentType =>
-        Monad[F].pure(
-          s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel
+        val failure = FailureDetails.AdapterFailure.InputData(
+          "contentType",
+          ct.some,
+          s"expected $ContentType"
         )
+        Monad[F].pure(failure.invalidNel)
       case (Some(body), _) =>
-        val params = toMap(
-          URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).asScala.toList
-        )
-        params.get("type") match {
-          case None =>
-            Monad[F].pure(
-              s"No $VendorName type parameter provided: cannot determine event type".invalidNel
+        val rawEvent = for {
+          params <- ConversionUtils
+            .parseUrlEncodedForm(body)
+            .leftMap(
+              e => FailureDetails.AdapterFailure.InputData("body", body.some, e)
             )
-          case Some(eventType) =>
-            val _ = client
-            val allParams = toMap(payload.querystring) ++ reformatParameters(params)
-            Monad[F].pure(for {
-              schema <- lookupSchema(eventType.some, VendorName, EventSchemaMap).toValidatedNel
-            } yield {
-              NonEmptyList.one(
-                RawEvent(
-                  api = payload.api,
-                  parameters = toUnstructEventParams(
-                    TrackerVersion,
-                    allParams,
-                    schema,
-                    MailchimpFormatter,
-                    "srv"
-                  ),
-                  contentType = payload.contentType,
-                  source = payload.source,
-                  context = payload.context
-                )
-              )
-            })
-        }
+          eventType <- params.get("type").toRight {
+            val msg = "no `type` parameter provided: cannot determine event type"
+            FailureDetails.AdapterFailure.InputData("body", body.some, msg)
+          }
+          schema <- lookupSchema(eventType.some, EventSchemaMap)
+          allParams = toMap(payload.querystring) ++ reformatParameters(params)
+        } yield RawEvent(
+          api = payload.api,
+          parameters = toUnstructEventParams(
+            TrackerVersion,
+            allParams,
+            schema,
+            MailchimpFormatter,
+            "srv"
+          ),
+          contentType = payload.contentType,
+          source = payload.source,
+          context = payload.context
+        )
+        Monad[F].pure(rawEvent.map(NonEmptyList.one).toValidatedNel)
     }
 
   /**
@@ -147,7 +145,7 @@ object MailchimpAdapter extends Adapter {
    */
   private[registry] def toKeys(formKey: String): NonEmptyList[String] = {
     val keys = formKey.split("\\]?(\\[|\\])").toList
-    NonEmptyList.of(keys(0), keys.tail: _*) // Safe only because split() never produces an empty Array
+    NonEmptyList.of(keys.head, keys.tail: _*) // Safe only because split() never produces an empty Array
   }
 
   /**

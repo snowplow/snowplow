@@ -18,6 +18,7 @@ import scala.util.control.NonFatal
 import cats.data.ValidatedNel
 import cats.implicits._
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
+import com.snowplowanalytics.snowplow.badrows._
 import org.mozilla.javascript._
 import io.circe._
 import io.circe.parser._
@@ -49,9 +50,9 @@ object JavascriptScriptEnrichment extends ParseableEnrichment {
     (for {
       _ <- isParseable(c, schemaKey)
       encoded <- CirceUtils.extract[String](c, "parameters", "script").toEither
-      raw <- ConversionUtils.decodeBase64Url("script", encoded)
+      raw <- ConversionUtils.decodeBase64Url(encoded) // script
       compiled <- compile(raw)
-    } yield JavascriptScriptConf(compiled)).toValidatedNel
+    } yield JavascriptScriptConf(schemaKey, compiled)).toValidatedNel
 
   object Variables {
     private val prefix = "$snowplow31337" // To avoid collisions
@@ -89,14 +90,17 @@ object JavascriptScriptEnrichment extends ParseableEnrichment {
  * Config for an JavaScript script enrichment
  * @param script The compiled script ready for
  */
-final case class JavascriptScriptEnrichment(script: Script) extends Enrichment {
+final case class JavascriptScriptEnrichment(schemaKey: SchemaKey, script: Script)
+    extends Enrichment {
+  private val enrichmentInfo =
+    FailureDetails.EnrichmentInformation(schemaKey, "javascript-script").some
 
   /**
    * Run the process function as stored in the CompiledScript against the supplied EnrichedEvent.
    * @param event The enriched event to pass into our process function
    * @return either a JSON array of contexts on Success, or an error String on Failure
    */
-  def process(event: EnrichedEvent): Either[String, List[Json]] =
+  def process(event: EnrichedEvent): Either[FailureDetails.EnrichmentStageIssue, List[Json]] =
     process(script, event)
 
   import JavascriptScriptEnrichment.Variables
@@ -110,37 +114,50 @@ final case class JavascriptScriptEnrichment(script: Script) extends Enrichment {
   private[registry] def process(
     script: Script,
     event: EnrichedEvent
-  ): Either[String, List[Json]] = {
+  ): Either[FailureDetails.EnrichmentStageIssue, List[Json]] = {
     val cx = Context.enter()
     val scope = cx.initStandardObjects
 
-    try {
+    val scriptExec = try {
       scope.put(Variables.In, scope, Context.javaToJS(event, scope))
       val retVal = script.exec(cx, scope)
       if (Option(retVal).isDefined) {
-        return s"Evaluated JavaScript script should not return a value; returned: [$retVal]".asLeft
+        val msg = s"Evaluated JavaScript script should not return a value; returned: [$retVal]"
+        FailureDetails.EnrichmentFailureMessage.Simple(msg).asLeft
+      } else {
+        ().asRight
       }
     } catch {
       case NonFatal(nf) =>
-        return s"Evaluating JavaScript script threw an exception: [$nf]".asLeft
+        val msg = s"Evaluating JavaScript script threw an exception: [$nf]"
+        FailureDetails.EnrichmentFailureMessage.Simple(msg).asLeft
     } finally {
       Context.exit()
     }
 
-    Option(scope.get(Variables.Out)) match {
-      case None => Nil.asRight
-      case Some(obj) =>
-        parse(obj.asInstanceOf[String]) match {
-          case Right(js) =>
-            js.asArray match {
-              case Some(array) => array.toList.asRight
-              case None => s"JavaScript script must return an Array; got [$obj]".asLeft
+    scriptExec
+      .flatMap { _ =>
+        Option(scope.get(Variables.Out)) match {
+          case None => Nil.asRight
+          case Some(obj) =>
+            parse(obj.asInstanceOf[String]) match {
+              case Right(js) =>
+                js.asArray match {
+                  case Some(array) => array.toList.asRight
+                  case None =>
+                    val msg = s"JavaScript script must return an Array; got [$obj]"
+                    FailureDetails.EnrichmentFailureMessage
+                      .Simple(msg)
+                      .asLeft
+                }
+              case Left(e) =>
+                val msg = "Could not convert object returned from JavaScript script to Json: " +
+                  s"[${e.getMessage}]"
+                FailureDetails.EnrichmentFailureMessage.Simple(msg).asLeft
             }
-          case Left(e) =>
-            ("Could not convert object returned from JavaScript script to Json: " +
-              s"[${e.getMessage}]").asLeft
         }
-    }
+      }
+      .leftMap(FailureDetails.EnrichmentFailure(enrichmentInfo, _))
   }
 
 }

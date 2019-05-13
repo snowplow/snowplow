@@ -17,6 +17,7 @@ package apirequest
 import cats.Eval
 import cats.data.ValidatedNel
 import cats.syntax.option._
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import io.circe._
 import io.circe.literal._
 import org.specs2.Specification
@@ -219,7 +220,9 @@ class InputSpec extends Specification with ValidatedMatchers {
     val input1 = Input("user", Some(PojoInput("user_id")), None)
     val input2 = Input("time", Some(PojoInput("true_tstamp")), None)
     val uriTemplate = "http://thishostdoesntexist31337:8123/{{  user }}/foo/{{ time}}/{{user}}"
+    val schemaKey = SchemaKey("vendor", "name", "format", SchemaVer.Full(1, 0, 0))
     val enrichment = ApiRequestConf(
+      schemaKey,
       List(input1, input2),
       HttpApi("GET", uriTemplate, 1000, Authentication(None)),
       List(Output("iglu:someschema", JsonOutput("$").some)),

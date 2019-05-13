@@ -23,25 +23,24 @@ import scala.util.{Try, Success => TS, Failure => TF}
 import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.effect.Clock
+import cats.syntax.option._
 import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
+import com.snowplowanalytics.snowplow.badrows._
 import io.circe.Json
 import io.circe.syntax._
 import org.apache.http.client.utils.URLEncodedUtils
 
 import loaders.CollectorPayload
-import utils.{JsonUtils => JU}
+import utils.{HttpClient, JsonUtils => JU}
 
 /**
  * Transforms a collector payload which conforms to a known version of the StatusGator Tracking
  * webhook into raw events.
  */
 object StatusGatorAdapter extends Adapter {
-  // Vendor name for Failure Message
-  private val VendorName = "StatusGator"
-
   // Tracker version for an StatusGator Tracking webhook
   private val TrackerVersion = "com.statusgator-v1"
 
@@ -50,7 +49,7 @@ object StatusGatorAdapter extends Adapter {
 
   // Schemas for reverse-engineering a Snowplow unstructured event
   private val EventSchema =
-    SchemaKey("com.statusgator", "status_change", "jsonschema", SchemaVer.Full(1, 0, 0)).toSchemaUri
+    SchemaKey("com.statusgator", "status_change", "jsonschema", SchemaVer.Full(1, 0, 0))
 
   /**
    * Converts a CollectorPayload instance into raw events. A StatusGator Tracking payload contains
@@ -59,23 +58,39 @@ object StatusGatorAdapter extends Adapter {
    * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
     payload: CollectorPayload,
     client: Client[F, Json]
-  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
+  ): F[
+    ValidatedNel[FailureDetails.AdapterFailureOrTrackerProtocolViolation, NonEmptyList[RawEvent]]
+  ] =
     (payload.body, payload.contentType) match {
       case (None, _) =>
-        Monad[F].pure(s"Request body is empty: no $VendorName events to process".invalidNel)
+        val failure = FailureDetails.AdapterFailure.InputData(
+          "body",
+          none,
+          "empty body: no events to process"
+        )
+        Monad[F].pure(failure.invalidNel)
+      case (Some(body), _) if (body.isEmpty) =>
+        val failure = FailureDetails.AdapterFailure.InputData(
+          "body",
+          none,
+          "empty body: no events to process"
+        )
+        Monad[F].pure(failure.invalidNel)
       case (_, None) =>
+        val msg = s"no content type: expected $ContentType"
         Monad[F].pure(
-          s"Request body provided but content type empty, expected $ContentType for $VendorName".invalidNel
+          FailureDetails.AdapterFailure.InputData("contentType", none, msg).invalidNel
         )
       case (_, Some(ct)) if ct != ContentType =>
+        val msg = s"expected $ContentType"
         Monad[F].pure(
-          s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel
+          FailureDetails.AdapterFailure
+            .InputData("contentType", ct.some, msg)
+            .invalidNel
         )
-      case (Some(body), _) if (body.isEmpty) =>
-        Monad[F].pure(s"$VendorName event body is empty: nothing to process".invalidNel)
       case (Some(body), _) =>
         val _ = client
         val qsParams = toMap(payload.querystring)
@@ -85,8 +100,12 @@ object StatusGatorAdapter extends Adapter {
           )
         } match {
           case TF(e) =>
-            val msg = JU.stripInstanceEtc(e.getMessage).orNull
-            Monad[F].pure(s"$VendorName incorrect event string : [$msg]".invalidNel)
+            val msg = s"could not parse body: ${JU.stripInstanceEtc(e.getMessage).orNull}"
+            Monad[F].pure(
+              FailureDetails.AdapterFailure
+                .InputData("body", body.some, msg)
+                .invalidNel
+            )
           case TS(bodyMap) =>
             Monad[F].pure(
               NonEmptyList

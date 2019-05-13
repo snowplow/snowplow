@@ -13,9 +13,17 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
+import java.util.UUID
+
+import cats.data.NonEmptyList
 import cats.syntax.option._
+
+import com.snowplowanalytics.snowplow.badrows._
+
 import org.apache.commons.codec.binary.Base64
+
 import org.joda.time.DateTime
+
 import org.specs2.{ScalaCheck, Specification}
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
@@ -26,6 +34,8 @@ class ThriftLoaderSpec
     with DataTables
     with ValidatedMatchers
     with ScalaCheck {
+  val Process = Processor("ThriftLoaderSpec", "v1")
+
   def is = s2"""
   This is a specification to test the ThriftLoader functionality
   toCollectorPayload should return a CollectorPayload for a valid Thrift CollectorPayload (even if parameterless) $e1
@@ -35,7 +45,7 @@ class ThriftLoaderSpec
   object Expected {
     val encoding = "UTF-8"
     val collector = "ssc-0.0.1-Stdout" // Note we have since fixed -stdout to be lowercase
-    val api = CollectorApi("com.snowplowanalytics.snowplow", "tp1")
+    val api = CollectorPayload.Api("com.snowplowanalytics.snowplow", "tp1")
   }
 
   def e1 =
@@ -53,7 +63,7 @@ class ThriftLoaderSpec
         "Cache-Control: max-age=0",
         "Connection: keep-alive",
         "Host: 127.0.0.1:8080"
-      ) ! "c5f3a09f-75f8-4309-bec5-fea560f78455".some |
+      ) ! UUID.fromString("c5f3a09f-75f8-4309-bec5-fea560f78455").some |
       "Page ping" !! "CgABAAABQ9pNXggLABQAAAAQc3NjLTAuMC4xLVN0ZG91dAsAHgAAAAVVVEYtOAsAKAAAAAgxMC4wLjIuMgwAKQgAAQAAAAEIAAIAAAABCwADAAACZmU9cHAmcGFnZT1Bc3luY2hyb25vdXMrd2Vic2l0ZS93ZWJhcHArZXhhbXBsZXMrZm9yK3Nub3dwbG93LmpzJnBwX21peD0wJnBwX21heD0wJnBwX21peT0wJnBwX21heT0wJmNvPSU3QiUyMnBhZ2UlMjI6JTdCJTIycGFnZV90eXBlJTIyOiUyMnRlc3QlMjIsJTIybGFzdF91cGRhdGVkJHRtcyUyMjoxMzkzMzcyODAwMDAwJTdELCUyMnVzZXIlMjI6JTdCJTIydXNlcl90eXBlJTIyOiUyMnRlc3RlciUyMiU3RCU3RCZkdG09MTM5MDkzNjkzODg1NSZ0aWQ9Nzk3NzQzJnZwPTI1NjB4OTYxJmRzPTI1NjB4OTYxJnZpZD03JmR1aWQ9M2MxNzU3NTQ0ZTM5YmNhNCZwPW1vYiZ0dj1qcy0wLjEzLjEmZnA9MjY5NTkzMDgwMyZhaWQ9Q0ZlMjNhJmxhbmc9ZW4tVVMmY3M9VVRGLTgmdHo9RXVyb3BlL0xvbmRvbiZ1aWQ9YWxleCsxMjMmZl9wZGY9MCZmX3F0PTEmZl9yZWFscD0wJmZfd21hPTAmZl9kaXI9MCZmX2ZsYT0xJmZfamF2YT0wJmZfZ2VhcnM9MCZmX2FnPTAmcmVzPTI1NjB4MTQ0MCZjZD0yNCZjb29raWU9MSZ1cmw9ZmlsZTovL2ZpbGU6Ly8vVXNlcnMvYWxleC9EZXZlbG9wbWVudC9kZXYtZW52aXJvbm1lbnQvZGVtby8xLXRyYWNrZXIvZXZlbnRzLmh0bWwvb3ZlcnJpZGRlbi11cmwvAAsALQAAAAlsb2NhbGhvc3QLADIAAABRTW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTAuOTsgcnY6MjYuMCkgR2Vja28vMjAxMDAxMDEgRmlyZWZveC8yNi4wDwBGCwAAAAcAAAAWQ29ubmVjdGlvbjoga2VlcC1hbGl2ZQAAAnBDb29raWU6IF9fdXRtYT0xMTE4NzIyODEuODc4MDg0NDg3LjEzOTAyMzcxMDcuMTM5MDg0ODQ4Ny4xMzkwOTMxNTIxLjY7IF9fdXRtej0xMTE4NzIyODEuMTM5MDIzNzEwNy4xLjEudXRtY3NyPShkaXJlY3QpfHV0bWNjbj0oZGlyZWN0KXx1dG1jbWQ9KG5vbmUpOyBfc3BfaWQuMWZmZj1iODlhNmZhNjMxZWVmYWMyLjEzOTAyMzcxMDcuNi4xMzkwOTMxNTQ1LjEzOTA4NDg2NDE7IGhibGlkPUNQamp1aHZGMDV6a3RQN0o3TTVWbzNOSUdQTEp5MVNGOyBvbGZzaz1vbGZzazU2MjkyMzYzNTYxNzU1NDsgX191dG1jPTExMTg3MjI4MTsgd2NzaWQ9dU1sb2cxUUpWRDdqdWhGWjdNNVZvQkN5UFB5aUJ5U1M7IF9va2x2PTEzOTA5MzE1ODU0NDUlMkN1TWxvZzFRSlZEN2p1aEZaN001Vm9CQ3lQUHlpQnlTUzsgX29rPTk3NTItNTAzLTEwLTUyMjc7IF9va2JrPWNkNCUzRHRydWUlMkN2aTUlM0QwJTJDdmk0JTNEMTM5MDkzMTUyMTEyMyUyQ3ZpMyUzRGFjdGl2ZSUyQ3ZpMiUzRGZhbHNlJTJDdmkxJTNEZmFsc2UlMkNjZDglM0RjaGF0JTJDY2Q2JTNEMCUyQ2NkNSUzRGF3YXklMkNjZDMlM0RmYWxzZSUyQ2NkMiUzRDAlMkNjZDElM0QwJTJDOyBzcD03NWExMzU4My01Yzk5LTQwZTMtODFmYy01NDEwODRkZmM3ODQAAAAeQWNjZXB0LUVuY29kaW5nOiBnemlwLCBkZWZsYXRlAAAAGkFjY2VwdC1MYW5ndWFnZTogZW4tVVMsIGVuAAAAK0FjY2VwdDogaW1hZ2UvcG5nLCBpbWFnZS8qO3E9MC44LCAqLyo7cT0wLjUAAABdVXNlci1BZ2VudDogTW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTAuOTsgcnY6MjYuMCkgR2Vja28vMjAxMDAxMDEgRmlyZWZveC8yNi4wAAAAFEhvc3Q6IGxvY2FsaG9zdDo0MDAxCwBQAAAAJDc1YTEzNTgzLTVjOTktNDBlMy04MWZjLTU0MTA4NGRmYzc4NAA=" !
         DateTime.parse("2014-01-28T19:22:20.040+00:00") ! toNameValuePairs(
         "e" -> "pp",
@@ -98,7 +108,7 @@ class ThriftLoaderSpec
         "Accept: image/png, image/*;q=0.8, */*;q=0.5",
         "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.9; rv:26.0) Gecko/20100101 Firefox/26.0",
         "Host: localhost:4001"
-      ) ! "75a13583-5c99-40e3-81fc-541084dfc784".some |
+      ) ! UUID.fromString("75a13583-5c99-40e3-81fc-541084dfc784").some |
       "Unstructured event" !! "CgABAAABQ9qNGa4LABQAAAAQc3NjLTAuMC4xLVN0ZG91dAsAHgAAAAVVVEYtOAsAKAAAAAgxMC4wLjIuMgwAKQgAAQAAAAEIAAIAAAABCwADAAACeWU9dWUmdWVfbmE9Vmlld2VkK1Byb2R1Y3QmdWVfcHI9JTdCJTIycHJvZHVjdF9pZCUyMjolMjJBU08wMTA0MyUyMiwlMjJjYXRlZ29yeSUyMjolMjJEcmVzc2VzJTIyLCUyMmJyYW5kJTIyOiUyMkFDTUUlMjIsJTIycmV0dXJuaW5nJTIyOnRydWUsJTIycHJpY2UlMjI6NDkuOTUsJTIyc2l6ZXMlMjI6JTVCJTIyeHMlMjIsJTIycyUyMiwlMjJsJTIyLCUyMnhsJTIyLCUyMnh4bCUyMiU1RCwlMjJhdmFpbGFibGVfc2luY2UkZHQlMjI6MTU4MDElN0QmZHRtPTEzOTA5NDExMTUyNjMmdGlkPTY0NzYxNSZ2cD0yNTYweDk2MSZkcz0yNTYweDk2MSZ2aWQ9OCZkdWlkPTNjMTc1NzU0NGUzOWJjYTQmcD1tb2ImdHY9anMtMC4xMy4xJmZwPTI2OTU5MzA4MDMmYWlkPUNGZTIzYSZsYW5nPWVuLVVTJmNzPVVURi04JnR6PUV1cm9wZS9Mb25kb24mdWlkPWFsZXgrMTIzJmZfcGRmPTAmZl9xdD0xJmZfcmVhbHA9MCZmX3dtYT0wJmZfZGlyPTAmZl9mbGE9MSZmX2phdmE9MCZmX2dlYXJzPTAmZl9hZz0wJnJlcz0yNTYweDE0NDAmY2Q9MjQmY29va2llPTEmdXJsPWZpbGU6Ly9maWxlOi8vL1VzZXJzL2FsZXgvRGV2ZWxvcG1lbnQvZGV2LWVudmlyb25tZW50L2RlbW8vMS10cmFja2VyL2V2ZW50cy5odG1sL292ZXJyaWRkZW4tdXJsLwALAC0AAAAJbG9jYWxob3N0CwAyAAAAUU1vemlsbGEvNS4wIChNYWNpbnRvc2g7IEludGVsIE1hYyBPUyBYIDEwLjk7IHJ2OjI2LjApIEdlY2tvLzIwMTAwMTAxIEZpcmVmb3gvMjYuMA8ARgsAAAAHAAAAFkNvbm5lY3Rpb246IGtlZXAtYWxpdmUAAAJwQ29va2llOiBfX3V0bWE9MTExODcyMjgxLjg3ODA4NDQ4Ny4xMzkwMjM3MTA3LjEzOTA4NDg0ODcuMTM5MDkzMTUyMS42OyBfX3V0bXo9MTExODcyMjgxLjEzOTAyMzcxMDcuMS4xLnV0bWNzcj0oZGlyZWN0KXx1dG1jY249KGRpcmVjdCl8dXRtY21kPShub25lKTsgX3NwX2lkLjFmZmY9Yjg5YTZmYTYzMWVlZmFjMi4xMzkwMjM3MTA3LjYuMTM5MDkzMTU0NS4xMzkwODQ4NjQxOyBoYmxpZD1DUGpqdWh2RjA1emt0UDdKN001Vm8zTklHUExKeTFTRjsgb2xmc2s9b2xmc2s1NjI5MjM2MzU2MTc1NTQ7IF9fdXRtYz0xMTE4NzIyODE7IHdjc2lkPXVNbG9nMVFKVkQ3anVoRlo3TTVWb0JDeVBQeWlCeVNTOyBfb2tsdj0xMzkwOTMxNTg1NDQ1JTJDdU1sb2cxUUpWRDdqdWhGWjdNNVZvQkN5UFB5aUJ5U1M7IF9vaz05NzUyLTUwMy0xMC01MjI3OyBfb2tiaz1jZDQlM0R0cnVlJTJDdmk1JTNEMCUyQ3ZpNCUzRDEzOTA5MzE1MjExMjMlMkN2aTMlM0RhY3RpdmUlMkN2aTIlM0RmYWxzZSUyQ3ZpMSUzRGZhbHNlJTJDY2Q4JTNEY2hhdCUyQ2NkNiUzRDAlMkNjZDUlM0Rhd2F5JTJDY2QzJTNEZmFsc2UlMkNjZDIlM0QwJTJDY2QxJTNEMCUyQzsgc3A9NzVhMTM1ODMtNWM5OS00MGUzLTgxZmMtNTQxMDg0ZGZjNzg0AAAAHkFjY2VwdC1FbmNvZGluZzogZ3ppcCwgZGVmbGF0ZQAAABpBY2NlcHQtTGFuZ3VhZ2U6IGVuLVVTLCBlbgAAACtBY2NlcHQ6IGltYWdlL3BuZywgaW1hZ2UvKjtxPTAuOCwgKi8qO3E9MC41AAAAXVVzZXItQWdlbnQ6IE1vemlsbGEvNS4wIChNYWNpbnRvc2g7IEludGVsIE1hYyBPUyBYIDEwLjk7IHJ2OjI2LjApIEdlY2tvLzIwMTAwMTAxIEZpcmVmb3gvMjYuMAAAABRIb3N0OiBsb2NhbGhvc3Q6NDAwMQsAUAAAACQ3NWExMzU4My01Yzk5LTQwZTMtODFmYy01NDEwODRkZmM3ODQA" !
         DateTime.parse("2014-01-28T20:31:56.846+00:00") ! toNameValuePairs(
         "e" -> "ue",
@@ -139,7 +149,7 @@ class ThriftLoaderSpec
         "Accept: image/png, image/*;q=0.8, */*;q=0.5",
         "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.9; rv:26.0) Gecko/20100101 Firefox/26.0",
         "Host: localhost:4001"
-      ) ! "75a13583-5c99-40e3-81fc-541084dfc784".some |
+      ) ! UUID.fromString("75a13583-5c99-40e3-81fc-541084dfc784").some |
       "Parameterless" !! "CgABAAABQ9o8zYULABQAAAAQc3NjLTAuMC4xLVN0ZG91dAsAHgAAAAVVVEYtOAsAKAAAAAgxMC4wLjIuMgwAKQgAAQAAAAEIAAIAAAABAAsALQAAAAlsb2NhbGhvc3QLADIAAABRTW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTAuOTsgcnY6MjYuMCkgR2Vja28vMjAxMDAxMDEgRmlyZWZveC8yNi4wDwBGCwAAAAgAAAAYQ2FjaGUtQ29udHJvbDogbWF4LWFnZT0wAAAAFkNvbm5lY3Rpb246IGtlZXAtYWxpdmUAAAJwQ29va2llOiBfX3V0bWE9MTExODcyMjgxLjg3ODA4NDQ4Ny4xMzkwMjM3MTA3LjEzOTA4NDg0ODcuMTM5MDkzMTUyMS42OyBfX3V0bXo9MTExODcyMjgxLjEzOTAyMzcxMDcuMS4xLnV0bWNzcj0oZGlyZWN0KXx1dG1jY249KGRpcmVjdCl8dXRtY21kPShub25lKTsgX3NwX2lkLjFmZmY9Yjg5YTZmYTYzMWVlZmFjMi4xMzkwMjM3MTA3LjYuMTM5MDkzMTU0NS4xMzkwODQ4NjQxOyBoYmxpZD1DUGpqdWh2RjA1emt0UDdKN001Vm8zTklHUExKeTFTRjsgb2xmc2s9b2xmc2s1NjI5MjM2MzU2MTc1NTQ7IF9fdXRtYz0xMTE4NzIyODE7IHdjc2lkPXVNbG9nMVFKVkQ3anVoRlo3TTVWb0JDeVBQeWlCeVNTOyBfb2tsdj0xMzkwOTMxNTg1NDQ1JTJDdU1sb2cxUUpWRDdqdWhGWjdNNVZvQkN5UFB5aUJ5U1M7IF9vaz05NzUyLTUwMy0xMC01MjI3OyBfb2tiaz1jZDQlM0R0cnVlJTJDdmk1JTNEMCUyQ3ZpNCUzRDEzOTA5MzE1MjExMjMlMkN2aTMlM0RhY3RpdmUlMkN2aTIlM0RmYWxzZSUyQ3ZpMSUzRGZhbHNlJTJDY2Q4JTNEY2hhdCUyQ2NkNiUzRDAlMkNjZDUlM0Rhd2F5JTJDY2QzJTNEZmFsc2UlMkNjZDIlM0QwJTJDY2QxJTNEMCUyQzsgc3A9NzVhMTM1ODMtNWM5OS00MGUzLTgxZmMtNTQxMDg0ZGZjNzg0AAAAHkFjY2VwdC1FbmNvZGluZzogZ3ppcCwgZGVmbGF0ZQAAABpBY2NlcHQtTGFuZ3VhZ2U6IGVuLVVTLCBlbgAAAEpBY2NlcHQ6IHRleHQvaHRtbCwgYXBwbGljYXRpb24veGh0bWwreG1sLCBhcHBsaWNhdGlvbi94bWw7cT0wLjksICovKjtxPTAuOAAAAF1Vc2VyLUFnZW50OiBNb3ppbGxhLzUuMCAoTWFjaW50b3NoOyBJbnRlbCBNYWMgT1MgWCAxMC45OyBydjoyNi4wKSBHZWNrby8yMDEwMDEwMSBGaXJlZm94LzI2LjAAAAAUSG9zdDogbG9jYWxob3N0OjQwMDELAFAAAAAkNzVhMTM1ODMtNWM5OS00MGUzLTgxZmMtNTQxMDg0ZGZjNzg0AA==" !
         DateTime.parse("2014-01-28T19:04:14.469+00:00") ! toNameValuePairs() ! "localhost".some ! "10.0.2.2".some ! "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.9; rv:26.0) Gecko/20100101 Firefox/26.0".some ! None ! List(
         "Cache-Control: max-age=0",
@@ -150,32 +160,45 @@ class ThriftLoaderSpec
         "Accept: text/html, application/xhtml+xml, application/xml;q=0.9, */*;q=0.8",
         "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.9; rv:26.0) Gecko/20100101 Firefox/26.0",
         "Host: localhost:4001"
-      ) ! "75a13583-5c99-40e3-81fc-541084dfc784".some |> {
+      ) ! UUID.fromString("75a13583-5c99-40e3-81fc-541084dfc784").some |> {
 
       (_, raw, timestamp, payload, hostname, ipAddress, userAgent, refererUri, headers, userId) =>
         {
 
-          val canonicalEvent = ThriftLoader.toCollectorPayload(Base64.decodeBase64(raw))
+          val canonicalEvent = ThriftLoader.toCollectorPayload(Base64.decodeBase64(raw), Process)
 
           val expected = CollectorPayload(
             api = Expected.api,
             querystring = payload,
             body = None,
             contentType = None,
-            source = CollectorSource(Expected.collector, Expected.encoding, hostname),
-            context =
-              CollectorContext(timestamp.some, ipAddress, userAgent, refererUri, headers, userId)
+            source = CollectorPayload.Source(Expected.collector, Expected.encoding, hostname),
+            context = CollectorPayload
+              .Context(timestamp.some, ipAddress, userAgent, refererUri, headers, userId)
           )
 
           canonicalEvent must beValid(expected.some)
         }
     }
 
+  val msg =
+    "error deserializing raw event: Cannot read. Remote side has closed. Tried to read 1 bytes, but only got 0 bytes. (This is often indicative of an internal error on the server side. Please check your server logs.)"
+
   // A bit of fun: the chances of generating a valid Thrift CollectorPayload at random are
   // so low that we can just use ScalaCheck here
   def e2 =
     prop { (raw: String) =>
-      ThriftLoader.toCollectorPayload(Base64.decodeBase64(raw)) must beInvalid
+      ThriftLoader.toCollectorPayload(Base64.decodeBase64(raw), Process) must beInvalid.like {
+        case NonEmptyList(
+            BadRow.CPFormatViolation(
+              Process,
+              Failure.CPFormatViolation(_, "thrift", f),
+              Payload.RawPayload(_)
+            ),
+            List()
+            ) =>
+          f must_== FailureDetails.CPFormatViolationMessage.Fallback(msg)
+      }
     }
 
 }
