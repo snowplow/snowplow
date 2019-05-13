@@ -26,7 +26,7 @@ import io.circe._
 import io.circe.generic.auto._
 import io.circe.syntax._
 
-import outputs.EnrichedEvent
+import outputs._
 import utils.{CirceUtils, HttpClient}
 
 object ApiRequestEnrichment extends ParseableEnrichment {
@@ -124,7 +124,7 @@ final case class ApiRequestEnrichment[F[_]: Monad: HttpClient](
     derivedContexts: List[Json],
     customContexts: List[SelfDescribingData[Json]],
     unstructEvent: List[SelfDescribingData[Json]]
-  ): F[ValidatedNel[String, List[Json]]] = {
+  ): F[ValidatedNel[EnrichmentFailureMessage, List[Json]]] = {
     // Note that SelfDescribingData have specific structure - it is a pair,
     // where first element is a SchemaKey, second element is a Json
     // with keys: `data`, `schema` and `hierarchy` and `schema` contains again SchemaKey
@@ -142,9 +142,12 @@ final case class ApiRequestEnrichment[F[_]: Monad: HttpClient](
       )
 
     (for {
-      context <- EitherT.fromEither[F](templateContext.toEither)
-      outputs <- EitherT(getOutputs(context)).leftMap(e => NonEmptyList.one(e))
-    } yield outputs).toValidated
+      context <- EitherT
+        .fromEither[F](templateContext.toEither)
+        .leftMap(_.map(SimpleEnrichmentFailureMessage.apply))
+      outputs <- EitherT(getOutputs(context))
+        .leftMap(e => NonEmptyList.one(SimpleEnrichmentFailureMessage(e)))
+    } yield outputs).leftWiden.toValidated
   }
 
   /**

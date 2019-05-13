@@ -12,85 +12,45 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.outputs
 
+import java.time.ZonedDateTime
+
 import cats.data.NonEmptyList
-import io.circe._
-import io.circe.syntax._
-import org.joda.time.{DateTime, DateTimeZone}
-import org.joda.time.format.DateTimeFormat
+import com.snowplowanalytics.iglu.core.SchemaKey
 
-/** Alternate BadRow constructors */
-object BadRow {
-
-  /**
-   * Constructor using Strings instead of ProcessingMessages
-   * @param line
-   * @param errors
-   * @return a BadRow
-   */
-  def apply(line: String, errors: NonEmptyList[String]): BadRow =
-    BadRow(line, errors, System.currentTimeMillis())
-
-  /**
-   * For rows which are so too long to send to Kinesis and so cannot contain their own original line
-   * @param line
-   * @param errors
-   * @param tstamp
-   * @return a BadRow
-   */
-  def oversizedRow(
-    size: Long,
-    errors: NonEmptyList[String],
-    tstamp: Long = System.currentTimeMillis()
-  ): String =
-    Json
-      .obj(
-        "size" := Json.fromLong(size),
-        "errors" := Json.arr(errors.toList.map(Json.fromString): _*),
-        "failure_tstamp" := Json.fromLong(tstamp)
-      )
-      .noSpaces
+sealed trait BadRow {
+  def failure: Failure
+  def payload: Payload
+  def processor: Processor
 }
 
-/**
- * Models our report on a bad row. Consists of:
- * 1. Our original input line (which was meant to be a Snowplow enriched event)
- * 2. A non-empty list of our Validation errors
- * 3. A timestamp
- */
-final case class BadRow(
-  val line: String,
-  val errors: NonEmptyList[String],
-  val tstamp: Long = System.currentTimeMillis()
-) {
+sealed trait Failure
 
-  // An ISO valid timestamp formatter
-  private val TstampFormat =
-    DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(DateTimeZone.UTC)
+sealed trait Payload
 
-  /**
-   * Converts a TypeHierarchy into a JSON containing each element.
-   * @return the TypeHierarchy as a Json
-   */
-  def toJson: Json =
-    Json.obj(
-      "line" := Json.fromString(line),
-      "errors" := Json.arr(errors.toList.map(Json.fromString): _*),
-      "failure_tstamp" := getTimestamp(tstamp)
-    )
+final case class Processor(artifact: String, version: String)
 
-  /**
-   * Converts our BadRow into a single JSON encapsulating both the input line and errors.
-   * @return this BadRow as a compact stringified JSON
-   */
-  def toCompactJson: String = toJson.noSpaces
+final case class EnrichmentFailuresBadRow(
+  failure: Failure,
+  payload: Payload,
+  processor: Processor
+) extends BadRow
 
-  /**
-   * Returns an ISO valid timestamp
-   * @param tstamp The Timestamp to convert
-   * @return the formatted Timestamp
-   */
-  def getTimestamp(tstamp: Long): String = {
-    val dt = new DateTime(tstamp)
-    TstampFormat.print(dt)
-  }
-}
+final case class EnrichmentFailures(
+  timestamp: ZonedDateTime,
+  messages: NonEmptyList[EnrichmentFailure]
+) extends Failure
+
+final case class EnrichmentFailure(
+  enrichment: EnrichmentInformation,
+  message: EnrichmentFailureMessage
+)
+
+sealed trait EnrichmentFailureMessage
+final case class SimpleEnrichmentFailureMessage(error: String) extends EnrichmentFailureMessage
+final case class InputDataEnrichmentFailureMessage(
+  field: String,
+  value: Option[String],
+  expectation: String
+) extends EnrichmentFailureMessage
+
+final case class EnrichmentInformation(schemaKey: SchemaKey, identifier: String)
