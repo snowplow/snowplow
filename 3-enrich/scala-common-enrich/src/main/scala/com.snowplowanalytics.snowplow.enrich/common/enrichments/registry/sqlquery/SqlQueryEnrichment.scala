@@ -26,7 +26,7 @@ import io.circe._
 import io.circe.generic.auto._
 import io.circe.syntax._
 
-import outputs.EnrichedEvent
+import outputs._
 import utils.CirceUtils
 
 /** Lets us create an SqlQueryConf from a Json */
@@ -126,7 +126,7 @@ final case class SqlQueryEnrichment[F[_]: Monad: DbExecutor](
     derivedContexts: List[Json],
     customContexts: List[SelfDescribingData[Json]],
     unstructEvent: List[SelfDescribingData[Json]]
-  ): F[ValidatedNel[String, List[Json]]] = {
+  ): F[ValidatedNel[EnrichmentFailureMessage, List[Json]]] = {
     val jsonCustomContexts = transformRawPairs(customContexts)
     val jsonUnstructEvent = transformRawPairs(unstructEvent).headOption
 
@@ -138,9 +138,13 @@ final case class SqlQueryEnrichment[F[_]: Monad: DbExecutor](
         .flatMap(m => allPlaceholdersFilled(m).leftMap(NonEmptyList.one))
 
     placeholderMap match {
-      case Right(Some(intMap)) => EitherT(get(intMap)).leftMap(_.toString).toValidatedNel
+      case Right(Some(intMap)) =>
+        EitherT(get(intMap))
+          .leftMap(e => SimpleEnrichmentFailureMessage(e.getMessage()))
+          .leftWiden
+          .toValidatedNel
       case Right(None) => Monad[F].pure(Nil.validNel)
-      case Left(err) => Monad[F].pure(err.map(_.toString).invalid)
+      case Left(err) => Monad[F].pure(err.map(SimpleEnrichmentFailureMessage.apply).invalid)
     }
   }
 

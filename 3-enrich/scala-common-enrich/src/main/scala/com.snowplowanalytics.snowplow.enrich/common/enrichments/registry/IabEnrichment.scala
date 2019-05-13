@@ -14,7 +14,7 @@ package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry
 
 import java.io.File
-import java.net.{InetAddress, URI, UnknownHostException}
+import java.net.{InetAddress, URI}
 
 import cats.{Eval, Monad}
 import cats.data.{NonEmptyList, ValidatedNel}
@@ -27,6 +27,7 @@ import io.circe.generic.auto._
 import io.circe.syntax._
 import org.joda.time.DateTime
 
+import outputs._
 import utils.CirceUtils
 
 /** Companion object. Lets us create an IabEnrichment instance from a Json. */
@@ -124,18 +125,22 @@ final case class IabEnrichment(iabClient: IabClient) extends Enrichment {
     userAgent: String,
     ipAddress: String,
     accurateAt: DateTime
-  ): Either[String, IabEnrichmentResponse] =
-    try {
-      val result = iabClient.checkAt(userAgent, InetAddress.getByName(ipAddress), accurateAt.toDate)
-      IabEnrichmentResponse(
-        result.isSpiderOrRobot,
-        result.getCategory.toString,
-        result.getReason.toString,
-        result.getPrimaryImpact.toString
-      ).asRight
-    } catch {
-      case _: UnknownHostException => s"IP address $ipAddress was invald".asLeft
-    }
+  ): Either[EnrichmentFailureMessage, IabEnrichmentResponse] =
+    for {
+      ip <- Either
+        .catchNonFatal(InetAddress.getByName(ipAddress))
+        .leftMap(
+          e => InputDataEnrichmentFailureMessage("user_ipaddress", ipAddress.some, e.getMessage)
+        )
+      result <- Either
+        .catchNonFatal(iabClient.checkAt(userAgent, ip, accurateAt.toDate))
+        .leftMap(e => SimpleEnrichmentFailureMessage(e.getMessage))
+    } yield IabEnrichmentResponse(
+      result.isSpiderOrRobot,
+      result.getCategory.toString,
+      result.getReason.toString,
+      result.getPrimaryImpact.toString
+    )
 
   /**
    * Get the IAB response as a JSON context for a specific event
@@ -148,7 +153,8 @@ final case class IabEnrichment(iabClient: IabClient) extends Enrichment {
     userAgent: Option[String],
     ipAddress: Option[String],
     accurateAt: Option[DateTime]
-  ): Either[String, Json] = getIab(userAgent, ipAddress, accurateAt).map(addSchema)
+  ): Either[NonEmptyList[EnrichmentFailureMessage], Json] =
+    getIab(userAgent, ipAddress, accurateAt).map(addSchema)
 
   /**
    * Get IAB check response received from the client library and extracted as a JSON object
@@ -161,12 +167,22 @@ final case class IabEnrichment(iabClient: IabClient) extends Enrichment {
     userAgent: Option[String],
     ipAddress: Option[String],
     time: Option[DateTime]
-  ): Either[String, Json] =
+  ): Either[NonEmptyList[EnrichmentFailureMessage], Json] =
     (userAgent, ipAddress, time) match {
-      case (Some(ua), Some(ip), Some(t)) => performCheck(ua, ip, t).map(_.asJson)
-      case _ =>
-        ("One of required event fields missing. " +
-          s"user agent: $userAgent, ip address: $ipAddress, time: $time").asLeft
+      case (Some(ua), Some(ip), Some(t)) =>
+        performCheck(ua, ip, t)
+          .map(_.asJson)
+          .leftMap(NonEmptyList.one)
+      case (a, b, c) =>
+        val failures = List((a, "useragent"), (b, "user_ipaddress"), (c, "derived_tstamp"))
+          .collect {
+            case (None, n) =>
+              InputDataEnrichmentFailureMessage(n, none, "missing")
+          }
+        NonEmptyList
+          .fromList(failures)
+          .getOrElse(NonEmptyList.of(SimpleEnrichmentFailureMessage("Couldn't construct failures")))
+          .asLeft
     }
 
   /**

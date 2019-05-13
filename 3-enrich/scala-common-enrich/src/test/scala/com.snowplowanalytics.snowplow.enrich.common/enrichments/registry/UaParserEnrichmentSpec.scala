@@ -44,8 +44,8 @@ class UaParserEnrichmentSpec extends Specification with DataTables {
         Some(customRules) !! mobileSafariUserAgent !! testAgentJson |> { (rules, input, expected) =>
         (for {
           c <- EitherT.rightT[Eval, String](UaParserConf(rules))
-          e <- c.enrichment[Eval]
-          res <- EitherT.fromEither[Eval](e.extractUserAgent(input))
+          e <- c.enrichment[Eval].leftMap(_.toString)
+          res <- EitherT.fromEither[Eval](e.extractUserAgent(input)).leftMap(_.toString)
         } yield res).value.value must_== Right(expected)
       }
     }

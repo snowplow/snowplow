@@ -21,6 +21,8 @@ import eu.bitwalker.useragentutils._
 import io.circe._
 import org.slf4j.LoggerFactory
 
+import outputs._
+
 object UserAgentUtilsEnrichmentConfig extends ParseableEnrichment {
   override val supportedSchema =
     SchemaCriterion("com.snowplowanalytics.snowplow", "user_agent_utils_config", "jsonschema", 1, 0)
@@ -72,7 +74,9 @@ case object UserAgentUtilsEnrichment extends Enrichment {
    * @param useragent to extract from. Should be encoded, i.e. not previously decoded.
    * @return the ClientAttributes or the message of the exception, boxed in a Scalaz Validation
    */
-  def extractClientAttributes(useragent: String): Either[String, ClientAttributes] =
+  def extractClientAttributes(
+    useragent: String
+  ): Either[EnrichmentFailureMessage, ClientAttributes] =
     try {
       val ua = UserAgent.parseUserAgentString(useragent)
       val b = ua.getBrowser
@@ -92,6 +96,7 @@ case object UserAgentUtilsEnrichment extends Enrichment {
       ).asRight
     } catch {
       case NonFatal(e) =>
-        "Exception parsing useragent [%s]: [%s]".format(useragent, e.getMessage).asLeft
+        val msg = s"Exception parsing useragent [$useragent]: [${e.getMessage}]"
+        SimpleEnrichmentFailureMessage(msg).asLeft
     }
 }

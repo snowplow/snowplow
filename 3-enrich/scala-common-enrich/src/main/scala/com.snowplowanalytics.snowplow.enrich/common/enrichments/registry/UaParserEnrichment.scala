@@ -25,6 +25,7 @@ import io.circe.syntax._
 import ua_parser.Parser
 import ua_parser.Client
 
+import outputs._
 import utils.CirceUtils
 
 /** Companion object. Lets us create a UaParserEnrichment from a Json. */
@@ -101,12 +102,16 @@ final case class UaParserEnrichment(parser: Parser) extends Enrichment {
    * @param useragent to extract from. Should be encoded, i.e. not previously decoded.
    * @return the json or the message of the exception, boxed in a Scalaz Validation
    */
-  def extractUserAgent(useragent: String): Either[String, Json] =
-    for {
-      c <- Either
-        .catchNonFatal(parser.parse(useragent))
-        .leftMap(e => s"Exception parsing useragent [$useragent]: [${e.getMessage}]")
-    } yield assembleContext(c)
+  def extractUserAgent(useragent: String): Either[EnrichmentFailureMessage, Json] =
+    Either
+      .catchNonFatal(parser.parse(useragent))
+      .leftMap(
+        e =>
+          SimpleEnrichmentFailureMessage(
+            s"Exception parsing useragent [$useragent]: [${e.getMessage}]"
+          )
+      )
+      .map(assembleContext)
 
   /** Assembles ua_parser_context from a parsed user agent. */
   def assembleContext(c: Client): Json = {
