@@ -18,32 +18,30 @@ import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.effect.Clock
 import cats.syntax.either._
+import cats.syntax.option._
 import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
+import com.snowplowanalytics.snowplow.badrows._
 import io.circe._
-import io.circe.parser._
 import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormat
 
 import loaders.CollectorPayload
-import utils.{JsonUtils => JU}
+import utils.{HttpClient, JsonUtils => JU}
 
 /**
  * Transforms a collector payload which conforms to a known version of the Marketo webhook into raw
  * events.
  */
 object MarketoAdapter extends Adapter {
-  // Vendor name for Failure Message
-  private val VendorName = "Marketo"
-
   // Tracker version for an Marketo webhook
   private val TrackerVersion = "com.marketo-v1"
 
   // Schemas for reverse-engineering a Snowplow unstructured event
   private val EventSchemaMap = Map(
-    "event" -> SchemaKey("com.marketo", "event", "jsonschema", SchemaVer.Full(2, 0, 0)).toSchemaUri
+    "event" -> SchemaKey("com.marketo", "event", "jsonschema", SchemaVer.Full(2, 0, 0))
   )
 
   // Datetime format used by Marketo
@@ -63,6 +61,36 @@ object MarketoAdapter extends Adapter {
   )
 
   /**
+   * Converts a CollectorPayload instance into raw events.
+   * Marketo event contains no "type" field and since there's only 1 schema the function
+   * lookupschema takes the eventType parameter as "event".
+   * We expect the type parameter to match the supported events, else
+   * we have an unsupported event type.
+   * @param payload The CollectorPayload containing one or more raw events
+   * @param client The Iglu client used for schema lookup and validation
+   * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
+   */
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
+    payload: CollectorPayload,
+    client: Client[F, Json]
+  ): F[
+    ValidatedNel[FailureDetails.AdapterFailureOrTrackerProtocolViolation, NonEmptyList[RawEvent]]
+  ] =
+    (payload.body, payload.contentType) match {
+      case (None, _) =>
+        val failure = FailureDetails.AdapterFailure.InputData(
+          "body",
+          none,
+          "empty body: no events to process"
+        )
+        Monad[F].pure(failure.invalidNel)
+      case (Some(body), _) =>
+        val _ = client
+        val event = payloadBodyToEvent(body, payload)
+        Monad[F].pure(rawEventsListProcessor(List(event)))
+    }
+
+  /**
    * Returns a validated JSON payload event. Converts all date-time values to a valid format.
    * The payload will be validated against marketo "event" schema.
    * @param json The JSON payload sent by Marketo
@@ -72,18 +100,22 @@ object MarketoAdapter extends Adapter {
   private def payloadBodyToEvent(
     json: String,
     payload: CollectorPayload
-  ): ValidatedNel[String, RawEvent] =
+  ): ValidatedNel[FailureDetails.AdapterFailure, RawEvent] =
     (for {
-      parsed <- parse(json)
-        .leftMap(e => s"$VendorName event failed to parse into JSON: [${e.getMessage}]")
+      parsed <- JU
+        .extractJson(json)
+        .leftMap(e => FailureDetails.AdapterFailure.NotJson("body", json.some, e))
 
       parsedConverted <- if (parsed.isObject) reformatParameters(parsed).asRight
-      else s"$VendorName event is not a json object".asLeft
+      else
+        FailureDetails.AdapterFailure
+          .InputData("body", json.some, "not a json object")
+          .asLeft
 
       // The payload doesn't contain a "type" field so we're constraining the eventType to be of
       // type "event"
       eventType = Some("event")
-      schema <- lookupSchema(eventType, VendorName, EventSchemaMap)
+      schema <- lookupSchema(eventType, EventSchemaMap)
       params = toUnstructEventParams(
         TrackerVersion,
         toMap(payload.querystring),
@@ -99,29 +131,6 @@ object MarketoAdapter extends Adapter {
         context = payload.context
       )
     } yield rawEvent).toValidatedNel
-
-  /**
-   * Converts a CollectorPayload instance into raw events.
-   * Marketo event contains no "type" field and since there's only 1 schema the function
-   * lookupschema takes the eventType parameter as "event".
-   * We expect the type parameter to match the supported events, else
-   * we have an unsupported event type.
-   * @param payload The CollectorPayload containing one or more raw events
-   * @param client The Iglu client used for schema lookup and validation
-   * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
-   */
-  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
-    payload: CollectorPayload,
-    client: Client[F, Json]
-  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
-    (payload.body, payload.contentType) match {
-      case (None, _) =>
-        Monad[F].pure(s"Request body is empty: no $VendorName event to process".invalidNel)
-      case (Some(body), _) =>
-        val _ = client
-        val event = payloadBodyToEvent(body, payload)
-        Monad[F].pure(rawEventsListProcessor(List(event)))
-    }
 
   private[registry] def reformatParameters(json: Json): Json =
     json.mapObject { obj =>

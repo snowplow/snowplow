@@ -16,6 +16,7 @@ package adapters.registry
 import cats.data.{NonEmptyList, Validated}
 import cats.syntax.either._
 import cats.syntax.option._
+import com.snowplowanalytics.snowplow.badrows._
 import io.circe.literal._
 import io.circe.parser._
 import org.joda.time.DateTime
@@ -28,9 +29,16 @@ import utils.Clock._
 class UrbanAirshipAdapterSpec extends Specification with ValidatedMatchers {
 
   object Shared {
-    val api = CollectorApi("com.urbanairship.connect", "v1")
-    val cljSource = CollectorSource("clj-tomcat", "UTF-8", None)
-    val context = CollectorContext(None, "37.157.33.123".some, None, None, Nil, None) // NB the collector timestamp is set to None!
+    val api = CollectorPayload.Api("com.urbanairship.connect", "v1")
+    val cljSource = CollectorPayload.Source("clj-tomcat", "UTF-8", None)
+    val context = CollectorPayload.Context(
+      None,
+      "37.157.33.123".some,
+      None,
+      None,
+      Nil,
+      None
+    ) // NB the collector timestamp is set to None!
   }
 
   "toRawEvents" should {
@@ -154,7 +162,10 @@ class UrbanAirshipAdapterSpec extends Specification with ValidatedMatchers {
       val res = UrbanAirshipAdapter.toRawEvents(payload, SpecHelpers.client).value
 
       res must beInvalid(
-        NonEmptyList.one("Content type of a/type provided, expected None for UrbanAirship")
+        NonEmptyList.one(
+          FailureDetails.AdapterFailure
+            .InputData("contentType", "a/type".some, "expected no content type")
+        )
       )
     }
 

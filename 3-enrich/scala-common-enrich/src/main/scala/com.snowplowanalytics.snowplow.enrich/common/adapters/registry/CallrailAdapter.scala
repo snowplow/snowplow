@@ -18,10 +18,14 @@ import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.effect.Clock
 import cats.syntax.validated._
+
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
+import com.snowplowanalytics.snowplow.badrows.FailureDetails
+
 import io.circe.Json
+
 import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormat
 
@@ -45,7 +49,7 @@ object CallrailAdapter extends Adapter {
       "call_complete",
       "jsonschema",
       SchemaVer.Full(1, 0, 2)
-    ).toSchemaUri
+    )
   }
 
   // Datetime format used by CallRail (as we will need to massage)
@@ -68,14 +72,21 @@ object CallrailAdapter extends Adapter {
    * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
     payload: CollectorPayload,
     client: Client[F, Json]
-  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] = {
+  ): F[
+    ValidatedNel[FailureDetails.AdapterFailureOrTrackerProtocolViolation, NonEmptyList[RawEvent]]
+  ] = {
     val _ = client
     val params = toMap(payload.querystring)
     if (params.isEmpty) {
-      Monad[F].pure("Querystring is empty: no CallRail event to process".invalidNel)
+      val failure = FailureDetails.AdapterFailure.InputData(
+        "querystring",
+        None,
+        "empty querystring"
+      )
+      Monad[F].pure(failure.invalidNel)
     } else {
       Monad[F].pure(
         NonEmptyList

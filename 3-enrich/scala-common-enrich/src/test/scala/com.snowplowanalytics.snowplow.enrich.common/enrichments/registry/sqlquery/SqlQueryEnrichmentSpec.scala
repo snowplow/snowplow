@@ -68,7 +68,7 @@ class SqlQueryEnrichmentSpec extends Specification with ValidatedMatchers {
     val query = Query(
       "SELECT username, email_address, date_of_birth FROM tbl_users WHERE user = ? AND client = ? LIMIT 1"
     )
-    val config = SqlQueryConf(inputs, db, query, Output(output, "AT_MOST_ONE"), cache)
+    val config = SqlQueryConf(SCHEMA_KEY, inputs, db, query, Output(output, "AT_MOST_ONE"), cache)
 
     val configuration = parse(
       """

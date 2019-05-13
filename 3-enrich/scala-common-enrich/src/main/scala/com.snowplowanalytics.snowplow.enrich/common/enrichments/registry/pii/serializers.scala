@@ -18,6 +18,20 @@ import io.circe.generic.auto._
 import io.circe.syntax._
 
 object serializers {
+  implicit val modifiedFieldEncoder: Encoder[ModifiedField] = Encoder.instance {
+    case m: ScalarModifiedField => m.asJson
+    case m: JsonModifiedField => m.asJson
+  }
+
+  implicit val piiStrategyEncoder: Encoder[PiiStrategy] = Encoder.instance {
+    case s: PiiStrategyPseudonymize =>
+      Json.obj(
+        "pseudonymize" := Json.obj(
+          "hashFunction" := s.functionName
+        )
+      )
+  }
+
   implicit val piiModifiedFieldsEncoder: Encoder[PiiModifiedFields] =
     new Encoder[PiiModifiedFields] {
       val PiiTransformationSchema =
@@ -37,7 +51,8 @@ object serializers {
                         m + ("json" -> (j :: m.getOrElse("json", List.empty[ModifiedField])))
                     }
                 }
-                .asJson
+                .asJson,
+            "strategy" := a.strategy.asJson
           )
         )
     }

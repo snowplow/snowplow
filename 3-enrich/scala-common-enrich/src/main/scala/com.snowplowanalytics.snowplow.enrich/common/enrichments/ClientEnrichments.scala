@@ -16,6 +16,7 @@ package enrichments
 import java.lang.{Integer => JInteger}
 
 import cats.syntax.either._
+import com.snowplowanalytics.snowplow.badrows._
 
 /**
  * Contains enrichments related to the client - where the client is the software which is using the
@@ -37,14 +38,22 @@ object ClientEnrichments {
    * @param res The packed string holding the screen dimensions
    * @return the ResolutionTuple or an error message, boxed in a Scalaz Validation
    */
-  val extractViewDimensions: (String, String) => Either[String, (JInteger, JInteger)] =
+  val extractViewDimensions
+    : (String, String) => Either[FailureDetails.EnrichmentStageIssue, (JInteger, JInteger)] =
     (field, res) =>
-      res match {
+      (res match {
         case ResRegex(width, height) =>
           Either
             .catchNonFatal((width.toInt: JInteger, height.toInt: JInteger))
-            .leftMap(_ => s"Field [$field]: view dimensions [$res] exceed Integer's max range")
-        case _ => s"Field [$field]: [$res] does not contain valid view dimensions".asLeft
+            .leftMap(_ => "could not be converted to java.lang.Integer s")
+        case _ => s"does not conform to regex ${ResRegex.toString}".asLeft
+      }).leftMap { msg =>
+        val f = FailureDetails.EnrichmentFailureMessage.InputData(
+          field,
+          Option(res),
+          msg
+        )
+        FailureDetails.EnrichmentFailure(None, f)
       }
 
 }

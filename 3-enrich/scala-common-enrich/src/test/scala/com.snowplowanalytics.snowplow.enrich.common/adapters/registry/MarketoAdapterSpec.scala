@@ -16,11 +16,12 @@ package registry
 
 import cats.data.NonEmptyList
 import cats.syntax.option._
+import com.snowplowanalytics.snowplow.badrows._
 import org.joda.time.DateTime
 import org.specs2.Specification
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
-import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import loaders._
 import utils.Clock._
 
 class MarketoAdapterSpec extends Specification with DataTables with ValidatedMatchers {
@@ -31,9 +32,9 @@ class MarketoAdapterSpec extends Specification with DataTables with ValidatedMat
   """
 
   object Shared {
-    val api = CollectorApi("com.marketo", "v1")
-    val cljSource = CollectorSource("clj-tomcat", "UTF-8", None)
-    val context = CollectorContext(
+    val api = CollectorPayload.Api("com.marketo", "v1")
+    val cljSource = CollectorPayload.Source("clj-tomcat", "UTF-8", None)
+    val context = CollectorPayload.Context(
       DateTime.parse("2018-01-01T00:00:00.000+00:00").some,
       "37.157.33.123".some,
       None,
@@ -77,7 +78,10 @@ class MarketoAdapterSpec extends Specification with DataTables with ValidatedMat
     val payload =
       CollectorPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
     MarketoAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(
-      NonEmptyList.one("Request body is empty: no Marketo event to process")
+      NonEmptyList.one(
+        FailureDetails.AdapterFailure
+          .InputData("body", None, "empty body: no events to process")
+      )
     )
   }
 }

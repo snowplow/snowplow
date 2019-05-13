@@ -14,24 +14,41 @@ package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
 import java.nio.charset.StandardCharsets.UTF_8
+import java.time.Instant
 
 import cats.data.ValidatedNel
 import cats.syntax.option._
 import cats.syntax.validated._
+import com.snowplowanalytics.snowplow.badrows._
 import org.specs2.mutable.Specification
-import org.specs2.matcher.DataTables
+import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import SpecHelpers._
 
 object LoaderSpec {
+  val processor = Processor("LoaderSpec", "v1")
+
   val loader = new Loader[String] {
     // Make our trait whole
-    def toCollectorPayload(line: String): ValidatedNel[String, Option[CollectorPayload]] =
-      "FAIL".invalidNel
+    override def toCollectorPayload(
+      line: String,
+      processor: Processor
+    ): ValidatedNel[BadRow.CPFormatViolation, Option[CollectorPayload]] =
+      BadRow
+        .CPFormatViolation(
+          processor,
+          Failure.CPFormatViolation(
+            Instant.now(),
+            "test",
+            FailureDetails.CPFormatViolationMessage.Fallback("FAIL")
+          ),
+          Payload.RawPayload(line)
+        )
+        .invalidNel
   }
 }
 
-class LoaderSpec extends Specification with DataTables {
+class LoaderSpec extends Specification with DataTables with ValidatedMatchers {
   import LoaderSpec._
 
   "getLoader" should {
@@ -53,9 +70,7 @@ class LoaderSpec extends Specification with DataTables {
   }
 
   "extractGetPayload" should {
-
     val Encoding = UTF_8
-
     // TODO: add more tests
     "return a Success-boxed NonEmptyList of NameValuePairs for a valid or empty querystring" in {
 

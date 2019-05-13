@@ -17,22 +17,30 @@ package registry
 import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.data.Validated._
-import cats.effect.Clock
 import cats.syntax.either._
 import cats.syntax.eq._
+import cats.syntax.option._
 import cats.syntax.validated._
+
+import cats.effect.Clock
+
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
-import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer, SelfDescribingData}
+import com.snowplowanalytics.iglu.core.circe.CirceIgluCodecs._
+
+import com.snowplowanalytics.snowplow.badrows.FailureDetails
+
 import io.circe._
-import io.circe.parser._
 import io.circe.syntax._
+
 import org.apache.http.NameValuePair
+
 import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.format.DateTimeFormat
 
 import loaders.CollectorPayload
-import utils.{JsonUtils => JU}
+import utils.{HttpClient, JsonUtils => JU}
 
 trait Adapter {
 
@@ -42,7 +50,7 @@ trait Adapter {
     "unstruct_event",
     "jsonschema",
     SchemaVer.Full(1, 0, 0)
-  ).toSchemaUri
+  )
 
   // The Iglu schema URI for a Snowplow custom contexts
   private val Contexts = SchemaKey(
@@ -50,7 +58,7 @@ trait Adapter {
     "contexts",
     "jsonschema",
     SchemaVer.Full(1, 0, 1)
-  ).toSchemaUri
+  )
 
   // Signature for a Formatter function
   type FormatterFunc = (RawEventParameters) => Json
@@ -89,7 +97,7 @@ trait Adapter {
    * @param json The event JSON which we need to update values for
    * @param eventOpt The event type as an Option[String] which we are now going to remove from
    * the event JSON
-   * @param tsFieldKey the key name of the timestamp field which will be transformed
+   * @param tsFieldKeys the key name of the timestamp field which will be transformed
    * @return the updated JSON with valid date-time values in the tsFieldKey fields
    */
   private[registry] def cleanupJsonEventValues(
@@ -125,10 +133,12 @@ trait Adapter {
    * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
+  def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
     payload: CollectorPayload,
     client: Client[F, Json]
-  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]]
+  ): F[
+    ValidatedNel[FailureDetails.AdapterFailureOrTrackerProtocolViolation, NonEmptyList[RawEvent]]
+  ]
 
   /**
    * Converts a NonEmptyList of name:value pairs into a Map.
@@ -136,13 +146,13 @@ trait Adapter {
    * @return the name:value pairs in Map form
    */
   protected[registry] def toMap(parameters: List[NameValuePair]): Map[String, String] =
-    parameters.map(p => (p.getName -> p.getValue)).toList.toMap
+    parameters.map(p => p.getName -> p.getValue).toMap
 
   /**
    * Convenience function to build a simple formatter of RawEventParameters.
    * @param bools A List of keys whose values should be processed as boolean-like Strings
    * @param ints A List of keys whose values should be processed as integer-like Strings
-   * @param dates If Some, a NEL of keys whose values should be treated as date-time-like Strings,
+   * @param dateTimes If Some, a NEL of keys whose values should be treated as date-time-like Strings,
    * which will require processing from the specified format
    * @return a formatter function which converts RawEventParameters into a cleaned JObject
    */
@@ -150,7 +160,7 @@ trait Adapter {
     bools: List[String] = Nil,
     ints: List[String] = Nil,
     dateTimes: JU.DateTimeFields = None
-  ): FormatterFunc = { (parameters: RawEventParameters) =>
+  ): FormatterFunc = { parameters: RawEventParameters =>
     val jsons = parameters.toList
       .map(p => JU.toJson(p._1, p._2, bools, ints, dateTimes))
     Json.obj(jsons: _*)
@@ -171,26 +181,17 @@ trait Adapter {
   protected[registry] def toUnstructEventParams(
     tracker: String,
     parameters: RawEventParameters,
-    schema: String,
+    schema: SchemaKey,
     formatter: FormatterFunc,
     platform: String
   ): RawEventParameters = {
-
     val params = formatter(parameters - ("nuid", "aid", "cv", "p"))
-
-    val json = Json.obj(
-      "schema" := UnstructEvent,
-      "data" := Json.obj(
-        ("schema" := schema),
-        ("data" := params)
-      )
-    )
-
+    val json = toUnstructEvent(SelfDescribingData(schema, params)).noSpaces
     Map(
       "tv" -> tracker,
       "e" -> "ue",
       "p" -> parameters.getOrElse("p", platform), // Required field
-      "ue_pr" -> json.noSpaces
+      "ue_pr" -> json
     ) ++
       parameters.filterKeys(AcceptedQueryParameters)
   }
@@ -201,10 +202,8 @@ trait Adapter {
    * @param eventJson The event which we will nest into the unstructured event
    * @return the self-describing unstructured event
    */
-  protected[registry] def toUnstructEvent(eventJson: Json): Json = Json.obj(
-    "schema" := UnstructEvent,
-    "data" := eventJson
-  )
+  protected[registry] def toUnstructEvent(eventJson: SelfDescribingData[Json]): Json =
+    SelfDescribingData(UnstructEvent, eventJson.asJson).asJson
 
   /**
    * Creates a Snowplow custom contexts entity by nesting the provided JValue in a self-describing
@@ -212,7 +211,7 @@ trait Adapter {
    * @param contextJson The context which will be nested into the custom contexts envelope
    * @return the self-describing custom contexts
    */
-  protected[registry] def toContext(contextJson: Json): Json =
+  protected[registry] def toContext(contextJson: SelfDescribingData[Json]): Json =
     toContexts(List(contextJson))
 
   /**
@@ -221,10 +220,8 @@ trait Adapter {
    * @param contextJsons The contexts which will be nested into the custom contexts envelope
    * @return the self-describing custom contexts
    */
-  protected[registry] def toContexts(contextJsons: List[Json]): Json = Json.obj(
-    "schema" := Contexts,
-    "data" := contextJsons
-  )
+  protected[registry] def toContexts(contextJsons: List[SelfDescribingData[Json]]): Json =
+    SelfDescribingData(Contexts, Json.arr(contextJsons.map(_.asJson): _*)).asJson
 
   /**
    * Fabricates a Snowplow unstructured event from the supplied parameters. Note that to be a
@@ -240,18 +237,11 @@ trait Adapter {
   protected[registry] def toUnstructEventParams(
     tracker: String,
     qsParams: RawEventParameters,
-    schema: String,
+    schema: SchemaKey,
     eventJson: JsonObject,
     platform: String
   ): RawEventParameters = {
-
-    val json = toUnstructEvent(
-      Json.obj(
-        "schema" := schema,
-        "data" := eventJson
-      )
-    ).noSpaces
-
+    val json = toUnstructEvent(SelfDescribingData(schema, eventJson.asJson)).noSpaces
     Map(
       "tv" -> tracker,
       "e" -> "ue",
@@ -275,17 +265,11 @@ trait Adapter {
   protected[registry] def toUnstructEventParams(
     tracker: String,
     qsParams: RawEventParameters,
-    schema: String,
+    schema: SchemaKey,
     eventJson: Json,
     platform: String
   ): RawEventParameters = {
-
-    val json = toUnstructEvent(
-      Json.obj(
-        "schema" := schema,
-        "data" := eventJson
-      )
-    ).noSpaces
+    val json = toUnstructEvent(SelfDescribingData(schema, eventJson)).noSpaces
 
     Map(
       "tv" -> tracker,
@@ -307,14 +291,14 @@ trait Adapter {
    * or Failures
    */
   protected[registry] def rawEventsListProcessor(
-    rawEventsList: List[ValidatedNel[String, RawEvent]]
-  ): ValidatedNel[String, NonEmptyList[RawEvent]] = {
+    rawEventsList: List[ValidatedNel[FailureDetails.AdapterFailure, RawEvent]]
+  ): ValidatedNel[FailureDetails.AdapterFailure, NonEmptyList[RawEvent]] = {
     val successes: List[RawEvent] =
       for {
         Valid(s) <- rawEventsList
       } yield s
 
-    val failures: List[String] =
+    val failures: List[FailureDetails.AdapterFailure] =
       (for {
         Invalid(NonEmptyList(h, t)) <- rawEventsList
       } yield h :: t).flatten
@@ -325,7 +309,9 @@ trait Adapter {
       // Some or all are Failures, return these.
       case (_, f :: fs) => NonEmptyList.of(f, fs: _*).invalid
       case (Nil, Nil) =>
-        "List of events is empty (should never happen, not catching empty list properly)".invalidNel
+        FailureDetails.AdapterFailure
+          .InputData("", none, "empty list of events")
+          .invalidNel
     }
   }
 
@@ -333,30 +319,39 @@ trait Adapter {
    * USAGE: Single event payloads
    * Gets the correct Schema URI for the event passed from the vendor payload
    * @param eventOpt An Option[String] which will contain a String or None
-   * @param vendor The vendor we are doing a schema lookup for; i.e. MailChimp or PagerDuty
    * @param eventSchemaMap A map of event types linked to their relevant schema URI's
    * @return the schema for the event or a Failure-boxed String if we cannot recognize the
    * event type
    */
   protected[registry] def lookupSchema(
     eventOpt: Option[String],
-    vendor: String,
-    eventSchemaMap: Map[String, String]
-  ): Either[String, String] =
+    eventSchemaMap: Map[String, SchemaKey]
+  ): Either[FailureDetails.AdapterFailure, SchemaKey] =
     eventOpt match {
       case None =>
-        s"$vendor event failed: type parameter not provided - cannot determine event type".asLeft
+        val msg = "cannot determine event type: type parameter not provided"
+        FailureDetails.AdapterFailure.SchemaMapping(None, eventSchemaMap, msg).asLeft
       case Some(eventType) =>
         eventType match {
           case et if eventSchemaMap.contains(et) =>
             eventSchemaMap.get(et) match {
               case None =>
-                s"$vendor event failed: type parameter [$et] has no schema associated with it - check event-schema map".asLeft
+                val msg = "no schema associated with the provided type parameter"
+                FailureDetails.AdapterFailure
+                  .SchemaMapping(eventType.some, eventSchemaMap, msg)
+                  .asLeft
               case Some(schema) => schema.asRight
             }
           case "" =>
-            s"$vendor event failed: type parameter is empty - cannot determine event type".asLeft
-          case et => s"$vendor event failed: type parameter [$et] not recognized".asLeft
+            val msg = "cannot determine event type: type parameter empty"
+            FailureDetails.AdapterFailure
+              .SchemaMapping(eventType.some, eventSchemaMap, msg)
+              .asLeft
+          case _ =>
+            val msg = "no schema associated with the provided type parameter"
+            FailureDetails.AdapterFailure
+              .SchemaMapping(eventType.some, eventSchemaMap, msg)
+              .asLeft
         }
     }
 
@@ -364,7 +359,6 @@ trait Adapter {
    * USAGE: Multiple event payloads
    * Gets the correct Schema URI for the event passed from the vendor payload
    * @param eventOpt An Option[String] which will contain a String or None
-   * @param vendor The vendor we are doing a schema lookup for; i.e. MailChimp or PagerDuty
    * @param index The index of the event we are trying to get a schema URI for
    * @param eventSchemaMap A map of event types linked to their relevant schema URI's
    * @return the schema for the event or a Failure-boxed String if we cannot recognize the
@@ -372,37 +366,36 @@ trait Adapter {
    */
   protected[registry] def lookupSchema(
     eventOpt: Option[String],
-    vendor: String,
     index: Int,
-    eventSchemaMap: Map[String, String]
-  ): Either[String, String] =
+    eventSchemaMap: Map[String, SchemaKey]
+  ): Either[FailureDetails.AdapterFailure, SchemaKey] =
     eventOpt match {
       case None =>
-        s"$vendor event at index [$index] failed: type parameter not provided - cannot determine event type".asLeft
+        val msg = s"cannot determine event type: type parameter not provided at index $index"
+        FailureDetails.AdapterFailure.SchemaMapping(None, eventSchemaMap, msg).asLeft
       case Some(eventType) =>
         eventType match {
           case et if eventSchemaMap.contains(et) =>
             eventSchemaMap.get(et) match {
               case None =>
-                s"$vendor event at index [$index] failed: type parameter [$et] has no schema associated with it - check event-schema map".asLeft
+                val msg = s"no schema associated with the provided type parameter at index $index"
+                FailureDetails.AdapterFailure
+                  .SchemaMapping(eventType.some, eventSchemaMap, msg)
+                  .asLeft
               case Some(schema) => schema.asRight
             }
           case "" =>
-            s"$vendor event at index [$index] failed: type parameter is empty - cannot determine event type".asLeft
-          case et =>
-            s"$vendor event at index [$index] failed: type parameter [$et] not recognized".asLeft
+            val msg = s"cannot determine event type: type parameter empty at index $index"
+            FailureDetails.AdapterFailure
+              .SchemaMapping(eventType.some, eventSchemaMap, msg)
+              .asLeft
+          case _ =>
+            val msg = s"no schema associated with the provided type parameter at index $index"
+            FailureDetails.AdapterFailure
+              .SchemaMapping(eventType.some, eventSchemaMap, msg)
+              .asLeft
         }
     }
-
-  /**
-   * Attempts to parse a json string into a JValue example:
-   * {"p":"app"} becomes JObject(List((p,JString(app))))
-   * @param jsonStr The string we want to parse into a JValue
-   * @return a Validated JValue or a NonEmptyList Failure containing a parsing exception
-   */
-  private[registry] def parseJsonSafe(jsonStr: String): Either[String, Json] =
-    parse(jsonStr)
-      .leftMap(e => s"Event failed to parse into JSON: [${e.message}]")
 
   private[registry] val snakeCaseOrDashTokenCapturingRegex = "[_-](\\w)".r
 

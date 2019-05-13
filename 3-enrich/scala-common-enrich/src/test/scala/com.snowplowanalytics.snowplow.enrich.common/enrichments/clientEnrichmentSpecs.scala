@@ -14,16 +14,33 @@ package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 
 import cats.syntax.either._
+import com.snowplowanalytics.snowplow.badrows._
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
 
 class ExtractViewDimensionsSpec extends Specification with DataTables {
 
   val FieldName = "res"
-  def err: (String) => String =
-    input => "Field [%s]: [%s] does not contain valid view dimensions".format(FieldName, input)
-  def err2: (String) => String =
-    input => "Field [%s]: view dimensions [%s] exceed Integer's max range".format(FieldName, input)
+  def err: String => FailureDetails.EnrichmentFailure =
+    input =>
+      FailureDetails.EnrichmentFailure(
+        None,
+        FailureDetails.EnrichmentFailureMessage.InputData(
+          FieldName,
+          Option(input),
+          """does not conform to regex (\d+)x(\d+)"""
+        )
+      )
+  def err2: String => FailureDetails.EnrichmentFailure =
+    input =>
+      FailureDetails.EnrichmentFailure(
+        None,
+        FailureDetails.EnrichmentFailureMessage.InputData(
+          FieldName,
+          Option(input),
+          "could not be converted to java.lang.Integer s"
+        )
+      )
 
   def is =
     s2"Extracting screen dimensions (viewports, screen resolution etc) with extractViewDimensions should work $e1"
