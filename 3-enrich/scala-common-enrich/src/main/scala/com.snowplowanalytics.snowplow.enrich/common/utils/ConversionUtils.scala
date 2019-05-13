@@ -26,6 +26,7 @@ import scala.util.control.NonFatal
 
 import cats.syntax.either._
 import cats.syntax.option._
+import com.snowplowanalytics.snowplow.badrows._
 import io.lemonlabs.uri.{Uri, Url}
 import io.lemonlabs.uri.config.UriConfig
 import io.lemonlabs.uri.decoding.PercentDecoder
@@ -107,7 +108,6 @@ object ConversionUtils {
    * For details on the Base 64 Encoding with URL and Filename Safe Alphabet see:
    * http://tools.ietf.org/html/rfc4648#page-7
    * @param str The encoded string to be decoded
-   * @param field The name of the field
    * @return a Scalaz Validation, wrapping either an
    * an error String or the decoded String
    */
@@ -117,17 +117,14 @@ object ConversionUtils {
   // 2. Functionality:
   // 1. If passed in null or "", return Success(None)
   // 2. If passed in a non-empty string but result == "", then return a Failure, because we have failed to decode something meaningful
-  def decodeBase64Url(field: String, str: String): Either[String, String] =
+  def decodeBase64Url(str: String): Either[String, String] =
     Either
       .catchNonFatal {
         val decodedBytes = UrlSafeBase64.decode(str)
         val result = new String(decodedBytes, UTF_8) // Must specify charset (EMR uses US_ASCII)
         result
       }
-      .leftMap { e =>
-        "Field [%s]: exception Base64-decoding [%s] (URL-safe encoding): [%s]"
-          .format(field, str, e.getMessage)
-      }
+      .leftMap(e => s"could not base64 decode: ${e.getMessage}")
 
   /**
    * Encodes a URL-safe Base64 string.
@@ -145,29 +142,42 @@ object ConversionUtils {
    * Validates that the given field contains a valid UUID.
    * @param field The name of the field being validated
    * @param str The String hopefully containing a UUID
-   * @return a Scalaz ValidatedString containing either the original String on Success, or an error
-   * String on Failure.
+   * @return either the original String, or an error String
    */
-  val validateUuid: (String, String) => Either[String, String] = (field, str) => {
-    def check(s: String)(u: UUID): Boolean = (u != null && s.toLowerCase == u.toString)
-    val uuid = Try(UUID.fromString(str)).toOption.filter(check(str))
-    uuid match {
-      case Some(_) => str.toLowerCase.asRight
-      case None => s"Field [$field]: [$str] is not a valid UUID".asLeft
+  val validateUuid: (String, String) => Either[FailureDetails.EnrichmentStageIssue, String] =
+    (field, str) => {
+      def check(s: String)(u: UUID): Boolean = (u != null && s.toLowerCase == u.toString)
+      val uuid = Try(UUID.fromString(str)).toOption.filter(check(str))
+      uuid match {
+        case Some(_) => str.toLowerCase.asRight
+        case None =>
+          val f = FailureDetails.EnrichmentFailureMessage.InputData(
+            field,
+            Option(str),
+            "not a valid UUID"
+          )
+          FailureDetails.EnrichmentFailure(None, f).asLeft
+      }
     }
-  }
 
   /**
    * @param field The name of the field being validated
    * @param str The String hopefully parseable as an integer
-   * @return a Scalaz ValidatedString containing either the original String on Success, or an error
-   * String on Failure.
+   * @return either the original String, or an error String
    */
-  val validateInteger: (String, String) => Either[String, String] = (field, str) => {
-    Either
-      .catchNonFatal { str.toInt; str }
-      .leftMap(_ => s"Field [$field]: [$str] is not a valid integer")
-  }
+  val validateInteger: (String, String) => Either[FailureDetails.EnrichmentStageIssue, String] =
+    (field, str) => {
+      Either
+        .catchNonFatal { str.toInt; str }
+        .leftMap { _ =>
+          val f = FailureDetails.EnrichmentFailureMessage.InputData(
+            field,
+            Option(str),
+            "not a valid integer"
+          )
+          FailureDetails.EnrichmentFailure(None, f)
+        }
+    }
 
   /**
    * Decodes a String in the specific encoding, also removing:
@@ -179,11 +189,10 @@ object ConversionUtils {
    * TODO: simplify this when we move to a more robust output format (e.g. Avro) - as then
    * no need to remove line breaks, tabs etc
    * @param enc The encoding of the String
-   * @param field The name of the field
    * @param str The String to decode
-   * @return a Scalaz Validation, wrapping either an error String or the decoded String
+   * @return either an error String or the decoded String
    */
-  val decodeString: (Charset, String, String) => Either[String, String] = (enc, field, str) =>
+  val decodeString: (Charset, String) => Either[String, String] = (enc, str) =>
     try {
       // TODO: switch to style of fixTabsNewlines above
       // TODO: potentially switch to using fixTabsNewlines too to avoid duplication
@@ -191,10 +200,7 @@ object ConversionUtils {
       val d = URLDecoder.decode(s, enc.toString)
       d.replaceAll("(\\r|\\n)", "").replaceAll("\\t", "    ").asRight
     } catch {
-      case NonFatal(e) =>
-        "Field [%s]: Exception URL-decoding [%s] (encoding [%s]): [%s]"
-          .format(field, str, enc, e.getMessage)
-          .asLeft
+      case NonFatal(e) => s"exception URL-decoding (encoding $enc): ${e.getMessage}".asLeft
     }
 
   /**
@@ -223,12 +229,11 @@ object ConversionUtils {
 
   /**
    * Decode double-encoded percents, then percent decode
-   * @param field The name of the field
    * @param str The String to decode
    * @return a Scalaz Validation, wrapping either an error String or the decoded String
    */
-  def doubleDecode(field: String, str: String): Either[String, String] =
-    decodeString(UTF_8, field, singleEncodePcts(str))
+  def doubleDecode(str: String): Either[String, String] =
+    decodeString(UTF_8, singleEncodePcts(str))
 
   /**
    * Encodes a string in the specified encoding
@@ -240,39 +245,47 @@ object ConversionUtils {
     URLEncoder.encode(str, enc)
 
   /**
-   * Parses a string to create a [[URI]].
+   * Parses a string to create a URI.
    * Parsing is relaxed, i.e. even if a URL is not correctly percent-encoded or not RFC 3986-compliant, it can be parsed.
    * @param uri String containing the URI to parse.
    * @return either:
-   * - the parsed URI if there was no error or with [[None]] if the input was `null`.
+   * - the parsed URI if there was no error or with None if the input was `null`.
    * - the error message if something went wrong.
    */
   def stringToUri(uri: String): Either[String, Option[URI]] =
-    Either.catchNonFatal(
-      Option(uri) // to handle null
-        .map(_.replaceAll(" ", "%20"))
-        .map(URI.create)
-    ).leftFlatMap { javaErr =>
-      implicit val c =
-        UriConfig(decoder = PercentDecoder(ignoreInvalidPercentEncoding = true), encoder = percentEncode -- '+')
-      Uri
-        .parseTry(uri)
-        .map(_.toJavaURI) match {
-        case util.Success(javaURI) =>
-          Some(javaURI).asRight
-        case util.Failure(scalaErr) =>
-          "Provided URI [%s] could not be parsed, neither by Java parsing (error: [%s]) nor by Scala parsing (error: [%s])."
-            .format(uri, javaErr.getMessage, scalaErr.getMessage)
-            .asLeft
+    Either
+      .catchNonFatal(
+        Option(uri) // to handle null
+          .map(_.replaceAll(" ", "%20"))
+          .map(URI.create)
+      )
+      .leftFlatMap { javaErr =>
+        implicit val c =
+          UriConfig(
+            decoder = PercentDecoder(ignoreInvalidPercentEncoding = true),
+            encoder = percentEncode -- '+'
+          )
+        Uri
+          .parseTry(uri)
+          .map(_.toJavaURI) match {
+          case util.Success(javaURI) =>
+            Some(javaURI).asRight
+          case util.Failure(scalaErr) =>
+            "Provided URI [%s] could not be parsed, neither by Java parsing (error: [%s]) nor by Scala parsing (error: [%s])."
+              .format(uri, javaErr.getMessage, scalaErr.getMessage)
+              .asLeft
+        }
       }
-    }
 
   /**
    * Attempt to extract the querystring from a URI as a map
    * @param uri URI containing the querystring
    * @param encoding Encoding of the URI
    */
-  def extractQuerystring(uri: URI, encoding: Charset): Either[String, Map[String, String]] =
+  def extractQuerystring(
+    uri: URI,
+    encoding: Charset
+  ): Either[FailureDetails.EnrichmentStageIssue, Map[String, String]] =
     Try(URLEncodedUtils.parse(uri, encoding).asScala.map(p => (p.getName -> p.getValue)))
       .recoverWith {
         case NonFatal(_) =>
@@ -280,16 +293,21 @@ object ConversionUtils {
       } match {
       case util.Success(s) => s.toMap.asRight
       case util.Failure(e) =>
-        s"Could not parse uri [$uri]. Uri parsing threw exception: [$e].".asLeft
+        val msg = s"could not parse uri, expection was thrown: [$e]."
+        val f = FailureDetails.EnrichmentFailureMessage.InputData(
+          "uri",
+          Option(uri).map(_.toString()),
+          msg
+        )
+        FailureDetails.EnrichmentFailure(None, f).asLeft
     }
 
   /**
    * Extract a Scala Int from a String, or error.
    * @param str The String which we hope is an Int
-   * @param field The name of the field we are trying to process. To use in our error message
-   * @return a Scalaz Validation, being either a Failure String or a Success JInt
+   * @return either a Failure String or a Success JInt
    */
-  val stringToJInteger: (String, String) => Either[String, JInteger] = (field, str) =>
+  val stringToJInteger: String => Either[String, JInteger] = str =>
     if (Option(str).isEmpty) {
       null.asInstanceOf[JInteger].asRight
     } else {
@@ -298,9 +316,20 @@ object ConversionUtils {
         jint.asRight
       } catch {
         case _: NumberFormatException =>
-          "Field [%s]: cannot convert [%s] to Int".format(field, str).asLeft
+          "cannot be converted to java.lang.Integer".asLeft
       }
     }
+
+  val stringToJInteger2: (String, String) => Either[FailureDetails.EnrichmentStageIssue, JInteger] =
+    (field, str) =>
+      stringToJInteger(str).leftMap { e =>
+        val f = FailureDetails.EnrichmentFailureMessage.InputData(
+          field,
+          Option(str),
+          e
+        )
+        FailureDetails.EnrichmentFailure(None, f)
+      }
 
   /**
    * Convert a String to a String containing a Redshift-compatible Double.
@@ -309,20 +338,28 @@ object ConversionUtils {
    * meaning Redshift may silently round this number on load.
    * @param str The String which we hope contains a Double
    * @param field The name of the field we are validating. To use in our error message
-   * @return a Scalaz Validation, being either a Failure String or a Success String
+   * @return either a failure or a String
    */
-  val stringToDoublelike: (String, String) => Either[String, String] = (field, str) =>
-    Either
-      .catchNonFatal {
-        if (Option(str).isEmpty || str == "null") {
-          // "null" String check is LEGACY to handle a bug in the JavaScript tracker
-          null.asInstanceOf[String]
-        } else {
-          val jbigdec = new JBigDecimal(str)
-          jbigdec.toPlainString // Strip scientific notation
+  val stringToDoubleLike: (String, String) => Either[FailureDetails.EnrichmentStageIssue, String] =
+    (field, str) =>
+      Either
+        .catchNonFatal {
+          if (Option(str).isEmpty || str == "null") {
+            // "null" String check is LEGACY to handle a bug in the JavaScript tracker
+            null.asInstanceOf[String]
+          } else {
+            val jbigdec = new JBigDecimal(str)
+            jbigdec.toPlainString // Strip scientific notation
+          }
         }
-      }
-      .leftMap(_ => s"Field [$field]: cannot convert [$str] to Double-like String")
+        .leftMap { _ =>
+          val msg = "cannot be converted to Double-like"
+          FailureDetails.EnrichmentFailure(
+            None,
+            FailureDetails.EnrichmentFailureMessage
+              .InputData(field, Option(str), msg)
+          )
+        }
 
   /**
    * Convert a String to a Double
@@ -330,7 +367,10 @@ object ConversionUtils {
    * @param field The name of the field we are validating. To use in our error message
    * @return a Scalaz Validation, being either a Failure String or a Success Double
    */
-  def stringToMaybeDouble(field: String, str: String): Either[String, Option[Double]] =
+  def stringToMaybeDouble(
+    field: String,
+    str: String
+  ): Either[FailureDetails.EnrichmentStageIssue, Option[Double]] =
     Either
       .catchNonFatal {
         if (Option(str).isEmpty || str == "null") {
@@ -341,42 +381,60 @@ object ConversionUtils {
           jbigdec.doubleValue().some
         }
       }
-      .leftMap(_ => s"Field [$field]: cannot convert [$str] to Double-like String")
+      .leftMap(
+        _ =>
+          FailureDetails.EnrichmentFailure(
+            None,
+            FailureDetails.EnrichmentFailureMessage.InputData(
+              field,
+              Option(str),
+              "cannot be converted to Double"
+            )
+          )
+      )
 
   /**
    * Converts a String to a Double with two decimal places. Used to honor schemas with
    * multipleOf 0.01.
    * Takes a field name and a string value and return a validated double.
    */
-  val stringToTwoDecimals: (String, String) => Either[String, Double] = (field, str) =>
+  val stringToTwoDecimals: String => Either[String, Double] = (str) =>
     try {
       BigDecimal(str).setScale(2, BigDecimal.RoundingMode.HALF_EVEN).toDouble.asRight
     } catch {
-      case _: NumberFormatException =>
-        "Field [%s]: cannot convert [%s] to Double".format(field, str).asLeft
+      case _: NumberFormatException => "cannot be converted to Double".asLeft
     }
 
   /**
    * Converts a String to a Double.
    * Takes a field name and a string value and return a validated float.
    */
-  val stringToDouble: (String, String) => Either[String, Double] = (field, str) =>
+  val stringToDouble: String => Either[String, Double] = (str) =>
     Either
       .catchNonFatal(BigDecimal(str).toDouble)
-      .leftMap(_ => s"Field [$field]: cannot convert [$str] to Double")
+      .leftMap(_ => s"cannot be converted to Double")
 
   /**
    * Extract a Java Byte representing 1 or 0 only from a String, or error.
    * @param str The String which we hope is an Byte
    * @param field The name of the field we are trying to process. To use in our error message
-   * @return a Scalaz Validation, being either a Failure String or a Success Byte
+   * @return either a Failure String or a Success Byte
    */
-  val stringToBooleanlikeJByte: (String, String) => Either[String, JByte] = (field, str) =>
-    str match {
-      case "1" => (1.toByte: JByte).asRight
-      case "0" => (0.toByte: JByte).asRight
-      case _ => s"Field [$field]: cannot convert [$str] to Boolean-like JByte".asLeft
-    }
+  val stringToBooleanLikeJByte
+    : (String, String) => Either[FailureDetails.EnrichmentStageIssue, JByte] =
+    (field, str) =>
+      str match {
+        case "1" => (1.toByte: JByte).asRight
+        case "0" => (0.toByte: JByte).asRight
+        case _ =>
+          val msg = "cannot be converted to Boolean-like java.lang.Byte"
+          val f = FailureDetails.EnrichmentFailureMessage.InputData(
+            field,
+            Option(str),
+            msg
+          )
+          FailureDetails.EnrichmentFailure(None, f).asLeft
+      }
 
   /**
    * Converts a String of value "1" or "0" to true or false respectively.
@@ -384,13 +442,13 @@ object ConversionUtils {
    * @return True for "1", false for "0", or an error message for any other value, all boxed in a
    * Scalaz Validation
    */
-  val stringToBoolean: (String, String) => Either[String, Boolean] = (field, str) =>
+  val stringToBoolean: String => Either[String, Boolean] = (str) =>
     if (str == "1") {
       true.asRight
     } else if (str == "0") {
       false.asRight
     } else {
-      s"Field [$field]: Cannot convert [$str] to boolean, only 1 or 0.".asLeft
+      s"cannot be converted to boolean, only 1 or 0 are supported".asLeft
     }
 
   /**
@@ -413,4 +471,13 @@ object ConversionUtils {
    */
   def booleanToJByte(bool: Boolean): JByte =
     (if (bool) 1 else 0).toByte
+
+  def parseUrlEncodedForm(s: String): Either[String, Map[String, String]] =
+    for {
+      r <- Either
+        .catchNonFatal(URLEncodedUtils.parse(URI.create("http://localhost/?" + s), UTF_8))
+        .leftMap(_.getMessage)
+      nvps = r.asScala.toList
+      pairs = nvps.map(p => p.getName() -> p.getValue())
+    } yield pairs.toMap
 }

@@ -14,14 +14,15 @@ package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry
 
 import java.io.File
-import java.net.{InetAddress, URI, UnknownHostException}
+import java.net.{InetAddress, URI}
 
-import cats.{Eval, Monad}
+import cats.{Eval, Id, Monad}
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.effect.Sync
 import cats.implicits._
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
 import com.snowplowanalytics.iab.spidersandrobotsclient.IabClient
+import com.snowplowanalytics.snowplow.badrows._
 import io.circe._
 import io.circe.generic.auto._
 import io.circe.syntax._
@@ -60,6 +61,7 @@ object IabEnrichment extends ParseableEnrichment {
           getIabDbFromName(c, "includeUseragentFile")
         ).mapN { (ip, exclude, include) =>
           IabConf(
+            schemaKey,
             file(ip, localMode),
             file(exclude, localMode),
             file(include, localMode)
@@ -80,7 +82,7 @@ object IabEnrichment extends ParseableEnrichment {
   def apply[F[_]: Monad: CreateIabClient](conf: IabConf): F[IabEnrichment] =
     CreateIabClient[F]
       .create(conf.ipFile._2, conf.excludeUaFile._2, conf.includeUaFile._2)
-      .map(IabEnrichment.apply)
+      .map(c => IabEnrichment(conf.schemaKey, c))
 
   /**
    * Creates IabDatabase instances used in the IabEnrichment case class.
@@ -108,8 +110,10 @@ object IabEnrichment extends ParseableEnrichment {
  * @param includeUaFile (Full URI to the IAB included user agent list, database name)
  * @param localMode Whether to use the local database file. Enabled for tests.
  */
-final case class IabEnrichment(iabClient: IabClient) extends Enrichment {
+final case class IabEnrichment(schemaKey: SchemaKey, iabClient: IabClient) extends Enrichment {
   private val schemaUri = "iglu:com.iab.snowplow/spiders_and_robots/jsonschema/1-0-0"
+  private val enrichmentInfo =
+    FailureDetails.EnrichmentInformation(schemaKey, "iab-spiders-and-robots").some
 
   /**
    * Get the IAB response containing information about whether an event is a spider or robot using
@@ -124,18 +128,26 @@ final case class IabEnrichment(iabClient: IabClient) extends Enrichment {
     userAgent: String,
     ipAddress: String,
     accurateAt: DateTime
-  ): Either[String, IabEnrichmentResponse] =
-    try {
-      val result = iabClient.checkAt(userAgent, InetAddress.getByName(ipAddress), accurateAt.toDate)
-      IabEnrichmentResponse(
-        result.isSpiderOrRobot,
-        result.getCategory.toString,
-        result.getReason.toString,
-        result.getPrimaryImpact.toString
-      ).asRight
-    } catch {
-      case _: UnknownHostException => s"IP address $ipAddress was invald".asLeft
-    }
+  ): Either[FailureDetails.EnrichmentStageIssue, IabEnrichmentResponse] =
+    (for {
+      ip <- Either
+        .catchNonFatal(InetAddress.getByName(ipAddress))
+        .leftMap(
+          e =>
+            FailureDetails.EnrichmentFailureMessage
+              .InputData("user_ipaddress", ipAddress.some, e.getMessage)
+        )
+      result <- Either
+        .catchNonFatal(iabClient.checkAt(userAgent, ip, accurateAt.toDate))
+        .leftMap(
+          e => FailureDetails.EnrichmentFailureMessage.Simple(e.getMessage)
+        )
+    } yield IabEnrichmentResponse(
+      result.isSpiderOrRobot,
+      result.getCategory.toString,
+      result.getReason.toString,
+      result.getPrimaryImpact.toString
+    )).leftMap(FailureDetails.EnrichmentFailure(enrichmentInfo, _))
 
   /**
    * Get the IAB response as a JSON context for a specific event
@@ -148,7 +160,8 @@ final case class IabEnrichment(iabClient: IabClient) extends Enrichment {
     userAgent: Option[String],
     ipAddress: Option[String],
     accurateAt: Option[DateTime]
-  ): Either[String, Json] = getIab(userAgent, ipAddress, accurateAt).map(addSchema)
+  ): Either[NonEmptyList[FailureDetails.EnrichmentStageIssue], Json] =
+    getIab(userAgent, ipAddress, accurateAt).map(addSchema)
 
   /**
    * Get IAB check response received from the client library and extracted as a JSON object
@@ -161,12 +174,31 @@ final case class IabEnrichment(iabClient: IabClient) extends Enrichment {
     userAgent: Option[String],
     ipAddress: Option[String],
     time: Option[DateTime]
-  ): Either[String, Json] =
+  ): Either[NonEmptyList[FailureDetails.EnrichmentStageIssue], Json] =
     (userAgent, ipAddress, time) match {
-      case (Some(ua), Some(ip), Some(t)) => performCheck(ua, ip, t).map(_.asJson)
-      case _ =>
-        ("One of required event fields missing. " +
-          s"user agent: $userAgent, ip address: $ipAddress, time: $time").asLeft
+      case (Some(ua), Some(ip), Some(t)) =>
+        performCheck(ua, ip, t)
+          .map(_.asJson)
+          .leftMap(NonEmptyList.one)
+      case (a, b, c) =>
+        val failures = List((a, "useragent"), (b, "user_ipaddress"), (c, "derived_tstamp"))
+          .collect {
+            case (None, n) =>
+              val f = FailureDetails.EnrichmentFailureMessage.InputData(
+                n,
+                none,
+                "missing"
+              )
+              FailureDetails.EnrichmentFailure(enrichmentInfo, f)
+          }
+        NonEmptyList
+          .fromList(failures)
+          .getOrElse(NonEmptyList.of {
+            val f = FailureDetails.EnrichmentFailureMessage
+              .Simple("could not construct failures")
+            FailureDetails.EnrichmentFailure(enrichmentInfo, f)
+          })
+          .asLeft
     }
 
   /**
@@ -212,6 +244,15 @@ object CreateIabClient {
       Eval.later {
         new IabClient(new File(ipFile), new File(excludeUaFile), new File(includeUaFile))
       }
+  }
+
+  implicit def idCreateIabClient: CreateIabClient[Id] = new CreateIabClient[Id] {
+    def create(
+      ipFile: String,
+      excludeUaFile: String,
+      includeUaFile: String
+    ): Id[IabClient] =
+      new IabClient(new File(ipFile), new File(excludeUaFile), new File(includeUaFile))
   }
 }
 

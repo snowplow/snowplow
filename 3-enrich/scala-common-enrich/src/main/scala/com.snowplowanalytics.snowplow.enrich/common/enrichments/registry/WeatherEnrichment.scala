@@ -23,6 +23,7 @@ import cats.Monad
 import cats.data.{EitherT, NonEmptyList, ValidatedNel}
 import cats.implicits._
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
+import com.snowplowanalytics.snowplow.badrows._
 import com.snowplowanalytics.weather.providers.openweather._
 import com.snowplowanalytics.weather.providers.openweather.responses._
 import io.circe._
@@ -57,7 +58,7 @@ object WeatherEnrichment extends ParseableEnrichment {
           CirceUtils.extract[Int](c, "parameters", "timeout").toValidatedNel,
           CirceUtils.extract[Int](c, "parameters", "cacheSize").toValidatedNel,
           CirceUtils.extract[Int](c, "parameters", "geoPrecision").toValidatedNel
-        ).mapN { WeatherConf(_, _, _, _, _) }.toEither
+        ).mapN { WeatherConf(schemaKey, _, _, _, _, _) }.toEither
       }
       .toValidated
 
@@ -78,15 +79,18 @@ object WeatherEnrichment extends ParseableEnrichment {
           conf.geoPrecision
         )
     ).leftMap(_.message)
-      .map(c => WeatherEnrichment(c))
+      .map(c => WeatherEnrichment(conf.schemaKey, c))
 }
 
 /**
  * Contains weather enrichments based on geo coordinates and time
  * @param client OWM client to get the weather from
  */
-final case class WeatherEnrichment[F[_]: Monad](client: OWMCacheClient[F]) extends Enrichment {
+final case class WeatherEnrichment[F[_]: Monad](schemaKey: SchemaKey, client: OWMCacheClient[F])
+    extends Enrichment {
   private val schemaUri = "iglu:org.openweathermap/weather/jsonschema/1-0-0"
+  private val enrichmentInfo =
+    FailureDetails.EnrichmentInformation(schemaKey, "weather").some
 
   /**
    * Get weather context as JSON for specific event. Any non-fatal error will return failure and
@@ -102,7 +106,7 @@ final case class WeatherEnrichment[F[_]: Monad](client: OWMCacheClient[F]) exten
     latitude: Option[JFloat],
     longitude: Option[JFloat],
     time: Option[DateTime]
-  ): F[Either[String, Json]] =
+  ): F[Either[NonEmptyList[FailureDetails.EnrichmentStageIssue], Json]] =
     (for {
       weather <- getWeather(latitude, longitude, time)
       schemaed = addSchema(weather)
@@ -119,19 +123,46 @@ final case class WeatherEnrichment[F[_]: Monad](client: OWMCacheClient[F]) exten
     latitude: Option[JFloat],
     longitude: Option[JFloat],
     time: Option[DateTime]
-  ): EitherT[F, String, Json] =
+  ): EitherT[F, NonEmptyList[FailureDetails.EnrichmentStageIssue], Json] =
     (latitude, longitude, time) match {
       case (Some(lat), Some(lon), Some(t)) =>
         val ts = ZonedDateTime.ofInstant(Instant.ofEpochMilli(t.getMillis()), ZoneOffset.UTC)
         for {
           weather <- EitherT(client.cachingHistoryByCoords(lat, lon, ts))
-            .leftMap(_.getMessage)
+            .leftMap { e =>
+              val f =
+                FailureDetails.EnrichmentFailure(
+                  enrichmentInfo,
+                  FailureDetails.EnrichmentFailureMessage
+                    .Simple(e.getMessage)
+                )
+              NonEmptyList.one(f)
+            }
+            .leftWiden[NonEmptyList[FailureDetails.EnrichmentStageIssue]]
           transformed = transformWeather(weather)
         } yield transformed.asJson
-      case _ =>
+      case (a, b, c) =>
+        val failures = List((a, "geo_latitude"), (b, "geo_longitude"), (c, "derived_tstamp"))
+          .collect {
+            case (None, n) =>
+              FailureDetails.EnrichmentFailure(
+                enrichmentInfo,
+                FailureDetails.EnrichmentFailureMessage
+                  .InputData(n, none, "missing")
+              )
+          }
         EitherT.leftT(
-          "One of required event fields missing. latitude: " +
-            s"$latitude, longitude: $longitude, tstamp: $time"
+          NonEmptyList
+            .fromList(failures)
+            .getOrElse(
+              NonEmptyList.one(
+                FailureDetails.EnrichmentFailure(
+                  enrichmentInfo,
+                  FailureDetails.EnrichmentFailureMessage
+                    .Simple("could not construct failures")
+                )
+              )
+            )
         )
     }
 

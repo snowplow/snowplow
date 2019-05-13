@@ -18,23 +18,23 @@ import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.effect.Clock
 import cats.syntax.either._
+import cats.syntax.option._
 import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
+import com.snowplowanalytics.snowplow.badrows._
 import io.circe._
 import org.apache.http.NameValuePair
 
 import loaders.CollectorPayload
+import utils.{HttpClient, JsonUtils}
 
 /**
  * Transforms a collector payload which conforms to a known version of the Pingdom Tracking webhook
  * into raw events.
  */
 object PingdomAdapter extends Adapter {
-  // Vendor name for Failure Message
-  private val VendorName = "Pingdom"
-
   // Tracker version for an Pingdom Tracking webhook
   private val TrackerVersion = "com.pingdom-v1"
 
@@ -62,28 +62,44 @@ object PingdomAdapter extends Adapter {
    * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
     payload: CollectorPayload,
     client: Client[F, Json]
-  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
-    (payload.querystring) match {
+  ): F[
+    ValidatedNel[FailureDetails.AdapterFailureOrTrackerProtocolViolation, NonEmptyList[RawEvent]]
+  ] =
+    payload.querystring match {
       case Nil =>
-        Monad[F].pure(s"$VendorName payload querystring is empty: nothing to process".invalidNel)
+        val msg = "empty querystring: no events to process"
+        val failure =
+          FailureDetails.AdapterFailure.InputData("querystring", none, msg)
+        Monad[F].pure(failure.invalidNel)
       case qs =>
         reformatMapParams(qs) match {
           case Left(f) => Monad[F].pure(f.invalid)
           case Right(s) =>
             s.get("message") match {
               case None =>
-                Monad[F].pure(
-                  s"$VendorName payload querystring does not have 'message' as a key".invalidNel
+                val msg = "no `message` parameter provided"
+                val formattedQS = s.map { case (k, v) => s"$k=$v" }.mkString("&")
+                val failure = FailureDetails.AdapterFailure.InputData(
+                  "querystring",
+                  formattedQS.some,
+                  msg
                 )
+                Monad[F].pure(failure.invalidNel)
               case Some(event) =>
                 Monad[F].pure((for {
-                  parsedEvent <- parseJsonSafe(event)
+                  parsedEvent <- JsonUtils
+                    .extractJson(event)
+                    .leftMap(
+                      e =>
+                        FailureDetails.AdapterFailure
+                          .NotJson("message", event.some, e)
+                    )
                   schema <- {
                     val eventOpt = parsedEvent.hcursor.downField("action").as[String].toOption
-                    lookupSchema(eventOpt, VendorName, EventSchemaMap)
+                    lookupSchema(eventOpt, EventSchemaMap)
                   }
                 } yield {
                   val _ = client
@@ -121,28 +137,27 @@ object PingdomAdapter extends Adapter {
    */
   private[registry] def reformatMapParams(
     params: List[NameValuePair]
-  ): Either[NonEmptyList[String], Map[String, String]] = {
+  ): Either[NonEmptyList[FailureDetails.AdapterFailure], Map[String, String]] = {
     val formatted = params.map { value =>
       (value.getName, value.getValue) match {
         case (k, PingdomValueRegex(v)) =>
-          (s"$VendorName name-value pair [$k -> $v]: Passed regex - Collector is not catching " +
-            "unicode wrappers anymore").asLeft
+          FailureDetails.AdapterFailure
+            .InputData(k, v.some, s"should not pass regex $PingdomValueRegex")
+            .asLeft
         case other => other.asRight
       }
     }
 
     val successes: List[(String, String)] = formatted.collect { case Right(s) => s }
-    val failures: List[String] = formatted.collect { case Left(f) => f }
+    val failures: List[FailureDetails.AdapterFailure] = formatted.collect { case Left(f) => f }
 
     (successes, failures) match {
       case (s :: ss, Nil) => (s :: ss).toMap.asRight // No Failures collected.
       case (_, f :: fs) => NonEmptyList.of(f, fs: _*).asLeft // Some Failures, return only those.
       case (Nil, Nil) =>
+        val msg = "empty querystring: nothing to process"
         NonEmptyList
-          .one(
-            "Empty parameters list was passed - should never happen: empty " +
-              "querystring is not being caught"
-          )
+          .one(FailureDetails.AdapterFailure.InputData("querystring", none, msg))
           .asLeft
     }
   }

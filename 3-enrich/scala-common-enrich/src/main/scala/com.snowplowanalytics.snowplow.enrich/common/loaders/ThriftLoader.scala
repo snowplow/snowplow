@@ -14,6 +14,7 @@ package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
 import java.nio.charset.Charset
+import java.time.Instant
 
 import scala.collection.JavaConverters._
 import scala.util.control.NonFatal
@@ -25,7 +26,9 @@ import com.snowplowanalytics.snowplow.CollectorPayload.thrift.model1.{
   CollectorPayload => CollectorPayload1
 }
 import com.snowplowanalytics.snowplow.SchemaSniffer.thrift.model1.SchemaSniffer
+import com.snowplowanalytics.snowplow.badrows._
 import com.snowplowanalytics.snowplow.collectors.thrift.SnowplowRawEvent
+import org.apache.commons.codec.binary.Base64
 import org.apache.http.NameValuePair
 import org.apache.thrift.TDeserializer
 import org.joda.time.{DateTime, DateTimeZone}
@@ -44,10 +47,13 @@ object ThriftLoader extends Loader[Array[Byte]] {
    * should encode the serialized object with `snowplowRawEventBytes.map(_.toChar)`.
    * Reference: http://stackoverflow.com/questions/5250324/
    * @return either a set of validation errors or an Option-boxed CanonicalInput object, wrapped in
-   * a Scalaz ValidatioNel.
+   * a ValidatedNel.
    */
-  def toCollectorPayload(line: Array[Byte]): ValidatedNel[String, Option[CollectorPayload]] =
-    try {
+  override def toCollectorPayload(
+    line: Array[Byte],
+    processor: Processor
+  ): ValidatedNel[BadRow.CPFormatViolation, Option[CollectorPayload]] =
+    (try {
       val schema = new SchemaSniffer
       this.synchronized {
         thriftDeserializer.deserialize(
@@ -57,13 +63,27 @@ object ThriftLoader extends Loader[Array[Byte]] {
       }
 
       if (schema.isSetSchema) {
-        val actualSchema = SchemaKey.fromUri(schema.getSchema).leftMap(_.code)
         (for {
-          as <- actualSchema.leftMap(NonEmptyList.one)
+          as <- SchemaKey
+            .fromUri(schema.getSchema)
+            .leftMap(
+              e =>
+                NonEmptyList
+                  .one(
+                    FailureDetails.CPFormatViolationMessage
+                      .Fallback(s"could not parse schema: ${e.code}")
+                  )
+            )
           res <- if (ExpectedSchema.matches(as)) {
             convertSchema1(line).toEither
           } else {
-            NonEmptyList.one(s"Verifying record as $ExpectedSchema failed: found $as").asLeft
+            NonEmptyList
+              .one(
+                FailureDetails.CPFormatViolationMessage.Fallback(
+                  s"verifying record as $ExpectedSchema failed: found $as"
+                )
+              )
+              .asLeft
           }
         } yield res).toValidated
       } else {
@@ -71,8 +91,20 @@ object ThriftLoader extends Loader[Array[Byte]] {
       }
     } catch {
       // TODO: Check for deserialization errors.
-      case NonFatal(e) => s"Error deserializing raw event: ${e.getMessage}".invalidNel
-    }
+      case NonFatal(e) =>
+        FailureDetails.CPFormatViolationMessage
+          .Fallback(s"error deserializing raw event: ${e.getMessage}")
+          .invalidNel
+    }).leftMap(
+      _.map(
+        f =>
+          BadRow.CPFormatViolation(
+            processor,
+            Failure.CPFormatViolation(Instant.now(), "thrift", f),
+            Payload.RawPayload(new String(Base64.encodeBase64(line), "UTF-8"))
+          )
+      )
+    )
 
   /**
    * Converts the source string into a ValidatedMaybeCollectorPayload.
@@ -81,9 +113,11 @@ object ThriftLoader extends Loader[Array[Byte]] {
    * should encode the serialized object with`snowplowRawEventBytes.map(_.toChar)`.
    * Reference: http://stackoverflow.com/questions/5250324/
    * @return either a set of validation errors or an Option-boxed CanonicalInput object, wrapped in
-   * a Scalaz ValidatioNel.
+   * a ValidatedNel.
    */
-  private def convertSchema1(line: Array[Byte]): ValidatedNel[String, Option[CollectorPayload]] = {
+  private def convertSchema1(
+    line: Array[Byte]
+  ): ValidatedNel[FailureDetails.CPFormatViolationMessage, Option[CollectorPayload]] = {
     val collectorPayload = new CollectorPayload1
     this.synchronized {
       thriftDeserializer.deserialize(
@@ -107,8 +141,11 @@ object ThriftLoader extends Loader[Array[Byte]] {
     val ip = IpAddressExtractor.extractIpAddress(headers, collectorPayload.ipAddress).some // Required
 
     val api = Option(collectorPayload.path) match {
-      case None => "Request does not contain a path".invalidNel
-      case Some(p) => CollectorApi.parse(p).toValidatedNel
+      case None =>
+        FailureDetails.CPFormatViolationMessage
+          .InputData("path", None, "request does not contain a path")
+          .invalidNel
+      case Some(p) => CollectorApi.parsePath(p).toValidatedNel
     }
 
     (querystring.toValidatedNel, api).mapN { (q, a) =>
@@ -137,11 +174,11 @@ object ThriftLoader extends Loader[Array[Byte]] {
    * should encode the serialized object with `snowplowRawEventBytes.map(_.toChar)`.
    * Reference: http://stackoverflow.com/questions/5250324/
    * @return either a set of validation errors or an Option-boxed CanonicalInput object, wrapped in
-   * a Scalaz ValidatioNel.
+   * a ValidatedNel.
    */
   private def convertOldSchema(
     line: Array[Byte]
-  ): ValidatedNel[String, Option[CollectorPayload]] = {
+  ): ValidatedNel[FailureDetails.CPFormatViolationMessage, Option[CollectorPayload]] = {
     val snowplowRawEvent = new SnowplowRawEvent
     this.synchronized {
       thriftDeserializer.deserialize(

@@ -16,12 +16,13 @@ package registry
 
 import cats.data.NonEmptyList
 import cats.syntax.option._
+import com.snowplowanalytics.snowplow.badrows._
 import io.circe.literal._
 import org.joda.time.DateTime
 import org.specs2.Specification
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
-import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import loaders._
 import utils.Clock._
 
 class MandrillAdapterSpec extends Specification with DataTables with ValidatedMatchers {
@@ -60,16 +61,34 @@ class MandrillAdapterSpec extends Specification with DataTables with ValidatedMa
 
   def e2 =
     "SPEC NAME" || "STRING TO PROCESS" | "EXPECTED OUTPUT" |
-      "Failure, empty events string" !! "mandrill_events=" ! "Mandrill events string is empty: nothing to process" |
-      "Failure, too many key-value pairs" !! "mandrill_events=some&mandrill_extra=some" ! "Mapped Mandrill body has invalid count of keys: 2" |
-      "Failure, incorrect key" !! "events_mandrill=something" ! "Mapped Mandrill body does not have 'mandrill_events' as a key" |> {
-      (_, str, expected) =>
-        MandrillAdapter.payloadBodyToEvents(str) must beLeft(expected)
+      "Failure, empty events string" !! "mandrill_events=" ! FailureDetails.AdapterFailure
+        .InputData(
+          "body",
+          "mandrill_events=".some,
+          "`mandrill_events` field is empty"
+        ) |
+      "Failure, too many key-value pairs" !! "mandrill_events=some&mandrill_extra=some" ! FailureDetails.AdapterFailure
+        .InputData(
+          "body",
+          "mandrill_events=some&mandrill_extra=some".some,
+          "body should have size 1: actual size 2"
+        ) |
+      "Failure, incorrect key" !! "events_mandrill=something" ! FailureDetails.AdapterFailure
+        .InputData(
+          "body",
+          "events_mandrill=something".some,
+          "no `mandrill_events` parameter provided"
+        ) |> { (_, str, expected) =>
+      MandrillAdapter.payloadBodyToEvents(str) must beLeft(expected)
     }
 
   def e3 = {
     val bodyStr = "mandrill_events=%5B%7B%22event%22%3A%22click%7D%5D"
-    val expected = "Mandrill events couldn't be parsed as JSON: [exhausted input]"
+    val expected = FailureDetails.AdapterFailure.NotJson(
+      "mandril_events",
+      """[{"event":"click}]""".some,
+      "invalid json: exhausted input"
+    )
     MandrillAdapter.payloadBodyToEvents(bodyStr) must beLeft(expected)
   }
 
@@ -209,9 +228,21 @@ class MandrillAdapterSpec extends Specification with DataTables with ValidatedMa
       Shared.context
     )
     val expected = NonEmptyList.of(
-      "Mandrill event at index [0] failed: type parameter [sending] not recognized",
-      "Mandrill event at index [1] failed: type parameter [deferred] not recognized",
-      "Mandrill event at index [2] failed: type parameter not provided - cannot determine event type"
+      FailureDetails.AdapterFailure.SchemaMapping(
+        "sending".some,
+        MandrillAdapter.EventSchemaMap,
+        "no schema associated with the provided type parameter at index 0"
+      ),
+      FailureDetails.AdapterFailure.SchemaMapping(
+        "deferred".some,
+        MandrillAdapter.EventSchemaMap,
+        "no schema associated with the provided type parameter at index 1"
+      ),
+      FailureDetails.AdapterFailure.SchemaMapping(
+        None,
+        MandrillAdapter.EventSchemaMap,
+        "cannot determine event type: type parameter not provided at index 2"
+      )
     )
     MandrillAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(expected)
   }
@@ -220,7 +251,10 @@ class MandrillAdapterSpec extends Specification with DataTables with ValidatedMa
     val payload =
       CollectorPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
     MandrillAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(
-      NonEmptyList.one("Request body is empty: no Mandrill events to process")
+      NonEmptyList.one(
+        FailureDetails.AdapterFailure
+          .InputData("body", None, "empty body: no events to process")
+      )
     )
   }
 
@@ -230,19 +264,24 @@ class MandrillAdapterSpec extends Specification with DataTables with ValidatedMa
       CollectorPayload(Shared.api, Nil, None, body.some, Shared.cljSource, Shared.context)
     MandrillAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(
       NonEmptyList.one(
-        "Request body provided but content type empty, expected application/x-www-form-urlencoded for Mandrill"
+        FailureDetails.AdapterFailure.InputData(
+          "contentType",
+          None,
+          "no content type: expected application/x-www-form-urlencoded"
+        )
       )
     )
   }
 
   def e8 = {
     val body = "mandrill_events=%5B%7B%22event%22%3A%20%22subscribe%22%7D%5D"
-    val ct = "application/x-www-form-urlencoded; charset=utf-8"
+    val ct = "application/x-www-form-urlencoded; charset=utf-8".some
     val payload =
-      CollectorPayload(Shared.api, Nil, ct.some, body.some, Shared.cljSource, Shared.context)
+      CollectorPayload(Shared.api, Nil, ct, body.some, Shared.cljSource, Shared.context)
     MandrillAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(
       NonEmptyList.one(
-        "Content type of application/x-www-form-urlencoded; charset=utf-8 provided, expected application/x-www-form-urlencoded for Mandrill"
+        FailureDetails.AdapterFailure
+          .InputData("contentType", ct, "expected application/x-www-form-urlencoded")
       )
     )
   }

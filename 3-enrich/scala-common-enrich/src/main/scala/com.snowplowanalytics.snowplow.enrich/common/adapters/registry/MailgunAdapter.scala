@@ -29,34 +29,32 @@ import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
+import com.snowplowanalytics.snowplow.badrows._
 import io.circe._
 import io.circe.syntax._
 import org.apache.http.client.utils.URLEncodedUtils
 
 import loaders.CollectorPayload
-import utils.{JsonUtils => JU}
+import utils.{HttpClient, JsonUtils => JU}
 
 /**
  * Transforms a collector payload which conforms to a known version of the StatusGator Tracking
  * webhook into raw events.
  */
 object MailgunAdapter extends Adapter {
-  // Vendor name for Failure Message
-  private val VendorName = "Mailgun"
-
   // Tracker version for an Mailgun Tracking webhook
   private val TrackerVersion = "com.mailgun-v1"
 
   // Expected content type for a request body
   private val ContentTypes = List("application/x-www-form-urlencoded", "multipart/form-data")
-  private val ContentTypesStr = ContentTypes.mkString(" or ")
+  private val ContentTypesStr = ContentTypes.mkString(", ")
 
   private val Vendor = "com.mailgun"
   private val Format = "jsonschema"
   private val SchemaVersion = SchemaVer.Full(1, 0, 0)
 
   // Schemas for reverse-engineering a Snowplow unstructured event
-  private val EventSchemaMap = Map(
+  private[registry] val EventSchemaMap = Map(
     "bounced" -> SchemaKey(Vendor, "message_bounced", Format, SchemaVersion).toSchemaUri,
     "clicked" -> SchemaKey(Vendor, "message_clicked", Format, SchemaVersion).toSchemaUri,
     "complained" -> SchemaKey(Vendor, "message_complained", Format, SchemaVersion).toSchemaUri,
@@ -73,23 +71,39 @@ object MailgunAdapter extends Adapter {
    * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
     payload: CollectorPayload,
     client: Client[F, Json]
-  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
+  ): F[
+    ValidatedNel[FailureDetails.AdapterFailureOrTrackerProtocolViolation, NonEmptyList[RawEvent]]
+  ] =
     (payload.body, payload.contentType) match {
       case (None, _) =>
-        Monad[F].pure(s"Request body is empty: no $VendorName events to process".invalidNel)
+        val failure = FailureDetails.AdapterFailure.InputData(
+          "body",
+          none,
+          "empty body: no events to process"
+        )
+        Monad[F].pure(failure.invalidNel)
+      case (Some(body), _) if (body.isEmpty) =>
+        val failure = FailureDetails.AdapterFailure.InputData(
+          "body",
+          none,
+          "empty body: no events to process"
+        )
+        Monad[F].pure(failure.invalidNel)
       case (_, None) =>
+        val msg = s"no content type: expected one of $ContentTypesStr"
         Monad[F].pure(
-          s"Request body provided but content type empty, expected $ContentTypesStr for $VendorName".invalidNel
+          FailureDetails.AdapterFailure.InputData("contentType", none, msg).invalidNel
         )
       case (_, Some(ct)) if !ContentTypes.exists(ct.startsWith(_)) =>
+        val msg = s"expected one of $ContentTypesStr"
         Monad[F].pure(
-          s"Content type of $ct provided, expected $ContentTypesStr for $VendorName".invalidNel
+          FailureDetails.AdapterFailure
+            .InputData("contentType", ct.some, msg)
+            .invalidNel
         )
-      case (Some(body), _) if (body.isEmpty) =>
-        Monad[F].pure(s"$VendorName event body is empty: nothing to process".invalidNel)
       case (Some(body), Some(ct)) =>
         val _ = client
         val params = toMap(payload.querystring)
@@ -103,15 +117,19 @@ object MailgunAdapter extends Adapter {
             )
         } match {
           case TF(e) =>
-            val message = JU.stripInstanceEtc(e.getMessage).orNull
-            Monad[F].pure(s"$VendorName adapter could not parse body: [$message]".invalidNel)
+            val msg = s"could not parse body: ${JU.stripInstanceEtc(e.getMessage).orNull}"
+            Monad[F].pure(
+              FailureDetails.AdapterFailure
+                .InputData("body", body.some, msg)
+                .invalidNel
+            )
           case TS(bodyMap) =>
             Monad[F].pure(
               bodyMap
                 .get("event")
                 .map { eventType =>
                   (for {
-                    schemaUri <- lookupSchema(eventType.some, VendorName, EventSchemaMap)
+                    schemaUri <- lookupSchema(eventType.some, EventSchemaMap)
                     event <- payloadBodyToEvent(bodyMap)
                     mEvent <- mutateMailgunEvent(event)
                   } yield NonEmptyList.one(
@@ -134,9 +152,12 @@ object MailgunAdapter extends Adapter {
                     )
                   )).toValidatedNel
                 }
-                .getOrElse(
-                  s"No $VendorName event parameter provided: cannot determine event type".invalidNel
-                )
+                .getOrElse {
+                  val msg = "no `event` parameter provided: cannot determine event type"
+                  FailureDetails.AdapterFailure
+                    .InputData("body", body.some, msg)
+                    .invalidNel
+                }
             )
         }
     }
@@ -146,7 +167,7 @@ object MailgunAdapter extends Adapter {
    * @param json parsed event fields as a JValue
    * @return The mutated event.
    */
-  private def mutateMailgunEvent(json: Json): Either[String, Json] = {
+  private def mutateMailgunEvent(json: Json): Either[FailureDetails.AdapterFailure, Json] = {
     val attachmentCountKey = "attachmentCount"
     val camelCase = camelize(json)
     camelCase.asObject match {
@@ -162,7 +183,10 @@ object MailgunAdapter extends Adapter {
           case _ => withFilteredFields
         }
         Json.fromJsonObject(finalJsonObject).asRight
-      case _ => s"$VendorName event string is not a json object".asLeft
+      case _ =>
+        FailureDetails.AdapterFailure
+          .InputData("body", json.noSpaces.some, "body is not a json object")
+          .asLeft
     }
   }
 
@@ -210,11 +234,22 @@ object MailgunAdapter extends Adapter {
    * Converts a querystring payload into an event
    * @param bodyMap The converted map from the querystring
    */
-  private def payloadBodyToEvent(bodyMap: Map[String, String]): Either[String, Json] =
+  private def payloadBodyToEvent(
+    bodyMap: Map[String, String]
+  ): Either[FailureDetails.AdapterFailure, Json] =
     (bodyMap.get("timestamp"), bodyMap.get("token"), bodyMap.get("signature")) match {
-      case (None, _, _) => s"$VendorName event data missing 'timestamp'".asLeft
-      case (_, None, _) => s"$VendorName event data missing 'token'".asLeft
-      case (_, _, None) => s"$VendorName event data missing 'signature'".asLeft
+      case (None, _, _) =>
+        FailureDetails.AdapterFailure
+          .InputData("timestamp", none, "missing 'timestamp'")
+          .asLeft
+      case (_, None, _) =>
+        FailureDetails.AdapterFailure
+          .InputData("token", none, "missing 'token'")
+          .asLeft
+      case (_, _, None) =>
+        FailureDetails.AdapterFailure
+          .InputData("signature", none, "missing 'signature'")
+          .asLeft
       case (Some(_), Some(_), Some(_)) => bodyMap.asJson.asRight
     }
 }

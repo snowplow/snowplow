@@ -16,11 +16,12 @@ package registry
 
 import cats.data.NonEmptyList
 import cats.syntax.option._
+import com.snowplowanalytics.snowplow.badrows._
 import org.joda.time.DateTime
 import org.specs2.Specification
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
-import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import loaders._
 import utils.Clock._
 
 class OlarkAdapterSpec extends Specification with DataTables with ValidatedMatchers {
@@ -207,7 +208,10 @@ class OlarkAdapterSpec extends Specification with DataTables with ValidatedMatch
     val payload =
       CollectorPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
     OlarkAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(
-      NonEmptyList.one("Request body is empty: no Olark events to process")
+      NonEmptyList.one(
+        FailureDetails.AdapterFailure
+          .InputData("body", None, "empty body: no events to process")
+      )
     )
   }
 
@@ -218,7 +222,11 @@ class OlarkAdapterSpec extends Specification with DataTables with ValidatedMatch
       CollectorPayload(Shared.api, Nil, None, body.some, Shared.cljSource, Shared.context)
     OlarkAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(
       NonEmptyList.one(
-        "Request body provided but content type empty, expected application/x-www-form-urlencoded for Olark"
+        FailureDetails.AdapterFailure.InputData(
+          "contentType",
+          None,
+          "no content type: expected application/x-www-form-urlencoded"
+        )
       )
     )
   }
@@ -231,7 +239,11 @@ class OlarkAdapterSpec extends Specification with DataTables with ValidatedMatch
       CollectorPayload(Shared.api, Nil, ct.some, body.some, Shared.cljSource, Shared.context)
     OlarkAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(
       NonEmptyList.one(
-        "Content type of application/json provided, expected application/x-www-form-urlencoded for Olark"
+        FailureDetails.AdapterFailure.InputData(
+          "contentType",
+          None,
+          "expected application/x-www-form-urlencoded"
+        )
       )
     )
   }
@@ -246,7 +258,11 @@ class OlarkAdapterSpec extends Specification with DataTables with ValidatedMatch
       Shared.cljSource,
       Shared.context
     )
-    val expected = NonEmptyList.one("Olark event body is empty: nothing to process")
+    val expected =
+      NonEmptyList.one(
+        FailureDetails.AdapterFailure
+          .InputData("body", None, "empty body: no events to process")
+      )
     OlarkAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(expected)
   }
 
@@ -261,7 +277,9 @@ class OlarkAdapterSpec extends Specification with DataTables with ValidatedMatch
       Shared.cljSource,
       Shared.context
     )
-    val expected = NonEmptyList.one("Olark event data does not have 'data' as a key")
+    val expected = NonEmptyList.one(
+      FailureDetails.AdapterFailure.InputData("data", None, "missing 'data' field")
+    )
     OlarkAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(expected)
   }
 
@@ -276,9 +294,13 @@ class OlarkAdapterSpec extends Specification with DataTables with ValidatedMatch
       Shared.cljSource,
       Shared.context
     )
-    val expected = NonEmptyList.one(
-      """Olark event string failed to parse into JSON: [expected json value got 'kind":...' (line 1, column 1)]"""
-    )
-    OlarkAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(expected)
+    OlarkAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid.like {
+      case nel =>
+        nel.size must_== 1
+        nel.head must haveClass[FailureDetails.AdapterFailure.NotJson]
+        val f = nel.head.asInstanceOf[FailureDetails.AdapterFailure.NotJson]
+        f.field must_== "data"
+        f.error must_== """invalid json: expected json value got 'kind":...' (line 1, column 1)"""
+    }
   }
 }

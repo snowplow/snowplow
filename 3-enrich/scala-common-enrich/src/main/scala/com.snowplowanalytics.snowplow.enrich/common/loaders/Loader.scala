@@ -20,8 +20,13 @@ import scala.collection.JavaConverters._
 
 import cats.data.ValidatedNel
 import cats.syntax.either._
+import cats.syntax.option._
+import com.snowplowanalytics.snowplow.badrows._
 import org.apache.http.NameValuePair
 import org.apache.http.client.utils.URLEncodedUtils
+import org.joda.time.DateTime
+
+import utils.JsonUtils
 
 /** Companion object to the CollectorLoader. Contains factory methods. */
 object Loader {
@@ -32,7 +37,7 @@ object Loader {
    * Factory to return a CollectorLoader based on the supplied collector identifier (e.g.
    * "cloudfront" or "clj-tomcat").
    * @param collector Identifier for the event collector
-   * @return a CollectorLoader object, or an an error message, boxed in a Scalaz Validation
+   * @return either a CollectorLoader object or an an error message
    */
   def getLoader(collectorOrProtocol: String): Either[String, Loader[_]] =
     collectorOrProtocol match {
@@ -55,28 +60,64 @@ abstract class Loader[T] {
    * @param line A line of data to convert
    * @return a CanonicalInput object, Option-boxed, or None if no input was extractable.
    */
-  def toCollectorPayload(line: T): ValidatedNel[String, Option[CollectorPayload]]
+  protected[loaders] def toCollectorPayload(
+    line: T,
+    processor: Processor
+  ): ValidatedNel[BadRow.CPFormatViolation, Option[CollectorPayload]]
 
   /**
    * Converts a querystring String into a non-empty list of NameValuePairs.
    * Returns a non-empty list of NameValuePairs on Success, or a Failure String.
    * @param qs Option-boxed querystring String to extract name-value pairs from, or None
    * @param encoding The encoding used by this querystring
-   * @return either a NEL of NameValuePairs or an error message, boxed in a Scalaz Validation
+   * @return either a NEL of NameValuePairs or an error message
    */
   protected[loaders] def parseQuerystring(
     qs: Option[String],
     enc: Charset
-  ): Either[String, List[NameValuePair]] = qs match {
+  ): Either[FailureDetails.CPFormatViolationMessage, List[NameValuePair]] = qs match {
     case Some(q) =>
       Either
         .catchNonFatal(URLEncodedUtils.parse(URI.create("http://localhost/?" + q), enc))
         .map(_.asScala.toList)
-        .leftMap(
-          e =>
-            "Exception extracting name-value pairs from querystring [%s] with encoding [%s]: [%s]"
-              .format(q, enc, e.getMessage)
-        )
+        .leftMap { e =>
+          val msg = s"could not extract name-value pairs from querystring with encoding $enc: " +
+            JsonUtils.stripInstanceEtc(e.getMessage).orNull
+          FailureDetails.CPFormatViolationMessage
+            .InputData("querystring", qs, msg)
+        }
     case None => Nil.asRight
+  }
+
+  /**
+   * Converts a CloudFront log-format date and a time to a timestamp.
+   * @param date The CloudFront log-format date
+   * @param time The CloudFront log-format time
+   * @return either the timestamp as a Joda DateTime or an error String
+   */
+  protected[loaders] def toTimestamp(
+    date: String,
+    time: String
+  ): Either[FailureDetails.CPFormatViolationMessage, DateTime] =
+    Either
+      .catchNonFatal(DateTime.parse("%sT%s+00:00".format(date, time)))
+      .leftMap { e =>
+        val msg = s"could not convert timestamp: ${e.getMessage}"
+        FailureDetails.CPFormatViolationMessage.InputData(
+          "dateTime",
+          s"$date $time".some,
+          msg
+        )
+      }
+
+  /**
+   * Checks whether a String field is a hyphen "-", which is used by CloudFront to signal a null.
+   * @param field The field to check
+   * @return True if the String was a hyphen "-"
+   */
+  private[loaders] def toOption(field: String): Option[String] = Option(field) match {
+    case Some("-") => None
+    case Some("") => None
+    case s => s // Leaves any other Some(x) or None as-is
   }
 }

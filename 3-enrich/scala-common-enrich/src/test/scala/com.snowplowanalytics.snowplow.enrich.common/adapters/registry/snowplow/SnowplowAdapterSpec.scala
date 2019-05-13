@@ -17,13 +17,18 @@ package snowplow
 
 import cats.data.NonEmptyList
 import cats.syntax.option._
+import com.snowplowanalytics.iglu.client._
+import com.snowplowanalytics.iglu.client.validator._
+import com.snowplowanalytics.iglu.core._
+import com.snowplowanalytics.snowplow.badrows._
 import org.joda.time.DateTime
 import org.specs2.{ScalaCheck, Specification}
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
-import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import loaders._
 import utils.{ConversionUtils => CU}
 import utils.Clock._
+import com.snowplowanalytics.iglu.core.ParseError
 
 class SnowplowAdapterSpec
     extends Specification
@@ -96,7 +101,15 @@ class SnowplowAdapterSpec
   def e2 = {
     val payload = CollectorPayload(Snowplow.Tp1, Nil, None, None, Shared.source, Shared.context)
     val actual = Tp1Adapter.toRawEvents(payload, SpecHelpers.client).value
-    actual must beInvalid(NonEmptyList.one("Querystring is empty: no raw event to process"))
+    actual must beInvalid(
+      NonEmptyList.one(
+        FailureDetails.AdapterFailure.InputData(
+          "querystring",
+          None,
+          "empty querystring: not a valid URI redirect"
+        )
+      )
+    )
   }
 
   def e3 = {
@@ -207,26 +220,60 @@ class SnowplowAdapterSpec
 
   def e7 =
     "SPEC NAME" || "IN QUERYSTRING" | "IN CONTENT TYPE" | "IN BODY" | "EXP. FAILURE" |
-      "Invalid content type" !! Nil ! "text/plain".some ! "body".some ! "Content type of text/plain provided, expected one of: application/json, application/json; charset=utf-8, application/json; charset=UTF-8" |
-      "Neither querystring nor body populated" !! Nil ! None ! None ! "Request body and querystring parameters empty, expected at least one populated" |
-      "Body populated but content type missing" !! Nil ! None ! "body".some ! "Request body provided but content type empty, expected one of: application/json, application/json; charset=utf-8, application/json; charset=UTF-8" |
-      "Content type populated but body missing" !! SpecHelpers.toNameValuePairs("a" -> "b") ! ApplicationJsonWithCharset.some ! None ! "Content type of application/json; charset=utf-8 provided but request body empty" |
-      "Body is not a JSON" !! SpecHelpers.toNameValuePairs("a" -> "b") ! ApplicationJson.some ! "body".some ! "Field [Body]: invalid JSON [body] with parsing error: expected json value got 'body' (line 1, column 1)" |> {
-
-      (_, querystring, contentType, body, expected) =>
-        {
-
-          val payload = CollectorPayload(
-            Snowplow.Tp2,
-            querystring,
-            contentType,
-            body,
-            Shared.source,
-            Shared.context
+      "Invalid content type" !! Nil ! "text/plain".some ! "body".some ! NonEmptyList.one(
+        FailureDetails.TrackerProtocolViolation.InputData(
+          "contentType",
+          "text/plain".some,
+          "expected one of application/json, application/json; charset=utf-8, application/json; charset=UTF-8"
+        )
+      ) |
+      "Neither querystring nor body populated" !! Nil ! None ! None ! NonEmptyList.of(
+        FailureDetails.TrackerProtocolViolation.InputData(
+          "body",
+          None,
+          "empty body: not a valid tracker protocol event"
+        ),
+        FailureDetails.TrackerProtocolViolation.InputData(
+          "querystring",
+          None,
+          "empty querystring: not a valid tracker protocol event"
+        )
+      ) |
+      "Body populated but content type missing" !! Nil ! None ! "body".some ! NonEmptyList.one(
+        FailureDetails.TrackerProtocolViolation.InputData(
+          "contentType",
+          None,
+          "expected one of application/json, application/json; charset=utf-8, application/json; charset=UTF-8"
+        )
+      ) |
+      "Content type populated but body missing" !! SpecHelpers.toNameValuePairs("a" -> "b") ! ApplicationJsonWithCharset.some ! None ! NonEmptyList
+        .one(
+          FailureDetails.TrackerProtocolViolation.InputData(
+            "body",
+            None,
+            "empty body: not a valid track protocol event"
           )
-          val actual = Tp2Adapter.toRawEvents(payload, SpecHelpers.client).value
-          actual must beInvalid(NonEmptyList.one(expected))
-        }
+        ) |
+      "Body is not a JSON" !! SpecHelpers.toNameValuePairs("a" -> "b") ! ApplicationJson.some ! "body".some ! NonEmptyList
+        .one(
+          FailureDetails.TrackerProtocolViolation.NotJson(
+            "body",
+            "body".some,
+            "invalid json: expected json value got 'body' (line 1, column 1)"
+          )
+        ) |> { (_, querystring, contentType, body, expected) =>
+      {
+        val payload = CollectorPayload(
+          Snowplow.Tp2,
+          querystring,
+          contentType,
+          body,
+          Shared.source,
+          Shared.context
+        )
+        val actual = Tp2Adapter.toRawEvents(payload, SpecHelpers.client).value
+        actual must beInvalid(expected)
+      }
     }
 
   def e8 = {
@@ -239,7 +286,12 @@ class SnowplowAdapterSpec
       Shared.context
     )
     val actual = Tp2Adapter.toRawEvents(payload, SpecHelpers.client).value
-    actual must beInvalid(NonEmptyList.of("INVALID_DATA_PAYLOAD"))
+    actual must beInvalid(
+      NonEmptyList.one(
+        FailureDetails.TrackerProtocolViolation
+          .NotSD("""{"not":"self-desc"}""", ParseError.InvalidData.code)
+      )
+    )
   }
 
   def e9 = {
@@ -255,7 +307,26 @@ class SnowplowAdapterSpec
     val actual = Tp2Adapter.toRawEvents(payload, SpecHelpers.client).value
     actual must beInvalid(
       NonEmptyList.one(
-        """{"error":"ValidationError","dataReports":[{"message":"$.latitude: is missing but it is required","path":"$","keyword":"required","targets":["latitude"]}]}"""
+        FailureDetails.TrackerProtocolViolation.IgluError(
+          SchemaKey(
+            "com.snowplowanalytics.snowplow",
+            "geolocation_context",
+            "jsonschema",
+            SchemaVer.Full(1, 0, 0)
+          ),
+          ClientError.ValidationError(
+            ValidatorError.InvalidData(
+              NonEmptyList.one(
+                ValidatorReport(
+                  "$.latitude: is missing but it is required",
+                  "$".some,
+                  List("latitude"),
+                  "required".some
+                )
+              )
+            )
+          )
+        )
       )
     )
   }
@@ -263,14 +334,95 @@ class SnowplowAdapterSpec
   def e10 =
     "SPEC NAME" || "IN JSON DATA" | "EXP. FAILURES" |
       "JSON object instead of array" !! "{}" ! NonEmptyList.one(
-        """{"error":"ValidationError","dataReports":[{"message":"$: object found, array expected","path":"$","keyword":"type","targets":["object","array"]}]}"""
+        FailureDetails.TrackerProtocolViolation.IgluError(
+          SchemaKey(
+            "com.snowplowanalytics.snowplow",
+            "payload_data",
+            "jsonschema",
+            SchemaVer.Full(1, 0, 0)
+          ),
+          ClientError.ValidationError(
+            ValidatorError.InvalidData(
+              NonEmptyList.of(
+                ValidatorReport(
+                  "$: object found, array expected",
+                  "$".some,
+                  List("object", "array"),
+                  "type".some
+                )
+              )
+            )
+          )
+        )
       ) |
       "Missing required properties" !! """[{"tv":"ios-0.1.0"}]""" ! NonEmptyList.one(
-        """{"error":"ValidationError","dataReports":[{"message":"$[0].p: is missing but it is required","path":"$[0]","keyword":"required","targets":["p"]},{"message":"$[0].e: is missing but it is required","path":"$[0]","keyword":"required","targets":["e"]}]}"""
+        FailureDetails.TrackerProtocolViolation.IgluError(
+          SchemaKey(
+            "com.snowplowanalytics.snowplow",
+            "payload_data",
+            "jsonschema",
+            SchemaVer.Full(1, 0, 0)
+          ),
+          ClientError.ValidationError(
+            ValidatorError.InvalidData(
+              NonEmptyList.of(
+                ValidatorReport(
+                  "$[0].p: is missing but it is required",
+                  "$[0]".some,
+                  List("p"),
+                  "required".some
+                ),
+                ValidatorReport(
+                  "$[0].e: is missing but it is required",
+                  "$[0]".some,
+                  List("e"),
+                  "required".some
+                )
+              )
+            )
+          )
+        )
       ) |
       "1 valid, 1 invalid" !! """[{"tv":"ios-0.1.0","p":"mob","e":"se"},{"new":"foo"}]""" ! NonEmptyList
-        .of(
-          """{"error":"ValidationError","dataReports":[{"message":"$[1].tv: is missing but it is required","path":"$[1]","keyword":"required","targets":["tv"]},{"message":"$[1].p: is missing but it is required","path":"$[1]","keyword":"required","targets":["p"]},{"message":"$[1].e: is missing but it is required","path":"$[1]","keyword":"required","targets":["e"]},{"message":"$[1].new: is not defined in the schema and the schema does not allow additional properties","path":"$[1]","keyword":"additionalProperties","targets":["new"]}]}"""
+        .one(
+          FailureDetails.TrackerProtocolViolation.IgluError(
+            SchemaKey(
+              "com.snowplowanalytics.snowplow",
+              "payload_data",
+              "jsonschema",
+              SchemaVer.Full(1, 0, 0)
+            ),
+            ClientError.ValidationError(
+              ValidatorError.InvalidData(
+                NonEmptyList.of(
+                  ValidatorReport(
+                    "$[1].tv: is missing but it is required",
+                    "$[1]".some,
+                    List("tv"),
+                    "required".some
+                  ),
+                  ValidatorReport(
+                    "$[1].p: is missing but it is required",
+                    "$[1]".some,
+                    List("p"),
+                    "required".some
+                  ),
+                  ValidatorReport(
+                    "$[1].e: is missing but it is required",
+                    "$[1]".some,
+                    List("e"),
+                    "required".some
+                  ),
+                  ValidatorReport(
+                    "$[1].new: is not defined in the schema and the schema does not allow additional properties",
+                    "$[1]".some,
+                    List("new"),
+                    "additionalProperties".some
+                  )
+                )
+              )
+            )
+          )
         ) |> { (_, json, expected) =>
       {
 
@@ -461,7 +613,15 @@ class SnowplowAdapterSpec
   def e16 = {
     val payload = CollectorPayload(Snowplow.Tp2, Nil, None, None, Shared.source, Shared.context)
     val actual = RedirectAdapter.toRawEvents(payload, SpecHelpers.client).value
-    actual must beInvalid(NonEmptyList.one("Querystring is empty: cannot be a valid URI redirect"))
+    actual must beInvalid(
+      NonEmptyList.one(
+        FailureDetails.TrackerProtocolViolation.InputData(
+          "querystring",
+          None,
+          "empty querystring: not a valid URI redirect"
+        )
+      )
+    )
   }
 
   def e17 = {
@@ -476,7 +636,13 @@ class SnowplowAdapterSpec
       )
     val actual = RedirectAdapter.toRawEvents(payload, SpecHelpers.client).value
     actual must beInvalid(
-      NonEmptyList.one("Querystring does not contain u parameter: not a valid URI redirect")
+      NonEmptyList.one(
+        FailureDetails.TrackerProtocolViolation.InputData(
+          "querystring",
+          "aid=test".some,
+          "missing `u` parameter: not a valid URI redirect"
+        )
+      )
     )
   }
 
@@ -496,7 +662,11 @@ class SnowplowAdapterSpec
     val actual = RedirectAdapter.toRawEvents(payload, SpecHelpers.client).value
     actual must beInvalid(
       NonEmptyList.one(
-        """Field [co|cx]: invalid JSON [{[-] with parsing error: expected " got '[-' (line 1, column 2)"""
+        FailureDetails.TrackerProtocolViolation.NotJson(
+          "co|cx",
+          "{[-".some,
+          """invalid json: expected " got '[-' (line 1, column 2)"""
+        )
       )
     )
   }
@@ -516,7 +686,10 @@ class SnowplowAdapterSpec
     )
     val actual = RedirectAdapter.toRawEvents(payload, SpecHelpers.client).value
     actual must beInvalid(
-      NonEmptyList.one("Field [co|cx]: invalid JSON [] with parsing error: exhausted input")
+      NonEmptyList.one(
+        FailureDetails.TrackerProtocolViolation
+          .NotJson("co|cx", "".some, "invalid json: exhausted input")
+      )
     )
   }
 

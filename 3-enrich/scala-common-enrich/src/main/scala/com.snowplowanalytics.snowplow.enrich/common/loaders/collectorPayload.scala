@@ -10,12 +10,46 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common.loaders
+package com.snowplowanalytics.snowplow.enrich.common
+package loaders
 
 import cats.syntax.either._
+import cats.syntax.option._
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.Payload.{CollectorPayload => CP}
 import org.apache.http.NameValuePair
 import org.joda.time.DateTime
 
+/**
+ * The canonical input format for the ETL process: it should be possible to convert any collector
+ * input format to this format, ready for the main, collector-agnostic stage of the ETL.
+ */
+final case class CollectorPayload(
+  api: CollectorApi,
+  querystring: List[NameValuePair], // Could be empty in future trackers
+  contentType: Option[String], // Not always set
+  body: Option[String], // Not set for GETs
+  source: CollectorSource,
+  context: CollectorContext
+) {
+  def toBadRowCollectorPayload: CP =
+    CP(
+      this.api.vendor,
+      this.api.version,
+      this.querystring.map(nvp => NVP(nvp.getName(), Option(nvp.getValue()))),
+      this.contentType,
+      this.body,
+      this.source.name,
+      this.source.encoding,
+      this.source.hostname,
+      this.context.timestamp.map(_.toString),
+      this.context.ipAddress,
+      this.context.useragent,
+      this.context.refererUri,
+      this.context.headers,
+      this.context.userId
+    )
+}
 object CollectorPayload {
 
   /**
@@ -63,15 +97,18 @@ object CollectorApi {
   /**
    * Parses the requested URI path to determine the specific API version this payload follows.
    * @param path The request path
-   * @return a Validation boxing either a CollectorApi or a Failure String.
+   * @return either a CollectorApi or a Failure String.
    */
-  def parse(path: String): Either[String, CollectorApi] = path match {
-    case ApiPathRegex(vnd, ver) => CollectorApi(vnd, ver).asRight
-    case _ if isIceRequest(path) => SnowplowTp1.asRight
-    case _ =>
-      (s"Request path $path does not match (/)vendor/version(/) pattern nor is a " +
-        "legacy /i(ce.png) request").asLeft
-  }
+  def parsePath(path: String): Either[FailureDetails.CPFormatViolationMessage, CollectorApi] =
+    path match {
+      case ApiPathRegex(vnd, ver) => CollectorApi(vnd, ver).asRight
+      case _ if isIceRequest(path) => SnowplowTp1.asRight
+      case _ =>
+        val msg = "path does not match (/)vendor/version(/) nor is a legacy /i(ce.png) request"
+        FailureDetails.CPFormatViolationMessage
+          .InputData("path", path.some, msg)
+          .asLeft
+    }
 
   /**
    * Checks whether a request to a collector is a tracker hitting the ice pixel.
@@ -105,16 +142,3 @@ final case class CollectorContext(
 
 /** Define the vendor and version of the payload. */
 final case class CollectorApi(vendor: String, version: String)
-
-/**
- * The canonical input format for the ETL process: it should be possible to convert any collector
- * input format to this format, ready for the main, collector-agnostic stage of the ETL.
- */
-final case class CollectorPayload(
-  api: CollectorApi,
-  querystring: List[NameValuePair], // Could be empty in future trackers
-  contentType: Option[String], // Not always set
-  body: Option[String], // Not set for GETs
-  source: CollectorSource,
-  context: CollectorContext
-)

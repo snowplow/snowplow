@@ -14,24 +14,22 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-import java.net.URI
-import java.nio.charset.StandardCharsets.UTF_8
-
-import scala.collection.JavaConverters._
-
 import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.effect.Clock
+import cats.syntax.either._
+import cats.syntax.option._
 import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
-import com.snowplowanalytics.iglu.core.SchemaKey
+import com.snowplowanalytics.iglu.core.{SchemaKey, SelfDescribingData}
+import com.snowplowanalytics.iglu.core.circe.instances._
+import com.snowplowanalytics.snowplow.badrows._
 import io.circe._
-import io.circe.parser._
 import io.circe.syntax._
-import org.apache.http.client.utils.URLEncodedUtils
 
 import loaders.CollectorPayload
+import utils.{ConversionUtils, HttpClient, JsonUtils}
 
 /**
  * Transforms a collector payload which either:
@@ -42,14 +40,18 @@ import loaders.CollectorPayload
  *    - Formatted as a Form Body
  */
 object IgluAdapter extends Adapter {
-  // Vendor name for Failure Message
-  private val VendorName = "Iglu"
-
   // Tracker version for an Iglu-compatible webhook
   private val TrackerVersion = "com.snowplowanalytics.iglu-v1"
 
   // Create a simple formatter function
   private val IgluFormatter: FormatterFunc = buildFormatter() // For defaults
+
+  private val contentTypes = (
+    "application/json",
+    "application/json; charset=utf-8",
+    "application/x-www-form-urlencoded"
+  )
+  private val contentTypesStr = contentTypes.productIterator.mkString(", ")
 
   /**
    * Converts a CollectorPayload instance into raw events. Currently we only support a single event
@@ -59,16 +61,19 @@ object IgluAdapter extends Adapter {
    * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
     payload: CollectorPayload,
     client: Client[F, Json]
-  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] = {
+  ): F[
+    ValidatedNel[FailureDetails.AdapterFailureOrTrackerProtocolViolation, NonEmptyList[RawEvent]]
+  ] = {
     val _ = client
     val params = toMap(payload.querystring)
     (params.get("schema"), payload.body, payload.contentType) match {
       case (_, Some(_), None) =>
+        val msg = s"expected one of $contentTypesStr"
         Monad[F].pure(
-          s"$VendorName event failed: ContentType must be set for a POST payload".invalidNel
+          FailureDetails.AdapterFailure.InputData("contentType", none, msg).invalidNel
         )
       case (None, Some(body), Some(contentType)) =>
         Monad[F].pure(payloadSdJsonToEvent(payload, body, contentType, params))
@@ -76,10 +81,13 @@ object IgluAdapter extends Adapter {
         Monad[F].pure(payloadToEventWithSchema(payload, schemaUri, params))
       case (Some(schemaUri), None, _) =>
         Monad[F].pure(payloadToEventWithSchema(payload, schemaUri, params))
-      case (_, _, _) =>
-        Monad[F].pure(
-          s"$VendorName event failed: is not a sd-json or a valid GET or POST request".invalidNel
+      case (None, None, _) =>
+        val nel = NonEmptyList.of(
+          FailureDetails.AdapterFailure
+            .InputData("schema", none, "empty `schema` field"),
+          FailureDetails.AdapterFailure.InputData("body", none, "empty body")
         )
+        Monad[F].pure(nel.invalid)
     }
   }
 
@@ -97,11 +105,15 @@ object IgluAdapter extends Adapter {
     body: String,
     contentType: String,
     params: Map[String, String]
-  ): ValidatedNel[String, NonEmptyList[RawEvent]] =
+  ): ValidatedNel[FailureDetails.AdapterFailure, NonEmptyList[RawEvent]] =
     contentType match {
-      case "application/json" => sdJsonBodyToEvent(payload, body, params)
-      case "application/json; charset=utf-8" => sdJsonBodyToEvent(payload, body, params)
-      case _ => "Content type not supported".invalidNel
+      case contentTypes._1 => sdJsonBodyToEvent(payload, body, params)
+      case contentTypes._2 => sdJsonBodyToEvent(payload, body, params)
+      case _ =>
+        val msg = s"expected one of ${List(contentTypes._1, contentTypes._2).mkString(", ")}"
+        FailureDetails.AdapterFailure
+          .InputData("contentType", contentType.some, msg)
+          .invalidNel
     }
 
   /**
@@ -114,34 +126,33 @@ object IgluAdapter extends Adapter {
     payload: CollectorPayload,
     body: String,
     params: Map[String, String]
-  ): ValidatedNel[String, NonEmptyList[RawEvent]] =
-    parseJsonSafe(body) match {
+  ): ValidatedNel[FailureDetails.AdapterFailure, NonEmptyList[RawEvent]] =
+    JsonUtils.extractJson(body) match {
       case Right(parsed) =>
-        val cursor = parsed.hcursor
-        (cursor.get[String]("schema").toOption, cursor.downField("data").focus) match {
-          case (Some(schemaUri), Some(data)) =>
-            SchemaKey.fromUri(schemaUri) match {
-              case Left(parseError) => parseError.code.invalidNel
-              case _ =>
-                NonEmptyList
-                  .one(
-                    RawEvent(
-                      api = payload.api,
-                      parameters =
-                        toUnstructEventParams(TrackerVersion, params, schemaUri, data, "app"),
-                      contentType = payload.contentType,
-                      source = payload.source,
-                      context = payload.context
-                    )
-                  )
-                  .valid
-            }
-          case (None, _) =>
-            s"$VendorName event failed: detected SelfDescribingJson but schema key is missing".invalidNel
-          case (_, None) =>
-            s"$VendorName event failed: detected SelfDescribingJson but data key is missing".invalidNel
+        SelfDescribingData.parse(parsed) match {
+          case Left(parseError) =>
+            FailureDetails.AdapterFailure.NotSD(body, parseError.code).invalidNel
+          case Right(sd) =>
+            NonEmptyList
+              .one(
+                RawEvent(
+                  api = payload.api,
+                  parameters = toUnstructEventParams(
+                    TrackerVersion,
+                    params,
+                    sd.schema.toSchemaUri,
+                    sd.data,
+                    "app"
+                  ),
+                  contentType = payload.contentType,
+                  source = payload.source,
+                  context = payload.context
+                )
+              )
+              .valid
         }
-      case Left(err) => err.invalidNel
+      case Left(e) =>
+        FailureDetails.AdapterFailure.NotJson("body", Option(body), e).invalidNel
     }
 
   // --- Payloads with the Schema in the Query-String
@@ -156,9 +167,12 @@ object IgluAdapter extends Adapter {
     payload: CollectorPayload,
     schemaUri: String,
     params: Map[String, String]
-  ): ValidatedNel[String, NonEmptyList[RawEvent]] =
+  ): ValidatedNel[FailureDetails.AdapterFailure, NonEmptyList[RawEvent]] =
     SchemaKey.fromUri(schemaUri) match {
-      case Left(parseError) => parseError.code.invalidNel
+      case Left(parseError) =>
+        FailureDetails.AdapterFailure
+          .InputData("schema", schemaUri.some, parseError.code)
+          .invalidNel
       case Right(_) =>
         (payload.body, payload.contentType) match {
           case (None, _) =>
@@ -181,14 +195,20 @@ object IgluAdapter extends Adapter {
               .valid
           case (Some(body), Some(contentType)) =>
             contentType match {
-              case "application/json" => jsonBodyToEvent(payload, body, schemaUri, params)
-              case "application/json; charset=utf-8" =>
-                jsonBodyToEvent(payload, body, schemaUri, params)
-              case "application/x-www-form-urlencoded" =>
-                formBodyToEvent(payload, body, schemaUri, params)
-              case _ => "Content type not supported".invalidNel
+              case contentTypes._1 => jsonBodyToEvent(payload, body, schemaUri, params)
+              case contentTypes._2 => jsonBodyToEvent(payload, body, schemaUri, params)
+              case contentTypes._3 => formBodyToEvent(payload, body, schemaUri, params)
+              case _ =>
+                val msg = s"expected one of $contentTypesStr"
+                FailureDetails.AdapterFailure
+                  .InputData("contentType", contentType.some, msg)
+                  .invalidNel
             }
-          case (_, None) => "Content type has not been specified".invalidNel
+          case (_, None) =>
+            val msg = s"expected one of $contentTypesStr"
+            FailureDetails.AdapterFailure
+              .InputData("contentType", none, msg)
+              .invalidNel
         }
     }
 
@@ -205,7 +225,7 @@ object IgluAdapter extends Adapter {
     body: String,
     schemaUri: String,
     params: Map[String, String]
-  ): ValidatedNel[String, NonEmptyList[RawEvent]] = {
+  ): ValidatedNel[FailureDetails.AdapterFailure, NonEmptyList[RawEvent]] = {
     def buildRawEvent(e: Json): RawEvent =
       RawEvent(
         api = payload.api,
@@ -215,23 +235,28 @@ object IgluAdapter extends Adapter {
         context = payload.context
       )
 
-    parse(body) match {
+    JsonUtils.extractJson(body) match {
       case Right(parsed) =>
         parsed.asArray match {
           case Some(array) =>
             array.toList match {
               case h :: t => NonEmptyList.of(buildRawEvent(h), t.map(buildRawEvent): _*).valid
               case _ =>
-                s"$VendorName event failed json sanity check: array of events cannot be empty".invalidNel
+                FailureDetails.AdapterFailure
+                  .InputData("body", body.some, "empty array of events")
+                  .invalidNel
             }
           case _ =>
             if (parsed.asObject.fold(true)(_.isEmpty)) {
-              s"$VendorName event failed json sanity check: has no key-value pairs".invalidNel
+              FailureDetails.AdapterFailure
+                .InputData("body", body.some, "has no key-value pairs")
+                .invalidNel
             } else {
               NonEmptyList.one(buildRawEvent(parsed)).valid
             }
         }
-      case Left(err) => err.getMessage.invalidNel
+      case Left(e) =>
+        FailureDetails.AdapterFailure.NotJson("body", Option(body), e).invalidNel
     }
   }
 
@@ -248,22 +273,22 @@ object IgluAdapter extends Adapter {
     body: String,
     schemaUri: String,
     params: Map[String, String]
-  ): ValidatedNel[String, NonEmptyList[RawEvent]] = {
-    val bodyMap =
-      toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).asScala.toList)
-    val event = bodyMap.asJson
-
-    NonEmptyList
-      .one(
-        RawEvent(
-          api = payload.api,
-          parameters =
-            toUnstructEventParams(TrackerVersion, (params - "schema"), schemaUri, event, "srv"),
-          contentType = payload.contentType,
-          source = payload.source,
-          context = payload.context
+  ): ValidatedNel[FailureDetails.AdapterFailure, NonEmptyList[RawEvent]] =
+    (for {
+      bodyMap <- ConversionUtils
+        .parseUrlEncodedForm(body)
+        .leftMap(e => FailureDetails.AdapterFailure.InputData("body", body.some, e))
+      event = bodyMap.asJson
+      rawEvent = NonEmptyList
+        .one(
+          RawEvent(
+            api = payload.api,
+            parameters =
+              toUnstructEventParams(TrackerVersion, (params - "schema"), schemaUri, event, "srv"),
+            contentType = payload.contentType,
+            source = payload.source,
+            context = payload.context
+          )
         )
-      )
-      .valid
-  }
+    } yield rawEvent).toValidatedNel
 }

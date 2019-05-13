@@ -20,7 +20,7 @@ import cats.data.{EitherT, ValidatedNel}
 import cats.syntax.either._
 import com.snowplowanalytics.forex.CreateForex
 import com.snowplowanalytics.forex.model.AccountType
-import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
+import com.snowplowanalytics.iglu.core._
 import com.snowplowanalytics.maxmind.iplookups.CreateIpLookups
 import com.snowplowanalytics.refererparser.CreateParser
 import com.snowplowanalytics.weather.providers.openweather.CreateOWM
@@ -36,9 +36,16 @@ import utils.ConversionUtils
 trait Enrichment
 
 sealed trait EnrichmentConf {
+  def schemaKey: SchemaKey = SchemaKey(
+    "com.acme",
+    "placeholder",
+    "jsonschema",
+    SchemaVer.Full(1, 0, 0)
+  )
   def filesToCache: List[(URI, String)] = Nil
 }
 final case class ApiRequestConf(
+  override val schemaKey: SchemaKey,
   inputs: List[apirequest.Input],
   api: HttpApi,
   outputs: List[apirequest.Output],
@@ -56,6 +63,7 @@ final case class PiiPseudonymizerConf(
     pii.PiiPseudonymizerEnrichment(fieldList, emitIdentificationEvent, strategy)
 }
 final case class SqlQueryConf(
+  override val schemaKey: SchemaKey,
   inputs: List[sqlquery.Input],
   db: Db,
   query: Query,
@@ -89,6 +97,7 @@ final case class CookieExtractorConf(cookieNames: List[String]) extends Enrichme
   def enrichment: CookieExtractorEnrichment = CookieExtractorEnrichment(cookieNames)
 }
 final case class CurrencyConversionConf(
+  override val schemaKey: SchemaKey,
   accountType: AccountType,
   apiKey: String,
   baseCurrency: CurrencyUnit
@@ -105,6 +114,7 @@ final case class HttpHeaderExtractorConf(headersPattern: String) extends Enrichm
   def enrichment: HttpHeaderExtractorEnrichment = HttpHeaderExtractorEnrichment(headersPattern)
 }
 final case class IabConf(
+  override val schemaKey: SchemaKey,
   ipFile: (URI, String),
   excludeUaFile: (URI, String),
   includeUaFile: (URI, String)
@@ -124,8 +134,9 @@ final case class IpLookupsConf(
   def enrichment[F[_]: Functor: CreateIpLookups]: F[IpLookupsEnrichment[F]] =
     IpLookupsEnrichment[F](this)
 }
-final case class JavascriptScriptConf(script: Script) extends EnrichmentConf {
-  def enrichment: JavascriptScriptEnrichment = JavascriptScriptEnrichment(script)
+final case class JavascriptScriptConf(override val schemaKey: SchemaKey, script: Script)
+    extends EnrichmentConf {
+  def enrichment: JavascriptScriptEnrichment = JavascriptScriptEnrichment(schemaKey, script)
 }
 final case class RefererParserConf(refererDatabase: (URI, String), internalDomains: List[String])
     extends EnrichmentConf {
@@ -133,15 +144,17 @@ final case class RefererParserConf(refererDatabase: (URI, String), internalDomai
   def enrichment[F[_]: Monad: CreateParser]: EitherT[F, String, RefererParserEnrichment] =
     RefererParserEnrichment[F](this)
 }
-final case class UaParserConf(uaDatabase: Option[(URI, String)]) extends EnrichmentConf {
+final case class UaParserConf(override val schemaKey: SchemaKey, uaDatabase: Option[(URI, String)])
+    extends EnrichmentConf {
   override val filesToCache: List[(URI, String)] = List(uaDatabase).flatten
   def enrichment[F[_]: Monad: CreateUaParser]: EitherT[F, String, UaParserEnrichment] =
     UaParserEnrichment[F](this)
 }
-final case object UserAgentUtilsConf extends EnrichmentConf {
-  def enrichment: UserAgentUtilsEnrichment.type = UserAgentUtilsEnrichment
+final case class UserAgentUtilsConf(override val schemaKey: SchemaKey) extends EnrichmentConf {
+  def enrichment: UserAgentUtilsEnrichment = UserAgentUtilsEnrichment(schemaKey)
 }
 final case class WeatherConf(
+  override val schemaKey: SchemaKey,
   apiHost: String,
   apiKey: String,
   timeout: Int,
@@ -150,6 +163,9 @@ final case class WeatherConf(
 ) extends EnrichmentConf {
   def enrichment[F[_]: Monad: CreateOWM]: EitherT[F, String, WeatherEnrichment[F]] =
     WeatherEnrichment[F](this)
+}
+final case class YauaaConf(cacheSize: Option[Int]) extends EnrichmentConf {
+  def enrichment: YauaaEnrichment = YauaaEnrichment(cacheSize)
 }
 
 /** Trait to hold helpers relating to enrichment config */
@@ -183,9 +199,8 @@ trait ParseableEnrichment {
     if (supportedSchema.matches(schemaKey)) {
       config.asRight
     } else {
-      ("Schema key %s is not supported. A '%s' enrichment must have schema '%s'.")
-        .format(schemaKey, supportedSchema.name, supportedSchema)
-        .asLeft
+      (s"Schema key ${schemaKey.toSchemaUri} is not supported. A '${supportedSchema.name}' " +
+        s"enrichment must have schema ${supportedSchema.asString}.").asLeft
     }
 
   /**

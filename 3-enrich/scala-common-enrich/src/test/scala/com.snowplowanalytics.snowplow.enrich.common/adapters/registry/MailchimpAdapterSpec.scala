@@ -16,6 +16,7 @@ package registry
 
 import cats.data.NonEmptyList
 import cats.syntax.option._
+import com.snowplowanalytics.snowplow.badrows._
 import io.circe._
 import io.circe.literal._
 import org.joda.time.DateTime
@@ -232,20 +233,27 @@ class MailchimpAdapterSpec extends Specification with DataTables with ValidatedM
 
   def e9 =
     "SPEC NAME" || "SCHEMA TYPE" | "EXPECTED OUTPUT" |
-      "Invalid, bad type" !! "bad" ! "MailChimp event failed: type parameter [bad] not recognized" |
-      "Invalid, no type" !! "" ! "MailChimp event failed: type parameter is empty - cannot determine event type" |> {
-      (_, schema, expected) =>
-        val body = "type=" + schema
-        val payload = CollectorPayload(
-          Shared.api,
-          Nil,
-          ContentType.some,
-          body.some,
-          Shared.cljSource,
-          Shared.context
-        )
-        val actual = MailchimpAdapter.toRawEvents(payload, SpecHelpers.client).value
-        actual must beInvalid(NonEmptyList.one(expected))
+      "Invalid, bad type" !! "bad" ! FailureDetails.AdapterFailure.SchemaMapping(
+        "bad".some,
+        MailchimpAdapter.EventSchemaMap,
+        "no schema associated with the provided type parameter"
+      ) |
+      "Invalid, no type" !! "" ! FailureDetails.AdapterFailure.SchemaMapping(
+        "".some,
+        MailchimpAdapter.EventSchemaMap,
+        "cannot determine event type: type parameter empty"
+      ) |> { (_, schema, expected) =>
+      val body = "type=" + schema
+      val payload = CollectorPayload(
+        Shared.api,
+        Nil,
+        ContentType.some,
+        body.some,
+        Shared.cljSource,
+        Shared.context
+      )
+      val actual = MailchimpAdapter.toRawEvents(payload, SpecHelpers.client).value
+      actual must beInvalid(NonEmptyList.one(expected))
     }
 
   def e10 = {
@@ -311,7 +319,12 @@ class MailchimpAdapterSpec extends Specification with DataTables with ValidatedM
     val payload =
       CollectorPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
     val actual = MailchimpAdapter.toRawEvents(payload, SpecHelpers.client).value
-    actual must beInvalid(NonEmptyList.one("Request body is empty: no MailChimp event to process"))
+    actual must beInvalid(
+      NonEmptyList.one(
+        FailureDetails.AdapterFailure
+          .InputData("body", None, "empty body: no events to process")
+      )
+    )
   }
 
   def e12 = {
@@ -320,7 +333,11 @@ class MailchimpAdapterSpec extends Specification with DataTables with ValidatedM
     val actual = MailchimpAdapter.toRawEvents(payload, SpecHelpers.client).value
     actual must beInvalid(
       NonEmptyList.one(
-        "Request body provided but content type empty, expected application/x-www-form-urlencoded for MailChimp"
+        FailureDetails.AdapterFailure.InputData(
+          "contentType",
+          None,
+          "no content type: expected application/x-www-form-urlencoded"
+        )
       )
     )
   }
@@ -337,7 +354,11 @@ class MailchimpAdapterSpec extends Specification with DataTables with ValidatedM
     val actual = MailchimpAdapter.toRawEvents(payload, SpecHelpers.client).value
     actual must beInvalid(
       NonEmptyList.one(
-        "Content type of application/json provided, expected application/x-www-form-urlencoded for MailChimp"
+        FailureDetails.AdapterFailure.InputData(
+          "contentType",
+          "application/json".some,
+          "expected application/x-www-form-urlencoded"
+        )
       )
     )
   }
@@ -354,7 +375,13 @@ class MailchimpAdapterSpec extends Specification with DataTables with ValidatedM
     )
     val actual = MailchimpAdapter.toRawEvents(payload, SpecHelpers.client).value
     actual must beInvalid(
-      NonEmptyList.one("No MailChimp type parameter provided: cannot determine event type")
+      NonEmptyList.one(
+        FailureDetails.AdapterFailure.InputData(
+          "body",
+          "fired_at=2014-10-22+13%3A10%3A40".some,
+          "no `type` parameter provided: cannot determine event type"
+        )
+      )
     )
   }
 }

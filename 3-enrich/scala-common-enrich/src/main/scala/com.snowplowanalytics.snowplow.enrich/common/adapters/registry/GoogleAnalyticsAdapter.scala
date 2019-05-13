@@ -15,11 +15,6 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-import java.net.URI
-import java.nio.charset.StandardCharsets.UTF_8
-
-import scala.collection.JavaConverters._
-
 import cats.{Applicative, Functor, Monad}
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.effect.Clock
@@ -27,11 +22,12 @@ import cats.implicits._
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
+import com.snowplowanalytics.snowplow.badrows._
 import io.circe._
 import io.circe.syntax._
-import org.apache.http.client.utils.URLEncodedUtils
 
 import loaders.CollectorPayload
+import utils.HttpClient
 import utils.ConversionUtils._
 
 /**
@@ -41,7 +37,6 @@ import utils.ConversionUtils._
 object GoogleAnalyticsAdapter extends Adapter {
 
   // for failure messages
-  private val VendorName = "GoogleAnalytics"
   private val GaVendor = "com.google.analytics"
   private val Vendor = s"$GaVendor.measurement-protocol"
   private val ProtocolVersion = "v1"
@@ -52,7 +47,7 @@ object GoogleAnalyticsAdapter extends Adapter {
   private val PageViewHitType = "pageview"
 
   // models a translation between measurement protocol fields and the fields in Iglu schemas
-  type Translation = Function1[String, Either[String, FieldType]]
+  type Translation = Function1[String, Either[FailureDetails.AdapterFailure, FieldType]]
 
   /**
    * Case class holding the name of the field in the Iglu schemas as well as the necessary
@@ -91,16 +86,48 @@ object GoogleAnalyticsAdapter extends Adapter {
   private val idTranslation: (String => KVTranslation) = (fieldName: String) =>
     KVTranslation(fieldName, (value: String) => StringType(value).asRight)
   private val intTranslation: (String => KVTranslation) = (fieldName: String) =>
-    KVTranslation(fieldName, stringToJInteger(fieldName, _: String).map(i => IntType(i.toInt)))
+    KVTranslation(
+      fieldName,
+      (value: String) =>
+        stringToJInteger(value)
+          .map(i => IntType(i.toInt))
+          .leftMap(
+            e => FailureDetails.AdapterFailure.InputData(fieldName, value.some, e)
+          )
+    )
   private val twoDecimalsTranslation: (String => KVTranslation) = (fieldName: String) =>
-    KVTranslation(fieldName, stringToTwoDecimals(fieldName, _: String).map(DoubleType))
+    KVTranslation(
+      fieldName,
+      (value: String) =>
+        stringToTwoDecimals(value)
+          .map(DoubleType)
+          .leftMap(
+            e => FailureDetails.AdapterFailure.InputData(fieldName, value.some, e)
+          )
+    )
   private val doubleTranslation: (String => KVTranslation) = (fieldName: String) =>
-    KVTranslation(fieldName, stringToDouble(fieldName, _: String).map(DoubleType))
+    KVTranslation(
+      fieldName,
+      (value: String) =>
+        stringToDouble(value)
+          .map(DoubleType)
+          .leftMap(
+            e => FailureDetails.AdapterFailure.InputData(fieldName, value.some, e)
+          )
+    )
   private val booleanTranslation: (String => KVTranslation) = (fieldName: String) =>
-    KVTranslation(fieldName, stringToBoolean(fieldName, _: String).map(BooleanType))
+    KVTranslation(
+      fieldName,
+      (value: String) =>
+        stringToBoolean(value)
+          .map(BooleanType)
+          .leftMap(
+            e => FailureDetails.AdapterFailure.InputData(fieldName, value.some, e)
+          )
+    )
 
   // unstruct event mappings
-  private val unstructEventData: Map[String, MPData] = Map(
+  private[registry] val unstructEventData: Map[String, MPData] = Map(
     "pageview" -> MPData(
       SchemaKey(Vendor, "page_view", Format, SchemaVersion),
       Map(
@@ -444,10 +471,12 @@ object GoogleAnalyticsAdapter extends Adapter {
    * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
     payload: CollectorPayload,
     client: Client[F, Json]
-  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
+  ): F[
+    ValidatedNel[FailureDetails.AdapterFailureOrTrackerProtocolViolation, NonEmptyList[RawEvent]]
+  ] =
     (for {
       body <- payload.body
       _ = client
@@ -455,7 +484,9 @@ object GoogleAnalyticsAdapter extends Adapter {
     } yield rawEvents) match {
       case Some(rawEvents) => Monad[F].pure(rawEvents.sequence)
       case None =>
-        Monad[F].pure(s"Request body is empty: no $VendorName events to process".invalidNel)
+        val failure =
+          FailureDetails.AdapterFailure.InputData("body", None, "empty body")
+        Monad[F].pure(failure.invalidNel)
     }
 
   /**
@@ -467,71 +498,74 @@ object GoogleAnalyticsAdapter extends Adapter {
   private def parsePayload(
     bodyPart: String,
     payload: CollectorPayload
-  ): ValidatedNel[String, RawEvent] = {
-    val params = toMap(
-      URLEncodedUtils.parse(URI.create(s"http://localhost/?$bodyPart"), UTF_8).asScala.toList
-    )
-    params.get("t") match {
-      case None => s"No $VendorName t parameter provided: cannot determine hit type".invalidNel
-      case Some(hitType) =>
-        // direct mappings
-        val mappings = translatePayload(params, directMappings(hitType))
-        val translationTable = unstructEventData
-          .get(hitType)
-          .map(_.translationTable)
-          .toValidNel(s"No matching $VendorName hit type for hit type $hitType")
-        val schemaVal = lookupSchema(
-          hitType.some,
-          VendorName,
-          unstructEventData.mapValues(_.schemaKey.toSchemaUri)
-        ).toValidatedNel
-        val simpleContexts = buildContexts(params, contextData, fieldToSchemaMap)
-        val compositeContexts =
-          buildCompositeContexts(
-            params,
-            compositeContextData,
-            compositeContextsWithCU,
-            nrCompFieldsPerSchema,
-            valueInFieldNameIndicator
-          ).toValidatedNel
-
-        (for {
-          // better-monadic-for doesn't work for some reason?
-          result <- (
-            translationTable,
-            schemaVal,
-            simpleContexts,
-            compositeContexts
-          ).mapN { (trTable, schema, contexts, compContexts) =>
-            val contextJsons = (contexts.toList ++ compContexts)
-              .collect {
-                // an unnecessary pageview context might have been built so we need to remove it
-                case (s, d)
-                    if hitType != PageViewHitType ||
-                      s != unstructEventData(PageViewHitType).schemaKey =>
-                  buildJson(s.toSchemaUri, d)
-              }
-            val contextParam: Map[String, String] =
-              if (contextJsons.isEmpty) Map.empty
-              else Map("co" -> toContexts(contextJsons).noSpaces)
-            (trTable, schema, contextParam)
-          }.toEither
-          payload <- translatePayload(params, result._1)
-            .map { e =>
-              val unstructEvent = toUnstructEvent(buildJson(result._2, e)).noSpaces
-              RawEvent(
-                api = payload.api,
-                parameters = result._3 ++ mappings ++
-                  Map("e" -> "ue", "ue_pr" -> unstructEvent, "tv" -> Protocol, "p" -> "srv"),
-                contentType = payload.contentType,
-                source = payload.source,
-                context = payload.context
-              )
-            }
-            .leftMap(NonEmptyList.one)
-        } yield payload).toValidated
-    }
-  }
+  ): ValidatedNel[FailureDetails.AdapterFailure, RawEvent] =
+    (for {
+      params <- parseUrlEncodedForm(bodyPart)
+        .leftMap(
+          e =>
+            NonEmptyList
+              .one(FailureDetails.AdapterFailure.InputData("body", bodyPart.some, e))
+        )
+      hitType <- params.get("t").toRight {
+        val msg = "no t parameter provided: cannot determine hit type"
+        NonEmptyList
+          .one(FailureDetails.AdapterFailure.InputData("body", bodyPart.some, msg))
+      }
+      // direct mappings
+      mappings = translatePayload(params, directMappings(hitType))
+      translationTable = unstructEventData
+        .get(hitType)
+        .map(_.translationTable)
+        .toValidNel(
+          FailureDetails.AdapterFailure
+            .InputData("t", hitType.some, "no matching hit type")
+        )
+      schemaVal = lookupSchema(
+        hitType.some,
+        unstructEventData.mapValues(_.schemaKey.toSchemaUri)
+      ).toValidatedNel
+      simpleContexts = buildContexts(params, contextData, fieldToSchemaMap)
+      compositeContexts = buildCompositeContexts(
+        params,
+        compositeContextData,
+        compositeContextsWithCU,
+        nrCompFieldsPerSchema,
+        valueInFieldNameIndicator
+      ).toValidatedNel
+      // better-monadic-for doesn't work for some reason?
+      result <- (
+        translationTable,
+        schemaVal,
+        simpleContexts,
+        compositeContexts
+      ).mapN { (trTable, schema, contexts, compContexts) =>
+        val contextJsons = (contexts.toList ++ compContexts)
+          .collect {
+            // an unnecessary pageview context might have been built so we need to remove it
+            case (s, d)
+                if hitType != PageViewHitType ||
+                  s != unstructEventData(PageViewHitType).schemaKey =>
+              buildJson(s.toSchemaUri, d)
+          }
+        val contextParam: Map[String, String] =
+          if (contextJsons.isEmpty) Map.empty
+          else Map("co" -> toContexts(contextJsons).noSpaces)
+        (trTable, schema, contextParam)
+      }.toEither
+      payload <- translatePayload(params, result._1)
+        .map { e =>
+          val unstructEvent = toUnstructEvent(buildJson(result._2, e)).noSpaces
+          RawEvent(
+            api = payload.api,
+            parameters = result._3 ++ mappings ++
+              Map("e" -> "ue", "ue_pr" -> unstructEvent, "tv" -> Protocol, "p" -> "srv"),
+            contentType = payload.contentType,
+            source = payload.source,
+            context = payload.context
+          )
+        }
+        .leftMap(NonEmptyList.one)
+    } yield payload).toValidated
 
   /**
    * Translates a payload according to a translation table.
@@ -542,9 +576,9 @@ object GoogleAnalyticsAdapter extends Adapter {
   private def translatePayload(
     originalParams: Map[String, String],
     translationTable: Map[String, KVTranslation]
-  ): Either[String, Map[String, FieldType]] = {
+  ): Either[FailureDetails.AdapterFailure, Map[String, FieldType]] = {
     val m = originalParams
-      .foldLeft(Map.empty[String, Either[String, FieldType]]) {
+      .foldLeft(Map.empty[String, Either[FailureDetails.AdapterFailure, FieldType]]) {
         case (m, (fieldName, value)) =>
           translationTable
             .get(fieldName)
@@ -587,9 +621,11 @@ object GoogleAnalyticsAdapter extends Adapter {
     originalParams: Map[String, String],
     referenceTable: Map[SchemaKey, Map[String, KVTranslation]],
     fieldToSchemaMap: Map[String, SchemaKey]
-  ): ValidatedNel[String, Map[SchemaKey, Map[String, FieldType]]] = {
+  ): ValidatedNel[FailureDetails.AdapterFailure, Map[SchemaKey, Map[String, FieldType]]] = {
     val m = originalParams
-      .foldLeft(Map.empty[SchemaKey, Map[String, ValidatedNel[String, FieldType]]]) {
+      .foldLeft(
+        Map.empty[SchemaKey, Map[String, ValidatedNel[FailureDetails.AdapterFailure, FieldType]]]
+      ) {
         case (m, (fieldName, value)) =>
           fieldToSchemaMap
             .get(fieldName)
@@ -625,7 +661,7 @@ object GoogleAnalyticsAdapter extends Adapter {
     schemasWithCU: List[SchemaKey],
     nrCompFieldsPerSchema: Map[SchemaKey, Int],
     indicator: String
-  ): Either[String, List[(SchemaKey, Map[String, FieldType])]] =
+  ): Either[FailureDetails.AdapterFailure, List[(SchemaKey, Map[String, FieldType])]] =
     for {
       // composite params have digits in their key
       composite <- originalParams
@@ -641,7 +677,9 @@ object GoogleAnalyticsAdapter extends Adapter {
         .mapValues(_.map(_._2))
       translated <- {
         val m = grouped
-          .foldLeft(Map.empty[SchemaKey, Map[String, Either[String, Seq[FieldType]]]]) {
+          .foldLeft(
+            Map.empty[SchemaKey, Map[String, Either[FailureDetails.AdapterFailure, Seq[FieldType]]]]
+          ) {
             case (m, (fieldName, values)) =>
               val additions = referenceTable
                 .filter(_.translationTable.contains(fieldName))
@@ -701,7 +739,7 @@ object GoogleAnalyticsAdapter extends Adapter {
     fieldName: String,
     value: String,
     indicator: String
-  ): Either[String, Map[String, String]] =
+  ): Either[FailureDetails.AdapterFailure, Map[String, String]] =
     for {
       brokenDown <- breakDownCompField(fieldName)
       (strs, ints) = brokenDown
@@ -711,7 +749,8 @@ object GoogleAnalyticsAdapter extends Adapter {
         (strs.init.scanRight("")(_ + _).init.map(indicator + _) zip ints).toMap.asRight
       } else {
         // can't happen without changing breakDownCompField(fieldName)
-        s"Cannot parse field name $fieldName, unexpected number of values inside".asLeft
+        val msg = "cannot parse composite field name: unexpected number of values"
+        FailureDetails.AdapterFailure.InputData(fieldName, value.some, msg).asLeft
       }
       r = m + (strs.reduce(_ + _) -> value)
     } yield r
@@ -728,13 +767,16 @@ object GoogleAnalyticsAdapter extends Adapter {
    */
   private[registry] def breakDownCompField(
     fieldName: String
-  ): Either[String, (List[String], List[String])] =
+  ): Either[FailureDetails.AdapterFailure, (List[String], List[String])] =
     fieldName match {
       case compositeFieldRegex(grps @ _*) => splitEvenOdd(grps.toList.filter(_.nonEmpty)).asRight
-      case s if s.isEmpty => "Cannot parse empty composite field name".asLeft
+      case s if s.isEmpty =>
+        FailureDetails.AdapterFailure
+          .InputData(fieldName, none, "cannot parse empty field name")
+          .asLeft
       case _ =>
-        (s"Cannot parse field name $fieldName, " +
-          s"it doesn't conform to the expected composite field regex: $compositeFieldRegex").asLeft
+        val msg = s"composite field name has to conform to regex $compositeFieldRegex"
+        FailureDetails.AdapterFailure.InputData(fieldName, none, msg).asLeft
     }
 
   /** Splits a list in two based on the oddness or evenness of their indices */

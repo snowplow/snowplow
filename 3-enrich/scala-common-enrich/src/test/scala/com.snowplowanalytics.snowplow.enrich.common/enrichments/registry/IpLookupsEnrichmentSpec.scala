@@ -67,27 +67,33 @@ class IpLookupsEnrichmentSpec extends Specification with DataTables {
         IpLocation( // Taken from scala-maxmind-geoip. See that test suite for other valid IP addresses
           countryCode = "CN",
           countryName = "China",
-          region      = Some("22"),
-          city        = Some("Changchun"),
-          latitude    = 43.88F,
-          longitude   = 125.3228F,
-          timezone    = Some("Asia/Harbin"),
-          postalCode  = None,
-          metroCode   = None,
-          regionName  = Some("Jilin Sheng")
+          region = Some("22"),
+          city = Some("Changchun"),
+          latitude = 43.88f,
+          longitude = 125.3228f,
+          timezone = Some("Asia/Harbin"),
+          postalCode = None,
+          metroCode = None,
+          regionName = Some("Jilin Sheng"),
+          isInEuropeanUnion = false,
+          continent = "Asia",
+          accuracyRadius = 100
         ).asRight.some |
       "valid IP address with port" !! "175.16.199.0:8080" !
         IpLocation( // Taken from scala-maxmind-geoip. See that test suite for other valid IP addresses
           countryCode = "CN",
           countryName = "China",
-          region      = Some("22"),
-          city        = Some("Changchun"),
-          latitude    = 43.88F,
-          longitude   = 125.3228F,
-          timezone    = Some("Asia/Harbin"),
-          postalCode  = None,
-          metroCode   = None,
-          regionName  = Some("Jilin Sheng")
+          region = Some("22"),
+          city = Some("Changchun"),
+          latitude = 43.88f,
+          longitude = 125.3228f,
+          timezone = Some("Asia/Harbin"),
+          postalCode = None,
+          metroCode = None,
+          regionName = Some("Jilin Sheng"),
+          isInEuropeanUnion = false,
+          continent = "Asia",
+          accuracyRadius = 100
         ).asRight.some |> { (_, ipAddress, expected) =>
       (for {
         e <- config.enrichment[Eval]

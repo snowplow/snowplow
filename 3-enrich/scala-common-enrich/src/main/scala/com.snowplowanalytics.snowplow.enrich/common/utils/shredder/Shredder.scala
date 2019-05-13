@@ -22,6 +22,7 @@ import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SelfDescribingData}
 import com.snowplowanalytics.iglu.core.circe.instances._
+import com.snowplowanalytics.snowplow.badrows._
 import io.circe.Json
 import io.circe.generic.auto._
 import io.circe.syntax._
@@ -61,7 +62,7 @@ object Shredder {
   def shred[F[_]: Monad: RegistryLookup: Clock](
     event: EnrichedEvent,
     client: Client[F, Json]
-  ): F[ValidatedNel[String, List[SelfDescribingData[Json]]]] = {
+  ): F[ValidatedNel[FailureDetails.EnrichmentStageIssue, List[SelfDescribingData[Json]]]] = {
     // Define what we know so far of the type hierarchy.
     val partialHierarchy = makePartialHierarchy(event.event_id, event.collector_tstamp)
 
@@ -83,7 +84,7 @@ object Shredder {
   def extractAndValidateUnstructEvent[F[_]: Monad: RegistryLookup: Clock](
     event: EnrichedEvent,
     client: Client[F, Json]
-  ): F[ValidatedNel[String, List[SelfDescribingData[Json]]]] =
+  ): F[ValidatedNel[FailureDetails.EnrichmentStageIssue, List[SelfDescribingData[Json]]]] =
     flatten(extractUnstructEvent(event, client))
       .flatMap(extracted => validate(extracted, client))
 
@@ -96,8 +97,8 @@ object Shredder {
   def extractAndValidateCustomContexts[F[_]: Monad: RegistryLookup: Clock](
     event: EnrichedEvent,
     client: Client[F, Json]
-  ): F[ValidatedNel[String, List[SelfDescribingData[Json]]]] =
-    extractAndValidateContexts(event.contexts, "context", client)
+  ): F[ValidatedNel[FailureDetails.EnrichmentStageIssue, List[SelfDescribingData[Json]]]] =
+    extractAndValidateContexts(event.contexts, "contexts", client)
 
   /**
    * Extract list of derived contexts out of string and validate each against its schema
@@ -108,7 +109,7 @@ object Shredder {
   def extractAndValidateDerivedContexts[F[_]: Monad: RegistryLookup: Clock](
     event: EnrichedEvent,
     client: Client[F, Json]
-  ): F[ValidatedNel[String, List[SelfDescribingData[Json]]]] =
+  ): F[ValidatedNel[FailureDetails.EnrichmentStageIssue, List[SelfDescribingData[Json]]]] =
     extractAndValidateContexts(event.derived_contexts, "derived_contexts", client)
 
   /**
@@ -122,7 +123,7 @@ object Shredder {
     json: String,
     field: String,
     client: Client[F, Json]
-  ): F[ValidatedNel[String, List[SelfDescribingData[Json]]]] =
+  ): F[ValidatedNel[FailureDetails.EnrichmentStageIssue, List[SelfDescribingData[Json]]]] =
     flatten(extractContexts(json, field, client))
       .flatMap(extracted => validate(extracted, client))
 
@@ -137,13 +138,15 @@ object Shredder {
   def extractUnstructEvent[F[_]: Monad: RegistryLookup: Clock](
     event: EnrichedEvent,
     client: Client[F, Json]
-  ): Option[F[ValidatedNel[String, List[Json]]]] =
-    extractAndValidateJson(
-      "ue_properties",
-      UePropertiesSchema,
-      Option(event.unstruct_event),
-      client
-    ).map(_.map(_.map(_ :: Nil)))
+  ): Option[F[ValidatedNel[FailureDetails.EnrichmentStageIssue, List[Json]]]] =
+    Option(event.unstruct_event).map { ue =>
+      extractAndValidateJson(
+        "ue_properties",
+        UePropertiesSchema,
+        ue,
+        client
+      ).map(_.map(_ :: Nil))
+    }
 
   /**
    * Extract list of contexts out of string. Extraction involves validation against schema
@@ -157,14 +160,16 @@ object Shredder {
     json: String,
     field: String,
     client: Client[F, Json]
-  ): Option[F[ValidatedNel[String, List[Json]]]] =
-    extractAndValidateJson(field, ContextsSchema, Option(json), client)
-      .map(_.map(_.map { json =>
-        json.asArray match {
-          case Some(js) => js.toList
-          case None => json :: Nil
-        }
-      }))
+  ): Option[F[ValidatedNel[FailureDetails.EnrichmentStageIssue, List[Json]]]] =
+    Option(json).map { js =>
+      extractAndValidateJson(field, ContextsSchema, js, client)
+        .map(_.map { json =>
+          json.asArray match {
+            case Some(js) => js.toList
+            case None => json :: Nil
+          }
+        })
+    }
 
   /**
    * Fetch Iglu Schema for each [[Json]] in [[ValidatedNelMessage]] and validate this node
@@ -174,17 +179,32 @@ object Shredder {
    * @return validated list of pairs consist of schema and node
    */
   private[shredder] def validate[F[_]: Monad: RegistryLookup: Clock](
-    validatedJsons: ValidatedNel[String, List[Json]],
+    validatedJsons: ValidatedNel[FailureDetails.EnrichmentStageIssue, List[Json]],
     client: Client[F, Json]
-  ): F[ValidatedNel[String, List[SelfDescribingData[Json]]]] =
+  ): F[ValidatedNel[FailureDetails.EnrichmentStageIssue, List[SelfDescribingData[Json]]]] =
     (for {
       jsons <- EitherT.fromEither[F](validatedJsons.toEither)
       validated <- jsons.map { json =>
         for {
           sd <- EitherT.fromEither[F](
-            SelfDescribingData.parse(json).leftMap(pe => NonEmptyList.one(pe.code))
+            SelfDescribingData
+              .parse(json)
+              .leftMap { e =>
+                NonEmptyList.one(
+                  FailureDetails.SchemaViolation
+                    .NotSD(json.noSpaces, e.code): FailureDetails.EnrichmentStageIssue
+                )
+              }
           )
-          _ <- client.check(sd).leftMap(e => NonEmptyList.one(e.asJson.noSpaces))
+          _ <- client
+            .check(sd)
+            .leftMap(
+              e =>
+                NonEmptyList.one(
+                  FailureDetails.SchemaViolation
+                    .IgluError(sd.schema, e): FailureDetails.EnrichmentStageIssue
+                )
+            )
         } yield sd
       }.sequence
     } yield validated).value.map(_.toValidated)
@@ -195,8 +215,8 @@ object Shredder {
    * @return empty list in case of None, or non-empty in case of some
    */
   private[shredder] def flatten[F[_]: Monad](
-    o: Option[F[ValidatedNel[String, List[Json]]]]
-  ): F[ValidatedNel[String, List[Json]]] = o match {
+    o: Option[F[ValidatedNel[FailureDetails.EnrichmentStageIssue, List[Json]]]]
+  ): F[ValidatedNel[FailureDetails.EnrichmentStageIssue, List[Json]]] = o match {
     case Some(vjl) => vjl
     case None => Monad[F].pure(List.empty[Json].validNel)
   }
@@ -257,37 +277,44 @@ object Shredder {
   private def extractAndValidateJson[F[_]: Monad: RegistryLookup: Clock](
     field: String,
     schemaCriterion: SchemaCriterion,
-    instance: Option[String],
+    instance: String,
     client: Client[F, Json]
-  ): Option[F[ValidatedNel[String, Json]]] =
-    instance.map { i =>
-      (for {
-        j <- EitherT.fromEither[F](extractJson(field, i).leftMap(e => NonEmptyList.one(e)))
-        sd <- EitherT.fromEither[F](
-          SelfDescribingData.parse(j).leftMap(parseError => NonEmptyList.one(parseError.code))
+  ): F[ValidatedNel[FailureDetails.EnrichmentStageIssue, Json]] =
+    (for {
+      j <- EitherT.fromEither[F](
+        JsonUtils
+          .extractJson(instance)
+          .leftMap(
+            e =>
+              NonEmptyList
+                .one(FailureDetails.SchemaViolation.NotJson(field, instance.some, e))
+          )
+      )
+      sd <- EitherT.fromEither[F](
+        SelfDescribingData
+          .parse(j)
+          .leftMap(
+            e =>
+              NonEmptyList
+                .one(FailureDetails.SchemaViolation.NotSD(instance, e.code))
+          )
+      )
+      _ <- client
+        .check(sd)
+        .leftMap(
+          e => NonEmptyList.one(FailureDetails.SchemaViolation.IgluError(sd.schema, e))
         )
-        _ <- client
-          .check(sd)
-          .leftMap(e => NonEmptyList.one(e.asJson.noSpaces))
-          .subflatMap { _ =>
-            schemaCriterion.matches(sd.schema) match {
-              case true => ().asRight
-              case false =>
-                NonEmptyList
-                  .one(s"Schema criterion $schemaCriterion does not match schema ${sd.schema}")
-                  .asLeft
-            }
+        .subflatMap { _ =>
+          schemaCriterion.matches(sd.schema) match {
+            case true => ().asRight
+            case false =>
+              NonEmptyList
+                .one(
+                  FailureDetails.SchemaViolation
+                    .SchemaCrit(sd.schema, schemaCriterion)
+                )
+                .asLeft
           }
-      } yield sd.data).toValidated
-    }
-
-  /**
-   * Wrapper around JsonUtils' extractJson which converts the failure to a Json Nel, for
-   * compatibility with subsequent JSON Schema checks.
-   * @param field The name of the field containing JSON
-   * @param instance The JSON instance itself
-   * @return the pimped ScalazArgs
-   */
-  private def extractJson(field: String, instance: String): Either[String, Json] =
-    JsonUtils.extractJson(field, instance)
+        }
+    } yield sd.data).leftWiden[NonEmptyList[FailureDetails.EnrichmentStageIssue]].toValidated
 }

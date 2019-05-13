@@ -23,7 +23,8 @@ import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.Resolver
 import com.snowplowanalytics.iglu.client.resolver.registries.Registry
 import com.snowplowanalytics.iglu.client.validator.CirceValidator
-import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SchemaVer}
+import com.snowplowanalytics.iglu.core._
+import com.snowplowanalytics.snowplow.badrows._
 import io.circe.Json
 import io.circe.literal._
 import io.circe.parser._
@@ -32,7 +33,8 @@ import org.apache.commons.codec.digest.DigestUtils
 import org.specs2.Specification
 import org.specs2.matcher.ValidatedMatchers
 
-import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import adapters.AdapterRegistry
+import loaders._
 import outputs.EnrichedEvent
 import utils.Clock._
 
@@ -51,7 +53,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
 
   def commonSetup(
     enrichmentReg: EnrichmentRegistry[Eval]
-  ): List[ValidatedNel[String, EnrichedEvent]] = {
+  ): List[ValidatedNel[BadRow, EnrichedEvent]] = {
     val context =
       CollectorContext(
         Some(DateTime.parse("2017-07-14T03:39:39.000+00:00")),
@@ -139,7 +141,14 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
     val reg = Registry.Embedded(regConf, path = "/iglu-schemas")
     val client = Client[Eval, Json](Resolver(List(reg), None), CirceValidator)
     EtlPipeline
-      .processEvents[Eval](enrichmentReg, client, s"spark-0.0.0", new DateTime(1500000000L), input)
+      .processEvents[Eval](
+        new AdapterRegistry(),
+        enrichmentReg,
+        client,
+        Processor("spark", "0.0.0"),
+        new DateTime(1500000000L),
+        input
+      )
       .value
   }
 

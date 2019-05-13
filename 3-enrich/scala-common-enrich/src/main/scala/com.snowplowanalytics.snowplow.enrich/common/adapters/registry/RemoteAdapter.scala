@@ -10,105 +10,121 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-import com.fasterxml.jackson.core.JsonParseException
-import iglu.client.Resolver
-import common.loaders.CollectorPayload
-import common.utils.HttpClient
-import org.json4s.JsonAST.{JNothing, JNull}
-import org.json4s.JsonDSL._
-import org.json4s.MappingException
-import org.json4s.jackson.JsonMethods._
-import scalaz.Scalaz._
-import scalaz.{Failure, Success, Validation}
+import cats.Monad
+import cats.data.{NonEmptyList, ValidatedNel}
+import cats.effect.Clock
+import cats.syntax.either._
+import cats.syntax.functor._
+import cats.syntax.option._
+import cats.syntax.validated._
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
+import com.snowplowanalytics.snowplow.badrows._
+import io.circe.Json
+import io.circe.syntax._
 
-import scala.util.control.NonFatal
+import loaders.CollectorPayload
+import utils.{HttpClient, JsonUtils}
 
 /**
  * An adapter for an enrichment that is handled by a remote webservice.
- *
- * @constructor create a new client to talk to the given remote webservice.
  * @param remoteUrl the url of the remote webservice, e.g. http://localhost/myEnrichment
  * @param connectionTimeout max duration of each connection attempt
  * @param readTimeout max duration of read wait time
  */
-class RemoteAdapter(val remoteUrl: String, val connectionTimeout: Option[Long], val readTimeout: Option[Long])
-    extends Adapter {
-
-  val bodyMissingErrorText          = "Missing payload body"
-  val missingEventsErrorText        = "Missing events in the response"
-  val emptyResponseErrorText        = "Empty response"
-  val incompatibleResponseErrorText = "Incompatible response, missing error and events fields"
+final case class RemoteAdapter(
+  remoteUrl: String,
+  connectionTimeout: Option[Long],
+  readTimeout: Option[Long]
+) extends Adapter {
 
   /**
    * POST the given payload to the remote webservice,
-   * wait for it to respond with an Either[List[String], List[RawEvent] ],
-   * and return that as a ValidatedRawEvents
-   *
-   * @param payload The CollectorPaylod containing one or more
-   *        raw events as collected by a Snowplow collector
-   * @param resolver (implicit) The Iglu resolver used for
-   *        schema lookup and validation
-   * @return a Validation boxing either a NEL of RawEvents on
-   *         Success, or a NEL of Failure Strings
+   * @param payload The CollectorPayload containing one or more raw events
+   * @param client The Iglu client used for schema lookup and validation
+   * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
+    payload: CollectorPayload,
+    client: Client[F, Json]
+  ): F[
+    ValidatedNel[FailureDetails.AdapterFailureOrTrackerProtocolViolation, NonEmptyList[RawEvent]]
+  ] =
     payload.body match {
       case Some(body) if body.nonEmpty =>
-        val json = ("contentType" -> payload.contentType) ~
-          ("queryString" -> toMap(payload.querystring)) ~
-          ("headers"     -> payload.context.headers) ~
-          ("body"        -> payload.body)
-        val request = HttpClient.buildRequest(remoteUrl,
-                                              authUser     = None,
-                                              authPassword = None,
-                                              Some(compact(render(json))),
-                                              "POST",
-                                              connectionTimeout,
-                                              readTimeout)
-        processResponse(payload, HttpClient.getBody(request))
-
-      case _ => bodyMissingErrorText.failNel
+        val _ = client
+        val json = Json.obj(
+          "contentType" := payload.contentType,
+          "queryString" := toMap(payload.querystring),
+          "headers" := payload.context.headers,
+          "body" := payload.body
+        )
+        val request = HttpClient.buildRequest(
+          remoteUrl,
+          authUser = None,
+          authPassword = None,
+          Some(json.noSpaces),
+          "POST",
+          connectionTimeout,
+          readTimeout
+        )
+        HttpClient[F]
+          .getResponse(request)
+          .map(processResponse(payload, _).toValidatedNel)
+      case _ =>
+        val msg = s"empty body: not a valid remote adapter $remoteUrl payload"
+        Monad[F].pure(
+          FailureDetails.AdapterFailure.InputData("body", none, msg).invalidNel
+        )
     }
 
-  def processResponse(payload: CollectorPayload, response: Validation[Throwable, String]) =
-    response match {
-      case Failure(throwable) =>
-        throwable.getMessage.failNel
-      case Success(bodyAsString) =>
-        try {
-          if (bodyAsString == "") {
-            emptyResponseErrorText.failNel
-          } else {
-            (parse(bodyAsString) \ "error", parse(bodyAsString) \ "events") match {
-              case (JNull, JNull) | (JNothing, JNothing) => incompatibleResponseErrorText.failNel
-              case (error, JNull | JNothing) => error.extract[String].failNel
-              case (JNull        | JNothing, eventsObj) =>
-                val events = eventsObj.extract[List[Map[String, String]]]
-                rawEventsListProcessor(events.map { event =>
-                  RawEvent(
-                    api         = payload.api,
-                    parameters  = event,
-                    contentType = payload.contentType,
-                    source      = payload.source,
-                    context     = payload.context
-                  ).success
-                })
-              case _ => s"Unable to parse response: ${bodyAsString}".failNel
-            }
-          }
-
-        } catch {
-          case e: MappingException =>
-            s"The events field should be List[Map[String, String]], error: ${e} - response: ${bodyAsString}".failNel
-          case e: JsonParseException => s"Json is not parsable, error: ${e} - response: ${bodyAsString}".failNel
-          case NonFatal(e)           => s"Unexpected error: $e".failNel
-        }
-    }
+  def processResponse(
+    payload: CollectorPayload,
+    response: Either[Throwable, String]
+  ): Either[FailureDetails.AdapterFailure, NonEmptyList[RawEvent]] =
+    for {
+      res <- response
+        .leftMap(
+          t =>
+            FailureDetails.AdapterFailure.InputData(
+              "body",
+              none,
+              s"could not get response from remote adapter $remoteUrl: ${t.getMessage}"
+            )
+        )
+      json <- JsonUtils
+        .extractJson(res)
+        .leftMap(e => FailureDetails.AdapterFailure.NotJson("body", res.some, e))
+      events <- json.hcursor
+        .downField("events")
+        .as[List[Map[String, String]]]
+        .leftMap(
+          e =>
+            FailureDetails.AdapterFailure.InputData(
+              "body",
+              res.some,
+              s"could not be decoded as a list of json objects: ${e.getMessage}"
+            )
+        )
+      nonEmptyEvents <- events match {
+        case Nil =>
+          FailureDetails.AdapterFailure
+            .InputData("body", res.some, "empty list of events")
+            .asLeft
+        case h :: t => NonEmptyList.of(h, t: _*).asRight
+      }
+      rawEvents = nonEmptyEvents.map { e =>
+        RawEvent(
+          api = payload.api,
+          parameters = e,
+          contentType = payload.contentType,
+          source = payload.source,
+          context = payload.context
+        )
+      }
+    } yield rawEvents
 }

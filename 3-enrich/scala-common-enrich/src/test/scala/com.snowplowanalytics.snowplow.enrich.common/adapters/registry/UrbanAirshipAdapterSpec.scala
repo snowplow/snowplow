@@ -16,6 +16,7 @@ package adapters.registry
 import cats.data.{NonEmptyList, Validated}
 import cats.syntax.either._
 import cats.syntax.option._
+import com.snowplowanalytics.snowplow.badrows._
 import io.circe.literal._
 import io.circe.parser._
 import org.joda.time.DateTime
@@ -154,7 +155,10 @@ class UrbanAirshipAdapterSpec extends Specification with ValidatedMatchers {
       val res = UrbanAirshipAdapter.toRawEvents(payload, SpecHelpers.client).value
 
       res must beInvalid(
-        NonEmptyList.one("Content type of a/type provided, expected None for UrbanAirship")
+        NonEmptyList.one(
+          FailureDetails.AdapterFailure
+            .InputData("contentType", "a/type".some, "expected no content type")
+        )
       )
     }
 

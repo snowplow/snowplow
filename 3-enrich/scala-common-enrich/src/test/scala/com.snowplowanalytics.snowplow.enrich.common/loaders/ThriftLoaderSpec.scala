@@ -13,7 +13,9 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
+import cats.data.NonEmptyList
 import cats.syntax.option._
+import com.snowplowanalytics.snowplow.badrows._
 import org.apache.commons.codec.binary.Base64
 import org.joda.time.DateTime
 import org.specs2.{ScalaCheck, Specification}
@@ -26,6 +28,8 @@ class ThriftLoaderSpec
     with DataTables
     with ValidatedMatchers
     with ScalaCheck {
+  val Process = Processor("ThriftLoaderSpec", "v1")
+
   def is = s2"""
   This is a specification to test the ThriftLoader functionality
   toCollectorPayload should return a CollectorPayload for a valid Thrift CollectorPayload (even if parameterless) $e1
@@ -155,7 +159,7 @@ class ThriftLoaderSpec
       (_, raw, timestamp, payload, hostname, ipAddress, userAgent, refererUri, headers, userId) =>
         {
 
-          val canonicalEvent = ThriftLoader.toCollectorPayload(Base64.decodeBase64(raw))
+          val canonicalEvent = ThriftLoader.toCollectorPayload(Base64.decodeBase64(raw), Process)
 
           val expected = CollectorPayload(
             api = Expected.api,
@@ -171,11 +175,24 @@ class ThriftLoaderSpec
         }
     }
 
+  val msg =
+    "error deserializing raw event: Cannot read. Remote side has closed. Tried to read 1 bytes, but only got 0 bytes. (This is often indicative of an internal error on the server side. Please check your server logs.)"
+
   // A bit of fun: the chances of generating a valid Thrift CollectorPayload at random are
   // so low that we can just use ScalaCheck here
   def e2 =
     prop { (raw: String) =>
-      ThriftLoader.toCollectorPayload(Base64.decodeBase64(raw)) must beInvalid
+      ThriftLoader.toCollectorPayload(Base64.decodeBase64(raw), Process) must beInvalid.like {
+        case NonEmptyList(
+            BadRow.CPFormatViolation(
+              Process,
+              Failure.CPFormatViolation(_, "thrift", f),
+              Payload.RawPayload(_)
+            ),
+            List()
+            ) =>
+          f must_== FailureDetails.CPFormatViolationMessage.Fallback(msg)
+      }
     }
 
 }
