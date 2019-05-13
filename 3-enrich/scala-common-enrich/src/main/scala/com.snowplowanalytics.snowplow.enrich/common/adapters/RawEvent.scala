@@ -13,20 +13,40 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 
-import loaders.{CollectorApi, CollectorContext, CollectorSource}
+import com.snowplowanalytics.snowplow.badrows.Payload.{RawEvent => RE}
+
+import loaders.CollectorPayload
 
 /**
- * The canonical input format for the ETL
- * process: it should be possible to
- * convert any collector payload to this
- * raw event format via an _adapter_,
- * ready for the main, collector-agnostic
- * stage of the Enrichment.
+ * The canonical input format for the ETL process:
+ * it should be possible to convert any collector payload to this raw event format via an `Adapter`,
+ * ready for the main, collector-agnostic stage of the Enrichment.
+ * Unlike `CollectorPayload`, where `body` can contain full POST payload with multiple events,
+ * [[RawEvent]] is always a single Snowplow event
  */
 final case class RawEvent(
-  api: CollectorApi,
+  api: CollectorPayload.Api,
   parameters: RawEventParameters,
   contentType: Option[String], // Not yet used but should be logged
-  source: CollectorSource,
-  context: CollectorContext
+  source: CollectorPayload.Source,
+  context: CollectorPayload.Context
 )
+
+object RawEvent {
+  def toRawEvent(re: RawEvent): RE =
+    RE(
+      re.api.vendor,
+      re.api.version,
+      re.parameters,
+      re.contentType,
+      re.source.name,
+      re.source.encoding,
+      re.source.hostname,
+      re.context.timestamp,
+      re.context.ipAddress,
+      re.context.useragent,
+      re.context.refererUri,
+      re.context.headers,
+      re.context.userId
+    )
+}

@@ -13,44 +13,47 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
+import java.time.Instant
+
 import cats.data.ValidatedNel
 import cats.syntax.either._
 import cats.syntax.option._
 import cats.syntax.validated._
+import com.snowplowanalytics.snowplow.badrows._
 
 /** Loader for TSVs */
 final case class TsvLoader(adapter: String) extends Loader[String] {
+  private val CollectorName = "tsv"
+  private val CollectorEncoding = "UTF-8"
 
   /**
    * Converts the source TSV into a ValidatedMaybeCollectorPayload.
    * @param line A TSV
    * @return either a set of validation errors or an Option-boxed CanonicalInput object, wrapped in
-   * a Scalaz ValidationNel.
+   * a ValidatedNel.
    */
-  def toCollectorPayload(line: String): ValidatedNel[String, Option[CollectorPayload]] =
+  override def toCollectorPayload(
+    line: String,
+    processor: Processor
+  ): ValidatedNel[BadRow.CPFormatViolation, Option[CollectorPayload]] =
     // Throw away the first two lines of Cloudfront web distribution access logs
-    if (line.startsWith("#Version:") || line.startsWith("#Fields:")) {
+    if (line.startsWith("#Version:") || line.startsWith("#Fields:"))
       None.valid
-    } else {
-      CollectorApi
-        .parse(adapter)
-        .map(
-          CollectorPayload(
-            Nil,
-            "tsv",
-            "UTF-8",
-            None,
-            None,
-            None,
-            None,
-            None,
-            Nil,
-            None,
-            _,
-            None,
-            Some(line)
-          ).some
+    else
+      CollectorPayload
+        .parseApi(adapter)
+        .map { api =>
+          val source = CollectorPayload.Source(CollectorName, CollectorEncoding, None)
+          val context = CollectorPayload.Context(None, None, None, None, Nil, None)
+          CollectorPayload(api, Nil, None, Some(line), source, context).some
+        }
+        .leftMap(
+          f =>
+            BadRow.CPFormatViolation(
+              processor,
+              Failure.CPFormatViolation(Instant.now(), CollectorName, f),
+              Payload.RawPayload(line)
+            )
         )
         .toValidatedNel
-    }
 }

@@ -14,11 +14,11 @@ package com.snowplowanalytics.snowplow.enrich.common.utils.shredder
 
 /** Expresses the hierarchy of types for this type. */
 final case class TypeHierarchy(
-  val rootId: String,
-  val rootTstamp: String,
-  val refRoot: String,
-  val refTree: List[String],
-  val refParent: String
+  rootId: String,
+  rootTstamp: String,
+  refRoot: String,
+  refTree: List[String],
+  refParent: String
 ) {
 
   /**

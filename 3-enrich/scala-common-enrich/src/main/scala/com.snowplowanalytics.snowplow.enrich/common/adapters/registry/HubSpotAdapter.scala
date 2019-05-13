@@ -19,24 +19,23 @@ import cats.data.{Kleisli, NonEmptyList, ValidatedNel}
 import cats.effect.Clock
 import cats.instances.option._
 import cats.syntax.either._
+import cats.syntax.option._
 import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
+import com.snowplowanalytics.snowplow.badrows._
 import io.circe._
-import io.circe.parser._
 import org.joda.time.DateTime
 
 import loaders.CollectorPayload
+import utils.{HttpClient, JsonUtils}
 
 /**
  * Transforms a collector payload which conforms to a known version of the HubSpot webhook
  * subscription into raw events.
  */
 object HubSpotAdapter extends Adapter {
-  // Vendor name for Failure Message
-  private val VendorName = "HubSpot"
-
   // Tracker version for a HubSpot webhook
   private val TrackerVersion = "com.hubspot-v1"
 
@@ -48,25 +47,25 @@ object HubSpotAdapter extends Adapter {
   private val SchemaVersion = SchemaVer.Full(1, 0, 0)
 
   // Event-Schema Map for reverse-engineering a Snowplow unstructured event
-  private val EventSchemaMap = Map(
+  private[registry] val EventSchemaMap = Map(
     "contact.creation" ->
-      SchemaKey(Vendor, "contact_creation", Format, SchemaVersion).toSchemaUri,
+      SchemaKey(Vendor, "contact_creation", Format, SchemaVersion),
     "contact.deletion" ->
-      SchemaKey(Vendor, "contact_deletion", Format, SchemaVersion).toSchemaUri,
+      SchemaKey(Vendor, "contact_deletion", Format, SchemaVersion),
     "contact.propertyChange" ->
-      SchemaKey(Vendor, "contact_change", Format, SchemaVersion).toSchemaUri,
+      SchemaKey(Vendor, "contact_change", Format, SchemaVersion),
     "company.creation" ->
-      SchemaKey(Vendor, "company_creation", Format, SchemaVersion).toSchemaUri,
+      SchemaKey(Vendor, "company_creation", Format, SchemaVersion),
     "company.deletion" ->
-      SchemaKey(Vendor, "company_deletion", Format, SchemaVersion).toSchemaUri,
+      SchemaKey(Vendor, "company_deletion", Format, SchemaVersion),
     "company.propertyChange" ->
-      SchemaKey(Vendor, "company_change", Format, SchemaVersion).toSchemaUri,
+      SchemaKey(Vendor, "company_change", Format, SchemaVersion),
     "deal.creation" ->
-      SchemaKey(Vendor, "deal_creation", Format, SchemaVersion).toSchemaUri,
+      SchemaKey(Vendor, "deal_creation", Format, SchemaVersion),
     "deal.deletion" ->
-      SchemaKey(Vendor, "deal_deletion", Format, SchemaVersion).toSchemaUri,
+      SchemaKey(Vendor, "deal_deletion", Format, SchemaVersion),
     "deal.propertyChange" ->
-      SchemaKey(Vendor, "deal_change", Format, SchemaVersion).toSchemaUri
+      SchemaKey(Vendor, "deal_change", Format, SchemaVersion)
   )
 
   /**
@@ -77,34 +76,45 @@ object HubSpotAdapter extends Adapter {
    * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
     payload: CollectorPayload,
     client: Client[F, Json]
-  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
+  ): F[
+    ValidatedNel[FailureDetails.AdapterFailureOrTrackerProtocolViolation, NonEmptyList[RawEvent]]
+  ] =
     (payload.body, payload.contentType) match {
       case (None, _) =>
-        Monad[F].pure(s"Request body is empty: no $VendorName events to process".invalidNel)
+        val failure = FailureDetails.AdapterFailure.InputData(
+          "body",
+          none,
+          "empty body: not events to process"
+        )
+        Monad[F].pure(failure.invalidNel)
       case (_, None) =>
+        val msg = s"no content type: expected $ContentType"
         Monad[F].pure(
-          s"Request body provided but content type empty, expected $ContentType for $VendorName".invalidNel
+          FailureDetails.AdapterFailure.InputData("contentType", none, msg).invalidNel
         )
       case (_, Some(ct)) if ct != ContentType =>
-        Monad[F].pure(
-          s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel
+        val failure = FailureDetails.AdapterFailure.InputData(
+          "contentType",
+          ct.some,
+          s"expected $ContentType"
         )
+        Monad[F].pure(failure.invalidNel)
       case (Some(body), _) =>
         payloadBodyToEvents(body) match {
-          case Left(str) => Monad[F].pure(str.invalidNel)
+          case Left(f) => Monad[F].pure(f.invalidNel)
           case Right(list) =>
             val _ = client
             // Create our list of Validated RawEvents
-            val rawEventsList: List[ValidatedNel[String, RawEvent]] =
+            val rawEventsList: List[ValidatedNel[FailureDetails.AdapterFailure, RawEvent]] =
               for {
                 (event, index) <- list.zipWithIndex
               } yield {
                 val eventType = event.hcursor.get[String]("subscriptionType").toOption
                 for {
-                  schema <- lookupSchema(eventType, VendorName, index, EventSchemaMap).toValidatedNel
+                  schema <- lookupSchema(eventType, index, EventSchemaMap).toValidatedNel
                 } yield {
                   val formattedEvent = reformatParameters(event)
                   val qsParams = toMap(payload.querystring)
@@ -133,11 +143,16 @@ object HubSpotAdapter extends Adapter {
    * @param body The payload body from the HubSpot event
    * @return either a Successful List of JValue JSONs or a Failure String
    */
-  private[registry] def payloadBodyToEvents(body: String): Either[String, List[Json]] =
+  private[registry] def payloadBodyToEvents(
+    body: String
+  ): Either[FailureDetails.AdapterFailure, List[Json]] =
     for {
-      b <- parse(body)
-        .leftMap(e => s"$VendorName payload failed to parse into JSON: [${e.getMessage}]")
-      a <- b.asArray.toRight(s"Could not resolve $VendorName payload into a JSON array of events")
+      b <- JsonUtils
+        .extractJson(body)
+        .leftMap(e => FailureDetails.AdapterFailure.NotJson("body", body.some, e))
+      a <- b.asArray.toRight(
+        FailureDetails.AdapterFailure.InputData("body", body.some, "not a json array")
+      )
     } yield a.toList
 
   /**

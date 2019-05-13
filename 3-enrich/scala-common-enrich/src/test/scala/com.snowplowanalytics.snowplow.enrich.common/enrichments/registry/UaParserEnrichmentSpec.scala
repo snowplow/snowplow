@@ -15,6 +15,7 @@ import java.net.URI
 
 import cats.Eval
 import cats.data.EitherT
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import io.circe.literal._
 import org.specs2.matcher.DataTables
 import org.specs2.mutable.Specification
@@ -36,6 +37,8 @@ class UaParserEnrichmentSpec extends Specification with DataTables {
   val testAgentJson =
     json"""{"schema":"iglu:com.snowplowanalytics.snowplow/ua_parser_context/jsonschema/1-0-0","data":{"useragentFamily":"UAP Test Family","useragentMajor":null,"useragentMinor":null,"useragentPatch":null,"useragentVersion":"UAP Test Family","osFamily":"UAP Test OS","osMajor":null,"osMinor":null,"osPatch":null,"osPatchMinor":null,"osVersion":"UAP Test OS","deviceFamily":"UAP Test Device"}}"""
 
+  val schemaKey = SchemaKey("vendor", "name", "format", SchemaVer.Full(1, 0, 0))
+
   "useragent parser" should {
     "parse useragent according to configured rules" in {
       "Custom Rules" | "Input UserAgent" | "Parsed UserAgent" |
@@ -43,9 +46,9 @@ class UaParserEnrichmentSpec extends Specification with DataTables {
         None !! safariUserAgent !! safariJson |
         Some(customRules) !! mobileSafariUserAgent !! testAgentJson |> { (rules, input, expected) =>
         (for {
-          c <- EitherT.rightT[Eval, String](UaParserConf(rules))
-          e <- c.enrichment[Eval]
-          res <- EitherT.fromEither[Eval](e.extractUserAgent(input))
+          c <- EitherT.rightT[Eval, String](UaParserConf(schemaKey, rules))
+          e <- c.enrichment[Eval].leftMap(_.toString)
+          res <- EitherT.fromEither[Eval](e.extractUserAgent(input)).leftMap(_.toString)
         } yield res).value.value must_== Right(expected)
       }
     }
@@ -59,7 +62,7 @@ class UaParserEnrichmentSpec extends Specification with DataTables {
         Some(badRulefile) !! mobileSafariUserAgent !! "Failed to initialize ua parser" |> {
         (rules, input, errorPrefix) =>
           (for {
-            c <- EitherT.rightT[Eval, String](UaParserConf(rules))
+            c <- EitherT.rightT[Eval, String](UaParserConf(schemaKey, rules))
             e <- c.enrichment[Eval]
             res = e.extractUserAgent(input)
           } yield res).value.value must beLeft.like {

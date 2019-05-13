@@ -15,19 +15,26 @@ package loaders
 
 import cats.data.NonEmptyList
 import cats.syntax.option._
+
+import com.snowplowanalytics.snowplow.badrows._
+
 import org.joda.time.DateTime
+
 import org.scalacheck.Arbitrary._
+
 import org.specs2.{ScalaCheck, Specification}
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
-import utils.ConversionUtils
 import SpecHelpers._
+import utils.ConversionUtils
 
 class CloudfrontLoaderSpec
     extends Specification
     with DataTables
     with ValidatedMatchers
     with ScalaCheck {
+  val Process = Processor("CloudfrontLoaderSpec", "v1")
+
   def is = s2"""
   This is a specification to test the CloudfrontLoader functionality
   toTimestamp should create a DateTime from valid date and time Strings                                   $e1
@@ -42,7 +49,7 @@ class CloudfrontLoaderSpec
   object Expected {
     val collector = "cloudfront"
     val encoding = "UTF-8"
-    val api = CollectorApi("com.snowplowanalytics.snowplow", "tp1")
+    val api = CollectorPayload.Api("com.snowplowanalytics.snowplow", "tp1")
   }
 
   def e1 =
@@ -228,16 +235,16 @@ class CloudfrontLoaderSpec
       (_, raw, timestamp, payload, ipAddress, userAgent, refererUri) =>
         {
 
-          val canonicalEvent = CloudfrontLoader
-            .toCollectorPayload(raw)
+          val canonicalEvent = CloudfrontLoader.toCollectorPayload(raw, Process)
 
           val expected = CollectorPayload(
             api = Expected.api,
             querystring = payload,
             body = None,
             contentType = None,
-            source = CollectorSource(Expected.collector, Expected.encoding, None),
-            context = CollectorContext(timestamp.some, ipAddress, userAgent, refererUri, Nil, None)
+            source = CollectorPayload.Source(Expected.collector, Expected.encoding, None),
+            context = CollectorPayload
+              .Context(timestamp.some, ipAddress, userAgent, refererUri, Nil, None)
           )
 
           canonicalEvent must beValid(expected.some)
@@ -247,17 +254,41 @@ class CloudfrontLoaderSpec
   def e6 = {
     val raw =
       "2012-05-24  11:35:53  DFW3  3343  99.116.172.58 POST d3gs014xn8p70.cloudfront.net  /i  200 http://www.psychicbazaar.com/2-tarot-cards/genre/all/type/all?p=5 Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0  e=pv&page=Tarot%2520cards%2520-%2520Psychic%2520Bazaar&tid=344260&uid=288112e0a5003be2&vid=1&lang=en-US&refr=http%253A%252F%252Fwww.psychicbazaar.com%252F2-tarot-cards%252Fgenre%252Fall%252Ftype%252Fall%253Fp%253D4&f_pdf=1&f_qt=0&f_realp=0&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=1366x768&cookie=1"
-    CloudfrontLoader.toCollectorPayload(raw) must beInvalid(
-      NonEmptyList.one("Only GET operations supported for CloudFront Collector, not POST")
-    )
+    CloudfrontLoader.toCollectorPayload(raw, Process) must beInvalid.like {
+      case NonEmptyList(
+          BadRow.CPFormatViolation(
+            Process,
+            Failure.CPFormatViolation(_, "cloudfront", f),
+            Payload.RawPayload(l)
+          ),
+          List()
+          ) =>
+        f must_== FailureDetails.CPFormatViolationMessage.InputData(
+          "verb",
+          "POST".some,
+          "operation must be GET"
+        )
+        l must_== raw
+    }
   }
 
   // A bit of fun: the chances of generating a valid CloudFront row at random are
   // so low that we can just use ScalaCheck here
   def e7 =
     prop { (raw: String) =>
-      CloudfrontLoader.toCollectorPayload(raw) must beInvalid(
-        NonEmptyList.one("Line does not match CloudFront header or data row formats")
-      )
+      CloudfrontLoader.toCollectorPayload(raw, Process) must beInvalid.like {
+        case NonEmptyList(
+            BadRow.CPFormatViolation(
+              Process,
+              Failure.CPFormatViolation(_, "cloudfront", f),
+              Payload.RawPayload(l)
+            ),
+            List()
+            ) =>
+          f must_== FailureDetails.CPFormatViolationMessage.Fallback(
+            "does not match header or data row formats"
+          )
+          l must_== raw
+      }
     }
 }

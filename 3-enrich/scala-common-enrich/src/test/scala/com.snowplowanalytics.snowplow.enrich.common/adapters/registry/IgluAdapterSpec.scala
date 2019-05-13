@@ -16,11 +16,12 @@ package registry
 
 import cats.data.NonEmptyList
 import cats.syntax.option._
+import com.snowplowanalytics.snowplow.badrows._
 import org.joda.time.DateTime
 import org.specs2.Specification
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
-import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import loaders._
 import utils.Clock._
 
 class IgluAdapterSpec extends Specification with DataTables with ValidatedMatchers {
@@ -46,10 +47,10 @@ class IgluAdapterSpec extends Specification with DataTables with ValidatedMatche
   """
 
   object Shared {
-    val api = CollectorApi("com.snowplowanalytics.iglu", "v1")
-    val cfSource = CollectorSource("cloudfront", "UTF-8", None)
-    val cljSource = CollectorSource("clj-tomcat", "UTF-8", None)
-    val context = CollectorContext(
+    val api = CollectorPayload.Api("com.snowplowanalytics.iglu", "v1")
+    val cfSource = CollectorPayload.Source("cloudfront", "UTF-8", None)
+    val cljSource = CollectorPayload.Source("clj-tomcat", "UTF-8", None)
+    val context = CollectorPayload.Context(
       DateTime.parse("2013-08-29T00:18:48.000+00:00").some,
       "37.157.33.123".some,
       None,
@@ -238,7 +239,11 @@ class IgluAdapterSpec extends Specification with DataTables with ValidatedMatche
     val actual = IgluAdapter.toRawEvents(payload, SpecHelpers.client).value
 
     actual must beInvalid(
-      NonEmptyList.one("Iglu event failed: is not a sd-json or a valid GET or POST request")
+      NonEmptyList.of(
+        FailureDetails.AdapterFailure
+          .InputData("schema", None, "empty `schema` field"),
+        FailureDetails.AdapterFailure.InputData("body", None, "empty body")
+      )
     )
   }
 
@@ -251,7 +256,11 @@ class IgluAdapterSpec extends Specification with DataTables with ValidatedMatche
     val actual = IgluAdapter.toRawEvents(payload, SpecHelpers.client).value
 
     actual must beInvalid(
-      NonEmptyList.one("Iglu event failed: is not a sd-json or a valid GET or POST request")
+      NonEmptyList.of(
+        FailureDetails.AdapterFailure
+          .InputData("schema", None, "empty `schema` field"),
+        FailureDetails.AdapterFailure.InputData("body", None, "empty body")
+      )
     )
   }
 
@@ -262,7 +271,13 @@ class IgluAdapterSpec extends Specification with DataTables with ValidatedMatche
     val payload = CollectorPayload(Shared.api, params, None, None, Shared.cfSource, Shared.context)
     val actual = IgluAdapter.toRawEvents(payload, SpecHelpers.client).value
 
-    actual must beInvalid(NonEmptyList.one("INVALID_IGLUURI"))
+    actual must beInvalid(
+      NonEmptyList
+        .one(
+          FailureDetails.AdapterFailure
+            .InputData("schema", "iglooooooo://blah".some, "INVALID_IGLUURI")
+        )
+    )
   }
 
   def e8 = {
@@ -317,7 +332,12 @@ class IgluAdapterSpec extends Specification with DataTables with ValidatedMatche
       )
     val actual = IgluAdapter.toRawEvents(payload, SpecHelpers.client).value
 
-    actual must beInvalid(NonEmptyList.one("Content type not supported"))
+    val expected = FailureDetails.AdapterFailure.InputData(
+      "contentType",
+      "application/badtype".some,
+      "expected one of application/json, application/json; charset=utf-8, application/x-www-form-urlencoded"
+    )
+    actual must beInvalid(NonEmptyList.one(expected))
   }
 
   def e10 = {
@@ -339,7 +359,10 @@ class IgluAdapterSpec extends Specification with DataTables with ValidatedMatche
     val actual = IgluAdapter.toRawEvents(payload, SpecHelpers.client).value
 
     actual must beInvalid(
-      NonEmptyList.one("Iglu event failed json sanity check: has no key-value pairs")
+      NonEmptyList.one(
+        FailureDetails.AdapterFailure
+          .InputData("body", "{}".some, "has no key-value pairs")
+      )
     )
   }
 
@@ -355,7 +378,13 @@ class IgluAdapterSpec extends Specification with DataTables with ValidatedMatche
     val actual = IgluAdapter.toRawEvents(payload, SpecHelpers.client).value
 
     actual must beInvalid(
-      NonEmptyList.one("Iglu event failed: ContentType must be set for a POST payload")
+      NonEmptyList.one(
+        FailureDetails.AdapterFailure.InputData(
+          "contentType",
+          None,
+          "expected one of application/json, application/json; charset=utf-8, application/x-www-form-urlencoded"
+        )
+      )
     )
   }
 
@@ -405,7 +434,15 @@ class IgluAdapterSpec extends Specification with DataTables with ValidatedMatche
       )
     val actual = IgluAdapter.toRawEvents(payload, SpecHelpers.client).value
 
-    actual must beInvalid(NonEmptyList.one("Content type not supported"))
+    actual must beInvalid(
+      NonEmptyList.one(
+        FailureDetails.AdapterFailure.InputData(
+          "contentType",
+          "application/xxx-url-form-encoded".some,
+          "expected one of application/json, application/json; charset=utf-8"
+        )
+      )
+    )
   }
 
   def e14 = {
@@ -422,7 +459,15 @@ class IgluAdapterSpec extends Specification with DataTables with ValidatedMatche
       )
     val actual = IgluAdapter.toRawEvents(payload, SpecHelpers.client).value
 
-    actual must beInvalid(NonEmptyList.one("Content type not supported"))
+    actual must beInvalid(
+      NonEmptyList.one(
+        FailureDetails.AdapterFailure.InputData(
+          "contentType",
+          "application/xxx-url-form-encoded".some,
+          "expected one of application/json, application/json; charset=utf-8, application/x-www-form-urlencoded"
+        )
+      )
+    )
   }
 
   def e15 = {
@@ -509,7 +554,10 @@ class IgluAdapterSpec extends Specification with DataTables with ValidatedMatche
     val actual = IgluAdapter.toRawEvents(payload, SpecHelpers.client).value
 
     actual must beInvalid(
-      NonEmptyList.one("Iglu event failed json sanity check: array of events cannot be empty")
+      NonEmptyList.one(
+        FailureDetails.AdapterFailure
+          .InputData("body", "[]".some, "empty array of events")
+      )
     )
   }
 }

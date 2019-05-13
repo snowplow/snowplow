@@ -205,8 +205,7 @@ class EnrichmentConfigsSpec extends Specification with ValidatedMatchers with Da
         SchemaVer.Full(1, 0, 0)
       )
       val result = UserAgentUtilsEnrichmentConfig.parse(userAgentUtilsEnrichmentJson, schemaKey)
-      result must beValid(UserAgentUtilsConf)
-
+      result must beValid(UserAgentUtilsConf(schemaKey))
     }
   }
 
@@ -239,7 +238,7 @@ class EnrichmentConfigsSpec extends Specification with ValidatedMatchers with Da
         (config, expected) =>
           {
             val result = UaParserEnrichment.parse(config, schemaKey)
-            result must beValid(UaParserConf(expected))
+            result must beValid(UaParserConf(schemaKey, expected))
           }
       }
     }
@@ -264,7 +263,9 @@ class EnrichmentConfigsSpec extends Specification with ValidatedMatchers with Da
       )
       val result =
         CurrencyConversionEnrichment.parse(currencyConversionEnrichmentJson, schemaKey)
-      result must beValid(CurrencyConversionConf(DeveloperAccount, "---", CurrencyUnit.EUR))
+      result must beValid(
+        CurrencyConversionConf(schemaKey, DeveloperAccount, "---", CurrencyUnit.EUR)
+      )
     }
   }
 
@@ -425,6 +426,7 @@ class EnrichmentConfigsSpec extends Specification with ValidatedMatchers with Da
         SchemaVer.Full(1, 0, 0)
       )
       val expected = IabConf(
+        schemaKey,
         (
           new URI("https://example.com/ip_exclude_current_cidr.txt"),
           "./iab_ipFile"

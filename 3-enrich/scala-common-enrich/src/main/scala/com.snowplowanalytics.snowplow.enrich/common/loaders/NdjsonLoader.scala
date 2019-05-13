@@ -13,11 +13,15 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
+import java.time.Instant
+
 import cats.data.ValidatedNel
 import cats.syntax.either._
 import cats.syntax.option._
-import cats.syntax.validated._
-import io.circe.parser._
+
+import com.snowplowanalytics.snowplow.badrows._
+
+import utils.JsonUtils
 
 final case class NdjsonLoader(adapter: String) extends Loader[String] {
 
@@ -29,35 +33,37 @@ final case class NdjsonLoader(adapter: String) extends Loader[String] {
    * @param line A line of data to convert
    * @return a CanonicalInput object, Option-boxed, or None if no input was extractable.
    */
-  override def toCollectorPayload(line: String): ValidatedNel[String, Option[CollectorPayload]] =
-    if (line.replaceAll("\r?\n", "").isEmpty) {
-      None.validNel
-    } else if (line.split("\r?\n").size > 1) {
-      "Too many lines! Expected single line".invalidNel
-    } else {
-      parse(line) match {
-        case Left(e) => s"Unparsable JSON: ${e.getMessage}".invalidNel
-        case _ =>
-          CollectorApi
-            .parse(adapter)
-            .map(
-              CollectorPayload(
-                Nil,
-                CollectorName,
-                CollectorEncoding,
-                None,
-                None,
-                None,
-                None,
-                None,
-                Nil,
-                None,
-                _,
-                None,
-                Some(line)
-              ).some
-            )
-            .toValidatedNel
-      }
-    }
+  override def toCollectorPayload(
+    line: String,
+    processor: Processor
+  ): ValidatedNel[BadRow.CPFormatViolation, Option[CollectorPayload]] = {
+    val collectorPayload =
+      if (line.replaceAll("\r?\n", "").isEmpty)
+        None.asRight
+      else if (line.split("\r?\n").length > 1)
+        FailureDetails.CPFormatViolationMessage
+          .Fallback(s"expected a single line, found ${line.split("\r?\n").length}")
+          .asLeft
+      else
+        for {
+          _ <- JsonUtils
+            .extractJson(line)
+            .leftMap(FailureDetails.CPFormatViolationMessage.Fallback.apply)
+          api <- CollectorPayload.parseApi(adapter)
+          source = CollectorPayload.Source(CollectorName, CollectorEncoding, None)
+          context = CollectorPayload.Context(None, None, None, None, Nil, None)
+          payload = CollectorPayload(api, Nil, None, Some(line), source, context)
+        } yield payload.some
+
+    collectorPayload
+      .leftMap(
+        message =>
+          BadRow.CPFormatViolation(
+            processor,
+            Failure.CPFormatViolation(Instant.now(), CollectorName, message),
+            Payload.RawPayload(line)
+          )
+      )
+      .toValidatedNel
+  }
 }

@@ -51,13 +51,13 @@ object Dependencies {
     val circe            = "0.11.1"
     val circeOptics      = "0.11.0"
     val circeJackson     = "0.11.1"
-    val igluClient       = "0.6.1"
     val scalaForex       = "0.7.0"
     val scalaWeather     = "0.5.0"
     val scalaj           = "2.4.1"
     val gatlingJsonpath  = "0.6.14"
     val scalaUri         = "1.4.5"
     val scalaLruMap      = "0.3.0"
+    val badRows          = "0.1.0"
     // Thrift schemas
     val snowplowRawEvent = "0.1.0"
     val collectorPayload = "0.0.0"
@@ -87,7 +87,8 @@ object Dependencies {
       "circe-core",
       "circe-generic",
       "circe-parser",
-      "circe-literal"
+      "circe-literal",
+      "circe-java8"
     ).map("io.circe" %% _ % V.circe)
     val cats             = "org.typelevel"              %% "cats-core"                     % V.cats
     val circeOptics      = "io.circe"                   %% "circe-optics"                  % V.circeOptics
@@ -95,12 +96,12 @@ object Dependencies {
     val scalaForex       = "com.snowplowanalytics"      %% "scala-forex"                   % V.scalaForex
     val refererParser    = "com.snowplowanalytics"      %% "scala-referer-parser"          % V.refererParser
     val maxmindIplookups = "com.snowplowanalytics"      %% "scala-maxmind-iplookups"       % V.maxmindIplookups
-    val igluClient       = "com.snowplowanalytics"      %% "iglu-scala-client"             % V.igluClient
     val scalaUri         = "io.lemonlabs"               %% "scala-uri"                     % V.scalaUri
     val scalaWeather     = "com.snowplowanalytics"      %% "scala-weather"                 % V.scalaWeather
     val scalaj           = "org.scalaj"                 %% "scalaj-http"                   % V.scalaj
     val gatlingJsonpath  = "io.gatling"                 %% "jsonpath"                      % V.gatlingJsonpath
     val scalaLruMap      = "com.snowplowanalytics"      %% "scala-lru-map"                 % V.scalaLruMap
+    val badRows          = "com.snowplowanalytics"      %% "snowplow-badrows"              % V.badRows
     // Thrift schemas
     val snowplowRawEvent = "com.snowplowanalytics"      %  "snowplow-thrift-raw-event"     % V.snowplowRawEvent
     val collectorPayload = "com.snowplowanalytics"      %  "collector-payload-1"           % V.collectorPayload
