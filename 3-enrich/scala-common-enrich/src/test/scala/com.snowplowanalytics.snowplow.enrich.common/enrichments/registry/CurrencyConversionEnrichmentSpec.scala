@@ -10,7 +10,8 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
+package com.snowplowanalytics.snowplow.enrich.common
+package enrichments.registry
 
 import cats.Eval
 import cats.data.{NonEmptyList, Validated, ValidatedNel}
@@ -21,6 +22,8 @@ import org.joda.money.CurrencyUnit
 import org.joda.time.DateTime
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
+
+import outputs._
 
 object CurrencyConversionEnrichmentSpec {
   val OerApiKey = "OER_KEY"
@@ -44,25 +47,25 @@ class CurrencyConversionEnrichmentSpec extends Specification with DataTables {
         s"No ${OerApiKey} environment variable found, test should have been skipped"
       )
     )
-  type Result =
-    ValidatedNel[String, (Option[String], Option[String], Option[String], Option[String])]
-  val trCurrencyMissing: Result = Validated.Invalid(
-    NonEmptyList.of(
-      "Open Exchange Rates error, message: Currency [] is not supported by Joda money Currency not found in the API, invalid currency ",
-      "Open Exchange Rates error, message: Currency [] is not supported by Joda money Currency not found in the API, invalid currency ",
-      "Open Exchange Rates error, message: Currency [] is not supported by Joda money Currency not found in the API, invalid currency "
-    )
-  )
+  type Result = ValidatedNel[
+    EnrichmentFailureMessage,
+    (Option[String], Option[String], Option[String], Option[String])
+  ]
   val currencyInvalidRup: Result = Validated.Invalid(
     NonEmptyList.of(
-      "Unknown currency 'RUP'",
-      "Unknown currency 'RUP'",
-      "Unknown currency 'RUP'"
+      InputDataEnrichmentFailureMessage("tr_currency", Some("RUP"), "Unknown currency 'RUP'"),
+      InputDataEnrichmentFailureMessage("tr_currency", Some("RUP"), "Unknown currency 'RUP'"),
+      InputDataEnrichmentFailureMessage("tr_currency", Some("RUP"), "Unknown currency 'RUP'")
     )
   )
-  val currencyInvalidHul: Result = "Unknown currency 'HUL'".invalidNel
-  val invalidAppKeyFailure: Result =
-    "Open Exchange Rates error, type: [OtherErrors], message: [invalid_app_id]".invalidNel
+  val currencyInvalidHul: Result = InputDataEnrichmentFailureMessage(
+    "ti_currency",
+    Some("HUL"),
+    "Unknown currency 'HUL'"
+  ).invalidNel
+  val invalidAppKeyFailure: Result = SimpleEnrichmentFailureMessage(
+    "Open Exchange Rates error, type: [OtherErrors], message: [invalid_app_id]"
+  ).invalidNel
   val coTstamp: DateTime = new DateTime(2011, 3, 13, 0, 0)
 
   def e1 =
@@ -104,10 +107,14 @@ class CurrencyConversionEnrichmentSpec extends Specification with DataTables {
 
   def e2 =
     "SPEC NAME" || "TRANSACTION CURRENCY" | "API KEY" | "TOTAL AMOUNT" | "TOTAL TAX" | "SHIPPING" | "TRANSACTION ITEM CURRENCY" | "TRANSACTION ITEM PRICE" | "DATETIME" | "CONVERTED TUPLE" |
-      "All fields absent" !! None ! validAppKey ! None ! None ! None ! None ! None ! None ! "Collector timestamp missing".invalidNel |
+      "All fields absent" !! None ! validAppKey ! None ! None ! None ! None ! None ! None ! InputDataEnrichmentFailureMessage(
+        "collector_tstamp",
+        None,
+        "missing"
+      ).invalidNel |
       "All fields absent except currency" !! Some("GBP") ! validAppKey ! None ! None ! None ! Some(
         "GBP"
-      ) ! None ! None ! "Collector timestamp missing".invalidNel |
+      ) ! None ! None ! InputDataEnrichmentFailureMessage("collector_tstamp", None, "missing").invalidNel |
       "No transaction currency, tax, or shipping" !! Some("GBP") ! validAppKey ! Some(11.00) ! None ! None ! None ! None ! Some(
         coTstamp
       ) ! (Some("12.75"), None, None, None).valid |

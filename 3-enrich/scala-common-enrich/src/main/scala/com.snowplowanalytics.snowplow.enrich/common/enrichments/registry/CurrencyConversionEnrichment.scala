@@ -16,7 +16,7 @@ package enrichments.registry
 import java.time.ZonedDateTime
 
 import cats.Monad
-import cats.data.{NonEmptyList, ValidatedNel}
+import cats.data.{EitherT, NonEmptyList, ValidatedNel}
 import cats.implicits._
 import com.snowplowanalytics.forex.{CreateForex, Forex}
 import com.snowplowanalytics.forex.model._
@@ -25,6 +25,7 @@ import io.circe._
 import org.joda.money.CurrencyUnit
 import org.joda.time.DateTime
 
+import outputs._
 import utils.CirceUtils
 
 /** Companion object. Lets us create an CurrencyConversionEnrichment instance from a Json. */
@@ -104,12 +105,11 @@ final case class CurrencyConversionEnrichment[F[_]: Monad](
    * @return None.success if the inputs were not both defined,
    * otherwise Validation[Option[_]] boxing the result of the conversion
    */
-  import cats.data.EitherT
   private def performConversion(
-    initialCurrency: Option[Either[String, CurrencyUnit]],
+    initialCurrency: Option[Either[EnrichmentFailureMessage, CurrencyUnit]],
     value: Option[Double],
     tstamp: ZonedDateTime
-  ): F[Either[String, Option[String]]] =
+  ): F[Either[EnrichmentFailureMessage, Option[String]]] =
     (initialCurrency, value) match {
       case (Some(ic), Some(v)) =>
         (for {
@@ -123,7 +123,9 @@ final case class CurrencyConversionEnrichment[F[_]: Monad](
                 _.bimap(
                   l => {
                     val errorType = l.errorType.getClass.getSimpleName.replace("$", "")
-                    s"Open Exchange Rates error, type: [$errorType], message: [${l.errorMessage}]"
+                    val msg =
+                      s"Open Exchange Rates error, type: [$errorType], message: [${l.errorMessage}]"
+                    SimpleEnrichmentFailureMessage(msg): EnrichmentFailureMessage
                   },
                   r => (r.getAmount().toPlainString()).some
                 )
@@ -152,14 +154,27 @@ final case class CurrencyConversionEnrichment[F[_]: Monad](
     tiCurrency: Option[String],
     tiPrice: Option[Double],
     collectorTstamp: Option[DateTime]
-  ): F[ValidatedNel[String, (Option[String], Option[String], Option[String], Option[String])]] =
+  ): F[ValidatedNel[
+    EnrichmentFailureMessage,
+    (Option[String], Option[String], Option[String], Option[String])
+  ]] =
     collectorTstamp match {
       case Some(tstamp) =>
         val zdt = tstamp.toGregorianCalendar().toZonedDateTime()
-        val trCu =
-          trCurrency.map(c => Either.catchNonFatal(CurrencyUnit.of(c)).leftMap(_.getMessage))
-        val tiCu =
-          tiCurrency.map(c => Either.catchNonFatal(CurrencyUnit.of(c)).leftMap(_.getMessage))
+        val trCu = trCurrency.map { c =>
+          Either
+            .catchNonFatal(CurrencyUnit.of(c))
+            .leftMap(
+              e => InputDataEnrichmentFailureMessage("tr_currency", trCurrency, e.getMessage)
+            )
+        }
+        val tiCu = tiCurrency.map { c =>
+          Either
+            .catchNonFatal(CurrencyUnit.of(c))
+            .leftMap(
+              e => InputDataEnrichmentFailureMessage("ti_currency", tiCurrency, e.getMessage)
+            )
+        }
         (
           performConversion(trCu, trTotal, zdt),
           performConversion(trCu, trTax, zdt),
@@ -175,6 +190,9 @@ final case class CurrencyConversionEnrichment[F[_]: Monad](
             ).mapN((_, _, _, _))
         )
       // This should never happen
-      case None => Monad[F].pure("Collector timestamp missing".invalidNel)
+      case None =>
+        Monad[F].pure(
+          InputDataEnrichmentFailureMessage("collector_tstamp", None, "missing").invalidNel
+        )
     }
 }

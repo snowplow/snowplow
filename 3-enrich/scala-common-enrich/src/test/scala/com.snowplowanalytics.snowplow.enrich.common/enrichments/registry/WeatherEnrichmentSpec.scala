@@ -69,9 +69,12 @@ class WeatherEnrichmentSpec extends Specification {
           Option(invalidEvent.lon),
           Option(invalidEvent.time)
         )
-      )
+      ).leftMap(_.head.toString)
     } yield stamp
-    res.value.value must beLeft.like { case e => e must contain("tstamp: None") }
+    res.value.value must beLeft.like {
+      case e =>
+        e must contain("InputDataEnrichmentFailureMessage(derived_tstamp,None,missing)")
+    }
   }
 
   def e2 = {
@@ -83,7 +86,7 @@ class WeatherEnrichmentSpec extends Specification {
           Option(validEvent.lon),
           Option(validEvent.time)
         )
-      )
+      ).leftMap(_.head.toString)
     } yield stamp
     res.value.value must beRight
   }
@@ -97,7 +100,7 @@ class WeatherEnrichmentSpec extends Specification {
           Option(validEvent.lon),
           Option(validEvent.time)
         )
-      )
+      ).leftMap(_.head.toString)
     } yield stamp
     res.value.value must beLeft.like { case e => e must contain("Check your API key") }
   }
@@ -111,7 +114,7 @@ class WeatherEnrichmentSpec extends Specification {
           Option(validEvent.lon),
           Option(validEvent.time)
         )
-      )
+      ).leftMap(_.head.toString)
     } yield stamp
     res.value.value must beRight.like {
       case weather =>
@@ -162,7 +165,7 @@ class WeatherEnrichmentSpec extends Specification {
           Option(validEvent.lon),
           Option(validEvent.time)
         )
-      )
+      ).leftMap(_.head.toString)
     } yield stamp
     res.value.value must beRight.like { // successful request
       case weather =>

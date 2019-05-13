@@ -30,6 +30,7 @@ import io.circe.generic.auto._
 import io.circe.syntax._
 import org.joda.time.{DateTime, DateTimeZone}
 
+import outputs._
 import utils.CirceUtils
 
 /** Companion object. Lets us create an WeatherEnrichment instance from a Json */
@@ -102,7 +103,7 @@ final case class WeatherEnrichment[F[_]: Monad](client: OWMCacheClient[F]) exten
     latitude: Option[JFloat],
     longitude: Option[JFloat],
     time: Option[DateTime]
-  ): F[Either[String, Json]] =
+  ): F[Either[NonEmptyList[EnrichmentFailureMessage], Json]] =
     (for {
       weather <- getWeather(latitude, longitude, time)
       schemaed = addSchema(weather)
@@ -119,19 +120,28 @@ final case class WeatherEnrichment[F[_]: Monad](client: OWMCacheClient[F]) exten
     latitude: Option[JFloat],
     longitude: Option[JFloat],
     time: Option[DateTime]
-  ): EitherT[F, String, Json] =
+  ): EitherT[F, NonEmptyList[EnrichmentFailureMessage], Json] =
     (latitude, longitude, time) match {
       case (Some(lat), Some(lon), Some(t)) =>
         val ts = ZonedDateTime.ofInstant(Instant.ofEpochMilli(t.getMillis()), ZoneOffset.UTC)
         for {
           weather <- EitherT(client.cachingHistoryByCoords(lat, lon, ts))
-            .leftMap(_.getMessage)
+            .leftMap(e => NonEmptyList.one(SimpleEnrichmentFailureMessage(e.getMessage)))
+            .leftWiden[NonEmptyList[EnrichmentFailureMessage]]
           transformed = transformWeather(weather)
         } yield transformed.asJson
-      case _ =>
+      case (a, b, c) =>
+        val failures = List((a, "geo_latitude"), (b, "geo_longitude"), (c, "derived_tstamp"))
+          .collect {
+            case (None, n) =>
+              InputDataEnrichmentFailureMessage(n, none, "missing")
+          }
         EitherT.leftT(
-          "One of required event fields missing. latitude: " +
-            s"$latitude, longitude: $longitude, tstamp: $time"
+          NonEmptyList
+            .fromList(failures)
+            .getOrElse(
+              NonEmptyList.of(SimpleEnrichmentFailureMessage("Couldn't construct failures"))
+            )
         )
     }
 
