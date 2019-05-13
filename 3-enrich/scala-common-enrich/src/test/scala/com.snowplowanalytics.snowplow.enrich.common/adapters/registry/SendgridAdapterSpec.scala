@@ -16,6 +16,7 @@ package registry
 
 import cats.data.NonEmptyList
 import cats.syntax.option._
+import com.snowplowanalytics.snowplow.badrows._
 import org.joda.time.DateTime
 import org.specs2.matcher.ValidatedMatchers
 import org.specs2.mutable.Specification
@@ -25,9 +26,9 @@ import utils.Clock._
 
 class SendgridAdapterSpec extends Specification with ValidatedMatchers {
   object Shared {
-    val api = CollectorApi("com.sendgrid", "v3")
-    val cljSource = CollectorSource("clj-tomcat", "UTF-8", None)
-    val context = CollectorContext(
+    val api = CollectorPayload.Api("com.sendgrid", "v3")
+    val cljSource = CollectorPayload.Source("clj-tomcat", "UTF-8", None)
+    val context = CollectorPayload.Context(
       DateTime.parse("2013-08-29T00:18:48.000+00:00").some,
       "37.157.33.123".some,
       None,
@@ -408,7 +409,11 @@ class SendgridAdapterSpec extends Specification with ValidatedMatchers {
       val actual = SendgridAdapter.toRawEvents(payload, SpecHelpers.client).value
       actual must beInvalid(
         NonEmptyList.one(
-          "Sendgrid event at index [1] failed: type parameter not provided - cannot determine event type"
+          FailureDetails.AdapterFailure.SchemaMapping(
+            None,
+            SendgridAdapter.EventSchemaMap,
+            "cannot determine event type: type parameter not provided at index 1"
+          )
         )
       )
     }
@@ -444,7 +449,7 @@ class SendgridAdapterSpec extends Specification with ValidatedMatchers {
         )
 
       val expectedJson =
-        """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.sendgrid/processed/jsonschema/2-0-0","data":{"email":"example@test.com","timestamp":"2015-11-03T11:20:15.000Z","smtp-id":"\u003c14c5d75ce93.dfd.64b469@ismtpd-555\u003e","category":"cat facts","sg_event_id":"sZROwMGMagFgnOEmSdvhig==","sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0","marketing_campaign_id":12345,"marketing_campaign_name":"campaign name","marketing_campaign_version":"B","marketing_campaign_split_id":13471}}}}"""
+        """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.sendgrid/processed/jsonschema/2-0-0","data":{"timestamp":"2015-11-03T11:20:15.000Z","email":"example@test.com","marketing_campaign_name":"campaign name","sg_event_id":"sZROwMGMagFgnOEmSdvhig==","smtp-id":"\u003c14c5d75ce93.dfd.64b469@ismtpd-555\u003e","marketing_campaign_version":"B","marketing_campaign_id":12345,"marketing_campaign_split_id":13471,"category":"cat facts","sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0"}}}"""
 
       val actual = SendgridAdapter.toRawEvents(payload, SpecHelpers.client).value
       actual must beValid(

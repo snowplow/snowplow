@@ -17,18 +17,24 @@ package snowplow
 
 import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
-import cats.effect.Clock
 import cats.syntax.either._
+import cats.syntax.option._
 import cats.syntax.validated._
-import com.snowplowanalytics.iglu.client.Client
-import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
-import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
+
+import cats.effect.Clock
+
 import io.circe._
 import io.circe.syntax._
 
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer, SelfDescribingData}
+import com.snowplowanalytics.iglu.core.circe.CirceIgluCodecs._
+
+import com.snowplowanalytics.snowplow.badrows.FailureDetails
+
 import loaders.CollectorPayload
-import utils.{JsonUtils => JU}
-import utils.{ConversionUtils => CU}
+import utils.{HttpClient, ConversionUtils => CU, JsonUtils => JU}
 
 /**
  * The Redirect Adapter is essentially a pre-processor for
@@ -55,7 +61,7 @@ object RedirectAdapter extends Adapter {
       "uri_redirect",
       "jsonschema",
       SchemaVer.Full(1, 0, 0)
-    ).toSchemaUri
+    )
 
   /**
    * Converts a CollectorPayload instance into raw events. Assumes we have a GET querystring with
@@ -65,23 +71,37 @@ object RedirectAdapter extends Adapter {
    * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
     payload: CollectorPayload,
     client: Client[F, Json]
-  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] = {
+  ): F[
+    ValidatedNel[FailureDetails.AdapterFailureOrTrackerProtocolViolation, NonEmptyList[RawEvent]]
+  ] = {
     val _ = client
     val originalParams = toMap(payload.querystring)
     if (originalParams.isEmpty) {
-      Monad[F].pure("Querystring is empty: cannot be a valid URI redirect".invalidNel)
+      val msg = "empty querystring: not a valid URI redirect"
+      val failure = FailureDetails.TrackerProtocolViolation.InputData(
+        "querystring",
+        none,
+        msg
+      )
+      Monad[F].pure(failure.invalidNel)
     } else {
       originalParams.get("u") match {
         case None =>
-          Monad[F].pure(
-            "Querystring does not contain u parameter: not a valid URI redirect".invalidNel
-          )
+          val msg = "missing `u` parameter: not a valid URI redirect"
+          val qs = originalParams.map(t => s"${t._1}=${t._2}").mkString("&")
+          val failure =
+            FailureDetails.TrackerProtocolViolation.InputData(
+              "querystring",
+              qs.some,
+              msg
+            )
+          Monad[F].pure(failure.invalidNel)
         case Some(u) =>
           val json = buildUriRedirect(u)
-          val newParams: Either[String, Map[String, String]] =
+          val newParams: Either[FailureDetails.TrackerProtocolViolation, Map[String, String]] =
             if (originalParams.contains("e")) {
               // Already have an event so add the URI redirect as a context (more fiddly)
               def newCo = Map("co" -> toContext(json).noSpaces)
@@ -122,26 +142,32 @@ object RedirectAdapter extends Adapter {
    * @param uri The URI we are redirecting to
    * @return a URI redirect as a self-describing JValue
    */
-  private def buildUriRedirect(uri: String): Json =
-    Json.obj(
-      "schema" := UriRedirect,
-      "data" := Json.obj("uri" := uri)
-    )
+  private def buildUriRedirect(uri: String): SelfDescribingData[Json] =
+    SelfDescribingData(UriRedirect, Json.obj("uri" := uri))
 
   /**
    * Adds a context to an existing non-Base64-encoded self-describing contexts stringified JSON.
    * Does the minimal amount of validation required to ensure the context can be safely added, or
    * returns a Failure.
-   * @param new The context to add to the existing list of contexts
+   * @param newContext The context to add to the existing list of contexts
    * @param existing The existing contexts as a non-Base64-encoded stringified JSON
    * @return an updated non-Base64-encoded self-describing contexts stringified JSON
    */
-  private def addToExistingCo(newContext: Json, existing: String): Either[String, String] =
+  private def addToExistingCo(
+    newContext: SelfDescribingData[Json],
+    existing: String
+  ): Either[FailureDetails.TrackerProtocolViolation, String] =
     for {
-      json <- JU.extractJson("co|cx", existing)
+      json <- JU
+        .extractJson(existing) // co|cx
+        .leftMap(
+          e =>
+            FailureDetails.TrackerProtocolViolation
+              .NotJson("co|cx", existing.some, e)
+        )
       merged = json.hcursor
         .downField("data")
-        .withFocus(_.mapArray(newContext +: _))
+        .withFocus(_.mapArray(newContext.asJson +: _))
         .top
         .getOrElse(json)
     } yield merged.noSpaces
@@ -150,13 +176,22 @@ object RedirectAdapter extends Adapter {
    * Adds a context to an existing Base64-encoded self-describing contexts stringified JSON.
    * Does the minimal amount of validation required to ensure the context can be safely added, or
    * returns a Failure.
-   * @param new The context to add to the existing list of contexts
+   * @param newContext The context to add to the existing list of contexts
    * @param existing The existing contexts as a non-Base64-encoded stringified JSON
    * @return an updated non-Base64-encoded self-describing contexts stringified JSON
    */
-  private def addToExistingCx(newContext: Json, existing: String): Either[String, String] =
+  private def addToExistingCx(
+    newContext: SelfDescribingData[Json],
+    existing: String
+  ): Either[FailureDetails.TrackerProtocolViolation, String] =
     for {
-      decoded <- CU.decodeBase64Url("cx", existing)
+      decoded <- CU
+        .decodeBase64Url(existing) // cx
+        .leftMap(
+          e =>
+            FailureDetails.TrackerProtocolViolation
+              .InputData("cx", existing.some, e)
+        )
       added <- addToExistingCo(newContext, decoded)
       recoded = CU.encodeBase64Url(added)
     } yield recoded

@@ -10,59 +10,48 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry
 
-// Json4s
-import org.json4s.{DefaultFormats, Extraction, JObject, JValue}
-import org.json4s.JsonDSL._
-import com.snowplowanalytics.snowplow.enrich.common.utils.ScalazJson4sUtils
-
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// Iglu
-import iglu.client.SchemaKey
-import iglu.client.SchemaCriterion
-
-// Yauaa
-import nl.basjes.parse.useragent.UserAgent
-import nl.basjes.parse.useragent.UserAgentAnalyzer
-
-// Scala
 import scala.collection.JavaConverters._
+
+import cats.data.ValidatedNel
+import cats.syntax.either._
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
+import io.circe.Json
+import io.circe.syntax._
+import nl.basjes.parse.useragent.{UserAgent, UserAgentAnalyzer}
+
+import utils.CirceUtils
 
 /** Companion object to create an instance of YauaaEnrichment from the configuration. */
 object YauaaEnrichment extends ParseableEnrichment {
-
-  implicit val formats = DefaultFormats
-
   val supportedSchema =
     SchemaCriterion(
       "com.snowplowanalytics.snowplow.enrichments",
       "yauaa_enrichment_config",
       "jsonschema",
       1,
-      0)
+      0
+    )
 
   /**
-   * Creates a YauaaEnrichment instance from a JValue containing the configuration of the enrichment.
+   * Creates a YauaaConf instance from a JValue containing the configuration of the enrichment.
    *
-   * @param config    JSON containing configuration for YAUAA enrichment.
+   * @param c         JSON containing configuration for YAUAA enrichment.
    * @param schemaKey SchemaKey provided for this enrichment.
    *                  Must be a supported SchemaKey for this enrichment.
-   * @return Configured YauaaEnrichment instance
+   * @return Configuration for YAUAA enrichment
    */
-  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[YauaaEnrichment] =
-    isParseable(config, schemaKey).flatMap { _ =>
-      val maybeCacheSize =
-        ScalazJson4sUtils.extract[Int](config, "parameters", "cacheSize").toOption
-      YauaaEnrichment(maybeCacheSize).success
-    }
+  override def parse(
+    c: Json,
+    schemaKey: SchemaKey,
+    localMode: Boolean = false
+  ): ValidatedNel[String, YauaaConf] =
+    (for {
+      _ <- isParseable(c, schemaKey)
+      cacheSize <- CirceUtils.extract[Option[Int]](c, "parameters", "cacheSize").toEither
+    } yield YauaaConf(cacheSize)).toValidatedNel
 
   /** Helper to decapitalize a string. Used for the names of the fields returned in the context. */
   def decapitalize(s: String): String = s match {
@@ -75,11 +64,9 @@ object YauaaEnrichment extends ParseableEnrichment {
 /**
  * Class for YAUAA enrichment, which tries to parse and analyze the user agent string
  * and extract as many relevant attributes as possible, like for example the device class.
- *
  * @param cacheSize Amount of user agents already parsed that stay in cache for faster parsing.
  */
 final case class YauaaEnrichment(cacheSize: Option[Int]) extends Enrichment {
-
   import YauaaEnrichment.decapitalize
 
   private val uaa: UserAgentAnalyzer = {
@@ -90,11 +77,6 @@ final case class YauaaEnrichment(cacheSize: Option[Int]) extends Enrichment {
     a
   }
 
-  // For unit testing
-  private[registry] def getCacheSize = uaa.getCacheSize
-
-  private implicit val formats = DefaultFormats
-
   val contextSchema = "iglu:nl.basjes/yauaa_context/jsonschema/1-0-0"
 
   val defaultDeviceClass = "UNKNOWN"
@@ -102,17 +84,12 @@ final case class YauaaEnrichment(cacheSize: Option[Int]) extends Enrichment {
 
   /**
    * Gets the result of YAUAA user agent analysis as self-describing JSON, for a specific event.
-   * Any non-fatal error will return failure.
-   *
    * @param userAgent User agent of the event.
    * @return Attributes retrieved thanks to the user agent (if any), as self-describing JSON.
    */
-  def getYauaaContext(userAgent: String): Validation[String, JObject] = {
+  def getYauaaContext(userAgent: String): Json = {
     val parsed = parseUserAgent(userAgent)
-    Extraction.decompose(parsed) match {
-      case obj: JObject => addSchema(obj).success
-      case _ => s"Couldn't transform YAUAA fields [$parsed] into JSON".failure
-    }
+    addSchema(parsed.asJson)
   }
 
   /** Gets the map of attributes retrieved by YAUAA from the user agent.
@@ -136,6 +113,9 @@ final case class YauaaEnrichment(cacheSize: Option[Int]) extends Enrichment {
    * @param context Yauaa context as JSON Object
    * @return Self-describing JSON with the result of YAUAA enrichment.
    */
-  private def addSchema(context: JObject): JObject =
-    ("schema", contextSchema) ~ (("data", context))
+  private def addSchema(context: Json): Json =
+    Json.obj(
+      "schema" := contextSchema,
+      "data" := context
+    )
 }

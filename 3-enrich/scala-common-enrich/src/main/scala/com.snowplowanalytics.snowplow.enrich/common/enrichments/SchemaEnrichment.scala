@@ -18,10 +18,16 @@ import cats.data.Validated
 import cats.effect.Clock
 import cats.syntax.either._
 import cats.syntax.functor._
+
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
-import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
+import com.snowplowanalytics.iglu.core._
+import com.snowplowanalytics.iglu.core.circe.instances._
+
+import com.snowplowanalytics.snowplow.badrows._
+
 import io.circe.Json
+import io.circe.parser.parse
 
 import outputs.EnrichedEvent
 import utils.shredder.Shredder
@@ -42,7 +48,7 @@ object SchemaEnrichment {
   def extractSchema[F[_]: Monad: RegistryLookup: Clock](
     event: EnrichedEvent,
     client: Client[F, Json]
-  ): F[Either[String, SchemaKey]] =
+  ): F[Either[FailureDetails.EnrichmentStageIssue, SchemaKey]] =
     event.event match {
       case "page_view" => Monad[F].pure(Schemas.pageViewSchema.asRight)
       case "page_ping" => Monad[F].pure(Schemas.pagePingSchema.asRight)
@@ -50,27 +56,50 @@ object SchemaEnrichment {
       case "transaction" => Monad[F].pure(Schemas.transactionSchema.asRight)
       case "transaction_item" => Monad[F].pure(Schemas.transactionItemSchema.asRight)
       case "unstruct" => extractUnstructSchema(event, client)
-      case eventType => Monad[F].pure(s"Unrecognized event [$eventType]".asLeft)
+      case eventType =>
+        val f = FailureDetails.EnrichmentFailureMessage.InputData(
+          "event",
+          Option(eventType),
+          "unrecognized"
+        )
+        Monad[F].pure(FailureDetails.EnrichmentFailure(None, f).asLeft)
     }
 
   private def extractUnstructSchema[F[_]: Monad: RegistryLookup: Clock](
     event: EnrichedEvent,
     client: Client[F, Json]
-  ): F[Either[String, SchemaKey]] =
+  ): F[Either[FailureDetails.EnrichmentStageIssue, SchemaKey]] = {
+    val possibleFailure = {
+      val f = FailureDetails.EnrichmentFailureMessage.InputData(
+        "unstruct_event",
+        Option(event.unstruct_event),
+        "could not be extracted"
+      )
+      FailureDetails.EnrichmentFailure(None, f).asLeft
+    }
     Shredder.extractUnstructEvent(event, client) match {
       case Some(f) =>
         f.map {
           case Validated.Valid(List(json)) =>
-            parseSchemaKey(json.asObject.flatMap(_.apply("schema")))
-          case _ => "Unstructured event couldn't be extracted".asLeft
+            SelfDescribingData.parse(json) match {
+              case Left(parseError) =>
+                FailureDetails.SchemaViolation
+                  .NotIglu(unsafeParseJson(event.unstruct_event), parseError)
+                  .asLeft
+              case Right(sd) => sd.schema.asRight
+            }
+          case _ => possibleFailure
         }
-      case _ => Monad[F].pure("Unstructured event couldn't be extracted".asLeft)
+      case _ => Monad[F].pure(possibleFailure)
     }
+  }
 
-  private def parseSchemaKey(node: Option[Json]): Either[String, SchemaKey] =
-    node.flatMap(_.asString) match {
-      case Some(str) => SchemaKey.fromUri(str).leftMap(_.code)
-      // It's validated by the Shredder, so it should never happen
-      case _ => "Unrecognized unstructured event structure".asLeft
-    }
+  /** Parse string, which is certainly JSON */
+  private def unsafeParseJson(string: String): Json =
+    parse(string).getOrElse(
+      Json.obj(
+        "payload" -> Json.fromString(string),
+        "message" -> Json.fromString("Invalid JSON in unstruct_event")
+      )
+    )
 }

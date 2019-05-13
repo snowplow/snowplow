@@ -14,21 +14,30 @@ package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
 import java.nio.charset.Charset
+import java.time.Instant
+import java.util.UUID
 
 import scala.collection.JavaConverters._
 import scala.util.control.NonFatal
 
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.implicits._
-import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
+
+import org.joda.time.{DateTime, DateTimeZone}
+
 import com.snowplowanalytics.snowplow.CollectorPayload.thrift.model1.{
   CollectorPayload => CollectorPayload1
 }
 import com.snowplowanalytics.snowplow.SchemaSniffer.thrift.model1.SchemaSniffer
 import com.snowplowanalytics.snowplow.collectors.thrift.SnowplowRawEvent
-import org.apache.http.NameValuePair
+
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.FailureDetails.CPFormatViolationMessage
+
+import org.apache.commons.codec.binary.Base64
 import org.apache.thrift.TDeserializer
-import org.joda.time.{DateTime, DateTimeZone}
+
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, ParseError => IgluParseError}
 
 /** Loader for Thrift SnowplowRawEvent objects. */
 object ThriftLoader extends Loader[Array[Byte]] {
@@ -37,42 +46,63 @@ object ThriftLoader extends Loader[Array[Byte]] {
   private val ExpectedSchema =
     SchemaCriterion("com.snowplowanalytics.snowplow", "CollectorPayload", "thrift", 1, 0)
 
+  /** Parse Error -> Collector Payload violation */
+  private def collectorPayloadViolation(e: IgluParseError) = {
+    val str = s"could not parse schema: ${e.code}"
+    val details = FailureDetails.CPFormatViolationMessage.Fallback(str)
+    NonEmptyList.of(details)
+  }
+
+  private def collectorPayloadViolation(key: SchemaKey) = {
+    val str = s"verifying record as ${ExpectedSchema.asString} failed: found ${key.toSchemaUri}"
+    val details = FailureDetails.CPFormatViolationMessage.Fallback(str)
+    NonEmptyList.of(details)
+  }
+
   /**
-   * Converts the source string into a ValidatedMaybeCollectorPayload.
+   * Converts the source string into a [[CollectorPayload]] (always `Some`)
    * Checks the version of the raw event and calls the appropriate method.
    * @param line A serialized Thrift object Byte array mapped to a String. The method calling this
    * should encode the serialized object with `snowplowRawEventBytes.map(_.toChar)`.
    * Reference: http://stackoverflow.com/questions/5250324/
    * @return either a set of validation errors or an Option-boxed CanonicalInput object, wrapped in
-   * a Scalaz ValidatioNel.
+   * a ValidatedNel.
    */
-  def toCollectorPayload(line: Array[Byte]): ValidatedNel[String, Option[CollectorPayload]] =
-    try {
-      val schema = new SchemaSniffer
-      this.synchronized {
-        thriftDeserializer.deserialize(
-          schema,
-          line
-        )
+  override def toCollectorPayload(
+    line: Array[Byte],
+    processor: Processor
+  ): ValidatedNel[BadRow.CPFormatViolation, Option[CollectorPayload]] = {
+
+    def createViolation(message: FailureDetails.CPFormatViolationMessage) =
+      BadRow.CPFormatViolation(
+        processor,
+        Failure.CPFormatViolation(Instant.now(), "thrift", message),
+        Payload.RawPayload(new String(Base64.encodeBase64(line), "UTF-8"))
+      )
+
+    val collectorPayload =
+      try {
+        val schema = new SchemaSniffer()
+        this.synchronized { thriftDeserializer.deserialize(schema, line) }
+        if (schema.isSetSchema) {
+          val payload = for {
+            schemaKey <- SchemaKey.fromUri(schema.getSchema).leftMap(collectorPayloadViolation)
+            collectorPayload <- if (ExpectedSchema.matches(schemaKey)) convertSchema1(line).toEither
+            else collectorPayloadViolation(schemaKey).asLeft
+          } yield collectorPayload
+          payload.toValidated
+        } else convertOldSchema(line)
+      } catch {
+        case NonFatal(e) =>
+          FailureDetails.CPFormatViolationMessage
+            .Fallback(s"error deserializing raw event: ${e.getMessage}")
+            .invalidNel
       }
 
-      if (schema.isSetSchema) {
-        val actualSchema = SchemaKey.fromUri(schema.getSchema).leftMap(_.code)
-        (for {
-          as <- actualSchema.leftMap(NonEmptyList.one)
-          res <- if (ExpectedSchema.matches(as)) {
-            convertSchema1(line).toEither
-          } else {
-            NonEmptyList.one(s"Verifying record as $ExpectedSchema failed: found $as").asLeft
-          }
-        } yield res).toValidated
-      } else {
-        convertOldSchema(line)
-      }
-    } catch {
-      // TODO: Check for deserialization errors.
-      case NonFatal(e) => s"Error deserializing raw event: ${e.getMessage}".invalidNel
+    collectorPayload.leftMap { messages =>
+      messages.map(createViolation)
     }
+  }
 
   /**
    * Converts the source string into a ValidatedMaybeCollectorPayload.
@@ -81,9 +111,11 @@ object ThriftLoader extends Loader[Array[Byte]] {
    * should encode the serialized object with`snowplowRawEventBytes.map(_.toChar)`.
    * Reference: http://stackoverflow.com/questions/5250324/
    * @return either a set of validation errors or an Option-boxed CanonicalInput object, wrapped in
-   * a Scalaz ValidatioNel.
+   * a ValidatedNel.
    */
-  private def convertSchema1(line: Array[Byte]): ValidatedNel[String, Option[CollectorPayload]] = {
+  private def convertSchema1(
+    line: Array[Byte]
+  ): ValidatedNel[FailureDetails.CPFormatViolationMessage, Option[CollectorPayload]] = {
     val collectorPayload = new CollectorPayload1
     this.synchronized {
       thriftDeserializer.deserialize(
@@ -100,32 +132,39 @@ object ThriftLoader extends Loader[Array[Byte]] {
     val hostname = Option(collectorPayload.hostname)
     val userAgent = Option(collectorPayload.userAgent)
     val refererUri = Option(collectorPayload.refererUri)
-    val networkUserId = Option(collectorPayload.networkUserId)
+    val networkUserId =
+      Option(collectorPayload.networkUserId).traverse(parseNetworkUserId).toValidatedNel
 
     val headers = Option(collectorPayload.headers).map(_.asScala.toList).getOrElse(Nil)
 
     val ip = IpAddressExtractor.extractIpAddress(headers, collectorPayload.ipAddress).some // Required
 
     val api = Option(collectorPayload.path) match {
-      case None => "Request does not contain a path".invalidNel
-      case Some(p) => CollectorApi.parse(p).toValidatedNel
+      case None =>
+        FailureDetails.CPFormatViolationMessage
+          .InputData("path", None, "request does not contain a path")
+          .invalidNel
+      case Some(p) => CollectorPayload.parseApi(p).toValidatedNel
     }
 
-    (querystring.toValidatedNel, api).mapN { (q, a) =>
-      CollectorPayload(
-        q,
-        collectorPayload.collector,
-        collectorPayload.encoding,
-        hostname,
+    (querystring.toValidatedNel, api, networkUserId).mapN { (q, a, nuid) =>
+      val source =
+        CollectorPayload.Source(collectorPayload.collector, collectorPayload.encoding, hostname)
+      val context = CollectorPayload.Context(
         Some(new DateTime(collectorPayload.timestamp, DateTimeZone.UTC)),
         ip,
         userAgent,
         refererUri,
         headers,
-        networkUserId,
+        nuid
+      )
+      CollectorPayload(
         a,
+        q,
         Option(collectorPayload.contentType),
-        Option(collectorPayload.body)
+        Option(collectorPayload.body),
+        source,
+        context
       ).some
     }
   }
@@ -137,12 +176,12 @@ object ThriftLoader extends Loader[Array[Byte]] {
    * should encode the serialized object with `snowplowRawEventBytes.map(_.toChar)`.
    * Reference: http://stackoverflow.com/questions/5250324/
    * @return either a set of validation errors or an Option-boxed CanonicalInput object, wrapped in
-   * a Scalaz ValidatioNel.
+   * a ValidatedNel.
    */
   private def convertOldSchema(
     line: Array[Byte]
-  ): ValidatedNel[String, Option[CollectorPayload]] = {
-    val snowplowRawEvent = new SnowplowRawEvent
+  ): ValidatedNel[FailureDetails.CPFormatViolationMessage, Option[CollectorPayload]] = {
+    val snowplowRawEvent = new SnowplowRawEvent()
     this.synchronized {
       thriftDeserializer.deserialize(
         snowplowRawEvent,
@@ -158,30 +197,29 @@ object ThriftLoader extends Loader[Array[Byte]] {
     val hostname = Option(snowplowRawEvent.hostname)
     val userAgent = Option(snowplowRawEvent.userAgent)
     val refererUri = Option(snowplowRawEvent.refererUri)
-    val networkUserId = Option(snowplowRawEvent.networkUserId)
+    val networkUserId =
+      Option(snowplowRawEvent.networkUserId).traverse(parseNetworkUserId).toValidatedNel
 
     val headers = Option(snowplowRawEvent.headers).map(_.asScala.toList).getOrElse(Nil)
 
     val ip = IpAddressExtractor.extractIpAddress(headers, snowplowRawEvent.ipAddress).some // Required
 
-    (querystring.toValidatedNel) map { (q: List[NameValuePair]) =>
-      Some(
-        CollectorPayload(
-          q,
-          snowplowRawEvent.collector,
-          snowplowRawEvent.encoding,
-          hostname,
-          Some(new DateTime(snowplowRawEvent.timestamp, DateTimeZone.UTC)),
-          ip,
-          userAgent,
-          refererUri,
-          headers,
-          networkUserId,
-          CollectorApi.SnowplowTp1, // No way of storing API vendor/version in Thrift yet, assume Snowplow TP1
-          None, // No way of storing content type in Thrift yet
-          None // No way of storing request body in Thrift yet
-        )
-      )
+    (querystring.toValidatedNel, networkUserId).mapN { (q, nuid) =>
+      val timestamp = Some(new DateTime(snowplowRawEvent.timestamp, DateTimeZone.UTC))
+      val context = CollectorPayload.Context(timestamp, ip, userAgent, refererUri, headers, nuid)
+      val source =
+        CollectorPayload.Source(snowplowRawEvent.collector, snowplowRawEvent.encoding, hostname)
+      // No way of storing API vendor/version in Thrift yet, assume Snowplow TP1
+      CollectorPayload(CollectorPayload.SnowplowTp1, q, None, None, source, context).some
     }
   }
+
+  private def parseNetworkUserId(
+    str: String
+  ): Either[FailureDetails.CPFormatViolationMessage, UUID] =
+    Either
+      .catchOnly[IllegalArgumentException](UUID.fromString(str))
+      .leftMap(
+        _ => CPFormatViolationMessage.InputData("networkUserId", Some(str), "not valid UUID")
+      )
 }

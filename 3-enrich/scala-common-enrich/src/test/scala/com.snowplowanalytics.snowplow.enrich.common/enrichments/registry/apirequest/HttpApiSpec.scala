@@ -15,6 +15,7 @@ package enrichments.registry
 package apirequest
 
 import cats.Eval
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import org.specs2.Specification
 import org.specs2.matcher.ValidatedMatchers
 import org.specs2.mock.Mockito
@@ -51,7 +52,9 @@ class HttpApiSpec extends Specification with ValidatedMatchers with Mockito {
 
   // This one uses real actor system
   def e3 = {
+    val schemaKey = SchemaKey("vendor", "name", "format", SchemaVer.Full(1, 0, 0))
     val enrichment = ApiRequestConf(
+      schemaKey,
       Nil,
       HttpApi("GET", "http://thishostdoesntexist31337:8123/endpoint", 1000, Authentication(None)),
       List(Output("", Some(JsonOutput("")))),

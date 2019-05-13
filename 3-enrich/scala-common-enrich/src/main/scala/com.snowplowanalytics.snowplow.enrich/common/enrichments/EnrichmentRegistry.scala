@@ -26,6 +26,7 @@ import com.snowplowanalytics.maxmind.iplookups.CreateIpLookups
 import com.snowplowanalytics.refererparser.CreateParser
 import com.snowplowanalytics.weather.providers.openweather.CreateOWM
 import io.circe._
+import io.circe.syntax._
 
 import registry._
 import registry.apirequest.ApiRequestEnrichment
@@ -58,7 +59,7 @@ object EnrichmentRegistry {
       )
       _ <- client
         .check(sd)
-        .leftMap(e => NonEmptyList.one(e.toString))
+        .leftMap(e => NonEmptyList.one(e.asJson.noSpaces))
         .subflatMap { _ =>
           EnrichmentConfigSchemaCriterion.matches(sd.schema) match {
             case true => ().asRight
@@ -70,7 +71,7 @@ object EnrichmentRegistry {
                 .asLeft
           }
         }
-      enrichments <- EitherT.fromEither[F](json.asArray match {
+      enrichments <- EitherT.fromEither[F](sd.data.asArray match {
         case Some(array) => array.toList.asRight
         case _ =>
           NonEmptyList
@@ -143,12 +144,13 @@ object EnrichmentRegistry {
             enrichment <- c.enrichment[F]
             registry <- er
           } yield registry.copy(uaParser = enrichment.some)
-        case c: UserAgentUtilsConf.type => er.map(_.copy(userAgentUtils = c.enrichment.some))
+        case c: UserAgentUtilsConf => er.map(_.copy(userAgentUtils = c.enrichment.some))
         case c: WeatherConf =>
           for {
             enrichment <- c.enrichment[F]
             registry <- er
           } yield registry.copy(weather = enrichment.some)
+        case c: YauaaConf => er.map(_.copy(yauaa = c.enrichment.some))
       }
     }
 
@@ -240,7 +242,7 @@ final case class EnrichmentRegistry[F[_]](
   javascriptScript: Option[JavascriptScriptEnrichment] = None,
   refererParser: Option[RefererParserEnrichment] = None,
   uaParser: Option[UaParserEnrichment] = None,
-  userAgentUtils: Option[UserAgentUtilsEnrichment.type] = None,
+  userAgentUtils: Option[UserAgentUtilsEnrichment] = None,
   weather: Option[WeatherEnrichment[F]] = None,
   yauaa: Option[YauaaEnrichment] = None
 )

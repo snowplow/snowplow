@@ -14,9 +14,11 @@ package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
 import java.nio.charset.StandardCharsets.UTF_8
+import java.time.Instant
 
 import cats.data.ValidatedNel
 import cats.implicits._
+import com.snowplowanalytics.snowplow.badrows._
 
 import utils.ConversionUtils
 
@@ -62,9 +64,12 @@ object CljTomcatLoader extends Loader[String] {
    * Converts the source string into a ValidatedMaybeCollectorPayload.
    * @param line A line of data to convert
    * @return either a set of validation errors or an Option-boxed CanonicalInput object, wrapped
-   * in a Scalaz ValidatioNel.
+   * in a ValidatedNel.
    */
-  def toCollectorPayload(line: String): ValidatedNel[String, Option[CollectorPayload]] = {
+  override def toCollectorPayload(
+    line: String,
+    processor: Processor
+  ): ValidatedNel[BadRow.CPFormatViolation, Option[CollectorPayload]] = {
     def build(
       qs: String,
       date: String,
@@ -72,48 +77,39 @@ object CljTomcatLoader extends Loader[String] {
       ip: String,
       ua: String,
       refr: String,
-      objct: String,
+      path: String,
       ct: Option[String],
       bdy: Option[String]
-    ): ValidatedNel[String, Option[CollectorPayload]] = {
-      val querystring = parseQuerystring(CloudfrontLoader.toOption(qs), CollectorEncoding)
-      val timestamp = CloudfrontLoader.toTimestamp(date, time)
-      val contentType = (for {
-        enc <- ct
-        raw = ConversionUtils.decodeString(CollectorEncoding, "Content type", enc)
-      } yield raw).sequence
-      val body = (for {
-        b64 <- bdy
-        raw = ConversionUtils.decodeBase64Url("Body", b64)
-      } yield raw).sequence
-      val api = CollectorApi.parse(objct)
+    ): ValidatedNel[FailureDetails.CPFormatViolationMessage, Option[CollectorPayload]] = {
+      val querystring = parseQuerystring(toOption(qs), CollectorEncoding)
+      val timestamp = toTimestamp(date, time)
+      val contentType = ct
+        .traverse(enc => ConversionUtils.decodeString(CollectorEncoding, enc))
+        .leftMap { m =>
+          FailureDetails.CPFormatViolationMessage.InputData("contentType", ct, m)
+        }
+      val body = bdy
+        .traverse(ConversionUtils.decodeBase64Url)
+        .leftMap { m =>
+          FailureDetails.CPFormatViolationMessage.InputData("body", bdy, m)
+        }
+      val collectorApi = CollectorPayload.parseApi(path)
 
       (
         timestamp.toValidatedNel,
         querystring.toValidatedNel,
-        api.toValidatedNel,
+        collectorApi.toValidatedNel,
         contentType.toValidatedNel,
         body.toValidatedNel
       ).mapN { (t, q, a, c, b) =>
-        CollectorPayload(
-          q,
-          CollectorName,
-          CollectorEncoding.toString,
-          None, // No hostname for CljTomcat
-          Some(t),
-          CloudfrontLoader.toOption(ip),
-          CloudfrontLoader.toOption(ua),
-          CloudfrontLoader.toOption(refr),
-          Nil, // No headers for CljTomcat
-          None, // No collector-set user ID for CljTomcat
-          a, // API vendor and version
-          c, // We may have content type
-          b // We may have request body
-        ).some
+        val source = CollectorPayload.Source(CollectorName, CollectorEncoding.toString, None)
+        val context =
+          CollectorPayload.Context(Some(t), toOption(ip), toOption(ua), toOption(refr), Nil, None)
+        CollectorPayload(a, q, c, b, source, context).some
       }
     }
 
-    line match {
+    val collectorPayload = line match {
       // A. For a request, to CljTomcat collector <= v0.6.0
       case CljTomcatRegex(date, time, _, _, ip, _, _, objct, _, refr, ua, qs, null, null) =>
         // API, content type and request body all unavailable
@@ -132,11 +128,12 @@ object CljTomcatLoader extends Loader[String] {
         build(qs, date, time, ip, ua, refr, objct, ct.some, None)
 
       // C: For a request with content type and/or body, to CljTomcat collector >= v0.7.0
-
       // C.1 Not a POST request
       case CljTomcatRegex(_, _, _, _, _, op, _, _, _, _, _, _, _, _) if op.toUpperCase != "POST" =>
-        (s"Operation must be POST, not ${op.toUpperCase}, if request content type and/or " +
-          "body are provided").invalidNel
+        val msg = "operation must be POST if content type and/or body are provided"
+        FailureDetails.CPFormatViolationMessage
+          .InputData("verb", op.toUpperCase().some, msg)
+          .invalidNel
 
       // C.2 A POST, let's check we can discern API format
       // TODO: we should check for nulls/"-"s for ct and body below
@@ -145,7 +142,20 @@ object CljTomcatLoader extends Loader[String] {
 
       // D. Row not recognised
       case _ =>
-        "Line does not match raw event format for Clojure Collector".invalidNel
+        FailureDetails.CPFormatViolationMessage
+          .Fallback("does not match the raw event format")
+          .invalidNel
     }
+
+    collectorPayload.leftMap(
+      _.map(
+        f =>
+          BadRow.CPFormatViolation(
+            processor,
+            Failure.CPFormatViolation(Instant.now(), CollectorName, f),
+            Payload.RawPayload(line)
+          )
+      )
+    )
   }
 }

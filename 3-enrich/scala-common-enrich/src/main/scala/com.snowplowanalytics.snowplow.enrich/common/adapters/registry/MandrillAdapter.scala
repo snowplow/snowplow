@@ -14,33 +14,27 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-import java.net.URI
-import java.nio.charset.StandardCharsets.UTF_8
-
-import scala.collection.JavaConverters._
-
 import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.effect.Clock
 import cats.syntax.either._
+import cats.syntax.option._
 import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
+import com.snowplowanalytics.snowplow.badrows._
 import io.circe._
-import io.circe.parser._
-import org.apache.http.client.utils.URLEncodedUtils
 
 import loaders.CollectorPayload
+import utils.{HttpClient, JsonUtils}
+import com.snowplowanalytics.snowplow.enrich.common.utils.ConversionUtils
 
 /**
  * Transforms a collector payload which conforms to a known version of the Mandrill Tracking webhook
  * into raw events.
  */
 object MandrillAdapter extends Adapter {
-  // Vendor name for Failure Message
-  private val VendorName = "Mandrill"
-
   // Tracker version for an Mandrill Tracking webhook
   private val TrackerVersion = "com.mandrill-v1"
 
@@ -52,16 +46,16 @@ object MandrillAdapter extends Adapter {
   private val SchemaVersion = SchemaVer.Full(1, 0, 1)
 
   // Schemas for reverse-engineering a Snowplow unstructured event
-  private val EventSchemaMap = Map(
-    "hard_bounce" -> SchemaKey(Vendor, "message_bounced", Format, SchemaVersion).toSchemaUri,
-    "click" -> SchemaKey(Vendor, "message_clicked", Format, SchemaVersion).toSchemaUri,
-    "deferral" -> SchemaKey(Vendor, "message_delayed", Format, SchemaVersion).toSchemaUri,
-    "spam" -> SchemaKey(Vendor, "message_marked_as_spam", Format, SchemaVersion).toSchemaUri,
-    "open" -> SchemaKey(Vendor, "message_opened", Format, SchemaVersion).toSchemaUri,
-    "reject" -> SchemaKey(Vendor, "message_rejected", Format, SchemaVer.Full(1, 0, 0)).toSchemaUri,
-    "send" -> SchemaKey(Vendor, "message_sent", Format, SchemaVer.Full(1, 0, 0)).toSchemaUri,
-    "soft_bounce" -> SchemaKey(Vendor, "message_soft_bounced", Format, SchemaVersion).toSchemaUri,
-    "unsub" -> SchemaKey(Vendor, "recipient_unsubscribed", Format, SchemaVersion).toSchemaUri
+  private[registry] val EventSchemaMap = Map(
+    "hard_bounce" -> SchemaKey(Vendor, "message_bounced", Format, SchemaVersion),
+    "click" -> SchemaKey(Vendor, "message_clicked", Format, SchemaVersion),
+    "deferral" -> SchemaKey(Vendor, "message_delayed", Format, SchemaVersion),
+    "spam" -> SchemaKey(Vendor, "message_marked_as_spam", Format, SchemaVersion),
+    "open" -> SchemaKey(Vendor, "message_opened", Format, SchemaVersion),
+    "reject" -> SchemaKey(Vendor, "message_rejected", Format, SchemaVer.Full(1, 0, 0)),
+    "send" -> SchemaKey(Vendor, "message_sent", Format, SchemaVer.Full(1, 0, 0)),
+    "soft_bounce" -> SchemaKey(Vendor, "message_soft_bounced", Format, SchemaVersion),
+    "unsub" -> SchemaKey(Vendor, "recipient_unsubscribed", Format, SchemaVersion)
   )
 
   /**
@@ -75,20 +69,31 @@ object MandrillAdapter extends Adapter {
    * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
     payload: CollectorPayload,
     client: Client[F, Json]
-  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
+  ): F[
+    ValidatedNel[FailureDetails.AdapterFailureOrTrackerProtocolViolation, NonEmptyList[RawEvent]]
+  ] =
     (payload.body, payload.contentType) match {
       case (None, _) =>
-        Monad[F].pure(s"Request body is empty: no $VendorName events to process".invalidNel)
+        val failure = FailureDetails.AdapterFailure.InputData(
+          "body",
+          none,
+          "empty body: no events to process"
+        )
+        Monad[F].pure(failure.invalidNel)
       case (_, None) =>
+        val msg = s"no content type: expected $ContentType"
         Monad[F].pure(
-          s"Request body provided but content type empty, expected $ContentType for $VendorName".invalidNel
+          FailureDetails.AdapterFailure.InputData("contentType", none, msg).invalidNel
         )
       case (_, Some(ct)) if ct != ContentType =>
+        val msg = s"expected $ContentType"
         Monad[F].pure(
-          s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel
+          FailureDetails.AdapterFailure
+            .InputData("contentType", ct.some, msg)
+            .invalidNel
         )
       case (Some(body), _) =>
         payloadBodyToEvents(body) match {
@@ -96,13 +101,13 @@ object MandrillAdapter extends Adapter {
           case Right(list) =>
             val _ = client
             // Create our list of Validated RawEvents
-            val rawEventsList: List[ValidatedNel[String, RawEvent]] =
+            val rawEventsList: List[ValidatedNel[FailureDetails.AdapterFailure, RawEvent]] =
               for {
                 (event, index) <- list.zipWithIndex
               } yield {
                 val eventOpt = event.hcursor.get[String]("event").toOption
                 for {
-                  schema <- lookupSchema(eventOpt, VendorName, index, EventSchemaMap).toValidatedNel
+                  schema <- lookupSchema(eventOpt, index, EventSchemaMap).toValidatedNel
                 } yield {
                   val formattedEvent =
                     cleanupJsonEventValues(event, eventOpt.map(("event", _)), List("ts"))
@@ -134,32 +139,53 @@ object MandrillAdapter extends Adapter {
    * @param rawEventString The encoded string from the Mandrill payload body
    * @return a list of single events formatted as JSONs or a Failure String
    */
-  private[registry] def payloadBodyToEvents(rawEventString: String): Either[String, List[Json]] = {
-    val bodyMap = toMap(
-      URLEncodedUtils
-        .parse(URI.create("http://localhost/?" + rawEventString), UTF_8)
-        .asScala
-        .toList
-    )
-    bodyMap match {
-      case map if map.size != 1 =>
-        s"Mapped $VendorName body has invalid count of keys: ${map.size}".asLeft
-      case map =>
-        map.get("mandrill_events") match {
-          case None => s"Mapped $VendorName body does not have 'mandrill_events' as a key".asLeft
-          case Some("") => s"$VendorName events string is empty: nothing to process".asLeft
-          case Some(dStr) =>
-            parse(dStr) match {
-              case Right(json) =>
-                json.asArray match {
-                  case Some(array) => array.toList.asRight
-                  case _ => s"Could not resolve $VendorName payload into a JSON array".asLeft
+  private[registry] def payloadBodyToEvents(
+    rawEventString: String
+  ): Either[FailureDetails.AdapterFailure, List[Json]] =
+    for {
+      bodyMap <- ConversionUtils
+        .parseUrlEncodedForm(rawEventString)
+        .leftMap(
+          e => FailureDetails.AdapterFailure.InputData("body", rawEventString.some, e)
+        )
+      res <- bodyMap match {
+        case map if map.size != 1 =>
+          val msg = s"body should have size 1: actual size ${map.size}"
+          FailureDetails.AdapterFailure
+            .InputData("body", rawEventString.some, msg)
+            .asLeft
+        case map =>
+          map.get("mandrill_events") match {
+            case None =>
+              val msg = "no `mandrill_events` parameter provided"
+              FailureDetails.AdapterFailure
+                .InputData("body", rawEventString.some, msg)
+                .asLeft
+            case Some("") =>
+              val msg = "`mandrill_events` field is empty"
+              FailureDetails.AdapterFailure
+                .InputData("body", rawEventString.some, msg)
+                .asLeft
+            case Some(dStr) =>
+              JsonUtils
+                .extractJson(dStr)
+                .leftMap(
+                  e =>
+                    FailureDetails.AdapterFailure
+                      .NotJson("mandril_events", dStr.some, e)
+                )
+                .flatMap { json =>
+                  json.asArray match {
+                    case Some(array) => array.toList.asRight
+                    case _ =>
+                      val msg = "not a json array"
+                      FailureDetails.AdapterFailure
+                        .InputData("mandrill_events", dStr.some, msg)
+                        .asLeft
+                  }
                 }
-              case Left(e) =>
-                s"$VendorName events couldn't be parsed as JSON: [${e.getMessage}]".asLeft
-            }
-        }
-    }
-  }
+          }
+      }
+    } yield res
 
 }

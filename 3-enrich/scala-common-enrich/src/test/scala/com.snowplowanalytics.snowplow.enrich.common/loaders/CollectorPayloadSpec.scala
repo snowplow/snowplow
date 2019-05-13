@@ -15,7 +15,7 @@ package com.snowplowanalytics.snowplow.enrich.common.loaders
 import org.specs2.mutable.Specification
 import org.specs2.matcher.DataTables
 
-class CollectorApiSpec extends Specification with DataTables {
+class CollectorPayloadSpec extends Specification with DataTables {
 
   // TODO: let's abstract this up to a CollectorApi.parse test
   // (then we can make isIceRequest private again).
@@ -27,11 +27,8 @@ class CollectorApiSpec extends Specification with DataTables {
         "Valid #3" !! "/i?foo=1&bar=2" ! true |
         "Invalid #1" !! "/blah/i" ! false |
         "Invalid #2" !! "i" ! false |> { (_, path, expected) =>
-        {
-          CollectorApi.isIceRequest(path) must_== expected
-        }
+        CollectorPayload.isIceRequest(path) must_== expected
       }
-
     }
   }
 }

@@ -18,23 +18,22 @@ import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.effect.Clock
 import cats.syntax.either._
+import cats.syntax.option._
 import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
+import com.snowplowanalytics.snowplow.badrows._
 import io.circe._
-import io.circe.parser._
 
 import loaders.CollectorPayload
+import utils.{HttpClient, JsonUtils}
 
 /**
  * Transforms a collector payload which conforms to a known version of the PagerDuty Tracking
  * webhook into raw events.
  */
 object PagerdutyAdapter extends Adapter {
-  // Vendor name for Failure Message
-  private val VendorName = "PagerDuty"
-
   // Tracker version for a PagerDuty webhook
   private val TrackerVersion = "com.pagerduty-v1"
 
@@ -43,8 +42,8 @@ object PagerdutyAdapter extends Adapter {
 
   // Event-Schema Map for reverse-engineering a Snowplow unstructured event
   private val Incident =
-    SchemaKey("com.pagerduty", "incident", "jsonschema", SchemaVer.Full(1, 0, 0)).toSchemaUri
-  private val EventSchemaMap = Map(
+    SchemaKey("com.pagerduty", "incident", "jsonschema", SchemaVer.Full(1, 0, 0))
+  private[registry] val EventSchemaMap = Map(
     "incident.trigger" -> Incident,
     "incident.acknowledge" -> Incident,
     "incident.unacknowledge" -> Incident,
@@ -62,20 +61,31 @@ object PagerdutyAdapter extends Adapter {
    * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
     payload: CollectorPayload,
     client: Client[F, Json]
-  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
+  ): F[
+    ValidatedNel[FailureDetails.AdapterFailureOrTrackerProtocolViolation, NonEmptyList[RawEvent]]
+  ] =
     (payload.body, payload.contentType) match {
       case (None, _) =>
-        Monad[F].pure(s"Request body is empty: no $VendorName events to process".invalidNel)
+        val failure = FailureDetails.AdapterFailure.InputData(
+          "body",
+          none,
+          "empty body: no events to process"
+        )
+        Monad[F].pure(failure.invalidNel)
       case (_, None) =>
+        val msg = s"no content type: expected $ContentType"
         Monad[F].pure(
-          s"Request body provided but content type empty, expected $ContentType for $VendorName".invalidNel
+          FailureDetails.AdapterFailure.InputData("contentType", none, msg).invalidNel
         )
       case (_, Some(ct)) if ct != ContentType =>
+        val msg = s"expected $ContentType"
         Monad[F].pure(
-          s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel
+          FailureDetails.AdapterFailure
+            .InputData("contentType", ct.some, msg)
+            .invalidNel
         )
       case (Some(body), _) =>
         payloadBodyToEvents(body) match {
@@ -83,13 +93,13 @@ object PagerdutyAdapter extends Adapter {
           case Right(list) =>
             val _ = client
             // Create our list of Validated RawEvents
-            val rawEventsList: List[ValidatedNel[String, RawEvent]] =
+            val rawEventsList: List[ValidatedNel[FailureDetails.AdapterFailure, RawEvent]] =
               for {
                 (event, index) <- list.zipWithIndex
               } yield {
                 val eventOpt = event.hcursor.downField("type").as[String].toOption
                 for {
-                  schema <- lookupSchema(eventOpt, VendorName, index, EventSchemaMap).toValidatedNel
+                  schema <- lookupSchema(eventOpt, index, EventSchemaMap).toValidatedNel
                 } yield {
                   val formattedEvent = reformatParameters(event)
                   val qsParams = toMap(payload.querystring)
@@ -119,13 +129,19 @@ object PagerdutyAdapter extends Adapter {
    * @param body The payload body from the PagerDuty event
    * @return either a Successful List of JValue JSONs or a Failure String
    */
-  private[registry] def payloadBodyToEvents(body: String): Either[String, List[Json]] =
-    parse(body)
-      .leftMap(e => s"$VendorName payload failed to parse into JSON: [${e.getMessage}]")
+  private[registry] def payloadBodyToEvents(
+    body: String
+  ): Either[FailureDetails.AdapterFailure, List[Json]] =
+    JsonUtils
+      .extractJson(body)
+      .leftMap(e => FailureDetails.AdapterFailure.NotJson("body", body.some, e))
       .flatMap { p =>
         p.hcursor.downField("messages").focus.flatMap(_.asArray) match {
           case Some(array) => array.toList.asRight
-          case None => s"Could not resolve $VendorName payload into a JSON array of events".asLeft
+          case None =>
+            FailureDetails.AdapterFailure
+              .InputData("messages", body.some, "field `messages` is not an array")
+              .asLeft
         }
       }
 
