@@ -107,7 +107,6 @@ object ConversionUtils {
    * For details on the Base 64 Encoding with URL and Filename Safe Alphabet see:
    * http://tools.ietf.org/html/rfc4648#page-7
    * @param str The encoded string to be decoded
-   * @param field The name of the field
    * @return a Scalaz Validation, wrapping either an
    * an error String or the decoded String
    */
@@ -117,7 +116,7 @@ object ConversionUtils {
   // 2. Functionality:
   // 1. If passed in null or "", return Success(None)
   // 2. If passed in a non-empty string but result == "", then return a Failure, because we have failed to decode something meaningful
-  def decodeBase64Url(field: String, str: String): Either[String, String] =
+  def decodeBase64Url(str: String): Either[String, String] =
     Either
       .catchNonFatal {
         val decodedBytes = UrlSafeBase64.decode(str)
@@ -125,8 +124,7 @@ object ConversionUtils {
         result
       }
       .leftMap { e =>
-        "Field [%s]: exception Base64-decoding [%s] (URL-safe encoding): [%s]"
-          .format(field, str, e.getMessage)
+        s"exception Base64-decoding [$str] (URL-safe encoding): [${e.getMessage}]"
       }
 
   /**

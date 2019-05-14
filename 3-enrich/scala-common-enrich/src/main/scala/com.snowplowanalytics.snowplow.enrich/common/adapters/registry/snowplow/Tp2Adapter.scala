@@ -86,7 +86,7 @@ object Tp2Adapter extends Adapter {
         case (None, None) => Monad[F].pure(NonEmptyList.one(qsParams).valid)
         case (Some(bdy), Some(_)) => // Build our NEL of parameters
           (for {
-            json <- extractAndValidateJson("Body", PayloadDataSchema, bdy, client)
+            json <- extractAndValidateJson(PayloadDataSchema, bdy, client) // body
             nel <- EitherT.fromEither(toParametersNel(json, qsParams))
           } yield nel).toValidated
       }
@@ -177,13 +177,12 @@ object Tp2Adapter extends Adapter {
    * Failure, or a singular JsonNode on success
    */
   private def extractAndValidateJson[F[_]: Monad: RegistryLookup: Clock](
-    field: String,
     schemaCriterion: SchemaCriterion,
     instance: String,
     client: Client[F, Json]
   ): EitherT[F, NonEmptyList[String], Json] =
     for {
-      j <- EitherT.fromEither(JU.extractJson(field, instance).leftMap(NonEmptyList.one))
+      j <- EitherT.fromEither(JU.extractJson(instance).leftMap(NonEmptyList.one)) // field
       sd <- EitherT.fromEither(
         SelfDescribingData.parse(j).leftMap(parseError => NonEmptyList.one(parseError.code))
       )

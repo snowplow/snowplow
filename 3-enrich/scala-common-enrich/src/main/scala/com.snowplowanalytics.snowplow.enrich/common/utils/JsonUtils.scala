@@ -16,9 +16,7 @@ import java.math.{BigInteger => JBigInteger}
 
 import cats.data.NonEmptyList
 import cats.syntax.either._
-import com.fasterxml.jackson.databind.{JsonNode, ObjectMapper}
 import io.circe._
-import io.circe.jackson._
 import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 
@@ -27,28 +25,20 @@ object JsonUtils {
 
   type DateTimeFields = Option[Tuple2[NonEmptyList[String], DateTimeFormatter]]
 
-  private lazy val Mapper = new ObjectMapper
-
   // Defines the maximalist JSON Schema-compatible date-time format
   private val JsonSchemaDateTimeFormat =
     DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(DateTimeZone.UTC)
 
   /** Validates a String as correct JSON. */
-  val extractUnencJson: (String, String) => Either[String, String] = validateAndReformatJson
+  val extractUnencJson: (String, String) => Either[String, String] =
+    (field, str) => validateAndReformatJson(str).leftMap(e => s"$field: $e")
 
   /** Decodes a Base64 (URL safe)-encoded String then validates it as correct JSON. */
   val extractBase64EncJson: (String, String) => Either[String, String] = (field, str) =>
     ConversionUtils
-      .decodeBase64Url(field, str)
-      .flatMap(json => validateAndReformatJson(field, json))
-
-  /**
-   * Converts a Joda DateTime into a JSON Schema-compatible date-time string.
-   * @param dateTime The Joda DateTime to convert to a timestamp String
-   * @return the timestamp String
-   */
-  private[utils] def toJsonSchemaDateTime(dateTime: DateTime): String =
-    JsonSchemaDateTimeFormat.print(dateTime)
+      .decodeBase64Url(str)
+      .flatMap(validateAndReformatJson)
+      .leftMap(e => s"$field: $e")
 
   /**
    * Converts a boolean-like String of value "true" or "false" to a JBool value of true or false
@@ -87,7 +77,7 @@ object JsonUtils {
   def toJsonSchemaDateTime(str: String, fromFormat: DateTimeFormatter): String =
     try {
       val dt = DateTime.parse(str, fromFormat)
-      toJsonSchemaDateTime(dt)
+      JsonSchemaDateTimeFormat.print(dt)
     } catch {
       case _: IllegalArgumentException => str
     }
@@ -126,36 +116,21 @@ object JsonUtils {
    * Validates and reformats a JSON:
    * 1. Checks the JSON is valid
    * 2. Reformats, including removing unnecessary whitespace
-   * @param field the name of the field containing the JSON
    * @param str the String hopefully containing JSON
-   * @return a Scalaz Validation, wrapping either an error String or the reformatted JSON String
+   * @return either an error String or the reformatted JSON String
    */
-  private[utils] def validateAndReformatJson(field: String, str: String): Either[String, String] =
-    extractJson(field, str).map(_.noSpaces)
+  private[utils] def validateAndReformatJson(str: String): Either[String, String] =
+    extractJson(str).map(_.noSpaces)
 
   /**
-   * Converts a JSON string into a Validation[String, JsonNode]
-   * Version 2.6.7 of jackson can send back null instead of exception here
-   * @param field The name of the field containing JSON
+   * Converts a JSON string into an EIther[String, Json]
    * @param instance The JSON string to parse
-   * @return a Scalaz Validation, wrapping either an error String or the extracted JsonNode
+   * @return either an error String or the extracted Json
    */
-  def extractJson(field: String, instance: String): Either[String, Json] =
+  def extractJson(instance: String): Either[String, Json] =
     io.circe.parser
       .parse(instance)
-      .leftMap(e => s"Field [$field]: invalid JSON [$instance] with parsing error: ${e.message}")
-
-  def extractJsonNode(field: String, instance: String): Either[String, JsonNode] =
-    extractJson(field, instance).map(circeToJackson)
-
-  /**
-   * Converts a JSON string into a JsonNode.
-   * UNSAFE - only use it for Strings you have created yourself. Use extractJson otherwise.
-   * @param instance The JSON string to parse
-   * @return the extracted JsonNode
-   */
-  def unsafeExtractJson(instance: String): JsonNode =
-    Mapper.readTree(instance)
+      .leftMap(e => s"invalid json: ${e.message}")
 
   /**
    * Strips the instance information from a Jackson
