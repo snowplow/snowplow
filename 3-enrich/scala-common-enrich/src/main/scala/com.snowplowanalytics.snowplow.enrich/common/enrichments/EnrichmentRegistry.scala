@@ -26,6 +26,7 @@ import com.snowplowanalytics.maxmind.iplookups.CreateIpLookups
 import com.snowplowanalytics.refererparser.CreateParser
 import com.snowplowanalytics.weather.providers.openweather.CreateOWM
 import io.circe._
+import io.circe.syntax._
 
 import registry._
 import registry.apirequest.ApiRequestEnrichment
@@ -58,7 +59,7 @@ object EnrichmentRegistry {
       )
       _ <- client
         .check(sd)
-        .leftMap(e => NonEmptyList.one(e.toString))
+        .leftMap(e => NonEmptyList.one(e.asJson.noSpaces))
         .subflatMap { _ =>
           EnrichmentConfigSchemaCriterion.matches(sd.schema) match {
             case true => ().asRight

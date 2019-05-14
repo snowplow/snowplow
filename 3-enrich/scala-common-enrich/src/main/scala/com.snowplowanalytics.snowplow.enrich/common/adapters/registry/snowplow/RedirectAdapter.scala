@@ -138,7 +138,7 @@ object RedirectAdapter extends Adapter {
    */
   private def addToExistingCo(newContext: Json, existing: String): Either[String, String] =
     for {
-      json <- JU.extractJson("co|cx", existing)
+      json <- JU.extractJson(existing) // co|cx
       merged = json.hcursor
         .downField("data")
         .withFocus(_.mapArray(newContext +: _))
@@ -156,7 +156,7 @@ object RedirectAdapter extends Adapter {
    */
   private def addToExistingCx(newContext: Json, existing: String): Either[String, String] =
     for {
-      decoded <- CU.decodeBase64Url("cx", existing)
+      decoded <- CU.decodeBase64Url(existing) // cx
       added <- addToExistingCo(newContext, decoded)
       recoded = CU.encodeBase64Url(added)
     } yield recoded

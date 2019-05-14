@@ -475,11 +475,15 @@ object EnrichmentManager {
 
     // Validate custom contexts
     val customContexts: F[ValidatedNel[String, List[SelfDescribingData[Json]]]] =
-      Shredder.extractAndValidateCustomContexts(event, client)
+      Shredder
+        .extractAndValidateCustomContexts(event, client)
+        .map(_.leftMap(_.map(_.toString)))
 
     // Validate unstructured event
     val unstructEvent: F[ValidatedNel[String, List[SelfDescribingData[Json]]]] =
-      Shredder.extractAndValidateUnstructEvent(event, client)
+      Shredder
+        .extractAndValidateUnstructEvent(event, client)
+        .map(_.leftMap(_.map(_.toString)))
 
     // Extract the event vendor/name/format/version
     val extractSchema: F[Either[String, Unit]] = SchemaEnrichment

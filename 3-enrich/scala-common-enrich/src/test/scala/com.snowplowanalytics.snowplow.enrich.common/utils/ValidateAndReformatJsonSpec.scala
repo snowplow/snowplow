@@ -22,8 +22,6 @@ class ValidateAndReformatJsonSpec extends Specification with DataTables {
   extracting invalid JSONs should fail $e2
   """
 
-  val FieldName = "json"
-
   def e1 =
     "SPEC NAME" || "INPUT STR" | "EXPECTED" |
       "Empty JSON" !! "{}" ! "{}" |
@@ -35,25 +33,22 @@ class ValidateAndReformatJsonSpec extends Specification with DataTables {
       {
         "a": 23
       }""" ! """{"a":23}""" |> { (_, str, expected) =>
-      JsonUtils.validateAndReformatJson(FieldName, str) must beRight(expected)
+      JsonUtils.validateAndReformatJson(str) must beRight(expected)
     }
 
-  def err1 = s"Field [$FieldName]: invalid JSON [] with parsing error: exhausted input"
-  def err2: (String, String, Int, Int) => String =
-    (str, got, line, col) =>
-      s"Field [$FieldName]: invalid JSON [$str] with parsing error: expected json value got '$got' (line $line, column $col)"
-  def err3: (String, String, Int, Int) => String =
-    (str, got, line, col) =>
-      s"""Field [$FieldName]: invalid JSON [$str] with parsing error: expected " got '$got' (line $line, column $col)"""
+  def err1 = s"invalid json: exhausted input"
+  def err2: (String, Int, Int) => String =
+    (got, line, col) => s"invalid json: expected json value got '$got' (line $line, column $col)"
+  def err3: (String, Int, Int) => String =
+    (got, line, col) => s"""invalid json: expected " got '$got' (line $line, column $col)"""
 
   def e2 =
     "SPEC NAME" || "INPUT STR" | "EXPECTED" |
       "Empty string" !! "" ! err1 |
-      "Double colons" !! """{"a"::2}""" ! err2("""{"a"::2}""", ":2}", 1, 6) |
-      "Random noise" !! "^45fj_" ! err2("^45fj_", "^45fj_", 1, 1) |
-      "Bad key" !! """{9:"a"}""" ! err3("""{9:"a"}""", """9:"a"}""", 1, 2) |> {
-      (_, str, expected) =>
-        JsonUtils.validateAndReformatJson(FieldName, str) must beLeft(expected)
+      "Double colons" !! """{"a"::2}""" ! err2(":2}", 1, 6) |
+      "Random noise" !! "^45fj_" ! err2("^45fj_", 1, 1) |
+      "Bad key" !! """{9:"a"}""" ! err3("""9:"a"}""", 1, 2) |> { (_, str, expected) =>
+      JsonUtils.validateAndReformatJson(str) must beLeft(expected)
     }
 
 }

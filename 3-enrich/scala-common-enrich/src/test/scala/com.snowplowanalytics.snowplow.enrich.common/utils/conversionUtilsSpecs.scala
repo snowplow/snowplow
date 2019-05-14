@@ -202,18 +202,16 @@ class DecodeBase64UrlSpec extends Specification with DataTables with ScalaCheck 
   decodeBase64Url should correctly decode valid Base64 (URL-safe) encoded strings $e3
   """
 
-  val FieldName = "e"
-
   // Only way of getting a failure currently
   def e1 =
-    ConversionUtils.decodeBase64Url(FieldName, null) must beLeft(
-      "Field [%s]: exception Base64-decoding [null] (URL-safe encoding): [null]".format(FieldName)
+    ConversionUtils.decodeBase64Url(null) must beLeft(
+      "exception Base64-decoding [null] (URL-safe encoding): [null]"
     )
 
   // No string creates a failure
   def e2 =
     prop { (str: String) =>
-      ConversionUtils.decodeBase64Url(FieldName, str) must beRight
+      ConversionUtils.decodeBase64Url(str) must beRight
     }
 
   // Taken from:
@@ -233,7 +231,7 @@ class DecodeBase64UrlSpec extends Specification with DataTables with ScalaCheck 
       "Unescaped characters" !! "äöü - &" ! "" |
       "Blank string" !! "" ! "" |> { (_, str, expected) =>
       {
-        ConversionUtils.decodeBase64Url(FieldName, str) must beRight(expected)
+        ConversionUtils.decodeBase64Url(str) must beRight(expected)
       }
     }
 }
