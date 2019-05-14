@@ -84,7 +84,7 @@ object CljTomcatLoader extends Loader[String] {
       } yield raw).sequence
       val body = (for {
         b64 <- bdy
-        raw = ConversionUtils.decodeBase64Url("Body", b64)
+        raw = ConversionUtils.decodeBase64Url(b64) // body
       } yield raw).sequence
       val api = CollectorApi.parse(objct)
 

@@ -15,7 +15,8 @@ package com.snowplowanalytics.snowplow.enrich.common.outputs
 import java.time.ZonedDateTime
 
 import cats.data.NonEmptyList
-import com.snowplowanalytics.iglu.core.SchemaKey
+import com.snowplowanalytics.iglu.client.ClientError
+import com.snowplowanalytics.iglu.core.{ParseError, SchemaCriterion, SchemaKey}
 
 sealed trait BadRow {
   def failure: Failure
@@ -29,11 +30,50 @@ sealed trait Payload
 
 final case class Processor(artifact: String, version: String)
 
-final case class EnrichmentFailuresBadRow(
-  failure: Failure,
-  payload: Payload,
-  processor: Processor
-) extends BadRow
+// ADAPTER FAILURES
+
+final case class AdapterFailures(
+  timestamp: ZonedDateTime,
+  vendor: String,
+  version: String,
+  messages: NonEmptyList[AdapterFailure]
+) extends Failure
+
+sealed trait AdapterFailure
+// tracker protocol
+final case class NotJsonAdapterFailure(error: String) extends AdapterFailure
+final case class NotSDAdapterFailure(error: ParseError) extends AdapterFailure
+final case class IgluErrorAdapterFailure(schemaKey: SchemaKey, error: ClientError)
+    extends AdapterFailure
+final case class SchemaCritAdapterFailure(schemaKey: SchemaKey, schemaCriterion: SchemaCriterion)
+    extends AdapterFailure
+// webhook adapters
+final case class SchemaMappingAdapterFailure(actual: String, expected: List[String])
+    extends AdapterFailure
+final case class InputDataAdapterFailure(
+  field: String,
+  value: Option[String],
+  expectation: String
+) extends AdapterFailure
+
+// SCHEMA VIOLATIONS
+
+final case class SchemaViolations(timestamp: ZonedDateTime, messages: NonEmptyList[SchemaViolation])
+    extends Failure
+
+sealed trait SchemaViolation
+final case class NotJsonSchemaViolation(
+  field: String,
+  json: String,
+  error: String
+) extends SchemaViolation
+final case class NotSDSchemaViolation(error: ParseError) extends SchemaViolation
+final case class IgluErrorSchemaViolation(schemaKey: SchemaKey, error: ClientError)
+    extends SchemaViolation
+final case class SchemaCritSchemaViolation(schemaKey: SchemaKey, schemaCriterion: SchemaCriterion)
+    extends SchemaViolation
+
+// ENRICHMENT FAILURES
 
 final case class EnrichmentFailures(
   timestamp: ZonedDateTime,

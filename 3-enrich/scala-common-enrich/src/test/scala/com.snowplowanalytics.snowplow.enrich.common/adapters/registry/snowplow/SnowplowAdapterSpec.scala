@@ -211,7 +211,7 @@ class SnowplowAdapterSpec
       "Neither querystring nor body populated" !! Nil ! None ! None ! "Request body and querystring parameters empty, expected at least one populated" |
       "Body populated but content type missing" !! Nil ! None ! "body".some ! "Request body provided but content type empty, expected one of: application/json, application/json; charset=utf-8, application/json; charset=UTF-8" |
       "Content type populated but body missing" !! SpecHelpers.toNameValuePairs("a" -> "b") ! ApplicationJsonWithCharset.some ! None ! "Content type of application/json; charset=utf-8 provided but request body empty" |
-      "Body is not a JSON" !! SpecHelpers.toNameValuePairs("a" -> "b") ! ApplicationJson.some ! "body".some ! "Field [Body]: invalid JSON [body] with parsing error: expected json value got 'body' (line 1, column 1)" |> {
+      "Body is not a JSON" !! SpecHelpers.toNameValuePairs("a" -> "b") ! ApplicationJson.some ! "body".some ! "invalid json: expected json value got 'body' (line 1, column 1)" |> {
 
       (_, querystring, contentType, body, expected) =>
         {
@@ -495,9 +495,7 @@ class SnowplowAdapterSpec
     )
     val actual = RedirectAdapter.toRawEvents(payload, SpecHelpers.client).value
     actual must beInvalid(
-      NonEmptyList.one(
-        """Field [co|cx]: invalid JSON [{[-] with parsing error: expected " got '[-' (line 1, column 2)"""
-      )
+      NonEmptyList.one("""invalid json: expected " got '[-' (line 1, column 2)""")
     )
   }
 
@@ -515,9 +513,7 @@ class SnowplowAdapterSpec
       Shared.context
     )
     val actual = RedirectAdapter.toRawEvents(payload, SpecHelpers.client).value
-    actual must beInvalid(
-      NonEmptyList.one("Field [co|cx]: invalid JSON [] with parsing error: exhausted input")
-    )
+    actual must beInvalid(NonEmptyList.one("invalid json: exhausted input"))
   }
 
 }

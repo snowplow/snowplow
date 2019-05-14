@@ -50,7 +50,7 @@ object JavascriptScriptEnrichment extends ParseableEnrichment {
     (for {
       _ <- isParseable(c, schemaKey)
       encoded <- CirceUtils.extract[String](c, "parameters", "script").toEither
-      raw <- ConversionUtils.decodeBase64Url("script", encoded)
+      raw <- ConversionUtils.decodeBase64Url(encoded) // script
       compiled <- compile(raw)
     } yield JavascriptScriptConf(compiled)).toValidatedNel
 

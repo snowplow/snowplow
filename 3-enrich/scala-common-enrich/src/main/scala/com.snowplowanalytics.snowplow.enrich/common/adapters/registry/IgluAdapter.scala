@@ -25,7 +25,8 @@ import cats.effect.Clock
 import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
-import com.snowplowanalytics.iglu.core.SchemaKey
+import com.snowplowanalytics.iglu.core.{SchemaKey, SelfDescribingData}
+import com.snowplowanalytics.iglu.core.circe.instances._
 import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
@@ -117,29 +118,26 @@ object IgluAdapter extends Adapter {
   ): ValidatedNel[String, NonEmptyList[RawEvent]] =
     parseJsonSafe(body) match {
       case Right(parsed) =>
-        val cursor = parsed.hcursor
-        (cursor.get[String]("schema").toOption, cursor.downField("data").focus) match {
-          case (Some(schemaUri), Some(data)) =>
-            SchemaKey.fromUri(schemaUri) match {
-              case Left(parseError) => parseError.code.invalidNel
-              case _ =>
-                NonEmptyList
-                  .one(
-                    RawEvent(
-                      api = payload.api,
-                      parameters =
-                        toUnstructEventParams(TrackerVersion, params, schemaUri, data, "app"),
-                      contentType = payload.contentType,
-                      source = payload.source,
-                      context = payload.context
-                    )
-                  )
-                  .valid
-            }
-          case (None, _) =>
-            s"$VendorName event failed: detected SelfDescribingJson but schema key is missing".invalidNel
-          case (_, None) =>
-            s"$VendorName event failed: detected SelfDescribingJson but data key is missing".invalidNel
+        SelfDescribingData.parse(parsed) match {
+          case Left(parseError) => parseError.code.invalidNel
+          case Right(sd) =>
+            NonEmptyList
+              .one(
+                RawEvent(
+                  api = payload.api,
+                  parameters = toUnstructEventParams(
+                    TrackerVersion,
+                    params,
+                    sd.schema.toSchemaUri,
+                    sd.data,
+                    "app"
+                  ),
+                  contentType = payload.contentType,
+                  source = payload.source,
+                  context = payload.context
+                )
+              )
+              .valid
         }
       case Left(err) => err.invalidNel
     }
