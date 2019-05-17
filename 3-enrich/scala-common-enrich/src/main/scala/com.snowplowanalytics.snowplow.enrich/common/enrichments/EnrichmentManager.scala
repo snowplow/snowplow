@@ -47,6 +47,9 @@ import web.{PageEnrichments           => WPE}
  */
 object EnrichmentManager {
 
+  // Regex for IPv4 without port
+  val IPv4Regex = """(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*""".r
+
   /**
    * Runs our enrichment process.
    *
@@ -279,14 +282,20 @@ object EnrichmentManager {
       case f => f
     }
 
-    // Fetch IAB enrichment context (before anonymizing the IP address)
+    // Fetch IAB enrichment context (before anonymizing the IP address).
+    // IAB enrichment is called only if the IP is v4 (and after removing the port if any)
+    // and if the user agent is defined.
     val iabContext = registry.getIabEnrichment match {
       case Some(iab) =>
-        iab
-          .getIabContext(Option(event.useragent),
-                         Option(event.user_ipaddress),
-                         Option(event.derived_tstamp).map(EventEnrichments.fromTimestamp))
-          .map(_.some)
+        event.user_ipaddress match {
+          case IPv4Regex(ipv4) if !List(null, "", s"\0").contains(event.useragent) =>
+            iab
+              .getIabContext(Option(event.useragent),
+                             Option(ipv4),
+                             Option(event.derived_tstamp).map(EventEnrichments.fromTimestamp))
+              .map(_.some)
+          case _ => None.success
+        }
       case None => None.success
     }
 
@@ -505,10 +514,21 @@ object EnrichmentManager {
       case None => None.success
     }
 
+    // YAUAA enrichment
+    val yauaaContext = registry.getYauaaEnrichment match {
+      case Some(yauaaEnrichment) =>
+        yauaaEnrichment
+          .getYauaaContext(event.useragent)
+          .map(_.some)
+      case None => None.success
+    }
+
     // Assemble array of contexts prepared by built-in enrichments
     val preparedDerivedContexts = List(uaParser).collect {
       case Success(Some(context)) => context
     } ++ List(weatherContext).collect {
+      case Success(Some(context)) => context
+    } ++ List(yauaaContext).collect {
       case Success(Some(context)) => context
     } ++ List(iabContext).collect {
       case Success(Some(context)) => context
@@ -584,7 +604,8 @@ object EnrichmentManager {
 
     val third =
       (weatherContext.toValidationNel |@|
-        iabContext.toValidationNel) { (_, _) =>
+        yauaaContext.toValidationNel |@|
+        iabContext.toValidationNel) { (_, _, _) =>
         ()
       }
 

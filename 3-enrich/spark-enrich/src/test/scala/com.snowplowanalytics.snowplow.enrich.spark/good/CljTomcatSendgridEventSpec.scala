@@ -20,7 +20,7 @@ import org.specs2.mutable.Specification
 object CljTomcatSendgridEventSpec {
   import EnrichJobSpec._
   val lines = Lines(
-    "2014-10-09  16:28:31    -   13  255.255.255.255   POST    255.255.255.255   /com.sendgrid/v3   404 -  -    aid=email&cv=clj-0.6.0-tom-0.0.4&nuid=-   -   -   -   application%2Fjson   W3siZW1haWwiOiJleGFtcGxlQHRlc3QuY29tIiwidGltZXN0YW1wIjoxNDQ2NTQ5NjE1LCJzbXRwLWlkIjoiXHUwMDNjMTRjNWQ3NWNlOTMuZGZkLjY0YjQ2OUBpc210cGQtNTU1XHUwMDNlIiwiZXZlbnQiOiJwcm9jZXNzZWQiLCJjYXRlZ29yeSI6ImNhdCBmYWN0cyIsInNnX2V2ZW50X2lkIjoic1pST3dNR01hZ0Znbk9FbVNkdmhpZz09Iiwic2dfbWVzc2FnZV9pZCI6IjE0YzVkNzVjZTkzLmRmZC42NGI0NjkuZmlsdGVyMDAwMS4xNjY0OC41NTE1RTBCODguMCJ9XQ=="
+    "2014-10-09  16:28:31    -   13  255.255.255.255   POST    255.255.255.255   /com.sendgrid/v3   404 -  -    aid=email&cv=clj-0.6.0-tom-0.0.4&nuid=-   -   -   -   application%2Fjson   W3siZW1haWwiOiJleGFtcGxlQHRlc3QuY29tIiwidGltZXN0YW1wIjoxNDQ2NTQ5NjE1LCJzbXRwLWlkIjoiXHUwMDNjMTRjNWQ3NWNlOTMuZGZkLjY0YjQ2OUBpc210cGQtNTU1XHUwMDNlIiwiZXZlbnQiOiJwcm9jZXNzZWQiLCJjYXRlZ29yeSI6ImNhdCBmYWN0cyIsInNnX2V2ZW50X2lkIjoic1pST3dNR01hZ0Znbk9FbVNkdmhpZz09Iiwic2dfbWVzc2FnZV9pZCI6IjE0YzVkNzVjZTkzLmRmZC42NGI0NjkuZmlsdGVyMDAwMS4xNjY0OC41NTE1RTBCODguMCIsIm1hcmtldGluZ19jYW1wYWlnbl9pZCI6MTIzNDUsIm1hcmtldGluZ19jYW1wYWlnbl9uYW1lIjoiY2FtcGFpZ24gbmFtZSIsIm1hcmtldGluZ19jYW1wYWlnbl92ZXJzaW9uIjoiQiIsIm1hcmtldGluZ19jYW1wYWlnbl9zcGxpdF9pZCI6MTM0NzF9XQ=="
   )
   val expected = List(
     "email",
@@ -81,7 +81,7 @@ object CljTomcatSendgridEventSpec {
     null, //
     null, //
     null, //
-    """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.sendgrid/processed/jsonschema/1-0-0","data":{"email":"example@test.com","timestamp":"2015-11-03T11:20:15.000Z","smtp-id":"\u003c14c5d75ce93.dfd.64b469@ismtpd-555\u003e","category":"cat facts","sg_event_id":"sZROwMGMagFgnOEmSdvhig==","sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0"}}}""",
+    """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.sendgrid/processed/jsonschema/2-0-0","data":{"email":"example@test.com","timestamp":"2015-11-03T11:20:15.000Z","smtp-id":"\u003c14c5d75ce93.dfd.64b469@ismtpd-555\u003e","category":"cat facts","sg_event_id":"sZROwMGMagFgnOEmSdvhig==","sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0","marketing_campaign_id":12345,"marketing_campaign_name":"campaign name","marketing_campaign_version":"B","marketing_campaign_split_id":13471}}}""",
     null, // Transaction fields empty
     null, //
     null, //

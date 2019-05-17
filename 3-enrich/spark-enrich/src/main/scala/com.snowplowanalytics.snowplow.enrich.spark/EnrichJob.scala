@@ -46,6 +46,7 @@ import com.hadoop.compression.lzo.{LzoCodec, LzopCodec}
 
 // Snowplow
 import common.{EtlPipeline, FatalEtlError, ValidatedEnrichedEvent}
+import common.adapters.AdapterRegistry
 import common.loaders.{Loader, ThriftLoader}
 import common.outputs.{BadRow, EnrichedEvent}
 
@@ -116,10 +117,12 @@ object EnrichJob extends SparkJob {
    */
   def enrich(line: Any, config: ParsedEnrichJobConfig): (Any, List[ValidatedEnrichedEvent]) = {
     import singleton._
-    val registry = RegistrySingleton.get(config.igluConfig, config.enrichments, config.local)
+    val adapterRegistry = new AdapterRegistry
+    val enrichmentRegistry = RegistrySingleton.get(config.igluConfig, config.enrichments, config.local)
     val loader   = LoaderSingleton.get(config.inFormat).asInstanceOf[Loader[Any]]
     val event = EtlPipeline.processEvents(
-      registry,
+      adapterRegistry,
+      enrichmentRegistry,
       etlVersion,
       config.etlTstamp,
       loader.toCollectorPayload(line))(ResolverSingleton.get(config.igluConfig))

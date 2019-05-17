@@ -40,8 +40,8 @@ class EnrichWithLocalFileSpec extends PipelineSpec {
     "L",
     "Dublin",
     "D02",
-    "53.3331",
-    "-6.2489",
+    "53.3338", //!\ after an update of MaxMind database this coordinate might change
+    "-6.2488", //!\ after an update of MaxMind database this coordinate might change
     "Leinster",
     """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.snowplowanalytics.snowplow/screen_view/jsonschema/1-0-0","data":{"name":"hello from Snowplow"}}}""",
     "curl/7.50.3",
@@ -51,7 +51,7 @@ class EnrichWithLocalFileSpec extends PipelineSpec {
     "1-0-0"
   )
 
-  "Enrich" should "enrich a unstruct event with geo ip information" in {
+  "Enrich" should "enrich a unstruct event with geo ip information (if failure, check coordinates)" in {
     downloadLocalEnrichmentFile(
       "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoLite2-City.mmdb",
       "./ip_geo"

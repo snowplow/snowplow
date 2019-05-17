@@ -67,7 +67,7 @@ module Snowplow
           client.list_clusters(options)
         rescue Elasticity::ThrottlingException, RestClient::RequestTimeout, RestClient::InternalServerError, RestClient::ServiceUnavailable, RestClient::SSLCertificateNotVerified
           retries += 1
-          sleep(2 ** retries * 1)
+          sleep(2 ** retries + 30)
           retry if retries < 3
         end
       end

@@ -54,22 +54,22 @@ object SendgridAdapter extends Adapter {
   // Expected content type for a request body
   private val ContentType = "application/json"
 
-  // Tracker version for an Sendgrid Tracking webhook
+  // Tracker version for a Sendgrid Tracking webhook
   private val TrackerVersion = "com.sendgrid-v3"
 
   // Schemas for reverse-engineering a Snowplow unstructured event
   private val EventSchemaMap = Map(
-    "processed"         -> SchemaKey("com.sendgrid", "processed", "jsonschema", "1-0-0").toSchemaUri,
-    "dropped"           -> SchemaKey("com.sendgrid", "dropped", "jsonschema", "1-0-0").toSchemaUri,
-    "delivered"         -> SchemaKey("com.sendgrid", "delivered", "jsonschema", "1-0-0").toSchemaUri,
-    "deferred"          -> SchemaKey("com.sendgrid", "deferred", "jsonschema", "1-0-0").toSchemaUri,
-    "bounce"            -> SchemaKey("com.sendgrid", "bounce", "jsonschema", "1-0-0").toSchemaUri,
-    "open"              -> SchemaKey("com.sendgrid", "open", "jsonschema", "1-0-0").toSchemaUri,
-    "click"             -> SchemaKey("com.sendgrid", "click", "jsonschema", "1-0-0").toSchemaUri,
-    "spamreport"        -> SchemaKey("com.sendgrid", "spamreport", "jsonschema", "1-0-0").toSchemaUri,
-    "unsubscribe"       -> SchemaKey("com.sendgrid", "unsubscribe", "jsonschema", "1-0-0").toSchemaUri,
-    "group_unsubscribe" -> SchemaKey("com.sendgrid", "group_unsubscribe", "jsonschema", "1-0-0").toSchemaUri,
-    "group_resubscribe" -> SchemaKey("com.sendgrid", "group_resubscribe", "jsonschema", "1-0-0").toSchemaUri
+    "processed"         -> SchemaKey("com.sendgrid", "processed", "jsonschema", "2-0-0").toSchemaUri,
+    "dropped"           -> SchemaKey("com.sendgrid", "dropped", "jsonschema", "2-0-0").toSchemaUri,
+    "delivered"         -> SchemaKey("com.sendgrid", "delivered", "jsonschema", "2-0-0").toSchemaUri,
+    "deferred"          -> SchemaKey("com.sendgrid", "deferred", "jsonschema", "2-0-0").toSchemaUri,
+    "bounce"            -> SchemaKey("com.sendgrid", "bounce", "jsonschema", "2-0-0").toSchemaUri,
+    "open"              -> SchemaKey("com.sendgrid", "open", "jsonschema", "2-0-0").toSchemaUri,
+    "click"             -> SchemaKey("com.sendgrid", "click", "jsonschema", "2-0-0").toSchemaUri,
+    "spamreport"        -> SchemaKey("com.sendgrid", "spamreport", "jsonschema", "2-0-0").toSchemaUri,
+    "unsubscribe"       -> SchemaKey("com.sendgrid", "unsubscribe", "jsonschema", "2-0-0").toSchemaUri,
+    "group_unsubscribe" -> SchemaKey("com.sendgrid", "group_unsubscribe", "jsonschema", "2-0-0").toSchemaUri,
+    "group_resubscribe" -> SchemaKey("com.sendgrid", "group_resubscribe", "jsonschema", "2-0-0").toSchemaUri
   )
 
   /**

@@ -175,6 +175,17 @@ enrich {
     appName = ${?ENRICH_STREAMS_APP_NAME}
   }
 
+  # The setting below requires an adapter being ready, i.e.: https://github.com/snowplow-incubator/remote-adapter-example
+  # remoteAdapters = [
+  #    {
+  #        vendor: "com.globeandmail"
+  #        version: "v1"
+  #        url: "http://remote-adapter-example:8995/sampleRemoteAdapter"
+  #        connectionTimeout: 1000
+  #        readTimeout: 5000
+  #    }
+  # ]
+
   # Optional section for tracking endpoints
   monitoring {
     snowplow {

@@ -87,8 +87,16 @@ object model {
     appId: String,
     method: String
   )
+  final case class RemoteAdapterConfig(
+    vendor: String,
+    version: String,
+    connectionTimeout: Option[Long],
+    readTimeout: Option[Long],
+    url: String
+  )
   final case class EnrichConfig(
     streams: StreamsConfig,
+    remoteAdapters: Option[List[RemoteAdapterConfig]],
     monitoring: Option[MonitoringConfig]
   )
 }

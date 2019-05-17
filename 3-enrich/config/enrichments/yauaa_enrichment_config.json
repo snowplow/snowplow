@@ -1,0 +1,9 @@
+{
+    "schema": "iglu:com.snowplowanalytics.snowplow.enrichments/yauaa_enrichment_config/jsonschema/1-0-0",
+
+    "data": {
+        "enabled": true,
+        "vendor": "com.snowplowanalytics.snowplow.enrichments",
+        "name": "yauaa_enrichment_config"
+    }
+}

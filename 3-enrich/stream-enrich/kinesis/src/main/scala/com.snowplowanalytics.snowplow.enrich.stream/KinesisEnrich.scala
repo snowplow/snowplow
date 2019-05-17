@@ -42,6 +42,7 @@ import org.json4s.JsonDSL._
 import scalaz.{Sink => _, Source => _, _}
 import Scalaz._
 
+import common.adapters.AdapterRegistry
 import common.enrichments.EnrichmentRegistry
 import config._
 import iglu.client.Resolver
@@ -67,7 +68,8 @@ object KinesisEnrich extends Enrich {
       enrichmentRegistry <- parseEnrichmentRegistry(enrichmentsArg)(resolver, creds)
       _                  <- cacheFiles(enrichmentRegistry, forceDownload)(creds)
       tracker = enrichConfig.monitoring.map(c => SnowplowTracking.initializeTracker(c.snowplow))
-      source <- getSource(enrichConfig.streams, resolver, enrichmentRegistry, tracker)
+      adapterRegistry = new AdapterRegistry(prepareRemoteAdapters(enrichConfig.remoteAdapters))
+      source <- getSource(enrichConfig.streams, resolver, adapterRegistry, enrichmentRegistry, tracker)
     } yield (tracker, source)
 
     trackerSource match {
@@ -83,10 +85,11 @@ object KinesisEnrich extends Enrich {
   override def getSource(
     streamsConfig: StreamsConfig,
     resolver: Resolver,
+    adapterRegistry: AdapterRegistry,
     enrichmentRegistry: EnrichmentRegistry,
     tracker: Option[Tracker]
   ): Validation[String, sources.Source] =
-    KinesisSource.createAndInitialize(streamsConfig, resolver, enrichmentRegistry, tracker)
+    KinesisSource.createAndInitialize(streamsConfig, resolver, adapterRegistry, enrichmentRegistry, tracker)
 
   override lazy val parser: scopt.OptionParser[FileConfig] =
     new scopt.OptionParser[FileConfig](generated.BuildInfo.name) with FileConfigOptions {

@@ -48,6 +48,8 @@ object Dependencies {
     val mysqlConnector   = "5.1.39"
     val jaywayJsonpath   = "2.4.0"
     val iabClient        = "0.1.0"
+    val yauaa            = "5.8"
+    val kryo             = "2.24.0"
     // Scala
     val scalaz7          = "7.0.9"
     val snowplowRawEvent = "0.1.0"
@@ -61,7 +63,7 @@ object Dependencies {
     val scalaWeather     = "0.3.0"
     val scalaj           = "2.3.0"
     val gatlingJsonpath  = "0.6.4"
-    val scalaUri         = "0.5.0"
+    val scalaUri         = "1.4.3"
     // Scala (test only)
     val specs2           = "2.3.13"
     val scalazSpecs2     = "0.2"
@@ -87,6 +89,8 @@ object Dependencies {
     val mysqlConnector   = "mysql"                      %  "mysql-connector-java"          % V.mysqlConnector
     val jaywayJsonpath   = "com.jayway.jsonpath"        %  "json-path"                     % V.jaywayJsonpath
     val iabClient        = "com.snowplowanalytics"      %  "iab-spiders-and-robots-client" % V.iabClient
+    val yauaa            = "nl.basjes.parse.useragent"  %  "yauaa"                         % V.yauaa
+    val kryo             = "com.esotericsoftware.kryo"  %  "kryo"                          % V.kryo
 
     // Scala
     val scalaForex       = "com.snowplowanalytics"      %% "scala-forex"                   % V.scalaForex

@@ -26,7 +26,7 @@ package sources
 import org.apache.commons.codec.binary.Base64
 import scalaz._
 import Scalaz._
-
+import common.adapters.AdapterRegistry
 import common.enrichments.EnrichmentRegistry
 import iglu.client.Resolver
 import model.{Stdin, StreamsConfig}
@@ -38,6 +38,7 @@ object StdinSource {
   def create(
     config: StreamsConfig,
     igluResolver: Resolver,
+    adapterRegistry: AdapterRegistry,
     enrichmentRegistry: EnrichmentRegistry,
     tracker: Option[Tracker]
   ): Validation[String, StdinSource] = for {
@@ -45,16 +46,17 @@ object StdinSource {
       case Stdin => ().success
       case _ => "Configured source/sink is not Stdin".failure
     }
-  } yield new StdinSource(igluResolver, enrichmentRegistry, tracker, config.out.partitionKey)
+  } yield new StdinSource(igluResolver, adapterRegistry, enrichmentRegistry, tracker, config.out.partitionKey)
 }
 
 /** Source to decode raw events (in base64) from stdin. */
 class StdinSource private (
   igluResolver: Resolver,
+  adapterRegistry: AdapterRegistry,
   enrichmentRegistry: EnrichmentRegistry,
   tracker: Option[Tracker],
   partitionKey: String
-) extends Source(igluResolver, enrichmentRegistry, tracker, partitionKey) {
+) extends Source(igluResolver, adapterRegistry, enrichmentRegistry, tracker, partitionKey) {
 
   override val MaxRecordSize = None
 

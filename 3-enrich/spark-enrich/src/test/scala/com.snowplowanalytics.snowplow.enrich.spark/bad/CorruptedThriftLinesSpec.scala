@@ -40,6 +40,7 @@ class CorruptedThriftLinesSpec extends Specification with EnrichJobSpec {
         false,
         false,
         false,
+        false,
         false)
 
       "write a bad row JSON containing the input line and all errors" in {

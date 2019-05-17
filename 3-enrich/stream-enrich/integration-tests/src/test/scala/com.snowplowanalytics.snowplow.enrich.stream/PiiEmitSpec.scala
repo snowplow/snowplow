@@ -126,6 +126,7 @@ class PiiEmitSpec
       val app = getMainApplicationFuture(
         configObject.get,
         SpecHelpers.resolver,
+        SpecHelpers.adapterRegistry,
         SpecHelpers.enrichmentRegistry,
         None)
       inputProduced(ktu.brokerAddress) aka "sending input" must beSuccessfulTry

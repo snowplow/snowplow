@@ -19,7 +19,7 @@ lazy val root = project
   .in(file("."))
   .settings(
     name        := "snowplow-common-enrich",
-    version     := "0.36.0",
+    version     := "0.37.0",
     description := "Common functionality for enriching raw Snowplow events"
   )
   .settings(BuildSettings.formatting)
@@ -44,6 +44,8 @@ lazy val root = project
       Dependencies.Libraries.mysqlConnector,
       Dependencies.Libraries.jaywayJsonpath,
       Dependencies.Libraries.iabClient,
+      Dependencies.Libraries.yauaa,
+      Dependencies.Libraries.kryo,
       // Scala
       Dependencies.Libraries.scalaz7,
       Dependencies.Libraries.snowplowRawEvent,

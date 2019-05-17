@@ -61,6 +61,5 @@ object singleton {
       }
       instance
     }
-
   }
 }

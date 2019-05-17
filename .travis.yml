@@ -69,7 +69,7 @@ services:
   - docker
   - postgresql
 before_deploy:
-  - pip install --user release-manager==0.3.0
+  - pip install --user release-manager==0.4.1
   # necessary for the deploy section to work, see https://github.com/snowplow/snowplow/issues/3691
   - rvm install 2.4.3
   - rvm --default use 2.4.3
