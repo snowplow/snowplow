@@ -23,6 +23,7 @@ import org.specs2.Specification
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import outputs.InputDataAdapterFailure
 import SpecHelpers._
 import utils.Clock._
 
@@ -161,6 +162,8 @@ class CallrailAdapterSpec extends Specification with DataTables with ValidatedMa
     val payload = CollectorPayload(Shared.api, params, None, None, Shared.source, Shared.context)
     val actual = CallrailAdapter.toRawEvents[Eval](payload, SpecHelpers.client).value
 
-    actual must beInvalid(NonEmptyList.one("Querystring is empty: no CallRail event to process"))
+    actual must beInvalid(
+      NonEmptyList.one(InputDataAdapterFailure("querystring", None, "empty querystring"))
+    )
   }
 }

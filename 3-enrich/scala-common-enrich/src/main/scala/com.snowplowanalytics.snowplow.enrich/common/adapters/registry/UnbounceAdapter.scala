@@ -25,15 +25,16 @@ import cats.data.{NonEmptyList, ValidatedNel}
 import cats.effect.Clock
 import cats.syntax.apply._
 import cats.syntax.either._
+import cats.syntax.option._
 import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import io.circe._
-import io.circe.parser._
 import org.apache.http.client.utils.URLEncodedUtils
 
 import loaders.CollectorPayload
+import outputs._
 import utils.{JsonUtils => JU}
 
 /**
@@ -41,9 +42,6 @@ import utils.{JsonUtils => JU}
  * into raw events.
  */
 object UnbounceAdapter extends Adapter {
-  // Vendor name for Failure Message
-  private val VendorName = "Unbounce"
-
   // Tracker version for an Unbounce Tracking webhook
   private val TrackerVersion = "com.unbounce-v1"
 
@@ -65,55 +63,53 @@ object UnbounceAdapter extends Adapter {
   override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
     payload: CollectorPayload,
     client: Client[F, Json]
-  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
+  ): F[ValidatedNel[AdapterFailure, NonEmptyList[RawEvent]]] =
     (payload.body, payload.contentType) match {
       case (None, _) =>
-        Monad[F].pure(s"Request body is empty: no $VendorName events to process".invalidNel)
+        val failure = InputDataAdapterFailure("body", none, "empty body: no events to process")
+        Monad[F].pure(failure.invalidNel)
+      case (Some(body), _) if (body.isEmpty) =>
+        val failure = InputDataAdapterFailure("body", none, "empty body: no events to process")
+        Monad[F].pure(failure.invalidNel)
       case (_, None) =>
-        Monad[F].pure(
-          s"Request body provided but content type empty, expected $ContentType for $VendorName".invalidNel
-        )
+        val msg = s"no content type: expected $ContentType"
+        Monad[F].pure(InputDataAdapterFailure("contentType", none, msg).invalidNel)
       case (_, Some(ct)) if ct != ContentType =>
-        Monad[F].pure(
-          s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel
-        )
+        val msg = s"expected $ContentType"
+        Monad[F].pure(InputDataAdapterFailure("contentType", ct.some, msg).invalidNel)
       case (Some(body), _) =>
-        if (body.isEmpty)
-          Monad[F].pure(s"$VendorName event body is empty: nothing to process".invalidNel)
-        else {
-          val _ = client
-          val qsParams = toMap(payload.querystring)
-          Try {
-            toMap(
-              URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).asScala.toList
-            )
-          } match {
-            case TF(e) =>
-              val msg = JU.stripInstanceEtc(e.getMessage).orNull
-              Monad[F].pure(s"$VendorName incorrect event string : [$msg]".invalidNel)
-            case TS(bodyMap) =>
-              Monad[F].pure(
-                (
-                  payloadBodyToEvent(bodyMap).toValidatedNel,
-                  lookupSchema(Some("form_post"), VendorName, ContextSchema).toValidatedNel
-                ).mapN { (event, schema) =>
-                  NonEmptyList.one(
-                    RawEvent(
-                      api = payload.api,
-                      parameters =
-                        toUnstructEventParams(TrackerVersion, qsParams, schema, event, "srv"),
-                      contentType = payload.contentType,
-                      source = payload.source,
-                      context = payload.context
-                    )
+        val _ = client
+        val qsParams = toMap(payload.querystring)
+        Try {
+          toMap(
+            URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).asScala.toList
+          )
+        } match {
+          case TF(e) =>
+            val msg = s"could not parse body: ${JU.stripInstanceEtc(e.getMessage).orNull}"
+            Monad[F].pure(InputDataAdapterFailure(body, body.some, msg).invalidNel)
+          case TS(bodyMap) =>
+            Monad[F].pure(
+              (
+                payloadBodyToEvent(bodyMap).toValidatedNel,
+                lookupSchema(Some("form_post"), ContextSchema).toValidatedNel
+              ).mapN { (event, schema) =>
+                NonEmptyList.one(
+                  RawEvent(
+                    api = payload.api,
+                    parameters =
+                      toUnstructEventParams(TrackerVersion, qsParams, schema, event, "srv"),
+                    contentType = payload.contentType,
+                    source = payload.source,
+                    context = payload.context
                   )
-                }
-              )
-          }
+                )
+              }
+            )
         }
     }
 
-  private def payloadBodyToEvent(bodyMap: Map[String, String]): Either[String, Json] =
+  private def payloadBodyToEvent(bodyMap: Map[String, String]): Either[AdapterFailure, Json] =
     (
       bodyMap.get("page_id"),
       bodyMap.get("page_name"),
@@ -121,17 +117,21 @@ object UnbounceAdapter extends Adapter {
       bodyMap.get("page_url"),
       bodyMap.get("data.json")
     ) match {
-      case (None, _, _, _, _) => s"${VendorName} context data missing 'page_id'".asLeft
-      case (_, None, _, _, _) => s"${VendorName} context data missing 'page_name'".asLeft
-      case (_, _, None, _, _) => s"${VendorName} context data missing 'variant'".asLeft
-      case (_, _, _, None, _) => s"${VendorName} context data missing 'page_url'".asLeft
+      case (None, _, _, _, _) =>
+        InputDataAdapterFailure("page_id", none, "missing 'page_id' field in body").asLeft
+      case (_, None, _, _, _) =>
+        InputDataAdapterFailure("page_name", none, "missing 'page_name' field in body").asLeft
+      case (_, _, None, _, _) =>
+        InputDataAdapterFailure("variant", none, "missing 'variant' field in body").asLeft
+      case (_, _, _, None, _) =>
+        InputDataAdapterFailure("page_url", none, "missing 'page_url' field in body").asLeft
       case (_, _, _, _, None) =>
-        s"$VendorName event data does not have 'data.json' as a key".asLeft
+        InputDataAdapterFailure("data.json", none, "missing 'data.json' field in body").asLeft
       case (_, _, _, _, Some(dataJson)) if dataJson.isEmpty =>
-        s"$VendorName event data is empty: nothing to process".asLeft
+        InputDataAdapterFailure("data.json", none, "empty 'data.json' field in body").asLeft
       case (Some(_), Some(_), Some(_), Some(_), Some(dataJson)) =>
         val event = (bodyMap - "data.json" - "data.xml").toList
-        parse(dataJson)
+        JU.extractJson(dataJson)
           .map { dJs =>
             val js = Json
               .obj(
@@ -139,6 +139,6 @@ object UnbounceAdapter extends Adapter {
               )
             camelize(js)
           }
-          .leftMap(e => s"$VendorName event string failed to parse into JSON: [${e.getMessage}]")
+          .leftMap(e => NotJsonAdapterFailure("data.json", dataJson, e))
     }
 }

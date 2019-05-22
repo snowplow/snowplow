@@ -21,6 +21,7 @@ import org.specs2.Specification
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import outputs.InputDataAdapterFailure
 import utils.Clock._
 
 class VeroAdapterSpec extends Specification with DataTables with ValidatedMatchers {
@@ -316,7 +317,7 @@ class VeroAdapterSpec extends Specification with DataTables with ValidatedMatche
     val payload =
       CollectorPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
     VeroAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(
-      NonEmptyList.one("Request body is empty: no Vero event to process")
+      NonEmptyList.one(InputDataAdapterFailure("body", None, "empty body: no events to process"))
     )
   }
 }

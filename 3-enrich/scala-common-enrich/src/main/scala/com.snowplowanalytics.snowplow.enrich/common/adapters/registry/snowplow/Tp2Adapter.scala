@@ -15,27 +15,19 @@ package adapters
 package registry
 package snowplow
 
-import java.util.Map.{Entry => JMapEntry}
-
-import scala.collection.JavaConverters._
-
 import cats.Monad
 import cats.data.{EitherT, NonEmptyList, Validated, ValidatedNel}
 import cats.data.Validated._
 import cats.effect.Clock
-import cats.syntax.either._
-import cats.syntax.functor._
-import cats.syntax.validated._
+import cats.implicits._
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SelfDescribingData}
 import com.snowplowanalytics.iglu.core.circe.instances._
-import com.fasterxml.jackson.databind.JsonNode
 import io.circe.Json
-import io.circe.jackson._
-import io.circe.syntax._
 
 import loaders.CollectorPayload
+import outputs._
 import utils.{JsonUtils => JU}
 
 /**
@@ -63,31 +55,35 @@ object Tp2Adapter extends Adapter {
   def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
     payload: CollectorPayload,
     client: Client[F, Json]
-  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] = {
+  ): F[ValidatedNel[AdapterFailure, NonEmptyList[RawEvent]]] = {
     val qsParams = toMap(payload.querystring)
 
     // Verify: body + content type set; content type matches expected; body contains expected JSON Schema; body passes schema validation
-    val validatedParamsNel: F[ValidatedNel[String, NonEmptyList[RawEventParameters]]] =
+    val validatedParamsNel: F[ValidatedNel[AdapterFailure, NonEmptyList[RawEventParameters]]] =
       (payload.body, payload.contentType) match {
         case (None, _) if qsParams.isEmpty =>
-          Monad[F].pure(
-            s"Request body and querystring parameters empty, expected at least one populated".invalidNel
-          )
+          val msg1 = "empty body: not a valid tracker protocol event"
+          val failure1 = InputDataAdapterFailure("body", none, msg1)
+          val msg2 = "empty querystring: not a valid tracker protocol event"
+          val failure2 = InputDataAdapterFailure("querystring", none, msg2)
+          Monad[F].pure(NonEmptyList.of(failure1, failure2).invalid)
         case (_, Some(ct)) if !ContentTypes.list.contains(ct) =>
-          Monad[F].pure(
-            s"Content type of ${ct} provided, expected one of: ${ContentTypes.str}".invalidNel
-          )
+          val msg = s"expected one of ${ContentTypes.str}"
+          val failure = InputDataAdapterFailure("contentType", ct.some, msg)
+          Monad[F].pure(failure.invalidNel)
         case (Some(_), None) =>
-          Monad[F].pure(
-            s"Request body provided but content type empty, expected one of: ${ContentTypes.str}".invalidNel
-          )
-        case (None, Some(ct)) =>
-          Monad[F].pure(s"Content type of ${ct} provided but request body empty".invalidNel)
+          val msg = s"expected one of ${ContentTypes.str}"
+          val failure = InputDataAdapterFailure("contentType", none, msg)
+          Monad[F].pure(failure.invalidNel)
+        case (None, Some(_)) =>
+          val msg = "empty body: not a valid track protocol event"
+          val failure = InputDataAdapterFailure("body", none, msg)
+          Monad[F].pure(failure.invalidNel)
         case (None, None) => Monad[F].pure(NonEmptyList.one(qsParams).valid)
         case (Some(bdy), Some(_)) => // Build our NEL of parameters
           (for {
-            json <- extractAndValidateJson(PayloadDataSchema, bdy, client) // body
-            nel <- EitherT.fromEither(toParametersNel(json, qsParams))
+            json <- extractAndValidateJson(PayloadDataSchema, bdy, "body", client)
+            nel <- EitherT.fromEither[F](toParametersNel(json, qsParams))
           } yield nel).toValidated
       }
 
@@ -113,57 +109,52 @@ object Tp2Adapter extends Adapter {
   private def toParametersNel(
     instance: Json,
     mergeWith: RawEventParameters
-  ): Either[NonEmptyList[String], NonEmptyList[RawEventParameters]] = {
-    val events: List[List[Validated[String, (String, String)]]] = for {
-      event <- circeToJackson(instance).iterator.asScala.toList
-    } yield for {
-      entry <- event.fields.asScala.toList
-    } yield toParameter(entry)
+  ): Either[NonEmptyList[AdapterFailure], NonEmptyList[RawEventParameters]] = {
+    val events: Option[Vector[Vector[Validated[AdapterFailure, (String, String)]]]] = for {
+      topLevel <- instance.asArray
+      fields <- topLevel.map(_.asObject).sequence
+      res = fields.map(_.toVector.map(toParameter))
+    } yield res
 
-    val failures: List[String] = events.flatten.collect { case Invalid(f) => f }
+    events match {
+      case Some(events) =>
+        val failures = events.flatten.collect { case Invalid(f) => f }
+        // We don't bother doing this conditionally because we
+        // don't expect any failures, so any performance gain
+        // from conditionality would be miniscule
+        val successes =
+          events.map(_.collect { case Valid(p) => p }.toMap ++ mergeWith)
 
-    // We don't bother doing this conditionally because we
-    // don't expect any failures, so any performance gain
-    // from conditionality would be miniscule
-    val successes: List[RawEventParameters] = (for {
-      params <- events
-    } yield (for {
-      param <- params
-    } yield param).collect {
-      case Valid(p) => p
-    }.toMap ++ mergeWith) // Overwrite with mergeWith
-
-    (successes, failures) match {
-      case (s :: ss, Nil) => NonEmptyList.of(s, ss: _*).asRight // No Failures collected
-      case (_ :: _, f :: fs) =>
-        // Some Failures, return those. Should never happen, unless JSON Schema changed
-        NonEmptyList.of(f, fs: _*).asLeft
-      case (Nil, _) =>
+        (successes.toList, failures.toList) match {
+          case (s :: ss, Nil) => NonEmptyList.of(s, ss: _*).asRight // No Failures collected
+          case (_ :: _, f :: fs) =>
+            // Some Failures, return those. Should never happen, unless JSON Schema changed
+            NonEmptyList.of(f, fs: _*).asLeft
+          case (Nil, _) =>
+            NonEmptyList
+              .one(InputDataAdapterFailure("body", instance.noSpaces.some, "empty list of events"))
+              .asLeft
+        }
+      case None =>
         NonEmptyList
-          .one(
-            "List of events is empty (should never happen, did JSON Schema change?)"
-          )
+          .one(InputDataAdapterFailure("body", instance.noSpaces.some, "json is not an array"))
           .asLeft
     }
   }
 
   /**
-   * Converts a Java Map.Entry containing a JsonNode into a (String -> String) parameter.
-   * @param entry The Java Map.Entry to convert
+   * Converts a (String, Json) into a (String -> String) parameter.
+   * @param entry The (String, Json) to convert
    * @return a Validation boxing either our parameter on Success, or an error String on Failure.
    */
-  private def toParameter(
-    entry: JMapEntry[String, JsonNode]
-  ): Validated[String, Tuple2[String, String]] = {
-    val key = entry.getKey
-    val rawValue = entry.getValue
+  private def toParameter(entry: (String, Json)): Validated[AdapterFailure, (String, String)] = {
+    val (key, value) = entry
 
-    Option(rawValue.textValue) match {
+    value.asString match {
       case Some(txt) => (key, txt).valid
-      case None if rawValue.isTextual =>
-        s"Value for key ${key} is a null String (should never happen, did Jackson implementation change?)".invalid
-      case _ =>
-        s"Value for key ${key} is not a String (should never happen, did JSON Schema change?)".invalid
+      case None if value.isNull =>
+        InputDataAdapterFailure(key, none, "value cannot be null").invalid
+      case _ => InputDataAdapterFailure(key, value.noSpaces.some, "value is not a string").invalid
     }
   }
 
@@ -179,24 +170,30 @@ object Tp2Adapter extends Adapter {
   private def extractAndValidateJson[F[_]: Monad: RegistryLookup: Clock](
     schemaCriterion: SchemaCriterion,
     instance: String,
+    field: String,
     client: Client[F, Json]
-  ): EitherT[F, NonEmptyList[String], Json] =
-    for {
-      j <- EitherT.fromEither(JU.extractJson(instance).leftMap(NonEmptyList.one)) // field
-      sd <- EitherT.fromEither(
-        SelfDescribingData.parse(j).leftMap(parseError => NonEmptyList.one(parseError.code))
+  ): EitherT[F, NonEmptyList[AdapterFailure], Json] =
+    (for {
+      j <- EitherT.fromEither[F](
+        JU.extractJson(instance)
+          .leftMap(e => NonEmptyList.one(NotJsonAdapterFailure(field, instance, e)))
+      )
+      sd <- EitherT.fromEither[F](
+        SelfDescribingData
+          .parse(j)
+          .leftMap(e => NonEmptyList.one(NotSDAdapterFailure(instance, e)))
       )
       _ <- client
         .check(sd)
-        .leftMap(e => NonEmptyList.one(e.asJson.noSpaces))
+        .leftMap(e => NonEmptyList.one(IgluErrorAdapterFailure(sd.schema, e)))
         .subflatMap { _ =>
           schemaCriterion.matches(sd.schema) match {
             case true => ().asRight
             case false =>
               NonEmptyList
-                .one(s"Schema criterion $schemaCriterion does not match schema ${sd.schema}")
+                .one(SchemaCritAdapterFailure(sd.schema, schemaCriterion))
                 .asLeft
           }
         }
-    } yield sd.data
+    } yield sd.data).leftWiden[NonEmptyList[AdapterFailure]]
 }
