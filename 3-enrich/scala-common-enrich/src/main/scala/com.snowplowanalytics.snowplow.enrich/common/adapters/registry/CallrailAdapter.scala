@@ -26,6 +26,7 @@ import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormat
 
 import loaders.CollectorPayload
+import outputs._
 import utils._
 
 /**
@@ -71,11 +72,12 @@ object CallrailAdapter extends Adapter {
   override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
     payload: CollectorPayload,
     client: Client[F, Json]
-  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] = {
+  ): F[ValidatedNel[AdapterFailure, NonEmptyList[RawEvent]]] = {
     val _ = client
     val params = toMap(payload.querystring)
     if (params.isEmpty) {
-      Monad[F].pure("Querystring is empty: no CallRail event to process".invalidNel)
+      val failure = InputDataAdapterFailure("querystring", None, "empty querystring")
+      Monad[F].pure(failure.invalidNel)
     } else {
       Monad[F].pure(
         NonEmptyList

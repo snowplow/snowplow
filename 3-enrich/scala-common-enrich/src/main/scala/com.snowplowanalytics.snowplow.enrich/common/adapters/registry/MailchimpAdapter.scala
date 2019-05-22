@@ -34,6 +34,7 @@ import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormat
 
 import loaders.CollectorPayload
+import outputs._
 import utils.{JsonUtils => JU}
 
 /**
@@ -41,9 +42,6 @@ import utils.{JsonUtils => JU}
  * webhook into raw events.
  */
 object MailchimpAdapter extends Adapter {
-  // Vendor name for Failure Message
-  private val VendorName = "MailChimp"
-
   // Expected content type for a request body
   private val ContentType = "application/x-www-form-urlencoded"
 
@@ -55,7 +53,7 @@ object MailchimpAdapter extends Adapter {
   private val SchemaVersion = SchemaVer.Full(1, 0, 0)
 
   // Schemas for reverse-engineering a Snowplow unstructured event
-  private val EventSchemaMap = Map(
+  private[registry] val EventSchemaMap = Map(
     "subscribe" -> SchemaKey(Vendor, "subscribe", Format, SchemaVersion).toSchemaUri,
     "unsubscribe" -> SchemaKey(Vendor, "unsubscribe", Format, SchemaVersion).toSchemaUri,
     "campaign" -> SchemaKey(Vendor, "campaign_sending_status", Format, SchemaVersion).toSchemaUri,
@@ -84,32 +82,30 @@ object MailchimpAdapter extends Adapter {
   override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
     payload: CollectorPayload,
     client: Client[F, Json]
-  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
+  ): F[ValidatedNel[AdapterFailure, NonEmptyList[RawEvent]]] =
     (payload.body, payload.contentType) match {
       case (None, _) =>
-        Monad[F].pure(s"Request body is empty: no $VendorName event to process".invalidNel)
+        val failure = InputDataAdapterFailure("body", none, "empty body: no events to process")
+        Monad[F].pure(failure.invalidNel)
       case (_, None) =>
-        Monad[F].pure(
-          s"Request body provided but content type empty, expected $ContentType for $VendorName".invalidNel
-        )
+        val msg = s"no content type: expected $ContentType"
+        Monad[F].pure(InputDataAdapterFailure("contentType", none, msg).invalidNel)
       case (_, Some(ct)) if ct != ContentType =>
-        Monad[F].pure(
-          s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel
-        )
+        val failure = InputDataAdapterFailure("contentType", ct.some, s"expected $ContentType")
+        Monad[F].pure(failure.invalidNel)
       case (Some(body), _) =>
         val params = toMap(
           URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).asScala.toList
         )
         params.get("type") match {
           case None =>
-            Monad[F].pure(
-              s"No $VendorName type parameter provided: cannot determine event type".invalidNel
-            )
+            val msg = "no `type` parameter provided: cannot determine event type"
+            Monad[F].pure(InputDataAdapterFailure("body", body.some, msg).invalidNel)
           case Some(eventType) =>
             val _ = client
             val allParams = toMap(payload.querystring) ++ reformatParameters(params)
             Monad[F].pure(for {
-              schema <- lookupSchema(eventType.some, VendorName, EventSchemaMap).toValidatedNel
+              schema <- lookupSchema(eventType.some, EventSchemaMap).toValidatedNel
             } yield {
               NonEmptyList.one(
                 RawEvent(

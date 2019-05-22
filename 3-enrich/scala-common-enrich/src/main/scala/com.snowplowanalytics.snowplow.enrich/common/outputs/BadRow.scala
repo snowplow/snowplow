@@ -41,15 +41,22 @@ final case class AdapterFailures(
 
 sealed trait AdapterFailure
 // tracker protocol
-final case class NotJsonAdapterFailure(error: String) extends AdapterFailure
-final case class NotSDAdapterFailure(error: ParseError) extends AdapterFailure
+final case class NotJsonAdapterFailure(
+  field: String,
+  json: String,
+  error: String
+) extends AdapterFailure
+final case class NotSDAdapterFailure(json: String, error: ParseError) extends AdapterFailure
 final case class IgluErrorAdapterFailure(schemaKey: SchemaKey, error: ClientError)
     extends AdapterFailure
 final case class SchemaCritAdapterFailure(schemaKey: SchemaKey, schemaCriterion: SchemaCriterion)
     extends AdapterFailure
 // webhook adapters
-final case class SchemaMappingAdapterFailure(actual: String, expected: List[String])
-    extends AdapterFailure
+final case class SchemaMappingAdapterFailure(
+  actual: Option[String],
+  expectedMapping: Map[String, String],
+  expectation: String
+) extends AdapterFailure
 final case class InputDataAdapterFailure(
   field: String,
   value: Option[String],
@@ -67,7 +74,7 @@ final case class NotJsonSchemaViolation(
   json: String,
   error: String
 ) extends SchemaViolation
-final case class NotSDSchemaViolation(error: ParseError) extends SchemaViolation
+final case class NotSDSchemaViolation(json: String, error: ParseError) extends SchemaViolation
 final case class IgluErrorSchemaViolation(schemaKey: SchemaKey, error: ClientError)
     extends SchemaViolation
 final case class SchemaCritSchemaViolation(schemaKey: SchemaKey, schemaCriterion: SchemaCriterion)

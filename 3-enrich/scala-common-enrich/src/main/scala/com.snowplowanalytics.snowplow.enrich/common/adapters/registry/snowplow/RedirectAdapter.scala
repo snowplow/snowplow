@@ -19,6 +19,7 @@ import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.effect.Clock
 import cats.syntax.either._
+import cats.syntax.option._
 import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
@@ -27,8 +28,8 @@ import io.circe._
 import io.circe.syntax._
 
 import loaders.CollectorPayload
-import utils.{JsonUtils => JU}
-import utils.{ConversionUtils => CU}
+import outputs._
+import utils.{JsonUtils => JU, ConversionUtils => CU}
 
 /**
  * The Redirect Adapter is essentially a pre-processor for
@@ -68,20 +69,23 @@ object RedirectAdapter extends Adapter {
   override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
     payload: CollectorPayload,
     client: Client[F, Json]
-  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] = {
+  ): F[ValidatedNel[AdapterFailure, NonEmptyList[RawEvent]]] = {
     val _ = client
     val originalParams = toMap(payload.querystring)
     if (originalParams.isEmpty) {
-      Monad[F].pure("Querystring is empty: cannot be a valid URI redirect".invalidNel)
+      val msg = "empty querystring: not a valid URI redirect"
+      val failure = InputDataAdapterFailure("querystring", none, msg)
+      Monad[F].pure(failure.invalidNel)
     } else {
       originalParams.get("u") match {
         case None =>
-          Monad[F].pure(
-            "Querystring does not contain u parameter: not a valid URI redirect".invalidNel
-          )
+          val msg = "missing `u` parameter: not a valid URI redirect"
+          val qs = originalParams.map(t => s"${t._1}=${t._2}").mkString("&")
+          val failure = InputDataAdapterFailure("querystring", qs.some, msg)
+          Monad[F].pure(failure.invalidNel)
         case Some(u) =>
           val json = buildUriRedirect(u)
-          val newParams: Either[String, Map[String, String]] =
+          val newParams: Either[AdapterFailure, Map[String, String]] =
             if (originalParams.contains("e")) {
               // Already have an event so add the URI redirect as a context (more fiddly)
               def newCo = Map("co" -> toContext(json).noSpaces)
@@ -136,9 +140,11 @@ object RedirectAdapter extends Adapter {
    * @param existing The existing contexts as a non-Base64-encoded stringified JSON
    * @return an updated non-Base64-encoded self-describing contexts stringified JSON
    */
-  private def addToExistingCo(newContext: Json, existing: String): Either[String, String] =
+  private def addToExistingCo(newContext: Json, existing: String): Either[AdapterFailure, String] =
     for {
-      json <- JU.extractJson(existing) // co|cx
+      json <- JU
+        .extractJson(existing) // co|cx
+        .leftMap(e => NotJsonAdapterFailure("co|cx", existing, e))
       merged = json.hcursor
         .downField("data")
         .withFocus(_.mapArray(newContext +: _))
@@ -154,9 +160,11 @@ object RedirectAdapter extends Adapter {
    * @param existing The existing contexts as a non-Base64-encoded stringified JSON
    * @return an updated non-Base64-encoded self-describing contexts stringified JSON
    */
-  private def addToExistingCx(newContext: Json, existing: String): Either[String, String] =
+  private def addToExistingCx(newContext: Json, existing: String): Either[AdapterFailure, String] =
     for {
-      decoded <- CU.decodeBase64Url(existing) // cx
+      decoded <- CU
+        .decodeBase64Url(existing) // cx
+        .leftMap(e => InputDataAdapterFailure("cx", existing.some, e))
       added <- addToExistingCo(newContext, decoded)
       recoded = CU.encodeBase64Url(added)
     } yield recoded

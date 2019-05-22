@@ -23,6 +23,7 @@ import scala.util.{Try, Success => TS, Failure => TF}
 import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.effect.Clock
+import cats.syntax.option._
 import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
@@ -32,6 +33,7 @@ import io.circe.syntax._
 import org.apache.http.client.utils.URLEncodedUtils
 
 import loaders.CollectorPayload
+import outputs._
 import utils.{JsonUtils => JU}
 
 /**
@@ -39,9 +41,6 @@ import utils.{JsonUtils => JU}
  * webhook into raw events.
  */
 object StatusGatorAdapter extends Adapter {
-  // Vendor name for Failure Message
-  private val VendorName = "StatusGator"
-
   // Tracker version for an StatusGator Tracking webhook
   private val TrackerVersion = "com.statusgator-v1"
 
@@ -62,20 +61,20 @@ object StatusGatorAdapter extends Adapter {
   override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
     payload: CollectorPayload,
     client: Client[F, Json]
-  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
+  ): F[ValidatedNel[AdapterFailure, NonEmptyList[RawEvent]]] =
     (payload.body, payload.contentType) match {
       case (None, _) =>
-        Monad[F].pure(s"Request body is empty: no $VendorName events to process".invalidNel)
-      case (_, None) =>
-        Monad[F].pure(
-          s"Request body provided but content type empty, expected $ContentType for $VendorName".invalidNel
-        )
-      case (_, Some(ct)) if ct != ContentType =>
-        Monad[F].pure(
-          s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel
-        )
+        val failure = InputDataAdapterFailure("body", none, "empty body: no events to process")
+        Monad[F].pure(failure.invalidNel)
       case (Some(body), _) if (body.isEmpty) =>
-        Monad[F].pure(s"$VendorName event body is empty: nothing to process".invalidNel)
+        val failure = InputDataAdapterFailure("body", none, "empty body: no events to process")
+        Monad[F].pure(failure.invalidNel)
+      case (_, None) =>
+        val msg = s"no content type: expected $ContentType"
+        Monad[F].pure(InputDataAdapterFailure("contentType", none, msg).invalidNel)
+      case (_, Some(ct)) if ct != ContentType =>
+        val msg = s"expected $ContentType"
+        Monad[F].pure(InputDataAdapterFailure("contentType", ct.some, msg).invalidNel)
       case (Some(body), _) =>
         val _ = client
         val qsParams = toMap(payload.querystring)
@@ -85,8 +84,8 @@ object StatusGatorAdapter extends Adapter {
           )
         } match {
           case TF(e) =>
-            val msg = JU.stripInstanceEtc(e.getMessage).orNull
-            Monad[F].pure(s"$VendorName incorrect event string : [$msg]".invalidNel)
+            val msg = s"could not parse body: ${JU.stripInstanceEtc(e.getMessage).orNull}"
+            Monad[F].pure(InputDataAdapterFailure("body", body.some, msg).invalidNel)
           case TS(bodyMap) =>
             Monad[F].pure(
               NonEmptyList

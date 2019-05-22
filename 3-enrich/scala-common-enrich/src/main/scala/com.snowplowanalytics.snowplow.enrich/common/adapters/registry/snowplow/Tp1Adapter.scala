@@ -24,6 +24,7 @@ import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import io.circe.Json
 
 import loaders.CollectorPayload
+import outputs._
 
 /** Version 1 of the Tracker Protocol is GET only. All data comes in on the querystring. */
 object Tp1Adapter extends Adapter {
@@ -38,11 +39,13 @@ object Tp1Adapter extends Adapter {
   override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
     payload: CollectorPayload,
     client: Client[F, Json]
-  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] = {
+  ): F[ValidatedNel[AdapterFailure, NonEmptyList[RawEvent]]] = {
     val _ = client
     val params = toMap(payload.querystring)
     if (params.isEmpty) {
-      Monad[F].pure("Querystring is empty: no raw event to process".invalidNel)
+      val msg = "empty querystring: not a valid URI redirect"
+      val failure = InputDataAdapterFailure("querystring", None, msg)
+      Monad[F].pure(failure.invalidNel)
     } else {
       Monad[F].pure(
         NonEmptyList

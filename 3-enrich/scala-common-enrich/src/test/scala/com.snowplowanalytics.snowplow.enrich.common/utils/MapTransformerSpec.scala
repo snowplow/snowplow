@@ -64,7 +64,7 @@ class MapTransformerSpec extends Specification with ValidatedMatchers {
   val transformMap: TransformMap = Map(
     ("p", (MiscEnrichments.extractPlatform, "platform")),
     ("f_pdf", (ConversionUtils.stringToBooleanlikeJByte, "br_features_pdf")),
-    ("vid", (ConversionUtils.stringToJInteger, "visit_id")),
+    ("vid", (ConversionUtils.stringToJInteger2, "visit_id")),
     ("tv", (MiscEnrichments.identity, "tracker_v")),
     ("res", (ClientEnrichments.extractViewDimensions, ("width", "height")))
   )

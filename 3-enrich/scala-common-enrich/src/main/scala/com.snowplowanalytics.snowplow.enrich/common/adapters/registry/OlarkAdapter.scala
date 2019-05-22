@@ -31,12 +31,12 @@ import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import io.circe._
-import io.circe.parser._
 import io.circe.optics.JsonPath._
 import org.apache.http.client.utils.URLEncodedUtils
 import org.joda.time.DateTime
 
 import loaders.CollectorPayload
+import outputs._
 import utils.{JsonUtils => JU}
 
 /**
@@ -44,9 +44,6 @@ import utils.{JsonUtils => JU}
  * into raw events.
  */
 object OlarkAdapter extends Adapter {
-  // Vendor name for Failure Message
-  private val VendorName = "Olark"
-
   // Tracker version for an Olark Tracking webhook
   private val TrackerVersion = "com.olark-v1"
 
@@ -73,20 +70,20 @@ object OlarkAdapter extends Adapter {
   override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
     payload: CollectorPayload,
     client: Client[F, Json]
-  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
+  ): F[ValidatedNel[AdapterFailure, NonEmptyList[RawEvent]]] =
     (payload.body, payload.contentType) match {
       case (None, _) =>
-        Monad[F].pure(s"Request body is empty: no $VendorName events to process".invalidNel)
-      case (_, None) =>
-        Monad[F].pure(
-          s"Request body provided but content type empty, expected $ContentType for $VendorName".invalidNel
-        )
-      case (_, Some(ct)) if ct != ContentType =>
-        Monad[F].pure(
-          s"Content type of $ct provided, expected $ContentType for $VendorName".invalidNel
-        )
+        val failure = InputDataAdapterFailure("body", none, "empty body: no events to process")
+        Monad[F].pure(failure.invalidNel)
       case (Some(body), _) if (body.isEmpty) =>
-        Monad[F].pure(s"$VendorName event body is empty: nothing to process".invalidNel)
+        val failure = InputDataAdapterFailure("body", none, "empty body: no events to process")
+        Monad[F].pure(failure.invalidNel)
+      case (_, None) =>
+        val msg = s"no content type: expected $ContentType"
+        Monad[F].pure(InputDataAdapterFailure("contentType", none, msg).invalidNel)
+      case (_, Some(ct)) if ct != ContentType =>
+        val msg = s"expected $ContentType"
+        Monad[F].pure(InputDataAdapterFailure("contentType", none, msg).invalidNel)
       case (Some(body), _) =>
         val _ = client
         val qsParams = toMap(payload.querystring)
@@ -96,8 +93,8 @@ object OlarkAdapter extends Adapter {
           )
         } match {
           case TF(e) =>
-            val message = JU.stripInstanceEtc(e.getMessage).orNull
-            Monad[F].pure(s"$VendorName could not parse body: [$message]".invalidNel)
+            val msg = s"could not parse body: ${JU.stripInstanceEtc(e.getMessage).orNull}"
+            Monad[F].pure(InputDataAdapterFailure(body, body.some, msg).invalidNel)
           case TS(bodyMap) =>
             Monad[F].pure(
               (for {
@@ -106,7 +103,7 @@ object OlarkAdapter extends Adapter {
                   case Some(_) => "transcript"
                   case _ => "offline_message"
                 }
-                schema <- lookupSchema(eventType.some, VendorName, EventSchemaMap)
+                schema <- lookupSchema(eventType.some, EventSchemaMap)
                 transformedEvent <- transformTimestamps(event)
               } yield NonEmptyList.one(
                 RawEvent(
@@ -133,43 +130,36 @@ object OlarkAdapter extends Adapter {
    * @param json a parsed event
    * @return JObject the event with timstamps replaced
    */
-  private def transformTimestamps(json: Json): Either[String, Json] = {
-    def toMsec(oTs: String): Either[String, Long] =
+  private def transformTimestamps(json: Json): Either[AdapterFailure, Json] = {
+    def toMsec(oTs: String): Either[AdapterFailure, Long] =
       for {
         formatted <- oTs.split('.') match {
-          case Array(sec) => Right(s"${sec}000")
-          case Array(sec, msec) => Right(s"${sec}${msec.take(3).padTo(3, '0')}")
-          case _ => Left(s"$VendorName unexpected timestamp format: $oTs")
+          case Array(sec) => s"${sec}000".asRight
+          case Array(sec, msec) => s"${sec}${msec.take(3).padTo(3, '0')}".asRight
+          case _ =>
+            InputDataAdapterFailure("timestamp", oTs.some, "unexpected timestamp format").asLeft
         }
-        long <- Either.catchNonFatal(formatted.toLong).leftMap(_.getMessage)
+        long <- Either
+          .catchNonFatal(formatted.toLong)
+          .leftMap { _ =>
+            InputDataAdapterFailure("timestamp", formatted.some, "cannot be converted to Double")
+          }
       } yield long
 
-    type EitherString[A] = Either[String, A]
-
-    val modifiedTimestamps: Either[String, Json] =
-      root.items.each.timestamp.string.modifyF[EitherString] { v =>
-        toMsec(v).map(long => JsonSchemaDateTimeFormat.print(new DateTime(long)))
-      }(json)
-
-    modifiedTimestamps match {
-      case Right(json) => json.asRight
-      case Left(e) => s"$VendorName could not convert timestamps: [$e]".asLeft
-    }
+    type EitherAF[A] = Either[AdapterFailure, A]
+    root.items.each.timestamp.string.modifyF[EitherAF] { v =>
+      toMsec(v).map(long => JsonSchemaDateTimeFormat.print(new DateTime(long)))
+    }(json)
   }
 
   /**
    * Converts a querystring payload into an event
    * @param bodyMap The converted map from the querystring
    */
-  private def payloadBodyToEvent(bodyMap: Map[String, String]): Either[String, Json] =
+  private def payloadBodyToEvent(bodyMap: Map[String, String]): Either[AdapterFailure, Json] =
     bodyMap.get("data") match {
-      case None => s"$VendorName event data does not have 'data' as a key".asLeft
-      case Some("") => s"$VendorName event data is empty: nothing to process".asLeft
+      case None | Some("") => InputDataAdapterFailure("data", none, "missing 'data' field").asLeft
       case Some(json) =>
-        parse(json) match {
-          case Right(event) => event.asRight
-          case Left(e) =>
-            s"$VendorName event string failed to parse into JSON: [${e.getMessage}]".asLeft
-        }
+        JU.extractJson(json).leftMap(e => NotJsonAdapterFailure("data", json, e))
     }
 }
