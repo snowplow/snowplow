@@ -19,24 +19,23 @@ import cats.data.{NonEmptyList, ValidatedNel}
 import cats.effect.Clock
 import cats.syntax.apply._
 import cats.syntax.either._
+import cats.syntax.option._
 import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
-import io.circe.Json
-import io.circe.parser._
+import io.circe.{DecodingFailure, Json}
 import org.joda.time.{DateTime, DateTimeZone}
 
 import loaders.CollectorPayload
+import outputs._
+import utils.JsonUtils
 
 /**
  * Transforms a collector payload which conforms to a known version of the UrbanAirship Connect API
  * into raw events.
  */
 object UrbanAirshipAdapter extends Adapter {
-  // Vendor name for Failure Message
-  private val VendorName = "UrbanAirship"
-
   // Tracker version for an UrbanAirship Connect API
   private val TrackerVersion = "com.urbanairship.connect-v1"
 
@@ -68,6 +67,31 @@ object UrbanAirshipAdapter extends Adapter {
   )
 
   /**
+   * Converts a CollectorPayload instance into raw events. A UrbanAirship connect API payload only
+   * contains a single event. We expect the name parameter to match the supported events, else
+   * we have an unsupported event type.
+   * @param payload The CollectorPayload containing one or more raw events
+   * @param client The Iglu client used for schema lookup and validation
+   * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
+   */
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
+    payload: CollectorPayload,
+    client: Client[F, Json]
+  ): F[ValidatedNel[AdapterFailure, NonEmptyList[RawEvent]]] =
+    (payload.body, payload.contentType) match {
+      case (None, _) =>
+        val failure = InputDataAdapterFailure("body", none, "empty body: no events to process")
+        Monad[F].pure(failure.invalidNel)
+      case (_, Some(ct)) =>
+        val msg = s"expected no content type"
+        Monad[F].pure(InputDataAdapterFailure("contentType", ct.some, msg).invalidNel)
+      case (Some(body), _) =>
+        val _ = client
+        val event = payloadBodyToEvent(body, payload)
+        Monad[F].pure(rawEventsListProcessor(List(event)))
+    }
+
+  /**
    * Converts payload into a single validated event. Expects a valid json, returns failure if one is
    * not present.
    * @param body_json json payload as a string
@@ -77,22 +101,28 @@ object UrbanAirshipAdapter extends Adapter {
   private def payloadBodyToEvent(
     bodyJson: String,
     payload: CollectorPayload
-  ): ValidatedNel[String, RawEvent] = {
+  ): ValidatedNel[AdapterFailure, RawEvent] = {
     def toTtmFormat(jsonTimestamp: String) =
       "%d".format(new DateTime(jsonTimestamp).getMillis)
 
-    parse(bodyJson) match {
+    def err(field: String, e: DecodingFailure): InputDataAdapterFailure =
+      InputDataAdapterFailure(field, none, s"could not extract '$field': ${e.getMessage}")
+
+    JsonUtils.extractJson(bodyJson) match {
       case Right(json) =>
         val cursor = json.hcursor
         val eventType = cursor.get[String]("type").toOption
-        val trueTs = cursor.get[String]("occurred").leftMap(_.getMessage).toValidatedNel
-        val eid = cursor.get[String]("id").leftMap(_.getMessage).toValidatedNel
-        val collectorTs = cursor.get[String]("processed").leftMap(_.getMessage).toValidatedNel
+        val trueTs = cursor.get[String]("occurred").leftMap(err("occurred", _)).toValidatedNel
+        val eid = cursor.get[String]("id").leftMap(err("id", _)).toValidatedNel
+        val collectorTs = cursor
+          .get[String]("processed")
+          .leftMap(err("processed", _))
+          .toValidatedNel
         (
           trueTs,
           eid,
           collectorTs,
-          lookupSchema(eventType, VendorName, EventSchemaMap).toValidatedNel
+          lookupSchema(eventType, EventSchemaMap).toValidatedNel
         ).mapN { (tts, id, cts, schema) =>
           RawEvent(
             api = payload.api,
@@ -108,31 +138,7 @@ object UrbanAirshipAdapter extends Adapter {
             context = payload.context.copy(timestamp = Some(new DateTime(cts, DateTimeZone.UTC)))
           )
         }
-      case Left(e) => s"$VendorName event failed to parse into JSON: [${e.getMessage}]".invalidNel
+      case Left(e) => NotJsonAdapterFailure("body", bodyJson, e).invalidNel
     }
   }
-
-  /**
-   * Converts a CollectorPayload instance into raw events. A UrbanAirship connect API payload only
-   * contains a single event. We expect the name parameter to match the supported events, else
-   * we have an unsupported event type.
-   * @param payload The CollectorPayload containing one or more raw events
-   * @param client The Iglu client used for schema lookup and validation
-   * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
-   */
-  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
-    payload: CollectorPayload,
-    client: Client[F, Json]
-  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
-    (payload.body, payload.contentType) match {
-      case (None, _) =>
-        Monad[F].pure(s"Request body is empty: no $VendorName event to process".invalidNel)
-      case (_, Some(ct)) =>
-        Monad[F].pure(s"Content type of $ct provided, expected None for $VendorName".invalidNel)
-      case (Some(body), _) =>
-        val _ = client
-        val event = payloadBodyToEvent(body, payload)
-        Monad[F].pure(rawEventsListProcessor(List(event)))
-    }
-
 }

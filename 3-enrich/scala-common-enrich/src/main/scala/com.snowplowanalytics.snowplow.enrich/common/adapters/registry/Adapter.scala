@@ -20,18 +20,19 @@ import cats.data.Validated._
 import cats.effect.Clock
 import cats.syntax.either._
 import cats.syntax.eq._
+import cats.syntax.option._
 import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import io.circe._
-import io.circe.parser._
 import io.circe.syntax._
 import org.apache.http.NameValuePair
 import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.format.DateTimeFormat
 
 import loaders.CollectorPayload
+import outputs._
 import utils.{JsonUtils => JU}
 
 trait Adapter {
@@ -128,7 +129,7 @@ trait Adapter {
   def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
     payload: CollectorPayload,
     client: Client[F, Json]
-  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]]
+  ): F[ValidatedNel[AdapterFailure, NonEmptyList[RawEvent]]]
 
   /**
    * Converts a NonEmptyList of name:value pairs into a Map.
@@ -307,14 +308,14 @@ trait Adapter {
    * or Failures
    */
   protected[registry] def rawEventsListProcessor(
-    rawEventsList: List[ValidatedNel[String, RawEvent]]
-  ): ValidatedNel[String, NonEmptyList[RawEvent]] = {
+    rawEventsList: List[ValidatedNel[AdapterFailure, RawEvent]]
+  ): ValidatedNel[AdapterFailure, NonEmptyList[RawEvent]] = {
     val successes: List[RawEvent] =
       for {
         Valid(s) <- rawEventsList
       } yield s
 
-    val failures: List[String] =
+    val failures: List[AdapterFailure] =
       (for {
         Invalid(NonEmptyList(h, t)) <- rawEventsList
       } yield h :: t).flatten
@@ -324,8 +325,7 @@ trait Adapter {
       case (s :: ss, Nil) => NonEmptyList.of(s, ss: _*).valid
       // Some or all are Failures, return these.
       case (_, f :: fs) => NonEmptyList.of(f, fs: _*).invalid
-      case (Nil, Nil) =>
-        "List of events is empty (should never happen, not catching empty list properly)".invalidNel
+      case (Nil, Nil) => InputDataAdapterFailure("", none, "empty list of events").invalidNel
     }
   }
 
@@ -333,30 +333,33 @@ trait Adapter {
    * USAGE: Single event payloads
    * Gets the correct Schema URI for the event passed from the vendor payload
    * @param eventOpt An Option[String] which will contain a String or None
-   * @param vendor The vendor we are doing a schema lookup for; i.e. MailChimp or PagerDuty
    * @param eventSchemaMap A map of event types linked to their relevant schema URI's
    * @return the schema for the event or a Failure-boxed String if we cannot recognize the
    * event type
    */
   protected[registry] def lookupSchema(
     eventOpt: Option[String],
-    vendor: String,
     eventSchemaMap: Map[String, String]
-  ): Either[String, String] =
+  ): Either[AdapterFailure, String] =
     eventOpt match {
       case None =>
-        s"$vendor event failed: type parameter not provided - cannot determine event type".asLeft
+        val msg = "cannot determine event type: type parameter not provided"
+        SchemaMappingAdapterFailure(None, eventSchemaMap, msg).asLeft
       case Some(eventType) =>
         eventType match {
           case et if eventSchemaMap.contains(et) =>
             eventSchemaMap.get(et) match {
               case None =>
-                s"$vendor event failed: type parameter [$et] has no schema associated with it - check event-schema map".asLeft
+                val msg = "no schema associated with the provided type parameter"
+                SchemaMappingAdapterFailure(eventType.some, eventSchemaMap, msg).asLeft
               case Some(schema) => schema.asRight
             }
           case "" =>
-            s"$vendor event failed: type parameter is empty - cannot determine event type".asLeft
-          case et => s"$vendor event failed: type parameter [$et] not recognized".asLeft
+            val msg = "cannot determine event type: type parameter empty"
+            SchemaMappingAdapterFailure(eventType.some, eventSchemaMap, msg).asLeft
+          case _ =>
+            val msg = "no schema associated with the provided type parameter"
+            SchemaMappingAdapterFailure(eventType.some, eventSchemaMap, msg).asLeft
         }
     }
 
@@ -372,37 +375,30 @@ trait Adapter {
    */
   protected[registry] def lookupSchema(
     eventOpt: Option[String],
-    vendor: String,
     index: Int,
     eventSchemaMap: Map[String, String]
-  ): Either[String, String] =
+  ): Either[AdapterFailure, String] =
     eventOpt match {
       case None =>
-        s"$vendor event at index [$index] failed: type parameter not provided - cannot determine event type".asLeft
+        val msg = s"cannot determine event type: type parameter not provided at index $index"
+        SchemaMappingAdapterFailure(None, eventSchemaMap, msg).asLeft
       case Some(eventType) =>
         eventType match {
           case et if eventSchemaMap.contains(et) =>
             eventSchemaMap.get(et) match {
               case None =>
-                s"$vendor event at index [$index] failed: type parameter [$et] has no schema associated with it - check event-schema map".asLeft
+                val msg = s"no schema associated with the provided type parameter at index $index"
+                SchemaMappingAdapterFailure(eventType.some, eventSchemaMap, msg).asLeft
               case Some(schema) => schema.asRight
             }
           case "" =>
-            s"$vendor event at index [$index] failed: type parameter is empty - cannot determine event type".asLeft
-          case et =>
-            s"$vendor event at index [$index] failed: type parameter [$et] not recognized".asLeft
+            val msg = s"cannot determine event type: type parameter empty at index $index"
+            SchemaMappingAdapterFailure(eventType.some, eventSchemaMap, msg).asLeft
+          case _ =>
+            val msg = s"no schema associated with the provided type parameter at index $index"
+            SchemaMappingAdapterFailure(eventType.some, eventSchemaMap, msg).asLeft
         }
     }
-
-  /**
-   * Attempts to parse a json string into a JValue example:
-   * {"p":"app"} becomes JObject(List((p,JString(app))))
-   * @param jsonStr The string we want to parse into a JValue
-   * @return a Validated JValue or a NonEmptyList Failure containing a parsing exception
-   */
-  private[registry] def parseJsonSafe(jsonStr: String): Either[String, Json] =
-    parse(jsonStr)
-      .leftMap(e => s"Event failed to parse into JSON: [${e.message}]")
 
   private[registry] val snakeCaseOrDashTokenCapturingRegex = "[_-](\\w)".r
 

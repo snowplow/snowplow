@@ -203,10 +203,7 @@ class DecodeBase64UrlSpec extends Specification with DataTables with ScalaCheck 
   """
 
   // Only way of getting a failure currently
-  def e1 =
-    ConversionUtils.decodeBase64Url(null) must beLeft(
-      "exception Base64-decoding [null] (URL-safe encoding): [null]"
-    )
+  def e1 = ConversionUtils.decodeBase64Url(null) must beLeft("could not base64 decode: null")
 
   // No string creates a failure
   def e2 =
@@ -324,19 +321,17 @@ class StringToJIntegerSpec extends Specification with DataTables {
   stringToJInteger should convert valid Strings to Java Integers                     $e2
   """
 
-  val FieldName = "val"
-  def err: (String) => String =
-    input => "Field [%s]: cannot convert [%s] to Int".format(FieldName, input)
+  val err: String = "cannot be converted to java.Integer"
 
   def e1 =
     "SPEC NAME" || "INPUT STR" | "EXPECTED" |
-      "Empty string" !! "" ! err("") |
-      "Floating point #1" !! "1999." ! err("1999.") |
-      "Floating point #2" !! "1999.00" ! err("1999.00") |
-      "Hexadecimal number" !! "0x54" ! err("0x54") |
-      "NaN" !! "NaN" ! err("NaN") |
-      "Sci. notation" !! "6.72E5" ! err("6.72E5") |> { (_, str, expected) =>
-      ConversionUtils.stringToJInteger(FieldName, str) must beLeft(expected)
+      "Empty string" !! "" ! err |
+      "Floating point #1" !! "1999." ! err |
+      "Floating point #2" !! "1999.00" ! err |
+      "Hexadecimal number" !! "0x54" ! err |
+      "NaN" !! "NaN" ! err |
+      "Sci. notation" !! "6.72E5" ! err |> { (_, str, expected) =>
+      ConversionUtils.stringToJInteger(str) must beLeft(expected)
     }
 
   def e2 =
@@ -346,7 +341,7 @@ class StringToJIntegerSpec extends Specification with DataTables {
       "Negative integer #1" !! "-2012103" ! -2012103 |
       "Negative integer #2" !! "-1" ! -1 |
       "Null" !! null ! null |> { (_, str, expected) =>
-      ConversionUtils.stringToJInteger(FieldName, str) must beRight(expected)
+      ConversionUtils.stringToJInteger(str) must beRight(expected)
     }
 }
 

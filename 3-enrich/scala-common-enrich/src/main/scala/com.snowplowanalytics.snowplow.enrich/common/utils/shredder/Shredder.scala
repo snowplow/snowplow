@@ -188,7 +188,9 @@ object Shredder {
           sd <- EitherT.fromEither[F](
             SelfDescribingData
               .parse(json)
-              .leftMap(e => NonEmptyList.one(NotSDSchemaViolation(e): SchemaViolation))
+              .leftMap { e =>
+                NonEmptyList.one(NotSDSchemaViolation(json.noSpaces, e): SchemaViolation)
+              }
           )
           _ <- client
             .check(sd)
@@ -277,7 +279,7 @@ object Shredder {
       sd <- EitherT.fromEither[F](
         SelfDescribingData
           .parse(j)
-          .leftMap(e => NonEmptyList.one(NotSDSchemaViolation(e)))
+          .leftMap(e => NonEmptyList.one(NotSDSchemaViolation(instance, e)))
       )
       _ <- client
         .check(sd)

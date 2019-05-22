@@ -23,6 +23,7 @@ import org.specs2.matcher.ValidatedMatchers
 import org.specs2.mutable.Specification
 
 import loaders._
+import outputs.InputDataAdapterFailure
 import utils.Clock._
 
 class UrbanAirshipAdapterSpec extends Specification with ValidatedMatchers {
@@ -154,7 +155,9 @@ class UrbanAirshipAdapterSpec extends Specification with ValidatedMatchers {
       val res = UrbanAirshipAdapter.toRawEvents(payload, SpecHelpers.client).value
 
       res must beInvalid(
-        NonEmptyList.one("Content type of a/type provided, expected None for UrbanAirship")
+        NonEmptyList.one(
+          InputDataAdapterFailure("contentType", "a/type".some, "expected no content type")
+        )
       )
     }
 

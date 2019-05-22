@@ -22,6 +22,7 @@ import org.specs2.Specification
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import loaders._
+import outputs._
 import utils.Clock._
 
 class PagerdutyAdapterSpec extends Specification with DataTables with ValidatedMatchers {
@@ -33,7 +34,7 @@ class PagerdutyAdapterSpec extends Specification with DataTables with ValidatedM
   payloadBodyToEvents must return a Success list of event JSON's from a valid payload body           $e4
   payloadBodyToEvents must return a Failure Nel for an invalid payload body being passed             $e5
   toRawEvents must return a Success Nel if all events are successful                                 $e6
-  toRawEvents must return a Failure Nel if any of the events where not successes                     $e7
+  toRawEvents must return a Failure Nel if any of the events were not successes                     $e7
   toRawEvents must return a Nel Failure if the request body is missing                               $e8
   toRawEvents must return a Nel Failure if the content type is missing                               $e9
   toRawEvents must return a Nel Failure if the content type is incorrect                             $e10
@@ -94,10 +95,17 @@ class PagerdutyAdapterSpec extends Specification with DataTables with ValidatedM
 
   def e5 =
     "SPEC NAME" || "INPUT" | "EXPECTED OUTPUT" |
-      "Failure, parse exception" !! """{"something:"some"}""" ! """PagerDuty payload failed to parse into JSON: [expected : got 'some"}' (line 1, column 14)]""" |
-      "Failure, missing messages key" !! """{"somekey":"key"}""" ! "Could not resolve PagerDuty payload into a JSON array of events" |> {
-      (_, input, expected) =>
-        PagerdutyAdapter.payloadBodyToEvents(input) must beLeft(expected)
+      "Failure, parse exception" !! """{"something:"some"}""" ! NotJsonAdapterFailure(
+        "body",
+        """{"something:"some"}""",
+        """invalid json: expected : got 'some"}' (line 1, column 14)"""
+      ) |
+      "Failure, missing messages key" !! """{"somekey":"key"}""" ! InputDataAdapterFailure(
+        "messages",
+        """{"somekey":"key"}""".some,
+        "field `messages` is not an array"
+      ) |> { (_, input, expected) =>
+      PagerdutyAdapter.payloadBodyToEvents(input) must beLeft(expected)
     }
 
   def e6 = {
@@ -139,7 +147,11 @@ class PagerdutyAdapterSpec extends Specification with DataTables with ValidatedM
       Shared.cljSource,
       Shared.context
     )
-    val expected = "PagerDuty event at index [0] failed: type parameter [trigger] not recognized"
+    val expected = SchemaMappingAdapterFailure(
+      "trigger".some,
+      PagerdutyAdapter.EventSchemaMap,
+      "no schema associated with the provided type parameter at index 0"
+    )
     PagerdutyAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(
       NonEmptyList.one(expected)
     )
@@ -149,7 +161,7 @@ class PagerdutyAdapterSpec extends Specification with DataTables with ValidatedM
     val payload =
       CollectorPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
     PagerdutyAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(
-      NonEmptyList.one("Request body is empty: no PagerDuty events to process")
+      NonEmptyList.one(InputDataAdapterFailure("body", None, "empty body: no events to process"))
     )
   }
 
@@ -158,23 +170,24 @@ class PagerdutyAdapterSpec extends Specification with DataTables with ValidatedM
       CollectorPayload(Shared.api, Nil, None, "stub".some, Shared.cljSource, Shared.context)
     PagerdutyAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(
       NonEmptyList.one(
-        "Request body provided but content type empty, expected application/json for PagerDuty"
+        InputDataAdapterFailure("contentType", None, "no content type: expected application/json")
       )
     )
   }
 
   def e10 = {
+    val ct = "application/x-www-form-urlencoded".some
     val payload = CollectorPayload(
       Shared.api,
       Nil,
-      "application/x-www-form-urlencoded".some,
+      ct,
       "stub".some,
       Shared.cljSource,
       Shared.context
     )
     PagerdutyAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(
       NonEmptyList.one(
-        "Content type of application/x-www-form-urlencoded provided, expected application/json for PagerDuty"
+        InputDataAdapterFailure("contentType", ct, "expected application/json")
       )
     )
   }

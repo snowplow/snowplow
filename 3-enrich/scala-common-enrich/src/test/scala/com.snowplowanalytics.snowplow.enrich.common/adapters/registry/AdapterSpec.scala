@@ -27,8 +27,9 @@ import org.joda.time.DateTime
 import org.specs2.Specification
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
-import SpecHelpers._
 import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import outputs._
+import SpecHelpers._
 
 class AdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
@@ -51,7 +52,7 @@ class AdapterSpec extends Specification with DataTables with ValidatedMatchers {
     def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
       payload: CollectorPayload,
       client: Client[F, Json]
-    ) = Monad[F].pure("Base".invalidNel)
+    ) = Monad[F].pure(InputDataAdapterFailure("base", None, "base").invalidNel)
   }
 
   object Shared {
@@ -122,22 +123,36 @@ class AdapterSpec extends Specification with DataTables with ValidatedMatchers {
 
   def e4 = {
     val expected = "iglu:com.adaptertest/test/jsonschema/1-0-0"
-    BaseAdapter.lookupSchema("adapterTest".some, "Adapter", SchemaMap) must beRight(expected)
+    BaseAdapter.lookupSchema("adapterTest".some, SchemaMap) must beRight(expected)
   }
 
   def e5 =
     "SPEC NAME" || "SCHEMA TYPE" | "EXPECTED OUTPUT" |
-      "Failing, nothing passed" !! None ! "Adapter event failed: type parameter not provided - cannot determine event type" |
-      "Failing, empty type" !! Some("") ! "Adapter event failed: type parameter is empty - cannot determine event type" |
-      "Failing, bad type passed" !! Some("bad") ! "Adapter event failed: type parameter [bad] not recognized" |> {
-      (_, et, expected) =>
-        BaseAdapter.lookupSchema(et, "Adapter", SchemaMap) must beLeft(expected)
+      "Failing, nothing passed" !! None ! SchemaMappingAdapterFailure(
+        None,
+        SchemaMap,
+        "cannot determine event type: type parameter not provided"
+      ) |
+      "Failing, empty type" !! Some("") ! SchemaMappingAdapterFailure(
+        "".some,
+        SchemaMap,
+        "cannot determine event type: type parameter empty"
+      ) |
+      "Failing, bad type passed" !! Some("bad") ! SchemaMappingAdapterFailure(
+        "bad".some,
+        SchemaMap,
+        "no schema associated with the provided type parameter"
+      ) |> { (_, et, expected) =>
+      BaseAdapter.lookupSchema(et, SchemaMap) must beLeft(expected)
     }
 
   def e6 = {
-    val expected =
-      "Adapter event at index [2] failed: type parameter not provided - cannot determine event type"
-    BaseAdapter.lookupSchema(None, "Adapter", 2, SchemaMap) must beLeft(expected)
+    val expected = SchemaMappingAdapterFailure(
+      None,
+      SchemaMap,
+      "cannot determine event type: type parameter not provided at index 2"
+    )
+    BaseAdapter.lookupSchema(None, 2, SchemaMap) must beLeft(expected)
   }
 
   def e7 = {
@@ -151,10 +166,13 @@ class AdapterSpec extends Specification with DataTables with ValidatedMatchers {
     val validatedRawEventsList =
       List(
         Validated.Valid(rawEvent),
-        Validated.Invalid(NonEmptyList.one("This is a failure string-1")),
-        Validated.Invalid(NonEmptyList.one("This is a failure string-2"))
+        Validated.Invalid(NonEmptyList.one(InputDataAdapterFailure("s1", None, "failure 1"))),
+        Validated.Invalid(NonEmptyList.one(InputDataAdapterFailure("s2", None, "failure 2")))
       )
-    val expected = NonEmptyList.of("This is a failure string-1", "This is a failure string-2")
+    val expected = NonEmptyList.of(
+      InputDataAdapterFailure("s1", None, "failure 1"),
+      InputDataAdapterFailure("s2", None, "failure 2")
+    )
     BaseAdapter.rawEventsListProcessor(validatedRawEventsList) must beInvalid(expected)
   }
 

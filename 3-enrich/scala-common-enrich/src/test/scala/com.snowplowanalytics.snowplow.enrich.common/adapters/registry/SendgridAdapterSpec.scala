@@ -21,6 +21,7 @@ import org.specs2.matcher.ValidatedMatchers
 import org.specs2.mutable.Specification
 
 import loaders._
+import outputs.SchemaMappingAdapterFailure
 import utils.Clock._
 
 class SendgridAdapterSpec extends Specification with ValidatedMatchers {
@@ -408,7 +409,11 @@ class SendgridAdapterSpec extends Specification with ValidatedMatchers {
       val actual = SendgridAdapter.toRawEvents(payload, SpecHelpers.client).value
       actual must beInvalid(
         NonEmptyList.one(
-          "Sendgrid event at index [1] failed: type parameter not provided - cannot determine event type"
+          SchemaMappingAdapterFailure(
+            None,
+            SendgridAdapter.EventSchemaMap,
+            "cannot determine event type: type parameter not provided at index 1"
+          )
         )
       )
     }

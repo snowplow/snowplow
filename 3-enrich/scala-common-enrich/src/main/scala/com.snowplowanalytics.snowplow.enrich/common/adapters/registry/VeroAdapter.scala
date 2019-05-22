@@ -24,15 +24,13 @@ import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import io.circe._
-import io.circe.parser._
 
 import loaders.CollectorPayload
+import outputs._
+import utils.JsonUtils
 
 /** Transforms a collector payload which fits the Vero webhook into raw events. */
 object VeroAdapter extends Adapter {
-  // Vendor name for Failure Message
-  private val VendorName = "Vero"
-
   // Tracker version for an Vero webhook
   private val TrackerVersion = "com.getvero-v1"
 
@@ -53,6 +51,28 @@ object VeroAdapter extends Adapter {
   )
 
   /**
+   * Converts a CollectorPayload instance into raw events. A Vero API payload only contains a single
+   * event. We expect the type parameter to match the supported events, otherwise we have an
+   * unsupported event type.
+   * @param payload The CollectorPayload containing one or more raw events
+   * @param client The Iglu client used for schema lookup and validation
+   * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
+   */
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
+    payload: CollectorPayload,
+    client: Client[F, Json]
+  ): F[ValidatedNel[AdapterFailure, NonEmptyList[RawEvent]]] =
+    (payload.body, payload.contentType) match {
+      case (None, _) =>
+        val failure = InputDataAdapterFailure("body", none, "empty body: no events to process")
+        Monad[F].pure(failure.invalidNel)
+      case (Some(body), _) =>
+        val _ = client
+        val event = payloadBodyToEvent(body, payload)
+        Monad[F].pure(rawEventsListProcessor(List(event.toValidatedNel)))
+    }
+
+  /**
    * Converts a payload into a single validated event. Expects a valid json returns failure if one
    * is not present
    * @param json Payload body that is sent by Vero
@@ -62,20 +82,21 @@ object VeroAdapter extends Adapter {
   private def payloadBodyToEvent(
     json: String,
     payload: CollectorPayload
-  ): Either[String, RawEvent] =
+  ): Either[AdapterFailure, RawEvent] =
     for {
-      parsed <- parse(json)
-        .leftMap(e => s"$VendorName event failed to parse into JSON: [${e.getMessage}]")
+      parsed <- JsonUtils.extractJson(json).leftMap(e => NotJsonAdapterFailure("body", json, e))
       eventType <- parsed.hcursor
         .get[String]("type")
-        .leftMap(e => s"Could not extract type from $VendorName event JSON: [${e.getMessage}]")
+        .leftMap(
+          e => InputDataAdapterFailure("type", none, s"could not extract 'type': ${e.getMessage}")
+        )
       formattedEvent = cleanupJsonEventValues(
         parsed,
         ("type", eventType).some,
         List(s"${eventType}_at", "triggered_at")
       )
       reformattedEvent = reformatParameters(formattedEvent)
-      schema <- lookupSchema(eventType.some, VendorName, EventSchemaMap)
+      schema <- lookupSchema(eventType.some, EventSchemaMap)
       params = toUnstructEventParams(
         TrackerVersion,
         toMap(payload.querystring),
@@ -91,27 +112,6 @@ object VeroAdapter extends Adapter {
         context = payload.context
       )
     } yield rawEvent
-
-  /**
-   * Converts a CollectorPayload instance into raw events. A Vero API payload only contains a single
-   * event. We expect the type parameter to match the supported events, otherwise we have an
-   * unsupported event type.
-   * @param payload The CollectorPayload containing one or more raw events
-   * @param client The Iglu client used for schema lookup and validation
-   * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
-   */
-  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
-    payload: CollectorPayload,
-    client: Client[F, Json]
-  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
-    (payload.body, payload.contentType) match {
-      case (None, _) =>
-        Monad[F].pure(s"Request body is empty: no $VendorName event to process".invalidNel)
-      case (Some(body), _) =>
-        val _ = client
-        val event = payloadBodyToEvent(body, payload)
-        Monad[F].pure(rawEventsListProcessor(List(event.toValidatedNel)))
-    }
 
   /**
    * Returns an updated Vero event JSON where the "_tags" field is renamed to "tags"

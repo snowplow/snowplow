@@ -123,9 +123,7 @@ object ConversionUtils {
         val result = new String(decodedBytes, UTF_8) // Must specify charset (EMR uses US_ASCII)
         result
       }
-      .leftMap { e =>
-        s"exception Base64-decoding [$str] (URL-safe encoding): [${e.getMessage}]"
-      }
+      .leftMap(e => s"could not base64 decode: ${e.getMessage}")
 
   /**
    * Encodes a URL-safe Base64 string.
@@ -177,11 +175,10 @@ object ConversionUtils {
    * TODO: simplify this when we move to a more robust output format (e.g. Avro) - as then
    * no need to remove line breaks, tabs etc
    * @param enc The encoding of the String
-   * @param field The name of the field
    * @param str The String to decode
    * @return a Scalaz Validation, wrapping either an error String or the decoded String
    */
-  val decodeString: (Charset, String, String) => Either[String, String] = (enc, field, str) =>
+  val decodeString: (Charset, String) => Either[String, String] = (enc, str) =>
     try {
       // TODO: switch to style of fixTabsNewlines above
       // TODO: potentially switch to using fixTabsNewlines too to avoid duplication
@@ -189,10 +186,7 @@ object ConversionUtils {
       val d = URLDecoder.decode(s, enc.toString)
       d.replaceAll("(\\r|\\n)", "").replaceAll("\\t", "    ").asRight
     } catch {
-      case NonFatal(e) =>
-        "Field [%s]: Exception URL-decoding [%s] (encoding [%s]): [%s]"
-          .format(field, str, enc, e.getMessage)
-          .asLeft
+      case NonFatal(e) => s"exception URL-decoding (encoding $enc): ${e.getMessage}".asLeft
     }
 
   /**
@@ -221,12 +215,11 @@ object ConversionUtils {
 
   /**
    * Decode double-encoded percents, then percent decode
-   * @param field The name of the field
    * @param str The String to decode
    * @return a Scalaz Validation, wrapping either an error String or the decoded String
    */
-  def doubleDecode(field: String, str: String): Either[String, String] =
-    decodeString(UTF_8, field, singleEncodePcts(str))
+  def doubleDecode(str: String): Either[String, String] =
+    decodeString(UTF_8, singleEncodePcts(str))
 
   /**
    * Encodes a string in the specified encoding
@@ -284,10 +277,9 @@ object ConversionUtils {
   /**
    * Extract a Scala Int from a String, or error.
    * @param str The String which we hope is an Int
-   * @param field The name of the field we are trying to process. To use in our error message
-   * @return a Scalaz Validation, being either a Failure String or a Success JInt
+   * @return either a Failure String or a Success JInt
    */
-  val stringToJInteger: (String, String) => Either[String, JInteger] = (field, str) =>
+  val stringToJInteger: String => Either[String, JInteger] = str =>
     if (Option(str).isEmpty) {
       null.asInstanceOf[JInteger].asRight
     } else {
@@ -296,9 +288,12 @@ object ConversionUtils {
         jint.asRight
       } catch {
         case _: NumberFormatException =>
-          "Field [%s]: cannot convert [%s] to Int".format(field, str).asLeft
+          "cannot be converted to java.Integer".asLeft
       }
     }
+
+  val stringToJInteger2: (String, String) => Either[String, JInteger] =
+    (_, str) => stringToJInteger(str)
 
   /**
    * Convert a String to a String containing a Redshift-compatible Double.
@@ -346,22 +341,21 @@ object ConversionUtils {
    * multipleOf 0.01.
    * Takes a field name and a string value and return a validated double.
    */
-  val stringToTwoDecimals: (String, String) => Either[String, Double] = (field, str) =>
+  val stringToTwoDecimals: String => Either[String, Double] = (str) =>
     try {
       BigDecimal(str).setScale(2, BigDecimal.RoundingMode.HALF_EVEN).toDouble.asRight
     } catch {
-      case _: NumberFormatException =>
-        "Field [%s]: cannot convert [%s] to Double".format(field, str).asLeft
+      case _: NumberFormatException => "cannot be converted to Double".asLeft
     }
 
   /**
    * Converts a String to a Double.
    * Takes a field name and a string value and return a validated float.
    */
-  val stringToDouble: (String, String) => Either[String, Double] = (field, str) =>
+  val stringToDouble: String => Either[String, Double] = (str) =>
     Either
       .catchNonFatal(BigDecimal(str).toDouble)
-      .leftMap(_ => s"Field [$field]: cannot convert [$str] to Double")
+      .leftMap(_ => s"cannot be converted to Double")
 
   /**
    * Extract a Java Byte representing 1 or 0 only from a String, or error.
@@ -382,13 +376,13 @@ object ConversionUtils {
    * @return True for "1", false for "0", or an error message for any other value, all boxed in a
    * Scalaz Validation
    */
-  val stringToBoolean: (String, String) => Either[String, Boolean] = (field, str) =>
+  val stringToBoolean: String => Either[String, Boolean] = (str) =>
     if (str == "1") {
       true.asRight
     } else if (str == "0") {
       false.asRight
     } else {
-      s"Field [$field]: Cannot convert [$str] to boolean, only 1 or 0.".asLeft
+      s"cannot be converted to boolean, only 1 or 0 are supported".asLeft
     }
 
   /**

@@ -80,7 +80,7 @@ object CljTomcatLoader extends Loader[String] {
       val timestamp = CloudfrontLoader.toTimestamp(date, time)
       val contentType = (for {
         enc <- ct
-        raw = ConversionUtils.decodeString(CollectorEncoding, "Content type", enc)
+        raw = ConversionUtils.decodeString(CollectorEncoding, enc) // content type
       } yield raw).sequence
       val body = (for {
         b64 <- bdy

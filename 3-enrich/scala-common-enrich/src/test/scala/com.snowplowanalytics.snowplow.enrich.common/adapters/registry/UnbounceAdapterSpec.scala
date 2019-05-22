@@ -21,6 +21,7 @@ import org.specs2.Specification
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import outputs._
 import utils.Clock._
 
 class UnbounceAdapterSpec extends Specification with DataTables with ValidatedMatchers {
@@ -123,7 +124,7 @@ class UnbounceAdapterSpec extends Specification with DataTables with ValidatedMa
     val payload =
       CollectorPayload(Shared.api, params, ContentType.some, None, Shared.cljSource, Shared.context)
     UnbounceAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(
-      NonEmptyList.one("Request body is empty: no Unbounce events to process")
+      NonEmptyList.one(InputDataAdapterFailure("body", None, "empty body: no events to process"))
     )
   }
 
@@ -134,7 +135,11 @@ class UnbounceAdapterSpec extends Specification with DataTables with ValidatedMa
       CollectorPayload(Shared.api, Nil, None, body.some, Shared.cljSource, Shared.context)
     UnbounceAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(
       NonEmptyList.one(
-        "Request body provided but content type empty, expected application/x-www-form-urlencoded for Unbounce"
+        InputDataAdapterFailure(
+          "contentType",
+          None,
+          "no content type: expected application/x-www-form-urlencoded"
+        )
       )
     )
   }
@@ -147,7 +152,11 @@ class UnbounceAdapterSpec extends Specification with DataTables with ValidatedMa
       CollectorPayload(Shared.api, Nil, ct.some, body.some, Shared.cljSource, Shared.context)
     UnbounceAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(
       NonEmptyList.one(
-        "Content type of application/json provided, expected application/x-www-form-urlencoded for Unbounce"
+        InputDataAdapterFailure(
+          "contentType",
+          "application/json".some,
+          "expected application/x-www-form-urlencoded"
+        )
       )
     )
   }
@@ -163,7 +172,8 @@ class UnbounceAdapterSpec extends Specification with DataTables with ValidatedMa
       Shared.cljSource,
       Shared.context
     )
-    val expected = NonEmptyList.one("Unbounce event body is empty: nothing to process")
+    val expected =
+      NonEmptyList.one(InputDataAdapterFailure("body", None, "empty body: no events to process"))
     UnbounceAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(expected)
   }
 
@@ -179,7 +189,9 @@ class UnbounceAdapterSpec extends Specification with DataTables with ValidatedMa
       Shared.cljSource,
       Shared.context
     )
-    val expected = NonEmptyList.one("Unbounce event data does not have 'data.json' as a key")
+    val expected = NonEmptyList.one(
+      InputDataAdapterFailure("data.json", None, "missing 'data.json' field in body")
+    )
     UnbounceAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(expected)
   }
 
@@ -195,7 +207,9 @@ class UnbounceAdapterSpec extends Specification with DataTables with ValidatedMa
       Shared.cljSource,
       Shared.context
     )
-    val expected = NonEmptyList.one("Unbounce event data is empty: nothing to process")
+    val expected = NonEmptyList.one(
+      InputDataAdapterFailure("data.json", None, "empty 'data.json' field in body")
+    )
     UnbounceAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(expected)
   }
 
@@ -212,7 +226,11 @@ class UnbounceAdapterSpec extends Specification with DataTables with ValidatedMa
       Shared.context
     )
     val expected = NonEmptyList.one(
-      """Unbounce event string failed to parse into JSON: [expected " got '{"emai...' (line 1, column 2)]"""
+      NotJsonAdapterFailure(
+        "data.json",
+        """{{"email":["test@snowplowanalytics.com"],"ip_address":["200.121.220.179"],"time_submitted":["04:17 PM UTC"]}""",
+        """invalid json: expected " got '{"emai...' (line 1, column 2)"""
+      )
     )
     UnbounceAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(expected)
   }
@@ -229,7 +247,8 @@ class UnbounceAdapterSpec extends Specification with DataTables with ValidatedMa
       Shared.cljSource,
       Shared.context
     )
-    val expected = NonEmptyList.one("Unbounce context data missing 'page_id'")
+    val expected =
+      NonEmptyList.one(InputDataAdapterFailure("page_id", None, "missing 'page_id' field in body"))
     UnbounceAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(expected)
   }
 
@@ -245,7 +264,9 @@ class UnbounceAdapterSpec extends Specification with DataTables with ValidatedMa
       Shared.cljSource,
       Shared.context
     )
-    val expected = NonEmptyList.one("Unbounce context data missing 'page_name'")
+    val expected = NonEmptyList.one(
+      InputDataAdapterFailure("page_name", None, "missing 'page_name' field in body")
+    )
     UnbounceAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(expected)
   }
 
@@ -261,7 +282,8 @@ class UnbounceAdapterSpec extends Specification with DataTables with ValidatedMa
       Shared.cljSource,
       Shared.context
     )
-    val expected = NonEmptyList.one("Unbounce context data missing 'variant'")
+    val expected =
+      NonEmptyList.one(InputDataAdapterFailure("variant", None, "missing 'variant' field in body"))
     UnbounceAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(expected)
   }
 
@@ -277,7 +299,9 @@ class UnbounceAdapterSpec extends Specification with DataTables with ValidatedMa
       Shared.cljSource,
       Shared.context
     )
-    val expected = NonEmptyList.one("Unbounce context data missing 'page_url'")
+    val expected = NonEmptyList.one(
+      InputDataAdapterFailure("page_url", None, "missing 'page_url' field in body")
+    )
     UnbounceAdapter.toRawEvents(payload, SpecHelpers.client).value must beInvalid(expected)
   }
 }

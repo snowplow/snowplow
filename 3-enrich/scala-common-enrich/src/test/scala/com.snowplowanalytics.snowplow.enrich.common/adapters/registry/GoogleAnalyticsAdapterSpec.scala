@@ -23,6 +23,7 @@ import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
 import GoogleAnalyticsAdapter._
+import outputs._
 import utils.Clock._
 
 class GoogleAnalyticsAdapterSpec extends Specification with DataTables with ValidatedMatchers {
@@ -75,7 +76,7 @@ class GoogleAnalyticsAdapterSpec extends Specification with DataTables with Vali
     val payload = CollectorPayload(api, Nil, None, None, source, context)
     val actual = toRawEvents(payload, SpecHelpers.client).value
     actual must beInvalid(
-      NonEmptyList.one("Request body is empty: no GoogleAnalytics events to process")
+      NonEmptyList.one(InputDataAdapterFailure("body", None, "empty body"))
     )
   }
 
@@ -84,7 +85,13 @@ class GoogleAnalyticsAdapterSpec extends Specification with DataTables with Vali
     val payload = CollectorPayload(api, Nil, None, body.some, source, context)
     val actual = toRawEvents(payload, SpecHelpers.client).value
     actual must beInvalid(
-      NonEmptyList.one("No GoogleAnalytics t parameter provided: cannot determine hit type")
+      NonEmptyList.one(
+        InputDataAdapterFailure(
+          "body",
+          "dl=docloc".some,
+          "no t parameter provided: cannot determine hit type"
+        )
+      )
     )
   }
 
@@ -94,8 +101,12 @@ class GoogleAnalyticsAdapterSpec extends Specification with DataTables with Vali
     val actual = toRawEvents(payload, SpecHelpers.client).value
     actual must beInvalid(
       NonEmptyList.of(
-        "No matching GoogleAnalytics hit type for hit type unknown",
-        "GoogleAnalytics event failed: type parameter [unknown] not recognized"
+        InputDataAdapterFailure("t", "unknown".some, "no matching hit type"),
+        SchemaMappingAdapterFailure(
+          "unknown".some,
+          unstructEventData.mapValues(_.schemaKey.toSchemaUri),
+          "no schema associated with the provided type parameter"
+        )
       )
     )
   }
@@ -457,13 +468,19 @@ class GoogleAnalyticsAdapterSpec extends Specification with DataTables with Vali
 
   def e20 = {
     val errorMessage = (s: String) =>
-      s"Cannot parse field name $s, it doesn't conform to the " +
-        """expected composite field regex: (pr|promo|il|cd|cm|cg)(\d+)([a-zA-Z]*)(\d*)([a-zA-Z]*)(\d*)$"""
+      InputDataAdapterFailure(
+        s,
+        None,
+        "composite field name has to conform to regex " +
+          """(pr|promo|il|cd|cm|cg)(\d+)([a-zA-Z]*)(\d*)([a-zA-Z]*)(\d*)$"""
+      )
     val s = Seq(
       breakDownCompField("pr") must beLeft(errorMessage("pr")),
       breakDownCompField("pr12id") must beRight((List("pr", "id"), List("12"))),
       breakDownCompField("12") must beLeft(errorMessage("12")),
-      breakDownCompField("") must beLeft("Cannot parse empty composite field name"),
+      breakDownCompField("") must beLeft(
+        InputDataAdapterFailure("", None, "cannot parse empty field name")
+      ),
       breakDownCompField("pr12id", "identifier", "IF") must beRight(
         Map("IFpr" -> "12", "prid" -> "identifier")
       ),

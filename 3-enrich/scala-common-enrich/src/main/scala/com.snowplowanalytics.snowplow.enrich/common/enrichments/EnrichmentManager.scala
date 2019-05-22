@@ -95,7 +95,7 @@ object EnrichmentManager {
     // May be updated later if we have a `ua` parameter
     val useragent: Either[String, Unit] = raw.context.useragent match {
       case Some(ua) =>
-        val u = CU.decodeString(Charset.forName(raw.source.encoding), "useragent", ua)
+        val u = CU.decodeString(Charset.forName(raw.source.encoding), ua) // useragent
         u.map { ua =>
           event.useragent = ua
           ()
@@ -120,7 +120,7 @@ object EnrichmentManager {
         ("nuid", (ME.toTsvSafe, "network_userid")),
         ("ua", (ME.toTsvSafe, "useragent")),
         ("fp", (ME.toTsvSafe, "user_fingerprint")),
-        ("vid", (CU.stringToJInteger, "domain_sessionidx")),
+        ("vid", (CU.stringToJInteger2, "domain_sessionidx")),
         ("sid", (CU.validateUuid, "domain_sessionid")),
         ("dtm", (EE.extractTimestamp, "dvce_created_tstamp")),
         ("ttm", (EE.extractTimestamp, "true_tstamp")),
@@ -182,12 +182,12 @@ object EnrichmentManager {
         ("ti_nm", (ME.toTsvSafe, "ti_name")),
         ("ti_ca", (ME.toTsvSafe, "ti_category")),
         ("ti_pr", (CU.stringToDoublelike, "ti_price")),
-        ("ti_qu", (CU.stringToJInteger, "ti_quantity")),
+        ("ti_qu", (CU.stringToJInteger2, "ti_quantity")),
         // Page pings
-        ("pp_mix", (CU.stringToJInteger, "pp_xoffset_min")),
-        ("pp_max", (CU.stringToJInteger, "pp_xoffset_max")),
-        ("pp_miy", (CU.stringToJInteger, "pp_yoffset_min")),
-        ("pp_may", (CU.stringToJInteger, "pp_yoffset_max")),
+        ("pp_mix", (CU.stringToJInteger2, "pp_xoffset_min")),
+        ("pp_max", (CU.stringToJInteger2, "pp_xoffset_max")),
+        ("pp_miy", (CU.stringToJInteger2, "pp_yoffset_min")),
+        ("pp_may", (CU.stringToJInteger2, "pp_yoffset_max")),
         // Currency
         ("tr_cu", (ME.toTsvSafe, "tr_currency")),
         ("ti_cu", (ME.toTsvSafe, "ti_currency"))
