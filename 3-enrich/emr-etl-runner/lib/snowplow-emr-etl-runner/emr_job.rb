@@ -1107,34 +1107,6 @@ module Snowplow
         JobResult.new(success, bootstrap_failure, rdb_loader_failure, rdb_loader_cancellation)
       end
 
-      # Prettified string containing failure details
-      # for this job flow.
-      Contract String => String
-      def get_failure_details(jobflow_id, cluster_status, cluster_step_status_for_run)
-        [
-          "EMR jobflow #{jobflow_id} failed, check Amazon EMR console and Hadoop logs for details (help: https://github.com/snowplow/snowplow/wiki/Troubleshooting-jobs-on-Elastic-MapReduce). Data files not archived.",
-          "#{@jobflow.name}: #{cluster_status.state} [#{cluster_status.last_state_change_reason}] ~ #{self.class.get_elapsed_time(cluster_status.ready_at, cluster_status.ended_at)} #{self.class.get_timespan(cluster_status.ready_at, cluster_status.ended_at)}"
-        ].concat(cluster_step_status_for_run
-            .sort { |a,b|
-              self.class.nilable_spaceship(a.started_at, b.started_at)
-            }
-            .each_with_index
-            .map { |s,i|
-              " - #{i + 1}. #{s.name}: #{s.state} ~ #{self.class.get_elapsed_time(s.started_at, s.ended_at)} #{self.class.get_timespan(s.started_at, s.ended_at)}"
-            })
-          .join("\n")
-      end
-
-      # Gets the time span.
-      #
-      # Parameters:
-      # +start+:: start time
-      # +_end+:: end time
-      Contract Maybe[Time], Maybe[Time] => String
-      def self.get_timespan(start, _end)
-        "[#{start} - #{_end}]"
-      end
-
       # Spaceship operator supporting nils
       #
       # Parameters:
@@ -1151,32 +1123,6 @@ module Snowplow
           -1
         else
           a <=> b
-        end
-      end
-
-      # Gets the elapsed time in a
-      # human-readable format.
-      #
-      # Parameters:
-      # +start+:: start time
-      # +_end+:: end time
-      Contract Maybe[Time], Maybe[Time] => String
-      def self.get_elapsed_time(start, _end)
-        if start.nil? or _end.nil?
-          "elapsed time n/a"
-        else
-          # Adapted from http://stackoverflow.com/a/19596579/255627
-          seconds_diff = (start - _end).to_i.abs
-
-          hours = seconds_diff / 3600
-          seconds_diff -= hours * 3600
-
-          minutes = seconds_diff / 60
-          seconds_diff -= minutes * 60
-
-          seconds = seconds_diff
-
-          "#{hours.to_s.rjust(2, '0')}:#{minutes.to_s.rjust(2, '0')}:#{seconds.to_s.rjust(2, '0')}"
         end
       end
 
@@ -1200,6 +1146,7 @@ module Snowplow
       #
       # Parameters:
       # +jobflow+:: The jobflow to extract steps from
+      Contract Elasticity::JobFlow => ArrayOf[Elasticity::ClusterStepStatus]
       def cluster_step_status_for_run(jobflow)
         begin
           retries ||= 0
@@ -1213,6 +1160,7 @@ module Snowplow
         end
       end
 
+      Contract Elasticity::JobFlow => Elasticity::ClusterStatus
       def cluster_status(jobflow)
         begin
           retries ||= 0
