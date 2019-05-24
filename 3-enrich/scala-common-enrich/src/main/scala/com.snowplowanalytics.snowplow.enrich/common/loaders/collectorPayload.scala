@@ -10,11 +10,15 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common.loaders
+package com.snowplowanalytics.snowplow.enrich.common
+package loaders
 
 import cats.syntax.either._
+import cats.syntax.option._
 import org.apache.http.NameValuePair
 import org.joda.time.DateTime
+
+import outputs._
 
 object CollectorPayload {
 
@@ -63,14 +67,14 @@ object CollectorApi {
   /**
    * Parses the requested URI path to determine the specific API version this payload follows.
    * @param path The request path
-   * @return a Validation boxing either a CollectorApi or a Failure String.
+   * @return either a CollectorApi or a Failure String.
    */
-  def parse(path: String): Either[String, CollectorApi] = path match {
+  def parsePath(path: String): Either[CPFormatViolationMessage, CollectorApi] = path match {
     case ApiPathRegex(vnd, ver) => CollectorApi(vnd, ver).asRight
     case _ if isIceRequest(path) => SnowplowTp1.asRight
     case _ =>
-      (s"Request path $path does not match (/)vendor/version(/) pattern nor is a " +
-        "legacy /i(ce.png) request").asLeft
+      val msg = "path does not match (/)vendor/version(/) nor is a legacy /i(ce.png) request"
+      InputDataCPFormatViolationMessage("path", path.some, msg).asLeft
   }
 
   /**

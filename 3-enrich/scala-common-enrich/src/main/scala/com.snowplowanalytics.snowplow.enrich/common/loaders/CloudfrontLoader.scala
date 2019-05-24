@@ -19,8 +19,8 @@ import scala.util.matching.Regex
 
 import cats.data.ValidatedNel
 import cats.implicits._
-import org.joda.time.DateTime
 
+import outputs._
 import utils.ConversionUtils.singleEncodePcts
 
 /**
@@ -85,16 +85,19 @@ object CloudfrontLoader extends Loader[String] {
    * Converts the source string into a ValidatedMaybeCollectorPayload.
    * @param line A line of data to convert
    * @return either a set of validation errors or an Option-boxed CanonicalInput object, wrapped
-   * in a Scalaz ValidatioNel.
+   * in a ValidatedNel.
    */
-  def toCollectorPayload(line: String): ValidatedNel[String, Option[CollectorPayload]] =
+  def toCollectorPayload(
+    line: String
+  ): ValidatedNel[CPFormatViolationMessage, Option[CollectorPayload]] =
     line match {
       // 1. Header row
       case h if (h.startsWith("#Version:") || h.startsWith("#Fields:")) => None.valid
       // 2. Not a GET request
       case CfOriginalPlusAdditionalRegex(_, _, _, _, _, op, _, _, _, _, _, _)
           if op.toUpperCase != "GET" =>
-        s"Only GET operations supported for CloudFront Collector, not ${op.toUpperCase}".invalidNel
+        val msg = "operation must be GET"
+        InputDataCPFormatViolationMessage("verb", op.toUpperCase().some, msg).invalidNel
       // 3. Row matches original CloudFront format
       case CfOriginalRegex(date, time, _, _, ip, _, _, objct, _, rfr, ua, qs) =>
         CloudfrontLogLine(date, time, ip, objct, rfr, ua, qs).toValidatedMaybeCollectorPayload
@@ -108,34 +111,8 @@ object CloudfrontLoader extends Loader[String] {
         CloudfrontLogLine(date, time, ip, objct, rfr, ua, qs, forwardedFor).toValidatedMaybeCollectorPayload
       // 4. Row not recognised
       case _ =>
-        "Line does not match CloudFront header or data row formats".invalidNel
+        FallbackCPFormatViolationMessage("does not match header or data row formats").invalidNel
     }
-
-  /**
-   * Converts a CloudFront log-format date and a time to a timestamp.
-   * @param date The CloudFront log-format date
-   * @param time The CloudFront log-format time
-   * @return the timestamp as a Joda DateTime or an error String, all wrapped in a Scalaz Validation
-   */
-  def toTimestamp(date: String, time: String): Either[String, DateTime] =
-    Either
-      .catchNonFatal(DateTime.parse("%sT%s+00:00".format(date, time)))
-      .leftMap(
-        e =>
-          s"Unexpected exception converting date [$date] and time [$time] to timestamp:" +
-            s" [${e.getMessage}]"
-      )
-
-  /**
-   * Checks whether a String field is a hyphen "-", which is used by CloudFront to signal a null.
-   * @param field The field to check
-   * @return True if the String was a hyphen "-"
-   */
-  def toOption(field: String): Option[String] = Option(field) match {
-    case Some("-") => None
-    case Some("") => None
-    case s => s // Leaves any other Some(x) or None as-is
-  }
 
   /**
    * 'Cleans' a string to make it parsable by URLDecoder.decode.
@@ -166,13 +143,14 @@ object CloudfrontLoader extends Loader[String] {
     date: String,
     time: String,
     lastIp: String,
-    objct: String,
+    path: String,
     rfr: String,
     ua: String,
     qs: String,
     forwardedFor: String = "-"
   ) {
-    def toValidatedMaybeCollectorPayload: ValidatedNel[String, Option[CollectorPayload]] = {
+    def toValidatedMaybeCollectorPayload
+      : ValidatedNel[CPFormatViolationMessage, Option[CollectorPayload]] = {
       // Validations, and let's strip double-encodings
       val timestamp = toTimestamp(date, time)
       val querystring = {
@@ -186,24 +164,25 @@ object CloudfrontLoader extends Loader[String] {
       val refr = singleEncodePcts(rfr)
       val referer = toOption(refr) map toCleanUri
 
-      val api = CollectorApi.parse(objct)
+      val collectorApi = CollectorApi.parsePath(path)
 
-      (timestamp.toValidatedNel, querystring.toValidatedNel, api.toValidatedNel).mapN { (t, q, a) =>
-        CollectorPayload(
-          q,
-          CollectorName,
-          CollectorEncoding.toString,
-          None, // No hostname for CloudFront
-          Some(t),
-          toOption(ip),
-          toOption(userAgent),
-          referer,
-          Nil, // No headers for CloudFront
-          None, // No collector-set user ID for CloudFront
-          a, // API vendor/version
-          None, // No content type
-          None // No request body
-        ).some
+      (timestamp.toValidatedNel, querystring.toValidatedNel, collectorApi.toValidatedNel).mapN {
+        (t, q, a) =>
+          CollectorPayload(
+            q,
+            CollectorName,
+            CollectorEncoding.toString,
+            None, // No hostname for CloudFront
+            Some(t),
+            toOption(ip),
+            toOption(userAgent),
+            referer,
+            Nil, // No headers for CloudFront
+            None, // No collector-set user ID for CloudFront
+            a, // API vendor/version
+            None, // No content type
+            None // No request body
+          ).some
       }
     }
   }

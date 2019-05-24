@@ -19,6 +19,7 @@ import org.joda.time.DateTime
 import org.specs2.{ScalaCheck, Specification}
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
+import outputs._
 import SpecHelpers._
 
 class CljTomcatLoaderSpec
@@ -212,7 +213,13 @@ class CljTomcatLoaderSpec
     val actual = CljTomcatLoader.toCollectorPayload(raw)
     actual must beInvalid(
       NonEmptyList
-        .one("Operation must be POST, not GET, if request content type and/or body are provided")
+        .one(
+          InputDataCPFormatViolationMessage(
+            "verb",
+            "GET".some,
+            "operation must be POST if content type and/or body are provided"
+          )
+        )
     )
   }
 
@@ -222,7 +229,11 @@ class CljTomcatLoaderSpec
     val actual = CljTomcatLoader.toCollectorPayload(raw)
     actual must beInvalid(
       NonEmptyList.one(
-        "Request path /com.sendgrid-api-v3 does not match (/)vendor/version(/) pattern nor is a legacy /i(ce.png) request"
+        InputDataCPFormatViolationMessage(
+          "path",
+          "/com.sendgrid-api-v3".some,
+          "path does not match (/)vendor/version(/) nor is a legacy /i(ce.png) request"
+        )
       )
     )
   }
@@ -232,7 +243,7 @@ class CljTomcatLoaderSpec
   def e4 =
     prop { (raw: String) =>
       CljTomcatLoader.toCollectorPayload(raw) must beInvalid(
-        NonEmptyList.one("Line does not match raw event format for Clojure Collector")
+        NonEmptyList.one(FallbackCPFormatViolationMessage("does not match the raw event format"))
       )
     }
 }

@@ -10,11 +10,14 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common.loaders
+package com.snowplowanalytics.snowplow.enrich.common
+package loaders
 
 import cats.data.NonEmptyList
 import org.specs2.matcher.ValidatedMatchers
 import org.specs2.mutable.Specification
+
+import outputs.FallbackCPFormatViolationMessage
 
 class NdjsonLoaderSpec extends Specification with ValidatedMatchers {
 
@@ -36,7 +39,7 @@ class NdjsonLoaderSpec extends Specification with ValidatedMatchers {
     "fail if multiple lines passed in as one line" in {
       val lines = List("""{"key":"value1"}""", """{"key":"value2"}""")
       NdjsonLoader("com.abc/v1").toCollectorPayload(lines.mkString("\n")) must beInvalid(
-        NonEmptyList.one("Too many lines! Expected single line")
+        NonEmptyList.one(FallbackCPFormatViolationMessage("expected a single line, found 2"))
       )
     }
 

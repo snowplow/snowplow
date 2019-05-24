@@ -21,13 +21,16 @@ import cats.syntax.validated._
 import org.specs2.mutable.Specification
 import org.specs2.matcher.DataTables
 
+import outputs._
 import SpecHelpers._
 
 object LoaderSpec {
   val loader = new Loader[String] {
     // Make our trait whole
-    def toCollectorPayload(line: String): ValidatedNel[String, Option[CollectorPayload]] =
-      "FAIL".invalidNel
+    def toCollectorPayload(
+      line: String
+    ): ValidatedNel[CPFormatViolationMessage, Option[CollectorPayload]] =
+      FallbackCPFormatViolationMessage("FAIL").invalidNel
   }
 }
 
