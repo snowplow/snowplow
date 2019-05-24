@@ -17,7 +17,9 @@ import cats.data.ValidatedNel
 import cats.syntax.either._
 import cats.syntax.option._
 import cats.syntax.validated._
-import io.circe.parser._
+
+import outputs._
+import utils.JsonUtils
 
 final case class NdjsonLoader(adapter: String) extends Loader[String] {
 
@@ -29,35 +31,35 @@ final case class NdjsonLoader(adapter: String) extends Loader[String] {
    * @param line A line of data to convert
    * @return a CanonicalInput object, Option-boxed, or None if no input was extractable.
    */
-  override def toCollectorPayload(line: String): ValidatedNel[String, Option[CollectorPayload]] =
+  override def toCollectorPayload(
+    line: String
+  ): ValidatedNel[CPFormatViolationMessage, Option[CollectorPayload]] =
     if (line.replaceAll("\r?\n", "").isEmpty) {
       None.validNel
     } else if (line.split("\r?\n").size > 1) {
-      "Too many lines! Expected single line".invalidNel
+      val size = line.split("\r?\n").size
+      FallbackCPFormatViolationMessage(s"expected a single line, found $size").invalidNel
     } else {
-      parse(line) match {
-        case Left(e) => s"Unparsable JSON: ${e.getMessage}".invalidNel
-        case _ =>
-          CollectorApi
-            .parse(adapter)
-            .map(
-              CollectorPayload(
-                Nil,
-                CollectorName,
-                CollectorEncoding,
-                None,
-                None,
-                None,
-                None,
-                None,
-                Nil,
-                None,
-                _,
-                None,
-                Some(line)
-              ).some
-            )
-            .toValidatedNel
-      }
+      (for {
+        _ <- JsonUtils
+          .extractJson(line)
+          .leftMap(FallbackCPFormatViolationMessage.apply)
+        collectorApi <- CollectorApi.parsePath(adapter)
+        cp = CollectorPayload(
+          Nil,
+          CollectorName,
+          CollectorEncoding,
+          None,
+          None,
+          None,
+          None,
+          None,
+          Nil,
+          None,
+          collectorApi,
+          None,
+          Some(line)
+        ).some
+      } yield cp).toValidatedNel
     }
 }

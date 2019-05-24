@@ -18,6 +18,8 @@ import cats.syntax.either._
 import cats.syntax.option._
 import cats.syntax.validated._
 
+import outputs.CPFormatViolationMessage
+
 /** Loader for TSVs */
 final case class TsvLoader(adapter: String) extends Loader[String] {
 
@@ -25,15 +27,17 @@ final case class TsvLoader(adapter: String) extends Loader[String] {
    * Converts the source TSV into a ValidatedMaybeCollectorPayload.
    * @param line A TSV
    * @return either a set of validation errors or an Option-boxed CanonicalInput object, wrapped in
-   * a Scalaz ValidationNel.
+   * a ValidatedNel.
    */
-  def toCollectorPayload(line: String): ValidatedNel[String, Option[CollectorPayload]] =
+  def toCollectorPayload(
+    line: String
+  ): ValidatedNel[CPFormatViolationMessage, Option[CollectorPayload]] =
     // Throw away the first two lines of Cloudfront web distribution access logs
     if (line.startsWith("#Version:") || line.startsWith("#Fields:")) {
       None.valid
     } else {
       CollectorApi
-        .parse(adapter)
+        .parsePath(adapter)
         .map(
           CollectorPayload(
             Nil,

@@ -30,6 +30,22 @@ sealed trait Payload
 
 final case class Processor(artifact: String, version: String)
 
+// COLLECTOR PAYLOAD FORMAT VIOLATION
+
+final case class CollectorPayloadFormatViolation(
+  timestamp: ZonedDateTime,
+  loader: String,
+  message: CPFormatViolationMessage
+) extends Failure
+
+sealed trait CPFormatViolationMessage
+final case class InputDataCPFormatViolationMessage(
+  payloadField: String,
+  value: Option[String],
+  expectation: String
+) extends CPFormatViolationMessage
+final case class FallbackCPFormatViolationMessage(error: String) extends CPFormatViolationMessage
+
 // ADAPTER FAILURES
 
 final case class AdapterFailures(

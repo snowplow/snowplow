@@ -176,7 +176,7 @@ object ConversionUtils {
    * no need to remove line breaks, tabs etc
    * @param enc The encoding of the String
    * @param str The String to decode
-   * @return a Scalaz Validation, wrapping either an error String or the decoded String
+   * @return either an error String or the decoded String
    */
   val decodeString: (Charset, String) => Either[String, String] = (enc, str) =>
     try {
