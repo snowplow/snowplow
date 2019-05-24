@@ -13,12 +13,14 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
+import cats.data.NonEmptyList
 import cats.syntax.option._
 import org.apache.commons.codec.binary.Base64
 import org.joda.time.DateTime
 import org.specs2.{ScalaCheck, Specification}
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
+import outputs.FallbackCPFormatViolationMessage
 import SpecHelpers._
 
 class ThriftLoaderSpec
@@ -171,11 +173,16 @@ class ThriftLoaderSpec
         }
     }
 
+  val msg =
+    "error deserializing raw event: Cannot read. Remote side has closed. Tried to read 1 bytes, but only got 0 bytes. (This is often indicative of an internal error on the server side. Please check your server logs.)"
+
   // A bit of fun: the chances of generating a valid Thrift CollectorPayload at random are
   // so low that we can just use ScalaCheck here
   def e2 =
     prop { (raw: String) =>
-      ThriftLoader.toCollectorPayload(Base64.decodeBase64(raw)) must beInvalid
+      ThriftLoader.toCollectorPayload(Base64.decodeBase64(raw)) must beInvalid(
+        NonEmptyList.one(FallbackCPFormatViolationMessage(msg))
+      )
     }
 
 }
