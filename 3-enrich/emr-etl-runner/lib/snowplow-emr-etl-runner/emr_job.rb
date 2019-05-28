@@ -717,17 +717,31 @@ module Snowplow
       def run(config)
 
         snowplow_tracking_enabled = ! config[:monitoring][:snowplow].nil?
+        if snowplow_tracking_enabled
+          Monitoring::Snowplow.parameterize(config)
+        end
 
         @pending_jobflow_steps.each do |jobflow_step|
           begin
             retries ||= 0
             # if the job flow is already running this triggers an HTTP call
             @jobflow.add_step(jobflow_step)
-          rescue Elasticity::ThrottlingException, RestClient::RequestTimeout, RestClient::InternalServerError, RestClient::ServiceUnavailable, RestClient::SSLCertificateNotVerified
-            logger.warn "Got an error while trying to submit a jobflow step: #{jobflow_step.name}"
-            retries += 1
-            sleep(2 ** retries + 30)
-            retry if retries < 3
+          rescue Elasticity::ThrottlingException, RestClient::RequestTimeout, RestClient::InternalServerError, RestClient::ServiceUnavailable, RestClient::SSLCertificateNotVerified => e
+            if retries < 3
+              retries += 1
+              delay = 2 ** retries + 30
+              logger.warn "Got error [#{e.message}] while trying to submit jobflow step [#{jobflow_step.name}] to jobflow [#{@jobflow.jobflow_id}]. Retrying in #{delay} seconds"
+              sleep(delay)
+              retry
+            else
+              if snowplow_tracking_enabled
+                step_status = Elasticity::ClusterStepStatus.new
+                step_status.name = "Add step [#{jobflow_step.name}] to jobflow [#{@jobflow.jobflow_id}]. (Error: [#{e.message}])"
+                step_status.state = "FAILED"
+                Monitoring::Snowplow.instance.track_single_step(step_status)
+              end
+              raise EmrExecutionError, "Can't add step [#{jobflow_step.name}] to jobflow [#{@jobflow.jobflow_id}] (retried 3 times). Error: [#{e.message}]."
+            end
           end
         end
 
@@ -746,7 +760,6 @@ module Snowplow
         logger.debug "EMR jobflow #{jobflow_id} started, waiting for jobflow to complete..."
 
         if snowplow_tracking_enabled
-          Monitoring::Snowplow.parameterize(config)
           Monitoring::Snowplow.instance.track_job_started(jobflow_id, cluster_status(@jobflow), cluster_step_status_for_run(@jobflow))
         end
 
