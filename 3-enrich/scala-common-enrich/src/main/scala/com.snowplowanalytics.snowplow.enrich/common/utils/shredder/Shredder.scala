@@ -61,7 +61,7 @@ object Shredder {
   def shred[F[_]: Monad: RegistryLookup: Clock](
     event: EnrichedEvent,
     client: Client[F, Json]
-  ): F[ValidatedNel[SchemaViolation, List[SelfDescribingData[Json]]]] = {
+  ): F[ValidatedNel[EnrichmentStageIssue, List[SelfDescribingData[Json]]]] = {
     // Define what we know so far of the type hierarchy.
     val partialHierarchy = makePartialHierarchy(event.event_id, event.collector_tstamp)
 
@@ -83,7 +83,7 @@ object Shredder {
   def extractAndValidateUnstructEvent[F[_]: Monad: RegistryLookup: Clock](
     event: EnrichedEvent,
     client: Client[F, Json]
-  ): F[ValidatedNel[SchemaViolation, List[SelfDescribingData[Json]]]] =
+  ): F[ValidatedNel[EnrichmentStageIssue, List[SelfDescribingData[Json]]]] =
     flatten(extractUnstructEvent(event, client))
       .flatMap(extracted => validate(extracted, client))
 
@@ -96,7 +96,7 @@ object Shredder {
   def extractAndValidateCustomContexts[F[_]: Monad: RegistryLookup: Clock](
     event: EnrichedEvent,
     client: Client[F, Json]
-  ): F[ValidatedNel[SchemaViolation, List[SelfDescribingData[Json]]]] =
+  ): F[ValidatedNel[EnrichmentStageIssue, List[SelfDescribingData[Json]]]] =
     extractAndValidateContexts(event.contexts, "context", client)
 
   /**
@@ -108,7 +108,7 @@ object Shredder {
   def extractAndValidateDerivedContexts[F[_]: Monad: RegistryLookup: Clock](
     event: EnrichedEvent,
     client: Client[F, Json]
-  ): F[ValidatedNel[SchemaViolation, List[SelfDescribingData[Json]]]] =
+  ): F[ValidatedNel[EnrichmentStageIssue, List[SelfDescribingData[Json]]]] =
     extractAndValidateContexts(event.derived_contexts, "derived_contexts", client)
 
   /**
@@ -122,7 +122,7 @@ object Shredder {
     json: String,
     field: String,
     client: Client[F, Json]
-  ): F[ValidatedNel[SchemaViolation, List[SelfDescribingData[Json]]]] =
+  ): F[ValidatedNel[EnrichmentStageIssue, List[SelfDescribingData[Json]]]] =
     flatten(extractContexts(json, field, client))
       .flatMap(extracted => validate(extracted, client))
 
@@ -137,7 +137,7 @@ object Shredder {
   def extractUnstructEvent[F[_]: Monad: RegistryLookup: Clock](
     event: EnrichedEvent,
     client: Client[F, Json]
-  ): Option[F[ValidatedNel[SchemaViolation, List[Json]]]] =
+  ): Option[F[ValidatedNel[EnrichmentStageIssue, List[Json]]]] =
     Option(event.unstruct_event).map { ue =>
       extractAndValidateJson(
         "ue_properties",
@@ -159,7 +159,7 @@ object Shredder {
     json: String,
     field: String,
     client: Client[F, Json]
-  ): Option[F[ValidatedNel[SchemaViolation, List[Json]]]] =
+  ): Option[F[ValidatedNel[EnrichmentStageIssue, List[Json]]]] =
     Option(json).map { js =>
       extractAndValidateJson(field, ContextsSchema, js, client)
         .map(_.map { json =>
@@ -178,9 +178,9 @@ object Shredder {
    * @return validated list of pairs consist of schema and node
    */
   private[shredder] def validate[F[_]: Monad: RegistryLookup: Clock](
-    validatedJsons: ValidatedNel[SchemaViolation, List[Json]],
+    validatedJsons: ValidatedNel[EnrichmentStageIssue, List[Json]],
     client: Client[F, Json]
-  ): F[ValidatedNel[SchemaViolation, List[SelfDescribingData[Json]]]] =
+  ): F[ValidatedNel[EnrichmentStageIssue, List[SelfDescribingData[Json]]]] =
     (for {
       jsons <- EitherT.fromEither[F](validatedJsons.toEither)
       validated <- jsons.map { json =>
@@ -189,12 +189,14 @@ object Shredder {
             SelfDescribingData
               .parse(json)
               .leftMap { e =>
-                NonEmptyList.one(NotSDSchemaViolation(json.noSpaces, e): SchemaViolation)
+                NonEmptyList.one(NotSDSchemaViolation(json.noSpaces, e.code): EnrichmentStageIssue)
               }
           )
           _ <- client
             .check(sd)
-            .leftMap(e => NonEmptyList.one(IgluErrorSchemaViolation(sd.schema, e): SchemaViolation))
+            .leftMap(
+              e => NonEmptyList.one(IgluErrorSchemaViolation(sd.schema, e): EnrichmentStageIssue)
+            )
         } yield sd
       }.sequence
     } yield validated).value.map(_.toValidated)
@@ -205,8 +207,8 @@ object Shredder {
    * @return empty list in case of None, or non-empty in case of some
    */
   private[shredder] def flatten[F[_]: Monad](
-    o: Option[F[ValidatedNel[SchemaViolation, List[Json]]]]
-  ): F[ValidatedNel[SchemaViolation, List[Json]]] = o match {
+    o: Option[F[ValidatedNel[EnrichmentStageIssue, List[Json]]]]
+  ): F[ValidatedNel[EnrichmentStageIssue, List[Json]]] = o match {
     case Some(vjl) => vjl
     case None => Monad[F].pure(List.empty[Json].validNel)
   }
@@ -269,17 +271,17 @@ object Shredder {
     schemaCriterion: SchemaCriterion,
     instance: String,
     client: Client[F, Json]
-  ): F[ValidatedNel[SchemaViolation, Json]] =
+  ): F[ValidatedNel[EnrichmentStageIssue, Json]] =
     (for {
       j <- EitherT.fromEither[F](
         JsonUtils
           .extractJson(instance)
-          .leftMap(e => NonEmptyList.one(NotJsonSchemaViolation(field, instance, e)))
+          .leftMap(e => NonEmptyList.one(NotJsonSchemaViolation(field, instance.some, e)))
       )
       sd <- EitherT.fromEither[F](
         SelfDescribingData
           .parse(j)
-          .leftMap(e => NonEmptyList.one(NotSDSchemaViolation(instance, e)))
+          .leftMap(e => NonEmptyList.one(NotSDSchemaViolation(instance, e.code)))
       )
       _ <- client
         .check(sd)
@@ -293,5 +295,5 @@ object Shredder {
                 .asLeft
           }
         }
-    } yield sd.data).leftWiden[NonEmptyList[SchemaViolation]].toValidated
+    } yield sd.data).leftWiden[NonEmptyList[EnrichmentStageIssue]].toValidated
 }

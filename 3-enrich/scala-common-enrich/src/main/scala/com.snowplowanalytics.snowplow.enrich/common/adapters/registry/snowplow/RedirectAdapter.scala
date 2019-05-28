@@ -144,7 +144,7 @@ object RedirectAdapter extends Adapter {
     for {
       json <- JU
         .extractJson(existing) // co|cx
-        .leftMap(e => NotJsonAdapterFailure("co|cx", existing, e))
+        .leftMap(e => NotJsonAdapterFailure("co|cx", existing.some, e))
       merged = json.hcursor
         .downField("data")
         .withFocus(_.mapArray(newContext +: _))

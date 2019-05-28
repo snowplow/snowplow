@@ -175,6 +175,7 @@ final case class PiiPseudonymizerEnrichment(
     "jsonschema",
     SchemaVer.Full(1, 0, 0)
   ).toSchemaUri
+
   def transformer(event: EnrichedEvent): Unit = {
     val modifiedFields = fieldList.flatMap(_.transform(event, strategy))
 

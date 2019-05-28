@@ -68,7 +68,7 @@ object ApiRequestEnrichment extends ParseableEnrichment {
           CirceUtils.extract[List[Output]](c, "parameters", "outputs").toValidatedNel,
           CirceUtils.extract[Cache](c, "parameters", "cache").toValidatedNel
         ).mapN { (inputs, api, outputs, cache) =>
-          ApiRequestConf(inputs, api, outputs, cache)
+          ApiRequestConf(schemaKey, inputs, api, outputs, cache)
         }.toEither
       }
       .toValidated
@@ -104,6 +104,7 @@ object ApiRequestEnrichment extends ParseableEnrichment {
 }
 
 final case class ApiRequestEnrichment[F[_]: Monad: HttpClient](
+  schemaKey: SchemaKey,
   inputs: List[Input],
   api: HttpApi,
   outputs: List[Output],
@@ -111,6 +112,9 @@ final case class ApiRequestEnrichment[F[_]: Monad: HttpClient](
   cache: LruMap[F, String, (Either[Throwable, Json], Long)]
 ) extends Enrichment {
   import ApiRequestEnrichment._
+
+  private val enrichmentInfo =
+    EnrichmentInformation(schemaKey, "api-request").some
 
   /**
    * Primary function of the enrichment. Failure means HTTP failure, failed unexpected JSON-value,
@@ -124,7 +128,7 @@ final case class ApiRequestEnrichment[F[_]: Monad: HttpClient](
     derivedContexts: List[Json],
     customContexts: List[SelfDescribingData[Json]],
     unstructEvent: List[SelfDescribingData[Json]]
-  ): F[ValidatedNel[EnrichmentFailureMessage, List[Json]]] = {
+  ): F[ValidatedNel[EnrichmentStageIssue, List[Json]]] = {
     // Note that SelfDescribingData have specific structure - it is a pair,
     // where first element is a SchemaKey, second element is a Json
     // with keys: `data`, `schema` and `hierarchy` and `schema` contains again SchemaKey
@@ -147,7 +151,7 @@ final case class ApiRequestEnrichment[F[_]: Monad: HttpClient](
         .leftMap(_.map(SimpleEnrichmentFailureMessage.apply))
       outputs <- EitherT(getOutputs(context))
         .leftMap(e => NonEmptyList.one(SimpleEnrichmentFailureMessage(e)))
-    } yield outputs).leftWiden.toValidated
+    } yield outputs).leftMap(_.map(EnrichmentFailure(enrichmentInfo, _))).leftWiden.toValidated
   }
 
   /**
@@ -217,7 +221,17 @@ object CreateApiRequestEnrichment {
     override def create(conf: ApiRequestConf): F[ApiRequestEnrichment[F]] =
       CLM
         .create(conf.cache.size)
-        .map(c => ApiRequestEnrichment(conf.inputs, conf.api, conf.outputs, conf.cache.ttl, c))
+        .map(
+          c =>
+            ApiRequestEnrichment(
+              conf.schemaKey,
+              conf.inputs,
+              conf.api,
+              conf.outputs,
+              conf.cache.ttl,
+              c
+            )
+        )
   }
 
   implicit def evalCreateApiRequestEnrichment(
@@ -227,7 +241,17 @@ object CreateApiRequestEnrichment {
     override def create(conf: ApiRequestConf): Eval[ApiRequestEnrichment[Eval]] =
       CLM
         .create(conf.cache.size)
-        .map(c => ApiRequestEnrichment(conf.inputs, conf.api, conf.outputs, conf.cache.ttl, c))
+        .map(
+          c =>
+            ApiRequestEnrichment(
+              conf.schemaKey,
+              conf.inputs,
+              conf.api,
+              conf.outputs,
+              conf.cache.ttl,
+              c
+            )
+        )
   }
 
   implicit def idCreateApiRequestEnrichment(
@@ -237,6 +261,16 @@ object CreateApiRequestEnrichment {
     override def create(conf: ApiRequestConf): Id[ApiRequestEnrichment[Id]] =
       CLM
         .create(conf.cache.size)
-        .map(c => ApiRequestEnrichment(conf.inputs, conf.api, conf.outputs, conf.cache.ttl, c))
+        .map(
+          c =>
+            ApiRequestEnrichment(
+              conf.schemaKey,
+              conf.inputs,
+              conf.api,
+              conf.outputs,
+              conf.cache.ttl,
+              c
+            )
+        )
   }
 }

@@ -14,6 +14,7 @@ package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
 import java.nio.charset.StandardCharsets.UTF_8
+import java.time.Instant
 
 import cats.data.ValidatedNel
 import cats.implicits._
@@ -65,9 +66,7 @@ object CljTomcatLoader extends Loader[String] {
    * @return either a set of validation errors or an Option-boxed CanonicalInput object, wrapped
    * in a ValidatedNel.
    */
-  def toCollectorPayload(
-    line: String
-  ): ValidatedNel[CPFormatViolationMessage, Option[CollectorPayload]] = {
+  override def toCP(line: String): ValidatedNel[BadRow, Option[CollectorPayload]] = {
     def build(
       qs: String,
       date: String,
@@ -118,7 +117,7 @@ object CljTomcatLoader extends Loader[String] {
       }
     }
 
-    line match {
+    (line match {
       // A. For a request, to CljTomcat collector <= v0.6.0
       case CljTomcatRegex(date, time, _, _, ip, _, _, objct, _, refr, ua, qs, null, null) =>
         // API, content type and request body all unavailable
@@ -137,7 +136,6 @@ object CljTomcatLoader extends Loader[String] {
         build(qs, date, time, ip, ua, refr, objct, ct.some, None)
 
       // C: For a request with content type and/or body, to CljTomcat collector >= v0.7.0
-
       // C.1 Not a POST request
       case CljTomcatRegex(_, _, _, _, _, op, _, _, _, _, _, _, _, _) if op.toUpperCase != "POST" =>
         val msg = "operation must be POST if content type and/or body are provided"
@@ -151,6 +149,15 @@ object CljTomcatLoader extends Loader[String] {
       // D. Row not recognised
       case _ =>
         FallbackCPFormatViolationMessage("does not match the raw event format").invalidNel
-    }
+    }).leftMap(
+      _.map(
+        f =>
+          BadRow(
+            CPFormatViolation(Instant.now(), CollectorName, f),
+            RawPayload(line),
+            Processor.default
+          )
+      )
+    )
   }
 }

@@ -33,6 +33,8 @@ import io.lemonlabs.uri.encoding.percentEncode
 import org.apache.commons.codec.binary.Base64
 import org.apache.http.client.utils.URLEncodedUtils
 
+import outputs._
+
 /** General-purpose utils to help the ETL process along. */
 object ConversionUtils {
   private val UrlSafeBase64 = new Base64(true) // true means "url safe"
@@ -141,28 +143,31 @@ object ConversionUtils {
    * Validates that the given field contains a valid UUID.
    * @param field The name of the field being validated
    * @param str The String hopefully containing a UUID
-   * @return a Scalaz ValidatedString containing either the original String on Success, or an error
-   * String on Failure.
+   * @return either the original String, or an error String
    */
-  val validateUuid: (String, String) => Either[String, String] = (field, str) => {
+  val validateUuid: (String, String) => Either[EnrichmentStageIssue, String] = (field, str) => {
     def check(s: String)(u: UUID): Boolean = (u != null && s.toLowerCase == u.toString)
     val uuid = Try(UUID.fromString(str)).toOption.filter(check(str))
     uuid match {
       case Some(_) => str.toLowerCase.asRight
-      case None => s"Field [$field]: [$str] is not a valid UUID".asLeft
+      case None =>
+        val f = InputDataEnrichmentFailureMessage(field, Option(str), "not a valid UUID")
+        EnrichmentFailure(None, f).asLeft
     }
   }
 
   /**
    * @param field The name of the field being validated
    * @param str The String hopefully parseable as an integer
-   * @return a Scalaz ValidatedString containing either the original String on Success, or an error
-   * String on Failure.
+   * @return either the original String, or an error String
    */
-  val validateInteger: (String, String) => Either[String, String] = (field, str) => {
+  val validateInteger: (String, String) => Either[EnrichmentStageIssue, String] = (field, str) => {
     Either
       .catchNonFatal { str.toInt; str }
-      .leftMap(_ => s"Field [$field]: [$str] is not a valid integer")
+      .leftMap { _ =>
+        val f = InputDataEnrichmentFailureMessage(field, Option(str), "not a valid integer")
+        EnrichmentFailure(None, f)
+      }
   }
 
   /**
@@ -263,7 +268,10 @@ object ConversionUtils {
    * @param uri URI containing the querystring
    * @param encoding Encoding of the URI
    */
-  def extractQuerystring(uri: URI, encoding: Charset): Either[String, Map[String, String]] =
+  def extractQuerystring(
+    uri: URI,
+    encoding: Charset
+  ): Either[EnrichmentStageIssue, Map[String, String]] =
     Try(URLEncodedUtils.parse(uri, encoding).asScala.map(p => (p.getName -> p.getValue)))
       .recoverWith {
         case NonFatal(_) =>
@@ -271,7 +279,9 @@ object ConversionUtils {
       } match {
       case util.Success(s) => s.toMap.asRight
       case util.Failure(e) =>
-        s"Could not parse uri [$uri]. Uri parsing threw exception: [$e].".asLeft
+        val msg = s"could not parse uri, expection was thrown: [$e]."
+        val f = InputDataEnrichmentFailureMessage("uri", Option(uri).map(_.toString()), msg)
+        EnrichmentFailure(None, f).asLeft
     }
 
   /**
@@ -288,12 +298,16 @@ object ConversionUtils {
         jint.asRight
       } catch {
         case _: NumberFormatException =>
-          "cannot be converted to java.Integer".asLeft
+          "cannot be converted to java.lang.Integer".asLeft
       }
     }
 
-  val stringToJInteger2: (String, String) => Either[String, JInteger] =
-    (_, str) => stringToJInteger(str)
+  val stringToJInteger2: (String, String) => Either[EnrichmentStageIssue, JInteger] =
+    (field, str) =>
+      stringToJInteger(str).leftMap { e =>
+        val f = InputDataEnrichmentFailureMessage(field, Option(str), e)
+        EnrichmentFailure(None, f)
+      }
 
   /**
    * Convert a String to a String containing a Redshift-compatible Double.
@@ -302,9 +316,9 @@ object ConversionUtils {
    * meaning Redshift may silently round this number on load.
    * @param str The String which we hope contains a Double
    * @param field The name of the field we are validating. To use in our error message
-   * @return a Scalaz Validation, being either a Failure String or a Success String
+   * @return either a failure or a String
    */
-  val stringToDoublelike: (String, String) => Either[String, String] = (field, str) =>
+  val stringToDoubleLike: (String, String) => Either[EnrichmentStageIssue, String] = (field, str) =>
     Either
       .catchNonFatal {
         if (Option(str).isEmpty || str == "null") {
@@ -315,7 +329,10 @@ object ConversionUtils {
           jbigdec.toPlainString // Strip scientific notation
         }
       }
-      .leftMap(_ => s"Field [$field]: cannot convert [$str] to Double-like String")
+      .leftMap { _ =>
+        val msg = "cannot be converted to Double-like"
+        EnrichmentFailure(None, InputDataEnrichmentFailureMessage(field, Option(str), msg))
+      }
 
   /**
    * Convert a String to a Double
@@ -323,7 +340,10 @@ object ConversionUtils {
    * @param field The name of the field we are validating. To use in our error message
    * @return a Scalaz Validation, being either a Failure String or a Success Double
    */
-  def stringToMaybeDouble(field: String, str: String): Either[String, Option[Double]] =
+  def stringToMaybeDouble(
+    field: String,
+    str: String
+  ): Either[EnrichmentStageIssue, Option[Double]] =
     Either
       .catchNonFatal {
         if (Option(str).isEmpty || str == "null") {
@@ -334,7 +354,13 @@ object ConversionUtils {
           jbigdec.doubleValue().some
         }
       }
-      .leftMap(_ => s"Field [$field]: cannot convert [$str] to Double-like String")
+      .leftMap(
+        _ =>
+          EnrichmentFailure(
+            None,
+            InputDataEnrichmentFailureMessage(field, Option(str), "cannot be converted to Double")
+          )
+      )
 
   /**
    * Converts a String to a Double with two decimal places. Used to honor schemas with
@@ -361,14 +387,18 @@ object ConversionUtils {
    * Extract a Java Byte representing 1 or 0 only from a String, or error.
    * @param str The String which we hope is an Byte
    * @param field The name of the field we are trying to process. To use in our error message
-   * @return a Scalaz Validation, being either a Failure String or a Success Byte
+   * @return either a Failure String or a Success Byte
    */
-  val stringToBooleanlikeJByte: (String, String) => Either[String, JByte] = (field, str) =>
-    str match {
-      case "1" => (1.toByte: JByte).asRight
-      case "0" => (0.toByte: JByte).asRight
-      case _ => s"Field [$field]: cannot convert [$str] to Boolean-like JByte".asLeft
-    }
+  val stringToBooleanLikeJByte: (String, String) => Either[EnrichmentStageIssue, JByte] =
+    (field, str) =>
+      str match {
+        case "1" => (1.toByte: JByte).asRight
+        case "0" => (0.toByte: JByte).asRight
+        case _ =>
+          val msg = "cannot be converted to Boolean-like java.lang.Byte"
+          val f = InputDataEnrichmentFailureMessage(field, Option(str), msg)
+          EnrichmentFailure(None, f).asLeft
+      }
 
   /**
    * Converts a String of value "1" or "0" to true or false respectively.

@@ -138,7 +138,7 @@ object UrbanAirshipAdapter extends Adapter {
             context = payload.context.copy(timestamp = Some(new DateTime(cts, DateTimeZone.UTC)))
           )
         }
-      case Left(e) => NotJsonAdapterFailure("body", bodyJson, e).invalidNel
+      case Left(e) => NotJsonAdapterFailure("body", bodyJson.some, e).invalidNel
     }
   }
 }

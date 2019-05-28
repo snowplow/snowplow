@@ -17,32 +17,35 @@ import cats.data.NonEmptyList
 import org.specs2.matcher.ValidatedMatchers
 import org.specs2.mutable.Specification
 
-import outputs.FallbackCPFormatViolationMessage
+import outputs._
 
 class NdjsonLoaderSpec extends Specification with ValidatedMatchers {
 
   "toCollectorPayload" should {
     "return failure on unparsable json" in {
-      val invalid = NdjsonLoader("com.abc/v1").toCollectorPayload("""{ ... """)
+      val invalid = NdjsonLoader("com.abc/v1").toCP("""{ ... """)
       invalid must beInvalid
     }
 
     "return success on parsable json" in {
-      val valid = NdjsonLoader("com.abc/v1").toCollectorPayload("""{ "key": "value" }""")
+      val valid = NdjsonLoader("com.abc/v1").toCP("""{ "key": "value" }""")
       valid must beValid
     }
 
     "return success with no content for empty rows" in {
-      NdjsonLoader("com.abc/v1").toCollectorPayload("\r\n") must beValid(None)
+      NdjsonLoader("com.abc/v1").toCP("\r\n") must beValid(None)
     }
 
     "fail if multiple lines passed in as one line" in {
-      val lines = List("""{"key":"value1"}""", """{"key":"value2"}""")
-      NdjsonLoader("com.abc/v1").toCollectorPayload(lines.mkString("\n")) must beInvalid(
-        NonEmptyList.one(FallbackCPFormatViolationMessage("expected a single line, found 2"))
-      )
+      val line = List("""{"key":"value1"}""", """{"key":"value2"}""").mkString("\n")
+      NdjsonLoader("com.abc/v1").toCP(line) must beInvalid.like {
+        case NonEmptyList(
+            BadRow(CPFormatViolation(_, "ndjson", f), RawPayload(l), Processor.default),
+            List()
+            ) =>
+          f must_== FallbackCPFormatViolationMessage("expected a single line, found 2")
+          l must_== line
+      }
     }
-
   }
-
 }

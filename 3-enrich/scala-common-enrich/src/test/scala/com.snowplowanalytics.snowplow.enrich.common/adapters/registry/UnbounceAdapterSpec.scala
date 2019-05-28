@@ -20,7 +20,7 @@ import org.joda.time.DateTime
 import org.specs2.Specification
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
-import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import loaders._
 import outputs._
 import utils.Clock._
 
@@ -228,7 +228,7 @@ class UnbounceAdapterSpec extends Specification with DataTables with ValidatedMa
     val expected = NonEmptyList.one(
       NotJsonAdapterFailure(
         "data.json",
-        """{{"email":["test@snowplowanalytics.com"],"ip_address":["200.121.220.179"],"time_submitted":["04:17 PM UTC"]}""",
+        """{{"email":["test@snowplowanalytics.com"],"ip_address":["200.121.220.179"],"time_submitted":["04:17 PM UTC"]}""".some,
         """invalid json: expected " got '{"emai...' (line 1, column 2)"""
       )
     )

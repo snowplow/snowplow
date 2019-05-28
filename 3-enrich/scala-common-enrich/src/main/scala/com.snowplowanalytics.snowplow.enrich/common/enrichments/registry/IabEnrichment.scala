@@ -61,6 +61,7 @@ object IabEnrichment extends ParseableEnrichment {
           getIabDbFromName(c, "includeUseragentFile")
         ).mapN { (ip, exclude, include) =>
           IabConf(
+            schemaKey,
             file(ip, localMode),
             file(exclude, localMode),
             file(include, localMode)
@@ -81,7 +82,7 @@ object IabEnrichment extends ParseableEnrichment {
   def apply[F[_]: Monad: CreateIabClient](conf: IabConf): F[IabEnrichment] =
     CreateIabClient[F]
       .create(conf.ipFile._2, conf.excludeUaFile._2, conf.includeUaFile._2)
-      .map(IabEnrichment.apply)
+      .map(c => IabEnrichment(conf.schemaKey, c))
 
   /**
    * Creates IabDatabase instances used in the IabEnrichment case class.
@@ -109,8 +110,10 @@ object IabEnrichment extends ParseableEnrichment {
  * @param includeUaFile (Full URI to the IAB included user agent list, database name)
  * @param localMode Whether to use the local database file. Enabled for tests.
  */
-final case class IabEnrichment(iabClient: IabClient) extends Enrichment {
+final case class IabEnrichment(schemaKey: SchemaKey, iabClient: IabClient) extends Enrichment {
   private val schemaUri = "iglu:com.iab.snowplow/spiders_and_robots/jsonschema/1-0-0"
+  private val enrichmentInfo =
+    EnrichmentInformation(schemaKey, "iab-spiders-and-robots").some
 
   /**
    * Get the IAB response containing information about whether an event is a spider or robot using
@@ -125,8 +128,8 @@ final case class IabEnrichment(iabClient: IabClient) extends Enrichment {
     userAgent: String,
     ipAddress: String,
     accurateAt: DateTime
-  ): Either[EnrichmentFailureMessage, IabEnrichmentResponse] =
-    for {
+  ): Either[EnrichmentStageIssue, IabEnrichmentResponse] =
+    (for {
       ip <- Either
         .catchNonFatal(InetAddress.getByName(ipAddress))
         .leftMap(
@@ -140,7 +143,7 @@ final case class IabEnrichment(iabClient: IabClient) extends Enrichment {
       result.getCategory.toString,
       result.getReason.toString,
       result.getPrimaryImpact.toString
-    )
+    )).leftMap(EnrichmentFailure(enrichmentInfo, _))
 
   /**
    * Get the IAB response as a JSON context for a specific event
@@ -153,7 +156,7 @@ final case class IabEnrichment(iabClient: IabClient) extends Enrichment {
     userAgent: Option[String],
     ipAddress: Option[String],
     accurateAt: Option[DateTime]
-  ): Either[NonEmptyList[EnrichmentFailureMessage], Json] =
+  ): Either[NonEmptyList[EnrichmentStageIssue], Json] =
     getIab(userAgent, ipAddress, accurateAt).map(addSchema)
 
   /**
@@ -167,7 +170,7 @@ final case class IabEnrichment(iabClient: IabClient) extends Enrichment {
     userAgent: Option[String],
     ipAddress: Option[String],
     time: Option[DateTime]
-  ): Either[NonEmptyList[EnrichmentFailureMessage], Json] =
+  ): Either[NonEmptyList[EnrichmentStageIssue], Json] =
     (userAgent, ipAddress, time) match {
       case (Some(ua), Some(ip), Some(t)) =>
         performCheck(ua, ip, t)
@@ -177,11 +180,15 @@ final case class IabEnrichment(iabClient: IabClient) extends Enrichment {
         val failures = List((a, "useragent"), (b, "user_ipaddress"), (c, "derived_tstamp"))
           .collect {
             case (None, n) =>
-              InputDataEnrichmentFailureMessage(n, none, "missing")
+              val f = InputDataEnrichmentFailureMessage(n, none, "missing")
+              EnrichmentFailure(enrichmentInfo, f)
           }
         NonEmptyList
           .fromList(failures)
-          .getOrElse(NonEmptyList.of(SimpleEnrichmentFailureMessage("Couldn't construct failures")))
+          .getOrElse(NonEmptyList.of {
+            val f = SimpleEnrichmentFailureMessage("could not construct failures")
+            EnrichmentFailure(enrichmentInfo, f)
+          })
           .asLeft
     }
 

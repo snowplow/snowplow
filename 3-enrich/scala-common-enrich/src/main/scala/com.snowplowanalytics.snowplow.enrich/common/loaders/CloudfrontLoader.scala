@@ -14,6 +14,7 @@ package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
 import java.nio.charset.StandardCharsets.UTF_8
+import java.time.Instant
 
 import scala.util.matching.Regex
 
@@ -87,10 +88,8 @@ object CloudfrontLoader extends Loader[String] {
    * @return either a set of validation errors or an Option-boxed CanonicalInput object, wrapped
    * in a ValidatedNel.
    */
-  def toCollectorPayload(
-    line: String
-  ): ValidatedNel[CPFormatViolationMessage, Option[CollectorPayload]] =
-    line match {
+  override def toCP(line: String): ValidatedNel[BadRow, Option[CollectorPayload]] =
+    (line match {
       // 1. Header row
       case h if (h.startsWith("#Version:") || h.startsWith("#Fields:")) => None.valid
       // 2. Not a GET request
@@ -112,7 +111,16 @@ object CloudfrontLoader extends Loader[String] {
       // 4. Row not recognised
       case _ =>
         FallbackCPFormatViolationMessage("does not match header or data row formats").invalidNel
-    }
+    }).leftMap(
+      _.map(
+        f =>
+          BadRow(
+            CPFormatViolation(Instant.now(), CollectorName, f),
+            RawPayload(line),
+            Processor.default
+          )
+      )
+    )
 
   /**
    * 'Cleans' a string to make it parsable by URLDecoder.decode.

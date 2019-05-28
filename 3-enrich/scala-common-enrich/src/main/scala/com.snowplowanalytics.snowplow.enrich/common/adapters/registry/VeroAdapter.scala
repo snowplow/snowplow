@@ -84,7 +84,9 @@ object VeroAdapter extends Adapter {
     payload: CollectorPayload
   ): Either[AdapterFailure, RawEvent] =
     for {
-      parsed <- JsonUtils.extractJson(json).leftMap(e => NotJsonAdapterFailure("body", json, e))
+      parsed <- JsonUtils
+        .extractJson(json)
+        .leftMap(e => NotJsonAdapterFailure("body", json.some, e))
       eventType <- parsed.hcursor
         .get[String]("type")
         .leftMap(

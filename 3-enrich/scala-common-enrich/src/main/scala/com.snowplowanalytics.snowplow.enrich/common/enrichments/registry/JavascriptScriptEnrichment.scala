@@ -52,7 +52,7 @@ object JavascriptScriptEnrichment extends ParseableEnrichment {
       encoded <- CirceUtils.extract[String](c, "parameters", "script").toEither
       raw <- ConversionUtils.decodeBase64Url(encoded) // script
       compiled <- compile(raw)
-    } yield JavascriptScriptConf(compiled)).toValidatedNel
+    } yield JavascriptScriptConf(schemaKey, compiled)).toValidatedNel
 
   object Variables {
     private val prefix = "$snowplow31337" // To avoid collisions
@@ -90,14 +90,17 @@ object JavascriptScriptEnrichment extends ParseableEnrichment {
  * Config for an JavaScript script enrichment
  * @param script The compiled script ready for
  */
-final case class JavascriptScriptEnrichment(script: Script) extends Enrichment {
+final case class JavascriptScriptEnrichment(schemaKey: SchemaKey, script: Script)
+    extends Enrichment {
+  private val enrichmentInfo =
+    EnrichmentInformation(schemaKey, "javascript-script").some
 
   /**
    * Run the process function as stored in the CompiledScript against the supplied EnrichedEvent.
    * @param event The enriched event to pass into our process function
    * @return either a JSON array of contexts on Success, or an error String on Failure
    */
-  def process(event: EnrichedEvent): Either[EnrichmentFailureMessage, List[Json]] =
+  def process(event: EnrichedEvent): Either[EnrichmentStageIssue, List[Json]] =
     process(script, event)
 
   import JavascriptScriptEnrichment.Variables
@@ -111,7 +114,7 @@ final case class JavascriptScriptEnrichment(script: Script) extends Enrichment {
   private[registry] def process(
     script: Script,
     event: EnrichedEvent
-  ): Either[EnrichmentFailureMessage, List[Json]] = {
+  ): Either[EnrichmentStageIssue, List[Json]] = {
     val cx = Context.enter()
     val scope = cx.initStandardObjects
 
@@ -132,25 +135,27 @@ final case class JavascriptScriptEnrichment(script: Script) extends Enrichment {
       Context.exit()
     }
 
-    scriptExec.flatMap { _ =>
-      Option(scope.get(Variables.Out)) match {
-        case None => Nil.asRight
-        case Some(obj) =>
-          parse(obj.asInstanceOf[String]) match {
-            case Right(js) =>
-              js.asArray match {
-                case Some(array) => array.toList.asRight
-                case None =>
-                  val msg = s"JavaScript script must return an Array; got [$obj]"
-                  SimpleEnrichmentFailureMessage(msg).asLeft
-              }
-            case Left(e) =>
-              val msg = "Could not convert object returned from JavaScript script to Json: " +
-                s"[${e.getMessage}]"
-              SimpleEnrichmentFailureMessage(msg).asLeft
-          }
+    scriptExec
+      .flatMap { _ =>
+        Option(scope.get(Variables.Out)) match {
+          case None => Nil.asRight
+          case Some(obj) =>
+            parse(obj.asInstanceOf[String]) match {
+              case Right(js) =>
+                js.asArray match {
+                  case Some(array) => array.toList.asRight
+                  case None =>
+                    val msg = s"JavaScript script must return an Array; got [$obj]"
+                    SimpleEnrichmentFailureMessage(msg).asLeft
+                }
+              case Left(e) =>
+                val msg = "Could not convert object returned from JavaScript script to Json: " +
+                  s"[${e.getMessage}]"
+                SimpleEnrichmentFailureMessage(msg).asLeft
+            }
+        }
       }
-    }
+      .leftMap(EnrichmentFailure(enrichmentInfo, _))
   }
 
 }

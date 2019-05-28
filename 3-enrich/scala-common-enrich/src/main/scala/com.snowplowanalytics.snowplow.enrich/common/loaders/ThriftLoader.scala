@@ -14,6 +14,7 @@ package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
 import java.nio.charset.Charset
+import java.time.Instant
 
 import scala.collection.JavaConverters._
 import scala.util.control.NonFatal
@@ -26,6 +27,7 @@ import com.snowplowanalytics.snowplow.CollectorPayload.thrift.model1.{
 }
 import com.snowplowanalytics.snowplow.SchemaSniffer.thrift.model1.SchemaSniffer
 import com.snowplowanalytics.snowplow.collectors.thrift.SnowplowRawEvent
+import org.apache.commons.codec.binary.Base64
 import org.apache.http.NameValuePair
 import org.apache.thrift.TDeserializer
 import org.joda.time.{DateTime, DateTimeZone}
@@ -48,10 +50,8 @@ object ThriftLoader extends Loader[Array[Byte]] {
    * @return either a set of validation errors or an Option-boxed CanonicalInput object, wrapped in
    * a ValidatedNel.
    */
-  def toCollectorPayload(
-    line: Array[Byte]
-  ): ValidatedNel[CPFormatViolationMessage, Option[CollectorPayload]] =
-    try {
+  override def toCP(line: Array[Byte]): ValidatedNel[BadRow, Option[CollectorPayload]] =
+    (try {
       val schema = new SchemaSniffer
       this.synchronized {
         thriftDeserializer.deserialize(
@@ -88,7 +88,16 @@ object ThriftLoader extends Loader[Array[Byte]] {
       // TODO: Check for deserialization errors.
       case NonFatal(e) =>
         FallbackCPFormatViolationMessage(s"error deserializing raw event: ${e.getMessage}").invalidNel
-    }
+    }).leftMap(
+      _.map(
+        f =>
+          BadRow(
+            CPFormatViolation(Instant.now(), "thrift", f),
+            RawPayload(new String(Base64.encodeBase64(line), "UTF-8")),
+            Processor.default
+          )
+      )
+    )
 
   /**
    * Converts the source string into a ValidatedMaybeCollectorPayload.

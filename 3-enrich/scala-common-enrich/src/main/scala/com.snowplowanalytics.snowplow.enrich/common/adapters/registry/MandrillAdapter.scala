@@ -156,7 +156,7 @@ object MandrillAdapter extends Adapter {
           case Some(dStr) =>
             JsonUtils
               .extractJson(dStr)
-              .leftMap(e => NotJsonAdapterFailure("mandril_events", dStr, e))
+              .leftMap(e => NotJsonAdapterFailure("mandril_events", dStr.some, e))
               .flatMap { json =>
                 json.asArray match {
                   case Some(array) => array.toList.asRight

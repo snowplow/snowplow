@@ -10,11 +10,14 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common.enrichments.web
+package com.snowplowanalytics.snowplow.enrich.common
+package enrichments.web
 
 import cats.syntax.option._
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
+
+import outputs._
 
 class ParseCrossDomainSpec extends Specification with DataTables {
   def is = s2"""
@@ -29,8 +32,14 @@ class ParseCrossDomainSpec extends Specification with DataTables {
     PageEnrichments.parseCrossDomain(Map()) must beRight((None, None))
 
   def e2 = {
-    val expected =
-      "Field [sp_dtm]: [not-a-timestamp] is not in the expected format (ms since epoch)"
+    val expected = EnrichmentFailure(
+      None,
+      InputDataEnrichmentFailureMessage(
+        "sp_dtm",
+        "not-a-timestamp".some,
+        "not in the expected format: ms since epoch"
+      )
+    )
     PageEnrichments.parseCrossDomain(Map("_sp" -> "abc.not-a-timestamp")) must beLeft(expected)
   }
 

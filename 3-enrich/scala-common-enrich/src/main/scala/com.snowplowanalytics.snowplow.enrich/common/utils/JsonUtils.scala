@@ -10,7 +10,8 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common.utils
+package com.snowplowanalytics.snowplow.enrich.common
+package utils
 
 import java.math.{BigInteger => JBigInteger}
 
@@ -19,6 +20,8 @@ import cats.syntax.either._
 import io.circe._
 import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
+
+import outputs._
 
 /** Contains general purpose extractors and other utilities for JSONs. Jackson-based. */
 object JsonUtils {
@@ -30,15 +33,21 @@ object JsonUtils {
     DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(DateTimeZone.UTC)
 
   /** Validates a String as correct JSON. */
-  val extractUnencJson: (String, String) => Either[String, String] =
-    (field, str) => validateAndReformatJson(str).leftMap(e => s"$field: $e")
+  val extractUnencJson: (String, String) => Either[EnrichmentStageIssue, String] = (field, str) =>
+    validateAndReformatJson(str)
+      .leftMap { e =>
+        EnrichmentFailure(None, InputDataEnrichmentFailureMessage(field, Option(str), e))
+      }
 
   /** Decodes a Base64 (URL safe)-encoded String then validates it as correct JSON. */
-  val extractBase64EncJson: (String, String) => Either[String, String] = (field, str) =>
-    ConversionUtils
-      .decodeBase64Url(str)
-      .flatMap(validateAndReformatJson)
-      .leftMap(e => s"$field: $e")
+  val extractBase64EncJson: (String, String) => Either[EnrichmentStageIssue, String] =
+    (field, str) =>
+      ConversionUtils
+        .decodeBase64Url(str)
+        .flatMap(validateAndReformatJson)
+        .leftMap { e =>
+          EnrichmentFailure(None, InputDataEnrichmentFailureMessage(field, Option(str), e))
+        }
 
   /**
    * Converts a boolean-like String of value "true" or "false" to a JBool value of true or false
