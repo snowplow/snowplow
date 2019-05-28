@@ -40,6 +40,8 @@ class WeatherEnrichmentSpec extends Specification {
   Check time stamp transformation   $e6
   """
 
+  val schemaKey = SchemaKey("vendor", "name", "format", SchemaVer.Full(1, 0, 0))
+
   lazy val validAppKey = sys.env
     .get(OwmApiKey)
     .getOrElse(
@@ -62,7 +64,8 @@ class WeatherEnrichmentSpec extends Specification {
 
   def e1 = {
     val res = for {
-      enr <- WeatherConf("history.openweathermap.org", "KEY", 10, 5200, 1).enrichment[Eval]
+      enr <- WeatherConf(schemaKey, "history.openweathermap.org", "KEY", 10, 5200, 1)
+        .enrichment[Eval]
       stamp <- EitherT(
         enr.getWeatherContext(
           Option(invalidEvent.lat),
@@ -79,7 +82,8 @@ class WeatherEnrichmentSpec extends Specification {
 
   def e2 = {
     val res = for {
-      enr <- WeatherConf("history.openweathermap.org", validAppKey, 10, 5200, 1).enrichment[Eval]
+      enr <- WeatherConf(schemaKey, "history.openweathermap.org", validAppKey, 10, 5200, 1)
+        .enrichment[Eval]
       stamp <- EitherT(
         enr.getWeatherContext(
           Option(validEvent.lat),
@@ -93,7 +97,8 @@ class WeatherEnrichmentSpec extends Specification {
 
   def e3 = {
     val res = for {
-      enr <- WeatherConf("history.openweathermap.org", "KEY", 10, 5200, 1).enrichment[Eval]
+      enr <- WeatherConf(schemaKey, "history.openweathermap.org", "KEY", 10, 5200, 1)
+        .enrichment[Eval]
       stamp <- EitherT(
         enr.getWeatherContext(
           Option(validEvent.lat),
@@ -107,7 +112,8 @@ class WeatherEnrichmentSpec extends Specification {
 
   def e4 = {
     val res = for {
-      enr <- WeatherConf("history.openweathermap.org", validAppKey, 15, 5200, 1).enrichment[Eval]
+      enr <- WeatherConf(schemaKey, "history.openweathermap.org", validAppKey, 15, 5200, 1)
+        .enrichment[Eval]
       stamp <- EitherT(
         enr.getWeatherContext(
           Option(validEvent.lat),
@@ -136,17 +142,16 @@ class WeatherEnrichmentSpec extends Specification {
         "timeout": 5
       }
     }"""
-    val config = WeatherEnrichment.parse(
-      configJson,
-      SchemaKey(
-        "com.snowplowanalytics.snowplow.enrichments",
-        "weather_enrichment_config",
-        "jsonschema",
-        SchemaVer.Full(1, 0, 0)
-      )
+    val schemaKey = SchemaKey(
+      "com.snowplowanalytics.snowplow.enrichments",
+      "weather_enrichment_config",
+      "jsonschema",
+      SchemaVer.Full(1, 0, 0)
     )
+    val config = WeatherEnrichment.parse(configJson, schemaKey)
     config.toEither must beRight(
       WeatherConf(
+        schemaKey,
         apiHost = "history.openweathermap.org",
         apiKey = "{{KEY}}",
         timeout = 5,
@@ -158,7 +163,8 @@ class WeatherEnrichmentSpec extends Specification {
 
   def e6 = {
     val res = for {
-      enr <- WeatherConf("history.openweathermap.org", validAppKey, 15, 2, 1).enrichment[Eval]
+      enr <- WeatherConf(schemaKey, "history.openweathermap.org", validAppKey, 15, 2, 1)
+        .enrichment[Eval]
       stamp <- EitherT(
         enr.getWeatherContext(
           Option(validEvent.lat),

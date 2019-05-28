@@ -24,7 +24,7 @@ import org.joda.time.DateTime
 import org.specs2.{ScalaCheck, Specification}
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
-import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import loaders._
 import outputs._
 import utils.{ConversionUtils => CU}
 import utils.Clock._
@@ -244,7 +244,7 @@ class SnowplowAdapterSpec
         .one(
           NotJsonAdapterFailure(
             "body",
-            "body",
+            "body".some,
             "invalid json: expected json value got 'body' (line 1, column 1)"
           )
         ) |> { (_, querystring, contentType, body, expected) =>
@@ -273,7 +273,7 @@ class SnowplowAdapterSpec
     )
     val actual = Tp2Adapter.toRawEvents(payload, SpecHelpers.client).value
     actual must beInvalid(
-      NonEmptyList.one(NotSDAdapterFailure("""{"not":"self-desc"}""", ParseError.InvalidData))
+      NonEmptyList.one(NotSDAdapterFailure("""{"not":"self-desc"}""", ParseError.InvalidData.code))
     )
   }
 
@@ -643,7 +643,7 @@ class SnowplowAdapterSpec
       NonEmptyList.one(
         NotJsonAdapterFailure(
           "co|cx",
-          "{[-",
+          "{[-".some,
           """invalid json: expected " got '[-' (line 1, column 2)"""
         )
       )
@@ -665,7 +665,7 @@ class SnowplowAdapterSpec
     )
     val actual = RedirectAdapter.toRawEvents(payload, SpecHelpers.client).value
     actual must beInvalid(
-      NonEmptyList.one(NotJsonAdapterFailure("co|cx", "", "invalid json: exhausted input"))
+      NonEmptyList.one(NotJsonAdapterFailure("co|cx", "".some, "invalid json: exhausted input"))
     )
   }
 

@@ -16,6 +16,7 @@ import scala.util.control.NonFatal
 
 import cats.data.ValidatedNel
 import cats.syntax.either._
+import cats.syntax.option._
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
 import eu.bitwalker.useragentutils._
 import io.circe._
@@ -33,13 +34,13 @@ object UserAgentUtilsEnrichmentConfig extends ParseableEnrichment {
     config: Json,
     schemaKey: SchemaKey,
     localMode: Boolean = false
-  ): ValidatedNel[String, UserAgentUtilsConf.type] = {
+  ): ValidatedNel[String, UserAgentUtilsConf] = {
     log.warn(
       s"user_agent_utils enrichment is deprecated. Please visit here for more information: " +
         s"https://github.com/snowplow/snowplow/wiki/user-agent-utils-enrichment"
     )
     isParseable(config, schemaKey)
-      .map(_ => UserAgentUtilsConf)
+      .map(_ => UserAgentUtilsConf(schemaKey))
       .toValidatedNel
   }
 }
@@ -65,8 +66,10 @@ final case class ClientAttributes(
   deviceIsMobile: Boolean
 )
 
-case object UserAgentUtilsEnrichment extends Enrichment {
+final case class UserAgentUtilsEnrichment(schemaKey: SchemaKey) extends Enrichment {
   private val mobileDeviceTypes = Set(DeviceType.MOBILE, DeviceType.TABLET, DeviceType.WEARABLE)
+  private val enrichmentInfo =
+    EnrichmentInformation(schemaKey, "ua-parser").some
 
   /**
    * Extracts the client attributes from a useragent string, using UserAgentUtils.
@@ -74,9 +77,7 @@ case object UserAgentUtilsEnrichment extends Enrichment {
    * @param useragent to extract from. Should be encoded, i.e. not previously decoded.
    * @return the ClientAttributes or the message of the exception, boxed in a Scalaz Validation
    */
-  def extractClientAttributes(
-    useragent: String
-  ): Either[EnrichmentFailureMessage, ClientAttributes] =
+  def extractClientAttributes(useragent: String): Either[EnrichmentStageIssue, ClientAttributes] =
     try {
       val ua = UserAgent.parseUserAgentString(useragent)
       val b = ua.getBrowser
@@ -96,7 +97,8 @@ case object UserAgentUtilsEnrichment extends Enrichment {
       ).asRight
     } catch {
       case NonFatal(e) =>
-        val msg = s"Exception parsing useragent [$useragent]: [${e.getMessage}]"
-        SimpleEnrichmentFailureMessage(msg).asLeft
+        val msg = s"could not parse useragent: ${e.getMessage}"
+        val f = InputDataEnrichmentFailureMessage("useragent", useragent.some, msg)
+        EnrichmentFailure(enrichmentInfo, f).asLeft
     }
 }

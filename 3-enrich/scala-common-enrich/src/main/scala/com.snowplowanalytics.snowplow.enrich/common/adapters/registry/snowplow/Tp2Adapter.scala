@@ -176,12 +176,12 @@ object Tp2Adapter extends Adapter {
     (for {
       j <- EitherT.fromEither[F](
         JU.extractJson(instance)
-          .leftMap(e => NonEmptyList.one(NotJsonAdapterFailure(field, instance, e)))
+          .leftMap(e => NonEmptyList.one(NotJsonAdapterFailure(field, instance.some, e)))
       )
       sd <- EitherT.fromEither[F](
         SelfDescribingData
           .parse(j)
-          .leftMap(e => NonEmptyList.one(NotSDAdapterFailure(instance, e)))
+          .leftMap(e => NonEmptyList.one(NotSDAdapterFailure(instance, e.code)))
       )
       _ <- client
         .check(sd)

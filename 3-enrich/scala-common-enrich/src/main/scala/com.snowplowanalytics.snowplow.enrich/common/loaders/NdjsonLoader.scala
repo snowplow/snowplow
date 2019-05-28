@@ -13,6 +13,8 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
+import java.time.Instant
+
 import cats.data.ValidatedNel
 import cats.syntax.either._
 import cats.syntax.option._
@@ -31,35 +33,42 @@ final case class NdjsonLoader(adapter: String) extends Loader[String] {
    * @param line A line of data to convert
    * @return a CanonicalInput object, Option-boxed, or None if no input was extractable.
    */
-  override def toCollectorPayload(
-    line: String
-  ): ValidatedNel[CPFormatViolationMessage, Option[CollectorPayload]] =
-    if (line.replaceAll("\r?\n", "").isEmpty) {
-      None.validNel
-    } else if (line.split("\r?\n").size > 1) {
-      val size = line.split("\r?\n").size
-      FallbackCPFormatViolationMessage(s"expected a single line, found $size").invalidNel
-    } else {
-      (for {
-        _ <- JsonUtils
-          .extractJson(line)
-          .leftMap(FallbackCPFormatViolationMessage.apply)
-        collectorApi <- CollectorApi.parsePath(adapter)
-        cp = CollectorPayload(
-          Nil,
-          CollectorName,
-          CollectorEncoding,
-          None,
-          None,
-          None,
-          None,
-          None,
-          Nil,
-          None,
-          collectorApi,
-          None,
-          Some(line)
-        ).some
-      } yield cp).toValidatedNel
-    }
+  override def toCP(line: String): ValidatedNel[BadRow, Option[CollectorPayload]] =
+    (if (line.replaceAll("\r?\n", "").isEmpty) {
+       None.validNel
+     } else if (line.split("\r?\n").size > 1) {
+       val size = line.split("\r?\n").size
+       FallbackCPFormatViolationMessage(s"expected a single line, found $size").invalidNel
+     } else {
+       (for {
+         _ <- JsonUtils
+           .extractJson(line)
+           .leftMap(FallbackCPFormatViolationMessage.apply)
+         collectorApi <- CollectorApi.parsePath(adapter)
+         cp = CollectorPayload(
+           Nil,
+           CollectorName,
+           CollectorEncoding,
+           None,
+           None,
+           None,
+           None,
+           None,
+           Nil,
+           None,
+           collectorApi,
+           None,
+           Some(line)
+         ).some
+       } yield cp).toValidatedNel
+     }).leftMap(
+      _.map(
+        f =>
+          BadRow(
+            CPFormatViolation(Instant.now(), CollectorName, f),
+            RawPayload(line),
+            Processor.default
+          )
+      )
+    )
 }

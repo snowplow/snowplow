@@ -13,22 +13,22 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 
+import java.time.Instant
+
 import cats.Monad
-import cats.data.{NonEmptyList, ValidatedNel}
+import cats.data.{NonEmptyList, Validated}
 import cats.effect.Clock
 import cats.syntax.functor._
 import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.core._
 import io.circe.Json
 
 import loaders.CollectorPayload
+import outputs._
 import registry._
-import registry.snowplow.{
-  Tp1Adapter => SpTp1Adapter,
-  Tp2Adapter => SpTp2Adapter,
-  RedirectAdapter => SpRedirectAdapter
-}
+import registry.snowplow._
 
 /**
  * The AdapterRegistry lets us convert a CollectorPayload into one or more RawEvents, using a given
@@ -111,93 +111,61 @@ class AdapterRegistry(remoteAdapters: Map[(String, String), RemoteAdapter] = Map
    */
   def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
     payload: CollectorPayload,
-    client: Client[F, Json]
-  ): F[ValidatedNel[String, NonEmptyList[RawEvent]]] =
-    (payload.api.vendor, payload.api.version) match {
-      case (Vendor.Snowplow, "tp1") =>
-        SpTp1Adapter
-          .toRawEvents(payload, client)
-          .map(_.leftMap(_.map(_.toString)))
-      case (Vendor.Snowplow, "tp2") =>
-        SpTp2Adapter
-          .toRawEvents(payload, client)
-          .map(_.leftMap(_.map(_.toString)))
-      case (Vendor.Redirect, "tp2") =>
-        SpRedirectAdapter
-          .toRawEvents(payload, client)
-          .map(_.leftMap(_.map(_.toString)))
-      case (Vendor.Iglu, "v1") =>
-        IgluAdapter
-          .toRawEvents(payload, client)
-          .map(_.leftMap(_.map(_.toString)))
-      case (Vendor.Callrail, "v1") =>
-        CallrailAdapter
-          .toRawEvents(payload, client)
-          .map(_.leftMap(_.map(_.toString)))
+    client: Client[F, Json],
+    processor: Processor
+  ): F[Validated[SelfDescribingData[BadRow], NonEmptyList[RawEvent]]] =
+    ((payload.api.vendor, payload.api.version) match {
+      case (Vendor.Snowplow, "tp1") => Tp1Adapter.toRawEvents(payload, client)
+      case (Vendor.Snowplow, "tp2") => Tp2Adapter.toRawEvents(payload, client)
+      case (Vendor.Redirect, "tp2") => RedirectAdapter.toRawEvents(payload, client)
+      case (Vendor.Iglu, "v1") => IgluAdapter.toRawEvents(payload, client)
+      case (Vendor.Callrail, "v1") => CallrailAdapter.toRawEvents(payload, client)
       case (Vendor.Cloudfront, "wd_access_log") =>
-        CloudfrontAccessLogAdapter
-          .toRawEvents(payload, client)
-          .map(_.leftMap(_.map(_.toString)))
-      case (Vendor.GoogleAnalytics, "v1") =>
-        GoogleAnalyticsAdapter
-          .toRawEvents(payload, client)
-          .map(_.leftMap(_.map(_.toString)))
-      case (Vendor.HubSpot, "v1") =>
-        HubSpotAdapter
-          .toRawEvents(payload, client)
-          .map(_.leftMap(_.map(_.toString)))
-      case (Vendor.Mailchimp, "v1") =>
-        MailchimpAdapter
-          .toRawEvents(payload, client)
-          .map(_.leftMap(_.map(_.toString)))
-      case (Vendor.Mailgun, "v1") =>
-        MailgunAdapter
-          .toRawEvents(payload, client)
-          .map(_.leftMap(_.map(_.toString)))
-      case (Vendor.Mandrill, "v1") =>
-        MandrillAdapter
-          .toRawEvents(payload, client)
-          .map(_.leftMap(_.map(_.toString)))
-      case (Vendor.Marketo, "v1") =>
-        MarketoAdapter
-          .toRawEvents(payload, client)
-          .map(_.leftMap(_.map(_.toString)))
-      case (Vendor.Olark, "v1") =>
-        OlarkAdapter
-          .toRawEvents(payload, client)
-          .map(_.leftMap(_.map(_.toString)))
-      case (Vendor.Pagerduty, "v1") =>
-        PagerdutyAdapter
-          .toRawEvents(payload, client)
-          .map(_.leftMap(_.map(_.toString)))
-      case (Vendor.Pingdom, "v1") =>
-        PingdomAdapter
-          .toRawEvents(payload, client)
-          .map(_.leftMap(_.map(_.toString)))
-      case (Vendor.Sendgrid, "v3") =>
-        SendgridAdapter
-          .toRawEvents(payload, client)
-          .map(_.leftMap(_.map(_.toString)))
-      case (Vendor.StatusGator, "v1") =>
-        StatusGatorAdapter
-          .toRawEvents(payload, client)
-          .map(_.leftMap(_.map(_.toString)))
-      case (Vendor.Unbounce, "v1") =>
-        UnbounceAdapter
-          .toRawEvents(payload, client)
-          .map(_.leftMap(_.map(_.toString)))
-      case (Vendor.UrbanAirship, "v1") =>
-        UrbanAirshipAdapter
-          .toRawEvents(payload, client)
-          .map(_.leftMap(_.map(_.toString)))
-      case (Vendor.Vero, "v1") =>
-        VeroAdapter
-          .toRawEvents(payload, client)
-          .map(_.leftMap(_.map(_.toString)))
+        CloudfrontAccessLogAdapter.toRawEvents(payload, client)
+      case (Vendor.GoogleAnalytics, "v1") => GoogleAnalyticsAdapter.toRawEvents(payload, client)
+      case (Vendor.HubSpot, "v1") => HubSpotAdapter.toRawEvents(payload, client)
+      case (Vendor.Mailchimp, "v1") => MailchimpAdapter.toRawEvents(payload, client)
+      case (Vendor.Mailgun, "v1") => MailgunAdapter.toRawEvents(payload, client)
+      case (Vendor.Mandrill, "v1") => MandrillAdapter.toRawEvents(payload, client)
+      case (Vendor.Marketo, "v1") => MarketoAdapter.toRawEvents(payload, client)
+      case (Vendor.Olark, "v1") => OlarkAdapter.toRawEvents(payload, client)
+      case (Vendor.Pagerduty, "v1") => PagerdutyAdapter.toRawEvents(payload, client)
+      case (Vendor.Pingdom, "v1") => PingdomAdapter.toRawEvents(payload, client)
+      case (Vendor.Sendgrid, "v3") => SendgridAdapter.toRawEvents(payload, client)
+      case (Vendor.StatusGator, "v1") => StatusGatorAdapter.toRawEvents(payload, client)
+      case (Vendor.Unbounce, "v1") => UnbounceAdapter.toRawEvents(payload, client)
+      case (Vendor.UrbanAirship, "v1") => UrbanAirshipAdapter.toRawEvents(payload, client)
+      case (Vendor.Vero, "v1") => VeroAdapter.toRawEvents(payload, client)
       case _ =>
-        Monad[F].pure(
-          (s"Payload with vendor ${payload.api.vendor} and version ${payload.api.version} not " +
-            "supported by this version of Scala Common Enrich").invalidNel
+        val f = InputDataAdapterFailure(
+          "vendor/version",
+          Some(s"${payload.api.vendor}/${payload.api.version}"),
+          "vendor/version combination is not supported"
         )
+        Monad[F].pure(f.invalidNel)
+    }).map(_.leftMap(enrichFailure(_, payload, payload.api.vendor, payload.api.version, processor)))
+
+  private def enrichFailure(
+    fs: NonEmptyList[AdapterFailure],
+    cp: CollectorPayload,
+    vendor: String,
+    vendorVersion: String,
+    processor: Processor
+  ): SelfDescribingData[BadRow] = {
+    val rawSchemaKey = SchemaKey(
+      "com.snowplowanalytics.snowplow.badrows",
+      "placeholder",
+      "jsonschema",
+      SchemaVer.Full(1, 0, 0)
+    )
+    val schemaKey = if (vendor == Vendor.Snowplow && vendorVersion == "tp2") {
+      rawSchemaKey.copy(name = "tracker_protocol_violations")
+    } else {
+      rawSchemaKey.copy(name = "adapter_failures")
     }
+    val f = AdapterFailures(Instant.now(), vendor, vendorVersion, fs)
+    val br = BadRow(f, CP(cp), processor)
+    SelfDescribingData(schemaKey, br)
+  }
+
 }

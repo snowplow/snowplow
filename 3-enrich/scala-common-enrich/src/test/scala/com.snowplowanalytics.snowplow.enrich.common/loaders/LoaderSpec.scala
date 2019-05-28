@@ -14,12 +14,14 @@ package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
 import java.nio.charset.StandardCharsets.UTF_8
+import java.time.Instant
 
-import cats.data.ValidatedNel
+import cats.data.{NonEmptyList, ValidatedNel}
 import cats.syntax.option._
 import cats.syntax.validated._
+import com.snowplowanalytics.iglu.core._
 import org.specs2.mutable.Specification
-import org.specs2.matcher.DataTables
+import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import outputs._
 import SpecHelpers._
@@ -27,14 +29,16 @@ import SpecHelpers._
 object LoaderSpec {
   val loader = new Loader[String] {
     // Make our trait whole
-    def toCollectorPayload(
-      line: String
-    ): ValidatedNel[CPFormatViolationMessage, Option[CollectorPayload]] =
-      FallbackCPFormatViolationMessage("FAIL").invalidNel
+    override def toCP(line: String): ValidatedNel[BadRow, Option[CollectorPayload]] =
+      BadRow(
+        CPFormatViolation(Instant.now(), "test", FallbackCPFormatViolationMessage("FAIL")),
+        RawPayload(line),
+        Processor.default
+      ).invalidNel
   }
 }
 
-class LoaderSpec extends Specification with DataTables {
+class LoaderSpec extends Specification with DataTables with ValidatedMatchers {
   import LoaderSpec._
 
   "getLoader" should {
@@ -55,10 +59,33 @@ class LoaderSpec extends Specification with DataTables {
     }
   }
 
+  "toCollectorPayload" should {
+    "turn bad rows into sd" in {
+      val schemaKey = SchemaKey(
+        "com.snowplowanalytics.snowplow.badrows",
+        "collector_payload_format_violation",
+        "jsonschema",
+        SchemaVer.Full(1, 0, 0)
+      )
+      LoaderSpec.loader.toCollectorPayload("ah", "sce", "1.0.0") must beInvalid.like {
+        case NonEmptyList(
+            SelfDescribingData(
+              sk,
+              BadRow(
+                CPFormatViolation(_, "test", FallbackCPFormatViolationMessage("FAIL")),
+                RawPayload("ah"),
+                Processor("sce", "1.0.0")
+              )
+            ),
+            List()
+            ) =>
+          sk must_== schemaKey
+      }
+    }
+  }
+
   "extractGetPayload" should {
-
     val Encoding = UTF_8
-
     // TODO: add more tests
     "return a Success-boxed NonEmptyList of NameValuePairs for a valid or empty querystring" in {
 

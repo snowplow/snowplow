@@ -13,6 +13,7 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry
 
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import io.circe.literal._
 import org.specs2.Specification
 
@@ -46,7 +47,8 @@ class JavascriptScriptEnrichmentSpec extends Specification {
           |""".stripMargin
 
     val compiled = JavascriptScriptEnrichment.compile(script)
-    JavascriptScriptEnrichment(compiled.right.get)
+    val schemaKey = SchemaKey("vendor", "name", "format", SchemaVer.Full(1, 0, 0))
+    JavascriptScriptEnrichment(schemaKey, compiled.right.get)
   }
 
   def buildEvent(appId: String): EnrichedEvent = {

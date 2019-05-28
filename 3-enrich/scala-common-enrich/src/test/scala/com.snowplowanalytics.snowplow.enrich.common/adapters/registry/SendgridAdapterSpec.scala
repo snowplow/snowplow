@@ -21,7 +21,7 @@ import org.specs2.matcher.ValidatedMatchers
 import org.specs2.mutable.Specification
 
 import loaders._
-import outputs.SchemaMappingAdapterFailure
+import outputs._
 import utils.Clock._
 
 class SendgridAdapterSpec extends Specification with ValidatedMatchers {

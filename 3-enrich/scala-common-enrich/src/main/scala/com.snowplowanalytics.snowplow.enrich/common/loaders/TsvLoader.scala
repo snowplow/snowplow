@@ -13,15 +13,18 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
+import java.time.Instant
+
 import cats.data.ValidatedNel
 import cats.syntax.either._
 import cats.syntax.option._
 import cats.syntax.validated._
 
-import outputs.CPFormatViolationMessage
+import outputs._
 
 /** Loader for TSVs */
 final case class TsvLoader(adapter: String) extends Loader[String] {
+  private val CollectorName = "tsv"
 
   /**
    * Converts the source TSV into a ValidatedMaybeCollectorPayload.
@@ -29,9 +32,7 @@ final case class TsvLoader(adapter: String) extends Loader[String] {
    * @return either a set of validation errors or an Option-boxed CanonicalInput object, wrapped in
    * a ValidatedNel.
    */
-  def toCollectorPayload(
-    line: String
-  ): ValidatedNel[CPFormatViolationMessage, Option[CollectorPayload]] =
+  override def toCP(line: String): ValidatedNel[BadRow, Option[CollectorPayload]] =
     // Throw away the first two lines of Cloudfront web distribution access logs
     if (line.startsWith("#Version:") || line.startsWith("#Fields:")) {
       None.valid
@@ -41,7 +42,7 @@ final case class TsvLoader(adapter: String) extends Loader[String] {
         .map(
           CollectorPayload(
             Nil,
-            "tsv",
+            CollectorName,
             "UTF-8",
             None,
             None,
@@ -54,6 +55,14 @@ final case class TsvLoader(adapter: String) extends Loader[String] {
             None,
             Some(line)
           ).some
+        )
+        .leftMap(
+          f =>
+            BadRow(
+              CPFormatViolation(Instant.now(), CollectorName, f),
+              RawPayload(line),
+              Processor.default
+            )
         )
         .toValidatedNel
     }

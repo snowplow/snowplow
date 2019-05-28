@@ -160,6 +160,6 @@ object OlarkAdapter extends Adapter {
     bodyMap.get("data") match {
       case None | Some("") => InputDataAdapterFailure("data", none, "missing 'data' field").asLeft
       case Some(json) =>
-        JU.extractJson(json).leftMap(e => NotJsonAdapterFailure("data", json, e))
+        JU.extractJson(json).leftMap(e => NotJsonAdapterFailure("data", json.some, e))
     }
 }

@@ -58,7 +58,7 @@ object WeatherEnrichment extends ParseableEnrichment {
           CirceUtils.extract[Int](c, "parameters", "timeout").toValidatedNel,
           CirceUtils.extract[Int](c, "parameters", "cacheSize").toValidatedNel,
           CirceUtils.extract[Int](c, "parameters", "geoPrecision").toValidatedNel
-        ).mapN { WeatherConf(_, _, _, _, _) }.toEither
+        ).mapN { WeatherConf(schemaKey, _, _, _, _, _) }.toEither
       }
       .toValidated
 
@@ -79,15 +79,18 @@ object WeatherEnrichment extends ParseableEnrichment {
           conf.geoPrecision
         )
     ).leftMap(_.message)
-      .map(c => WeatherEnrichment(c))
+      .map(c => WeatherEnrichment(conf.schemaKey, c))
 }
 
 /**
  * Contains weather enrichments based on geo coordinates and time
  * @param client OWM client to get the weather from
  */
-final case class WeatherEnrichment[F[_]: Monad](client: OWMCacheClient[F]) extends Enrichment {
+final case class WeatherEnrichment[F[_]: Monad](schemaKey: SchemaKey, client: OWMCacheClient[F])
+    extends Enrichment {
   private val schemaUri = "iglu:org.openweathermap/weather/jsonschema/1-0-0"
+  private val enrichmentInfo =
+    EnrichmentInformation(schemaKey, "weather").some
 
   /**
    * Get weather context as JSON for specific event. Any non-fatal error will return failure and
@@ -103,7 +106,7 @@ final case class WeatherEnrichment[F[_]: Monad](client: OWMCacheClient[F]) exten
     latitude: Option[JFloat],
     longitude: Option[JFloat],
     time: Option[DateTime]
-  ): F[Either[NonEmptyList[EnrichmentFailureMessage], Json]] =
+  ): F[Either[NonEmptyList[EnrichmentStageIssue], Json]] =
     (for {
       weather <- getWeather(latitude, longitude, time)
       schemaed = addSchema(weather)
@@ -120,27 +123,39 @@ final case class WeatherEnrichment[F[_]: Monad](client: OWMCacheClient[F]) exten
     latitude: Option[JFloat],
     longitude: Option[JFloat],
     time: Option[DateTime]
-  ): EitherT[F, NonEmptyList[EnrichmentFailureMessage], Json] =
+  ): EitherT[F, NonEmptyList[EnrichmentStageIssue], Json] =
     (latitude, longitude, time) match {
       case (Some(lat), Some(lon), Some(t)) =>
         val ts = ZonedDateTime.ofInstant(Instant.ofEpochMilli(t.getMillis()), ZoneOffset.UTC)
         for {
           weather <- EitherT(client.cachingHistoryByCoords(lat, lon, ts))
-            .leftMap(e => NonEmptyList.one(SimpleEnrichmentFailureMessage(e.getMessage)))
-            .leftWiden[NonEmptyList[EnrichmentFailureMessage]]
+            .leftMap { e =>
+              val f =
+                EnrichmentFailure(enrichmentInfo, SimpleEnrichmentFailureMessage(e.getMessage))
+              NonEmptyList.one(f)
+            }
+            .leftWiden[NonEmptyList[EnrichmentStageIssue]]
           transformed = transformWeather(weather)
         } yield transformed.asJson
       case (a, b, c) =>
         val failures = List((a, "geo_latitude"), (b, "geo_longitude"), (c, "derived_tstamp"))
           .collect {
             case (None, n) =>
-              InputDataEnrichmentFailureMessage(n, none, "missing")
+              EnrichmentFailure(
+                enrichmentInfo,
+                InputDataEnrichmentFailureMessage(n, none, "missing")
+              )
           }
         EitherT.leftT(
           NonEmptyList
             .fromList(failures)
             .getOrElse(
-              NonEmptyList.of(SimpleEnrichmentFailureMessage("Couldn't construct failures"))
+              NonEmptyList.one(
+                EnrichmentFailure(
+                  enrichmentInfo,
+                  SimpleEnrichmentFailureMessage("could not construct failures")
+                )
+              )
             )
         )
     }

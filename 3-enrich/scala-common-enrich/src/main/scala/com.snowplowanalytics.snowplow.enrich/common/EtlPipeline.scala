@@ -12,9 +12,7 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common
 
-import java.io.{PrintWriter, StringWriter}
-
-import scala.util.control.NonFatal
+import java.time.Instant
 
 import cats.Monad
 import cats.data.{EitherT, NonEmptyList, Validated, ValidatedNel}
@@ -22,16 +20,19 @@ import cats.effect.Clock
 import cats.implicits._
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
+import com.snowplowanalytics.iglu.core._
 import io.circe.Json
 import org.joda.time.DateTime
 
 import adapters.AdapterRegistry
 import enrichments.{EnrichmentManager, EnrichmentRegistry}
 import loaders.CollectorPayload
-import outputs.EnrichedEvent
+import outputs._
 
 /** Expresses the end-to-end event pipeline supported by the Scala Common Enrich project. */
 object EtlPipeline {
+
+  private type BR = SelfDescribingData[BadRow]
 
   /**
    * A helper method to take a ValidatedMaybeCanonicalInput and transform it into a List (possibly
@@ -51,41 +52,111 @@ object EtlPipeline {
     adapterRegistry: AdapterRegistry,
     enrichmentRegistry: EnrichmentRegistry[F],
     client: Client[F, Json],
-    etlVersion: String,
+    artifact: String,
+    artifactVersion: String,
     etlTstamp: DateTime,
-    input: ValidatedNel[String, Option[CollectorPayload]]
-  ): F[List[ValidatedNel[String, EnrichedEvent]]] = {
+    input: ValidatedNel[BR, Option[CollectorPayload]]
+  ): F[List[ValidatedNel[BR, EnrichedEvent]]] = {
     def flattenToList(
-      v: ValidatedNel[String, Option[ValidatedNel[String, NonEmptyList[EnrichedEvent]]]]
-    ): List[ValidatedNel[String, EnrichedEvent]] = v match {
+      v: ValidatedNel[BR, Option[ValidatedNel[BR, NonEmptyList[EnrichedEvent]]]]
+    ): List[ValidatedNel[BR, EnrichedEvent]] = v match {
       case Validated.Valid(Some(Validated.Valid(nel))) => nel.toList.map(_.valid)
       case Validated.Valid(Some(Validated.Invalid(f))) => List(f.invalid)
       case Validated.Invalid(f) => List(f.invalid)
       case Validated.Valid(None) => Nil
     }
 
-    try {
-      val e = for {
-        maybePayload <- input
-      } yield for {
-        payload <- maybePayload
-      } yield (for {
-        events <- EitherT(adapterRegistry.toRawEvents(payload, client).map(_.toEither))
-        enrichedEvents <- events.map { e =>
-          val r = EnrichmentManager
-            .enrichEvent(enrichmentRegistry, client, etlVersion, etlTstamp, e)
-            .map(_.toEither)
-          EitherT(r)
-        }.sequence
-      } yield enrichedEvents).value.map(_.toValidated)
+    val processor = Processor(artifact, artifactVersion)
 
-      e.map(_.sequence).sequence.map(flattenToList)
-    } catch {
-      case NonFatal(nf) => {
-        val errorWriter = new StringWriter
-        nf.printStackTrace(new PrintWriter(errorWriter))
-        Monad[F].pure(List(s"Unexpected error processing events: $errorWriter".invalidNel))
-      }
-    }
+    val e = for {
+      maybePayload <- input
+    } yield for {
+      payload <- maybePayload
+    } yield (for {
+      events <- EitherT(
+        adapterRegistry
+          .toRawEvents(payload, client, processor)
+          .map(_.toEither.leftMap(sd => NonEmptyList.one(sd)))
+      )
+      enrichedEvents <- events.map { e =>
+        val r = EnrichmentManager
+          .enrichEvent(registry, client, artifact, etlTstamp, e)
+          .map(_.toEither)
+        EitherT(r).leftMap { case (nel, pee) => buildBadRows(nel, pee, processor) }
+      }.sequence
+    } yield enrichedEvents).value.map(_.toValidated)
+
+    e.map(_.sequence).sequence.map(flattenToList)
   }
+
+  def buildBadRows(
+    nel: NonEmptyList[EnrichmentStageIssue],
+    pee: PartiallyEnrichedEvent,
+    processor: Processor
+  ): NonEmptyList[BR] = {
+    val (fs, vs) = splitIssues(nel)
+    val brs = List(
+      buildEnrichmentBadRow(fs, pee, processor),
+      buildSchemaBadRow(vs, pee, processor)
+    ).flatten
+    // can't be empty
+    NonEmptyList.fromList(brs).get
+  }
+
+  def buildEnrichmentBadRow(
+    fs: List[EnrichmentFailure],
+    pee: PartiallyEnrichedEvent,
+    processor: Processor
+  ): Option[BR] = {
+    val schemaKey = SchemaKey(
+      "com.snowplowanalytics.snowplow.badrows",
+      "enrichment_failures",
+      "jsonschema",
+      SchemaVer.Full(1, 0, 0)
+    )
+    NonEmptyList
+      .fromList(fs)
+      .map { fs =>
+        val br = BadRow(
+          EnrichmentFailures(Instant.now(), fs),
+          pee,
+          processor
+        )
+        SelfDescribingData(schemaKey, br)
+      }
+  }
+
+  def buildSchemaBadRow(
+    vs: List[SchemaViolation],
+    pee: PartiallyEnrichedEvent,
+    processor: Processor
+  ): Option[BR] = {
+    val schemaKey = SchemaKey(
+      "com.snowplowanalytics.snowplow.badrows",
+      "schema_violations",
+      "jsonschema",
+      SchemaVer.Full(1, 0, 0)
+    )
+    NonEmptyList
+      .fromList(vs)
+      .map { vs =>
+        val br = BadRow(
+          SchemaViolations(Instant.now(), vs),
+          pee,
+          processor
+        )
+        SelfDescribingData(schemaKey, br)
+      }
+  }
+
+  def splitIssues(
+    n: NonEmptyList[EnrichmentStageIssue]
+  ): (List[EnrichmentFailure], List[SchemaViolation]) =
+    n.foldLeft((List.empty[EnrichmentFailure], List.empty[SchemaViolation])) {
+      case ((es, ss), i) =>
+        i match {
+          case e: EnrichmentFailure => (e :: es, ss)
+          case s: SchemaViolation => (es, s :: ss)
+        }
+    }
 }

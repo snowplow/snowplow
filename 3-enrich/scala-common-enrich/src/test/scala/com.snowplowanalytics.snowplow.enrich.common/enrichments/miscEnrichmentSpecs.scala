@@ -10,13 +10,16 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common.enrichments
+package com.snowplowanalytics.snowplow.enrich.common
+package enrichments
 
 import cats.syntax.either._
 import io.circe.literal._
 import org.specs2.mutable.{Specification => MutSpecification}
-import org.specs2.{ScalaCheck, Specification}
+import org.specs2.Specification
 import org.specs2.matcher.DataTables
+
+import outputs._
 
 class EtlVersionSpec extends MutSpecification {
   "The ETL version" should {
@@ -32,8 +35,16 @@ class EtlVersionSpec extends MutSpecification {
 /** Tests the extractPlatform function. Uses DataTables. */
 class ExtractPlatformSpec extends Specification with DataTables {
   val FieldName = "p"
-  def err: (String) => String =
-    input => "Field [%s]: [%s] is not a supported tracking platform".format(FieldName, input)
+  def err: String => EnrichmentFailure =
+    input =>
+      EnrichmentFailure(
+        None,
+        InputDataEnrichmentFailureMessage(
+          FieldName,
+          Option(input),
+          "not recognized as a tracking platform"
+        )
+      )
 
   def is = s2"Extracting platforms with extractPlatform should work $e1"
 
@@ -72,18 +83,6 @@ class ExtractIpSpec extends Specification with DataTables {
       MiscEnrichments.extractIp("ip", input) must_== expected
     }
 
-}
-
-/** Tests the identity function. Uses ScalaCheck. */
-class IdentitySpec extends Specification with ScalaCheck {
-
-  def is =
-    "The identity function should work for any pair of Strings" ! e1
-
-  def e1 =
-    prop { (field: String, value: String) =>
-      MiscEnrichments.identity(field, value) must_== value.asRight
-    }
 }
 
 class FormatDerivedContextsSpec extends MutSpecification {

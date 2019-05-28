@@ -32,13 +32,13 @@ class TsvLoaderSpec extends Specification with DataTables with ValidatedMatchers
       source = CollectorSource("tsv", "UTF-8", None),
       context = CollectorContext(None, None, None, None, Nil, None)
     )
-    TsvLoader("com.amazon.aws.cloudfront/wd_access_log").toCollectorPayload("a\tb") must beValid(
+    TsvLoader("com.amazon.aws.cloudfront/wd_access_log").toCP("a\tb") must beValid(
       expected.some
     )
   }
 
   def e2 =
-    TsvLoader("com.amazon.aws.cloudfront/wd_access_log").toCollectorPayload("#Version: 1.0") must beValid(
+    TsvLoader("com.amazon.aws.cloudfront/wd_access_log").toCP("#Version: 1.0") must beValid(
       None
     )
 }

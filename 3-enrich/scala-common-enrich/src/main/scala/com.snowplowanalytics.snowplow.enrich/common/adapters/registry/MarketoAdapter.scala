@@ -98,7 +98,7 @@ object MarketoAdapter extends Adapter {
     (for {
       parsed <- JU
         .extractJson(json)
-        .leftMap(e => NotJsonAdapterFailure("body", json, e))
+        .leftMap(e => NotJsonAdapterFailure("body", json.some, e))
 
       parsedConverted <- if (parsed.isObject) reformatParameters(parsed).asRight
       else InputDataAdapterFailure("body", json.some, "not a json object").asLeft

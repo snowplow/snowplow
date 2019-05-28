@@ -75,7 +75,7 @@ object SqlQueryEnrichment extends ParseableEnrichment {
           CirceUtils.extract[Query](c, "parameters", "query").toValidatedNel,
           output,
           CirceUtils.extract[Cache](c, "parameters", "cache").toValidatedNel
-        ).mapN { SqlQueryConf(_, _, _, _, _) }.toEither
+        ).mapN { SqlQueryConf(schemaKey, _, _, _, _, _) }.toEither
       }
       .toValidated
 
@@ -102,6 +102,7 @@ object SqlQueryEnrichment extends ParseableEnrichment {
 }
 
 final case class SqlQueryEnrichment[F[_]: Monad: DbExecutor](
+  schemaKey: SchemaKey,
   inputs: List[Input],
   db: Db,
   query: Query,
@@ -110,6 +111,9 @@ final case class SqlQueryEnrichment[F[_]: Monad: DbExecutor](
   cache: LruMap[F, IntMap[Input.ExtractedValue], (EitherThrowable[List[Json]], Long)]
 ) extends Enrichment {
   import SqlQueryEnrichment._
+
+  private val enrichmentInfo =
+    EnrichmentInformation(schemaKey, "sql-query").some
 
   /**
    * Primary function of the enrichment. Failure means connection failure, failed unexpected
@@ -126,7 +130,7 @@ final case class SqlQueryEnrichment[F[_]: Monad: DbExecutor](
     derivedContexts: List[Json],
     customContexts: List[SelfDescribingData[Json]],
     unstructEvent: List[SelfDescribingData[Json]]
-  ): F[ValidatedNel[EnrichmentFailureMessage, List[Json]]] = {
+  ): F[ValidatedNel[EnrichmentStageIssue, List[Json]]] = {
     val jsonCustomContexts = transformRawPairs(customContexts)
     val jsonUnstructEvent = transformRawPairs(unstructEvent).headOption
 
@@ -140,11 +144,15 @@ final case class SqlQueryEnrichment[F[_]: Monad: DbExecutor](
     placeholderMap match {
       case Right(Some(intMap)) =>
         EitherT(get(intMap))
-          .leftMap(e => SimpleEnrichmentFailureMessage(e.getMessage()))
+          .leftMap(
+            e => EnrichmentFailure(enrichmentInfo, SimpleEnrichmentFailureMessage(e.getMessage()))
+          )
           .leftWiden
           .toValidatedNel
       case Right(None) => Monad[F].pure(Nil.validNel)
-      case Left(err) => Monad[F].pure(err.map(SimpleEnrichmentFailureMessage.apply).invalid)
+      case Left(es) =>
+        val fs = es.map(e => EnrichmentFailure(enrichmentInfo, SimpleEnrichmentFailureMessage(e)))
+        Monad[F].pure(fs.invalid)
     }
   }
 
@@ -231,7 +239,16 @@ object CreateSqlQueryEnrichment {
       CLM
         .create(conf.cache.size)
         .map(
-          c => SqlQueryEnrichment(conf.inputs, conf.db, conf.query, conf.output, conf.cache.ttl, c)
+          c =>
+            SqlQueryEnrichment(
+              conf.schemaKey,
+              conf.inputs,
+              conf.db,
+              conf.query,
+              conf.output,
+              conf.cache.ttl,
+              c
+            )
         )
   }
 
@@ -243,7 +260,16 @@ object CreateSqlQueryEnrichment {
       CLM
         .create(conf.cache.size)
         .map(
-          c => SqlQueryEnrichment(conf.inputs, conf.db, conf.query, conf.output, conf.cache.ttl, c)
+          c =>
+            SqlQueryEnrichment(
+              conf.schemaKey,
+              conf.inputs,
+              conf.db,
+              conf.query,
+              conf.output,
+              conf.cache.ttl,
+              c
+            )
         )
   }
 
@@ -255,7 +281,16 @@ object CreateSqlQueryEnrichment {
       CLM
         .create(conf.cache.size)
         .map(
-          c => SqlQueryEnrichment(conf.inputs, conf.db, conf.query, conf.output, conf.cache.ttl, c)
+          c =>
+            SqlQueryEnrichment(
+              conf.schemaKey,
+              conf.inputs,
+              conf.db,
+              conf.query,
+              conf.output,
+              conf.cache.ttl,
+              c
+            )
         )
   }
 }
