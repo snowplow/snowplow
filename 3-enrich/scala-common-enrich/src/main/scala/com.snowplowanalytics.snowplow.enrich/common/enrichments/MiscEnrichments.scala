@@ -18,6 +18,7 @@ import io.circe._
 import io.circe.syntax._
 
 import generated.ProjectSettings
+import outputs._
 import utils.{ConversionUtils => CU}
 
 /** Miscellaneous enrichments which don't fit into one of the other modules. */
@@ -37,24 +38,25 @@ object MiscEnrichments {
    * @param platform The code for the platform generating this event.
    * @return a Scalaz ValidatedString.
    */
-  val extractPlatform: (String, String) => Either[String, String] = (field, platform) =>
-    platform match {
-      case "web" => "web".asRight // Web, including Mobile Web
-      case "iot" => "iot".asRight // Internet of Things (e.g. Arduino tracker)
-      case "app" => "app".asRight // General App
-      case "mob" => "mob".asRight // Mobile / Tablet
-      case "pc" => "pc".asRight // Desktop / Laptop / Netbook
-      case "cnsl" => "cnsl".asRight // Games Console
-      case "tv" => "tv".asRight // Connected TV
-      case "srv" => "srv".asRight // Server-side App
-      case p => s"Field [$field]: [$p] is not a supported tracking platform".asLeft
-    }
-
-  /** Identity transform. Straight passthrough. */
-  val identity: (String, String) => Either[String, String] = (_, value) => value.asRight
+  val extractPlatform: (String, String) => Either[EnrichmentStageIssue, String] =
+    (field, platform) =>
+      platform match {
+        case "web" => "web".asRight // Web, including Mobile Web
+        case "iot" => "iot".asRight // Internet of Things (e.g. Arduino tracker)
+        case "app" => "app".asRight // General App
+        case "mob" => "mob".asRight // Mobile / Tablet
+        case "pc" => "pc".asRight // Desktop / Laptop / Netbook
+        case "cnsl" => "cnsl".asRight // Games Console
+        case "tv" => "tv".asRight // Connected TV
+        case "srv" => "srv".asRight // Server-side App
+        case _ =>
+          val msg = "not recognized as a tracking platform"
+          val f = InputDataEnrichmentFailureMessage(field, Option(platform), msg)
+          EnrichmentFailure(None, f).asLeft
+      }
 
   /** Make a String TSV safe */
-  val toTsvSafe: (String, String) => Either[String, String] = (_, value) =>
+  val toTsvSafe: (String, String) => Either[EnrichmentStageIssue, String] = (_, value) =>
     CU.makeTsvSafe(value).asRight
 
   /**
@@ -63,7 +65,7 @@ object MiscEnrichments {
    * Here we retrieve the first one as it is supposed to be the client one, c.f.
    * https://en.m.wikipedia.org/wiki/X-Forwarded-For#Format
    */
-  val extractIp: (String, String) => Either[String, String] = (_, value) => {
+  val extractIp: (String, String) => Either[EnrichmentStageIssue, String] = (_, value) => {
     val lastIp = Option(value).map(_.split("[,|, ]").head).orNull
     CU.makeTsvSafe(lastIp).asRight
   }

@@ -20,7 +20,7 @@ import org.joda.time.DateTime
 import org.specs2.{ScalaCheck, Specification}
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
-import outputs.FallbackCPFormatViolationMessage
+import outputs._
 import SpecHelpers._
 
 class ThriftLoaderSpec
@@ -157,7 +157,7 @@ class ThriftLoaderSpec
       (_, raw, timestamp, payload, hostname, ipAddress, userAgent, refererUri, headers, userId) =>
         {
 
-          val canonicalEvent = ThriftLoader.toCollectorPayload(Base64.decodeBase64(raw))
+          val canonicalEvent = ThriftLoader.toCP(Base64.decodeBase64(raw))
 
           val expected = CollectorPayload(
             api = Expected.api,
@@ -180,9 +180,13 @@ class ThriftLoaderSpec
   // so low that we can just use ScalaCheck here
   def e2 =
     prop { (raw: String) =>
-      ThriftLoader.toCollectorPayload(Base64.decodeBase64(raw)) must beInvalid(
-        NonEmptyList.one(FallbackCPFormatViolationMessage(msg))
-      )
+      ThriftLoader.toCP(Base64.decodeBase64(raw)) must beInvalid.like {
+        case NonEmptyList(
+            BadRow(CPFormatViolation(_, "thrift", f), RawPayload(_), Processor.default),
+            List()
+            ) =>
+          f must_== FallbackCPFormatViolationMessage(msg)
+      }
     }
 
 }

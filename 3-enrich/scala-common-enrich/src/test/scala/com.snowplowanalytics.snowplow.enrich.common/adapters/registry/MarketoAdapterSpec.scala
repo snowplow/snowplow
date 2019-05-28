@@ -20,8 +20,8 @@ import org.joda.time.DateTime
 import org.specs2.Specification
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
-import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
-import outputs.InputDataAdapterFailure
+import loaders._
+import outputs._
 import utils.Clock._
 
 class MarketoAdapterSpec extends Specification with DataTables with ValidatedMatchers {

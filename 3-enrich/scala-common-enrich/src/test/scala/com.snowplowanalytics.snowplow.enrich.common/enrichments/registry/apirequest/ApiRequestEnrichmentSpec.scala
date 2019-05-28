@@ -74,7 +74,8 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
     }
     val output = Output("iglu:com.acme/user/jsonschema/1-0-0", Some(JsonOutput("$.record")))
     val cache = Cache(3000, 60)
-    val config = ApiRequestConf(inputs, api, List(output), cache)
+    val schemaKey = SchemaKey("vendor", "name", "format", SchemaVer.Full(1, 0, 0))
+    val config = ApiRequestConf(schemaKey, inputs, api, List(output), cache)
 
     val fakeEnrichedEvent = new EnrichedEvent {
       app_id = "some-fancy-app-id"
@@ -313,7 +314,8 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
     val output =
       Output(schema = "iglu:com.acme/user/jsonschema/1-0-0", json = Some(JsonOutput("$.record")))
     val cache = Cache(size = 3000, ttl = 60)
-    val config = ApiRequestConf(inputs, api, List(output), cache)
+    val schemaKey = SchemaKey("vendor", "name", "format", SchemaVer.Full(1, 0, 0))
+    val config = ApiRequestConf(schemaKey, inputs, api, List(output), cache)
 
     val fakeEnrichedEvent = new EnrichedEvent {
       app_id = "some-fancy-app-id"

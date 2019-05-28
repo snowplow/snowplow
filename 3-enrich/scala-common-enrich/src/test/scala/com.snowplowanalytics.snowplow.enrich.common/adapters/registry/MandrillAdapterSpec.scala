@@ -21,7 +21,7 @@ import org.joda.time.DateTime
 import org.specs2.Specification
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
-import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import loaders._
 import outputs._
 import utils.Clock._
 
@@ -83,7 +83,7 @@ class MandrillAdapterSpec extends Specification with DataTables with ValidatedMa
     val bodyStr = "mandrill_events=%5B%7B%22event%22%3A%22click%7D%5D"
     val expected = NotJsonAdapterFailure(
       "mandril_events",
-      """[{"event":"click}]""",
+      """[{"event":"click}]""".some,
       "invalid json: exhausted input"
     )
     MandrillAdapter.payloadBodyToEvents(bodyStr) must beLeft(expected)

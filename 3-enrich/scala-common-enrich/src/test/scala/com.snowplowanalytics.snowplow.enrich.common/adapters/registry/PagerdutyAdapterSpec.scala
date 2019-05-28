@@ -97,7 +97,7 @@ class PagerdutyAdapterSpec extends Specification with DataTables with ValidatedM
     "SPEC NAME" || "INPUT" | "EXPECTED OUTPUT" |
       "Failure, parse exception" !! """{"something:"some"}""" ! NotJsonAdapterFailure(
         "body",
-        """{"something:"some"}""",
+        """{"something:"some"}""".some,
         """invalid json: expected : got 'some"}' (line 1, column 14)"""
       ) |
       "Failure, missing messages key" !! """{"somekey":"key"}""" ! InputDataAdapterFailure(

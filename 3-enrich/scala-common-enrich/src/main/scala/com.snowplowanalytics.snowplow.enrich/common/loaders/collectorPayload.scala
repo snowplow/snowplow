@@ -20,6 +20,18 @@ import org.joda.time.DateTime
 
 import outputs._
 
+/**
+ * The canonical input format for the ETL process: it should be possible to convert any collector
+ * input format to this format, ready for the main, collector-agnostic stage of the ETL.
+ */
+final case class CollectorPayload(
+  api: CollectorApi,
+  querystring: List[NameValuePair], // Could be empty in future trackers
+  contentType: Option[String], // Not always set
+  body: Option[String], // Not set for GETs
+  source: CollectorSource,
+  context: CollectorContext
+)
 object CollectorPayload {
 
   /**
@@ -109,16 +121,3 @@ final case class CollectorContext(
 
 /** Define the vendor and version of the payload. */
 final case class CollectorApi(vendor: String, version: String)
-
-/**
- * The canonical input format for the ETL process: it should be possible to convert any collector
- * input format to this format, ready for the main, collector-agnostic stage of the ETL.
- */
-final case class CollectorPayload(
-  api: CollectorApi,
-  querystring: List[NameValuePair], // Could be empty in future trackers
-  contentType: Option[String], // Not always set
-  body: Option[String], // Not set for GETs
-  source: CollectorSource,
-  context: CollectorContext
-)

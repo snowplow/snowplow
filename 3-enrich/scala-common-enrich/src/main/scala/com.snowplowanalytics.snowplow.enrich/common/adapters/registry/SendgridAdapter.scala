@@ -129,7 +129,7 @@ object SendgridAdapter extends Adapter {
               InputDataAdapterFailure("body", body.some, "body is not a json array").invalidNel
             )
         }
-      case Left(e) => List(NotJsonAdapterFailure("body", body, e).invalidNel)
+      case Left(e) => List(NotJsonAdapterFailure("body", body.some, e).invalidNel)
     }
 
 }

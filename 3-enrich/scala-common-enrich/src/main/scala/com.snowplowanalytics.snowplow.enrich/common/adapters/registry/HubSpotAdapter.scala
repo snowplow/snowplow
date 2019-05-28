@@ -135,7 +135,7 @@ object HubSpotAdapter extends Adapter {
     for {
       b <- JsonUtils
         .extractJson(body)
-        .leftMap(e => NotJsonAdapterFailure("body", body, e))
+        .leftMap(e => NotJsonAdapterFailure("body", body.some, e))
       a <- b.asArray.toRight(InputDataAdapterFailure("body", body.some, "not a json array"))
     } yield a.toList
 

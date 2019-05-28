@@ -68,7 +68,7 @@ object CurrencyConversionEnrichment extends ParseableEnrichment {
             }
             .toValidatedNel
         ).mapN { (apiKey, baseCurrency, accountType) =>
-          CurrencyConversionConf(accountType, apiKey, baseCurrency)
+          CurrencyConversionConf(schemaKey, accountType, apiKey, baseCurrency)
         }.toEither
       }
       .toValidated
@@ -85,7 +85,7 @@ object CurrencyConversionEnrichment extends ParseableEnrichment {
       .create(
         ForexConfig(conf.apiKey, conf.accountType, baseCurrency = conf.baseCurrency)
       )
-      .map(f => CurrencyConversionEnrichment(f, conf.baseCurrency))
+      .map(f => CurrencyConversionEnrichment(conf.schemaKey, f, conf.baseCurrency))
 }
 
 /**
@@ -94,9 +94,12 @@ object CurrencyConversionEnrichment extends ParseableEnrichment {
  * @param baseCurrency the base currency to refer to
  */
 final case class CurrencyConversionEnrichment[F[_]: Monad](
+  schemaKey: SchemaKey,
   forex: Forex[F],
   baseCurrency: CurrencyUnit
 ) extends Enrichment {
+  private val enrichmentInfo =
+    EnrichmentInformation(schemaKey, "currency-conversion").some
 
   /**
    * Attempt to convert if the initial currency and value are both defined
@@ -106,10 +109,10 @@ final case class CurrencyConversionEnrichment[F[_]: Monad](
    * otherwise Validation[Option[_]] boxing the result of the conversion
    */
   private def performConversion(
-    initialCurrency: Option[Either[EnrichmentFailureMessage, CurrencyUnit]],
+    initialCurrency: Option[Either[EnrichmentStageIssue, CurrencyUnit]],
     value: Option[Double],
     tstamp: ZonedDateTime
-  ): F[Either[EnrichmentFailureMessage, Option[String]]] =
+  ): F[Either[EnrichmentStageIssue, Option[String]]] =
     (initialCurrency, value) match {
       case (Some(ic), Some(v)) =>
         (for {
@@ -125,7 +128,8 @@ final case class CurrencyConversionEnrichment[F[_]: Monad](
                     val errorType = l.errorType.getClass.getSimpleName.replace("$", "")
                     val msg =
                       s"Open Exchange Rates error, type: [$errorType], message: [${l.errorMessage}]"
-                    SimpleEnrichmentFailureMessage(msg): EnrichmentFailureMessage
+                    val f = SimpleEnrichmentFailureMessage(msg)
+                    EnrichmentFailure(enrichmentInfo, f): EnrichmentStageIssue
                   },
                   r => (r.getAmount().toPlainString()).some
                 )
@@ -155,7 +159,7 @@ final case class CurrencyConversionEnrichment[F[_]: Monad](
     tiPrice: Option[Double],
     collectorTstamp: Option[DateTime]
   ): F[ValidatedNel[
-    EnrichmentFailureMessage,
+    EnrichmentStageIssue,
     (Option[String], Option[String], Option[String], Option[String])
   ]] =
     collectorTstamp match {
@@ -164,16 +168,18 @@ final case class CurrencyConversionEnrichment[F[_]: Monad](
         val trCu = trCurrency.map { c =>
           Either
             .catchNonFatal(CurrencyUnit.of(c))
-            .leftMap(
-              e => InputDataEnrichmentFailureMessage("tr_currency", trCurrency, e.getMessage)
-            )
+            .leftMap { e =>
+              val f = InputDataEnrichmentFailureMessage("tr_currency", trCurrency, e.getMessage)
+              EnrichmentFailure(enrichmentInfo, f)
+            }
         }
         val tiCu = tiCurrency.map { c =>
           Either
             .catchNonFatal(CurrencyUnit.of(c))
-            .leftMap(
-              e => InputDataEnrichmentFailureMessage("ti_currency", tiCurrency, e.getMessage)
-            )
+            .leftMap { e =>
+              val f = InputDataEnrichmentFailureMessage("ti_currency", tiCurrency, e.getMessage)
+              EnrichmentFailure(enrichmentInfo, f)
+            }
         }
         (
           performConversion(trCu, trTotal, zdt),
@@ -191,8 +197,7 @@ final case class CurrencyConversionEnrichment[F[_]: Monad](
         )
       // This should never happen
       case None =>
-        Monad[F].pure(
-          InputDataEnrichmentFailureMessage("collector_tstamp", None, "missing").invalidNel
-        )
+        val f = InputDataEnrichmentFailureMessage("collector_tstamp", None, "missing")
+        Monad[F].pure(EnrichmentFailure(enrichmentInfo, f).invalidNel)
     }
 }

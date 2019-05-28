@@ -128,7 +128,7 @@ object IgluAdapter extends Adapter {
     JsonUtils.extractJson(body) match {
       case Right(parsed) =>
         SelfDescribingData.parse(parsed) match {
-          case Left(parseError) => NotSDAdapterFailure(body, parseError).invalidNel
+          case Left(parseError) => NotSDAdapterFailure(body, parseError.code).invalidNel
           case Right(sd) =>
             NonEmptyList
               .one(
@@ -148,7 +148,7 @@ object IgluAdapter extends Adapter {
               )
               .valid
         }
-      case Left(e) => NotJsonAdapterFailure("body", body, e).invalidNel
+      case Left(e) => NotJsonAdapterFailure("body", Option(body), e).invalidNel
     }
 
   // --- Payloads with the Schema in the Query-String
@@ -241,7 +241,7 @@ object IgluAdapter extends Adapter {
               NonEmptyList.one(buildRawEvent(parsed)).valid
             }
         }
-      case Left(e) => NotJsonAdapterFailure("body", body, e).invalidNel
+      case Left(e) => NotJsonAdapterFailure("body", Option(body), e).invalidNel
     }
   }
 

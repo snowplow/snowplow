@@ -22,7 +22,7 @@ import org.joda.time.DateTime
 import org.specs2.Specification
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
-import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import loaders._
 import outputs._
 import utils.Clock._
 
@@ -66,7 +66,7 @@ class HubSpotAdapterSpec extends Specification with DataTables with ValidatedMat
     "SPEC NAME" || "INPUT" | "EXPECTED OUTPUT" |
       "Failure, parse exception" !! """{"something:"some"}""" ! NotJsonAdapterFailure(
         "body",
-        """{"something:"some"}""",
+        """{"something:"some"}""".some,
         """invalid json: expected : got 'some"}' (line 1, column 14)"""
       ) |> { (_, input, expected) =>
       HubSpotAdapter.payloadBodyToEvents(input) must beLeft(expected)

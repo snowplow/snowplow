@@ -15,13 +15,15 @@ package utils
 
 import scala.beans.BeanProperty
 
+import cats.syntax.either._
 import org.apache.commons.lang3.builder.ToStringBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
 import org.specs2.matcher.ValidatedMatchers
 import org.specs2.mutable.Specification
 
-import MapTransformer._
 import enrichments.{ClientEnrichments, MiscEnrichments}
+import MapTransformer._
+import outputs.EnrichmentStageIssue
 
 // Test Bean
 final class TargetBean {
@@ -52,6 +54,9 @@ final class TargetBean {
 
 class MapTransformerSpec extends Specification with ValidatedMatchers {
 
+  val identity: (String, String) => Either[EnrichmentStageIssue, String] =
+    (_, value) => value.asRight
+
   val sourceMap = Map(
     "p" -> "web",
     "f_pdf" -> "1",
@@ -63,10 +68,10 @@ class MapTransformerSpec extends Specification with ValidatedMatchers {
 
   val transformMap: TransformMap = Map(
     ("p", (MiscEnrichments.extractPlatform, "platform")),
-    ("f_pdf", (ConversionUtils.stringToBooleanlikeJByte, "br_features_pdf")),
+    ("f_pdf", (ConversionUtils.stringToBooleanLikeJByte, "br_features_pdf")),
     ("vid", (ConversionUtils.stringToJInteger2, "visit_id")),
-    ("tv", (MiscEnrichments.identity, "tracker_v")),
-    ("res", (ClientEnrichments.extractViewDimensions, ("width", "height")))
+    ("res", (ClientEnrichments.extractViewDimensions, ("width", "height"))),
+    ("tv", (identity, ("tracker_v")))
   )
 
   val expected = {

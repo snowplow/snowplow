@@ -17,13 +17,31 @@ import cats.syntax.either._
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
 
+import outputs._
+
 class ExtractViewDimensionsSpec extends Specification with DataTables {
 
   val FieldName = "res"
-  def err: (String) => String =
-    input => "Field [%s]: [%s] does not contain valid view dimensions".format(FieldName, input)
-  def err2: (String) => String =
-    input => "Field [%s]: view dimensions [%s] exceed Integer's max range".format(FieldName, input)
+  def err: String => EnrichmentFailure =
+    input =>
+      EnrichmentFailure(
+        None,
+        InputDataEnrichmentFailureMessage(
+          FieldName,
+          Option(input),
+          """does not conform to regex (\d+)x(\d+)"""
+        )
+      )
+  def err2: String => EnrichmentFailure =
+    input =>
+      EnrichmentFailure(
+        None,
+        InputDataEnrichmentFailureMessage(
+          FieldName,
+          Option(input),
+          "could not be converted to java.lang.Integer s"
+        )
+      )
 
   def is =
     s2"Extracting screen dimensions (viewports, screen resolution etc) with extractViewDimensions should work $e1"

@@ -11,10 +11,12 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import org.specs2.matcher.DataTables
 import org.specs2.mutable.Specification
 
 class UserAgentUtilsEnrichmentSpec extends Specification with DataTables {
+  val schemaKey = SchemaKey("vendor", "name", "format", SchemaVer.Full(1, 0, 0))
 
   "useragent parser" should {
     "parse useragent" in {
@@ -51,7 +53,9 @@ class UserAgentUtilsEnrichmentSpec extends Specification with DataTables {
               deviceType,
               deviceIsMobile
             )
-            UserAgentUtilsEnrichment.extractClientAttributes(input) must beRight(expected)
+            UserAgentUtilsEnrichment(schemaKey).extractClientAttributes(input) must beRight(
+              expected
+            )
           }
       }
     }

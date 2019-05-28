@@ -139,6 +139,6 @@ object UnbounceAdapter extends Adapter {
               )
             camelize(js)
           }
-          .leftMap(e => NotJsonAdapterFailure("data.json", dataJson, e))
+          .leftMap(e => NotJsonAdapterFailure("data.json", dataJson.some, e))
     }
 }

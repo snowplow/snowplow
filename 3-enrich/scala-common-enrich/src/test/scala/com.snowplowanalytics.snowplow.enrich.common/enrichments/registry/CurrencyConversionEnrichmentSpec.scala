@@ -15,9 +15,11 @@ package enrichments.registry
 
 import cats.Eval
 import cats.data.{NonEmptyList, Validated, ValidatedNel}
+import cats.syntax.option._
 import cats.syntax.validated._
 import com.snowplowanalytics.forex.CreateForex._
 import com.snowplowanalytics.forex.model._
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import org.joda.money.CurrencyUnit
 import org.joda.time.DateTime
 import org.specs2.Specification
@@ -48,23 +50,30 @@ class CurrencyConversionEnrichmentSpec extends Specification with DataTables {
       )
     )
   type Result = ValidatedNel[
-    EnrichmentFailureMessage,
+    EnrichmentStageIssue,
     (Option[String], Option[String], Option[String], Option[String])
   ]
+  val schemaKey = SchemaKey("vendor", "name", "format", SchemaVer.Full(1, 0, 0))
+  val ef: EnrichmentFailureMessage => EnrichmentFailure = m =>
+    EnrichmentFailure(EnrichmentInformation(schemaKey, "currency-conversion").some, m)
   val currencyInvalidRup: Result = Validated.Invalid(
     NonEmptyList.of(
-      InputDataEnrichmentFailureMessage("tr_currency", Some("RUP"), "Unknown currency 'RUP'"),
-      InputDataEnrichmentFailureMessage("tr_currency", Some("RUP"), "Unknown currency 'RUP'"),
-      InputDataEnrichmentFailureMessage("tr_currency", Some("RUP"), "Unknown currency 'RUP'")
+      ef(InputDataEnrichmentFailureMessage("tr_currency", Some("RUP"), "Unknown currency 'RUP'")),
+      ef(InputDataEnrichmentFailureMessage("tr_currency", Some("RUP"), "Unknown currency 'RUP'")),
+      ef(InputDataEnrichmentFailureMessage("tr_currency", Some("RUP"), "Unknown currency 'RUP'"))
     )
   )
-  val currencyInvalidHul: Result = InputDataEnrichmentFailureMessage(
-    "ti_currency",
-    Some("HUL"),
-    "Unknown currency 'HUL'"
+  val currencyInvalidHul: Result = ef(
+    InputDataEnrichmentFailureMessage(
+      "ti_currency",
+      Some("HUL"),
+      "Unknown currency 'HUL'"
+    )
   ).invalidNel
-  val invalidAppKeyFailure: Result = SimpleEnrichmentFailureMessage(
-    "Open Exchange Rates error, type: [OtherErrors], message: [invalid_app_id]"
+  val invalidAppKeyFailure: Result = ef(
+    SimpleEnrichmentFailureMessage(
+      "Open Exchange Rates error, type: [OtherErrors], message: [invalid_app_id]"
+    )
   ).invalidNel
   val coTstamp: DateTime = new DateTime(2011, 3, 13, 0, 0)
 
@@ -92,7 +101,8 @@ class CurrencyConversionEnrichmentSpec extends Specification with DataTables {
         expected
       ) =>
         (for {
-          e <- CurrencyConversionConf(DeveloperAccount, apiKey, CurrencyUnit.EUR).enrichment[Eval]
+          e <- CurrencyConversionConf(schemaKey, DeveloperAccount, apiKey, CurrencyUnit.EUR)
+            .enrichment[Eval]
           res <- e.convertCurrencies(
             trCurrency,
             trAmountTotal,
@@ -107,14 +117,16 @@ class CurrencyConversionEnrichmentSpec extends Specification with DataTables {
 
   def e2 =
     "SPEC NAME" || "TRANSACTION CURRENCY" | "API KEY" | "TOTAL AMOUNT" | "TOTAL TAX" | "SHIPPING" | "TRANSACTION ITEM CURRENCY" | "TRANSACTION ITEM PRICE" | "DATETIME" | "CONVERTED TUPLE" |
-      "All fields absent" !! None ! validAppKey ! None ! None ! None ! None ! None ! None ! InputDataEnrichmentFailureMessage(
-        "collector_tstamp",
-        None,
-        "missing"
+      "All fields absent" !! None ! validAppKey ! None ! None ! None ! None ! None ! None ! ef(
+        InputDataEnrichmentFailureMessage(
+          "collector_tstamp",
+          None,
+          "missing"
+        )
       ).invalidNel |
       "All fields absent except currency" !! Some("GBP") ! validAppKey ! None ! None ! None ! Some(
         "GBP"
-      ) ! None ! None ! InputDataEnrichmentFailureMessage("collector_tstamp", None, "missing").invalidNel |
+      ) ! None ! None ! ef(InputDataEnrichmentFailureMessage("collector_tstamp", None, "missing")).invalidNel |
       "No transaction currency, tax, or shipping" !! Some("GBP") ! validAppKey ! Some(11.00) ! None ! None ! None ! None ! Some(
         coTstamp
       ) ! (Some("12.75"), None, None, None).valid |
@@ -157,7 +169,9 @@ class CurrencyConversionEnrichmentSpec extends Specification with DataTables {
         expected
       ) =>
         (for {
-          c <- Eval.now(CurrencyConversionConf(DeveloperAccount, apiKey, CurrencyUnit.EUR))
+          c <- Eval.now(
+            CurrencyConversionConf(schemaKey, DeveloperAccount, apiKey, CurrencyUnit.EUR)
+          )
           e <- c.enrichment[Eval]
           res <- e.convertCurrencies(
             trCurrency,

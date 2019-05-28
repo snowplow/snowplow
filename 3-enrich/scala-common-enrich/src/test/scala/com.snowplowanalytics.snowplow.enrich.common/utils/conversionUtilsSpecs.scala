@@ -10,7 +10,8 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common.utils
+package com.snowplowanalytics.snowplow.enrich.common
+package utils
 
 import java.net.URI
 
@@ -20,6 +21,8 @@ import org.scalacheck.Arbitrary._
 import org.specs2.{ScalaCheck, Specification}
 import org.specs2.mutable.{Specification => MutableSpecification}
 import org.specs2.matcher.DataTables
+
+import outputs._
 
 class StringToUriSpec extends MutableSpecification with ValidationMatchers {
 
@@ -261,12 +264,19 @@ class ValidateUuidSpec extends Specification with DataTables with ScalaCheck {
   def e2 =
     prop { (str: String) =>
       ConversionUtils.validateUuid(FieldName, str) must beLeft(
-        s"Field [$FieldName]: [$str] is not a valid UUID"
+        EnrichmentFailure(
+          None,
+          InputDataEnrichmentFailureMessage(
+            FieldName,
+            Option(str),
+            "not a valid UUID"
+          )
+        )
       )
     }
 }
 
-class StringToDoublelikeSpec extends Specification with DataTables {
+class StringToDoubleLikeSpec extends Specification with DataTables {
   def is = s2"""
   This is a specification to test the stringToDoublelike function
   stringToDoublelike should fail if the supplied String is not parseable as a number                    $e1
@@ -275,8 +285,16 @@ class StringToDoublelikeSpec extends Specification with DataTables {
   """
 
   val FieldName = "val"
-  def err: (String) => String =
-    input => "Field [%s]: cannot convert [%s] to Double-like String".format(FieldName, input)
+  def err: String => EnrichmentFailure =
+    input =>
+      EnrichmentFailure(
+        None,
+        InputDataEnrichmentFailureMessage(
+          FieldName,
+          Option(input),
+          "cannot be converted to Double-like"
+        )
+      )
 
   def e1 =
     "SPEC NAME" || "INPUT STR" | "EXPECTED" |
@@ -288,7 +306,7 @@ class StringToDoublelikeSpec extends Specification with DataTables {
       "NaN" !! "NaN" ! err("NaN") |
       "English string" !! "hi & bye" ! err("hi & bye") |
       "Vietnamese name" !! "Trịnh Công Sơn" ! err("Trịnh Công Sơn") |> { (_, str, expected) =>
-      ConversionUtils.stringToDoublelike(FieldName, str) must beLeft(expected)
+      ConversionUtils.stringToDoubleLike(FieldName, str) must beLeft(expected)
     }
 
   def e2 =
@@ -306,11 +324,11 @@ class StringToDoublelikeSpec extends Specification with DataTables {
       "Sci. notation #1" !! "4.321768E3" ! "4321.768" |
       "Sci. notation #2" !! "6.72E9" ! "6720000000" |
       "Sci. notation #3" !! "7.51E-9" ! "0.00000000751" |> { (_, str, expected) =>
-      ConversionUtils.stringToDoublelike(FieldName, str) must beRight(expected)
+      ConversionUtils.stringToDoubleLike(FieldName, str) must beRight(expected)
     }
 
   val BigNumber = "78694235323.00000001" // Redshift only supports 15 significant digits for a Double
-  def e3 = ConversionUtils.stringToDoublelike(FieldName, BigNumber) must beRight(BigNumber)
+  def e3 = ConversionUtils.stringToDoubleLike(FieldName, BigNumber) must beRight(BigNumber)
 
 }
 
@@ -321,7 +339,7 @@ class StringToJIntegerSpec extends Specification with DataTables {
   stringToJInteger should convert valid Strings to Java Integers                     $e2
   """
 
-  val err: String = "cannot be converted to java.Integer"
+  val err: String = "cannot be converted to java.lang.Integer"
 
   def e1 =
     "SPEC NAME" || "INPUT STR" | "EXPECTED" |
@@ -345,7 +363,7 @@ class StringToJIntegerSpec extends Specification with DataTables {
     }
 }
 
-class StringToBooleanlikeJByteSpec extends Specification with DataTables {
+class StringToBooleanLikeJByteSpec extends Specification with DataTables {
   def is = s2"""
   This is a specification to test the stringToBooleanlikeJByte function
   stringToBooleanlikeJByte should fail if the supplied String is not parseable as a 1 or 0 JByte           $e1
@@ -353,8 +371,16 @@ class StringToBooleanlikeJByteSpec extends Specification with DataTables {
   """
 
   val FieldName = "val"
-  def err: (String) => String =
-    input => "Field [%s]: cannot convert [%s] to Boolean-like JByte".format(FieldName, input)
+  def err: String => EnrichmentFailure =
+    input =>
+      EnrichmentFailure(
+        None,
+        InputDataEnrichmentFailureMessage(
+          FieldName,
+          Option(input),
+          "cannot be converted to Boolean-like java.lang.Byte"
+        )
+      )
 
   def e1 =
     "SPEC NAME" || "INPUT STR" | "EXPECTED" |
@@ -365,13 +391,13 @@ class StringToBooleanlikeJByteSpec extends Specification with DataTables {
       "Large number" !! "19,999.99" ! err("19,999.99") |
       "Text #1" !! "a" ! err("a") |
       "Text #2" !! "0x54" ! err("0x54") |> { (_, str, expected) =>
-      ConversionUtils.stringToBooleanlikeJByte(FieldName, str) must beLeft(expected)
+      ConversionUtils.stringToBooleanLikeJByte(FieldName, str) must beLeft(expected)
     }
 
   def e2 =
     "SPEC NAME" || "INPUT STR" | "EXPECTED" |
       "True aka 1" !! "1" ! 1.toByte |
       "False aka 0" !! "0" ! 0.toByte |> { (_, str, expected) =>
-      ConversionUtils.stringToBooleanlikeJByte(FieldName, str) must beRight(expected)
+      ConversionUtils.stringToBooleanLikeJByte(FieldName, str) must beRight(expected)
     }
 }

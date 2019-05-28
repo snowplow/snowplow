@@ -21,12 +21,15 @@ import scala.collection.JavaConverters._
 import cats.data.ValidatedNel
 import cats.syntax.either._
 import cats.syntax.option._
+import com.snowplowanalytics.iglu.core.SelfDescribingData
 import org.apache.http.NameValuePair
 import org.apache.http.client.utils.URLEncodedUtils
 import org.joda.time.DateTime
 
 import outputs._
 import utils.JsonUtils
+import com.snowplowanalytics.iglu.core.SchemaKey
+import com.snowplowanalytics.iglu.core.SchemaVer
 
 /** Companion object to the CollectorLoader. Contains factory methods. */
 object Loader {
@@ -60,7 +63,27 @@ abstract class Loader[T] {
    * @param line A line of data to convert
    * @return a CanonicalInput object, Option-boxed, or None if no input was extractable.
    */
-  def toCollectorPayload(line: T): ValidatedNel[CPFormatViolationMessage, Option[CollectorPayload]]
+  protected[loaders] def toCP(line: T): ValidatedNel[BadRow, Option[CollectorPayload]]
+
+  def toCollectorPayload(
+    line: T,
+    artifact: String,
+    version: String
+  ): ValidatedNel[SelfDescribingData[BadRow], Option[CollectorPayload]] =
+    toCP(line).leftMap(
+      _.map(
+        br =>
+          SelfDescribingData(
+            SchemaKey(
+              "com.snowplowanalytics.snowplow.badrows",
+              "collector_payload_format_violation",
+              "jsonschema",
+              SchemaVer.Full(1, 0, 0)
+            ),
+            br.copy(processor = Processor(artifact, version))
+          )
+      )
+    )
 
   /**
    * Converts a querystring String into a non-empty list of NameValuePairs.

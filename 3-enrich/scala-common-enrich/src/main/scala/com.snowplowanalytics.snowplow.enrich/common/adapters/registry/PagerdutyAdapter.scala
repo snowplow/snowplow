@@ -25,8 +25,8 @@ import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import io.circe._
 
-import outputs._
 import loaders.CollectorPayload
+import outputs._
 import utils.JsonUtils
 
 /**
@@ -120,7 +120,7 @@ object PagerdutyAdapter extends Adapter {
   private[registry] def payloadBodyToEvents(body: String): Either[AdapterFailure, List[Json]] =
     JsonUtils
       .extractJson(body)
-      .leftMap(e => NotJsonAdapterFailure("body", body, e))
+      .leftMap(e => NotJsonAdapterFailure("body", body.some, e))
       .flatMap { p =>
         p.hcursor.downField("messages").focus.flatMap(_.asArray) match {
           case Some(array) => array.toList.asRight
