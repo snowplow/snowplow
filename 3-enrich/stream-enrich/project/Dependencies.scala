@@ -45,7 +45,7 @@ object Dependencies {
     val snowplowTracker      = "0.3.0"
     // Scala (test only)
     val specs2               = "2.3.13"
-    val scalacheck           = "1.11.3"
+    val scalacheck           = "1.14.0"
     val jinJava              = "2.3.6"
   }
 
