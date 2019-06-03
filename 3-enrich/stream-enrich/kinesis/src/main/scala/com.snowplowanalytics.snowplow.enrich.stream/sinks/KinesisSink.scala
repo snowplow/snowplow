@@ -42,18 +42,22 @@ import scalatracker.Tracker
 
 /** KinesisSink companion object with factory method */
 object KinesisSink {
-  def validate(kinesisConfig: Kinesis, streamName: String): \/[String, Unit] = for {
-    provider <- KinesisEnrich.getProvider(kinesisConfig.aws)
-    endpointConfiguration =
-      new EndpointConfiguration(kinesisConfig.streamEndpoint, kinesisConfig.region)
-    client = AmazonKinesisClientBuilder
-      .standard()
-      .withCredentials(provider)
-      .withEndpointConfiguration(endpointConfiguration)
-      .build()
-    _ <- streamExists(client, streamName).leftMap(_.getMessage)
-      .ensure(s"Kinesis stream $streamName doesn't exist")(_ == true)
-  } yield ()
+  def validate(kinesisConfig: Kinesis, streamName: String): \/[String, Unit] =
+    for {
+      provider <- KinesisEnrich.getProvider(kinesisConfig.aws)
+      endpointConfiguration = new EndpointConfiguration(
+        kinesisConfig.streamEndpoint,
+        kinesisConfig.region
+      )
+      client = AmazonKinesisClientBuilder
+        .standard()
+        .withCredentials(provider)
+        .withEndpointConfiguration(endpointConfiguration)
+        .build()
+      _ <- streamExists(client, streamName)
+        .leftMap(_.getMessage)
+        .ensure(s"Kinesis stream $streamName doesn't exist")(_ == true)
+    } yield ()
 
   /**
    * Check whether a Kinesis stream exists
@@ -63,7 +67,7 @@ object KinesisSink {
   private def streamExists(client: AmazonKinesis, name: String): \/[Throwable, Boolean] = {
     val existsTry = Try {
       val describeStreamResult = client.describeStream(name)
-      val status               = describeStreamResult.getStreamDescription.getStreamStatus
+      val status = describeStreamResult.getStreamDescription.getStreamStatus
       status == "ACTIVE" || status == "UPDATING"
     }
     utils.toEither(existsTry)
@@ -82,13 +86,13 @@ class KinesisSink(
   /** Kinesis records must not exceed 1MB */
   private val MaxBytes = 1000000L
 
-  private val maxBackoff      = backoffPolicy.maxBackoff
-  private val minBackoff      = backoffPolicy.minBackoff
+  private val maxBackoff = backoffPolicy.maxBackoff
+  private val minBackoff = backoffPolicy.minBackoff
   private val randomGenerator = new java.util.Random()
 
-  val ByteThreshold   = buffer.byteLimit
+  val ByteThreshold = buffer.byteLimit
   val RecordThreshold = buffer.recordLimit
-  val TimeThreshold   = buffer.timeLimit
+  val TimeThreshold = buffer.timeLimit
   var nextRequestTime = 0L
 
   /**
@@ -202,10 +206,10 @@ class KinesisSink(
   def sendBatch(batch: List[(ByteBuffer, String)]): Unit =
     if (!batch.isEmpty) {
       log.info(s"Writing ${batch.size} records to Kinesis stream $streamName")
-      var unsentRecords         = batch
-      var backoffTime           = minBackoff
+      var unsentRecords = batch
+      var backoffTime = minBackoff
       var sentBatchSuccessfully = false
-      var attemptNumber         = 0
+      var attemptNumber = 0
       while (!sentBatchSuccessfully) {
         attemptNumber += 1
 
@@ -214,10 +218,11 @@ class KinesisSink(
         } yield p
 
         try {
-          val results      = Await.result(putData, 10.seconds).getRecords.asScala.toList
+          val results = Await.result(putData, 10.seconds).getRecords.asScala.toList
           val failurePairs = unsentRecords zip results filter { _._2.getErrorMessage != null }
           log.info(
-            s"Successfully wrote ${unsentRecords.size - failurePairs.size} out of ${unsentRecords.size} records")
+            s"Successfully wrote ${unsentRecords.size - failurePairs.size} out of ${unsentRecords.size} records"
+          )
           if (failurePairs.nonEmpty) {
             val (failedRecords, failedResults) = failurePairs.unzip
             unsentRecords = failedRecords
@@ -225,7 +230,7 @@ class KinesisSink(
             backoffTime = getNextBackoff(backoffTime)
             log.error(s"Retrying all failed records in $backoffTime milliseconds...")
 
-            val err           = s"Failed to send ${failurePairs.size} events"
+            val err = s"Failed to send ${failurePairs.size} events"
             val putSize: Long = unsentRecords.foldLeft(0L)((a, b) => a + b._1.capacity)
 
             tracker match {
@@ -237,7 +242,8 @@ class KinesisSink(
                   streamName,
                   "snowplow-stream-enrich",
                   attemptNumber.toLong,
-                  putSize)
+                  putSize
+                )
               case _ => None
             }
 
@@ -262,7 +268,8 @@ class KinesisSink(
                   streamName,
                   "snowplow-stream-enrich",
                   attemptNumber.toLong,
-                  putSize)
+                  putSize
+                )
               case _ => None
             }
 
@@ -290,18 +297,22 @@ class KinesisSink(
     }
 
   private[sinks] def getErrorsSummary(
-    badResponses: List[PutRecordsResultEntry]): Map[String, (Long, String)] =
-    badResponses.foldLeft(Map[String, (Long, String)]())((counts, r) =>
-      if (counts.contains(r.getErrorCode)) {
-        counts + (r.getErrorCode -> (counts(r.getErrorCode)._1 + 1 -> r.getErrorMessage))
-      } else {
-        counts + (r.getErrorCode -> ((1, r.getErrorMessage)))
-    })
+    badResponses: List[PutRecordsResultEntry]
+  ): Map[String, (Long, String)] =
+    badResponses.foldLeft(Map[String, (Long, String)]())(
+      (counts, r) =>
+        if (counts.contains(r.getErrorCode)) {
+          counts + (r.getErrorCode -> (counts(r.getErrorCode)._1 + 1 -> r.getErrorMessage))
+        } else {
+          counts + (r.getErrorCode -> ((1, r.getErrorMessage)))
+        }
+    )
 
   private[sinks] def logErrorsSummary(errorsSummary: Map[String, (Long, String)]): Unit =
     for ((errorCode, (count, sampleMessage)) <- errorsSummary) {
       log.error(
-        s"$count records failed with error code ${errorCode}. Example error message: ${sampleMessage}")
+        s"$count records failed with error code ${errorCode}. Example error message: ${sampleMessage}"
+      )
     }
 
   /**
@@ -312,7 +323,7 @@ class KinesisSink(
    */
   private def getNextBackoff(lastBackoff: Long): Long = {
     val offset: Long = (randomGenerator.nextDouble() * (lastBackoff * 3 - minBackoff)).toLong
-    val sum: Long    = minBackoff + offset
+    val sum: Long = minBackoff + offset
     sum min maxBackoff
   }
 }

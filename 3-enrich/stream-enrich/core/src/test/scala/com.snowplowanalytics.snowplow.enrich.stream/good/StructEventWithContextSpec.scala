@@ -317,7 +317,8 @@ class StructEventWithContextSpec extends Specification {
           for (idx <- StructEventWithContextSpec.expected.indices) {
             fields(idx) must beFieldEqualTo(
               StructEventWithContextSpec.expected(idx),
-              withIndex = idx)
+              withIndex = idx
+            )
           }
           for (idx <- StructEventWithContextSpec.pii.indices) {
             piiFields(idx) must beFieldEqualTo(StructEventWithContextSpec.pii(idx), withIndex = idx)
