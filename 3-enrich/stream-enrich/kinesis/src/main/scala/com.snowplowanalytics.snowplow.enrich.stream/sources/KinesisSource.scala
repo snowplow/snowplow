@@ -16,18 +16,18 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package stream
+package com.snowplowanalytics.snowplow.enrich.stream
 package sources
 
 import java.net.InetAddress
 import java.util.{List, UUID}
 
 import scala.util.control.Breaks._
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.util.control.NonFatal
+
+import cats.Id
+import cats.syntax.either._
 import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import com.amazonaws.services.kinesis.AmazonKinesisClientBuilder
@@ -35,46 +35,42 @@ import com.amazonaws.services.kinesis.clientlibrary.interfaces._
 import com.amazonaws.services.kinesis.clientlibrary.exceptions._
 import com.amazonaws.services.kinesis.clientlibrary.lib.worker._
 import com.amazonaws.services.kinesis.model.Record
-import org.apache.thrift.TDeserializer
-import scalaz._
-import Scalaz._
-import common.adapters.AdapterRegistry
-import common.enrichments.EnrichmentRegistry
-import iglu.client.Resolver
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.snowplow.badrows.Processor
+import com.snowplowanalytics.snowplow.enrich.common.adapters.AdapterRegistry
+import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
+import com.snowplowanalytics.snowplow.scalatracker.Tracker
+import io.circe.Json
+
 import model.{Kinesis, StreamsConfig}
-import scalatracker.Tracker
 import sinks._
 
 /** KinesisSource companion object with factory method */
 object KinesisSource {
   def createAndInitialize(
     config: StreamsConfig,
-    igluResolver: Resolver,
+    client: Client[Id, Json],
     adapterRegistry: AdapterRegistry,
-    enrichmentRegistry: EnrichmentRegistry,
-    tracker: Option[Tracker]
-  ): Validation[String, KinesisSource] =
+    enrichmentRegistry: EnrichmentRegistry[Id],
+    tracker: Option[Tracker[Id]],
+    processor: Processor
+  ): Either[String, KinesisSource] =
     for {
       kinesisConfig <- config.sourceSink match {
-        case c: Kinesis => c.success
-        case _ => "Configured source/sink is not Kinesis".failure
+        case c: Kinesis => c.asRight
+        case _ => "Configured source/sink is not Kinesis".asLeft
       }
       emitPii = utils.emitPii(enrichmentRegistry)
-      _ <- (KinesisSink
-        .validate(kinesisConfig, config.out.enriched)
-        .validation
-        .leftMap(_.wrapNel) |@|
-        utils.validatePii(emitPii, config.out.pii).validation.leftMap(_.wrapNel) |@|
-        KinesisSink.validate(kinesisConfig, config.out.bad).validation.leftMap(_.wrapNel)) {
-        (_, _, _) =>
-          ()
-      }.leftMap(_.toList.mkString("\n"))
-      provider <- KinesisEnrich.getProvider(kinesisConfig.aws).validation
+      _ <- KinesisSink.validate(kinesisConfig, config.out.enriched)
+      _ <- utils.validatePii(emitPii, config.out.pii)
+      _ <- KinesisSink.validate(kinesisConfig, config.out.bad)
+      provider <- KinesisEnrich.getProvider(kinesisConfig.aws)
     } yield new KinesisSource(
-      igluResolver,
+      client,
       adapterRegistry,
       enrichmentRegistry,
       tracker,
+      processor,
       config,
       kinesisConfig,
       provider
@@ -83,18 +79,19 @@ object KinesisSource {
 
 /** Source to read events from a Kinesis stream */
 class KinesisSource private (
-  igluResolver: Resolver,
+  client: Client[Id, Json],
   adapterRegistry: AdapterRegistry,
-  enrichmentRegistry: EnrichmentRegistry,
-  tracker: Option[Tracker],
+  enrichmentRegistry: EnrichmentRegistry[Id],
+  tracker: Option[Tracker[Id]],
+  processor: Processor,
   config: StreamsConfig,
   kinesisConfig: Kinesis,
   provider: AWSCredentialsProvider
-) extends Source(igluResolver, adapterRegistry, enrichmentRegistry, tracker, config.out.partitionKey) {
+) extends Source(client, adapterRegistry, enrichmentRegistry, processor, config.out.partitionKey) {
 
-  override val MaxRecordSize = Some(1000000L)
+  override val MaxRecordSize = Some(1000000)
 
-  private val client = {
+  private val kClient = {
     val endpointConfiguration =
       new EndpointConfiguration(kinesisConfig.streamEndpoint, kinesisConfig.region)
     AmazonKinesisClientBuilder
@@ -107,7 +104,7 @@ class KinesisSource private (
   override val threadLocalGoodSink: ThreadLocal[Sink] = new ThreadLocal[Sink] {
     override def initialValue: Sink =
       new KinesisSink(
-        client,
+        kClient,
         kinesisConfig.backoffPolicy,
         config.buffer,
         config.out.enriched,
@@ -124,7 +121,7 @@ class KinesisSource private (
           new ThreadLocal[Sink] {
             override def initialValue: Sink =
               new KinesisSink(
-                client,
+                kClient,
                 kinesisConfig.backoffPolicy,
                 config.buffer,
                 piiStreamName,
@@ -137,7 +134,7 @@ class KinesisSource private (
 
   override val threadLocalBadSink: ThreadLocal[Sink] = new ThreadLocal[Sink] {
     override def initialValue: Sink =
-      new KinesisSink(client, kinesisConfig.backoffPolicy, config.buffer, config.out.bad, tracker)
+      new KinesisSink(kClient, kinesisConfig.backoffPolicy, config.buffer, config.out.bad, tracker)
   }
 
   /** Never-ending processing loop over source stream. */
@@ -184,14 +181,11 @@ class KinesisSource private (
 
   // Process events from a Kinesis stream.
   class RawEventProcessor extends IRecordProcessor {
-    private val thriftDeserializer = new TDeserializer()
-
     private var kinesisShardId: String = _
 
     // Backoff and retry settings.
     private val BACKOFF_TIME_IN_MILLIS = 3000L
     private val NUM_RETRIES = 10
-    private val CHECKPOINT_INTERVAL_MILLIS = 1000L
 
     override def initialize(shardId: String) = {
       log.info("Initializing record processor for shard: " + shardId)
@@ -215,7 +209,7 @@ class KinesisSource private (
 
     private def processRecordsWithRetries(records: List[Record]): Boolean =
       try {
-        enrichAndStoreEvents(records.map(_.getData.array).toList)
+        enrichAndStoreEvents(records.asScala.map(_.getData.array).toList)
       } catch {
         case NonFatal(e) =>
           // TODO: send an event when something goes wrong here

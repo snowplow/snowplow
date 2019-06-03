@@ -36,7 +36,7 @@ class InvalidEnrichedEventSpec extends Specification {
       val rawEvent = Base64.decodeBase64(InvalidEnrichedEventSpec.raw)
 
       val enrichedEvent = TestSource.enrichEvents(rawEvent)(0)
-      enrichedEvent.isFailure must beTrue
+      enrichedEvent.isInvalid must beTrue
     }
   }
 }

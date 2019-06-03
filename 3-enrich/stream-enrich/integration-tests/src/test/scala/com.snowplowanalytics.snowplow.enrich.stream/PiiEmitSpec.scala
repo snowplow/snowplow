@@ -12,37 +12,33 @@
  * implied.  See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package stream
+package com.snowplowanalytics.snowplow.enrich.stream
 
-// Scala
-import scala.util.{Try, Success, Failure}
-import scala.collection.JavaConversions._
-import scala.concurrent.duration.FiniteDuration
-import scala.io.Source
-
-// Scala libraries
-import pureconfig._
-import com.typesafe.config.ConfigFactory
-import org.specs2.mutable.Specification
-import org.specs2.matcher.{FutureMatchers, Matcher}
-
-// Java
 import java.util.regex.Pattern
 import java.util.concurrent.TimeUnit
 
-// Java libraries
-import org.apache.commons.codec.binary.Base64
+import scala.util.{Failure, Success, Try}
+import scala.collection.JavaConverters._
+import scala.concurrent.duration.FiniteDuration
+import scala.io.Source
+
 import com.hubspot.jinjava.Jinjava
+import com.typesafe.config.ConfigFactory
+import org.apache.commons.codec.binary.Base64
+import org.specs2.concurrent.ExecutionEnv
+import org.specs2.mutable.Specification
+import org.specs2.matcher.{FutureMatchers, Matcher}
+import org.specs2.specification.BeforeAfterAll
+import pureconfig._
 
-// This project
 import good._
-import model.{StreamsConfig, SourceSinkConfig}
+import model.{SourceSinkConfig, StreamsConfig}
 
-class PiiEmitSpec
-  extends Specification with FutureMatchers with KafkaIntegrationSpec with BeforeAfterAll {
+class PiiEmitSpec(implicit ee: ExecutionEnv)
+    extends Specification
+    with FutureMatchers
+    with KafkaIntegrationSpec
+    with BeforeAfterAll {
 
   var ktu: KafkaTestUtils = _
   override def beforeAll(): Unit = {
@@ -50,11 +46,10 @@ class PiiEmitSpec
     ktu.setup()
     ktu.createTopics(kafkaTopics.toList: _*)
   }
-  override def afterAll(): Unit = {
+  override def afterAll(): Unit =
     if (ktu != null) {
       ktu = null
     }
-  }
 
   import KafkaIntegrationSpecValues._
 
@@ -75,19 +70,20 @@ class PiiEmitSpec
     "appName" -> "jim"
   )
 
-  def config: String = Try {
-    val configRes = getClass.getResourceAsStream("/config.hocon.sample")
-    Source.fromInputStream(configRes).getLines.mkString("\n")
-  } match {
-    case Failure(t) => {
-      println(s"Unable to get config.hocon.sample: $t"); throw new Exception(t)
+  def config: String =
+    Try {
+      val configRes = getClass.getResourceAsStream("/config.hocon.sample")
+      Source.fromInputStream(configRes).getLines.mkString("\n")
+    } match {
+      case Failure(t) => {
+        println(s"Unable to get config.hocon.sample: $t"); throw new Exception(t)
+      }
+      case Success(s) => s
     }
-    case Success(s) => s
-  }
 
   def configInstance: String = {
     val jinJava = new Jinjava()
-    jinJava.render(config, configValues)
+    jinJava.render(config, configValues.asJava)
   }
 
   private def decode(s: String): Array[Byte] = Base64.decodeBase64(s)
@@ -116,19 +112,21 @@ class PiiEmitSpec
     "emit all events" in {
       implicit def hint[T]: ProductHint[T] =
         ProductHint[T](ConfigFieldMapping(CamelCase, CamelCase))
-      implicit val sourceSinkConfigHint = new FieldCoproductHint[SourceSinkConfig]("enabled")
+      implicit val _ = new FieldCoproductHint[SourceSinkConfig]("enabled")
 
       val parsedConfig = ConfigFactory.parseString(configInstance).resolve()
       val configObject = Try {
         loadConfigOrThrow[StreamsConfig](parsedConfig.getConfig("enrich.streams"))
       }
       configObject aka "enrichment config loading" must not beAFailedTry
-      val app = getMainApplicationFuture(
+
+      getMainApplicationFuture(
         configObject.get,
-        SpecHelpers.resolver,
+        SpecHelpers.client,
         SpecHelpers.adapterRegistry,
         SpecHelpers.enrichmentRegistry,
-        None)
+        None
+      )
       inputProduced(ktu.brokerAddress) aka "sending input" must beSuccessfulTry
 
       def spaceJoinResult(expected: List[StringOrRegex]) =
@@ -142,32 +140,37 @@ class PiiEmitSpec
 
       val expectedMatcher: Matcher[(List[String], List[String], List[String])] = beLike {
         case (good: List[String], bad: List[String], pii: List[String]) => {
-          (bad aka "bad result list" must have size (expectedBad)) and
-            (pii aka "pii result list" must have size (expectedPii)) and
-            (good aka "good result list" must have size (expectedGood)) and
-            (good aka "good result list" must containMatch(
-              spaceJoinResult(PagePingWithContextSpec.expected))) and
-            (pii aka "pii result list" must containMatch(spaceJoinResult(PagePingWithContextSpec.pii))) and
-            (good aka "good result list" must containMatch(
-              spaceJoinResult(PageViewWithContextSpec.expected))) and
-            (pii aka "pii result list" must containMatch(spaceJoinResult(PageViewWithContextSpec.pii))) and
-            (good aka "good result list" must containMatch(
-              spaceJoinResult(StructEventSpec.expected))) and
-            (pii aka "pii result list" must containMatch(spaceJoinResult(StructEventSpec.pii))) and
-            (good aka "good result list" must containMatch(
-              spaceJoinResult(StructEventWithContextSpec.expected))) and
-            (pii aka "pii result list" must containMatch(spaceJoinResult(StructEventWithContextSpec.pii))) and
-            (good aka "good result list" must containMatch(
-              spaceJoinResult(TransactionItemSpec.expected))) and
-            (pii aka "pii result list" must containMatch(spaceJoinResult(TransactionItemSpec.pii))) and
-            (good aka "good result list" must containMatch(
-              spaceJoinResult(TransactionSpec.expected))) and
-            (pii aka "pii result list" must containMatch(spaceJoinResult(TransactionSpec.pii)))
+          bad aka "bad result list" must have size (expectedBad)
+          pii aka "pii result list" must have size (expectedPii)
+          good aka "good result list" must have size (expectedGood)
+          good aka "good result list" must containMatch(
+            spaceJoinResult(PagePingWithContextSpec.expected)
+          )
+          pii aka "pii result list" must containMatch(spaceJoinResult(PagePingWithContextSpec.pii))
+          good aka "good result list" must containMatch(
+            spaceJoinResult(PageViewWithContextSpec.expected)
+          )
+          pii aka "pii result list" must containMatch(spaceJoinResult(PageViewWithContextSpec.pii))
+          good aka "good result list" must containMatch(spaceJoinResult(StructEventSpec.expected))
+          pii aka "pii result list" must containMatch(spaceJoinResult(StructEventSpec.pii))
+          good aka "good result list" must containMatch(
+            spaceJoinResult(StructEventWithContextSpec.expected)
+          )
+          pii aka "pii result list" must containMatch(
+            spaceJoinResult(StructEventWithContextSpec.pii)
+          )
+          good aka "good result list" must containMatch(
+            spaceJoinResult(TransactionItemSpec.expected)
+          )
+          pii aka "pii result list" must containMatch(spaceJoinResult(TransactionItemSpec.pii))
+          good aka "good result list" must containMatch(spaceJoinResult(TransactionSpec.expected))
+          pii aka "pii result list" must containMatch(spaceJoinResult(TransactionSpec.pii))
         }
       }
       allResults(ktu.brokerAddress) must expectedMatcher.await(
         retries = 0,
-        timeout = FiniteDuration(consumerExecutionTimeoutSec.toLong, TimeUnit.SECONDS))
+        timeout = FiniteDuration(consumerExecutionTimeoutSec.toLong, TimeUnit.SECONDS)
+      )
     }
   }
 }

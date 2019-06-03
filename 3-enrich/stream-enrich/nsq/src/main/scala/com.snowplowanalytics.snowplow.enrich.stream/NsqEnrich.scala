@@ -16,38 +16,39 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package stream
+package com.snowplowanalytics.snowplow.enrich.stream
 
 import java.io.File
 import java.net.URI
 
+import cats.Id
+import cats.syntax.either._
 import com.snowplowanalytics.snowplow.enrich.common.adapters.AdapterRegistry
-import common.adapters.registry.RemoteAdapter
-import scalaz.{Sink => _, Source => _, _}
-import common.enrichments.EnrichmentRegistry
+import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
+import com.snowplowanalytics.snowplow.badrows.Processor
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.snowplow.scalatracker.Tracker
+import io.circe.Json
+
 import config.FileConfig
-import iglu.client.Resolver
 import model.{Credentials, StreamsConfig}
-import scalatracker.Tracker
-import sources.{NsqSource, Source}
+import sources.NsqSource
 
 /** The main entry point for Stream Enrich for NSQ. */
 object NsqEnrich extends Enrich {
 
   def main(args: Array[String]): Unit = run(args)
 
-  override def getSource(
+  def getSource(
     streamsConfig: StreamsConfig,
-    resolver: Resolver,
+    client: Client[Id, Json],
     adapterRegistry: AdapterRegistry,
-    enrichmentRegistry: EnrichmentRegistry,
-    tracker: Option[Tracker]
-  ): Validation[String, Source] =
+    enrichmentRegistry: EnrichmentRegistry[Id],
+    tracker: Option[Tracker[Id]],
+    processor: Processor
+  ): Either[String, sources.Source] =
     NsqSource
-      .create(streamsConfig, resolver, adapterRegistry, enrichmentRegistry, tracker)
+      .create(streamsConfig, client, adapterRegistry, enrichmentRegistry, processor)
       .leftMap(_.getMessage)
 
   override val parser: scopt.OptionParser[FileConfig] = localParser
@@ -57,20 +58,20 @@ object NsqEnrich extends Enrich {
     targetFile: File
   )(
     implicit creds: Credentials
-  ): Validation[String, Int] =
+  ): Either[String, Int] =
     httpDownloader(uri, targetFile)
 
   override def extractResolver(
     resolverArgument: String
   )(
     implicit creds: Credentials
-  ): Validation[String, String] =
+  ): Either[String, String] =
     localResolverExtractor(resolverArgument)
 
   override def extractEnrichmentConfigs(
     enrichmentArg: Option[String]
   )(
     implicit creds: Credentials
-  ): Validation[String, String] =
+  ): Either[String, Json] =
     localEnrichmentConfigsExtractor(enrichmentArg)
 }

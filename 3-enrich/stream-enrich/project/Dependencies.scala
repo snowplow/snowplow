@@ -36,12 +36,9 @@ object Dependencies {
     val slf4j                = "1.7.5"
     // Scala
     val scopt                = "3.6.0"
-    val scalaz7              = "7.0.9"
-    val json4s               = "3.6.6"
     val pureconfig           = "0.8.0"
     val snowplowRawEvent     = "0.1.0"
-    val snowplowCommonEnrich = "0.38.0"
-    val igluClient           = "0.5.0"
+    val snowplowCommonEnrich = "1.0.0"
     val snowplowTracker      = "0.3.0"
     // Scala (test only)
     val specs2               = "2.3.13"
@@ -64,15 +61,11 @@ object Dependencies {
     val slf4j                = "org.slf4j"                        %  "slf4j-simple"              % V.slf4j
     val log4jOverSlf4j       = "org.slf4j"                        %  "log4j-over-slf4j"          % V.slf4j
     // Scala
-    val scopt                = "com.github.scopt"                 %% "scopt"                     % V.scopt
-    val scalaz7              = "org.scalaz"                       %% "scalaz-core"               % V.scalaz7
-    val json4s               = "org.json4s"                       %% "json4s-core"               % V.json4s
-    val json4sJackson        = "org.json4s"                       %% "json4s-jackson"            % V.json4s
-    val pureconfig           = "com.github.pureconfig"            %% "pureconfig"                % V.pureconfig
-    val snowplowRawEvent     = "com.snowplowanalytics"            %  "snowplow-thrift-raw-event" % V.snowplowRawEvent
-    val igluClient           = "com.snowplowanalytics"            %% "iglu-scala-client"         % V.igluClient
-    val snowplowCommonEnrich = "com.snowplowanalytics"            %% "snowplow-common-enrich"    % V.snowplowCommonEnrich
-    val snowplowTracker      = "com.snowplowanalytics"            %% "snowplow-scala-tracker"    % V.snowplowTracker
+    val scopt                = "com.github.scopt"                 %% "scopt"                             % V.scopt
+    val pureconfig           = "com.github.pureconfig"            %% "pureconfig"                        % V.pureconfig
+    val snowplowRawEvent     = "com.snowplowanalytics"            %  "snowplow-thrift-raw-event"         % V.snowplowRawEvent
+    val snowplowCommonEnrich = "com.snowplowanalytics"            %% "snowplow-common-enrich"            % V.snowplowCommonEnrich
+    val snowplowTracker      = "com.snowplowanalytics"            %% "snowplow-scala-tracker-emitter-id" % V.snowplowTracker
     // Scala (test only)
     val specs2               = "org.specs2"            %% "specs2"                    % V.specs2         % "test"
     val scalacheck           = "org.scalacheck"        %% "scalacheck"                % V.scalacheck     % "test"
