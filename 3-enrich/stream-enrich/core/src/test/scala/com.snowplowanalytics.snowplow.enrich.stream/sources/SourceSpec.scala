@@ -16,9 +16,10 @@
 package com.snowplowanalytics.snowplow.enrich.stream
 package sources
 
-import org.json4s._
-import org.json4s.jackson.JsonMethods._
+import java.time.Instant
+
 import org.specs2.mutable.Specification
+import com.snowplowanalytics.snowplow.badrows._
 
 class SourceSpec extends Specification {
 
@@ -33,38 +34,40 @@ class SourceSpec extends Specification {
   }
 
   "adjustOversizedFailureJson" should {
-    "remove the \"line\" field from a large bad JSON" in {
-      val badJson = """{"line":"huge", "errors":["some error"], "other":"more information"}"""
-      val parsed = parse(Source.adjustOversizedFailureJson(badJson))
-      parsed \ "line" must_== JNothing
-      parsed \ "other" must_== JString("more information")
-      parsed \ "size" must_== JInt(Source.getSize(badJson))
-    }
-
-    "remove create a new bad row if the bad row JSON is unparseable" in {
-      val badJson = "{"
-      val parsed = parse(Source.adjustOversizedFailureJson(badJson))
-      parsed \ "size" must_== JInt(1)
+    "truncate the original bad row" in {
+      val processor = Processor("se", "1.0.0")
+      val original = BadRow.CPFormatViolation(
+        processor,
+        Failure.CPFormatViolation(
+          Instant.ofEpochSecond(12),
+          "tsv",
+          FailureDetails.CPFormatViolationMessage.Fallback("ah")
+        ),
+        Payload.RawPayload("ah")
+      )
+      val res = Source.adjustOversizedFailureJson(original, 200, processor)
+      res.schemaKey must_== Schemas.SizeViolation
+      val failure = res.failure
+      failure.actualSizeBytes must_== 267
+      failure.maximumAllowedSizeBytes must_== 200
+      failure.expectation must_== "bad row exceeded the maximum size"
+      res.payload must_== Payload.RawPayload("""{"schema":"iglu:com.""")
+      res.processor must_== processor
     }
   }
 
   "oversizedSuccessToFailure" should {
     "create a bad row JSON from an oversized success" in {
-      val actual = parse(Source.oversizedSuccessToFailure("abc", 2))
-      actual \ "size" must_== JInt(3)
-      actual \ "errors" must_== JArray(
-        List(
-          JObject(
-            List(
-              ("level", JString("error")),
-              (
-                "message",
-                JString("Enriched event size of 3 bytes is greater than allowed maximum of 2")
-              )
-            )
-          )
-        )
-      )
+      val processor = Processor("se", "1.0.0")
+      val res =
+        Source.oversizedSuccessToFailure("abcdefghijklmnopqrstuvwxy", 10, processor)
+      res.schemaKey must_== Schemas.SizeViolation
+      val failure = res.failure
+      failure.actualSizeBytes must_== 25
+      failure.maximumAllowedSizeBytes must_== 10
+      failure.expectation must_== "event passed enrichment but exceeded the maximum allowed size as a result"
+      res.payload must_== Payload.RawPayload("a")
+      res.processor must_== processor
     }
   }
 }
