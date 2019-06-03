@@ -18,6 +18,7 @@ object Dependencies {
     // For Snowplow
     "Snowplow Analytics Maven releases repo" at "http://maven.snplow.com/releases/",
     "Snowplow Analytics Maven snapshot repo" at "http://maven.snplow.com/snapshots/",
+    "snowplow" at "https://snowplow.bintray.com/snowplow-maven",
     // For uaParser utils
     "user-agent-parser repo"                 at "https://clojars.org/repo/",
     // For user-agent-utils
@@ -41,7 +42,7 @@ object Dependencies {
     val snowplowCommonEnrich = "1.0.0"
     val snowplowTracker      = "0.3.0"
     // Scala (test only)
-    val specs2               = "2.3.13"
+    val specs2               = "4.5.1"
     val scalacheck           = "1.14.0"
     val jinJava              = "2.3.6"
   }
@@ -67,10 +68,10 @@ object Dependencies {
     val snowplowCommonEnrich = "com.snowplowanalytics"            %% "snowplow-common-enrich"            % V.snowplowCommonEnrich
     val snowplowTracker      = "com.snowplowanalytics"            %% "snowplow-scala-tracker-emitter-id" % V.snowplowTracker
     // Scala (test only)
-    val specs2               = "org.specs2"            %% "specs2"                    % V.specs2         % "test"
-    val scalacheck           = "org.scalacheck"        %% "scalacheck"                % V.scalacheck     % "test"
-    val kafka                = "org.apache.kafka"      %% "kafka"                     % V.kafka          % "test"
+    val specs2               = "org.specs2"          %% "specs2-core" % V.specs2     % "test"
+    val scalacheck           = "org.scalacheck"      %% "scalacheck"  % V.scalacheck % "test"
+    val kafka                = "org.apache.kafka"    %% "kafka"       % V.kafka      % "test"
     // Java (test only)
-    val jinJava              = "com.hubspot.jinjava"   %  "jinjava"                   % V.jinJava        % "test"
+    val jinJava              = "com.hubspot.jinjava" %  "jinjava"     % V.jinJava    % "test"
   }
 }
