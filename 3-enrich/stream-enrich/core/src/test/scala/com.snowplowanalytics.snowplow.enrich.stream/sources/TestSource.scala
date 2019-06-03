@@ -14,18 +14,19 @@
  * governing permissions and limitations there under.
  */
 
-package com.snowplowanalytics
-package snowplow
-package enrich
-package stream
+package com.snowplowanalytics.snowplow.enrich.stream
 package sources
 
+import cats.Id
+import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.snowplow.enrich.common.adapters.AdapterRegistry
-import common.adapters.registry.RemoteAdapter
-import iglu.client.Resolver
-import common.enrichments.EnrichmentRegistry
+import com.snowplowanalytics.snowplow.enrich.common.adapters.registry.RemoteAdapter
+import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
+import com.snowplowanalytics.snowplow.enrich.common.outputs.Processor
+import com.snowplowanalytics.snowplow.scalatracker.Tracker
+import io.circe.Json
+
 import model.EnrichConfig
-import scalatracker.Tracker
 import sinks.Sink
 
 /**
@@ -35,11 +36,11 @@ import sinks.Sink
  */
 class TestSource(
   config: EnrichConfig,
-  igluResolver: Resolver,
+  client: Client[Id, Json],
   adapterRegistry: AdapterRegistry,
-  enrichmentRegistry: EnrichmentRegistry,
-  tracker: Option[Tracker]
-) extends Source(igluResolver, adapterRegistry, enrichmentRegistry, tracker, "") {
+  enrichmentRegistry: EnrichmentRegistry[Id],
+  tracker: Option[Tracker[Id]]
+) extends Source(client, adapterRegistry, enrichmentRegistry, tracker, Processor.default, "") {
 
   override val MaxRecordSize = None
 

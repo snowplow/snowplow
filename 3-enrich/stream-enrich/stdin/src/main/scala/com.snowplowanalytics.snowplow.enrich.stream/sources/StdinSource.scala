@@ -17,53 +17,50 @@
  * governing permissions and limitations there under.
  */
 
-package com.snowplowanalytics
-package snowplow
-package enrich
-package stream
+package com.snowplowanalytics.snowplow.enrich.stream
 package sources
 
 import org.apache.commons.codec.binary.Base64
-import scalaz._
-import Scalaz._
-import common.adapters.AdapterRegistry
-import common.enrichments.EnrichmentRegistry
-import iglu.client.Resolver
+
+import cats.Id
+import cats.syntax.either._
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.snowplow.enrich.common.adapters.AdapterRegistry
+import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
+import com.snowplowanalytics.snowplow.enrich.common.outputs.Processor
+import com.snowplowanalytics.snowplow.scalatracker.Tracker
+import io.circe.Json
+
 import model.{Stdin, StreamsConfig}
-import scalatracker.Tracker
 import sinks.{Sink, StderrSink, StdoutSink}
 
 /** StdinSource companion object with factory method */
 object StdinSource {
   def create(
     config: StreamsConfig,
-    igluResolver: Resolver,
+    client: Client[Id, Json],
     adapterRegistry: AdapterRegistry,
-    enrichmentRegistry: EnrichmentRegistry,
-    tracker: Option[Tracker]
-  ): Validation[String, StdinSource] =
+    enrichmentRegistry: EnrichmentRegistry[Id],
+    tracker: Option[Tracker[Id]],
+    processor: Processor
+  ): Either[String, StdinSource] =
     for {
       _ <- config.sourceSink match {
-        case Stdin => ().success
-        case _ => "Configured source/sink is not Stdin".failure
+        case Stdin => ().asRight
+        case _ => "Configured source/sink is not Stdin".asLeft
       }
-    } yield new StdinSource(
-      igluResolver,
-      adapterRegistry,
-      enrichmentRegistry,
-      tracker,
-      config.out.partitionKey
-    )
+    } yield new StdinSource(client, enrichmentRegistry, tracker, processor, config.out.partitionKey)
 }
 
 /** Source to decode raw events (in base64) from stdin. */
 class StdinSource private (
-  igluResolver: Resolver,
+  client: Client[Id, Json],
   adapterRegistry: AdapterRegistry,
-  enrichmentRegistry: EnrichmentRegistry,
-  tracker: Option[Tracker],
+  enrichmentRegistry: EnrichmentRegistry[Id],
+  tracker: Option[Tracker[Id]],
+  processor: Processor,
   partitionKey: String
-) extends Source(igluResolver, adapterRegistry, enrichmentRegistry, tracker, partitionKey) {
+) extends Source(client, adapterRegistry, enrichmentRegistry, tracker, processor, partitionKey) {
 
   override val MaxRecordSize = None
 

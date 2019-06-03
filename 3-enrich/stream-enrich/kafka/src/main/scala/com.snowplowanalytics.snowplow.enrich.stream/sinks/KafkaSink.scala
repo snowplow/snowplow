@@ -24,10 +24,8 @@ import java.util.Properties
 
 import scala.collection.JavaConverters._
 
+import cats.syntax.either._
 import org.apache.kafka.clients.producer._
-
-import scalaz._
-import Scalaz._
 
 import model.{BufferConfig, Kafka}
 
@@ -37,8 +35,8 @@ object KafkaSink {
     kafkaConfig: Kafka,
     bufferConfig: BufferConfig,
     topicName: String
-  ): \/[String, KafkaProducer[String, String]] =
-    createProducer(kafkaConfig, bufferConfig).right
+  ): Either[String, KafkaProducer[String, String]] =
+    createProducer(kafkaConfig, bufferConfig).asRight
 
   /**
    * Instantiates a producer on an existing topic with the given configuration options.
