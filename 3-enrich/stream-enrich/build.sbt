@@ -58,6 +58,7 @@ lazy val core = project
   .settings(moduleName := "snowplow-stream-enrich")
   .settings(buildSettings)
   .settings(libraryDependencies ++= commonDependencies)
+  .settings(BuildSettings.formatting)
   .enablePlugins(BuildInfoPlugin)
   .settings(
     buildInfoKeys := Seq[BuildInfoKey](organization, name, version,
@@ -68,6 +69,7 @@ lazy val core = project
 lazy val kinesis = project
   .settings(moduleName := "snowplow-stream-enrich-kinesis")
   .settings(allSettings)
+  .settings(BuildSettings.formatting)
   .settings(libraryDependencies ++= Seq(
     Dependencies.Libraries.kinesisClient,
     Dependencies.Libraries.kinesisSdk,
@@ -80,6 +82,7 @@ lazy val kinesis = project
 lazy val kafka = project
   .settings(moduleName := "snowplow-stream-enrich-kafka")
   .settings(allSettings)
+  .settings(BuildSettings.formatting)
   .settings(libraryDependencies ++= Seq(
     Dependencies.Libraries.kafkaClients
   ))
@@ -88,17 +91,20 @@ lazy val kafka = project
 lazy val nsq = project
   .settings(moduleName := "snowplow-stream-enrich-nsq")
   .settings(allSettings)
+  .settings(BuildSettings.formatting)
   .settings(libraryDependencies ++= Seq(Dependencies.Libraries.nsqClient))
   .dependsOn(core)
 
 lazy val stdin = project
   .settings(moduleName := "snowplow-stream-enrich-stdin")
   .settings(allSettings)
+  .settings(BuildSettings.formatting)
   .dependsOn(core)
 
 lazy val integrationTests = project.in(file("./integration-tests"))
   .settings(moduleName := "integration-tests")
   .settings(allSettings)
+  .settings(BuildSettings.formatting)
   .settings(BuildSettings.addExampleConfToTestCp)
   .settings(libraryDependencies ++= Seq(
     // Test
