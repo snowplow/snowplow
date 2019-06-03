@@ -25,7 +25,7 @@ import cats.Id
 import cats.effect.Clock
 import cats.syntax.either._
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
-import com.snowplowanalytics.snowplow.scalatracker.{ClockProvider, UUIDProvider}
+import com.snowplowanalytics.snowplow.scalatracker.UUIDProvider
 
 object utils {
   def emitPii(enrichmentRegistry: EnrichmentRegistry[Id]): Boolean =
@@ -39,16 +39,13 @@ object utils {
       case _ => ().asRight
     }
 
-  implicit val idClock: Clock[Id] = new Clock[Id] {
+  implicit val clockProvider: Clock[Id] = new Clock[Id] {
     final def realTime(unit: TimeUnit): Id[Long] =
       unit.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
     final def monotonic(unit: TimeUnit): Id[Long] =
       unit.convert(System.nanoTime(), TimeUnit.NANOSECONDS)
   }
 
-  implicit val idClockProvider: ClockProvider[Id] = new ClockProvider[Id] {
-    final def getCurrentMilliseconds: Id[Long] = System.currentTimeMillis()
-  }
   implicit val uuidProvider: UUIDProvider[Id] = new UUIDProvider[Id] {
     override def generateUUID: Id[UUID] = UUID.randomUUID()
   }
