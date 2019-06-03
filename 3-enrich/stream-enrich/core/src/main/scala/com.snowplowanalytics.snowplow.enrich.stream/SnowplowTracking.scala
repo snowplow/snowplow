@@ -16,15 +16,20 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow
-package enrich.stream
+package com.snowplowanalytics.snowplow.enrich.stream
 
-import org.json4s._
-import org.json4s.JsonDSL._
+import scala.concurrent.ExecutionContext.Implicits.global
+
+import cats.Id
+import cats.data.NonEmptyList
+import com.snowplowanalytics.iglu.core._
+import com.snowplowanalytics.snowplow.scalatracker.Tracker
+import com.snowplowanalytics.snowplow.scalatracker.emitters.id.AsyncEmitter
+import io.circe.Json
 
 import model.SnowplowMonitoringConfig
-import scalatracker.{SelfDescribingJson, Tracker}
-import scalatracker.emitters.AsyncEmitter
+import utils._
+import io.circe.JsonObject
 
 /**
  * Functionality for sending Snowplow events for monitoring purposes
@@ -39,11 +44,10 @@ object SnowplowTracking {
    * @param config The "monitoring.snowplow" section of the HOCON
    * @return a new tracker instance
    */
-  def initializeTracker(config: SnowplowMonitoringConfig): Tracker = {
-    val emitter = AsyncEmitter.createAndStart(config.collectorUri, config.collectorPort)
-    val tracker = new Tracker(List(emitter), generated.BuildInfo.name, config.appId)
-    tracker.enableEc2Context()
-    tracker
+  def initializeTracker(config: SnowplowMonitoringConfig): Tracker[Id] = {
+    val emitter =
+      AsyncEmitter.createAndStart(config.collectorUri, Some(config.collectorPort), false, None)
+    new Tracker(NonEmptyList.one(emitter), generated.BuildInfo.name, config.appId)
   }
 
   /**
@@ -60,7 +64,7 @@ object SnowplowTracking {
    * @param putSize the size in bytes of the put request
    */
   def sendFailureEvent(
-    tracker: Tracker,
+    tracker: Tracker[Id],
     errorType: String,
     errorMessage: String,
     streamName: String,
@@ -68,15 +72,22 @@ object SnowplowTracking {
     retryCount: Long,
     putSize: Long
   ): Unit =
-    tracker.trackUnstructEvent(
-      SelfDescribingJson(
-        "iglu:com.snowplowanalytics.monitoring.kinesis/stream_write_failed/jsonschema/1-0-0",
-        ("errorType" -> errorType) ~
-          ("errorMessage" -> errorMessage) ~
-          ("streamName" -> streamName) ~
-          ("appName" -> appName) ~
-          ("retryCount" -> retryCount) ~
-          ("putSize" -> putSize)
+    tracker.trackSelfDescribingEvent(
+      SelfDescribingData[Json](
+        SchemaKey(
+          "com.snowplowanalytics.monitoring.kinesis",
+          "stream_write_failed",
+          "jsonschema",
+          SchemaVer.Full(1, 0, 0)
+        ),
+        Json.obj(
+          ("errorType", Json.fromString(errorType)),
+          ("errorMessage", Json.fromString(errorMessage)),
+          ("streamName", Json.fromString(streamName)),
+          ("appName", Json.fromString(appName)),
+          ("retryCount", Json.fromLong(retryCount)),
+          ("putSize", Json.fromLong(putSize))
+        )
       )
     )
 
@@ -85,7 +96,7 @@ object SnowplowTracking {
    *
    * @param tracker a Tracker instance
    */
-  def initializeSnowplowTracking(tracker: Tracker): Unit = {
+  def initializeSnowplowTracking(tracker: Tracker[Id]): Unit = {
     trackApplicationInitialization(tracker)
 
     Runtime.getRuntime.addShutdownHook(new Thread() {
@@ -109,11 +120,16 @@ object SnowplowTracking {
    *
    * @param tracker a Tracker instance
    */
-  private def trackApplicationInitialization(tracker: Tracker): Unit =
-    tracker.trackUnstructEvent(
-      SelfDescribingJson(
-        "iglu:com.snowplowanalytics.monitoring.kinesis/app_initialized/jsonschema/1-0-0",
-        JObject(Nil)
+  private def trackApplicationInitialization(tracker: Tracker[Id]): Unit =
+    tracker.trackSelfDescribingEvent(
+      SelfDescribingData[Json](
+        SchemaKey(
+          "com.snowplowanalytics.monitoring.kinesis",
+          "app_initialized",
+          "jsonschema",
+          SchemaVer.Full(1, 0, 0)
+        ),
+        Json.fromJsonObject(JsonObject.empty)
       )
     )
 
@@ -122,11 +138,16 @@ object SnowplowTracking {
    *
    * @param tracker a Tracker instance
    */
-  def trackApplicationShutdown(tracker: Tracker): Unit =
-    tracker.trackUnstructEvent(
-      SelfDescribingJson(
-        "iglu:com.snowplowanalytics.monitoring.kinesis/app_shutdown/jsonschema/1-0-0",
-        JObject(Nil)
+  def trackApplicationShutdown(tracker: Tracker[Id]): Unit =
+    tracker.trackSelfDescribingEvent(
+      SelfDescribingData[Json](
+        SchemaKey(
+          "com.snowplowanalytics.monitoring.kinesis",
+          "app_shutdown",
+          "jsonschema",
+          SchemaVer.Full(1, 0, 0)
+        ),
+        Json.fromJsonObject(JsonObject.empty)
       )
     )
 
@@ -136,11 +157,16 @@ object SnowplowTracking {
    * @param tracker a Tracker instance
    * @param message The warning message
    */
-  def trackApplicationWarning(tracker: Tracker, message: String): Unit =
-    tracker.trackUnstructEvent(
-      SelfDescribingJson(
-        "iglu:com.snowplowanalytics.monitoring.kinesis/app_warning/jsonschema/1-0-0",
-        ("warning" -> message)
+  def trackApplicationWarning(tracker: Tracker[Id], message: String): Unit =
+    tracker.trackSelfDescribingEvent(
+      SelfDescribingData[Json](
+        SchemaKey(
+          "com.snowplowanalytics.monitoring.kinesis",
+          "app_warning",
+          "jsonschema",
+          SchemaVer.Full(1, 0, 0)
+        ),
+        Json.obj(("warning", Json.fromString(message)))
       )
     )
 
@@ -150,11 +176,16 @@ object SnowplowTracking {
    * @param tracker a Tracker instance
    * @param heartbeatInterval Time between heartbeats in milliseconds
    */
-  private def trackApplicationHeartbeat(tracker: Tracker, heartbeatInterval: Long): Unit =
-    tracker.trackUnstructEvent(
-      SelfDescribingJson(
-        "iglu:com.snowplowanalytics.monitoring.kinesis/app_heartbeat/jsonschema/1-0-0",
-        "interval" -> heartbeatInterval
+  private def trackApplicationHeartbeat(tracker: Tracker[Id], heartbeatInterval: Long): Unit =
+    tracker.trackSelfDescribingEvent(
+      SelfDescribingData[Json](
+        SchemaKey(
+          "com.snowplowanalytics.monitoring.kinesis",
+          "app_heartbeat",
+          "jsonschema",
+          SchemaVer.Full(1, 0, 0)
+        ),
+        Json.obj(("internal", Json.fromLong(heartbeatInterval)))
       )
     )
 }

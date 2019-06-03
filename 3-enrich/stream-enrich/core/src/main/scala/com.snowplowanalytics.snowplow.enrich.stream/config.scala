@@ -22,6 +22,8 @@ package stream
 
 import java.io.File
 
+import scopt.{OptionDef, OptionParser}
+
 object config {
 
   final case class FileConfig(
@@ -31,12 +33,12 @@ object config {
     forceDownload: Boolean = false
   )
 
-  trait FileConfigOptions { self: scopt.OptionParser[FileConfig] =>
+  trait FileConfigOptions { self: OptionParser[FileConfig] =>
 
     val FilepathRegex = "^file:(.+)$".r
     private val regexMsg = "'file:[filename]'"
 
-    def configOption(): Unit =
+    def configOption(): OptionDef[File, FileConfig] =
       opt[File]("config")
         .required()
         .valueName("<filename>")
@@ -46,7 +48,7 @@ object config {
             if (f.exists) success
             else failure(s"Configuration file $f does not exist")
         )
-    def localResolverOption(): Unit =
+    def localResolverOption(): OptionDef[String, FileConfig] =
       opt[String]("resolver")
         .required()
         .valueName("<resolver uri>")
@@ -56,7 +58,7 @@ object config {
           case FilepathRegex(_) => success
           case _ => failure(s"Resolver doesn't match accepted uris: $regexMsg")
         })
-    def localEnrichmentsOption(): Unit =
+    def localEnrichmentsOption(): OptionDef[String, FileConfig] =
       opt[String]("enrichments")
         .optional()
         .valueName("<enrichment directory uri>")
@@ -66,7 +68,7 @@ object config {
           case FilepathRegex(_) => success
           case _ => failure(s"Enrichments directory doesn't match accepted uris: $regexMsg")
         })
-    def forceCachedFilesDownloadOption(): Unit =
+    def forceCachedFilesDownloadOption(): OptionDef[Unit, FileConfig] =
       opt[Unit]("force-cached-files-download")
         .text("Invalidate the cached IP lookup / IAB database files and download them anew")
         .action((_, c) => c.copy(forceDownload = true))
