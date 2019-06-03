@@ -36,9 +36,10 @@ object KafkaSink {
   def validateAndCreateProducer(
     kafkaConfig: Kafka,
     bufferConfig: BufferConfig,
-    topicName: String): \/[String, KafkaProducer[String, String]] = {
+    topicName: String
+  ): \/[String, KafkaProducer[String, String]] =
     createProducer(kafkaConfig, bufferConfig).right
-  }
+
   /**
    * Instantiates a producer on an existing topic with the given configuration options.
    * This can fail if the producer can't be created.
@@ -67,10 +68,7 @@ object KafkaSink {
 }
 
 /** Kafka Sink for Scala enrichment */
-class KafkaSink(
-  kafkaProducer: KafkaProducer[String, String],
-  topicName: String
-) extends Sink {
+class KafkaSink(kafkaProducer: KafkaProducer[String, String], topicName: String) extends Sink {
 
   /**
    * Side-effecting function to store the EnrichedEvent to the given output stream.
