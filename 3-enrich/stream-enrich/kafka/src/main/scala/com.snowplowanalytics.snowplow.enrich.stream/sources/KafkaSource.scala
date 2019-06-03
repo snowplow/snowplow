@@ -44,26 +44,39 @@ object KafkaSource {
     adapterRegistry: AdapterRegistry,
     enrichmentRegistry: EnrichmentRegistry,
     tracker: Option[Tracker]
-  ): Validation[String, KafkaSource] = for {
-    kafkaConfig <- config.sourceSink match {
-      case c: Kafka => c.success
-      case _ => "Configured source/sink is not Kafka".failure
-    }
-    goodProducer <- KafkaSink
-      .validateAndCreateProducer(kafkaConfig, config.buffer, config.out.enriched)
-      .validation
-    emitPii = utils.emitPii(enrichmentRegistry)
-    _ <- utils.validatePii(emitPii, config.out.pii).validation
-    piiProducer <- config.out.pii match {
-      case Some(piiStreamName) =>
-        KafkaSink.validateAndCreateProducer(kafkaConfig, config.buffer, piiStreamName).validation
-          .map(Some(_))
-      case None => None.success
-    }
-    badProducer <- KafkaSink
-      .validateAndCreateProducer(kafkaConfig, config.buffer, config.out.bad)
-      .validation
-  } yield new KafkaSource(goodProducer, piiProducer, badProducer, igluResolver, adapterRegistry, enrichmentRegistry, tracker, config, kafkaConfig)
+  ): Validation[String, KafkaSource] =
+    for {
+      kafkaConfig <- config.sourceSink match {
+        case c: Kafka => c.success
+        case _ => "Configured source/sink is not Kafka".failure
+      }
+      goodProducer <- KafkaSink
+        .validateAndCreateProducer(kafkaConfig, config.buffer, config.out.enriched)
+        .validation
+      emitPii = utils.emitPii(enrichmentRegistry)
+      _ <- utils.validatePii(emitPii, config.out.pii).validation
+      piiProducer <- config.out.pii match {
+        case Some(piiStreamName) =>
+          KafkaSink
+            .validateAndCreateProducer(kafkaConfig, config.buffer, piiStreamName)
+            .validation
+            .map(Some(_))
+        case None => None.success
+      }
+      badProducer <- KafkaSink
+        .validateAndCreateProducer(kafkaConfig, config.buffer, config.out.bad)
+        .validation
+    } yield new KafkaSource(
+      goodProducer,
+      piiProducer,
+      badProducer,
+      igluResolver,
+      adapterRegistry,
+      enrichmentRegistry,
+      tracker,
+      config,
+      kafkaConfig
+    )
 }
 
 /** Source to read events from a Kafka topic */
@@ -86,11 +99,15 @@ class KafkaSource private (
       new KafkaSink(goodProducer, config.out.enriched)
   }
 
-  override val threadLocalPiiSink: Option[ThreadLocal[Sink]] = piiProducer.flatMap { somePiiProducer =>
-  config.out.pii.map { piiTopicName =>  new ThreadLocal[Sink] {
-    override def initialValue: Sink =
-      new KafkaSink(somePiiProducer, piiTopicName)
-  }}}
+  override val threadLocalPiiSink: Option[ThreadLocal[Sink]] = piiProducer.flatMap {
+    somePiiProducer =>
+      config.out.pii.map { piiTopicName =>
+        new ThreadLocal[Sink] {
+          override def initialValue: Sink =
+            new KafkaSink(somePiiProducer, piiTopicName)
+        }
+      }
+  }
 
   override val threadLocalBadSink: ThreadLocal[Sink] = new ThreadLocal[Sink] {
     override def initialValue: Sink =
@@ -118,7 +135,8 @@ class KafkaSource private (
 
   private def createConsumer(
     brokers: String,
-    groupId: String): KafkaConsumer[String, Array[Byte]] = {
+    groupId: String
+  ): KafkaConsumer[String, Array[Byte]] = {
     val properties = createProperties(brokers, groupId)
     properties.putAll(kafkaConfig.consumerConf.getOrElse(Map()).asJava)
     new KafkaConsumer[String, Array[Byte]](properties)

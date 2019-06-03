@@ -53,20 +53,32 @@ object KinesisSource {
     adapterRegistry: AdapterRegistry,
     enrichmentRegistry: EnrichmentRegistry,
     tracker: Option[Tracker]
-  ): Validation[String, KinesisSource] = for {
-    kinesisConfig <- config.sourceSink match {
-      case c: Kinesis => c.success
-      case _ => "Configured source/sink is not Kinesis".failure
-    }
-    emitPii = utils.emitPii(enrichmentRegistry)
-    _ <- (
-      KinesisSink.validate(kinesisConfig, config.out.enriched).validation.leftMap(_.wrapNel) |@|
-      utils.validatePii(emitPii, config.out.pii).validation.leftMap(_.wrapNel) |@|
-      KinesisSink.validate(kinesisConfig, config.out.bad).validation.leftMap(_.wrapNel)) {
-        (_, _, _) => ()
+  ): Validation[String, KinesisSource] =
+    for {
+      kinesisConfig <- config.sourceSink match {
+        case c: Kinesis => c.success
+        case _ => "Configured source/sink is not Kinesis".failure
+      }
+      emitPii = utils.emitPii(enrichmentRegistry)
+      _ <- (KinesisSink
+        .validate(kinesisConfig, config.out.enriched)
+        .validation
+        .leftMap(_.wrapNel) |@|
+        utils.validatePii(emitPii, config.out.pii).validation.leftMap(_.wrapNel) |@|
+        KinesisSink.validate(kinesisConfig, config.out.bad).validation.leftMap(_.wrapNel)) {
+        (_, _, _) =>
+          ()
       }.leftMap(_.toList.mkString("\n"))
-    provider <- KinesisEnrich.getProvider(kinesisConfig.aws).validation
-  } yield new KinesisSource(igluResolver, adapterRegistry, enrichmentRegistry, tracker, config, kinesisConfig, provider)
+      provider <- KinesisEnrich.getProvider(kinesisConfig.aws).validation
+    } yield new KinesisSource(
+      igluResolver,
+      adapterRegistry,
+      enrichmentRegistry,
+      tracker,
+      config,
+      kinesisConfig,
+      provider
+    )
 }
 
 /** Source to read events from a Kinesis stream */
@@ -94,16 +106,32 @@ class KinesisSource private (
 
   override val threadLocalGoodSink: ThreadLocal[Sink] = new ThreadLocal[Sink] {
     override def initialValue: Sink =
-      new KinesisSink(client, kinesisConfig.backoffPolicy, config.buffer, config.out.enriched, tracker)
+      new KinesisSink(
+        client,
+        kinesisConfig.backoffPolicy,
+        config.buffer,
+        config.out.enriched,
+        tracker
+      )
   }
   override val threadLocalPiiSink: Option[ThreadLocal[Sink]] = {
     val emitPii = utils.emitPii(enrichmentRegistry)
-    utils.validatePii(emitPii, config.out.pii).toOption
+    utils
+      .validatePii(emitPii, config.out.pii)
+      .toOption
       .flatMap { _ =>
-        config.out.pii.map { piiStreamName => new ThreadLocal[Sink] {
-          override def initialValue: Sink =
-            new KinesisSink(client, kinesisConfig.backoffPolicy, config.buffer, piiStreamName, tracker)
-        } }
+        config.out.pii.map { piiStreamName =>
+          new ThreadLocal[Sink] {
+            override def initialValue: Sink =
+              new KinesisSink(
+                client,
+                kinesisConfig.backoffPolicy,
+                config.buffer,
+                piiStreamName,
+                tracker
+              )
+          }
+        }
       }
   }
 
@@ -161,8 +189,8 @@ class KinesisSource private (
     private var kinesisShardId: String = _
 
     // Backoff and retry settings.
-    private val BACKOFF_TIME_IN_MILLIS     = 3000L
-    private val NUM_RETRIES                = 10
+    private val BACKOFF_TIME_IN_MILLIS = 3000L
+    private val NUM_RETRIES = 10
     private val CHECKPOINT_INTERVAL_MILLIS = 1000L
 
     override def initialize(shardId: String) = {
@@ -172,7 +200,8 @@ class KinesisSource private (
 
     override def processRecords(
       records: List[Record],
-      checkpointer: IRecordProcessorCheckpointer) = {
+      checkpointer: IRecordProcessorCheckpointer
+    ) = {
 
       if (!records.isEmpty) {
         log.info(s"Processing ${records.size} records from $kinesisShardId")
@@ -219,13 +248,15 @@ class KinesisSource private (
                 log.info(
                   s"Transient issue when checkpointing - attempt ${i + 1} of "
                     + NUM_RETRIES,
-                  e)
+                  e
+                )
               }
             case e: InvalidStateException =>
               log.error(
                 "Cannot save checkpoint to the DynamoDB table used by " +
                   "the Amazon Kinesis Client Library.",
-                e)
+                e
+              )
               break
           }
           Thread.sleep(BACKOFF_TIME_IN_MILLIS)
