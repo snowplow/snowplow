@@ -33,7 +33,7 @@ object config {
 
   trait FileConfigOptions { self: scopt.OptionParser[FileConfig] =>
 
-    val FilepathRegex    = "^file:(.+)$".r
+    val FilepathRegex = "^file:(.+)$".r
     private val regexMsg = "'file:[filename]'"
 
     def configOption(): Unit =
@@ -41,9 +41,11 @@ object config {
         .required()
         .valueName("<filename>")
         .action((f: File, c: FileConfig) => c.copy(config = f))
-        .validate(f =>
-          if (f.exists) success
-          else failure(s"Configuration file $f does not exist"))
+        .validate(
+          f =>
+            if (f.exists) success
+            else failure(s"Configuration file $f does not exist")
+        )
     def localResolverOption(): Unit =
       opt[String]("resolver")
         .required()
@@ -52,7 +54,7 @@ object config {
         .action((r: String, c: FileConfig) => c.copy(resolver = r))
         .validate(_ match {
           case FilepathRegex(_) => success
-          case _                => failure(s"Resolver doesn't match accepted uris: $regexMsg")
+          case _ => failure(s"Resolver doesn't match accepted uris: $regexMsg")
         })
     def localEnrichmentsOption(): Unit =
       opt[String]("enrichments")
@@ -62,7 +64,7 @@ object config {
         .action((e: String, c: FileConfig) => c.copy(enrichmentsDir = Some(e)))
         .validate(_ match {
           case FilepathRegex(_) => success
-          case _                => failure(s"Enrichments directory doesn't match accepted uris: $regexMsg")
+          case _ => failure(s"Enrichments directory doesn't match accepted uris: $regexMsg")
         })
     def forceCachedFilesDownloadOption(): Unit =
       opt[Unit]("force-cached-files-download")
