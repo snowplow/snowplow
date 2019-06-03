@@ -16,43 +16,40 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package stream
+package com.snowplowanalytics.snowplow.enrich.stream
 package sources
 
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets.UTF_8
+import java.time.Instant
 import java.util.UUID
 
 import scala.util.Random
-import scala.util.control.NonFatal
 
-// scalaz import have to be first, there is a weird conflict with json4s imports
-import scalaz.{Sink => _, _}
-import Scalaz._
-import org.apache.commons.codec.binary.Base64
-import org.json4s.{ThreadLocal => _, _}
-import org.json4s.JsonDSL._
-import org.json4s.DefaultFormats
-import org.json4s.jackson.Serialization.write
-import org.json4s.jackson.JsonMethods._
+import cats.Id
+import cats.data.ValidatedNel
+import cats.data.Validated.{Invalid, Valid}
+import cats.syntax.option._
+import cats.syntax.validated._
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.enrich.common.EtlPipeline
+import com.snowplowanalytics.snowplow.enrich.common.adapters.AdapterRegistry
+import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
+import com.snowplowanalytics.snowplow.enrich.common.loaders.{CollectorPayload, ThriftLoader}
+import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
+import io.circe.Json
+import io.circe.syntax._
+import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.format.DateTimeFormat
 
-import common.{EtlPipeline, ValidatedMaybeCollectorPayload}
-import common.enrichments.EnrichmentRegistry
-import common.adapters.AdapterRegistry
-import common.loaders.ThriftLoader
-import common.outputs.{BadRow, EnrichedEvent}
-
-import iglu.client.Resolver
-import scalatracker.Tracker
 import sinks._
+import utils._
 
 object Source {
+  val processor = Processor("stream-enrich", "1.0.0") // TODO generate through code
 
   val PiiEventName = "pii_transformation"
   val PiiEventVendor = "com.snowplowanalytics.snowplow"
@@ -64,70 +61,77 @@ object Source {
 
   /**
    * If a bad row JSON is too big, reduce it's size
-   * @param value Bad row JSON which is too large
-   * @return Bad row JSON with `size` field instead of `line` field
+   * @param value Bad row which is too large
+   * @param maxSizeBytes maximum size in bytes
+   * @param processor current processor
+   * @return Bad row embedding truncated bad row
    */
-  def adjustOversizedFailureJson(value: String): String = {
-    val size = getSize(value)
-    try {
-      val jsonWithoutLine = parse(value) removeField {
-        case ("line", _) => true
-        case _ => false
-      }
-      compact(render({ ("size" -> size): JValue } merge jsonWithoutLine))
-
-    } catch {
-      case NonFatal(e) =>
-        BadRow.oversizedRow(
-          size,
-          NonEmptyList("Unable to extract errors field from original oversized bad row JSON")
-        )
-    }
+  def adjustOversizedFailureJson(
+    badRow: BadRow,
+    maxSizeBytes: Int,
+    processor: Processor
+  ): BadRow.SizeViolation = {
+    val size = getSizeBr(badRow)
+    BadRow.SizeViolation(
+      processor,
+      Failure.SizeViolation(Instant.now(), maxSizeBytes, size, "bad row exceeded the maximum size"),
+      Payload.RawPayload(brToString(badRow).take(maxSizeBytes / 10))
+    )
   }
 
   /**
    * Convert a too-large successful event to a failure
    * @param value Event which passed enrichment but was too large
-   * @param maximum Maximum allowable bytes
+   * @param maxSizeBytes maximum size in bytes
+   * @param processor current processor
    * @return Bad row JSON
    */
-  def oversizedSuccessToFailure(value: String, maximum: Long): String = {
-    val size = Source.getSize(value)
-    BadRow.oversizedRow(
-      size,
-      NonEmptyList(
-        s"Enriched event size of $size bytes is greater than allowed maximum of $maximum"
-      )
+  def oversizedSuccessToFailure(
+    value: String,
+    maxSizeBytes: Int,
+    processor: Processor
+  ): BadRow.SizeViolation = {
+    val size = getSize(value)
+    val msg = "event passed enrichment but exceeded the maximum allowed size as a result"
+    BadRow.SizeViolation(
+      processor,
+      Failure.SizeViolation(Instant.now(), maxSizeBytes, size, msg),
+      Payload.RawPayload(value.take(maxSizeBytes / 10))
     )
   }
 
+  val brToString: BadRow => String = br => br.compact
+
   /** The size of a string in bytes */
-  def getSize(evt: String): Long = ByteBuffer.wrap(evt.getBytes(UTF_8)).capacity.toLong
+  val getSize: String => Int = evt => ByteBuffer.wrap(evt.getBytes(UTF_8)).capacity
+
+  /** The size of a bad row in bytes */
+  val getSizeBr: BadRow => Int =
+    (brToString andThen getSize)(_)
 }
 
 /** Abstract base for the different sources we support. */
 abstract class Source(
-  igluResolver: Resolver,
+  client: Client[Id, Json],
   adapterRegistry: AdapterRegistry,
-  enrichmentRegistry: EnrichmentRegistry,
-  tracker: Option[Tracker],
+  enrichmentRegistry: EnrichmentRegistry[Id],
+  processor: Processor,
   partitionKey: String
 ) {
 
-  val MaxRecordSize: Option[Long]
+  val MaxRecordSize: Option[Int]
 
   lazy val log = LoggerFactory.getLogger(getClass())
 
   /** Never-ending processing loop over source stream. */
   def run(): Unit
 
-  implicit val resolver: Resolver = igluResolver
   private val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS")
 
   def getPiiEvent(event: EnrichedEvent): Option[EnrichedEvent] =
     Option(event.pii)
       .filter(_.nonEmpty)
-      .map { piiStr =>
+      .map { _ =>
         val ee = new EnrichedEvent
         ee.unstruct_event = event.pii
         ee.app_id = event.app_id
@@ -142,21 +146,22 @@ abstract class Source(
         ee.event_format = Source.PiiEventFormat
         ee.event_name = Source.PiiEventName
         ee.event_version = Source.PiiEventVersion
-        ee.contexts = getContextParentEvent(event.event_id)
+        ee.contexts = getContextParentEvent(event.event_id).noSpaces
         ee.v_etl =
           s"stream-enrich-${generated.BuildInfo.version}-common-${generated.BuildInfo.commonEnrichVersion}"
         ee
       }
 
-  def getContextParentEvent(eventId: String): String = {
-    implicit val json4sFormats = DefaultFormats
-
-    write(
-      ("schema" -> Source.ContextsSchema) ~ ("data" -> List(
-        ("schema" -> Source.ParentEventSchema) ~ ("data" -> ("parentEventId" -> eventId))
-      ))
+  def getContextParentEvent(eventId: String): Json =
+    Json.obj(
+      "schema" := Json.fromString(Source.ContextsSchema),
+      "data" := Json.arr(
+        Json.obj(
+          "schema" -> Json.fromString(Source.ParentEventSchema),
+          "data" -> Json.obj("parentEventId" -> Json.fromString(eventId))
+        )
+      )
     )
-  }
 
   val threadLocalGoodSink: ThreadLocal[Sink]
   val threadLocalPiiSink: Option[ThreadLocal[Sink]]
@@ -187,35 +192,33 @@ abstract class Source(
 
   /**
    * Convert incoming binary Thrift records to lists of enriched events
-   *
    * @param binaryData Thrift raw event
    * @return List containing failed, successful and, if present, pii events. Successful and failed, each specify a
    *         partition key.
    */
   def enrichEvents(
     binaryData: Array[Byte]
-  ): List[Validation[(String, String), (String, String, Option[String])]] = {
-    val canonicalInput: ValidatedMaybeCollectorPayload = ThriftLoader.toCollectorPayload(binaryData)
-    val processedEvents: List[ValidationNel[String, EnrichedEvent]] = EtlPipeline.processEvents(
-      adapterRegistry,
-      enrichmentRegistry,
-      s"stream-enrich-${generated.BuildInfo.version}",
-      new DateTime(System.currentTimeMillis),
-      canonicalInput
-    )
-    processedEvents.map(validatedMaybeEvent => {
-      validatedMaybeEvent match {
-        case Success(co) =>
-          (
-            tabSeparateEnrichedEvent(co),
-            getProprertyValue(co, partitionKey),
-            getPiiEvent(co).map(tabSeparateEnrichedEvent)
-          ).success
-        case Failure(errors) =>
-          val line = new String(Base64.encodeBase64(binaryData), UTF_8)
-          (BadRow(line, errors).toCompactJson -> Random.nextInt.toString).fail
-      }
-    })
+  ): List[ValidatedNel[(BadRow, String), (String, String, Option[String])]] = {
+    val canonicalInput: ValidatedNel[BadRow, Option[CollectorPayload]] =
+      ThriftLoader.toCollectorPayload(binaryData, processor)
+    val processedEvents: List[ValidatedNel[BadRow, EnrichedEvent]] =
+      EtlPipeline.processEvents(
+        adapterRegistry,
+        enrichmentRegistry,
+        client,
+        Processor("stream-enrich", generated.BuildInfo.version),
+        new DateTime(System.currentTimeMillis),
+        canonicalInput
+      )
+    processedEvents.map {
+      case Valid(ee) =>
+        (
+          tabSeparateEnrichedEvent(ee),
+          getProprertyValue(ee, partitionKey),
+          getPiiEvent(ee).map(tabSeparateEnrichedEvent)
+        ).valid
+      case Invalid(nel) => nel.map(_ -> Random.nextInt().toString()).invalid
+    }
   }
 
   /**
@@ -227,26 +230,26 @@ abstract class Source(
    * @return Whether to checkpoint
    */
   def enrichAndStoreEvents(binaryData: List[Array[Byte]]): Boolean = {
-    val enrichedEvents = binaryData.flatMap(enrichEvents(_))
-    val successes = enrichedEvents collect { case Success(s) => s }
-    val sizeUnadjustedFailures = enrichedEvents collect { case Failure(s) => s }
-    val failures = sizeUnadjustedFailures map {
+    val enrichedEvents = binaryData.flatMap(enrichEvents)
+    val successes = enrichedEvents.collect { case Valid(s) => s }
+    val sizeUnadjustedFailures = enrichedEvents.collect { case Invalid(s) => s }
+    val failures = sizeUnadjustedFailures.map(_.toList).flatten.map {
       case (value, key) =>
-        if (!isTooLarge(value)) {
-          value -> key
-        } else {
-          Source.adjustOversizedFailureJson(value) -> key
+        MaxRecordSize.flatMap(s => if (Source.getSizeBr(value) >= s) s.some else none) match {
+          case None => value -> key
+          case Some(s) => Source.adjustOversizedFailureJson(value, s, processor) -> key
         }
     }
 
-    val (tooBigSuccesses, smallEnoughSuccesses) = successes partition { s =>
-      isTooLarge(s._1)
-    }
+    val (tooBigSuccesses, smallEnoughSuccesses) =
+      successes.partition { s =>
+        isTooLarge(s._1)
+      }
 
     val sizeBasedFailures = for {
       (value, key, _) <- tooBigSuccesses
       m <- MaxRecordSize
-    } yield Source.oversizedSuccessToFailure(value, m) -> key
+    } yield Source.oversizedSuccessToFailure(value, m, processor) -> key
 
     val anonymizedSuccesses = smallEnoughSuccesses.map {
       case (event, partition, _) => (event, partition)
@@ -258,8 +261,10 @@ abstract class Source(
     val successesTriggeredFlush = threadLocalGoodSink.get.storeEnrichedEvents(anonymizedSuccesses)
     val piiTriggeredFlush =
       threadLocalPiiSink.map(_.get.storeEnrichedEvents(piiSuccesses)).getOrElse(false)
+    val allFailures = (failures ++ sizeBasedFailures)
+      .map { case (br, k) => Source.brToString(br) -> k }
     val failuresTriggeredFlush =
-      threadLocalBadSink.get.storeEnrichedEvents(failures ++ sizeBasedFailures)
+      threadLocalBadSink.get.storeEnrichedEvents(allFailures)
 
     if (successesTriggeredFlush == true || failuresTriggeredFlush == true || piiTriggeredFlush == true) {
       // Block until the records have been sent to Kinesis
@@ -272,14 +277,6 @@ abstract class Source(
     }
   }
 
-  /**
-   * Whether a record is too large to send to Kinesis
-   * @param evt
-   * @return boolean size decision
-   */
-  private def isTooLarge(evt: String): Boolean = MaxRecordSize match {
-    case None => false
-    case Some(m) => Source.getSize(evt) >= m
-  }
-
+  private val isTooLarge: String => Boolean = evt =>
+    MaxRecordSize.map(Source.getSize(evt) >= _).getOrElse(false)
 }

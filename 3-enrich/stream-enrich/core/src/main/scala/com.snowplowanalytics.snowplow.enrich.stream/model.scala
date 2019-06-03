@@ -20,10 +20,8 @@ package com.snowplowanalytics.snowplow.enrich.stream
 
 import java.text.SimpleDateFormat
 
-import scala.util.Try
+import cats.syntax.either._
 
-// TODO: file is named Amodel.scala instead of model.scala, rename once >= 2.12.4
-// https://github.com/pureconfig/pureconfig/issues/205
 object model {
 
   sealed trait Credentials
@@ -61,7 +59,7 @@ object model {
       .right
       .flatMap { s =>
         val format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
-        utils.fold(Try(format.parse(s)))(t => Left(t.getMessage), Right(_))
+        Either.catchNonFatal(format.parse(s)).leftMap(_.getMessage)
       }
     require(initialPosition != "AT_TIMESTAMP" || timestamp.isRight, timestamp.left.getOrElse(""))
 

@@ -13,43 +13,35 @@
  * governing permissions and limitations there under.
  */
 
-package com.snowplowanalytics
-package snowplow
-package enrich
-package stream
+package com.snowplowanalytics.snowplow.enrich.stream
 
-// Scala
-import common.adapters.AdapterRegistry
-import enrich.stream.model.StreamsConfig
+import java.time.{Duration => JDuration}
+import java.util.Properties
+import java.util.concurrent.ForkJoinPool
 
 import scala.concurrent._
 import scala.concurrent.duration.Duration
 import scala.util.Try
-import collection.JavaConversions._
-import scala.concurrent.forkjoin.ForkJoinPool
+import scala.collection.JavaConverters._
 
-// Java
-import java.util.Properties
-
-// Scala libraries
+import cats.Id
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.snowplow.badrows.Processor
+import com.snowplowanalytics.snowplow.enrich.common.adapters.AdapterRegistry
+import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
+import com.snowplowanalytics.snowplow.scalatracker.Tracker
 import org.apache.kafka.clients.consumer.{ConsumerRecords, KafkaConsumer}
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
-
-// Specs2
 import org.specs2.matcher.{TraversableMatchers, TryMatchers}
+import io.circe.Json
 
-// Snowplow and Iglu
-import scalatracker.Tracker
-import iglu.client.Resolver
-import common.enrichments.EnrichmentRegistry
+import model.StreamsConfig
 
 /*
  * Extending this trait creates a new integration test with a new instance of kafka
  * See PiiEmitSpec for an example of how to use it
  */
-trait KafkaIntegrationSpec
-    extends TryMatchers
-    with TraversableMatchers {
+trait KafkaIntegrationSpec extends TryMatchers with TraversableMatchers {
 
   import KafkaIntegrationSpecValues._
   implicit val ec = ExecutionContext.fromExecutor(new ForkJoinPool(16))
@@ -62,25 +54,31 @@ trait KafkaIntegrationSpec
   def inputGood: List[Array[Byte]]
 
   def getMainApplicationFuture(
-                                configuration: StreamsConfig,
-                                resolver: Resolver,
-                                adapterRegistry: AdapterRegistry,
-                                enrichmentRegistry: EnrichmentRegistry,
-                                tracker: Option[Tracker]): Future[Unit] = Future {
-    KafkaEnrich.getSource(configuration, resolver, adapterRegistry, enrichmentRegistry, tracker).toOption.get.run()
+    configuration: StreamsConfig,
+    client: Client[Id, Json],
+    adapterRegistry: AdapterRegistry,
+    registry: EnrichmentRegistry[Id],
+    tracker: Option[Tracker[Id]]
+  ): Future[Unit] = Future {
+    val p = Processor("test", "1.0.0")
+    KafkaEnrich
+      .getSource(configuration, client, adapterRegistry, registry, tracker, p)
+      .toOption
+      .get
+      .run()
   }
 
   def producerTimeoutSec: Int
   def inputProduced(address: String): Try[Unit] =
     Try { Await.result(produce(address: String), Duration(s"$producerTimeoutSec sec")) }
   def testKafkaPropertiesProducer(address: String) = {
-      val props = new Properties()
-      props.put("bootstrap.servers", address)
-      props.put("client.id", "producer-george")
-      props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer")
-      props.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer")
-      props
-    }
+    val props = new Properties()
+    props.put("bootstrap.servers", address)
+    props.put("client.id", "producer-george")
+    props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer")
+    props.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer")
+    props
+  }
   def produce(address: String): Future[Unit] = Future {
     val testProducer = new KafkaProducer[String, Array[Byte]](testKafkaPropertiesProducer(address))
     val events = inputGood
@@ -91,11 +89,16 @@ trait KafkaIntegrationSpec
     testProducer.close
   }
   private def getListOfRecords(cr: ConsumerRecords[String, String]): List[String] =
-    cr.map(_.value).toList
+    cr.asScala.map(_.value).toList
 
   val POLL_TIME_MSEC = 100L
 
-  def getRecords(topic: String, expectedRecords: Int, timeoutSec: Int, address: String): Future[List[String]] =
+  def getRecords(
+    topic: String,
+    expectedRecords: Int,
+    timeoutSec: Int,
+    address: String
+  ): Future[List[String]] =
     Future {
       val started = System.currentTimeMillis
       val testKafkaPropertiesConsumer = {
@@ -109,10 +112,12 @@ trait KafkaIntegrationSpec
         props
       }
       val testConsumerPii = new KafkaConsumer[String, String](testKafkaPropertiesConsumer)
-      testConsumerPii.subscribe(List(topic))
-      var records = getListOfRecords(testConsumerPii.poll(POLL_TIME_MSEC))
+      testConsumerPii.subscribe(List(topic).asJava)
+      var records = getListOfRecords(testConsumerPii.poll(JDuration.ofMillis(POLL_TIME_MSEC)))
       while (((System.currentTimeMillis - started) / 1000 < timeoutSec - 1) && records.size < expectedRecords) {
-        records = records ++ getListOfRecords(testConsumerPii.poll(POLL_TIME_MSEC))
+        records = records ++ getListOfRecords(
+          testConsumerPii.poll(JDuration.ofMillis(POLL_TIME_MSEC))
+        )
       }
       testConsumerPii.close()
       records
@@ -128,8 +133,8 @@ trait KafkaIntegrationSpec
   def allResults(address: String): Future[(List[String], List[String], List[String])] =
     for {
       good <- producedGoodRecords(address)
-      bad  <- producedBadRecords(address)
-      pii  <- producedPiiRecords(address)
+      bad <- producedBadRecords(address)
+      pii <- producedPiiRecords(address)
     } yield (good, bad, pii)
 
 }
@@ -138,4 +143,3 @@ object KafkaIntegrationSpecValues {
   val (testGoodIn, testGood, testBad, testPii) =
     ("testGoodIn", "testEnrichedGood", "testEnrichedBad", "testEnrichedUglyPii")
 }
-

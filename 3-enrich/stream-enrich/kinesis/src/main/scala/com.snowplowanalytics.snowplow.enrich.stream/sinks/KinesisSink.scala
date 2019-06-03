@@ -28,21 +28,20 @@ import scala.collection.JavaConverters._
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.util.Try
 import scala.util.control.NonFatal
 
+import cats.Id
+import cats.syntax.either._
 import com.amazonaws.services.kinesis.model._
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import com.amazonaws.services.kinesis.{AmazonKinesis, AmazonKinesisClientBuilder}
-import scalaz._
-import Scalaz._
 
 import model._
 import scalatracker.Tracker
 
 /** KinesisSink companion object with factory method */
 object KinesisSink {
-  def validate(kinesisConfig: Kinesis, streamName: String): \/[String, Unit] =
+  def validate(kinesisConfig: Kinesis, streamName: String): Either[String, Unit] =
     for {
       provider <- KinesisEnrich.getProvider(kinesisConfig.aws)
       endpointConfiguration = new EndpointConfiguration(
@@ -64,14 +63,12 @@ object KinesisSink {
    * @param name Name of the stream
    * @return Whether the stream exists
    */
-  private def streamExists(client: AmazonKinesis, name: String): \/[Throwable, Boolean] = {
-    val existsTry = Try {
+  private def streamExists(client: AmazonKinesis, name: String): Either[Throwable, Boolean] =
+    Either.catchNonFatal {
       val describeStreamResult = client.describeStream(name)
       val status = describeStreamResult.getStreamDescription.getStreamStatus
       status == "ACTIVE" || status == "UPDATING"
     }
-    utils.toEither(existsTry)
-  }
 }
 
 /** Kinesis Sink for Scala enrichment */
@@ -80,7 +77,7 @@ class KinesisSink(
   backoffPolicy: KinesisBackoffPolicyConfig,
   buffer: BufferConfig,
   streamName: String,
-  tracker: Option[Tracker]
+  tracker: Option[Tracker[Id]]
 ) extends Sink {
 
   /** Kinesis records must not exceed 1MB */
