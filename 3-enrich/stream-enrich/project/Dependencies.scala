@@ -42,7 +42,7 @@ object Dependencies {
     val snowplowRawEvent     = "0.1.0"
     val snowplowCommonEnrich = "0.37.0"
     val igluClient           = "0.5.0"
-    val snowplowTracker      = "0.3.0"
+    val snowplowTracker      = "0.6.0"
     // Scala (test only)
     val specs2               = "2.3.13"
     val scalacheck           = "1.14.0"
