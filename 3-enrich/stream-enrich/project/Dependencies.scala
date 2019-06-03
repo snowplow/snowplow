@@ -37,7 +37,7 @@ object Dependencies {
     // Scala
     val scopt                = "3.6.0"
     val scalaz7              = "7.0.9"
-    val json4s               = "3.2.11"
+    val json4s               = "3.6.6"
     val pureconfig           = "0.8.0"
     val snowplowRawEvent     = "0.1.0"
     val snowplowCommonEnrich = "0.38.0"
@@ -66,7 +66,7 @@ object Dependencies {
     // Scala
     val scopt                = "com.github.scopt"                 %% "scopt"                     % V.scopt
     val scalaz7              = "org.scalaz"                       %% "scalaz-core"               % V.scalaz7
-    val json4s               = "org.json4s"                       %% "json4s"                    % V.json4s
+    val json4s               = "org.json4s"                       %% "json4s-core"               % V.json4s
     val json4sJackson        = "org.json4s"                       %% "json4s-jackson"            % V.json4s
     val pureconfig           = "com.github.pureconfig"            %% "pureconfig"                % V.pureconfig
     val snowplowRawEvent     = "com.snowplowanalytics"            %  "snowplow-thrift-raw-event" % V.snowplowRawEvent
