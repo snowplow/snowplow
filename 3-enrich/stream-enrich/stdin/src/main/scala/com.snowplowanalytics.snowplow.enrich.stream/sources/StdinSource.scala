@@ -41,12 +41,19 @@ object StdinSource {
     adapterRegistry: AdapterRegistry,
     enrichmentRegistry: EnrichmentRegistry,
     tracker: Option[Tracker]
-  ): Validation[String, StdinSource] = for {
-    _ <- config.sourceSink match {
-      case Stdin => ().success
-      case _ => "Configured source/sink is not Stdin".failure
-    }
-  } yield new StdinSource(igluResolver, adapterRegistry, enrichmentRegistry, tracker, config.out.partitionKey)
+  ): Validation[String, StdinSource] =
+    for {
+      _ <- config.sourceSink match {
+        case Stdin => ().success
+        case _ => "Configured source/sink is not Stdin".failure
+      }
+    } yield new StdinSource(
+      igluResolver,
+      adapterRegistry,
+      enrichmentRegistry,
+      tracker,
+      config.out.partitionKey
+    )
 }
 
 /** Source to decode raw events (in base64) from stdin. */

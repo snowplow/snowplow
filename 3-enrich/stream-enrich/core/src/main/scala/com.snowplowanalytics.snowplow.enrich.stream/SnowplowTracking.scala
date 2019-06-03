@@ -66,17 +66,19 @@ object SnowplowTracking {
     streamName: String,
     appName: String,
     retryCount: Long,
-    putSize: Long): Unit =
+    putSize: Long
+  ): Unit =
     tracker.trackUnstructEvent(
       SelfDescribingJson(
         "iglu:com.snowplowanalytics.monitoring.kinesis/stream_write_failed/jsonschema/1-0-0",
-        ("errorType"      -> errorType) ~
+        ("errorType" -> errorType) ~
           ("errorMessage" -> errorMessage) ~
-          ("streamName"   -> streamName) ~
-          ("appName"      -> appName) ~
-          ("retryCount"   -> retryCount) ~
-          ("putSize"      -> putSize)
-      ))
+          ("streamName" -> streamName) ~
+          ("appName" -> appName) ~
+          ("retryCount" -> retryCount) ~
+          ("putSize" -> putSize)
+      )
+    )
 
   /**
    * Send an initialization event and schedule heartbeat and shutdown events
@@ -112,7 +114,8 @@ object SnowplowTracking {
       SelfDescribingJson(
         "iglu:com.snowplowanalytics.monitoring.kinesis/app_initialized/jsonschema/1-0-0",
         JObject(Nil)
-      ))
+      )
+    )
 
   /**
    * Send an application_shutdown unstructured event
@@ -124,7 +127,8 @@ object SnowplowTracking {
       SelfDescribingJson(
         "iglu:com.snowplowanalytics.monitoring.kinesis/app_shutdown/jsonschema/1-0-0",
         JObject(Nil)
-      ))
+      )
+    )
 
   /**
    * Send a warning unstructured event
@@ -137,7 +141,8 @@ object SnowplowTracking {
       SelfDescribingJson(
         "iglu:com.snowplowanalytics.monitoring.kinesis/app_warning/jsonschema/1-0-0",
         ("warning" -> message)
-      ))
+      )
+    )
 
   /**
    * Send a heartbeat unstructured event
@@ -150,5 +155,6 @@ object SnowplowTracking {
       SelfDescribingJson(
         "iglu:com.snowplowanalytics.monitoring.kinesis/app_heartbeat/jsonschema/1-0-0",
         "interval" -> heartbeatInterval
-      ))
+      )
+    )
 }

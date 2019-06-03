@@ -49,13 +49,15 @@ object NsqSource {
     for {
       nsqConfig <- config.sourceSink match {
         case c: Nsq => c.success
-        case _      => new IllegalArgumentException("Configured source/sink is not Nsq").failure
+        case _ => new IllegalArgumentException("Configured source/sink is not Nsq").failure
       }
       goodProducer <- NsqSink
         .validateAndCreateProducer(nsqConfig)
         .validation
       emitPii = utils.emitPii(enrichmentRegistry)
-      _ <- utils.validatePii(emitPii, config.out.pii).validation
+      _ <- utils
+        .validatePii(emitPii, config.out.pii)
+        .validation
         .leftMap(new IllegalArgumentException(_))
       piiProducer <- config.out.pii match {
         case Some(_) => NsqSink.validateAndCreateProducer(nsqConfig).validation.map(Some(_))
@@ -64,17 +66,17 @@ object NsqSource {
       badProducer <- NsqSink
         .validateAndCreateProducer(nsqConfig)
         .validation
-    } yield
-      new NsqSource(
-        goodProducer,
-        piiProducer,
-        badProducer,
-        igluResolver,
-        adapterRegistry,
-        enrichmentRegistry,
-        tracker,
-        config,
-        nsqConfig)
+    } yield new NsqSource(
+      goodProducer,
+      piiProducer,
+      badProducer,
+      igluResolver,
+      adapterRegistry,
+      enrichmentRegistry,
+      tracker,
+      config,
+      nsqConfig
+    )
 }
 
 /** Source to read raw events from NSQ. */
@@ -116,7 +118,7 @@ class NsqSource private (
       override def message(msg: NSQMessage): Unit = {
         val bytes = msg.getMessage()
         enrichAndStoreEvents(List(bytes)) match {
-          case true  => msg.finished()
+          case true => msg.finished()
           case false => log.error(s"Error while enriching the event")
         }
       }
@@ -136,7 +138,8 @@ class NsqSource private (
       nsqConfig.rawChannel,
       nsqCallback,
       new NSQConfig(),
-      errorCallback)
+      errorCallback
+    )
     consumer.start()
   }
 }

@@ -30,18 +30,16 @@ import model.Nsq
 
 /** NsqSink companion object with factory method */
 object NsqSink {
-  def validateAndCreateProducer(
-    nsqConfig: Nsq): \/[Throwable, NSQProducer] =
+  def validateAndCreateProducer(nsqConfig: Nsq): \/[Throwable, NSQProducer] =
     new NSQProducer().addAddress(nsqConfig.host, nsqConfig.port).right
-  }
+}
+
 /**
  * NSQSink for Scala enrichment
  */
-class NsqSink(
-  nsqProducer: NSQProducer,
-  topicName: String
-) extends Sink {
+class NsqSink(nsqProducer: NSQProducer, topicName: String) extends Sink {
   val producer = nsqProducer.start()
+
   /**
    *
    * @param events Sequence of enriched events and (unused) partition keys
