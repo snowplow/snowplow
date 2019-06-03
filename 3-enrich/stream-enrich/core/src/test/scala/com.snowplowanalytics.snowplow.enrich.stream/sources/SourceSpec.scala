@@ -59,7 +59,12 @@ class SourceSpec extends Specification {
               ("level", JString("error")),
               (
                 "message",
-                JString("Enriched event size of 3 bytes is greater than allowed maximum of 2"))))))
+                JString("Enriched event size of 3 bytes is greater than allowed maximum of 2")
+              )
+            )
+          )
+        )
+      )
     }
   }
 }

@@ -39,14 +39,14 @@ import sources.TestSource
  */
 object SpecHelpers {
 
-
   implicit def stringToJustString(s: String) = JustString(s)
-  implicit def regexToJustRegex(r: Regex)    = JustRegex(r)
+  implicit def regexToJustRegex(r: Regex) = JustRegex(r)
 
   /**
    * The Stream Enrich being used
    */
-  val EnrichVersion = s"stream-enrich-${generated.BuildInfo.version}-common-${generated.BuildInfo.commonEnrichVersion}"
+  val EnrichVersion =
+    s"stream-enrich-${generated.BuildInfo.version}-common-${generated.BuildInfo.commonEnrichVersion}"
 
   val TimestampRegex =
     "[0-9]{1,4}-[0-9]{1,2}-[0-9]{1,2} [0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}(\\.\\d{3})?".r
@@ -64,9 +64,11 @@ object SpecHelpers {
   val ContextWithUuid4Regexp =
     new Regex(
       Pattern.quote(
-        """{"schema":"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0","data":[{"schema":"iglu:com.snowplowanalytics.snowplow/parent_event/jsonschema/1-0-0","data":{"parentEventId":"""") +
+        """{"schema":"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0","data":[{"schema":"iglu:com.snowplowanalytics.snowplow/parent_event/jsonschema/1-0-0","data":{"parentEventId":""""
+      ) +
         "[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}" +
-        Pattern.quote("\"}}]}"))
+        Pattern.quote("\"}}]}")
+    )
 
   /**
    * Fields in our EnrichedEvent which will be checked
@@ -103,7 +105,7 @@ object SpecHelpers {
     private val field = OutputFields(index)
 
     private val regexp = expected match {
-      case JustRegex(_)  => true
+      case JustRegex(_) => true
       case JustString(_) => false
     }
 
@@ -115,7 +117,6 @@ object SpecHelpers {
       lazy val failureMsg =
         s"$field: ${actual.description} does not %s $expected"
           .format(if (regexp) "match" else "equal")
-
 
       result(equalsOrMatches(actual.value, expected), successMsg, failureMsg, actual)
     }
@@ -132,7 +133,7 @@ object SpecHelpers {
      * matches expected, false otherwise
      */
     private def equalsOrMatches(actual: String, expected: StringOrRegex): Boolean = expected match {
-      case JustRegex(r)  => r.pattern.matcher(actual).matches
+      case JustRegex(r) => r.pattern.matcher(actual).matches
       case JustString(s) => actual == s
     }
 
@@ -198,7 +199,7 @@ object SpecHelpers {
     resolverEnvVar.getOrElse(igluCentralDefaultConfig)
   }
   val validatedResolver = for {
-    json     <- JsonUtils.extractJson("", igluConfig)
+    json <- JsonUtils.extractJson("", igluConfig)
     resolver <- Resolver.parse(json).leftMap(_.toString)
   } yield resolver
 
@@ -207,7 +208,8 @@ object SpecHelpers {
     s => s
   )
 
-   val enrichmentConfig = """|{
+  val enrichmentConfig =
+    """|{
       |"schema": "iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0",
       |"data": [
         |{
@@ -308,7 +310,7 @@ object SpecHelpers {
 
   val enrichmentRegistry = (for {
     registryConfig <- JsonUtils.extractJson("", enrichmentConfig)
-    reg            <- EnrichmentRegistry.parse(fromJsonNode(registryConfig), true).leftMap(_.toString)
+    reg <- EnrichmentRegistry.parse(fromJsonNode(registryConfig), true).leftMap(_.toString)
   } yield reg) fold (
     e => throw new RuntimeException(e),
     s => s
