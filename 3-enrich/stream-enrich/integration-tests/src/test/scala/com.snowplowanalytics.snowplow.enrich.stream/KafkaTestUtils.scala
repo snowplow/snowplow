@@ -19,27 +19,26 @@ import java.io.File
 import java.net.InetSocketAddress
 import java.util.Properties
 
-import kafka.admin.AdminUtils
-import kafka.server.{KafkaConfig, KafkaServerStartable}
-import kafka.utils.ZkUtils
-import org.apache.zookeeper.server.{NIOServerCnxnFactory, ZooKeeperServer}
-
+import scala.collection.JavaConverters._
 import scala.util.Random
+
+import kafka.server.{KafkaConfig, KafkaServerStartable}
+import org.apache.zookeeper.server.{NIOServerCnxnFactory, ZooKeeperServer}
+import org.apache.kafka.clients.admin.AdminClient
+import org.apache.kafka.clients.admin.NewTopic
 
 class KafkaTestUtils {
   // zk
   private val zkHost = "localhost"
   private val zkPort = 2181
-  private val zkSessionTimeout = 6000
-  private val zkConnectionTimeout = 6000
   private var zk: EmbeddedZookeeper = _
-  private var zkUtils: ZkUtils = _
   private var zkReady = false
 
   // kafka
   private val brokerHost = "localhost"
   private val brokerPort = 9092
   private var kafkaServer: KafkaServerStartable = _
+  private var adminClient: AdminClient = _
   private var topicCountMap = Map.empty[String, Int]
   private var brokerReady = false
 
@@ -55,13 +54,6 @@ class KafkaTestUtils {
     s"$brokerHost:$brokerPort"
   }
 
-  /** Zookeeper client */
-  def zookeeperClient: ZkUtils = {
-    assert(zkReady, "Zk not ready, cannot get zk client")
-    Option(zkUtils).getOrElse(
-      throw new IllegalStateException("Zk client not initialized"))
-  }
-
   /** Start the Zookeeper and Kafka servers */
   def setup(): Unit = {
     setupEmbeddedZookeeper()
@@ -70,8 +62,6 @@ class KafkaTestUtils {
 
   private def setupEmbeddedZookeeper(): Unit = {
     zk = new EmbeddedZookeeper(zkHost, zkPort)
-    zkUtils = ZkUtils(s"$zkHost:$zkPort", zkSessionTimeout, zkConnectionTimeout,
-      isZkSecurityEnabled = false)
     zkReady = true
   }
 
@@ -81,6 +71,12 @@ class KafkaTestUtils {
     kafkaServer = new KafkaServerStartable(kafkaConfig)
     kafkaServer.startup()
     brokerReady = true
+    val adminProps = {
+      val props = new Properties()
+      props.put("bootstrap.servers", brokerAddress)
+      props
+    }
+    adminClient = AdminClient.create(adminProps)
   }
 
   /** Close the Kafka as well as the Zookeeper client and server */
@@ -88,14 +84,14 @@ class KafkaTestUtils {
     brokerReady = false
     zkReady = false
 
+    if (adminClient != null) {
+      adminClient.close()
+      adminClient = null
+    }
+
     if (kafkaServer != null) {
       kafkaServer.shutdown()
       kafkaServer = null
-    }
-
-    if (zkUtils != null) {
-      zkUtils.close()
-      zkUtils = null
     }
 
     if (zk != null) {
@@ -110,7 +106,7 @@ class KafkaTestUtils {
   @scala.annotation.varargs
   def createTopics(topics: String*): Unit =
     for (topic <- topics) {
-      AdminUtils.createTopic(zkUtils, topic, 1, 1)
+      adminClient.createTopics(List(new NewTopic(topic, 1, 1)).asJava)
       Thread.sleep(1000)
       topicCountMap = topicCountMap + (topic -> 1)
     }
@@ -120,15 +116,13 @@ class KafkaTestUtils {
     props.put("broker.id", "0")
     props.put("host.name", brokerHost)
     props.put("offsets.topic.replication.factor", "1")
-    props.put("log.dir",
-      {
-        val dir = System.getProperty("java.io.tmpdir") +
-          "/logDir-" + new Random().nextInt(Int.MaxValue)
-        val f = new File(dir)
-        f.mkdirs()
-        dir
-      }
-    )
+    props.put("log.dir", {
+      val dir = System.getProperty("java.io.tmpdir") +
+        "/logDir-" + new Random().nextInt(Int.MaxValue)
+      val f = new File(dir)
+      f.mkdirs()
+      dir
+    })
     props.put("port", brokerPort.toString)
     props.put("zookeeper.connect", zkAddress)
     props.put("zookeeper.connection.timeout.ms", "10000")
@@ -137,14 +131,16 @@ class KafkaTestUtils {
 
   private class EmbeddedZookeeper(hostname: String, port: Int) {
     private val snapshotDir = {
-      val f = new File(System.getProperty("java.io.tmpdir"),
-        "snapshotDir-" + Random.nextInt(Int.MaxValue))
+      val f = new File(
+        System.getProperty("java.io.tmpdir"),
+        "snapshotDir-" + Random.nextInt(Int.MaxValue)
+      )
       f.mkdirs()
       f
     }
     private val logDir = {
-      val f = new File(System.getProperty("java.io.tmpdir"),
-        "logDir-" + Random.nextInt(Int.MaxValue))
+      val f =
+        new File(System.getProperty("java.io.tmpdir"), "logDir-" + Random.nextInt(Int.MaxValue))
       f.mkdirs()
       f
     }

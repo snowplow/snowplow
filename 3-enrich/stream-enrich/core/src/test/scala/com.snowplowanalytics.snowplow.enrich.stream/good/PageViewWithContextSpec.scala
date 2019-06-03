@@ -304,7 +304,7 @@ class PageViewWithContextSpec extends Specification {
       val rawEvent = Base64.decodeBase64(PageViewWithContextSpec.raw)
 
       val enrichedEvent = TestSource.enrichEvents(rawEvent)(0)
-      enrichedEvent.isSuccess must beTrue
+      enrichedEvent.isValid must beTrue
 
       // "-1" prevents empty strings from being discarded from the end of the array
       val fields = enrichedEvent.toOption.get._1.split("\t", -1)

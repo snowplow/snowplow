@@ -21,13 +21,9 @@ lazy val commonDependencies = Seq(
   Dependencies.Libraries.jacksonDatabind,
   // Scala
   Dependencies.Libraries.scopt,
-  Dependencies.Libraries.scalaz7,
-  Dependencies.Libraries.json4s,
-  Dependencies.Libraries.json4sJackson,
   Dependencies.Libraries.pureconfig,
   Dependencies.Libraries.snowplowRawEvent,
   Dependencies.Libraries.snowplowCommonEnrich,
-  Dependencies.Libraries.igluClient,
   Dependencies.Libraries.snowplowTracker,
   // Test
   Dependencies.Libraries.specs2,
