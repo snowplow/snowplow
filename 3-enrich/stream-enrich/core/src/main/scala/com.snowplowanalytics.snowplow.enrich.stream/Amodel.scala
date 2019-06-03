@@ -27,7 +27,7 @@ import scala.util.Try
 object model {
 
   sealed trait Credentials
-  case object NoCredentials                                             extends Credentials
+  case object NoCredentials extends Credentials
   final case class AWSCredentials(accessKey: String, secretKey: String) extends Credentials
 
   // Case classes necessary to the decoding of the configuration
@@ -39,7 +39,12 @@ object model {
     appName: String
   )
   final case class InConfig(raw: String)
-  final case class OutConfig(enriched: String, pii: Option[String], bad: String, partitionKey: String)
+  final case class OutConfig(
+    enriched: String,
+    pii: Option[String],
+    bad: String,
+    partitionKey: String
+  )
   final case class KinesisBackoffPolicyConfig(minBackoff: Long, maxBackoff: Long)
   sealed trait SourceSinkConfig
   final case class Kinesis(
@@ -62,14 +67,14 @@ object model {
 
     val streamEndpoint = customEndpoint.getOrElse(region match {
       case cn @ "cn-north-1" => s"https://kinesis.$cn.amazonaws.com.cn"
-      case _                 => s"https://kinesis.$region.amazonaws.com"
+      case _ => s"https://kinesis.$region.amazonaws.com"
     })
   }
   final case class Kafka(
     brokers: String,
     retries: Int,
-    consumerConf: Option[Map[String,String]],
-    producerConf: Option[Map[String,String]]
+    consumerConf: Option[Map[String, String]],
+    producerConf: Option[Map[String, String]]
   ) extends SourceSinkConfig
   final case class Nsq(
     rawChannel: String,
@@ -79,7 +84,11 @@ object model {
     lookupPort: Int
   ) extends SourceSinkConfig
   case object Stdin extends SourceSinkConfig
-  final case class BufferConfig(byteLimit: Long, recordLimit: Long, timeLimit: Long)
+  final case class BufferConfig(
+    byteLimit: Long,
+    recordLimit: Long,
+    timeLimit: Long
+  )
   final case class MonitoringConfig(snowplow: SnowplowMonitoringConfig)
   final case class SnowplowMonitoringConfig(
     collectorUri: String,

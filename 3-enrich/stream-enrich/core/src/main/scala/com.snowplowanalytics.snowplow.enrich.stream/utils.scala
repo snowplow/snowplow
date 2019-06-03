@@ -35,18 +35,18 @@ object utils {
 
   def filterOrElse[L, R](e: \/[L, R])(p: R => Boolean, l: => L): \/[L, R] = e match {
     case \/-(r) if p(r) => r.right
-    case \/-(_)         => l.left
-    case o              => o
+    case \/-(_) => l.left
+    case o => o
   }
 
   def emitPii(enrichmentRegistry: EnrichmentRegistry): Boolean =
     enrichmentRegistry.getPiiPseudonymizerEnrichment
-      .map(_.emitIdentificationEvent).getOrElse(false)
+      .map(_.emitIdentificationEvent)
+      .getOrElse(false)
 
-  def validatePii(emitPii: Boolean, streamName: Option[String]): \/[String, Unit] = {
+  def validatePii(emitPii: Boolean, streamName: Option[String]): \/[String, Unit] =
     (emitPii, streamName) match {
-        case (true, None) => "PII was configured to emit, but no PII stream name was given".left
-        case _ => ().right
+      case (true, None) => "PII was configured to emit, but no PII stream name was given".left
+      case _ => ().right
     }
-  }
 }
