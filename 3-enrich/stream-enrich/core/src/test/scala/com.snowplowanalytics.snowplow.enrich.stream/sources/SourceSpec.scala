@@ -16,9 +16,11 @@
 package com.snowplowanalytics.snowplow.enrich.stream
 package sources
 
-import org.json4s._
-import org.json4s.jackson.JsonMethods._
+import java.time.Instant
+
 import org.specs2.mutable.Specification
+import com.snowplowanalytics.iglu.core.SelfDescribingData
+import com.snowplowanalytics.snowplow.enrich.common.outputs._
 
 class SourceSpec extends Specification {
 
@@ -33,38 +35,42 @@ class SourceSpec extends Specification {
   }
 
   "adjustOversizedFailureJson" should {
-    "remove the \"line\" field from a large bad JSON" in {
-      val badJson = """{"line":"huge", "errors":["some error"], "other":"more information"}"""
-      val parsed = parse(Source.adjustOversizedFailureJson(badJson))
-      parsed \ "line" must_== JNothing
-      parsed \ "other" must_== JString("more information")
-      parsed \ "size" must_== JInt(Source.getSize(badJson))
-    }
-
-    "remove create a new bad row if the bad row JSON is unparseable" in {
-      val badJson = "{"
-      val parsed = parse(Source.adjustOversizedFailureJson(badJson))
-      parsed \ "size" must_== JInt(1)
+    "truncate the original bad row" in {
+      val original = SelfDescribingData[BadRow](
+        Source.oversizedBadRow,
+        BadRow(
+          CPFormatViolation(
+            Instant.ofEpochSecond(12),
+            "tsv",
+            FallbackCPFormatViolationMessage("ah")
+          ),
+          RawPayload("ah"),
+          Processor.default
+        )
+      )
+      val res = Source.adjustOversizedFailureJson(original, 200, Processor.default)
+      res.schema must_== Source.oversizedBadRow
+      res.data.failure must haveClass[SizeViolation]
+      val f = res.data.failure.asInstanceOf[SizeViolation]
+      f.actualSizeBytes must_== 404
+      f.maximumAllowedSizeBytes must_== 200
+      f.expectation must_== "bad row exceeded the maximum size"
+      res.data.payload must_== RawPayload("""{"schema":"iglu:com.snowplowanalytics.sn""")
+      res.data.processor must_== Processor.default
     }
   }
 
   "oversizedSuccessToFailure" should {
     "create a bad row JSON from an oversized success" in {
-      val actual = parse(Source.oversizedSuccessToFailure("abc", 2))
-      actual \ "size" must_== JInt(3)
-      actual \ "errors" must_== JArray(
-        List(
-          JObject(
-            List(
-              ("level", JString("error")),
-              (
-                "message",
-                JString("Enriched event size of 3 bytes is greater than allowed maximum of 2")
-              )
-            )
-          )
-        )
-      )
+      val res = Source.oversizedSuccessToFailure("abcdefghijklmnopqrstuvwxy", 10, Processor.default)
+      res.schema must_== Source.oversizedBadRow
+      res.data.failure must haveClass[SizeViolation]
+      val f = res.data.failure.asInstanceOf[SizeViolation]
+      f.actualSizeBytes must_== 25
+      f.maximumAllowedSizeBytes must_== 10
+      f.expectation must_== "event passed enrichment but exceeded the maximum allowed size as a result"
+      res.data.payload must_== RawPayload("ab")
+      res.data.processor must_== Processor.default
     }
   }
 }

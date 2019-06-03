@@ -18,35 +18,38 @@
  */
 package com.snowplowanalytics.snowplow.enrich.stream
 
-import scala.util.{Failure, Success, Try}
+import java.util.UUID
+import java.util.concurrent.TimeUnit
 
-import scalaz._
-import Scalaz._
+import cats.Id
+import cats.effect.Clock
+import cats.syntax.either._
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
+import com.snowplowanalytics.snowplow.scalatracker.{ClockProvider, UUIDProvider}
 
 object utils {
-  // to rm once 2.12 as well as the right projections
-  def fold[A, B](t: Try[A])(ft: Throwable => B, fa: A => B): B = t match {
-    case Success(a) => fa(a)
-    case Failure(t) => ft(t)
-  }
-
-  def toEither[A](t: Try[A]): \/[Throwable, A] = fold(t)(_.left, _.right)
-
-  def filterOrElse[L, R](e: \/[L, R])(p: R => Boolean, l: => L): \/[L, R] = e match {
-    case \/-(r) if p(r) => r.right
-    case \/-(_) => l.left
-    case o => o
-  }
-
-  def emitPii(enrichmentRegistry: EnrichmentRegistry): Boolean =
-    enrichmentRegistry.getPiiPseudonymizerEnrichment
+  def emitPii(enrichmentRegistry: EnrichmentRegistry[Id]): Boolean =
+    enrichmentRegistry.piiPseudonymizer
       .map(_.emitIdentificationEvent)
       .getOrElse(false)
 
-  def validatePii(emitPii: Boolean, streamName: Option[String]): \/[String, Unit] =
+  def validatePii(emitPii: Boolean, streamName: Option[String]): Either[String, Unit] =
     (emitPii, streamName) match {
-      case (true, None) => "PII was configured to emit, but no PII stream name was given".left
-      case _ => ().right
+      case (true, None) => "PII was configured to emit, but no PII stream name was given".asLeft
+      case _ => ().asRight
     }
+
+  implicit val idClock: Clock[Id] = new Clock[Id] {
+    final def realTime(unit: TimeUnit): Id[Long] =
+      unit.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+    final def monotonic(unit: TimeUnit): Id[Long] =
+      unit.convert(System.nanoTime(), TimeUnit.NANOSECONDS)
+  }
+
+  implicit val idClockProvider: ClockProvider[Id] = new ClockProvider[Id] {
+    final def getCurrentMilliseconds: Id[Long] = System.currentTimeMillis()
+  }
+  implicit val uuidProvider: UUIDProvider[Id] = new UUIDProvider[Id] {
+    override def generateUUID: Id[UUID] = UUID.randomUUID()
+  }
 }
