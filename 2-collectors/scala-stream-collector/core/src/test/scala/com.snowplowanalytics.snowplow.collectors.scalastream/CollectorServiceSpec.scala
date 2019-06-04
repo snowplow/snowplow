@@ -51,18 +51,17 @@ class CollectorServiceSpec extends Specification {
       "attach p3p headers" in {
         val (r, l) = service.cookie(Some("nuid=12"), Some("b"), "p", None, None, None, "h",
           RemoteAddress.Unknown, HttpRequest(), false, false)
-        r.headers must have size 5
+        r.headers must have size 4
         r.headers must contain(RawHeader("P3P", "policyref=\"%s\", CP=\"%s\""
             .format("/w3c/p3p.xml", "NOI DSP COR NID PSA OUR IND COM NAV STA")))
         r.headers must contain(`Access-Control-Allow-Origin`(HttpOriginRange.`*`))
         r.headers must contain(`Access-Control-Allow-Credentials`(true))
-        r.headers must contain(`Cache-Control`(`no-cache`, `no-store`, `must-revalidate`))
         l must have size 1
       }
       "not store stuff and provide no cookie if do not track is on" in {
         val (r, l) = service.cookie(Some("nuid=12"), Some("b"), "p", None, None, None, "h",
           RemoteAddress.Unknown, HttpRequest(), false, true)
-        r.headers must have size 4
+        r.headers must have size 3
         r.headers must contain(RawHeader("P3P", "policyref=\"%s\", CP=\"%s\""
             .format("/w3c/p3p.xml", "NOI DSP COR NID PSA OUR IND COM NAV STA")))
         r.headers must contain(`Access-Control-Allow-Origin`(HttpOriginRange.`*`))
@@ -74,12 +73,14 @@ class CollectorServiceSpec extends Specification {
           RemoteAddress.Unknown, HttpRequest(), true, false)
         r.headers must have size 6
         r.headers must contain(`Location`("/?bounce=true"))
+        r.headers must contain(`Cache-Control`(`no-cache`, `no-store`, `must-revalidate`))
         l must have size 0
       }
       "store stuff if having already bounced with the fallback nuid" in {
         val (r, l) = bouncingService.cookie(Some("bounce=true"), Some("b"), "p", None, None, None,
           "h", RemoteAddress.Unknown, HttpRequest(), true, false)
-        r.headers must have size 4
+        r.headers must have size 5
+        r.headers must contain(`Cache-Control`(`no-cache`, `no-store`, `must-revalidate`))
         l must have size 1
         val newEvent = new CollectorPayload(
           "iglu-schema", "ip", System.currentTimeMillis, "UTF-8", "collector")
