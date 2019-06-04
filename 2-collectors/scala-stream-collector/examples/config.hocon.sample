@@ -11,7 +11,7 @@
 # implied.  See the Apache License Version 2.0 for the specific language
 # governing permissions and limitations there under.
 
-# This file (application.conf.example) contains a template with
+# This file (config.hocon.sample) contains a template with
 # configuration options for the Scala Stream Collector.
 #
 # To use, copy this to 'application.conf' and modify the configuration options.

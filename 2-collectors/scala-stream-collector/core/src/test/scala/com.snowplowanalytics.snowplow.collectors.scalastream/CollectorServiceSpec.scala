@@ -22,6 +22,7 @@ import scala.concurrent.duration._
 
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
+import akka.http.scaladsl.model.headers.CacheDirectives._
 import org.apache.thrift.{TSerializer, TDeserializer}
 import org.specs2.mutable.Specification
 
@@ -50,17 +51,18 @@ class CollectorServiceSpec extends Specification {
       "attach p3p headers" in {
         val (r, l) = service.cookie(Some("nuid=12"), Some("b"), "p", None, None, None, "h",
           RemoteAddress.Unknown, HttpRequest(), false, false)
-        r.headers must have size 4
+        r.headers must have size 5
         r.headers must contain(RawHeader("P3P", "policyref=\"%s\", CP=\"%s\""
             .format("/w3c/p3p.xml", "NOI DSP COR NID PSA OUR IND COM NAV STA")))
         r.headers must contain(`Access-Control-Allow-Origin`(HttpOriginRange.`*`))
         r.headers must contain(`Access-Control-Allow-Credentials`(true))
+        r.headers must contain(`Cache-Control`(`no-cache`, `no-store`, `must-revalidate`))
         l must have size 1
       }
       "not store stuff and provide no cookie if do not track is on" in {
         val (r, l) = service.cookie(Some("nuid=12"), Some("b"), "p", None, None, None, "h",
           RemoteAddress.Unknown, HttpRequest(), false, true)
-        r.headers must have size 3
+        r.headers must have size 4
         r.headers must contain(RawHeader("P3P", "policyref=\"%s\", CP=\"%s\""
             .format("/w3c/p3p.xml", "NOI DSP COR NID PSA OUR IND COM NAV STA")))
         r.headers must contain(`Access-Control-Allow-Origin`(HttpOriginRange.`*`))
@@ -70,7 +72,7 @@ class CollectorServiceSpec extends Specification {
       "not store stuff if bouncing and provide a location header" in {
         val (r, l) = bouncingService.cookie(None, Some("b"), "p", None, None, None, "h",
           RemoteAddress.Unknown, HttpRequest(), true, false)
-        r.headers must have size 5
+        r.headers must have size 6
         r.headers must contain(`Location`("/?bounce=true"))
         l must have size 0
       }
