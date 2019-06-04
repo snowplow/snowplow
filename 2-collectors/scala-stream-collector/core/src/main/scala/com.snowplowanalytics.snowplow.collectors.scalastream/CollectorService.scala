@@ -21,6 +21,7 @@ import scala.collection.JavaConverters._
 
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
+import akka.http.scaladsl.model.headers.CacheDirectives._
 import org.apache.commons.codec.binary.Base64
 import org.slf4j.LoggerFactory
 import scalaz._
@@ -118,6 +119,7 @@ class CollectorService(
       config.cookieBounce,
       bounce) ++
       cookieHeader(config.cookieConfig, nuid, doNotTrack) ++
+      cacheControl(pixelExpected) ++
       List(
         RawHeader("P3P", "policyref=\"%s\", CP=\"%s\"".format(config.p3p.policyRef, config.p3p.CP)),
         accessControlAllowOriginHeader(request),
@@ -330,11 +332,16 @@ class CollectorService(
       None
     }
 
-  /** Retrieves all headers from the request except Remote-Address and Raw-Requet-URI */
+  /** Retrieves all headers from the request except Remote-Address and Raw-Request-URI */
   def headers(request: HttpRequest): Seq[String] = request.headers.flatMap {
     case _: `Remote-Address` | _: `Raw-Request-URI` => None
     case other => Some(other.toString)
   }
+
+  /** If the pixel is requested, this attaches cache control headers to the response to prevent any caching. */
+  def cacheControl(pixelExpected: Boolean): List[`Cache-Control`] =
+    if (pixelExpected) List(`Cache-Control`(`no-cache`, `no-store`, `must-revalidate`))
+    else Nil
 
   /**
    * Gets the IP from a RemoteAddress. If ipAsPartitionKey is false, a UUID will be generated.

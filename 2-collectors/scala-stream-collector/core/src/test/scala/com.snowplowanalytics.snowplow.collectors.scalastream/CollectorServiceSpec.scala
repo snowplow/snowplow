@@ -22,6 +22,7 @@ import scala.concurrent.duration._
 
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
+import akka.http.scaladsl.model.headers.CacheDirectives._
 import org.apache.thrift.{TSerializer, TDeserializer}
 import org.specs2.mutable.Specification
 
@@ -70,14 +71,16 @@ class CollectorServiceSpec extends Specification {
       "not store stuff if bouncing and provide a location header" in {
         val (r, l) = bouncingService.cookie(None, Some("b"), "p", None, None, None, "h",
           RemoteAddress.Unknown, HttpRequest(), true, false)
-        r.headers must have size 5
+        r.headers must have size 6
         r.headers must contain(`Location`("/?bounce=true"))
+        r.headers must contain(`Cache-Control`(`no-cache`, `no-store`, `must-revalidate`))
         l must have size 0
       }
       "store stuff if having already bounced with the fallback nuid" in {
         val (r, l) = bouncingService.cookie(Some("bounce=true"), Some("b"), "p", None, None, None,
           "h", RemoteAddress.Unknown, HttpRequest(), true, false)
-        r.headers must have size 4
+        r.headers must have size 5
+        r.headers must contain(`Cache-Control`(`no-cache`, `no-store`, `must-revalidate`))
         l must have size 1
         val newEvent = new CollectorPayload(
           "iglu-schema", "ip", System.currentTimeMillis, "UTF-8", "collector")
