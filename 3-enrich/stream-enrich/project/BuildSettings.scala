@@ -44,7 +44,14 @@ object BuildSettings {
   // sbt-assembly settings for building a fat jar
   import sbtassembly.AssemblyPlugin.autoImport._
   lazy val sbtAssemblySettings = Seq(
-    assemblyJarName in assembly := { s"${moduleName.value}-${version.value}.jar" }
+    assemblyJarName in assembly := { s"${moduleName.value}-${version.value}.jar" },
+    assemblyMergeStrategy in assembly := {
+      case x if x.endsWith("ProjectSettings$.class") => MergeStrategy.first
+      case x if x.endsWith("module-info.class") => MergeStrategy.first
+      case x =>
+        val oldStrategy = (assemblyMergeStrategy in assembly).value
+        oldStrategy(x)
+    }
   )
 
   lazy val formatting = Seq(
