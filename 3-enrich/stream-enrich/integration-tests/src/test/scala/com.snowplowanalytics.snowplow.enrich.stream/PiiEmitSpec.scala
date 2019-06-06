@@ -30,6 +30,8 @@ import org.specs2.mutable.Specification
 import org.specs2.matcher.{FutureMatchers, Matcher}
 import org.specs2.specification.BeforeAfterAll
 import pureconfig._
+import pureconfig.generic.auto._
+import pureconfig.generic.{FieldCoproductHint, ProductHint}
 
 import good._
 import model.{SourceSinkConfig, StreamsConfig}
@@ -108,11 +110,13 @@ class PiiEmitSpec(implicit ee: ExecutionEnv)
   // Ordinarily the consumers return in less than 1 sec
   override val consumerExecutionTimeoutSec = 15
 
+  implicit def hint[T]: ProductHint[T] =
+    ProductHint[T](ConfigFieldMapping(CamelCase, CamelCase))
+  implicit val _: FieldCoproductHint[SourceSinkConfig] =
+    new FieldCoproductHint[SourceSinkConfig]("enabled")
+
   "Pii" should {
     "emit all events" in {
-      implicit def hint[T]: ProductHint[T] =
-        ProductHint[T](ConfigFieldMapping(CamelCase, CamelCase))
-      implicit val _ = new FieldCoproductHint[SourceSinkConfig]("enabled")
 
       val parsedConfig = ConfigFactory.parseString(configInstance).resolve()
       val configObject = Try {
