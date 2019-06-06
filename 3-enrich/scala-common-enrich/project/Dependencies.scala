@@ -86,7 +86,8 @@ object Dependencies {
       "circe-core",
       "circe-generic",
       "circe-parser",
-      "circe-literal"
+      "circe-literal",
+      "circe-java8"
     ).map("io.circe" %% _ % V.circe)
     val cats             = "org.typelevel"              %% "cats-core"                     % V.cats
     val circeOptics      = "io.circe"                   %% "circe-optics"                  % V.circeOptics

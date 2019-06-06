@@ -135,22 +135,6 @@ object PiiPseudonymizerEnrichment extends ParseableEnrichment {
 }
 
 /**
- * Implements a pseudonymization strategy using any algorithm known to DigestFunction
- * @param functionName string representation of the function
- * @param hashFunction the DigestFunction to apply
- * @param salt salt added to the plain string before hashing
- */
-final case class PiiStrategyPseudonymize(
-  functionName: String,
-  hashFunction: DigestFunction,
-  salt: String
-) extends PiiStrategy {
-  val TextEncoding = "UTF-8"
-  override def scramble(clearText: String): String = hash(clearText + salt)
-  def hash(text: String): String = hashFunction(text.getBytes(TextEncoding))
-}
-
-/**
  * The PiiPseudonymizerEnrichment runs after all other enrichments to find fields that are
  * configured as PII (personally identifiable information) and apply some anonymization (currently
  * only pseudonymization) on them. Currently a single strategy for all the fields is supported due

@@ -26,11 +26,11 @@ object MiscEnrichments {
 
   /**
    * The version of this ETL. Appends this version to the supplied "host" ETL.
-   * @param hostEtlVersion The version of the host ETL running this library
+   * @param processor The version of the host ETL running this library
    * @return the complete ETL version
    */
-  def etlVersion(hostEtlVersion: String): String =
-    "%s-common-%s".format(hostEtlVersion, ProjectSettings.version)
+  def etlVersion(processor: Processor): String =
+    s"${processor.artifact}-${processor.version}-common-${ProjectSettings.version}"
 
   /**
    * Validate the specified platform.
