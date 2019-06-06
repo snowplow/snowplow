@@ -172,14 +172,11 @@ abstract class Source(
 
   def getContextParentEvent(eventId: String): Json =
     Json.obj(
-      ("schema", Json.fromString(Source.ContextsSchema)),
-      (
-        "data",
-        Json.arr(
-          Json.obj(
-            "schema" -> Json.fromString(Source.ParentEventSchema),
-            "data" -> Json.obj("parentEventId" -> Json.fromString(eventId))
-          )
+      "schema" := Json.fromString(Source.ContextsSchema),
+      "data" := Json.arr(
+        Json.obj(
+          "schema" -> Json.fromString(Source.ParentEventSchema),
+          "data" -> Json.obj("parentEventId" -> Json.fromString(eventId))
         )
       )
     )

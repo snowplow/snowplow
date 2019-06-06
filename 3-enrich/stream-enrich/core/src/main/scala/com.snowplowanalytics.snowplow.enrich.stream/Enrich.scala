@@ -161,8 +161,8 @@ a  * @param creds optionally necessary credentials to download the resolver
     for {
       parsedResolver <- extractResolver(resolverArg)
       json <- JsonUtils.extractJson(parsedResolver)
-      resolver <- Client.parseDefault[Id](json).leftMap(_.toString).value
-    } yield resolver
+      client <- Client.parseDefault[Id](json).leftMap(_.toString).value
+    } yield client
 
   /**
    * Return a JSON string based on the resolver argument
