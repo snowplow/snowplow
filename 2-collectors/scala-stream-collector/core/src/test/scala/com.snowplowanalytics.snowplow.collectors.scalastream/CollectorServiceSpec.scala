@@ -289,22 +289,22 @@ class CollectorServiceSpec extends Specification {
     "cookieHeader" in {
       "give back a cookie header with the appropriate configuration" in {
         val nuid = "nuid"
-        val conf = CookieConfig(true, "name", 5.seconds, Some("domain"))
-        val Some(`Set-Cookie`(cookie)) = service.cookieHeader(Some(conf), nuid, false)
+        val conf = CookieConfig(true, "name", 5.seconds, Some(List("domain")))
+        val Some(`Set-Cookie`(cookie)) = service.cookieHeader(HttpRequest(), Some(conf), nuid, false)
         cookie.name shouldEqual conf.name
         cookie.value shouldEqual nuid
-        cookie.domain shouldEqual conf.domain
+        cookie.domain shouldEqual None
         cookie.path shouldEqual Some("/")
         cookie.expires must beSome
         (cookie.expires.get - DateTime.now.clicks).clicks must beCloseTo(conf.expiration.toMillis, 1000L)
       }
       "give back None if no configuration is given" in {
-        service.cookieHeader(None, "nuid", false) shouldEqual None
+        service.cookieHeader(HttpRequest(), None, "nuid", false) shouldEqual None
       }
       "give back None if doNoTrack is true" in {
         val nuid = "nuid"
-        val conf = CookieConfig(true, "name", 5.seconds, Some("domain"))
-        service.cookieHeader(Some(conf), "nuid", true) shouldEqual None
+        val conf = CookieConfig(true, "name", 5.seconds, Some(List("domain")))
+        service.cookieHeader(HttpRequest(), Some(conf), "nuid", true) shouldEqual None
       }
     }
 
@@ -399,6 +399,38 @@ class CollectorServiceSpec extends Specification {
         val request = HttpRequest()
         service.accessControlAllowOriginHeader(request) shouldEqual
           `Access-Control-Allow-Origin`(HttpOriginRange.`*`)
+      }
+    }
+
+    "cookieDomain" in {
+      "not return a domain if a list of domains is not supplied in the config" in {
+        val request = HttpRequest()
+        val cookieConfig = CookieConfig(true, "name", 5.seconds, None)
+        service.cookieDomain(request, cookieConfig.domains) shouldEqual None
+      }
+      "not return a domain if a list of domains is supplied in the config but the Origin request header is empty" in {
+        val request = HttpRequest()
+        val cookieConfig = CookieConfig(true, "name", 5.seconds, Some(List("domain.com")))
+        service.cookieDomain(request, cookieConfig.domains) shouldEqual None
+      }
+      "not return a domain if none of the domains in the request's Origin header has a match in the list of domains supplied with the config" in {
+        val origins = scala.collection.immutable.Seq(HttpOrigin("http", Host("origin.com")), HttpOrigin("http", Host("otherorigin.com", 8080)))
+        val request = HttpRequest().withHeaders(`Origin`(origins))
+        val cookieConfig = CookieConfig(true, "name", 5.seconds, Some(List("domain.com", "otherdomain.com")))
+        service.cookieDomain(request, cookieConfig.domains) shouldEqual None
+      }
+      "return only the first match if multiple domains from the request's Origin header have matches in the list of domains supplied with the config" in {
+        val origins = scala.collection.immutable.Seq(HttpOrigin("http", Host("domain.com")), HttpOrigin("http", Host("otherdomain.com", 8080)))
+        val request = HttpRequest().withHeaders(`Origin`(origins))
+        val cookieConfig = CookieConfig(true, "name", 5.seconds, Some(List("domain.com", "otherdomain.com")))
+        service.cookieDomain(request, cookieConfig.domains) shouldEqual Some("domain.com")
+      }
+    }
+
+    "extractDomains" in {
+      "correctly extract the root domain names from a list of values in the request's Origin header" in {
+        val origins = scala.collection.immutable.Seq(HttpOrigin("http", Host("origin.com")), HttpOrigin("http", Host("subdomain.otherorigin.com", 8080)))
+        service.extractDomains(origins) shouldEqual Seq("origin.com", "otherorigin.com")
       }
     }
   }

@@ -55,10 +55,21 @@ collector {
     name = {{collectorCookieName}}
     name = ${?COLLECTOR_COOKIE_NAME}
     # The domain is optional and will make the cookie accessible to other
-    # applications on the domain. Comment out this line to tie cookies to
-    # the collector's full domain
-    domain = "{{cookieDomain}}"
-    domain = ${?COLLECTOR_COOKIE_DOMAIN}
+    # applications on the domain. Comment out these lines to tie cookies to
+    # the collector's full domain.
+    # The domain is determined by matching the origin domains (from the Origin header of the request)
+    # to the list below. The first match is used. If no matches are found, the value will not be set
+    # and the collector's domain will be used.
+    # If the Origin header contains any subdomains, only the root domain names will be matched against
+    # the list below. That way, the cookie will be readable from all subdomains on the root domain.
+    domains = [
+        "{{cookieDomain1}}"
+        "{{cookieDomain2}}"
+        # ... more domains
+    ]
+    domains += ${?COLLECTOR_COOKIE_DOMAIN_1}
+    domains += ${?COLLECTOR_COOKIE_DOMAIN_2}
+    # ... more domains
   }
 
   # If you have a do not track cookie in place, the Scala Stream Collector can respect it by

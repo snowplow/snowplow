@@ -49,7 +49,7 @@ package model {
     enabled: Boolean,
     name: String,
     expiration: FiniteDuration,
-    domain: Option[String]
+    domains: Option[List[String]]
   )
   final case class DoNotTrackCookieConfig(
     enabled: Boolean,
@@ -145,7 +145,7 @@ package model {
         None
 
     def cookieName = cookieConfig.map(_.name)
-    def cookieDomain = cookieConfig.flatMap(_.domain)
+    def cookieDomain = cookieConfig.flatMap(_.domains) // This might not work as expected.
     def cookieExpiration = cookieConfig.map(_.expiration)
   }
 }

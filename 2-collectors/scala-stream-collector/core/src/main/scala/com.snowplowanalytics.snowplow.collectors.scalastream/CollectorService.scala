@@ -118,7 +118,7 @@ class CollectorService(
       request,
       config.cookieBounce,
       bounce) ++
-      cookieHeader(config.cookieConfig, nuid, doNotTrack) ++
+      cookieHeader(request, config.cookieConfig, nuid, doNotTrack) ++
       cacheControl(pixelExpected) ++
       List(
         RawHeader("P3P", "policyref=\"%s\", CP=\"%s\"".format(config.p3p.policyRef, config.p3p.CP)),
@@ -282,6 +282,7 @@ class CollectorService(
    * @return the build cookie wrapped in a header
    */
   def cookieHeader(
+    request: HttpRequest,
     cookieConfig: Option[CookieConfig],
     networkUserId: String,
     doNotTrack: Boolean
@@ -294,7 +295,7 @@ class CollectorService(
           name    = config.name,
           value   = networkUserId,
           expires = Some(DateTime.now + config.expiration.toMillis),
-          domain  = config.domain,
+          domain  = cookieDomain(request, config.domains),
           path    = Some("/")
         )
         `Set-Cookie`(responseCookie)
@@ -342,6 +343,34 @@ class CollectorService(
   def cacheControl(pixelExpected: Boolean): List[`Cache-Control`] =
     if (pixelExpected) List(`Cache-Control`(`no-cache`, `no-store`, `must-revalidate`))
     else Nil
+
+  /**
+   * Determines the cookie domain to be used by inspecting the Origin header of the request
+   * and trying to find a match in the list of domains specified in the config file.
+   * The Origin header may include multiple domains. The first matching domain is used.
+   * If no match is found, the cookie domain is not set.
+   */
+  def cookieDomain(request: HttpRequest, domains: Option[List[String]]): Option[String] = {
+    domains match {
+      case None => None
+      case Some(domainList) =>
+        request.headers.find {
+          case `Origin`(_) => true
+          case _ => false
+        } match {
+          case Some(`Origin`(origins)) =>
+            val originDomains = extractDomains(origins)
+            domainList.find { domain => originDomains.contains(domain)}
+          case _ => None
+        }
+    }
+  }
+
+  /** Extracts the root domains from a list of values in the request's Origin header. */
+  def extractDomains(origins: Seq[HttpOrigin]): Seq[String] = {
+    val originHosts = origins.map(origin => origin.host.host.address())
+    originHosts.map(host => { host.split("\\.").toList.takeRight(2).mkString(".") })
+  }
 
   /**
    * Gets the IP from a RemoteAddress. If ipAsPartitionKey is false, a UUID will be generated.
