@@ -27,7 +27,7 @@ object Dependencies {
 
   object V {
     // Java
-    val awsSdk               = "1.11.290"
+    val awsSdk               = "1.11.566"
     val kinesisClient        = "1.9.0"
     val kafka                = "2.1.1"
     val nsqClient            = "1.2.0"
