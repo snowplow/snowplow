@@ -52,8 +52,7 @@ object EtlPipeline {
     adapterRegistry: AdapterRegistry,
     enrichmentRegistry: EnrichmentRegistry[F],
     client: Client[F, Json],
-    artifact: String,
-    artifactVersion: String,
+    processor: Processor,
     etlTstamp: DateTime,
     input: ValidatedNel[BR, Option[CollectorPayload]]
   ): F[List[ValidatedNel[BR, EnrichedEvent]]] = {
@@ -65,8 +64,6 @@ object EtlPipeline {
       case Validated.Invalid(f) => List(f.invalid)
       case Validated.Valid(None) => Nil
     }
-
-    val processor = Processor(artifact, artifactVersion)
 
     val e = for {
       maybePayload <- input
@@ -80,7 +77,7 @@ object EtlPipeline {
       )
       enrichedEvents <- events.map { e =>
         val r = EnrichmentManager
-          .enrichEvent(registry, client, artifact, etlTstamp, e)
+          .enrichEvent(registry, client, processor, etlTstamp, e)
           .map(_.toEither)
         EitherT(r).leftMap { case (nel, pee) => buildBadRows(nel, pee, processor) }
       }.sequence

@@ -62,7 +62,7 @@ object EnrichmentManager {
   def enrichEvent[F[_]: Monad: RegistryLookup: Clock](
     registry: EnrichmentRegistry[F],
     client: Client[F, Json],
-    hostEtlVersion: String,
+    processor: Processor,
     etlTstamp: DateTime,
     raw: RawEvent
   ): F[Validated[(NonEmptyList[EnrichmentStageIssue], PartiallyEnrichedEvent), EnrichedEvent]] = {
@@ -70,7 +70,7 @@ object EnrichmentManager {
 
     // Let's start populating the CanonicalOutput
     // with the fields which cannot error
-    val event = setupEnrichedEvent(raw, etlTstamp, hostEtlVersion)
+    val event = setupEnrichedEvent(raw, etlTstamp, processor)
 
     // 2. Enrichments which can fail
 
@@ -265,12 +265,12 @@ object EnrichmentManager {
   def setupEnrichedEvent(
     raw: RawEvent,
     etlTstamp: DateTime,
-    hostEtlVersion: String
+    processor: Processor
   ): EnrichedEvent = {
     val e = new EnrichedEvent()
     e.event_id = EE.generateEventId // May be updated later if we have an `eid` parameter
     e.v_collector = raw.source.name // May be updated later if we have a `cv` parameter
-    e.v_etl = ME.etlVersion(hostEtlVersion)
+    e.v_etl = ME.etlVersion(processor)
     e.etl_tstamp = EE.toTimestamp(etlTstamp)
     e.network_userid = raw.context.userId.orNull // May be updated later by 'nuid'
     e.user_ipaddress = ME
@@ -785,10 +785,7 @@ object EnrichmentManager {
       ("ue_pr", (JU.extractUnencJson, "unstruct_event")),
       ("ue_px", (JU.extractBase64EncJson, "unstruct_event")),
       // Ecommerce transactions
-      (
-        "tr_id",
-        (ME.toTsvSafe, "tr_o // Overwrite collector-set nuid with tracker-set tnuidrderid")
-      ),
+      ("tr_id", (ME.toTsvSafe, "tr_orderid")),
       ("tr_af", (ME.toTsvSafe, "tr_affiliation")),
       ("tr_tt", (CU.stringToDoubleLike, "tr_total")),
       ("tr_tx", (CU.stringToDoubleLike, "tr_tax")),

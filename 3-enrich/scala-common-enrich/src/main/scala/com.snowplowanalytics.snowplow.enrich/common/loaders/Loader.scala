@@ -67,8 +67,7 @@ abstract class Loader[T] {
 
   def toCollectorPayload(
     line: T,
-    artifact: String,
-    version: String
+    processor: Processor
   ): ValidatedNel[SelfDescribingData[BadRow], Option[CollectorPayload]] =
     toCP(line).leftMap(
       _.map(
@@ -80,7 +79,7 @@ abstract class Loader[T] {
               "jsonschema",
               SchemaVer.Full(1, 0, 0)
             ),
-            br.copy(processor = Processor(artifact, version))
+            br.copy(processor = processor)
           )
       )
     )

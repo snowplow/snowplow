@@ -81,7 +81,7 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
     val input =
       s"2013-10-07\t23:35:30\tc\t100\t255.255.255.255\tf\tg\th\ti\t$url\t$doubleEncodedUa\t$doubleEncodedQs"
 
-    val payload = loader.toCollectorPayload(input, "sce", "1.0.0")
+    val payload = loader.toCollectorPayload(input, Processor("sce", "1.0.0"))
 
     val actual = payload.map(
       _.map(CloudfrontAccessLogAdapter.toRawEvents(_, SpecHelpers.client).value)
@@ -129,7 +129,7 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
     val input =
       s"2013-10-07\t23:35:30\tc\t100\t255.255.255.255\tf\tg\th\ti\t$url\t$doubleEncodedUa\t$doubleEncodedQs\tm\tn\to"
 
-    val payload = loader.toCollectorPayload(input, "sce", "1.0.0")
+    val payload = loader.toCollectorPayload(input, Processor("sce", "1.0.0"))
 
     val actual = payload.map(
       _.map(CloudfrontAccessLogAdapter.toRawEvents(_, SpecHelpers.client).value)
@@ -180,7 +180,7 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
     val input =
       s"2013-10-07\t23:35:30\tc\t100\t255.255.255.255\tf\tg\th\ti\t$url\t$doubleEncodedUa\t$doubleEncodedQs\tm\tn\to\tp\tq\t90"
 
-    val payload = loader.toCollectorPayload(input, "sce", "1.0.0")
+    val payload = loader.toCollectorPayload(input, Processor("sce", "1.0.0"))
 
     val actual = payload.map(
       _.map(CloudfrontAccessLogAdapter.toRawEvents(_, SpecHelpers.client).value)
@@ -234,7 +234,7 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
     val input =
       s"2013-10-07\t23:35:30\tc\t100\t255.255.255.255\tf\tg\th\ti\t$url\t$doubleEncodedUa\t$doubleEncodedQs\tm\tn\to\tp\tq\t90\t0.001"
 
-    val payload = loader.toCollectorPayload(input, "sce", "1.0.0")
+    val payload = loader.toCollectorPayload(input, Processor("sce", "1.0.0"))
 
     val actual = payload.map(
       _.map(CloudfrontAccessLogAdapter.toRawEvents(_, SpecHelpers.client).value)
@@ -289,7 +289,7 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
     val input =
       s"2013-10-07\t23:35:30\tc\t100\t255.255.255.255\tf\tg\th\ti\t$url\t$doubleEncodedUa\t$doubleEncodedQs\tm\tn\to\tp\tq\t90\t0.001\tr\ts\tt\tu"
 
-    val payload = loader.toCollectorPayload(input, "sce", "1.0.0")
+    val payload = loader.toCollectorPayload(input, Processor("sce", "1.0.0"))
 
     val actual = payload.map(
       _.map(CloudfrontAccessLogAdapter.toRawEvents(_, SpecHelpers.client).value)
@@ -348,7 +348,7 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
     val input =
       s"2013-10-07\t23:35:30\tc\t100\t255.255.255.255\tf\tg\th\ti\t$url\t$doubleEncodedUa\t$doubleEncodedQs\tm\tn\to\tp\tq\t90\t0.001\tr\ts\tt\tu\tHTTP/2.0"
 
-    val payload = loader.toCollectorPayload(input, "sce", "1.0.0")
+    val payload = loader.toCollectorPayload(input, Processor("sce", "1.0.0"))
 
     val actual = payload.map(
       _.map(CloudfrontAccessLogAdapter.toRawEvents(_, SpecHelpers.client).value)
@@ -408,7 +408,7 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
     val input =
       s"2013-10-07\t23:35:30\tc\t100\t255.255.255.255\tf\tg\th\ti\t$url\t$doubleEncodedUa\t$doubleEncodedQs\tm\tn\to\tp\tq\t90\t0.001\tr\ts\tt\tu\tHTTP/2.0\tProcessed\t12"
 
-    val payload = loader.toCollectorPayload(input, "sce", "1.0.0")
+    val payload = loader.toCollectorPayload(input, Processor("sce", "1.0.0"))
 
     val actual = payload.map(
       _.map(CloudfrontAccessLogAdapter.toRawEvents(_, SpecHelpers.client).value)

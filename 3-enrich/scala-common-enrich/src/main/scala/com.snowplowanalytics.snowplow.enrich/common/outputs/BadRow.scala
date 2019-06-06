@@ -18,7 +18,10 @@ import java.time.Instant
 import cats.data.NonEmptyList
 import com.snowplowanalytics.iglu.client.ClientError
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
-import org.joda.time.DateTime
+import io.circe.Encoder
+import io.circe.generic.auto._
+import io.circe.java8.time._
+import io.circe.syntax._
 
 import loaders._
 
@@ -29,6 +32,13 @@ final case class BadRow(
 )
 
 sealed trait Payload
+object Payload {
+  implicit val encodePayload: Encoder[Payload] = Encoder.instance {
+    case p: RawPayload => p.asJson
+    case p: CP => p.asJson
+    case p: PartiallyEnrichedEvent => p.asJson
+  }
+}
 final case class RawPayload(line: String) extends Payload
 
 final case class NVP(name: String, value: Option[String])
@@ -41,7 +51,7 @@ final case class CP(
   collector: String,
   encoding: String,
   hostname: Option[String],
-  timestamp: Option[DateTime], // Must have a timestamp
+  timestamp: Option[String], // Must have a timestamp
   ipAddress: Option[String],
   useragent: Option[String],
   refererUri: Option[String],
@@ -59,7 +69,7 @@ object CP {
       cp.source.name,
       cp.source.encoding,
       cp.source.hostname,
-      cp.context.timestamp,
+      cp.context.timestamp.map(_.toString),
       cp.context.ipAddress,
       cp.context.useragent,
       cp.context.refererUri,
@@ -343,6 +353,15 @@ object Processor {
 }
 
 sealed trait Failure
+object Failure {
+  implicit val encodeFailure: Encoder[Failure] = Encoder.instance {
+    case f: CPFormatViolation => f.asJson
+    case f: AdapterFailures => f.asJson
+    case f: SchemaViolations => f.asJson
+    case f: EnrichmentFailures => f.asJson
+    case f: SizeViolation => f.asJson
+  }
+}
 
 // COLLECTOR PAYLOAD FORMAT VIOLATION
 
@@ -370,6 +389,7 @@ final case class AdapterFailures(
 ) extends Failure
 
 sealed trait AdapterFailure
+
 // tracker protocol
 final case class IgluErrorAdapterFailure(schemaKey: SchemaKey, error: ClientError)
     extends AdapterFailure
@@ -432,3 +452,12 @@ final case class InputDataEnrichmentFailureMessage(
 ) extends EnrichmentFailureMessage
 
 final case class EnrichmentInformation(schemaKey: SchemaKey, identifier: String)
+
+// SIZE VIOLATION
+
+final case class SizeViolation(
+  timestamp: Instant,
+  maximumAllowedSizeBytes: Int,
+  actualSizeBytes: Int,
+  expectation: String
+) extends Failure
