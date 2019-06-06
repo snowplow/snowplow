@@ -71,7 +71,7 @@ object EnrichmentRegistry {
                 .asLeft
           }
         }
-      enrichments <- EitherT.fromEither[F](json.asArray match {
+      enrichments <- EitherT.fromEither[F](sd.data.asArray match {
         case Some(array) => array.toList.asRight
         case _ =>
           NonEmptyList

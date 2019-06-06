@@ -191,7 +191,7 @@ class CljTomcatLoaderSpec
         {
 
           val canonicalEvent = CljTomcatLoader
-            .toCollectorPayload(raw, "sce", "1.0.0")
+            .toCollectorPayload(raw, Processor("sce", "1.0.0"))
 
           val expected = CollectorPayload(
             api = CollectorApi(Expected.vendor, version),
