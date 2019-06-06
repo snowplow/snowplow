@@ -33,7 +33,7 @@ object Dependencies {
     val nsqClient            = "1.2.0"
     val jackson              = "2.9.9"
     val config               = "1.3.4"
-    val slf4j                = "1.7.5"
+    val slf4j                = "1.7.26"
     // Scala
     val scopt                = "3.6.0"
     val pureconfig           = "0.8.0"
