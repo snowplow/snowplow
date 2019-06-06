@@ -165,10 +165,10 @@ class KinesisSource private (
     log.info(s"Processing raw input stream: ${config.in.raw}")
 
     val rawEventProcessorFactory = new RawEventProcessorFactory()
-    val worker = new Worker(
-      rawEventProcessorFactory,
-      kinesisClientLibConfiguration
-    )
+    val worker = new Worker.Builder()
+      .recordProcessorFactory(rawEventProcessorFactory)
+      .config(kinesisClientLibConfiguration)
+      .build()
 
     worker.run()
   }
