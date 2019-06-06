@@ -142,8 +142,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
       .processEvents[Eval](
         enrichmentReg,
         client,
-        "spark",
-        "0.0.0",
+        Processor("spark", "0.0.0"),
         new DateTime(1500000000L),
         input
       )

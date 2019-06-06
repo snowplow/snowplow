@@ -196,9 +196,8 @@ trait ParseableEnrichment {
     if (supportedSchema.matches(schemaKey)) {
       config.asRight
     } else {
-      ("Schema key %s is not supported. A '%s' enrichment must have schema '%s'.")
-        .format(schemaKey, supportedSchema.name, supportedSchema)
-        .asLeft
+      (s"Schema key ${schemaKey.toSchemaUri} is not supported. A '${supportedSchema.name}' " +
+        s"enrichment must have schema ${supportedSchema.asString}.").asLeft
     }
 
   /**

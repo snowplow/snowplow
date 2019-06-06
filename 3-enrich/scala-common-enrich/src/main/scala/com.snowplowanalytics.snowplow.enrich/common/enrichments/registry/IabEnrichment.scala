@@ -16,7 +16,7 @@ package enrichments.registry
 import java.io.File
 import java.net.{InetAddress, URI}
 
-import cats.{Eval, Monad}
+import cats.{Eval, Id, Monad}
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.effect.Sync
 import cats.implicits._
@@ -235,6 +235,15 @@ object CreateIabClient {
       Eval.later {
         new IabClient(new File(ipFile), new File(excludeUaFile), new File(includeUaFile))
       }
+  }
+
+  implicit def idCreateIabClient: CreateIabClient[Id] = new CreateIabClient[Id] {
+    def create(
+      ipFile: String,
+      excludeUaFile: String,
+      includeUaFile: String
+    ): Id[IabClient] =
+      new IabClient(new File(ipFile), new File(excludeUaFile), new File(includeUaFile))
   }
 }
 

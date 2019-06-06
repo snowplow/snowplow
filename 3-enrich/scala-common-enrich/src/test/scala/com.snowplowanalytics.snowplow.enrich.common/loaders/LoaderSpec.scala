@@ -67,7 +67,7 @@ class LoaderSpec extends Specification with DataTables with ValidatedMatchers {
         "jsonschema",
         SchemaVer.Full(1, 0, 0)
       )
-      LoaderSpec.loader.toCollectorPayload("ah", "sce", "1.0.0") must beInvalid.like {
+      LoaderSpec.loader.toCollectorPayload("ah", Processor("sce", "1.0.0")) must beInvalid.like {
         case NonEmptyList(
             SelfDescribingData(
               sk,
