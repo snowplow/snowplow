@@ -40,6 +40,8 @@ import io.circe.Json
 import io.circe.syntax._
 import org.slf4j.LoggerFactory
 import pureconfig._
+import pureconfig.generic.auto._
+import pureconfig.generic.{FieldCoproductHint, ProductHint}
 
 import config._
 import model._
@@ -98,6 +100,9 @@ trait Enrich {
     processor: Processor
   ): Either[String, sources.Source]
 
+  implicit def hint[T]: ProductHint[T] = ProductHint[T](ConfigFieldMapping(CamelCase, CamelCase))
+  implicit val _ = new FieldCoproductHint[SourceSinkConfig]("enabled")
+
   /**
    * Parses the configuration from cli arguments
    * @param args cli arguments
@@ -106,9 +111,7 @@ trait Enrich {
    */
   def parseConfig(
     args: Array[String]
-  ): Either[String, (EnrichConfig, String, Option[String], Boolean)] = {
-    implicit def hint[T] = ProductHint[T](ConfigFieldMapping(CamelCase, CamelCase))
-    implicit val _ = new FieldCoproductHint[SourceSinkConfig]("enabled")
+  ): Either[String, (EnrichConfig, String, Option[String], Boolean)] =
     for {
       parsedCliArgs <- parser
         .parse(args, FileConfig())
@@ -130,7 +133,6 @@ trait Enrich {
         .map(ec => (ec, resolverArg, enrichmentsArg, forceDownload))
         .leftMap(_.getMessage)
     } yield parsedConfig
-  }
 
   /** Cli arguments parser */
   def parser: scopt.OptionParser[FileConfig]
