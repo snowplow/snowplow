@@ -14,7 +14,6 @@ import com.typesafe.sbt.packager.docker._
 
 lazy val commonDependencies = Seq(
   // Java
-  Dependencies.Libraries.commonsCodec,
   Dependencies.Libraries.config,
   Dependencies.Libraries.slf4j,
   Dependencies.Libraries.log4jOverSlf4j,

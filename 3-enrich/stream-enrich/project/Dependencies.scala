@@ -32,8 +32,7 @@ object Dependencies {
     val kafka                = "2.2.1"
     val nsqClient            = "1.2.0"
     val jackson              = "2.9.3"
-    val commonsCodec         = "1.10"
-    val config               = "1.3.1"
+    val config               = "1.3.4"
     val slf4j                = "1.7.5"
     // Scala
     val scopt                = "3.6.0"
@@ -57,7 +56,6 @@ object Dependencies {
     val nsqClient            = "com.snowplowanalytics"            %  "nsq-java-client"           % V.nsqClient
     val jacksonCbor          = "com.fasterxml.jackson.dataformat" %  "jackson-dataformat-cbor"   % V.jackson
     val jacksonDatabind      = "com.fasterxml.jackson.core"       %  "jackson-databind"          % V.jackson
-    val commonsCodec         = "commons-codec"                    %  "commons-codec"             % V.commonsCodec
     val config               = "com.typesafe"                     %  "config"                    % V.config
     val slf4j                = "org.slf4j"                        %  "slf4j-simple"              % V.slf4j
     val log4jOverSlf4j       = "org.slf4j"                        %  "log4j-over-slf4j"          % V.slf4j
