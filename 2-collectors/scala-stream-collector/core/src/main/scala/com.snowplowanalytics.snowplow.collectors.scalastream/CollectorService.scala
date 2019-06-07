@@ -18,14 +18,12 @@ package collectors.scalastream
 import java.util.UUID
 
 import scala.collection.JavaConverters._
-
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.model.headers.CacheDirectives._
 import org.apache.commons.codec.binary.Base64
 import org.slf4j.LoggerFactory
 import scalaz._
-
 import CollectorPayload.thrift.model1.CollectorPayload
 import enrich.common.outputs.BadRow
 import generated.BuildInfo
@@ -352,25 +350,65 @@ class CollectorService(
    */
   def cookieDomain(request: HttpRequest, domains: Option[List[String]]): Option[String] = {
     domains match {
-      case None => None
       case Some(domainList) =>
         request.headers.find {
           case `Origin`(_) => true
           case _ => false
         } match {
           case Some(`Origin`(origins)) =>
-            val originDomains = extractDomains(origins)
-            domainList.find { domain => originDomains.contains(domain)}
+            val originHosts = extractHosts(origins)
+            val domainRegex = domainList.map(toRegex)
+            val matchingHosts = for {
+              domain <- domainRegex
+              matchingHosts <- originHosts.find {
+                case x if x.matches(domain) => true
+                case _ => false
+              }
+            } yield matchingHosts
+            matchingHosts.headOption match {
+              case Some(matchingValue) =>
+                val domainToUse = domainRegex.find {
+                  case x if matchingValue.matches(x) => true
+                  case _ => false
+                }
+                domainToUse.flatMap { d => Some(toDomain(d)) }
+              case None => None
+            }
           case _ => None
         }
+      case None => None
     }
   }
 
-  /** Extracts the root domains from a list of values in the request's Origin header. */
-  def extractDomains(origins: Seq[HttpOrigin]): Seq[String] = {
-    val originHosts = origins.map(origin => origin.host.host.address())
-    originHosts.map(host => { host.split("\\.").toList.takeRight(2).mkString(".") })
+  /** Extracts the host names from a list of values in the request's Origin header. */
+  def extractHosts(origins: Seq[HttpOrigin]): Seq[String] = {
+    origins.map(origin => origin.host.host.address())
   }
+
+  /**
+   * Parses the domain names supplied in the cookie config into regex.
+   * Examples:
+   * "domain.com"         -> "(domain\.com)"
+   * "*.domain.gov.co.uk" -> ".*(domain\.gov\.co\.uk)"
+   */
+  def toRegex(cookieDomainConfig: String): String = {
+    if (cookieDomainConfig.startsWith("*.")) {
+      val rawDomain = cookieDomainConfig.split("\\.").toList.drop(1).mkString("\\.")
+      ("*." + """(\.""" + rawDomain + ")").replace("*.", ".*")
+    } else {
+      val rawDomain = cookieDomainConfig.split("\\.").toList.mkString("\\.")
+      "(" + rawDomain + ")"
+    }
+  }
+
+  /**
+    * Turns a domain regex into a valid domain name that can be inserted in the header.
+    * For example:
+    * ".*(domain\.gov\.co\.uk)" -> "domain.gov.co.uk"
+    *
+    */
+  def toDomain(regex: String): String =
+    regex.replace(".*", "").replace("""(\.""", "").replace("(", "").replace(")", "").replace("""\.""", """.""")
 
   /**
    * Gets the IP from a RemoteAddress. If ipAsPartitionKey is false, a UUID will be generated.

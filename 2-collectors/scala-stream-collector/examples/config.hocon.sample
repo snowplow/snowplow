@@ -60,12 +60,19 @@ collector {
     # The domain is determined by matching the origin domains (from the Origin header of the request)
     # to the list below. The first match is used. If no matches are found, the value will not be set
     # and the collector's domain will be used.
-    # If the Origin header contains any subdomains, only the root domain names will be matched against
-    # the list below. That way, the cookie will be readable from all subdomains on the root domain.
+    # To match subdomains from the Origin header against a main domain, you can use the * wildcard.
+    # But you must explicitly include the main domain as well if you want to use it alongside subdomains.
+    # Examples:
+    # domain.com will match domain.com but not www.domain.com or secure.domain.com.
+    # www.domain.com will match www.domain.com but not domain.com or secure.domain.com.
+    # secure.domain.com will match secure.domain.com but not domain.com or www.domain.com.
+    # *.domain.com will match www.domain.com and secure.domain.com but not domain.com.
+    # Whenever possible, the main domain will be used in the response, so the cookie will be readable from
+    # any subdomain on it as well.
     domains = [
-        "{{cookieDomain1}}"
-        "{{cookieDomain2}}"
-        # ... more domains
+        "{{cookieDomain1}}" # e.g. "domain.com" -> only the main domain will be matched and returned
+        "{{cookieDomain2}}" # e.g. "*.domain.com" -> only subdomains will be matched and the main domain will be returned
+        # ... more domains, e.g. "another.domain.com" -> only the specific subdomain will be matched and returned
     ]
     domains += ${?COLLECTOR_COOKIE_DOMAIN_1}
     domains += ${?COLLECTOR_COOKIE_DOMAIN_2}
