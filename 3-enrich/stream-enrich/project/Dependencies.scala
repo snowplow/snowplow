@@ -31,7 +31,7 @@ object Dependencies {
     val kinesisClient        = "1.10.0"
     val kafka                = "2.2.1"
     val nsqClient            = "1.2.0"
-    val jackson              = "2.9.3"
+    val jackson              = "2.9.9"
     val config               = "1.3.4"
     val slf4j                = "1.7.5"
     // Scala
