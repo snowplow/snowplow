@@ -26,14 +26,14 @@ import scala.util.control.NonFatal
 
 import cats.syntax.either._
 import cats.syntax.option._
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.EnrichmentFailureMessage._
 import io.lemonlabs.uri.{Uri, Url}
 import io.lemonlabs.uri.config.UriConfig
 import io.lemonlabs.uri.decoding.PercentDecoder
 import io.lemonlabs.uri.encoding.percentEncode
 import org.apache.commons.codec.binary.Base64
 import org.apache.http.client.utils.URLEncodedUtils
-
-import outputs._
 
 /** General-purpose utils to help the ETL process along. */
 object ConversionUtils {

@@ -15,13 +15,16 @@ package loaders
 
 import cats.data.NonEmptyList
 import cats.syntax.option._
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.CPFormatViolationMessage._
+import com.snowplowanalytics.snowplow.badrows.Failure.CPFormatViolation
+import com.snowplowanalytics.snowplow.badrows.Payload.RawPayload
 import org.joda.time.DateTime
 import org.scalacheck.Arbitrary._
 import org.specs2.{ScalaCheck, Specification}
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import SpecHelpers._
-import outputs._
 import utils.ConversionUtils
 
 class CloudfrontLoaderSpec
@@ -249,7 +252,7 @@ class CloudfrontLoaderSpec
       "2012-05-24  11:35:53  DFW3  3343  99.116.172.58 POST d3gs014xn8p70.cloudfront.net  /i  200 http://www.psychicbazaar.com/2-tarot-cards/genre/all/type/all?p=5 Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0  e=pv&page=Tarot%2520cards%2520-%2520Psychic%2520Bazaar&tid=344260&uid=288112e0a5003be2&vid=1&lang=en-US&refr=http%253A%252F%252Fwww.psychicbazaar.com%252F2-tarot-cards%252Fgenre%252Fall%252Ftype%252Fall%253Fp%253D4&f_pdf=1&f_qt=0&f_realp=0&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=1366x768&cookie=1"
     CloudfrontLoader.toCP(raw) must beInvalid.like {
       case NonEmptyList(
-          BadRow(CPFormatViolation(_, "cloudfront", f), RawPayload(l), Processor.default),
+          BadRow(CPFormatViolation(_, "cloudfront", f), RawPayload(l), Processor("sce", "1.0.0")),
           List()
           ) =>
         f must_== InputDataCPFormatViolationMessage("verb", "POST".some, "operation must be GET")
@@ -263,7 +266,7 @@ class CloudfrontLoaderSpec
     prop { (raw: String) =>
       CloudfrontLoader.toCP(raw) must beInvalid.like {
         case NonEmptyList(
-            BadRow(CPFormatViolation(_, "cloudfront", f), RawPayload(l), Processor.default),
+            BadRow(CPFormatViolation(_, "cloudfront", f), RawPayload(l), Processor("sce", "1.0.0")),
             List()
             ) =>
           f must_== FallbackCPFormatViolationMessage("does not match header or data row formats")

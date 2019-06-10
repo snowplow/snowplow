@@ -14,10 +14,10 @@ package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.web
 
 import cats.syntax.option._
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.EnrichmentFailureMessage._
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
-
-import outputs._
 
 class ParseCrossDomainSpec extends Specification with DataTables {
   def is = s2"""

@@ -27,9 +27,9 @@ import com.snowplowanalytics.client.nsq.callbacks._
 import com.snowplowanalytics.client.nsq.exceptions.NSQException
 import com.snowplowanalytics.client.nsq.lookup.DefaultNSQLookup
 import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.snowplow.badrows.Processor
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.AdapterRegistry
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
-import com.snowplowanalytics.snowplow.enrich.common.outputs.Processor
 import com.snowplowanalytics.snowplow.scalatracker.Tracker
 import io.circe.Json
 

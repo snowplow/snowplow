@@ -14,11 +14,12 @@ package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 
 import cats.syntax.either._
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.EnrichmentFailureMessage._
 import io.circe._
 import io.circe.syntax._
 
 import generated.ProjectSettings
-import outputs._
 import utils.{ConversionUtils => CU}
 
 /** Miscellaneous enrichments which don't fit into one of the other modules. */

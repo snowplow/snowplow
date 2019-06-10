@@ -28,13 +28,14 @@ import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
+import com.snowplowanalytics.snowplow.badrows.AdapterFailure
+import com.snowplowanalytics.snowplow.badrows.AdapterFailure.InputDataAdapterFailure
 import io.circe._
 import org.apache.http.client.utils.URLEncodedUtils
 import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormat
 
 import loaders.CollectorPayload
-import outputs._
 import utils.{JsonUtils => JU}
 
 /**

@@ -25,11 +25,11 @@ import scala.util.Try
 import scala.collection.JavaConverters._
 
 import cats.Id
-import com.snowplowanalytics.snowplow.scalatracker.Tracker
 import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.snowplow.badrows.Processor
 import com.snowplowanalytics.snowplow.enrich.common.adapters.AdapterRegistry
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
-import com.snowplowanalytics.snowplow.enrich.common.outputs.Processor
+import com.snowplowanalytics.snowplow.scalatracker.Tracker
 import org.apache.kafka.clients.consumer.{ConsumerRecords, KafkaConsumer}
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.specs2.matcher.{TraversableMatchers, TryMatchers}

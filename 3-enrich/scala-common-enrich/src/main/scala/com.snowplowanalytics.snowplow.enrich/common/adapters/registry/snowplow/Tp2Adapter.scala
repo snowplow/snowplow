@@ -24,10 +24,11 @@ import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SelfDescribingData}
 import com.snowplowanalytics.iglu.core.circe.instances._
+import com.snowplowanalytics.snowplow.badrows.AdapterFailure
+import com.snowplowanalytics.snowplow.badrows.AdapterFailure._
 import io.circe.Json
 
 import loaders.CollectorPayload
-import outputs._
 import utils.{JsonUtils => JU}
 
 /**

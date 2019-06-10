@@ -15,10 +15,11 @@ package loaders
 
 import cats.syntax.either._
 import cats.syntax.option._
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.CPFormatViolationMessage._
+import com.snowplowanalytics.snowplow.badrows.Payload.{CollectorPayload => CP}
 import org.apache.http.NameValuePair
 import org.joda.time.DateTime
-
-import outputs._
 
 /**
  * The canonical input format for the ETL process: it should be possible to convert any collector
@@ -31,7 +32,25 @@ final case class CollectorPayload(
   body: Option[String], // Not set for GETs
   source: CollectorSource,
   context: CollectorContext
-)
+) {
+  def toBadRowCollectorPayload: CP =
+    CP(
+      this.api.vendor,
+      this.api.version,
+      this.querystring.map(nvp => NVP(nvp.getName(), Option(nvp.getValue()))),
+      this.contentType,
+      this.body,
+      this.source.name,
+      this.source.encoding,
+      this.source.hostname,
+      this.context.timestamp.map(_.toString),
+      this.context.ipAddress,
+      this.context.useragent,
+      this.context.refererUri,
+      this.context.headers,
+      this.context.userId
+    )
+}
 object CollectorPayload {
 
   /**

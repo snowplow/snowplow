@@ -19,11 +19,14 @@ import java.time.Instant
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.syntax.option._
 import cats.syntax.validated._
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.CPFormatViolationMessage._
+import com.snowplowanalytics.snowplow.badrows.Failure.CPFormatViolation
+import com.snowplowanalytics.snowplow.badrows.Payload.RawPayload
 import com.snowplowanalytics.iglu.core._
 import org.specs2.mutable.Specification
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
-import outputs._
 import SpecHelpers._
 
 object LoaderSpec {
@@ -33,7 +36,7 @@ object LoaderSpec {
       BadRow(
         CPFormatViolation(Instant.now(), "test", FallbackCPFormatViolationMessage("FAIL")),
         RawPayload(line),
-        Processor.default
+        Processor("sce", "1.0.0")
       ).invalidNel
   }
 }

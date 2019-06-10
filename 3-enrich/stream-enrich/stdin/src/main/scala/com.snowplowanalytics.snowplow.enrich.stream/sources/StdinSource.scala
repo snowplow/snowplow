@@ -25,9 +25,9 @@ import org.apache.commons.codec.binary.Base64
 import cats.Id
 import cats.syntax.either._
 import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.snowplow.badrows.Processor
 import com.snowplowanalytics.snowplow.enrich.common.adapters.AdapterRegistry
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
-import com.snowplowanalytics.snowplow.enrich.common.outputs.Processor
 import com.snowplowanalytics.snowplow.scalatracker.Tracker
 import io.circe.Json
 

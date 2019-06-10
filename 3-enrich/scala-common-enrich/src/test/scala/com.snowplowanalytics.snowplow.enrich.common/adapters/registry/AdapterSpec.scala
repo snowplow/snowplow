@@ -21,6 +21,8 @@ import cats.syntax.option._
 import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
+import com.snowplowanalytics.snowplow.badrows.AdapterFailure._
+import com.snowplowanalytics.snowplow.badrows.Payload.{CollectorPayload => _}
 import io.circe._
 import io.circe.literal._
 import org.joda.time.DateTime
@@ -28,7 +30,6 @@ import org.specs2.Specification
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import loaders._
-import outputs._
 import SpecHelpers._
 
 class AdapterSpec extends Specification with DataTables with ValidatedMatchers {

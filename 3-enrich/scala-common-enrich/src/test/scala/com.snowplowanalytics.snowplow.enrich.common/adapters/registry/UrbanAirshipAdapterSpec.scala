@@ -16,6 +16,8 @@ package adapters.registry
 import cats.data.{NonEmptyList, Validated}
 import cats.syntax.either._
 import cats.syntax.option._
+import com.snowplowanalytics.snowplow.badrows.AdapterFailure._
+import com.snowplowanalytics.snowplow.badrows.Payload.{CollectorPayload => _}
 import io.circe.literal._
 import io.circe.parser._
 import org.joda.time.DateTime
@@ -23,7 +25,6 @@ import org.specs2.matcher.ValidatedMatchers
 import org.specs2.mutable.Specification
 
 import loaders._
-import outputs._
 import utils.Clock._
 
 class UrbanAirshipAdapterSpec extends Specification with ValidatedMatchers {

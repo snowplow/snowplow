@@ -15,11 +15,14 @@ package loaders
 
 import cats.data.NonEmptyList
 import cats.syntax.option._
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.CPFormatViolationMessage._
+import com.snowplowanalytics.snowplow.badrows.Failure.CPFormatViolation
+import com.snowplowanalytics.snowplow.badrows.Payload.RawPayload
 import org.joda.time.DateTime
 import org.specs2.{ScalaCheck, Specification}
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
-import outputs._
 import SpecHelpers._
 
 class CljTomcatLoaderSpec
@@ -213,7 +216,7 @@ class CljTomcatLoaderSpec
     val actual = CljTomcatLoader.toCP(raw)
     actual must beInvalid.like {
       case NonEmptyList(
-          BadRow(CPFormatViolation(_, "clj-tomcat", f), RawPayload(l), Processor.default),
+          BadRow(CPFormatViolation(_, "clj-tomcat", f), RawPayload(l), Processor("sce", "1.0.0")),
           List()
           ) =>
         f must_== InputDataCPFormatViolationMessage(
@@ -231,7 +234,7 @@ class CljTomcatLoaderSpec
     val actual = CljTomcatLoader.toCP(raw)
     actual must beInvalid.like {
       case NonEmptyList(
-          BadRow(CPFormatViolation(_, "clj-tomcat", f), RawPayload(l), Processor.default),
+          BadRow(CPFormatViolation(_, "clj-tomcat", f), RawPayload(l), Processor("sce", "1.0.0")),
           List()
           ) =>
         f must_== InputDataCPFormatViolationMessage(
@@ -249,7 +252,7 @@ class CljTomcatLoaderSpec
     prop { (raw: String) =>
       CljTomcatLoader.toCP(raw) must beInvalid.like {
         case NonEmptyList(
-            BadRow(CPFormatViolation(_, "clj-tomcat", f), RawPayload(l), Processor.default),
+            BadRow(CPFormatViolation(_, "clj-tomcat", f), RawPayload(l), Processor("sce", "1.0.0")),
             List()
             ) =>
           f must_== FallbackCPFormatViolationMessage("does not match the raw event format")
