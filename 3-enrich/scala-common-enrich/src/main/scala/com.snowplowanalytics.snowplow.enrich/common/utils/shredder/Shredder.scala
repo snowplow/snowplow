@@ -22,11 +22,13 @@ import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SelfDescribingData}
 import com.snowplowanalytics.iglu.core.circe.instances._
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.SchemaViolation._
 import io.circe.Json
 import io.circe.generic.auto._
 import io.circe.syntax._
 
-import outputs._
+import outputs.EnrichedEvent
 
 /**
  * The shredder takes the two fields containing JSONs (contexts and unstructured event properties)

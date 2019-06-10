@@ -20,12 +20,13 @@ import cats.syntax.option._
 import com.snowplowanalytics.iglu.client._
 import com.snowplowanalytics.iglu.client.validator._
 import com.snowplowanalytics.iglu.core._
+import com.snowplowanalytics.snowplow.badrows.AdapterFailure._
+import com.snowplowanalytics.snowplow.badrows.Payload.{CollectorPayload => _}
 import org.joda.time.DateTime
 import org.specs2.{ScalaCheck, Specification}
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import loaders._
-import outputs._
 import utils.{ConversionUtils => CU}
 import utils.Clock._
 import com.snowplowanalytics.iglu.core.ParseError

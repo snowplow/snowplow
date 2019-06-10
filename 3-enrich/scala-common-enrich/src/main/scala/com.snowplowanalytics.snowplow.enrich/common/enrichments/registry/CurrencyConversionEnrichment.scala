@@ -21,11 +21,12 @@ import cats.implicits._
 import com.snowplowanalytics.forex.{CreateForex, Forex}
 import com.snowplowanalytics.forex.model._
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.EnrichmentFailureMessage._
 import io.circe._
 import org.joda.money.CurrencyUnit
 import org.joda.time.DateTime
 
-import outputs._
 import utils.CirceUtils
 
 /** Companion object. Lets us create an CurrencyConversionEnrichment instance from a Json. */

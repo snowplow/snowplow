@@ -18,12 +18,12 @@ import cats.Eval
 import cats.data.NonEmptyList
 import cats.syntax.option._
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup._
+import com.snowplowanalytics.snowplow.badrows.AdapterFailure.InputDataAdapterFailure
 import org.joda.time.DateTime
 import org.specs2.Specification
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import loaders._
-import outputs._
 import SpecHelpers._
 import utils.Clock._
 

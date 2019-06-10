@@ -14,12 +14,12 @@ package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 
 import cats.syntax.either._
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.EnrichmentFailureMessage._
 import io.circe.literal._
 import org.specs2.mutable.{Specification => MutSpecification}
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
-
-import outputs._
 
 class EtlVersionSpec extends MutSpecification {
   "The ETL version" should {

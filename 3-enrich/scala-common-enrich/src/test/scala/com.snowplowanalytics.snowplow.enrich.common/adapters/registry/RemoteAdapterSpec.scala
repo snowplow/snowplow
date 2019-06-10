@@ -18,12 +18,13 @@ import java.io.InputStream
 import java.net.InetSocketAddress
 import java.util.concurrent.TimeUnit
 
-import com.snowplowanalytics.snowplow.enrich.common.loaders.{
-  CollectorApi,
-  CollectorContext,
-  CollectorPayload,
-  CollectorSource
-}
+import scala.concurrent.duration.Duration
+
+import cats.data.NonEmptyList
+import cats.syntax.either._
+import cats.syntax.option._
+import com.snowplowanalytics.snowplow.badrows.AdapterFailure._
+import com.snowplowanalytics.snowplow.badrows.Payload.{CollectorPayload => _}
 import com.sun.net.httpserver.{HttpExchange, HttpHandler, HttpServer}
 import org.joda.time.DateTime
 import org.json4s.DefaultFormats

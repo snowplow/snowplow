@@ -25,10 +25,10 @@ import scala.collection.JavaConverters._
 
 import cats.Id
 import cats.syntax.either._
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.snowplow.badrows.Processor
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.AdapterRegistry
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
-import com.snowplowanalytics.snowplow.enrich.common.outputs.Processor
-import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.snowplow.scalatracker.Tracker
 import io.circe.Json
 import org.apache.kafka.clients.consumer.KafkaConsumer

@@ -19,8 +19,9 @@ import cats.data.ValidatedNel
 import cats.syntax.either._
 import cats.syntax.option._
 import cats.syntax.validated._
-
-import outputs._
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.Failure.CPFormatViolation
+import com.snowplowanalytics.snowplow.badrows.Payload.RawPayload
 
 /** Loader for TSVs */
 final case class TsvLoader(adapter: String) extends Loader[String] {
@@ -61,7 +62,7 @@ final case class TsvLoader(adapter: String) extends Loader[String] {
             BadRow(
               CPFormatViolation(Instant.now(), CollectorName, f),
               RawPayload(line),
-              Processor.default
+              Processor("sce", "1.0.0")
             )
         )
         .toValidatedNel

@@ -21,15 +21,14 @@ import scala.collection.JavaConverters._
 import cats.data.ValidatedNel
 import cats.syntax.either._
 import cats.syntax.option._
-import com.snowplowanalytics.iglu.core.SelfDescribingData
+import com.snowplowanalytics.iglu.core._
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.CPFormatViolationMessage._
 import org.apache.http.NameValuePair
 import org.apache.http.client.utils.URLEncodedUtils
 import org.joda.time.DateTime
 
-import outputs._
 import utils.JsonUtils
-import com.snowplowanalytics.iglu.core.SchemaKey
-import com.snowplowanalytics.iglu.core.SchemaVer
 
 /** Companion object to the CollectorLoader. Contains factory methods. */
 object Loader {

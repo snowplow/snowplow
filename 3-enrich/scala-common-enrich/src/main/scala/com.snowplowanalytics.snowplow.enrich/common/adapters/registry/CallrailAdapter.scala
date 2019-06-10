@@ -21,12 +21,12 @@ import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
+import com.snowplowanalytics.snowplow.badrows._
 import io.circe.Json
 import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormat
 
 import loaders.CollectorPayload
-import outputs._
 import utils._
 
 /**
@@ -76,7 +76,7 @@ object CallrailAdapter extends Adapter {
     val _ = client
     val params = toMap(payload.querystring)
     if (params.isEmpty) {
-      val failure = InputDataAdapterFailure("querystring", None, "empty querystring")
+      val failure = AdapterFailure.InputDataAdapterFailure("querystring", None, "empty querystring")
       Monad[F].pure(failure.invalidNel)
     } else {
       Monad[F].pure(

@@ -16,8 +16,8 @@ package enrichments
 import java.lang.{Integer => JInteger}
 
 import cats.syntax.either._
-
-import outputs._
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.EnrichmentFailureMessage._
 
 /**
  * Contains enrichments related to the client - where the client is the software which is using the

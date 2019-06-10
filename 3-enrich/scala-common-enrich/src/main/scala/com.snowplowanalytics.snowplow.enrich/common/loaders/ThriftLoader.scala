@@ -26,13 +26,15 @@ import com.snowplowanalytics.snowplow.CollectorPayload.thrift.model1.{
   CollectorPayload => CollectorPayload1
 }
 import com.snowplowanalytics.snowplow.SchemaSniffer.thrift.model1.SchemaSniffer
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.CPFormatViolationMessage._
+import com.snowplowanalytics.snowplow.badrows.Failure.CPFormatViolation
+import com.snowplowanalytics.snowplow.badrows.Payload.RawPayload
 import com.snowplowanalytics.snowplow.collectors.thrift.SnowplowRawEvent
 import org.apache.commons.codec.binary.Base64
 import org.apache.http.NameValuePair
 import org.apache.thrift.TDeserializer
 import org.joda.time.{DateTime, DateTimeZone}
-
-import outputs._
 
 /** Loader for Thrift SnowplowRawEvent objects. */
 object ThriftLoader extends Loader[Array[Byte]] {
@@ -94,7 +96,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
           BadRow(
             CPFormatViolation(Instant.now(), "thrift", f),
             RawPayload(new String(Base64.encodeBase64(line), "UTF-8")),
-            Processor.default
+            Processor("sce", "1.0.0")
           )
       )
     )

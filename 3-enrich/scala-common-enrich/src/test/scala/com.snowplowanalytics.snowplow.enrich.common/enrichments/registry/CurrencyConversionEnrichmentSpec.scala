@@ -20,12 +20,12 @@ import cats.syntax.validated._
 import com.snowplowanalytics.forex.CreateForex._
 import com.snowplowanalytics.forex.model._
 import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.EnrichmentFailureMessage._
 import org.joda.money.CurrencyUnit
 import org.joda.time.DateTime
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
-
-import outputs._
 
 object CurrencyConversionEnrichmentSpec {
   val OerApiKey = "OER_KEY"

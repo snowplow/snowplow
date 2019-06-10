@@ -17,16 +17,19 @@ package common
 package adapters
 package registry
 
-import com.fasterxml.jackson.core.JsonParseException
-import iglu.client.Resolver
-import common.loaders.CollectorPayload
-import common.utils.HttpClient
-import org.json4s.JsonAST.{JNothing, JNull}
-import org.json4s.JsonDSL._
-import org.json4s.MappingException
-import org.json4s.jackson.JsonMethods._
-import scalaz.Scalaz._
-import scalaz.{Failure, Success, Validation}
+import cats.Monad
+import cats.data.{NonEmptyList, ValidatedNel}
+import cats.effect.Clock
+import cats.syntax.either._
+import cats.syntax.functor._
+import cats.syntax.option._
+import cats.syntax.validated._
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
+import com.snowplowanalytics.snowplow.badrows.AdapterFailure
+import com.snowplowanalytics.snowplow.badrows.AdapterFailure._
+import io.circe.Json
+import io.circe.syntax._
 
 import scala.util.control.NonFatal
 

@@ -18,8 +18,11 @@ import java.time.Instant
 
 import cats.data.ValidatedNel
 import cats.implicits._
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.CPFormatViolationMessage._
+import com.snowplowanalytics.snowplow.badrows.Failure.CPFormatViolation
+import com.snowplowanalytics.snowplow.badrows.Payload.RawPayload
 
-import outputs._
 import utils.ConversionUtils
 
 /**
@@ -155,7 +158,7 @@ object CljTomcatLoader extends Loader[String] {
           BadRow(
             CPFormatViolation(Instant.now(), CollectorName, f),
             RawPayload(line),
-            Processor.default
+            Processor("sce", "1.0.0")
           )
       )
     )

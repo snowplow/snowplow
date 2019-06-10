@@ -25,11 +25,12 @@ import cats.syntax.option._
 import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
+import com.snowplowanalytics.snowplow.badrows.AdapterFailure
+import com.snowplowanalytics.snowplow.badrows.AdapterFailure.InputDataAdapterFailure
 import io.circe._
 import org.joda.time.DateTime
 
 import loaders.{CollectorContext, CollectorPayload}
-import outputs._
 import utils.ConversionUtils
 
 /** Transforms a Cloudfront access log into raw events */

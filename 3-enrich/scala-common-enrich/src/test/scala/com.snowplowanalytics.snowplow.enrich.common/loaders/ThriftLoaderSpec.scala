@@ -15,12 +15,15 @@ package loaders
 
 import cats.data.NonEmptyList
 import cats.syntax.option._
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.CPFormatViolationMessage._
+import com.snowplowanalytics.snowplow.badrows.Failure.CPFormatViolation
+import com.snowplowanalytics.snowplow.badrows.Payload.RawPayload
 import org.apache.commons.codec.binary.Base64
 import org.joda.time.DateTime
 import org.specs2.{ScalaCheck, Specification}
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
-import outputs._
 import SpecHelpers._
 
 class ThriftLoaderSpec
@@ -182,7 +185,7 @@ class ThriftLoaderSpec
     prop { (raw: String) =>
       ThriftLoader.toCP(Base64.decodeBase64(raw)) must beInvalid.like {
         case NonEmptyList(
-            BadRow(CPFormatViolation(_, "thrift", f), RawPayload(_), Processor.default),
+            BadRow(CPFormatViolation(_, "thrift", f), RawPayload(_), Processor("sce", "1.0.0")),
             List()
             ) =>
           f must_== FallbackCPFormatViolationMessage(msg)
