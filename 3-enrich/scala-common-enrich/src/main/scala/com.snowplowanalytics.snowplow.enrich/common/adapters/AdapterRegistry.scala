@@ -23,10 +23,10 @@ import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.core._
+import com.snowplowanalytics.snowplow.badrows._
 import io.circe.Json
 
 import loaders.CollectorPayload
-import outputs._
 import registry._
 import registry.snowplow._
 
@@ -137,7 +137,7 @@ class AdapterRegistry(remoteAdapters: Map[(String, String), RemoteAdapter] = Map
       case (Vendor.UrbanAirship, "v1") => UrbanAirshipAdapter.toRawEvents(payload, client)
       case (Vendor.Vero, "v1") => VeroAdapter.toRawEvents(payload, client)
       case _ =>
-        val f = InputDataAdapterFailure(
+        val f = AdapterFailure.InputDataAdapterFailure(
           "vendor/version",
           Some(s"${payload.api.vendor}/${payload.api.version}"),
           "vendor/version combination is not supported"
@@ -163,8 +163,8 @@ class AdapterRegistry(remoteAdapters: Map[(String, String), RemoteAdapter] = Map
     } else {
       rawSchemaKey.copy(name = "adapter_failures")
     }
-    val f = AdapterFailures(Instant.now(), vendor, vendorVersion, fs)
-    val br = BadRow(f, CP(cp), processor)
+    val f = Failure.AdapterFailures(Instant.now(), vendor, vendorVersion, fs)
+    val br = BadRow(f, cp.toBadRowCollectorPayload, processor)
     SelfDescribingData(schemaKey, br)
   }
 

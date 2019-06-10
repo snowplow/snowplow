@@ -21,10 +21,11 @@ import cats.effect.Clock
 import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
+import com.snowplowanalytics.snowplow.badrows.AdapterFailure
+import com.snowplowanalytics.snowplow.badrows.AdapterFailure.InputDataAdapterFailure
 import io.circe.Json
 
 import loaders.CollectorPayload
-import outputs._
 
 /** Version 1 of the Tracker Protocol is GET only. All data comes in on the querystring. */
 object Tp1Adapter extends Adapter {

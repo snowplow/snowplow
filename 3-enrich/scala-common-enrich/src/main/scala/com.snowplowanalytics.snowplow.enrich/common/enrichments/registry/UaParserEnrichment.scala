@@ -20,12 +20,13 @@ import cats.data.{EitherT, NonEmptyList, ValidatedNel}
 import cats.effect.Sync
 import cats.implicits._
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.EnrichmentFailureMessage._
 import io.circe._
 import io.circe.syntax._
 import ua_parser.Parser
 import ua_parser.Client
 
-import outputs._
 import utils.CirceUtils
 
 /** Companion object. Lets us create a UaParserEnrichment from a Json. */

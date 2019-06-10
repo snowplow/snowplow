@@ -23,6 +23,9 @@ import cats.implicits._
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core.SelfDescribingData
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.EnrichmentFailureMessage._
+import com.snowplowanalytics.snowplow.badrows.Payload._
 import com.snowplowanalytics.refererparser._
 import io.circe.Json
 import org.joda.time.DateTime
@@ -36,7 +39,7 @@ import enrichments.registry.apirequest.ApiRequestEnrichment
 import enrichments.registry.pii.PiiPseudonymizerEnrichment
 import enrichments.registry.sqlquery.SqlQueryEnrichment
 import enrichments.web.{PageEnrichments => WPE}
-import outputs._
+import outputs.EnrichedEvent
 import utils.{ConversionUtils => CU, JsonUtils => JU}
 import utils.MapTransformer._
 import utils.shredder.Shredder
@@ -258,7 +261,7 @@ object EnrichmentManager {
         y.toValidated,
         iabContext.toValidated
       ).mapN((_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _) => event)
-        .leftMap(nel => (nel, PartiallyEnrichedEvent(event)))
+        .leftMap(nel => (nel, EnrichedEvent.toPartiallyEnrichedEvent(event)))
     }
   }
 

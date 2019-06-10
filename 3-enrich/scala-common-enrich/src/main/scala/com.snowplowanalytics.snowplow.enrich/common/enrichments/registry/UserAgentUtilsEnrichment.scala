@@ -18,11 +18,11 @@ import cats.data.ValidatedNel
 import cats.syntax.either._
 import cats.syntax.option._
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.EnrichmentFailureMessage._
 import eu.bitwalker.useragentutils._
 import io.circe._
 import org.slf4j.LoggerFactory
-
-import outputs._
 
 object UserAgentUtilsEnrichmentConfig extends ParseableEnrichment {
   override val supportedSchema =

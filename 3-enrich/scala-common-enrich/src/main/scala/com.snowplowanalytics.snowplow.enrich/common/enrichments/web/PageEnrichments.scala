@@ -18,8 +18,9 @@ import java.net.URI
 
 import cats.syntax.either._
 import cats.syntax.option._
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.EnrichmentFailureMessage._
 
-import outputs._
 import utils.{ConversionUtils => CU}
 
 /** Holds enrichments related to the web page URL, and the document object contained in the page. */

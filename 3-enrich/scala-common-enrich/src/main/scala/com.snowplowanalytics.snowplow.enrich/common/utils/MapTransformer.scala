@@ -19,8 +19,7 @@ import cats.data.ValidatedNel
 import cats.instances.int._
 import cats.syntax.either._
 import cats.syntax.validated._
-
-import outputs._
+import com.snowplowanalytics.snowplow.badrows._
 
 /**
  * The problem we're trying to solve: converting maps to classes in Scala

@@ -14,12 +14,12 @@ package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 
 import cats.syntax.either._
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.EnrichmentFailureMessage._
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
-
-import outputs._
 
 class ExtractEventTypeSpec extends Specification with DataTables {
   def is = s2"""

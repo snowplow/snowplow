@@ -24,6 +24,8 @@ import com.snowplowanalytics.iglu.client.resolver.Resolver
 import com.snowplowanalytics.iglu.client.resolver.registries.Registry
 import com.snowplowanalytics.iglu.client.validator.CirceValidator
 import com.snowplowanalytics.iglu.core._
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.Payload.{CollectorPayload => _}
 import io.circe.Json
 import io.circe.literal._
 import io.circe.parser._
@@ -33,7 +35,7 @@ import org.specs2.Specification
 import org.specs2.matcher.ValidatedMatchers
 
 import loaders._
-import outputs._
+import outputs.EnrichedEvent
 import utils.Clock._
 
 class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatchers {

@@ -22,11 +22,13 @@ import cats.effect.Sync
 import cats.implicits._
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SelfDescribingData}
 import com.snowplowanalytics.lrumap._
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.EnrichmentFailureMessage._
 import io.circe._
 import io.circe.generic.auto._
 import io.circe.syntax._
 
-import outputs._
+import outputs.EnrichedEvent
 import utils.CirceUtils
 
 /** Lets us create an SqlQueryConf from a Json */
