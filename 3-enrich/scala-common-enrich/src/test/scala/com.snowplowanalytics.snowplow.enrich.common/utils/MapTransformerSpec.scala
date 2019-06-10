@@ -16,6 +16,7 @@ package utils
 import scala.beans.BeanProperty
 
 import cats.syntax.either._
+import com.snowplowanalytics.snowplow.badrows.EnrichmentStageIssue
 import org.apache.commons.lang3.builder.ToStringBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
 import org.specs2.matcher.ValidatedMatchers
@@ -23,7 +24,6 @@ import org.specs2.mutable.Specification
 
 import enrichments.{ClientEnrichments, MiscEnrichments}
 import MapTransformer._
-import outputs.EnrichmentStageIssue
 
 // Test Bean
 final class TargetBean {

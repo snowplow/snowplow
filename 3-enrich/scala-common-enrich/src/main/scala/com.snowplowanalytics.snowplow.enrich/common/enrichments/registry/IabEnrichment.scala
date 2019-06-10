@@ -22,12 +22,13 @@ import cats.effect.Sync
 import cats.implicits._
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
 import com.snowplowanalytics.iab.spidersandrobotsclient.IabClient
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.EnrichmentFailureMessage._
 import io.circe._
 import io.circe.generic.auto._
 import io.circe.syntax._
 import org.joda.time.DateTime
 
-import outputs._
 import utils.CirceUtils
 
 /** Companion object. Lets us create an IabEnrichment instance from a Json. */

@@ -22,9 +22,12 @@ import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core._
 import com.snowplowanalytics.iglu.core.circe.instances._
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.EnrichmentFailureMessage._
+import com.snowplowanalytics.snowplow.badrows.SchemaViolation._
 import io.circe.Json
 
-import outputs._
+import outputs.EnrichedEvent
 import utils.shredder.Shredder
 
 object SchemaEnrichment {

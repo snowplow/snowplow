@@ -21,13 +21,16 @@ import cats.implicits._
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core._
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.Failure._
+import com.snowplowanalytics.snowplow.badrows.Payload._
 import io.circe.Json
 import org.joda.time.DateTime
 
 import adapters.AdapterRegistry
 import enrichments.{EnrichmentManager, EnrichmentRegistry}
 import loaders.CollectorPayload
-import outputs._
+import outputs.EnrichedEvent
 
 /** Expresses the end-to-end event pipeline supported by the Scala Common Enrich project. */
 object EtlPipeline {

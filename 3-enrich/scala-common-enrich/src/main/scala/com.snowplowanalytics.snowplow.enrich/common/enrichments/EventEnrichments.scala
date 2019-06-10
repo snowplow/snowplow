@@ -19,10 +19,10 @@ import scala.util.control.NonFatal
 
 import cats.syntax.either._
 import cats.syntax.option._
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.EnrichmentFailureMessage._
 import org.joda.time.{DateTime, DateTimeZone, Period}
 import org.joda.time.format.DateTimeFormat
-
-import outputs._
 
 /** Holds the enrichments related to events. */
 object EventEnrichments {

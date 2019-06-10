@@ -17,6 +17,8 @@ import java.net.URI
 
 import cats.syntax.either._
 import cats.syntax.option._
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.EnrichmentFailureMessage._
 import org.scalacheck.Arbitrary._
 import org.specs2.{ScalaCheck, Specification}
 import org.specs2.mutable.{Specification => MutableSpecification}
@@ -24,7 +26,7 @@ import org.specs2.matcher.DataTables
 
 import outputs._
 
-class StringToUriSpec extends MutableSpecification with ValidationMatchers {
+class StringToUriSpec extends Specification with DataTables {
 
   /** Helper to generate URLs with `chars` at different places in the path and in the query string, doubled, tripled, etc. */
   private def generateUrlsWithChars(chars: String): List[String] = List(

@@ -18,13 +18,14 @@ import scala.util.control.NonFatal
 import cats.data.ValidatedNel
 import cats.implicits._
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.EnrichmentFailureMessage._
 import org.mozilla.javascript._
 import io.circe._
 import io.circe.parser._
 
 import outputs.EnrichedEvent
 import utils.{CirceUtils, ConversionUtils}
-import outputs._
 
 object JavascriptScriptEnrichment extends ParseableEnrichment {
   override val supportedSchema =

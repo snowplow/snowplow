@@ -14,10 +14,12 @@ package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
 import cats.data.NonEmptyList
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.CPFormatViolationMessage._
+import com.snowplowanalytics.snowplow.badrows.Failure.CPFormatViolation
+import com.snowplowanalytics.snowplow.badrows.Payload.RawPayload
 import org.specs2.matcher.ValidatedMatchers
 import org.specs2.mutable.Specification
-
-import outputs._
 
 class NdjsonLoaderSpec extends Specification with ValidatedMatchers {
 
@@ -40,7 +42,7 @@ class NdjsonLoaderSpec extends Specification with ValidatedMatchers {
       val line = List("""{"key":"value1"}""", """{"key":"value2"}""").mkString("\n")
       NdjsonLoader("com.abc/v1").toCP(line) must beInvalid.like {
         case NonEmptyList(
-            BadRow(CPFormatViolation(_, "ndjson", f), RawPayload(l), Processor.default),
+            BadRow(CPFormatViolation(_, "ndjson", f), RawPayload(l), Processor("sce", "1.0.0")),
             List()
             ) =>
           f must_== FallbackCPFormatViolationMessage("expected a single line, found 2")

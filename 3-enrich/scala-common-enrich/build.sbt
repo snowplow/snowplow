@@ -54,6 +54,7 @@ lazy val root = project
       Dependencies.Libraries.scalaj,
       Dependencies.Libraries.gatlingJsonpath,
       Dependencies.Libraries.scalaLruMap,
+      Dependencies.Libraries.badRows,
       // Thrift schemas
       Dependencies.Libraries.snowplowRawEvent,
       Dependencies.Libraries.collectorPayload,

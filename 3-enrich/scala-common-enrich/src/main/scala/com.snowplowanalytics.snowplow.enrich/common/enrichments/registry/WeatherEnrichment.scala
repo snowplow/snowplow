@@ -23,6 +23,8 @@ import cats.Monad
 import cats.data.{EitherT, NonEmptyList, ValidatedNel}
 import cats.implicits._
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.EnrichmentFailureMessage._
 import com.snowplowanalytics.weather.providers.openweather._
 import com.snowplowanalytics.weather.providers.openweather.responses._
 import io.circe._
@@ -30,7 +32,6 @@ import io.circe.generic.auto._
 import io.circe.syntax._
 import org.joda.time.{DateTime, DateTimeZone}
 
-import outputs._
 import utils.CirceUtils
 
 /** Companion object. Lets us create an WeatherEnrichment instance from a Json */

@@ -19,10 +19,10 @@ package sources
 
 import cats.Id
 import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.snowplow.badrows.Processor
 import com.snowplowanalytics.snowplow.enrich.common.adapters.AdapterRegistry
 import com.snowplowanalytics.snowplow.enrich.common.adapters.registry.RemoteAdapter
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
-import com.snowplowanalytics.snowplow.enrich.common.outputs.Processor
 import com.snowplowanalytics.snowplow.scalatracker.Tracker
 import io.circe.Json
 
@@ -40,7 +40,7 @@ class TestSource(
   adapterRegistry: AdapterRegistry,
   enrichmentRegistry: EnrichmentRegistry[Id],
   tracker: Option[Tracker[Id]]
-) extends Source(client, adapterRegistry, enrichmentRegistry, tracker, Processor.default, "") {
+) extends Source(client, adapterRegistry, enrichmentRegistry, tracker, Processor("sce", "1.0.0"), "") {
 
   override val MaxRecordSize = None
 

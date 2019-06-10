@@ -51,7 +51,6 @@ class ShredderSpec extends Specification {
     }
 
     // TODO: check actual contents (have already confirmed in REPL)
-    //println(Shredder.shred(event, SpecHelpers.client).value)
     Shredder.shred(event, SpecHelpers.client).value.toOption.get must have size (3)
   }
 }
