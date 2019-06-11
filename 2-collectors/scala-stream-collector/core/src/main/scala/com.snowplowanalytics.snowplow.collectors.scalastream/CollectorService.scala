@@ -293,7 +293,7 @@ class CollectorService(
           name    = config.name,
           value   = networkUserId,
           expires = Some(DateTime.now + config.expiration.toMillis),
-          domain  = cookieDomain(request, config.domains),
+          domain  = cookieDomain(request, config.domains, config.fallbackDomain),
           path    = Some("/")
         )
         `Set-Cookie`(responseCookie)
@@ -348,7 +348,7 @@ class CollectorService(
    * The Origin header may include multiple domains. The first matching domain is used.
    * If no match is found, the cookie domain is not set.
    */
-  def cookieDomain(request: HttpRequest, domains: Option[List[String]]): Option[String] = {
+  def cookieDomain(request: HttpRequest, domains: Option[List[String]], fallbackDomain: Option[String]): Option[String] = {
     domains match {
       case Some(domainList) =>
         request.headers.find {
@@ -372,11 +372,11 @@ class CollectorService(
                   case _ => false
                 }
                 domainToUse.flatMap { d => Some(toDomain(d)) }
-              case None => None
+              case None => fallbackDomain
             }
-          case _ => None
+          case _ => fallbackDomain
         }
-      case None => None
+      case None => fallbackDomain
     }
   }
 

@@ -77,6 +77,10 @@ collector {
     domains += ${?COLLECTOR_COOKIE_DOMAIN_1}
     domains += ${?COLLECTOR_COOKIE_DOMAIN_2}
     # ... more domains
+    # If specified, the fallback domain will be used if none of the Origin header hosts matches the list of
+    # cookie domains configured above. (For example, if there is no Origin header.)
+    fallbackDomain = "{{fallbackDomain}}"
+    fallbackDomain = ${?FALLBACK_DOMAIN}
   }
 
   # If you have a do not track cookie in place, the Scala Stream Collector can respect it by
