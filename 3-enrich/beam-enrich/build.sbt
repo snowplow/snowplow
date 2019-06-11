@@ -34,7 +34,7 @@ import Tests._
 lazy val commonSettings = Defaults.coreDefaultSettings ++ Seq(
   organization  := "com.snowplowanalytics",
   version       := "0.4.0",
-  scalaVersion  := "2.11.12",
+  scalaVersion  := "2.12.10",
   javacOptions  ++= Seq("-source", "1.8", "-target", "1.8"),
   scalacOptions ++= compilerOptions,
    scalacOptions in (Compile, console) ~= {
