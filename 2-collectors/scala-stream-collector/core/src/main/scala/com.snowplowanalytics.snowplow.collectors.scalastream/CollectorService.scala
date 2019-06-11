@@ -389,7 +389,7 @@ class CollectorService(
    * Parses the domain names supplied in the cookie config into regex.
    * Examples:
    * "domain.com"         -> "(domain\.com)"
-   * "*.domain.gov.co.uk" -> ".*(domain\.gov\.co\.uk)"
+   * "*.domain.gov.co.uk" -> ".*(\.domain\.gov\.co\.uk)"
    */
   def toRegex(cookieDomainConfig: String): String = {
     if (cookieDomainConfig.startsWith("*.")) {
@@ -404,7 +404,7 @@ class CollectorService(
   /**
     * Turns a domain regex into a valid domain name that can be inserted in the header.
     * For example:
-    * ".*(domain\.gov\.co\.uk)" -> "domain.gov.co.uk"
+    * ".*(\.domain\.gov\.co\.uk)" -> "domain.gov.co.uk"
     *
     */
   def toDomain(regex: String): String =
