@@ -64,14 +64,13 @@ object Enrich {
       client <- Client.parseDefault[Id](resolverJson).leftMap(_.toString).value
       registryJson <- parseEnrichmentRegistry(config.enrichments, client)
       confs <- EnrichmentRegistry.parse(registryJson, client, false).leftMap(_.toString).toEither
-      registry <- EnrichmentRegistry.build[Id](confs).value
-      _ <- if (emitPii(registry) && config.pii.isEmpty) {
+      _ <- if (emitPii(confs) && config.pii.isEmpty) {
         "A pii topic needs to be used in order to use the pii enrichment".asLeft
       } else {
         ().asRight
       }
     } yield ParsedEnrichConfig(
-      config.raw, config.enriched, config.bad, config.pii, resolverJson, registryJson, confs)
+      config.raw, config.enriched, config.bad, config.pii, resolverJson, confs)
 
     parsedConfig match {
       case Left(e) =>
@@ -162,13 +161,13 @@ object Enrich {
    * Turns a collection of byte arrays into a collection of either bad rows of enriched events.
    * @param raw collection of events
    * @param resolver Json representing the iglu resolver
-   * @param reigstry Json representing the enrichment registry
+   * @param enrichmentConfs list of enabled enrichment configuration
    * @param cachedFiles list of files to cache
    */
   private def enrichEvents(
     raw: SCollection[Array[Byte]],
     resolver: Json,
-    registry: Json,
+    enrichmentConfs: List[EnrichmentConf],
     cachedFiles: DistCache[List[Either[String, String]]]
   ): SCollection[Validated[List[String], EnrichedEvent]] =
     raw
@@ -277,9 +276,11 @@ object Enrich {
     sc: ScioContext,
     enrichmentConfs: List[EnrichmentConf]
   ): DistCache[List[Either[String, String]]] = {
-    val filesToCache = enrichmentConfs.map(_.filesToCache).flatten
-    // Path is not serializable
-    sc.distCache(filesToCache.map(_._1.toString)) { files =>
+    val filesToCache: List[(String, String)] = enrichmentConfs
+      .map(_.filesToCache)
+      .flatten
+      .map { case (uri, sl) => (uri.toString, sl) }
+    sc.distCache(filesToCache.map(_._1)) { files =>
       val symLinks = files.toList.zip(filesToCache.map(_._2))
         .map { case (file, symLink) => createSymLink(file, symLink) }
       symLinks.zip(files).foreach {
