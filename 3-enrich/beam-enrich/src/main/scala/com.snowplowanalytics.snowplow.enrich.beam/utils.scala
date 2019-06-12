@@ -35,6 +35,8 @@ import io.circe.Json
 import io.circe.syntax._
 import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.format.DateTimeFormat
+import com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.EnrichmentConf
+import com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.PiiPseudonymizerConf
 
 object utils {
 
@@ -85,8 +87,10 @@ object utils {
     )
 
   /** Determine if we have to emit pii transformation events. */
-  def emitPii(registry: EnrichmentRegistry[Id]): Boolean =
-    registry.piiPseudonymizer
+  def emitPii(confs: List[EnrichmentConf]): Boolean =
+    confs
+      .collect { case c: PiiPseudonymizerConf => c }
+      .headOption
       .map(_.emitIdentificationEvent)
       .getOrElse(false)
 
