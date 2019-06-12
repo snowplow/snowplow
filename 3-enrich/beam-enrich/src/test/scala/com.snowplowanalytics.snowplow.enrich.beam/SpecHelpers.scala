@@ -12,23 +12,22 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and
  * limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package beam
+package com.snowplowanalytics.snowplow.enrich.beam
 
-import scalaz._
-import Scalaz._
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
+import cats.Id
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.core._
+import com.snowplowanalytics.iglu.core.circe.CirceIgluCodecs._
+import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
+import io.circe.Json
+import io.circe.literal._
+import io.circe.syntax._
 
-import common.enrichments.EnrichmentRegistry
-import common.utils.JsonUtils
-import iglu.client.Resolver
+import utils._
 
 object SpecHelpers {
 
-  val resolverConfig = """
+  val resolverConfig = json"""
     {
       "schema": "iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-2",
       "data": {
@@ -45,15 +44,12 @@ object SpecHelpers {
     }
   """
 
-  implicit val resolver = (for {
-    json <- JsonUtils.extractJson("", resolverConfig)
-    resolver <- Resolver.parse(json).leftMap(_.toString)
-  } yield resolver).fold(
+  val client = Client.parseDefault[Id](resolverConfig).leftMap(_.toString).value.fold(
     e => throw new RuntimeException(e),
     r => r
   )
 
-  val enrichmentConfig = """
+  val enrichmentConfig = json"""
     {
       "schema": "iglu:com.snowplowanalytics.snowplow/anon_ip/jsonschema/1-0-0",
       "data": {
@@ -65,7 +61,7 @@ object SpecHelpers {
     }
   """
 
-  val ipLookupsEnrichmentConfig = """
+  val ipLookupsEnrichmentConfig = json"""
     {
       "schema": "iglu:com.snowplowanalytics.snowplow/ip_lookups/jsonschema/2-0-0",
       "data": {
@@ -82,15 +78,25 @@ object SpecHelpers {
     }
   """
 
+  val enrichmentsSchemaKey = SchemaKey(
+    "com.snowplowanalytics.snowplow",
+    "enrichments",
+    "jsonschema",
+    SchemaVer.Full(1, 0, 0)
+  )
 
-  val enrichmentRegistry = (for {
-    combinedJson <-
-      (("schema" -> "iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0") ~
-      ("data" -> List(parse(enrichmentConfig)))).success
-    registry <- EnrichmentRegistry.parse(combinedJson, false).leftMap(_.toList.mkString("\n"))
-  } yield registry).fold(
-    e => throw new RuntimeException(e),
+  val enrichmentsJson = SelfDescribingData(
+    enrichmentsSchemaKey,
+    Json.arr(enrichmentConfig, ipLookupsEnrichmentConfig)
+  )
+
+  val enrichmentConfs = EnrichmentRegistry.parse(enrichmentsJson.asJson, client, true).fold(
+    e => throw new RuntimeException(e.toList.mkString("\n")),
     r => r
   )
 
+  val enrichmentRegistry = EnrichmentRegistry.build(enrichmentConfs).fold(
+    e => throw new RuntimeException(e.toList.mkString("\n")),
+    r => r
+  )
 }

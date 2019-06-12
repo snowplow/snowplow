@@ -12,48 +12,43 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and
  * limitations there under.
  */
-package com.snowplowanalytics
-package snowplow.enrich
-package beam
+package com.snowplowanalytics.snowplow.enrich.beam
 
-import org.json4s._
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
+import com.snowplowanalytics.iglu.core.circe.CirceIgluCodecs._
+import io.circe.literal._
+import io.circe.syntax._
 import org.scalatest._
-import Matchers._
+import org.scalatest.Matchers._
 
 import singleton._
 
 class SingletonSpec extends FreeSpec {
   "the singleton object should" - {
-    "make a ResolverSingleton.get function available" - {
+    "make a ClientSingleton.get function available" - {
       "which throws if the resolver can't be parsed" in {
         // resolver is validated at launch time so this can't happen
-        a[RuntimeException] should be thrownBy ResolverSingleton.get(JString("a"))
+        a[RuntimeException] should be thrownBy ClientSingleton.get(json"""{}""")
       }
       "which builds and stores the resolver" in {
-        ResolverSingleton.get(parse(SpecHelpers.resolverConfig)) shouldEqual SpecHelpers.resolver
+        ClientSingleton.get(SpecHelpers.resolverConfig).resolver.repos shouldEqual
+          SpecHelpers.client.resolver.repos
       }
       "which retrieves the resolver afterwards" in {
-        ResolverSingleton.get(JString("a")) shouldEqual SpecHelpers.resolver
+        ClientSingleton.get(json"""{}""").resolver.repos shouldEqual
+          SpecHelpers.client.resolver.repos
       }
     }
     "make a EnrichmentRegistrySingleton.get function available" - {
-      import SpecHelpers.resolver
-      "which throws if the registry can't be parsed" in {
-        // registry is validated at launch time so this can't happen
-        a[RuntimeException] should be thrownBy
-          EnrichmentRegistrySingleton.get(JObject(List(("a", JString("a")))))
-      }
       "which builds and stores the registry" in {
-        val json =
-          ("schema" -> "iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0") ~
-          ("data" -> List(parse(SpecHelpers.enrichmentConfig)))
-        EnrichmentRegistrySingleton.get(json) shouldEqual SpecHelpers.enrichmentRegistry
+        val reg = EnrichmentRegistrySingleton.get(
+          SpecHelpers.enrichmentsJson.asJson, SpecHelpers.client)
+        reg.anonIp shouldBe defined
+        reg.ipLookups shouldBe defined
       }
       "which retrieves the registry afterwards" in {
-        EnrichmentRegistrySingleton.get(JObject(List(("a", JString("a"))))) shouldEqual
-          SpecHelpers.enrichmentRegistry
+        val reg = EnrichmentRegistrySingleton.get(json"""{}""", SpecHelpers.client)
+        reg.anonIp shouldBe defined
+        reg.ipLookups shouldBe defined
       }
     }
   }

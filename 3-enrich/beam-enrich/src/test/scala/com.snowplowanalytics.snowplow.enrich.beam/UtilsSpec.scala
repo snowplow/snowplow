@@ -12,19 +12,19 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and
  * limitations there under.
  */
-package com.snowplowanalytics
-package snowplow.enrich
-package beam
+package com.snowplowanalytics.snowplow.enrich.beam
 
-import java.net.URI
 import java.nio.file.{Files, Paths}
+import java.time.Instant
 
+import com.snowplowanalytics.iglu.core.SelfDescribingData
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.CPFormatViolationMessage._
+import com.snowplowanalytics.snowplow.badrows.Failure.{CPFormatViolation, SizeViolation}
+import com.snowplowanalytics.snowplow.badrows.Payload.RawPayload
+import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
 import org.scalatest._
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
-import scalaz._
 
-import common.outputs.{EnrichedEvent, BadRow}
 import utils._
 
 class UtilsSpec extends FreeSpec with Matchers {
@@ -56,15 +56,6 @@ class UtilsSpec extends FreeSpec with Matchers {
         f.delete
       }
     }
-    "make a getFilesToCache function available" - {
-      "which sends back the files that need caching" in {
-        val res = parse(SpecHelpers.resolverConfig)
-        val reg = (("schema" -> "iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0") ~
-          ("data" -> List(parse(SpecHelpers.ipLookupsEnrichmentConfig))))
-        getFilesToCache(res, reg) should contain only (
-          (new URI("http://acme.com/GeoLite2-City.mmdb"), "./ip_geo"))
-      }
-    }
     "make a getEnrichedEventMetrics function available" - {
       "which sends back vendor and tracker metrics" in {
         val event = {
@@ -78,31 +69,64 @@ class UtilsSpec extends FreeSpec with Matchers {
     }
     "make a getStringSize function available" - {
       "which sends back the size of a string in bytes" in {
-        getStringSize("a" * 10) shouldEqual 10
+        getSize("a" * 10) shouldEqual 10
       }
     }
     "make a resizeBadRow function available" - {
       "which leaves the bad row as is if it doesn't exceed the max size" in {
-        val badRow = BadRow("abc", NonEmptyList("error"))
-        resizeBadRow(badRow, 10) shouldEqual badRow
+        val badRow = SelfDescribingData[BadRow](
+          oversizedBadRow,
+          BadRow(
+            CPFormatViolation(
+              Instant.ofEpochSecond(12),
+              "tsv",
+              FallbackCPFormatViolationMessage("ah")
+            ),
+            RawPayload("ah"),
+            Processor("be", "1.0.0")
+          )
+        )
+        resizeBadRow(badRow, 500, Processor("be", "1.0.0")) shouldEqual badRow
       }
       "which truncates the event in the bad row as is if it exceeds the max size" in {
-        val badRow = BadRow("a" * 100, NonEmptyList("error"))
-        val resizedBadRow = resizeBadRow(badRow, 40)
-        resizedBadRow.line shouldEqual "a"
-        resizedBadRow.errors.map(_.getMessage) shouldEqual NonEmptyList(
-          "Size of bad row (100) is greater than allowed maximum size (40)",
-          "error"
+        val original = SelfDescribingData[BadRow](
+          oversizedBadRow,
+          BadRow(
+            CPFormatViolation(
+              Instant.ofEpochSecond(12),
+              "tsv",
+              FallbackCPFormatViolationMessage("ah")
+            ),
+            RawPayload("ah"),
+            Processor("be", "1.0.0")
+          )
         )
+        val res = resizeBadRow(original, 200, Processor("be", "1.0.0"))
+        res.schema shouldEqual oversizedBadRow
+        res.data.failure shouldBe a[SizeViolation]
+        val f = res.data.failure.asInstanceOf[SizeViolation]
+        f.actualSizeBytes shouldEqual 350
+        f.maximumAllowedSizeBytes shouldEqual 200
+        f.expectation shouldEqual "bad row exceeded the maximum size"
+        resBr.payload shouldBe a[RawPayload]
+        val p = resBr.payload.asInstanceOf[RawPayload]
+        p.line shouldEqual "{\"schema\":\"iglu:com."
+        resBr.processor shouldEqual Processor("be", "1.0.0")
       }
     }
     "make a resizeEnrichedEvent function available" - {
       "which truncates a formatted enriched event and wrap it in a bad row" in {
-        val badRow = resizeEnrichedEvent("a" * 100, 100, 400)
-        badRow.line shouldEqual "a" * 10
-        badRow.errors.map(_.getMessage) shouldEqual NonEmptyList(
-          "Size of enriched event (100) is greater than allowed maximum (400)"
-        )
+        val res = resizeEnrichedEvent("a" * 100, 100, 400, Processor("be", "1.0.0"))
+        res.schema shouldEqual oversizedBadRow
+        res.data.failure shouldBe a[SizeViolation]
+        val f = res.data.failure.asInstanceOf[SizeViolation]
+        f.actualSizeBytes shouldEqual 100
+        f.maximumAllowedSizeBytes shouldEqual 400
+        f.expectation shouldEqual "event passed enrichment but exceeded the maximum allowed size as a result"
+        resBr.payload shouldBe a[RawPayload]
+        val p = resBr.payload.asInstanceOf[RawPayload]
+        p.line shouldEqual ("a" * 40)
+        resBr.processor shouldEqual Processor("be", "1.0.0")
       }
     }
     "make a tabSeparatedEnrichedEvent function available" - {
