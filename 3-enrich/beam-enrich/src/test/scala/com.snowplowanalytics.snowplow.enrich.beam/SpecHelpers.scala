@@ -61,23 +61,6 @@ object SpecHelpers {
     }
   """
 
-  val ipLookupsEnrichmentConfig = json"""
-    {
-      "schema": "iglu:com.snowplowanalytics.snowplow/ip_lookups/jsonschema/2-0-0",
-      "data": {
-        "name": "ip_lookups",
-        "vendor": "com.snowplowanalytics.snowplow",
-        "enabled": true,
-        "parameters": {
-          "geo": {
-          "database": "GeoLite2-City.mmdb",
-          "uri": "http://acme.com"
-          }
-        }
-      }
-    }
-  """
-
   val enrichmentsSchemaKey = SchemaKey(
     "com.snowplowanalytics.snowplow",
     "enrichments",
@@ -87,7 +70,7 @@ object SpecHelpers {
 
   val enrichmentsJson = SelfDescribingData(
     enrichmentsSchemaKey,
-    Json.arr(enrichmentConfig, ipLookupsEnrichmentConfig)
+    Json.arr(enrichmentConfig)
   )
 
   val enrichmentConfs = EnrichmentRegistry.parse(enrichmentsJson.asJson, client, true).fold(
