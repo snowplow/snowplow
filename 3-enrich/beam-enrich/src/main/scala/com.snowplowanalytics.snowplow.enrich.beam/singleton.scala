@@ -18,9 +18,8 @@ import cats.Id
 import cats.syntax.either._
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
+import com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.EnrichmentConf
 import io.circe.Json
-
-import utils._
 
 /** Singletons needed for unserializable classes. */
 object singleton {
@@ -49,22 +48,18 @@ object singleton {
     @volatile private var instance: EnrichmentRegistry[Id] = _
     /**
      * Retrieve or build an instance of EnrichmentRegistry.
-     * @param registry Json representing the enrichment registry
+     * @param enrichmentConfs list of enabled enrichment configuration
      * @param client iglu client
      */
     def get(
-      registry: Json,
+      enrichmentConfs: List[EnrichmentConf],
       client: Client[Id, Json]
     ): EnrichmentRegistry[Id] = {
       if (instance == null) {
         synchronized {
           if (instance == null) {
-            instance = (for {
-              confs <- EnrichmentRegistry.parse[Id](registry, client, false)
-                .leftMap(_.toString)
-                .toEither
-              reg <- EnrichmentRegistry.build[Id](confs).value
-            } yield reg).valueOr(e => throw new RuntimeException(e.toString))
+            instance = EnrichmentRegistry.build[Id](enrichmentConfs).value
+              .valueOr(e => throw new RuntimeException(e.toString))
           }
         }
       }
