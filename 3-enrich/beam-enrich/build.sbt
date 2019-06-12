@@ -68,9 +68,10 @@ dockerUpdateLatest := true
 
 lazy val scioVersion = "0.6.0"
 lazy val beamVersion = "2.5.0"
-lazy val sceVersion = "0.38.0"
+lazy val sceVersion = "1.0.0"
 lazy val scalaMacrosVersion = "2.1.0"
 lazy val slf4jVersion = "1.7.25"
+lazy val circeVersion = "0.11.1"
 lazy val scalatestVersion = "3.0.5"
 
 lazy val root: Project = Project(
@@ -88,7 +89,8 @@ lazy val root: Project = Project(
     "org.slf4j" % "slf4j-simple" % slf4jVersion
   ) ++ Seq(
     "com.spotify" %% "scio-test" % scioVersion,
-    "org.scalatest" %% "scalatest" % scalatestVersion
+    "org.scalatest" %% "scalatest" % scalatestVersion,
+    "io.circe" %% "circe-literal" % circeVersion
   ).map(_ % "test")
 ).enablePlugins(JavaAppPackaging, DockerPlugin, BuildInfoPlugin)
 

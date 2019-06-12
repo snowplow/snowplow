@@ -16,12 +16,13 @@ package com.snowplowanalytics.snowplow.enrich.beam
 
 import java.nio.file.Files
 
+import com.snowplowanalytics.iglu.core.SelfDescribingData
+import com.snowplowanalytics.iglu.core.circe.CirceIgluCodecs._
 import com.spotify.scio.Args
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
+import io.circe.Json
+import io.circe.syntax._
 import org.scalatest._
-import Matchers._
-import scalaz._
+import org.scalatest.Matchers._
 
 import config._
 import SpecHelpers._
@@ -30,7 +31,7 @@ class ConfigSpec extends FreeSpec {
   "the config object should" - {
     "make an EnrichConfig smart ctor available" - {
       "which fails if --job-name is not present" in {
-        EnrichConfig(Args(Array.empty)) shouldEqual Failure(
+        EnrichConfig(Args(Array.empty)) shouldEqual Left(
           "Missing `job-name` argument\n" +
           "Missing `raw` argument\n" +
           "Missing `enriched` argument\n" +
@@ -39,7 +40,7 @@ class ConfigSpec extends FreeSpec {
         )
       }
       "which fails if --raw is not present" in {
-        EnrichConfig(Args(Array("--job-name=j"))) shouldEqual Failure(
+        EnrichConfig(Args(Array("--job-name=j"))) shouldEqual Left(
           "Missing `raw` argument\n" +
           "Missing `enriched` argument\n" +
           "Missing `bad` argument\n" +
@@ -47,63 +48,62 @@ class ConfigSpec extends FreeSpec {
         )
       }
       "which fails if --enriched is not present" in {
-        EnrichConfig(Args(Array("--job-name=j", "--raw=i"))) shouldEqual Failure(
+        EnrichConfig(Args(Array("--job-name=j", "--raw=i"))) shouldEqual Left(
           "Missing `enriched` argument\n" +
           "Missing `bad` argument\n" +
           "Missing `resolver` argument"
         )
       }
       "which fails if --bad is not present" in {
-        EnrichConfig(Args(Array("--job-name=j", "--raw=i", "--enriched=o"))) shouldEqual Failure(
+        EnrichConfig(Args(Array("--job-name=j", "--raw=i", "--enriched=o"))) shouldEqual Left(
           "Missing `bad` argument\n" +
           "Missing `resolver` argument"
         )
       }
       "which fails if --resolver is not present" in {
         EnrichConfig(Args(Array("--job-name=j", "--raw=i", "--enriched=o", "--bad=b"))) shouldEqual
-          Failure("Missing `resolver` argument")
+          Left("Missing `resolver` argument")
       }
       "which succeeds otherwise" in {
         EnrichConfig(Args(
           Array("--job-name=j", "--raw=i", "--enriched=o", "--bad=b", "--resolver=r"))) shouldEqual
-          Success(EnrichConfig("j", "i", "o", "b", None, "r", None))
+          Right(EnrichConfig("j", "i", "o", "b", None, "r", None))
       }
       "which succeeds if --enrichments is present" in {
         val args = Args(Array(
           "--job-name=j", "--raw=i", "--enriched=o", "--bad=b", "--resolver=r", "--enrichments=e"))
-        EnrichConfig(args) shouldEqual Success(EnrichConfig("j", "i", "o", "b", None, "r", Some("e")))
+        EnrichConfig(args) shouldEqual Right(EnrichConfig("j", "i", "o", "b", None, "r", Some("e")))
       }
       "which succeeds if --pii is present" in {
         val args = Args(Array(
           "--job-name=j", "--raw=i", "--enriched=o", "--bad=b", "--pii=p", "--resolver=r"))
-        EnrichConfig(args) shouldEqual Success(EnrichConfig("j", "i", "o", "b", Some("p"), "r", None))
+        EnrichConfig(args) shouldEqual Right(EnrichConfig("j", "i", "o", "b", Some("p"), "r", None))
       }
     }
 
     "make a parseResolver function available" - {
       "which fails if there is no resolver file" in {
         parseResolver("doesnt-exist") shouldEqual
-          Failure("Iglu resolver configuration file `doesnt-exist` does not exist")
+          Left("Iglu resolver configuration file `doesnt-exist` does not exist")
       }
       "which fails if the resolver file is not json" in {
         val path = writeToFile("not-json", "not-json")
         parseResolver(path) match {
-          case Failure(e) => e should startWith("Field []: invalid JSON [not-json]")
+          case Left(e) => e shouldEqual "invalid json: expected null got 'not-js...' (line 1, column 1)"
           case _ => fail()
         }
       }
       "which fails if it's not a resolver" in {
         val path = writeToFile("json", """{"a":2}""")
         parseResolver(path) match {
-          case Failure(e) =>
-            e should startWith("error: Resolver configuration failed JSON Schema validation")
+          case Left(e) => e shouldEqual "schema key is not available"
           case _ => fail()
         }
       }
       "which succeeds if it's a resolver" in {
-        val path = writeToFile("resolver", resolverConfig)
+        val path = writeToFile("resolver", resolverConfig.noSpaces)
         parseResolver(path) match {
-          case Success(_) => succeed
+          case Right(_) => succeed
           case _ => fail()
         }
       }
@@ -111,35 +111,39 @@ class ConfigSpec extends FreeSpec {
 
     "make a parseEnrichmentRegistry function available" - {
       "which fails if there is no enrichments dir" in {
-        parseEnrichmentRegistry(Some("doesnt-exist")) shouldEqual
-          Failure("Enrichment directory `doesnt-exist` does not exist")
+        parseEnrichmentRegistry(Some("doesnt-exist"), SpecHelpers.client) shouldEqual
+          Left("Enrichment directory `doesnt-exist` does not exist")
       }
       "which fails if the contents of the enrichment dir are not json" in {
         val path = writeToFile("not-json", "not-json", "not-json")
-        parseEnrichmentRegistry(Some(path)) match {
-          case Failure(e) => e should startWith("Field []: invalid JSON [not-json]")
+        parseEnrichmentRegistry(Some(path), SpecHelpers.client) match {
+          case Left(e) => e shouldEqual "invalid json: expected null got 'not-js...' (line 1, column 1)"
           case _ => fail()
         }
       }
       "which fails if the contents of the enrichment dir are not enrichments" in {
         val path = writeToFile("json", "json", """{"a":2}""")
-        parseEnrichmentRegistry(Some(path)) match {
-          case Failure(e) =>
-            e should startWith("error: NonEmptyList(error: object instance has properties")
+        parseEnrichmentRegistry(Some(path), SpecHelpers.client) match {
+          case Left(e) =>
+            e shouldEqual """{"error":"ValidationError","dataReports":[{"message":"$[0].schema: is missing but it is required","path":"$[0]","keyword":"required","targets":["schema"]},{"message":"$[0].data: is missing but it is required","path":"$[0]","keyword":"required","targets":["data"]},{"message":"$[0].a: is not defined in the schema and the schema does not allow additional properties","path":"$[0]","keyword":"additionalProperties","targets":["a"]}]}"""
           case _ => fail()
         }
       }
       "which succeeds if the contents of the enrichment dir are enrichments" in {
-        val path = writeToFile("enrichments", "enrichments", enrichmentConfig)
-        parseEnrichmentRegistry(Some(path)) shouldEqual Success(
-          ("schema" -> "iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0") ~
-          ("data" -> List(parse(enrichmentConfig)))
+        val path = writeToFile("enrichments", "enrichments", enrichmentConfig.noSpaces)
+        parseEnrichmentRegistry(Some(path), SpecHelpers.client) shouldEqual Right(
+          SelfDescribingData(
+            SpecHelpers.enrichmentsSchemaKey,
+            Json.arr(enrichmentConfig)
+          ).asJson
         )
       }
       "which succeeds if no enrichments dir is given" in {
-        parseEnrichmentRegistry(None) shouldEqual Success(
-          ("schema" -> "iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0") ~
-          ("data" -> List.empty[String])
+        parseEnrichmentRegistry(None, SpecHelpers.client) shouldEqual Right(
+          SelfDescribingData(
+            SpecHelpers.enrichmentsSchemaKey,
+            Json.arr()
+          ).asJson
         )
       }
     }

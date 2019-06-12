@@ -12,31 +12,28 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and
  * limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package beam
+package com.snowplowanalytics.snowplow.enrich.beam
 
-import java.nio.charset.StandardCharsets.UTF_8
-
+import cats.Id
+import cats.data.Validated
+import cats.implicits._
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.enrich.common.EtlPipeline
+import com.snowplowanalytics.snowplow.enrich.common.adapters.AdapterRegistry
+import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
+import com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.EnrichmentConf
+import com.snowplowanalytics.snowplow.enrich.common.loaders.ThriftLoader
+import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
 import com.spotify.scio._
 import com.spotify.scio.pubsub.PubSubAdmin
 import com.spotify.scio.values.{DistCache, SCollection}
+import _root_.io.circe.Json
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubOptions
-import org.apache.commons.codec.binary.Base64
 import org.joda.time.DateTime
-import org.json4s.{JObject, JValue}
 import org.slf4j.LoggerFactory
-import scalaz._
-import Scalaz._
 
-import common.EtlPipeline
-import common.adapters.AdapterRegistry
-import common.enrichments.EnrichmentRegistry
-import common.loaders.ThriftLoader
-import common.outputs.{EnrichedEvent, BadRow}
 import config._
-import iglu.client.Resolver
 import singleton._
 import utils._
 
@@ -53,6 +50,8 @@ object Enrich {
   val timeToEnrichDistribution =
     ScioMetrics.distribution(MetricsNamespace, "time_to_enrich_ms")
 
+  val processor = Processor(generated.BuildInfo.name, generated.BuildInfo.version)
+
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     val parsedConfig = for {
@@ -60,24 +59,25 @@ object Enrich {
       _ = sc.setJobName(config.jobName)
       _ <- checkTopicExists(sc, config.enriched)
       _ <- checkTopicExists(sc, config.bad)
-      _ <- config.pii.map(checkTopicExists(sc, _)).getOrElse(().success)
+      _ <- config.pii.map(checkTopicExists(sc, _)).getOrElse(().asRight)
       resolverJson <- parseResolver(config.resolver)
-      resolver <- Resolver.parse(resolverJson).leftMap(_.toList.mkString("\n"))
-      registryJson <- parseEnrichmentRegistry(config.enrichments)(resolver)
-      registry <- EnrichmentRegistry.parse(registryJson, false)(resolver).leftMap(_.toList.mkString("\n"))
+      client <- Client.parseDefault[Id](resolverJson).leftMap(_.toString).value
+      registryJson <- parseEnrichmentRegistry(config.enrichments, client)
+      confs <- EnrichmentRegistry.parse(registryJson, client, false).leftMap(_.toString).toEither
+      registry <- EnrichmentRegistry.build[Id](confs).value
       _ <- if (emitPii(registry) && config.pii.isEmpty) {
-        "A pii topic needs to be used in order to use the pii enrichment".failure
+        "A pii topic needs to be used in order to use the pii enrichment".asLeft
       } else {
-        ().success
+        ().asRight
       }
     } yield ParsedEnrichConfig(
-      config.raw, config.enriched, config.bad, config.pii, resolverJson, registryJson)
+      config.raw, config.enriched, config.bad, config.pii, resolverJson, registryJson, confs)
 
     parsedConfig match {
-      case Failure(e) =>
+      case Left(e) =>
         System.err.println(e)
         System.exit(1)
-      case Success(config) =>
+      case Right(config) =>
         run(sc, config)
         sc.close()
     }
@@ -85,64 +85,108 @@ object Enrich {
 
   def run(sc: ScioContext, config: ParsedEnrichConfig): Unit = {
     val cachedFiles: DistCache[List[Either[String, String]]] =
-      buildDistCache(sc, config.resolver, config.enrichmentRegistry)
+      buildDistCache(sc, config.enrichmentConfs)
 
-    val raw: SCollection[Array[Byte]] = sc.pubsubSubscription(config.raw).withName("raw")
-    val enriched: SCollection[Validation[BadRow, EnrichedEvent]] =
-      enrichEvents(raw, config.resolver, config.enrichmentRegistry, cachedFiles)
+    val raw: SCollection[Array[Byte]] =
+      sc.withName("raw-from-pubsub").pubsubSubscription[Array[Byte]](config.raw)
 
-    val (successes, failures) = enriched.partition(_.isSuccess)
-    val (tooBigSuccesses, properlySizedSuccesses) = formatEnrichedEvents(successes)
-    properlySizedSuccesses.withName("properly-sized-enriched-successes")
-      .map(_._1).withName("enriched-good")
-      .saveAsPubsub(config.enriched)
+    val enriched: SCollection[Validated[List[String], EnrichedEvent]] =
+      enrichEvents(raw, config.resolver, config.enrichmentConfs, cachedFiles)
 
-    val piis = generatePiiEvents(successes, config.resolver, config.enrichmentRegistry)
-    (piis |@| config.pii) { (piis, pii) =>
-      val properlySizedPiis = piis._2
-      properlySizedPiis.withName("properly-sized-pii-successes")
-        .map(_._1).withName("pii-good")
-        .saveAsPubsub(pii)
+    val (failures, successes): (SCollection[String], SCollection[EnrichedEvent]) = {
+      val enrichedPartitioned = enriched.withName("split-enriched-good-bad").partition(_.isValid)
+
+      val successes = enrichedPartitioned._1
+        .withName("get-enriched-good")
+        .collect { case Validated.Valid(enriched) => enriched }
+
+      val failures = enrichedPartitioned._2
+        .withName("get-enriched-bad")
+        .collect { case Validated.Invalid(badRows) => badRows.toList }
+        .withName("flatten-bad-rows")
+        .flatten
+        .withName("resize-bad-rows")
+        .map(resizeBadRow(_, MaxRecordSize, processor))
+
+      (failures, successes)
     }
 
-    val failureCollection: SCollection[BadRow] =
-      failures.collect { case Failure(badRow) => resizeBadRow(badRow, MaxRecordSize) }
-        .withName("bad-rows") ++
-      tooBigSuccesses.withName("oversized-enriched-successes")
-        .map { case (event, size) => resizeEnrichedEvent(event, size, MaxRecordSize) } ++
-      (piis |@| config.pii) { (piis, pii) =>
-        val tooBigPiis = piis._1
-        tooBigPiis.withName("oversized-pii-successes")
-          .map { case (event, size) => resizeEnrichedEvent(event, size, MaxRecordSize) }
-      }.getOrElse(sc.parallelize(List.empty))
-    failureCollection.withName("all-bad-rows")
-      .map(_.toCompactJson).withName("enriched-bad")
+    val (tooBigSuccesses, properlySizedSuccesses) = formatEnrichedEvents(successes)
+    properlySizedSuccesses
+      .withName("get-properly-sized-enriched")
+      .map(_._1)
+      .withName("write-enriched-to-pubsub")
+      .saveAsPubsub(config.enriched)
+
+    val resizedEnriched: SCollection[String] = tooBigSuccesses
+      .withName("resize-oversized-enriched")
+      .map {
+        case (event, size) => resizeEnrichedEvent(event, size, MaxRecordSize, processor)
+      }
+
+    val piis = generatePiiEvents(successes, config.enrichmentConfs)
+
+    val allResized: SCollection[String] = (piis, config.pii) match {
+      case (Some((tooBigPiis, properlySizedPiis)), Some(topicPii)) =>
+        properlySizedPiis
+          .withName("get-properly-sized-pii")
+          .map(_._1)
+          .withName("write-pii-to-pubsub")
+          .saveAsPubsub(topicPii)
+
+        tooBigPiis
+          .withName("resize-oversized-pii")
+          .map {
+            case (event, size) =>
+              resizeEnrichedEvent(event, size, MaxRecordSize, processor)
+          }
+          .withName("join-bad-resized")
+          .union(resizedEnriched)
+
+      case _ => resizedEnriched
+    }
+
+    val allBadRows: SCollection[String] =
+      allResized
+        .withName("join-bad-all")
+        .union(failures)
+
+    allBadRows
+      .withName("write-bad-rows-to-pubsub")
       .saveAsPubsub(config.bad)
+
+    ()
   }
 
   /**
    * Turns a collection of byte arrays into a collection of either bad rows of enriched events.
    * @param raw collection of events
-   * @param resolver JValue needed to build the resolver
-   * @param enrichmentRegistry JObject needed to build the resolver
+   * @param resolver Json representing the iglu resolver
+   * @param reigstry Json representing the enrichment registry
    * @param cachedFiles list of files to cache
    */
   private def enrichEvents(
     raw: SCollection[Array[Byte]],
-    resolver: JValue,
-    enrichmentRegistry: JObject,
+    resolver: Json,
+    registry: Json,
     cachedFiles: DistCache[List[Either[String, String]]]
-  ): SCollection[Validation[BadRow, EnrichedEvent]]= raw
-    .map { rawEvent =>
-      cachedFiles()
-      implicit val r = ResolverSingleton.get(resolver)
-      val (enriched, time) = timeMs {
-        enrich(rawEvent, EnrichmentRegistrySingleton.get(enrichmentRegistry))
+  ): SCollection[Validated[List[String], EnrichedEvent]] =
+    raw
+      .withName("enrich")
+      .map { rawEvent =>
+        cachedFiles()
+        val (enriched, time) = timeMs {
+          enrich(
+            rawEvent,
+            EnrichmentRegistrySingleton.get(enrichmentConfs),
+            ClientSingleton.get(resolver)
+          )
+        }
+        timeToEnrichDistribution.update(time)
+        enriched
       }
-      timeToEnrichDistribution.update(time)
-      enriched
-    }.withName("enriched")
-    .flatten.withName("enriched-flattened")
+      .withName("flatten-enriched")
+      .flatten
 
   /**
    * Turns successfully enriched events into TSV partitioned by whether or no they exceed the
@@ -151,42 +195,45 @@ object Enrich {
    * @return a collection of properly-sized enriched events and another of oversized ones
    */
   private def formatEnrichedEvents(
-    enriched: SCollection[Validation[BadRow, EnrichedEvent]]
-  ): (SCollection[(String, Int)], SCollection[(String, Int)]) = enriched
-    .collect { case Success(enrichedEvent) =>
-      getEnrichedEventMetrics(enrichedEvent)
-        .foreach(ScioMetrics.counter(MetricsNamespace, _).inc())
-      val formattedEnrichedEvent = tabSeparatedEnrichedEvent(enrichedEvent)
-      val size = getStringSize(formattedEnrichedEvent)
-      enrichedEventSizeDistribution.update(size.toLong)
-      (formattedEnrichedEvent, size)
-    }.withName("enriched-successes")
-    .partition(_._2 >= MaxRecordSize)
+    enriched: SCollection[EnrichedEvent]
+  ): (SCollection[(String, Int)], SCollection[(String, Int)]) =
+    enriched
+      .withName("format-enriched")
+      .map { enrichedEvent =>
+        getEnrichedEventMetrics(enrichedEvent)
+          .foreach(ScioMetrics.counter(MetricsNamespace, _).inc())
+        val formattedEnrichedEvent = tabSeparatedEnrichedEvent(enrichedEvent)
+        val size = getSize(formattedEnrichedEvent)
+        enrichedEventSizeDistribution.update(size.toLong)
+        (formattedEnrichedEvent, size)
+      }
+      .withName("split-oversized")
+      .partition(_._2 >= MaxRecordSize)
 
   /**
    * Generates PII transformation events depending on the configuration of the PII enrichment.
    * @param enriched collection of events that went through the enrichment phase
-   * @param resolver JValue needed to build the resolver
-   * @param enrichmentRegistry JObject needed to build the resolver
+   * @param resolver Json representing the iglu resolver
+   * @param reigstry Json representing the enrichment registry
    * @return a collection of properly-sized enriched events and another of oversized ones wrapped
    * in an option depending on whether the PII enrichment is configured to emit PII transformation
    * events
    */
   private def generatePiiEvents(
-    enriched: SCollection[Validation[BadRow, EnrichedEvent]],
-    resolver: JValue,
-    enrichmentRegistry: JObject
-  ): Option[(SCollection[(String, Int)], SCollection[(String, Int)])] = {
-    implicit val r = ResolverSingleton.get(resolver)
-    val registry = EnrichmentRegistrySingleton.get(enrichmentRegistry)
-    if (emitPii(registry)) {
+    enriched: SCollection[EnrichedEvent],
+    confs: List[EnrichmentConf]
+  ): Option[(SCollection[(String, Int)], SCollection[(String, Int)])] =
+    if (emitPii(confs)) {
       val (tooBigPiis, properlySizedPiis) = enriched
-        .collect { case Success(enrichedEvent) =>
+        .withName("generate-pii-events")
+        .map { enrichedEvent =>
           getPiiEvent(enrichedEvent)
             .map(tabSeparatedEnrichedEvent)
-            .map(formatted => (formatted, getStringSize(formatted)))
+            .map(formatted => (formatted, getSize(formatted)))
         }
-        .flatten.withName("pii-successes")
+        .withName("flatten-pii-events")
+        .flatten
+        .withName("split-oversized-pii")
         .partition(_._2 >= MaxRecordSize)
       Some((tooBigPiis, properlySizedPiis))
     } else {
@@ -199,21 +246,23 @@ object Enrich {
    * @param data serialized collector payload
    * @return a list of either [[EnrichedEvent]] or [[BadRow]]
    */
-  private def enrich(data: Array[Byte], enrichmentRegistry: EnrichmentRegistry)(
-      implicit r: Resolver): List[Validation[BadRow, EnrichedEvent]] = {
-    val collectorPayload = ThriftLoader.toCollectorPayload(data)
-    val processedEvents = EtlPipeline.processEvents(
+  private def enrich(
+    data: Array[Byte],
+    enrichmentRegistry: EnrichmentRegistry[Id],
+    client: Client[Id, Json]
+  ): List[Validated[List[String], EnrichedEvent]] = {
+    val processor = Processor(generated.BuildInfo.name, generated.BuildInfo.version)
+    val collectorPayload = ThriftLoader.toCollectorPayload(data, processor)
+    val enriched = EtlPipeline.processEvents(
       new AdapterRegistry,
       enrichmentRegistry,
-      s"beam-enrich-${generated.BuildInfo.version}",
+      client,
+      processor,
       new DateTime(System.currentTimeMillis),
       collectorPayload
     )
-    processedEvents.map {
-      case Success(enrichedEvent) => enrichedEvent.success
-      case Failure(errors) =>
-        val line = new String(Base64.encodeBase64(data), UTF_8)
-        BadRow(line, errors).failure
+    enriched.map {
+      _.leftMap(_.map(br => br.compact).toList)
     }
   }
 
@@ -221,16 +270,14 @@ object Enrich {
    * Builds a SCIO's [[DistCache]] which downloads the needed files and create the necessary
    * symlinks.
    * @param sc [[ScioContext]]
-   * @param resolver JValue needed to build the resolver
-   * @param enrichmentRegistry JObject needed to build the resolver
+   * @param enrichmentConfs list of enrichment configurations
    * @return a properly build [[DistCache]]
    */
   private def buildDistCache(
     sc: ScioContext,
-    resolver: JValue,
-    enrichmentRegistry: JObject
+    enrichmentConfs: List[EnrichmentConf]
   ): DistCache[List[Either[String, String]]] = {
-    val filesToCache = getFilesToCache(resolver, enrichmentRegistry)
+    val filesToCache = enrichmentConfs.map(_.filesToCache).flatten
     // Path is not serializable
     sc.distCache(filesToCache.map(_._1.toString)) { files =>
       val symLinks = files.toList.zip(filesToCache.map(_._2))
@@ -249,14 +296,14 @@ object Enrich {
    * @param topicName name of the topic to check for existence, projects/{project}/topics/{topic}
    * @return Right if it exists, left otherwise
    */
-  private def checkTopicExists(sc: ScioContext, topicName: String): Validation[String, Unit] =
+  private def checkTopicExists(sc: ScioContext, topicName: String): Either[String, Unit] =
     if (sc.isTest) {
-      ().success
+      ().asRight
     } else {
       PubSubAdmin.topic(sc.options.as(classOf[PubsubOptions]), topicName) match {
-        case scala.util.Success(_) => ().success
+        case scala.util.Success(_) => ().asRight
         case scala.util.Failure(e) =>
-          s"Output topic $topicName couldn't be retrieved: ${e.getMessage}".failure
+          s"Output topic $topicName couldn't be retrieved: ${e.getMessage}".asLeft
       }
     }
 }
