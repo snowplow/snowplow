@@ -96,7 +96,6 @@ object config {
     bad: String,
     pii: Option[String],
     resolver: Json,
-    registry: Json,
     enrichmentConfs: List[EnrichmentConf]
   )
 

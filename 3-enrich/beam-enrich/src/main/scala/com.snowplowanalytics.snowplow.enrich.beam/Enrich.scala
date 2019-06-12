@@ -31,7 +31,6 @@ import com.spotify.scio._
 import com.spotify.scio.pubsub.PubSubAdmin
 import com.spotify.scio.values.{DistCache, SCollection}
 import _root_.io.circe.Json
-import _root_.io.circe.generic.auto._
 import _root_.io.circe.syntax._
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubOptions
 import org.joda.time.DateTime
@@ -68,14 +67,13 @@ object Enrich {
       client <- Client.parseDefault[Id](resolverJson).leftMap(_.toString).value
       registryJson <- parseEnrichmentRegistry(config.enrichments, client)
       confs <- EnrichmentRegistry.parse(registryJson, client, false).leftMap(_.toString).toEither
-      registry <- EnrichmentRegistry.build[Id](confs).value
-      _ <- if (emitPii(registry) && config.pii.isEmpty) {
+      _ <- if (emitPii(confs) && config.pii.isEmpty) {
         "A pii topic needs to be used in order to use the pii enrichment".asLeft
       } else {
         ().asRight
       }
     } yield ParsedEnrichConfig(
-      config.raw, config.enriched, config.bad, config.pii, resolverJson, registryJson, confs)
+      config.raw, config.enriched, config.bad, config.pii, resolverJson, confs)
 
     parsedConfig match {
       case Left(e) =>
@@ -94,7 +92,7 @@ object Enrich {
     val raw: SCollection[Array[Byte]] =
       sc.pubsubSubscription[Array[Byte]](config.raw).withName("raw")
     val enriched: SCollection[ValidatedNel[Json, EnrichedEvent]] =
-      enrichEvents(raw, config.resolver, config.registry, cachedFiles)
+      enrichEvents(raw, config.resolver, config.enrichmentConfs, cachedFiles)
 
     val (successes, failures) = enriched.partition(_.isValid)
     val (tooBigSuccesses, properlySizedSuccesses) = formatEnrichedEvents(successes)
@@ -102,7 +100,7 @@ object Enrich {
       .map(_._1).withName("enriched-good")
       .saveAsPubsub(config.enriched)
 
-    val piis = generatePiiEvents(successes, config.resolver, config.registry)
+    val piis = generatePiiEvents(successes, config.enrichmentConfs)
     (piis, config.pii).mapN { (piis, pii) =>
       val properlySizedPiis = piis._2
       properlySizedPiis.withName("properly-sized-pii-successes")
@@ -133,22 +131,23 @@ object Enrich {
    * Turns a collection of byte arrays into a collection of either bad rows of enriched events.
    * @param raw collection of events
    * @param resolver Json representing the iglu resolver
-   * @param reigstry Json representing the enrichment registry
+   * @param enrichmentConfs list of enabled enrichment configuration
    * @param cachedFiles list of files to cache
    */
   private def enrichEvents(
     raw: SCollection[Array[Byte]],
     resolver: Json,
-    registry: Json,
+    enrichmentConfs: List[EnrichmentConf],
     cachedFiles: DistCache[List[Either[String, String]]]
   ): SCollection[ValidatedNel[Json, EnrichedEvent]] = raw
     .map { rawEvent =>
       cachedFiles()
+      val client = ClientSingleton.get(resolver)
       val (enriched, time) = timeMs {
         enrich(
           rawEvent,
-          EnrichmentRegistrySingleton.get(registry, ClientSingleton.get(resolver)),
-          ClientSingleton.get(resolver)
+          EnrichmentRegistrySingleton.get(enrichmentConfs, client),
+          client
         )
       }
       timeToEnrichDistribution.update(time)
@@ -188,12 +187,9 @@ object Enrich {
    */
   private def generatePiiEvents(
     enriched: SCollection[ValidatedNel[Json, EnrichedEvent]],
-    resolver: Json,
-    registry: Json
+    confs: List[EnrichmentConf]
   ): Option[(SCollection[(String, Int)], SCollection[(String, Int)])] = {
-    val client = ClientSingleton.get(resolver)
-    val reg = EnrichmentRegistrySingleton.get(registry, client)
-    if (emitPii(reg)) {
+    if (emitPii(confs)) {
       val (tooBigPiis, properlySizedPiis) = enriched
         .collect { case Validated.Valid(enrichedEvent) =>
           getPiiEvent(enrichedEvent)
@@ -241,9 +237,11 @@ object Enrich {
     sc: ScioContext,
     enrichmentConfs: List[EnrichmentConf]
   ): DistCache[List[Either[String, String]]] = {
-    val filesToCache = enrichmentConfs.map(_.filesToCache).flatten
-    // Path is not serializable
-    sc.distCache(filesToCache.map(_._1.toString)) { files =>
+    val filesToCache: List[(String, String)] = enrichmentConfs
+      .map(_.filesToCache)
+      .flatten
+      .map { case (uri, sl) => (uri.toString, sl) }
+    sc.distCache(filesToCache.map(_._1)) { files =>
       val symLinks = files.toList.zip(filesToCache.map(_._2))
         .map { case (file, symLink) => createSymLink(file, symLink) }
       symLinks.zip(files).foreach {
