@@ -67,7 +67,7 @@ maintainer in Docker := "Snowplow Analytics Ltd. <support@snowplowanalytics.com>
 daemonUser in Docker := "snowplow"
 
 lazy val scioVersion = "0.7.4"
-lazy val beamVersion = "2.5.0"
+lazy val beamVersion = "2.11.0"
 lazy val sceVersion = "1.0.0"
 lazy val scalaMacrosVersion = "2.1.0"
 lazy val slf4jVersion = "1.7.25"
