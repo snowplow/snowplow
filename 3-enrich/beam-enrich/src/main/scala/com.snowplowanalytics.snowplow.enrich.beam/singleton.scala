@@ -12,29 +12,30 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and
  * limitations there under.
  */
-package com.snowplowanalytics
-package snowplow.enrich
-package beam
+package com.snowplowanalytics.snowplow.enrich.beam
 
-import org.json4s._
+import cats.Id
+import cats.syntax.either._
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
+import io.circe.Json
 
-import common.enrichments.EnrichmentRegistry
-import iglu.client.Resolver
+import utils._
 
 /** Singletons needed for unserializable classes. */
 object singleton {
   /** Singleton for Resolver to maintain one per node. */
-  object ResolverSingleton {
-    @volatile private var instance: Resolver = _
+  object ClientSingleton {
+    @volatile private var instance: Client[Id, Json] = _
     /**
      * Retrieve or build an instance of a Resolver.
      * @param resolverJson JSON representing the Resolver
      */
-    def get(resolverJson: JValue): Resolver = {
+    def get(resolverJson: Json): Client[Id, Json] = {
       if (instance == null) {
         synchronized {
           if (instance == null) {
-            instance = Resolver.parse(resolverJson)
+            instance = Client.parseDefault[Id](resolverJson)
               .valueOr(e => throw new RuntimeException(e.toString))
           }
         }
@@ -45,17 +46,25 @@ object singleton {
 
   /** Singleton for EnrichmentRegistry. */
   object EnrichmentRegistrySingleton {
-    @volatile private var instance: EnrichmentRegistry = _
+    @volatile private var instance: EnrichmentRegistry[Id] = _
     /**
      * Retrieve or build an instance of EnrichmentRegistry.
-     * @param enrichmentsJson JSON representing the enrichments that need performing
+     * @param registry Json representing the enrichment registry
+     * @param client iglu client
      */
-    def get(enrichmentsJson: JObject)(implicit r: Resolver): EnrichmentRegistry = {
+    def get(
+      registry: Json,
+      client: Client[Id, Json]
+    ): EnrichmentRegistry[Id] = {
       if (instance == null) {
         synchronized {
           if (instance == null) {
-            instance = EnrichmentRegistry.parse(enrichmentsJson, false)
-              .valueOr(e => throw new RuntimeException(e.toString))
+            instance = (for {
+              confs <- EnrichmentRegistry.parse[Id](registry, client, false)
+                .leftMap(_.toString)
+                .toEither
+              reg <- EnrichmentRegistry.build[Id](confs).value
+            } yield reg).valueOr(e => throw new RuntimeException(e.toString))
           }
         }
       }
