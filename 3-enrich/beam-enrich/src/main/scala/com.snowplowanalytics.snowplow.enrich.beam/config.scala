@@ -21,19 +21,25 @@ import java.io.File
 
 import scala.io.Source
 
-// import order conflict with json4s
-import scalaz._
-import Scalaz._
+import cats.Id
+import cats.data.ValidatedNel
+import cats.implicits._
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.core._
+import com.snowplowanalytics.iglu.core.circe.CirceIgluCodecs._
+import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
+import com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.EnrichmentConf
+import com.snowplowanalytics.snowplow.enrich.common.utils.JsonUtils
 import com.spotify.scio.Args
-import org.json4s._
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
+import io.circe.Json
+import io.circe.syntax._
 
-import common.enrichments.EnrichmentRegistry
-import common.utils.JsonUtils
-import iglu.client.Resolver
+import utils._
 
 object config {
+  private type EitherS[A] = Either[String, A]
+  private type ValidatedNelS[A] = ValidatedNel[String, A]
+
   /** Case class holding the raw job configuration */
   final case class EnrichConfig(
     jobName: String,
@@ -46,11 +52,11 @@ object config {
   )
   object EnrichConfig {
     /** Smart constructor taking SCIO's [[Args]] */
-    def apply(args: Args): Validation[String, EnrichConfig] = for {
-      _ <- if (args.optional("help").isDefined) helpString(configurations).failure else "".success
+    def apply(args: Args): Either[String, EnrichConfig] = for {
+      _ <- if (args.optional("help").isDefined) helpString(configurations).asLeft else "".asRight
       l <- configurations.collect {
-        case RequiredConfiguration(key, _) => args.optional(key).toSuccess(s"Missing `$key` argument").toValidationNel
-      }.sequenceU.leftMap(_.toList.mkString("\n"))
+        case RequiredConfiguration(key, _) => args.optional(key).toValidNel(s"Missing `$key` argument")
+      }.sequence[ValidatedNelS, String].leftMap(_.toList.mkString("\n")).toEither
       List(jobName, raw, enriched, bad, resolver) = l
     } yield EnrichConfig(jobName, raw, enriched, bad, args.optional("pii"), resolver, args.optional("enrichments"))
 
@@ -89,8 +95,9 @@ object config {
     enriched: String,
     bad: String,
     pii: Option[String],
-    resolver: JValue,
-    enrichmentRegistry: JObject
+    resolver: Json,
+    registry: Json,
+    enrichmentConfs: List[EnrichmentConf]
   )
 
   /**
@@ -98,18 +105,17 @@ object config {
    * @param resolverPath path where the resolver is located
    * @return the parsed JValue if the parsing was successful
    */
-  def parseResolver(resolverPath: String): Validation[String, JValue] = for {
+  def parseResolver(resolverPath: String): Either[String, Json] = for {
     fileContent <- readResolverFile(resolverPath)
-    jsonNode <- JsonUtils.extractJson("", fileContent)
-    json = fromJsonNode(jsonNode)
-    _ <- Resolver.parse(json).leftMap(_.toList.mkString("\n"))
+    json <- JsonUtils.extractJson(fileContent)
+    _ <- Client.parseDefault[Id](json).leftMap(_.message).value
   } yield json
 
   /** Reads a resolver file at the specfied path. */
-  private def readResolverFile(path: String): Validation[String, String] = {
+  private def readResolverFile(path: String): Either[String, String] = {
     val file = new File(path)
-    if (file.exists) Source.fromFile(file).mkString.success
-    else s"Iglu resolver configuration file `$path` does not exist".failure
+    if (file.exists) Source.fromFile(file).mkString.asRight
+    else s"Iglu resolver configuration file `$path` does not exist".asLeft
   }
 
   /**
@@ -117,26 +123,31 @@ object config {
    * @param enrichmentsPath path where the enrichment directory is located
    * @return the enrichment registry built from the enrichments found
    */
-  def parseEnrichmentRegistry(enrichmentsPath: Option[String])(
-      implicit resolver: Resolver): Validation[String, JObject] = for {
+  def parseEnrichmentRegistry(
+    enrichmentsPath: Option[String],
+    client: Client[Id, Json]
+  ): Either[String, Json] = for {
     fileContents <- readEnrichmentFiles(enrichmentsPath)
-    jsons <- fileContents.map(JsonUtils.extractJson("", _)).sequenceU
-    combinedJson =
-      ("schema" -> "iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0") ~
-      ("data" -> jsons.map(fromJsonNode))
-    _ <- EnrichmentRegistry.parse(combinedJson, false).leftMap(_.toList.mkString("\n"))
-  } yield combinedJson
+    jsons <- fileContents.map(JsonUtils.extractJson(_)).sequence[EitherS, Json]
+    schemaKey = SchemaKey(
+      "com.snowplowanalytics.snowplow",
+      "enrichments",
+      "jsonschema",
+      SchemaVer.Full(1, 0, 0)
+    )
+    enrichmentsJson = SelfDescribingData[Json](schemaKey, Json.fromValues(jsons)).asJson
+    _ <- EnrichmentRegistry.parse(enrichmentsJson, client, false).leftMap(_.toList.mkString("\n")).toEither
+  } yield enrichmentsJson
 
   /** Reads all the enrichment files contained in a directory at the specified path. */
-  private def readEnrichmentFiles(path: Option[String]): Validation[String, List[String]] =
+  private def readEnrichmentFiles(path: Option[String]): Either[String, List[String]] =
     path.map { p =>
       for {
-        files <- Option(new File(p).listFiles)
-          .toSuccess(s"Enrichment directory `$p` does not exist")
+        files <- Option(new File(p).listFiles).toRight(s"Enrichment directory `$p` does not exist")
         read = files
           .filter(_.getName.endsWith(".json"))
           .map(Source.fromFile(_).mkString)
           .toList
       } yield read
-    }.getOrElse(Nil.success)
+    }.getOrElse(Nil.asRight)
 }
