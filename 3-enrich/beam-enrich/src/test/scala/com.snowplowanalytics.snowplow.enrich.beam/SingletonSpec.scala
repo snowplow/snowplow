@@ -14,9 +14,8 @@
  */
 package com.snowplowanalytics.snowplow.enrich.beam
 
-import com.snowplowanalytics.iglu.core.circe.CirceIgluCodecs._
+import com.snowplowanalytics.snowplow.enrich.common.enrichments.registry._
 import io.circe.literal._
-import io.circe.syntax._
 import org.scalatest._
 import org.scalatest.Matchers._
 
@@ -41,14 +40,12 @@ class SingletonSpec extends FreeSpec {
     "make a EnrichmentRegistrySingleton.get function available" - {
       "which builds and stores the registry" in {
         val reg = EnrichmentRegistrySingleton.get(
-          SpecHelpers.enrichmentsJson.asJson, SpecHelpers.client)
+          List(AnonIpConf(AnonOctets.Two)), SpecHelpers.client)
         reg.anonIp shouldBe defined
-        reg.ipLookups shouldBe defined
       }
       "which retrieves the registry afterwards" in {
-        val reg = EnrichmentRegistrySingleton.get(json"""{}""", SpecHelpers.client)
+        val reg = EnrichmentRegistrySingleton.get(Nil, SpecHelpers.client)
         reg.anonIp shouldBe defined
-        reg.ipLookups shouldBe defined
       }
     }
   }

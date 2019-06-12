@@ -18,11 +18,15 @@ import java.nio.file.{Files, Paths}
 import java.time.Instant
 
 import com.snowplowanalytics.iglu.core.SelfDescribingData
+import com.snowplowanalytics.iglu.core.circe.CirceIgluCodecs._
 import com.snowplowanalytics.snowplow.badrows._
 import com.snowplowanalytics.snowplow.badrows.CPFormatViolationMessage._
 import com.snowplowanalytics.snowplow.badrows.Failure.{CPFormatViolation, SizeViolation}
 import com.snowplowanalytics.snowplow.badrows.Payload.RawPayload
 import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
+import io.circe.Json
+import io.circe.literal._
+import io.circe.syntax._
 import org.scalatest._
 
 import utils._
@@ -74,7 +78,7 @@ class UtilsSpec extends FreeSpec with Matchers {
     }
     "make a resizeBadRow function available" - {
       "which leaves the bad row as is if it doesn't exceed the max size" in {
-        val badRow = SelfDescribingData[BadRow](
+        val badRow = SelfDescribingData[Json](
           oversizedBadRow,
           BadRow(
             CPFormatViolation(
@@ -84,12 +88,12 @@ class UtilsSpec extends FreeSpec with Matchers {
             ),
             RawPayload("ah"),
             Processor("be", "1.0.0")
-          )
-        )
+          ).asJson
+        ).asJson
         resizeBadRow(badRow, 500, Processor("be", "1.0.0")) shouldEqual badRow
       }
       "which truncates the event in the bad row as is if it exceeds the max size" in {
-        val original = SelfDescribingData[BadRow](
+        val original = SelfDescribingData[Json](
           oversizedBadRow,
           BadRow(
             CPFormatViolation(
@@ -99,14 +103,16 @@ class UtilsSpec extends FreeSpec with Matchers {
             ),
             RawPayload("ah"),
             Processor("be", "1.0.0")
-          )
-        )
+          ).asJson
+        ).asJson
         val res = resizeBadRow(original, 200, Processor("be", "1.0.0"))
-        res.schema shouldEqual oversizedBadRow
-        res.data.failure shouldBe a[SizeViolation]
-        val f = res.data.failure.asInstanceOf[SizeViolation]
-        f.actualSizeBytes shouldEqual 350
+        val resSdd = res.as[SelfDescribingData[Json]].toOption.get
+        resSdd.schema shouldEqual oversizedBadRow
+        val resBr = resSdd.data.as[BadRow].toOption.get
+        resBr.failure shouldBe a[SizeViolation]
+        val f = resBr.failure.asInstanceOf[SizeViolation]
         f.maximumAllowedSizeBytes shouldEqual 200
+        f.actualSizeBytes shouldEqual 255
         f.expectation shouldEqual "bad row exceeded the maximum size"
         resBr.payload shouldBe a[RawPayload]
         val p = resBr.payload.asInstanceOf[RawPayload]
@@ -117,11 +123,13 @@ class UtilsSpec extends FreeSpec with Matchers {
     "make a resizeEnrichedEvent function available" - {
       "which truncates a formatted enriched event and wrap it in a bad row" in {
         val res = resizeEnrichedEvent("a" * 100, 100, 400, Processor("be", "1.0.0"))
-        res.schema shouldEqual oversizedBadRow
-        res.data.failure shouldBe a[SizeViolation]
-        val f = res.data.failure.asInstanceOf[SizeViolation]
-        f.actualSizeBytes shouldEqual 100
+        val resSdd = res.as[SelfDescribingData[Json]].toOption.get
+        resSdd.schema shouldEqual oversizedBadRow
+        val resBr = resSdd.data.as[BadRow].toOption.get
+        resBr.failure shouldBe a[SizeViolation]
+        val f = resBr.failure.asInstanceOf[SizeViolation]
         f.maximumAllowedSizeBytes shouldEqual 400
+        f.actualSizeBytes shouldEqual 100
         f.expectation shouldEqual "event passed enrichment but exceeded the maximum allowed size as a result"
         resBr.payload shouldBe a[RawPayload]
         val p = resBr.payload.asInstanceOf[RawPayload]
