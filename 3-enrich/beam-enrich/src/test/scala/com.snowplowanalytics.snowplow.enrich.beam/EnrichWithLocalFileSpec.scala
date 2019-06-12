@@ -21,6 +21,7 @@ import java.nio.file.Paths
 import scala.sys.process._
 
 import com.spotify.scio.ScioMetrics
+import com.spotify.scio.io.PubsubIO
 import com.spotify.scio.testing._
 import org.apache.commons.codec.binary.Base64
 
@@ -72,7 +73,7 @@ class EnrichWithLocalFileSpec extends PipelineSpec {
       .args("--job-name=j", "--raw=in", "--enriched=out", "--bad=bad",
         "--resolver=" + Paths.get(getClass.getResource("/iglu_resolver.json").toURI()),
         "--enrichments=" + Paths.get(getClass.getResource("/ip_lookups").toURI()))
-      .input(PubsubIO("in"), raw.map(Base64.decodeBase64))
+      .input(PubsubIO[Array[Byte]]("in"), raw.map(Base64.decodeBase64))
       .distCache(DistCacheIO("http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoLite2-City.mmdb"),
         List(Right("./ip_geo")))
       .output(PubsubIO[String]("out"))(_ should satisfySingleValue { c: String =>
