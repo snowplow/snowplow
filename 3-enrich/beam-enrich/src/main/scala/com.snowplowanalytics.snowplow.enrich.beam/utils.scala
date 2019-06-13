@@ -52,7 +52,7 @@ object utils {
   def getPiiEvent(event: EnrichedEvent): Option[EnrichedEvent] =
     Option(event.pii)
       .filter(_.nonEmpty)
-      .map { piiStr =>
+      .map { _ =>
         val ee = new EnrichedEvent
         ee.unstruct_event = event.pii
         ee.app_id = event.app_id
