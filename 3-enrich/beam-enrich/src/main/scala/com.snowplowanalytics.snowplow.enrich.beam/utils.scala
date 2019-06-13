@@ -56,7 +56,7 @@ object utils {
   def getPiiEvent(event: EnrichedEvent): Option[EnrichedEvent] =
     Option(event.pii)
       .filter(_.nonEmpty)
-      .map { piiStr =>
+      .map { _ =>
         val ee = new EnrichedEvent
         ee.unstruct_event = event.pii
         ee.app_id = event.app_id
@@ -126,7 +126,7 @@ object utils {
       oversizedBadRow,
       BadRow(
         SizeViolation(Instant.now(), maxSizeBytes, size, msg),
-        RawPayload(value.take(size / ReductionFactor)),
+        RawPayload(value.take(maxSizeBytes / ReductionFactor)),
         processor
       ).asJson
     ).asJson
@@ -150,7 +150,7 @@ object utils {
         oversizedBadRow,
         BadRow(
           SizeViolation(Instant.now(), maxSizeBytes, size, "bad row exceeded the maximum size"),
-          RawPayload(json.take(size / ReductionFactor)),
+          RawPayload(json.take(maxSizeBytes / ReductionFactor)),
           processor
         ).asJson
       ).asJson
