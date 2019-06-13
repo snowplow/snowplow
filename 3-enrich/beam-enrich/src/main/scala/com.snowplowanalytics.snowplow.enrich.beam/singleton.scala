@@ -23,9 +23,11 @@ import io.circe.Json
 
 /** Singletons needed for unserializable classes. */
 object singleton {
+
   /** Singleton for Resolver to maintain one per node. */
   object ClientSingleton {
     @volatile private var instance: Client[Id, Json] = _
+
     /**
      * Retrieve or build an instance of a Resolver.
      * @param resolverJson JSON representing the Resolver
@@ -34,7 +36,8 @@ object singleton {
       if (instance == null) {
         synchronized {
           if (instance == null) {
-            instance = Client.parseDefault[Id](resolverJson)
+            instance = Client
+              .parseDefault[Id](resolverJson)
               .valueOr(e => throw new RuntimeException(e.toString))
           }
         }
@@ -46,6 +49,7 @@ object singleton {
   /** Singleton for EnrichmentRegistry. */
   object EnrichmentRegistrySingleton {
     @volatile private var instance: EnrichmentRegistry[Id] = _
+
     /**
      * Retrieve or build an instance of EnrichmentRegistry.
      * @param enrichmentConfs list of enabled enrichment configuration
@@ -58,7 +62,9 @@ object singleton {
       if (instance == null) {
         synchronized {
           if (instance == null) {
-            instance = EnrichmentRegistry.build[Id](enrichmentConfs).value
+            instance = EnrichmentRegistry
+              .build[Id](enrichmentConfs)
+              .value
               .valueOr(e => throw new RuntimeException(e.toString))
           }
         }
