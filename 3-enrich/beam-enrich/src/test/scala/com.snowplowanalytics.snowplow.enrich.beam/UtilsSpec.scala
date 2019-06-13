@@ -49,7 +49,9 @@ class UtilsSpec extends FreeSpec with Matchers {
       }
       "which fails if the symlink already exists" in {
         val f = Files.createTempFile("test2", ".txt").toFile
-        createSymLink(f, f.toString) shouldEqual Left(s"A file at path ${f.toString} already exists")
+        createSymLink(f, f.toString) shouldEqual Left(
+          s"A file at path ${f.toString} already exists"
+        )
         f.delete
       }
       "which fails if the symbolic link can't be created" in {
@@ -144,7 +146,7 @@ class UtilsSpec extends FreeSpec with Matchers {
           e.pii = "pii"
           e
         }
-        tabSeparatedEnrichedEvent(event) should not include("pii")
+        tabSeparatedEnrichedEvent(event) should not include ("pii")
       }
     }
     "make a getPii function available" - {
@@ -172,7 +174,7 @@ class UtilsSpec extends FreeSpec with Matchers {
         e.event_name shouldEqual "pii_transformation"
         e.event_version shouldEqual "1-0-0"
         e.contexts should include
-          """{"schema":"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0","data":[{"schema":"iglu:com.snowplowanalytics.snowplow/parent_event/jsonschema/1-0-0","data":{"parentEventId":"""
+        """{"schema":"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0","data":[{"schema":"iglu:com.snowplowanalytics.snowplow/parent_event/jsonschema/1-0-0","data":{"parentEventId":"""
       }
     }
   }

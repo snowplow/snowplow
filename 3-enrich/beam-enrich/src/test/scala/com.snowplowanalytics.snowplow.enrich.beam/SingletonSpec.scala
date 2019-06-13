@@ -39,8 +39,8 @@ class SingletonSpec extends FreeSpec {
     }
     "make a EnrichmentRegistrySingleton.get function available" - {
       "which builds and stores the registry" in {
-        val reg = EnrichmentRegistrySingleton.get(
-          List(AnonIpConf(AnonOctets.Two)), SpecHelpers.client)
+        val reg =
+          EnrichmentRegistrySingleton.get(List(AnonIpConf(AnonOctets.Two)), SpecHelpers.client)
         reg.anonIp shouldBe defined
       }
       "which retrieves the registry afterwards" in {

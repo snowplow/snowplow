@@ -39,13 +39,15 @@ object utils {
   /** Format an [[EnrichedEvent]] as a TSV. */
   def tabSeparatedEnrichedEvent(enrichedEvent: EnrichedEvent): String =
     enrichedEvent.getClass.getDeclaredFields
-    .filterNot(_.getName.equals("pii"))
-    .map { field =>
-      field.setAccessible(true)
-      Option(field.get(enrichedEvent)).getOrElse("")
-    }.mkString("\t")
+      .filterNot(_.getName.equals("pii"))
+      .map { field =>
+        field.setAccessible(true)
+        Option(field.get(enrichedEvent)).getOrElse("")
+      }
+      .mkString("\t")
 
   private val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS")
+
   /** Creates a PII event from the pii field of an existing event. */
   def getPiiEvent(event: EnrichedEvent): Option[EnrichedEvent] =
     Option(event.pii)
@@ -65,18 +67,20 @@ object utils {
         ee.event_format = "jsonschema"
         ee.event_name = "pii_transformation"
         ee.event_version = "1-0-0"
-        ee.v_etl = s"beam-enrich-${generated.BuildInfo.version}-common-${generated.BuildInfo.sceVersion}"
+        ee.v_etl =
+          s"beam-enrich-${generated.BuildInfo.version}-common-${generated.BuildInfo.sceVersion}"
         ee.contexts = getContextParentEvent(ee.event_id).noSpaces
         ee
       }
-
 
   private def getContextParentEvent(eventId: String): Json =
     Json.obj(
       "schema" := Json.fromString("iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0"),
       "data" := Json.arr(
         Json.obj(
-          "schema" -> Json.fromString("iglu:com.snowplowanalytics.snowplow/parent_event/jsonschema/1-0-0"),
+          "schema" -> Json.fromString(
+            "iglu:com.snowplowanalytics.snowplow/parent_event/jsonschema/1-0-0"
+          ),
           "data" -> Json.obj("parentEventId" -> Json.fromString(eventId))
         )
       )
@@ -178,7 +182,6 @@ object utils {
       Option(enrichedEvent.v_tracker).map(t => ("tracker", t))
     ).flatten
       .map { case (n, v) => n + "_" + v.replaceAll("[.-]", "_") }
-
 
   implicit val idClock: Clock[Id] = new Clock[Id] {
     final def realTime(unit: TimeUnit): Id[Long] =
