@@ -85,6 +85,7 @@ object Enrich {
       case Right(config) =>
         run(sc, config)
         sc.close()
+        ()
     }
   }
 

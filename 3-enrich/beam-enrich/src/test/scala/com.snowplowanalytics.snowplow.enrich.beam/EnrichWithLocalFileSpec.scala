@@ -89,16 +89,21 @@ class EnrichWithLocalFileSpec extends PipelineSpec {
         ),
         List(Right("./ip_geo"))
       )
-      .output(PubsubIO[String]("out"))(_ should satisfySingleValue { c: String =>
-        expected.forall(c.contains) // Add `println(c);` before `expected` to see the enrichment output
-      })
-      .output(PubsubIO[String]("bad"))(_ should beEmpty)
+      .output(PubsubIO[String]("out")) { o =>
+        o should satisfySingleValue { c: String =>
+          expected.forall(c.contains) // Add `println(c);` before `expected` to see the enrichment output
+        }; ()
+      }
+      .output(PubsubIO[String]("bad")) { b =>
+        b should beEmpty; ()
+      }
       .distribution(Enrich.enrichedEventSizeDistribution) { d =>
         d.getCount() shouldBe 1
         d.getMin() shouldBe 676
         d.getMin() shouldBe d.getMax()
         d.getMin() shouldBe d.getSum()
         d.getMin() shouldBe d.getMean()
+        ()
       }
       .distribution(Enrich.timeToEnrichDistribution) { d =>
         d.getCount() shouldBe 1
@@ -106,19 +111,25 @@ class EnrichWithLocalFileSpec extends PipelineSpec {
         d.getMin() shouldBe d.getMax()
         d.getMin() shouldBe d.getSum()
         d.getMin() shouldBe d.getMean()
+        ()
       }
-      .counter(ScioMetrics.counter("snowplow", "vendor_com_snowplowanalytics_snowplow"))(
-        _ shouldBe 1
-      )
-      .counter(ScioMetrics.counter("snowplow", "tracker_tracker_version"))(_ shouldBe 1)
+      .counter(ScioMetrics.counter("snowplow", "vendor_com_snowplowanalytics_snowplow")) { c =>
+        c shouldBe 1
+        ()
+      }
+      .counter(ScioMetrics.counter("snowplow", "tracker_tracker_version")) { c =>
+        c shouldBe 1
+        ()
+      }
       .run()
 
     deleteLocalFile("./ip_geo")
   }
 
-  private def downloadLocalEnrichmentFile(remoteLocation: String, localLocation: String): Unit =
-    new URL(remoteLocation).#>(new File(localLocation)).!!
+  private def downloadLocalEnrichmentFile(remoteLocation: String, localLocation: String): Unit = {
+    new URL(remoteLocation).#>(new File(localLocation)).!!; ()
+  }
 
-  private def deleteLocalFile(location: String): Unit = new File(location).delete
+  private def deleteLocalFile(location: String): Unit = { new File(location).delete; () }
 
 }
