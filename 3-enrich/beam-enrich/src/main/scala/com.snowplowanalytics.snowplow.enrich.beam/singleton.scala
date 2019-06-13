@@ -53,12 +53,8 @@ object singleton {
     /**
      * Retrieve or build an instance of EnrichmentRegistry.
      * @param enrichmentConfs list of enabled enrichment configuration
-     * @param client iglu client
      */
-    def get(
-      enrichmentConfs: List[EnrichmentConf],
-      client: Client[Id, Json]
-    ): EnrichmentRegistry[Id] = {
+    def get(enrichmentConfs: List[EnrichmentConf]): EnrichmentRegistry[Id] = {
       if (instance == null) {
         synchronized {
           if (instance == null) {
