@@ -86,6 +86,7 @@ object Enrich {
       case Right(config) =>
         run(sc, config)
         sc.close()
+        ()
     }
   }
 
@@ -126,7 +127,7 @@ object Enrich {
           .withName("oversized-enriched-successes")
           .map { case (event, size) => resizeEnrichedEvent(event, size, MaxRecordSize, processor) } ++
         (piis, config.pii)
-          .mapN { (piis, pii) =>
+          .mapN { (piis, _) =>
             val tooBigPiis = piis._1
             tooBigPiis
               .withName("oversized-pii-successes")
@@ -140,6 +141,7 @@ object Enrich {
       .map(_.noSpaces)
       .withName("enriched-bad")
       .saveAsPubsub(config.bad)
+    ()
   }
 
   /**
