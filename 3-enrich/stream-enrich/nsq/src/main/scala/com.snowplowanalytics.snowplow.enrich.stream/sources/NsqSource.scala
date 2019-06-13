@@ -30,7 +30,6 @@ import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.snowplow.badrows.Processor
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.AdapterRegistry
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
-import com.snowplowanalytics.snowplow.scalatracker.Tracker
 import io.circe.Json
 
 import model.{Nsq, StreamsConfig}
@@ -43,7 +42,6 @@ object NsqSource {
     client: Client[Id, Json],
     adapterRegistry: AdapterRegistry,
     enrichmentRegistry: EnrichmentRegistry[Id],
-    tracker: Option[Tracker[Id]],
     processor: Processor
   ): Either[Throwable, NsqSource] =
     for {
@@ -68,7 +66,6 @@ object NsqSource {
       client,
       adapterRegistry,
       enrichmentRegistry,
-      tracker,
       processor,
       config,
       nsqConfig
@@ -83,11 +80,10 @@ class NsqSource private (
   client: Client[Id, Json],
   adapterRegistry: AdapterRegistry,
   enrichmentRegistry: EnrichmentRegistry[Id],
-  tracker: Option[Tracker[Id]],
   processor: Processor,
   config: StreamsConfig,
   nsqConfig: Nsq
-) extends Source(client, adapterRegistry, enrichmentRegistry, tracker, processor, config.out.partitionKey) {
+) extends Source(client, adapterRegistry, enrichmentRegistry, processor, config.out.partitionKey) {
 
   override val MaxRecordSize = None
 
@@ -138,5 +134,6 @@ class NsqSource private (
       errorCallback
     )
     consumer.start()
+    ()
   }
 }

@@ -27,7 +27,6 @@ import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
 import com.snowplowanalytics.snowplow.enrich.common.utils.JsonUtils
 import org.specs2.matcher.{Expectable, Matcher}
 
-import model._
 import sources.TestSource
 import utils._
 
@@ -134,20 +133,7 @@ object SpecHelpers {
    * Built using an inline configuration file
    * with both source and sink set to test.
    */
-  lazy val TestSource = {
-    val config = EnrichConfig(
-      streams = StreamsConfig(
-        InConfig("raw"),
-        OutConfig("enriched", Some("pii"), "bad", "partitionkey"),
-        Kafka("brokers", 1, None, None),
-        BufferConfig(1000L, 100L, 1200L),
-        "appName"
-      ),
-      None,
-      monitoring = None
-    )
-    new TestSource(config, resolver, adapterRegistry, enrichmentRegistry, None)
-  }
+  lazy val TestSource = new TestSource(client, adapterRegistry, enrichmentRegistry)
   val igluCentralDefaultConfig =
     """{
     "schema": "iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-0",

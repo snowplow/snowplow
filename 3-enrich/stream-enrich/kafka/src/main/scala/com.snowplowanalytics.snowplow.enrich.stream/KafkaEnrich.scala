@@ -46,7 +46,7 @@ object KafkaEnrich extends Enrich {
     tracker: Option[Tracker[Id]],
     processor: Processor
   ): Either[String, Source] =
-    KafkaSource.create(streamsConfig, client, enrichmentRegistry, tracker, processor)
+    KafkaSource.create(streamsConfig, client, enrichmentRegistry, processor)
 
   override val parser: scopt.OptionParser[FileConfig] = localParser
 

@@ -166,7 +166,7 @@ object SnowplowTracking {
           "jsonschema",
           SchemaVer.Full(1, 0, 0)
         ),
-        Json.obj(("warning", Json.fromString("message")))
+        Json.obj(("warning", Json.fromString(message)))
       )
     )
 

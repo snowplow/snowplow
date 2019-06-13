@@ -46,7 +46,7 @@ object StdinEnrich extends Enrich {
     tracker: Option[Tracker[Id]],
     processor: Processor
   ): Either[String, Source] =
-    StdinSource.create(streamsConfig, client, adapterRegistry, enrichmentRegistry, tracker, processor)
+    StdinSource.create(streamsConfig, client, adapterRegistry, enrichmentRegistry, processor)
 
   override val parser: scopt.OptionParser[FileConfig] = localParser
 
