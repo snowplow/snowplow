@@ -57,22 +57,18 @@ collector {
     # The domain is optional and will make the cookie accessible to other
     # applications on the domain. Comment out these lines to tie cookies to
     # the collector's full domain.
-    # The domain is determined by matching the origin domains (from the Origin header of the request)
-    # to the list below. The first match is used. If no matches are found, the value will not be set
-    # and the collector's domain will be used.
-    # To match subdomains from the Origin header against a main domain, you can use the * wildcard.
-    # But you must explicitly include the main domain as well if you want to use it alongside subdomains.
+    # The domain is determined by matching the domains from the Origin header of the request
+    # to the list below. The first match is used. If no matches are found, the fallback domain will be used,
+    # if configured.
+    # If you specify a main domain, all subdomains on it will be matched.
+    # If you specify a subdomain, only that subdomain will be matched.
     # Examples:
-    # domain.com will match domain.com but not www.domain.com or secure.domain.com.
-    # www.domain.com will match www.domain.com but not domain.com or secure.domain.com.
-    # secure.domain.com will match secure.domain.com but not domain.com or www.domain.com.
-    # *.domain.com will match www.domain.com and secure.domain.com but not domain.com.
-    # Whenever possible, the main domain will be used in the response, so the cookie will be readable from
-    # any subdomain on it as well.
+    # domain.com will match domain.com, www.domain.com and secure.client.domain.com
+    # client.domain.com will match secure.client.domain.com but not domain.com or www.domain.com
     domains = [
-        "{{cookieDomain1}}" # e.g. "domain.com" -> only the main domain will be matched and returned
-        "{{cookieDomain2}}" # e.g. "*.domain.com" -> only subdomains will be matched and the main domain will be returned
-        # ... more domains, e.g. "another.domain.com" -> only the specific subdomain will be matched and returned
+        "{{cookieDomain1}}" # e.g. "domain.com" -> any origin domain ending with this will be matched and domain.com will be returned
+        "{{cookieDomain2}}" # e.g. "secure.anotherdomain.com" -> any origin domain ending with this will be matched and secure.anotherdomain.com will be returned
+        # ... more domains
     ]
     domains += ${?COLLECTOR_COOKIE_DOMAIN_1}
     domains += ${?COLLECTOR_COOKIE_DOMAIN_2}

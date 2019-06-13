@@ -407,78 +407,43 @@ class CollectorServiceSpec extends Specification {
         "if a list of domains is not supplied in the config and there is no fallback domain" in {
           val request = HttpRequest()
           val cookieConfig = CookieConfig(true, "name", 5.seconds, None, None)
-          service.cookieDomain(request, cookieConfig.domains, cookieConfig.fallbackDomain) shouldEqual None
+          service.cookieDomain(request.headers, cookieConfig.domains, cookieConfig.fallbackDomain) shouldEqual None
         }
         "if a list of domains is supplied in the config but the Origin request header is empty and there is no fallback domain" in {
           val request = HttpRequest()
           val cookieConfig = CookieConfig(true, "name", 5.seconds, Some(List("domain.com")), None)
-          service.cookieDomain(request, cookieConfig.domains, cookieConfig.fallbackDomain) shouldEqual None
+          service.cookieDomain(request.headers, cookieConfig.domains, cookieConfig.fallbackDomain) shouldEqual None
         }
         "if none of the domains in the request's Origin header has a match in the list of domains supplied with the config and there is no fallback domain" in {
           val origins = scala.collection.immutable.Seq(HttpOrigin("http", Host("origin.com")), HttpOrigin("http", Host("otherorigin.com", 8080)))
           val request = HttpRequest().withHeaders(`Origin`(origins))
           val cookieConfig = CookieConfig(true, "name", 5.seconds, Some(List("domain.com", "otherdomain.com")), None)
-          service.cookieDomain(request, cookieConfig.domains, cookieConfig.fallbackDomain) shouldEqual None
+          service.cookieDomain(request.headers, cookieConfig.domains, cookieConfig.fallbackDomain) shouldEqual None
         }
       }
       "return the fallback domain" in {
         "if a list of domains is not supplied in the config but a fallback domain is configured" in {
           val request = HttpRequest()
           val cookieConfig = CookieConfig(true, "name", 5.seconds, None, Some("fallbackDomain"))
-          service.cookieDomain(request, cookieConfig.domains, cookieConfig.fallbackDomain) shouldEqual Some("fallbackDomain")
+          service.cookieDomain(request.headers, cookieConfig.domains, cookieConfig.fallbackDomain) shouldEqual Some("fallbackDomain")
         }
         "if the Origin header is empty and a fallback domain is configured" in {
           val request = HttpRequest()
           val cookieConfig = CookieConfig(true, "name", 5.seconds, Some(List("domain.com")), Some("fallbackDomain"))
-          service.cookieDomain(request, cookieConfig.domains, cookieConfig.fallbackDomain) shouldEqual Some("fallbackDomain")
+          service.cookieDomain(request.headers, cookieConfig.domains, cookieConfig.fallbackDomain) shouldEqual Some("fallbackDomain")
         }
         "if none of the domains in the request's Origin header has a match in the list of domains supplied with the config but a fallback domain is configured" in {
           val origins = scala.collection.immutable.Seq(HttpOrigin("http", Host("origin.com")), HttpOrigin("http", Host("otherorigin.com", 8080)))
           val request = HttpRequest().withHeaders(`Origin`(origins))
           val cookieConfig = CookieConfig(true, "name", 5.seconds, Some(List("domain.com", "otherdomain.com")), Some("fallbackDomain"))
-          service.cookieDomain(request, cookieConfig.domains, cookieConfig.fallbackDomain) shouldEqual Some("fallbackDomain")
+          service.cookieDomain(request.headers, cookieConfig.domains, cookieConfig.fallbackDomain) shouldEqual Some("fallbackDomain")
         }
       }
       "return only the first match if multiple domains from the request's Origin header have matches in the list of domains supplied with the config" in {
-        val origins = scala.collection.immutable.Seq(HttpOrigin("http", Host("domain.com")), HttpOrigin("http", Host("www.otherdomain.com", 8080)))
+        val origins = scala.collection.immutable.Seq(HttpOrigin("http", Host("www.domain.com")), HttpOrigin("http", Host("www.otherdomain.com", 8080)))
         val request = HttpRequest().withHeaders(`Origin`(origins))
-        val cookieConfig = CookieConfig(true, "name", 5.seconds, Some(List("domain.com", "*.otherdomain.com")), Some("fallbackDomain"))
-        service.cookieDomain(request, cookieConfig.domains, cookieConfig.fallbackDomain) shouldEqual Some("domain.com")
-      }
-    }
-
-    "toRegex" in {
-      "generate the correct regex" in {
-        val cookieDomain1 = "first.com"
-        val cookieDomain2 = "*.second.com"
-        val cookieDomain3 = "third.gov.co.uk"
-        val cookieDomain4 = "*.fourth.gov.co.uk"
-        val config = List(cookieDomain1, cookieDomain2, cookieDomain3, cookieDomain4)
-
-        val expected1 = """(first\.com)"""
-        val expected2 = """.*(\.second\.com)"""
-        val expected3 = """(third\.gov\.co\.uk)"""
-        val expected4 = """.*(\.fourth\.gov\.co\.uk)"""
-
-        config.map(service.toRegex) shouldEqual List(expected1, expected2, expected3, expected4)
-      }
-    }
-
-    "toDomain" in {
-      "turn the regex into the correct domain name" in {
-        val regex1 = """(first\.com)"""
-        val regex2 = """.*(\.second\.com)"""
-        val regex3 = """(third\.gov\.co\.uk)"""
-        val regex4 = """.*(\.fourth\.gov\.co\.uk)"""
-        val tests = List(regex1, regex2, regex3, regex4)
-
-        val expected1 = "first.com"
-        val expected2 = "second.com"
-        val expected3 = "third.gov.co.uk"
-        val expected4 = "fourth.gov.co.uk"
-
-        tests.map(r => service.toDomain(r)) shouldEqual List(expected1, expected2, expected3, expected4)
-
+        val cookieConfig = CookieConfig(true, "name", 5.seconds, Some(List("domain.com", "otherdomain.com")), Some("fallbackDomain"))
+        service.cookieDomain(request.headers, cookieConfig.domains, cookieConfig.fallbackDomain) shouldEqual Some("domain.com")
       }
     }
 
@@ -486,6 +451,24 @@ class CollectorServiceSpec extends Specification {
       "correctly extract the host names from a list of values in the request's Origin header" in {
         val origins = scala.collection.immutable.Seq(HttpOrigin("http", Host("origin.com")), HttpOrigin("http", Host("subdomain.otherorigin.gov.co.uk", 8080)))
         service.extractHosts(origins) shouldEqual Seq("origin.com", "subdomain.otherorigin.gov.co.uk")
+      }
+    }
+
+    "validMatch" in {
+      val domain = "snplow.com"
+      "true for valid matches" in {
+        val validHost1 = "snplow.com"
+        val validHost2 = "blog.snplow.com"
+        val validHost3 = "blog.snplow.com.snplow.com"
+        service.validMatch(validHost1, domain) shouldEqual true
+        service.validMatch(validHost2, domain) shouldEqual true
+        service.validMatch(validHost3, domain) shouldEqual true
+      }
+      "false for invalid matches" in {
+        val invalidHost1 = "notsnplow.com"
+        val invalidHost2 = "blog.snplow.comsnplow.com"
+        service.validMatch(invalidHost1, domain) shouldEqual false
+        service.validMatch(invalidHost2, domain) shouldEqual false
       }
     }
   }

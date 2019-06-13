@@ -15,15 +15,20 @@
 package com.snowplowanalytics.snowplow
 package collectors.scalastream
 
-import java.util.UUID
 
+// Java
+import java.util.UUID
+import org.apache.commons.codec.binary.Base64
+import org.slf4j.LoggerFactory
+
+// Scala
 import scala.collection.JavaConverters._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.model.headers.CacheDirectives._
-import org.apache.commons.codec.binary.Base64
-import org.slf4j.LoggerFactory
 import scalaz._
+
+// Snowplow
 import CollectorPayload.thrift.model1.CollectorPayload
 import enrich.common.outputs.BadRow
 import generated.BuildInfo
@@ -293,7 +298,7 @@ class CollectorService(
           name    = config.name,
           value   = networkUserId,
           expires = Some(DateTime.now + config.expiration.toMillis),
-          domain  = cookieDomain(request, config.domains, config.fallbackDomain),
+          domain  = cookieDomain(request.headers, config.domains, config.fallbackDomain),
           path    = Some("/")
         )
         `Set-Cookie`(responseCookie)
@@ -345,70 +350,43 @@ class CollectorService(
   /**
    * Determines the cookie domain to be used by inspecting the Origin header of the request
    * and trying to find a match in the list of domains specified in the config file.
-   * The Origin header may include multiple domains. The first matching domain is used.
-   * If no match is found, the cookie domain is not set.
+   * @param headers The headers from the http request.
+   * @param domains The list of cookie domains from the configuration.
+   * @param fallbackDomain The fallback domain from the configuration.
+   * @return The domain to be sent back in the response, unless no cookie domains are configured.
+   * The Origin header may include multiple domains. The first matching domain is returned.
+   * If no match is found, the fallback domain is used if configured. Otherwise, the cookie domain is not set.
    */
-  def cookieDomain(request: HttpRequest, domains: Option[List[String]], fallbackDomain: Option[String]): Option[String] = {
-    domains match {
-      case Some(domainList) =>
-        request.headers.find {
-          case `Origin`(_) => true
-          case _ => false
-        } match {
-          case Some(`Origin`(origins)) =>
-            val originHosts = extractHosts(origins)
-            val domainRegex = domainList.map(toRegex)
-            val matchingHosts = for {
-              domain <- domainRegex
-              matchingHosts <- originHosts.find {
-                case x if x.matches(domain) => true
-                case _ => false
-              }
-            } yield matchingHosts
-            matchingHosts.headOption match {
-              case Some(matchingValue) =>
-                val domainToUse = domainRegex.find {
-                  case x if matchingValue.matches(x) => true
-                  case _ => false
-                }
-                domainToUse.flatMap { d => Some(toDomain(d)) }
-              case None => fallbackDomain
-            }
-          case _ => fallbackDomain
-        }
+  def cookieDomain(headers: Seq[HttpHeader], domains: Option[List[String]], fallbackDomain: Option[String]): Option[String] =
+    (for {
+      domainList <- domains
+      origins <- headers.collectFirst { case header: `Origin` => header.origins }
+      originHosts = extractHosts(origins)
+      matchingDomains = for {
+        host <- originHosts
+        matchingDomains <- domainList.collectFirst { case domain if validMatch(host, domain) => domain }
+      } yield matchingDomains
+      domainToUse <- matchingDomains.headOption
+    } yield domainToUse) match {
+      case Some(domain) => Some(domain)
       case None => fallbackDomain
     }
-  }
 
   /** Extracts the host names from a list of values in the request's Origin header. */
-  def extractHosts(origins: Seq[HttpOrigin]): Seq[String] = {
+  def extractHosts(origins: Seq[HttpOrigin]): Seq[String] =
     origins.map(origin => origin.host.host.address())
-  }
 
   /**
-   * Parses the domain names supplied in the cookie config into regex.
-   * Examples:
-   * "domain.com"         -> "(domain\.com)"
-   * "*.domain.gov.co.uk" -> ".*(\.domain\.gov\.co\.uk)"
+   * Ensures a match is valid.
+   * We only want matches where:
+   * a.) the Origin host is exactly equal to the cookie domain from the config
+   * b.) the Origin host is a subdomain of the cookie domain from the config.
+   * But we want to avoid cases where the cookie domain from the config is randomly
+   * a substring of the Origin host, without any connection between them.
    */
-  def toRegex(cookieDomainConfig: String): String = {
-    if (cookieDomainConfig.startsWith("*.")) {
-      val rawDomain = cookieDomainConfig.split("\\.").toList.drop(1).mkString("\\.")
-      ("*." + """(\.""" + rawDomain + ")").replace("*.", ".*")
-    } else {
-      val rawDomain = cookieDomainConfig.split("\\.").toList.mkString("\\.")
-      "(" + rawDomain + ")"
-    }
-  }
-
-  /**
-    * Turns a domain regex into a valid domain name that can be inserted in the header.
-    * For example:
-    * ".*(\.domain\.gov\.co\.uk)" -> "domain.gov.co.uk"
-    *
-    */
-  def toDomain(regex: String): String =
-    regex.replace(".*", "").replace("""(\.""", "").replace("(", "").replace(")", "").replace("""\.""", """.""")
+  def validMatch(host: String, domain: String): Boolean =
+    if (host == domain || host.endsWith("." + domain)) true
+    else false
 
   /**
    * Gets the IP from a RemoteAddress. If ipAsPartitionKey is false, a UUID will be generated.
