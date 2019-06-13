@@ -72,7 +72,7 @@ lazy val sceVersion = "1.0.0"
 lazy val scalaMacrosVersion = "2.1.1"
 lazy val slf4jVersion = "1.7.25"
 lazy val circeVersion = "0.11.1"
-lazy val scalatestVersion = "3.0.5"
+lazy val scalatestVersion = "3.0.8"
 
 lazy val root: Project = Project(
   "beam-enrich",
