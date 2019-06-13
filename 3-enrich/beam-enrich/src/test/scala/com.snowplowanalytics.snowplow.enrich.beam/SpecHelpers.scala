@@ -44,10 +44,14 @@ object SpecHelpers {
     }
   """
 
-  val client = Client.parseDefault[Id](resolverConfig).leftMap(_.toString).value.fold(
-    e => throw new RuntimeException(e),
-    r => r
-  )
+  val client = Client
+    .parseDefault[Id](resolverConfig)
+    .leftMap(_.toString)
+    .value
+    .fold(
+      e => throw new RuntimeException(e),
+      r => r
+    )
 
   val enrichmentConfig = json"""
     {
@@ -73,13 +77,17 @@ object SpecHelpers {
     Json.arr(enrichmentConfig)
   )
 
-  val enrichmentConfs = EnrichmentRegistry.parse(enrichmentsJson.asJson, client, true).fold(
-    e => throw new RuntimeException(e.toList.mkString("\n")),
-    r => r
-  )
+  val enrichmentConfs = EnrichmentRegistry
+    .parse(enrichmentsJson.asJson, client, true)
+    .fold(
+      e => throw new RuntimeException(e.toList.mkString("\n")),
+      r => r
+    )
 
-  val enrichmentRegistry = EnrichmentRegistry.build(enrichmentConfs).fold(
-    e => throw new RuntimeException(e.toList.mkString("\n")),
-    r => r
-  )
+  val enrichmentRegistry = EnrichmentRegistry
+    .build(enrichmentConfs)
+    .fold(
+      e => throw new RuntimeException(e.toList.mkString("\n")),
+      r => r
+    )
 }
