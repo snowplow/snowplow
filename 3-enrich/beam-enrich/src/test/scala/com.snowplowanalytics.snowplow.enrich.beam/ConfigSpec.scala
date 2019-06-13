@@ -33,31 +33,31 @@ class ConfigSpec extends FreeSpec {
       "which fails if --job-name is not present" in {
         EnrichConfig(Args(Array.empty)) shouldEqual Left(
           "Missing `job-name` argument\n" +
-          "Missing `raw` argument\n" +
-          "Missing `enriched` argument\n" +
-          "Missing `bad` argument\n" +
-          "Missing `resolver` argument"
+            "Missing `raw` argument\n" +
+            "Missing `enriched` argument\n" +
+            "Missing `bad` argument\n" +
+            "Missing `resolver` argument"
         )
       }
       "which fails if --raw is not present" in {
         EnrichConfig(Args(Array("--job-name=j"))) shouldEqual Left(
           "Missing `raw` argument\n" +
-          "Missing `enriched` argument\n" +
-          "Missing `bad` argument\n" +
-          "Missing `resolver` argument"
+            "Missing `enriched` argument\n" +
+            "Missing `bad` argument\n" +
+            "Missing `resolver` argument"
         )
       }
       "which fails if --enriched is not present" in {
         EnrichConfig(Args(Array("--job-name=j", "--raw=i"))) shouldEqual Left(
           "Missing `enriched` argument\n" +
-          "Missing `bad` argument\n" +
-          "Missing `resolver` argument"
+            "Missing `bad` argument\n" +
+            "Missing `resolver` argument"
         )
       }
       "which fails if --bad is not present" in {
         EnrichConfig(Args(Array("--job-name=j", "--raw=i", "--enriched=o"))) shouldEqual Left(
           "Missing `bad` argument\n" +
-          "Missing `resolver` argument"
+            "Missing `resolver` argument"
         )
       }
       "which fails if --resolver is not present" in {
@@ -65,18 +65,28 @@ class ConfigSpec extends FreeSpec {
           Left("Missing `resolver` argument")
       }
       "which succeeds otherwise" in {
-        EnrichConfig(Args(
-          Array("--job-name=j", "--raw=i", "--enriched=o", "--bad=b", "--resolver=r"))) shouldEqual
+        EnrichConfig(
+          Args(Array("--job-name=j", "--raw=i", "--enriched=o", "--bad=b", "--resolver=r"))
+        ) shouldEqual
           Right(EnrichConfig("j", "i", "o", "b", None, "r", None))
       }
       "which succeeds if --enrichments is present" in {
-        val args = Args(Array(
-          "--job-name=j", "--raw=i", "--enriched=o", "--bad=b", "--resolver=r", "--enrichments=e"))
+        val args = Args(
+          Array(
+            "--job-name=j",
+            "--raw=i",
+            "--enriched=o",
+            "--bad=b",
+            "--resolver=r",
+            "--enrichments=e"
+          )
+        )
         EnrichConfig(args) shouldEqual Right(EnrichConfig("j", "i", "o", "b", None, "r", Some("e")))
       }
       "which succeeds if --pii is present" in {
-        val args = Args(Array(
-          "--job-name=j", "--raw=i", "--enriched=o", "--bad=b", "--pii=p", "--resolver=r"))
+        val args = Args(
+          Array("--job-name=j", "--raw=i", "--enriched=o", "--bad=b", "--pii=p", "--resolver=r")
+        )
         EnrichConfig(args) shouldEqual Right(EnrichConfig("j", "i", "o", "b", Some("p"), "r", None))
       }
     }
@@ -89,7 +99,8 @@ class ConfigSpec extends FreeSpec {
       "which fails if the resolver file is not json" in {
         val path = writeToFile("not-json", "not-json")
         parseResolver(path) match {
-          case Left(e) => e shouldEqual "invalid json: expected null got 'not-js...' (line 1, column 1)"
+          case Left(e) =>
+            e shouldEqual "invalid json: expected null got 'not-js...' (line 1, column 1)"
           case _ => fail()
         }
       }
@@ -117,7 +128,8 @@ class ConfigSpec extends FreeSpec {
       "which fails if the contents of the enrichment dir are not json" in {
         val path = writeToFile("not-json", "not-json", "not-json")
         parseEnrichmentRegistry(Some(path), SpecHelpers.client) match {
-          case Left(e) => e shouldEqual "invalid json: expected null got 'not-js...' (line 1, column 1)"
+          case Left(e) =>
+            e shouldEqual "invalid json: expected null got 'not-js...' (line 1, column 1)"
           case _ => fail()
         }
       }
@@ -149,9 +161,15 @@ class ConfigSpec extends FreeSpec {
     }
   }
 
-  private def writeToFile(dir: String, name: String, content: String): String = {
+  private def writeToFile(
+    dir: String,
+    name: String,
+    content: String
+  ): String = {
     val d = Files.createTempDirectory(dir)
-    Files.write(Files.createTempFile(d.toAbsolutePath, name, ".json"), content.getBytes).toFile
+    Files
+      .write(Files.createTempFile(d.toAbsolutePath, name, ".json"), content.getBytes)
+      .toFile
       .deleteOnExit()
     val f = d.toFile()
     f.deleteOnExit()
