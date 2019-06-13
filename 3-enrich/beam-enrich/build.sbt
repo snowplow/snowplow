@@ -1,21 +1,6 @@
 import sbt._
 import Keys._
 
-lazy val compilerOptions = Seq(
-  "-target:jvm-1.8",
-  "-deprecation",
-  "-feature",
-  "-unchecked",
-  "-language:existentials",
-  "-language:higherKinds",
-  "-language:implicitConversions",
-  "-Yno-adapted-args",
-  "-Ywarn-dead-code",
-  "-Ywarn-numeric-widen",
-  "-Ywarn-unused-import",
-  "-Xfuture"
-)
-
 lazy val resolutionRepos = Seq(
   // For Snowplow
   "Snowplow Analytics Maven releases repo" at "http://maven.snplow.com/releases/",
@@ -35,14 +20,6 @@ lazy val commonSettings = Defaults.coreDefaultSettings ++ Seq(
   organization  := "com.snowplowanalytics",
   version       := "0.4.0",
   scalaVersion  := "2.12.10",
-  javacOptions  ++= Seq("-source", "1.8", "-target", "1.8"),
-  scalacOptions ++= compilerOptions,
-   scalacOptions in (Compile, console) ~= {
-    _.filterNot(Set("-Ywarn-unused-import"))
-  },
-  scalacOptions in (Test, console) ~= {
-    _.filterNot(Set("-Ywarn-unused-import"))
-  },
   resolvers     ++= resolutionRepos
 )
 
