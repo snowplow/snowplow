@@ -97,7 +97,7 @@ object Enrich {
       buildDistCache(sc, config.enrichmentConfs)
 
     val raw: SCollection[Array[Byte]] =
-      sc.pubsubSubscription[Array[Byte]](config.raw).withName("raw")
+      sc.withName("raw").pubsubSubscription[Array[Byte]](config.raw)
     val enriched: SCollection[ValidatedNel[Json, EnrichedEvent]] =
       enrichEvents(raw, config.resolver, config.enrichmentConfs, cachedFiles)
 
@@ -113,7 +113,7 @@ object Enrich {
     (piis, config.pii).mapN { (piis, pii) =>
       val properlySizedPiis = piis._2
       properlySizedPiis
-        .withName("properly-sized-pii-successes")
+        .withName("properly-sized-piis")
         .map(_._1)
         .withName("pii-good")
         .saveAsPubsub(pii)
@@ -121,23 +121,25 @@ object Enrich {
 
     val failureCollection: SCollection[Json] =
       failures
+        .withName("enrichment-bad-rows")
         .collect { case Validated.Invalid(badRows) => badRows.toList }
+        .withName("enrichment-bad-rows-flattened")
         .flatten
-        .map(resizeBadRow(_, MaxRecordSize, processor))
-        .withName("bad-rows") ++
+        .withName("properly-sized-enrichment-bad-rows")
+        .map(resizeBadRow(_, MaxRecordSize, processor)) ++
         tooBigSuccesses
-          .withName("oversized-enriched-successes")
+          .withName("resized-enriched-events-bad-rows")
           .map { case (event, size) => resizeEnrichedEvent(event, size, MaxRecordSize, processor) } ++
         (piis, config.pii)
           .mapN { (piis, _) =>
             val tooBigPiis = piis._1
             tooBigPiis
-              .withName("oversized-pii-successes")
+              .withName("resized-pii-events-bad-rows")
               .map {
                 case (event, size) => resizeEnrichedEvent(event, size, MaxRecordSize, processor)
               }
           }
-          .getOrElse(sc.parallelize(List.empty))
+          .getOrElse(sc.withName("no-pii").parallelize(List.empty))
     failureCollection
       .withName("all-bad-rows")
       .map(_.noSpaces)
@@ -160,6 +162,7 @@ object Enrich {
     cachedFiles: DistCache[List[Either[String, String]]]
   ): SCollection[ValidatedNel[Json, EnrichedEvent]] =
     raw
+      .withName("enriched")
       .map { rawEvent =>
         cachedFiles()
         val (enriched, time) = timeMs {
@@ -174,9 +177,9 @@ object Enrich {
           _.leftMap(_.map(br => SelfDescribingData[Json](br.schema, br.data.asJson).asJson))
         }
       }
-      .withName("enriched")
-      .flatten
       .withName("enriched-flattened")
+      .flatten
+      .withName("enriched-partitioned")
 
   /**
    * Turns successfully enriched events into TSV partitioned by whether or no they exceed the
@@ -215,14 +218,15 @@ object Enrich {
   ): Option[(SCollection[(String, Int)], SCollection[(String, Int)])] =
     if (emitPii(confs)) {
       val (tooBigPiis, properlySizedPiis) = enriched
+        .withName("pii-successes")
         .collect {
           case Validated.Valid(enrichedEvent) =>
             getPiiEvent(enrichedEvent)
               .map(tabSeparatedEnrichedEvent)
               .map(formatted => (formatted, getSize(formatted)))
         }
+        .withName("pii-successes-flattened")
         .flatten
-        .withName("pii-successes")
         .partition(_._2 >= MaxRecordSize)
       Some((tooBigPiis, properlySizedPiis))
     } else {
