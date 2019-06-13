@@ -70,7 +70,13 @@ object Enrich {
         ().asRight
       }
     } yield ParsedEnrichConfig(
-      config.raw, config.enriched, config.bad, config.pii, resolverJson, confs)
+      config.raw,
+      config.enriched,
+      config.bad,
+      config.pii,
+      resolverJson,
+      confs
+    )
 
     parsedConfig match {
       case Left(e) =>
@@ -238,7 +244,6 @@ object Enrich {
     } else {
       None
     }
-  }
 
   /**
    * Enrich a collector payload into a list of [[EnrichedEvent]].
@@ -281,7 +286,8 @@ object Enrich {
       .flatten
       .map { case (uri, sl) => (uri.toString, sl) }
     sc.distCache(filesToCache.map(_._1)) { files =>
-      val symLinks = files.toList.zip(filesToCache.map(_._2))
+      val symLinks = files.toList
+        .zip(filesToCache.map(_._2))
         .map { case (file, symLink) => createSymLink(file, symLink) }
       symLinks.zip(files).foreach {
         case (Right(p), file) => logger.info(s"File $file cached at $p")
