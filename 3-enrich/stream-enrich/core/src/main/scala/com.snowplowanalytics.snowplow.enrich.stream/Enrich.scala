@@ -269,7 +269,11 @@ a  * @param creds optionally necessary credentials to download the resolver
           new File(path)
         )
     }
-    val downloadedFiles: List[Either[String, Int]] = cleanedFiles.map {
+    val filteredFiles = cleanedFiles.filter {
+      case (_, targetFile) =>
+        forceDownload || targetFile.length == 0L
+    }
+    val downloadedFiles: List[Either[String, Int]] = filteredFiles.map {
       case (cleanURI, targetFile) =>
         download(cleanURI, targetFile).flatMap {
           case i if i != 0 => s"Attempt to download $cleanURI to $targetFile failed".asLeft

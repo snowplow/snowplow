@@ -36,11 +36,8 @@ import com.amazonaws.services.kinesis.clientlibrary.exceptions._
 import com.amazonaws.services.kinesis.clientlibrary.lib.worker._
 import com.amazonaws.services.kinesis.model.Record
 import com.snowplowanalytics.iglu.client.Client
-<<<<<<< HEAD
-import com.snowplowanalytics.snowplow.enrich.common.enrichments.AdapterRegistry
-=======
 import com.snowplowanalytics.snowplow.badrows.Processor
->>>>>>> [WIP] Scala Common Enrich: use snowplow-badrows (closes #4106)
+import com.snowplowanalytics.snowplow.enrich.common.enrichments.AdapterRegistry
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
 import com.snowplowanalytics.snowplow.scalatracker.Tracker
 import io.circe.Json
@@ -90,7 +87,7 @@ class KinesisSource private (
   config: StreamsConfig,
   kinesisConfig: Kinesis,
   provider: AWSCredentialsProvider
-) extends Source(client, adapterRegistry, enrichmentRegistry, tracker, processor, config.out.partitionKey) {
+) extends Source(client, adapterRegistry, enrichmentRegistry, processor, config.out.partitionKey) {
 
   override val MaxRecordSize = Some(1000000)
 

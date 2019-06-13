@@ -23,10 +23,8 @@ import com.snowplowanalytics.snowplow.badrows.Processor
 import com.snowplowanalytics.snowplow.enrich.common.adapters.AdapterRegistry
 import com.snowplowanalytics.snowplow.enrich.common.adapters.registry.RemoteAdapter
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
-import com.snowplowanalytics.snowplow.scalatracker.Tracker
 import io.circe.Json
 
-import model.EnrichConfig
 import sinks.Sink
 
 /**
@@ -35,12 +33,10 @@ import sinks.Sink
  * sources.
  */
 class TestSource(
-  config: EnrichConfig,
   client: Client[Id, Json],
   adapterRegistry: AdapterRegistry,
-  enrichmentRegistry: EnrichmentRegistry[Id],
-  tracker: Option[Tracker[Id]]
-) extends Source(client, adapterRegistry, enrichmentRegistry, tracker, Processor("sce", "1.0.0"), "") {
+  enrichmentRegistry: EnrichmentRegistry[Id]
+) extends Source(client, adapterRegistry, enrichmentRegistry, Processor("sce", "1.0.0"), "") {
 
   override val MaxRecordSize = None
 
