@@ -28,7 +28,6 @@ import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.snowplow.badrows.Processor
 import com.snowplowanalytics.snowplow.enrich.common.adapters.AdapterRegistry
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
-import com.snowplowanalytics.snowplow.scalatracker.Tracker
 import io.circe.Json
 
 import model.{Stdin, StreamsConfig}
@@ -41,7 +40,6 @@ object StdinSource {
     client: Client[Id, Json],
     adapterRegistry: AdapterRegistry,
     enrichmentRegistry: EnrichmentRegistry[Id],
-    tracker: Option[Tracker[Id]],
     processor: Processor
   ): Either[String, StdinSource] =
     for {
@@ -49,7 +47,7 @@ object StdinSource {
         case Stdin => ().asRight
         case _ => "Configured source/sink is not Stdin".asLeft
       }
-    } yield new StdinSource(client, enrichmentRegistry, tracker, processor, config.out.partitionKey)
+    } yield new StdinSource(client, enrichmentRegistry, processor, config.out.partitionKey)
 }
 
 /** Source to decode raw events (in base64) from stdin. */
@@ -57,10 +55,9 @@ class StdinSource private (
   client: Client[Id, Json],
   adapterRegistry: AdapterRegistry,
   enrichmentRegistry: EnrichmentRegistry[Id],
-  tracker: Option[Tracker[Id]],
   processor: Processor,
   partitionKey: String
-) extends Source(client, adapterRegistry, enrichmentRegistry, tracker, processor, partitionKey) {
+) extends Source(client, adapterRegistry, enrichmentRegistry, processor, partitionKey) {
 
   override val MaxRecordSize = None
 

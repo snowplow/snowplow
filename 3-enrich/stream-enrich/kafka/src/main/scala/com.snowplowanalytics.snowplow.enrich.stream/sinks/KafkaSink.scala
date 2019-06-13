@@ -33,8 +33,7 @@ import model.{BufferConfig, Kafka}
 object KafkaSink {
   def validateAndCreateProducer(
     kafkaConfig: Kafka,
-    bufferConfig: BufferConfig,
-    topicName: String
+    bufferConfig: BufferConfig
   ): Either[String, KafkaProducer[String, String]] =
     createProducer(kafkaConfig, bufferConfig).asRight
 

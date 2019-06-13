@@ -29,7 +29,6 @@ import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.snowplow.badrows.Processor
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.AdapterRegistry
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
-import com.snowplowanalytics.snowplow.scalatracker.Tracker
 import io.circe.Json
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer._
@@ -45,7 +44,6 @@ object KafkaSource {
     client: Client[Id, Json],
     adapterRegistry: AdapterRegistry,
     enrichmentRegistry: EnrichmentRegistry[Id],
-    tracker: Option[Tracker[Id]],
     processor: Processor
   ): Either[String, KafkaSource] =
     for {
@@ -53,19 +51,17 @@ object KafkaSource {
         case c: Kafka => c.asRight
         case _ => "Configured source/sink is not Kafka".asLeft
       }
-      goodProducer <- KafkaSink
-        .validateAndCreateProducer(kafkaConfig, config.buffer, config.out.enriched)
+      goodProducer <- KafkaSink.validateAndCreateProducer(kafkaConfig, config.buffer)
       emitPii = utils.emitPii(enrichmentRegistry)
       _ <- utils.validatePii(emitPii, config.out.pii)
       piiProducer <- config.out.pii match {
-        case Some(piiStreamName) =>
+        case Some(_) =>
           KafkaSink
-            .validateAndCreateProducer(kafkaConfig, config.buffer, piiStreamName)
+            .validateAndCreateProducer(kafkaConfig, config.buffer)
             .map(Some(_))
         case None => None.asRight
       }
-      badProducer <- KafkaSink
-        .validateAndCreateProducer(kafkaConfig, config.buffer, config.out.bad)
+      badProducer <- KafkaSink.validateAndCreateProducer(kafkaConfig, config.buffer)
     } yield new KafkaSource(
       goodProducer,
       piiProducer,
@@ -73,7 +69,6 @@ object KafkaSource {
       client,
       adapterRegistry,
       enrichmentRegistry,
-      tracker,
       processor,
       config,
       kafkaConfig
@@ -88,11 +83,10 @@ class KafkaSource private (
   client: Client[Id, Json],
   adapterRegistry: AdapterRegistry,
   enrichmentRegistry: EnrichmentRegistry[Id],
-  tracker: Option[Tracker[Id]],
   processor: Processor,
   config: StreamsConfig,
   kafkaConfig: Kafka
-) extends Source(client, adapterRegistry, enrichmentRegistry, tracker, processor, config.out.partitionKey) {
+) extends Source(client, adapterRegistry, enrichmentRegistry, processor, config.out.partitionKey) {
 
   override val MaxRecordSize = None
 
