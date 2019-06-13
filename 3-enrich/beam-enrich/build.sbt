@@ -82,6 +82,8 @@ lazy val root: Project = Project(
   description := "Streaming enrich job written using SCIO",
   buildInfoKeys := Seq[BuildInfoKey](organization, name, version, "sceVersion" -> sceVersion),
   buildInfoPackage := "com.snowplowanalytics.snowplow.enrich.beam.generated",
+  scalafmtConfig := file(".scalafmt.conf"),
+  scalafmtOnCompile := true,
   libraryDependencies ++= Seq(
     "com.spotify" %% "scio-core" % scioVersion,
     "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion,
