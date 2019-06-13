@@ -97,16 +97,21 @@ class EnrichSpec extends PipelineSpec {
       )
       .input(PubsubIO[Array[Byte]]("in"), raw.map(Base64.decodeBase64))
       .distCache(DistCacheIO(""), List.empty[Either[String, String]])
-      .output(PubsubIO[String]("out"))(_ should satisfySingleValue { c: String =>
-        expected.forall(c.contains)
-      })
-      .output(PubsubIO[String]("bad"))(_ should beEmpty)
+      .output(PubsubIO[String]("out")) { o =>
+        o should satisfySingleValue { c: String =>
+          expected.forall(c.contains)
+        }; ()
+      }
+      .output(PubsubIO[String]("bad")) { b =>
+        b should beEmpty; ()
+      }
       .distribution(Enrich.enrichedEventSizeDistribution) { d =>
         d.getCount() shouldBe 1
         d.getMin() shouldBe 813
         d.getMin() shouldBe d.getMax()
         d.getMin() shouldBe d.getSum()
         d.getMin() shouldBe d.getMean()
+        ()
       }
       .distribution(Enrich.timeToEnrichDistribution) { d =>
         d.getCount() shouldBe 1
@@ -114,9 +119,16 @@ class EnrichSpec extends PipelineSpec {
         d.getMin() shouldBe d.getMax()
         d.getMin() shouldBe d.getSum()
         d.getMin() shouldBe d.getMean()
+        ()
       }
-      .counter(ScioMetrics.counter("snowplow", "vendor_com_google_analytics"))(_ shouldBe 1)
-      .counter(ScioMetrics.counter("snowplow", "tracker_js_0_13_1"))(_ shouldBe 1)
+      .counter(ScioMetrics.counter("snowplow", "vendor_com_google_analytics")) { c =>
+        c shouldBe 1
+        ()
+      }
+      .counter(ScioMetrics.counter("snowplow", "tracker_js_0_13_1")) { c =>
+        c shouldBe 1
+        ()
+      }
       .run()
   }
 
