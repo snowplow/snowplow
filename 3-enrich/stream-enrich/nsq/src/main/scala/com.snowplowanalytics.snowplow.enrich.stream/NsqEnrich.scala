@@ -48,7 +48,7 @@ object NsqEnrich extends Enrich {
     processor: Processor
   ): Either[String, sources.Source] =
     NsqSource
-      .create(streamsConfig, client, adapterRegistry, enrichmentRegistry, tracker, processor)
+      .create(streamsConfig, client, adapterRegistry, enrichmentRegistry, processor)
       .leftMap(_.getMessage)
 
   override val parser: scopt.OptionParser[FileConfig] = localParser
