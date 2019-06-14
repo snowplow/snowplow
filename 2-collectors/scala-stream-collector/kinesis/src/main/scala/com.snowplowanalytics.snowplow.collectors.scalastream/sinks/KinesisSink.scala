@@ -21,12 +21,11 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.{Success, Failure}
 
+import cats.syntax.either._
 import com.amazonaws.auth._
 import com.amazonaws.services.kinesis.model._
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import com.amazonaws.services.kinesis.{AmazonKinesis, AmazonKinesisClientBuilder}
-import scalaz._
-import Scalaz._
 
 import model._
 
@@ -46,13 +45,13 @@ object KinesisSink {
     bufferConfig: BufferConfig,
     streamName: String,
     executorService: ScheduledExecutorService
-  ): \/[Throwable, KinesisSink] = {
+  ): Either[Throwable, KinesisSink] = {
     val client = for {
       provider <- getProvider(kinesisConfig.aws)
       client = createKinesisClient(provider, kinesisConfig.endpoint, kinesisConfig.region)
       exists <-
-        if (streamExists(client, streamName)) true.right
-        else new IllegalArgumentException(s"Kinesis stream $streamName doesn't exist").left
+        if (streamExists(client, streamName)) true.asRight
+        else new IllegalArgumentException(s"Kinesis stream $streamName doesn't exist").asLeft
     } yield client
 
     client.map { c =>
@@ -73,26 +72,26 @@ object KinesisSink {
   }
 
   /** Create an aws credentials provider through env variables and iam. */
-  private def getProvider(awsConfig: AWSConfig): \/[Throwable, AWSCredentialsProvider] = {
+  private def getProvider(awsConfig: AWSConfig): Either[Throwable, AWSCredentialsProvider] = {
     def isDefault(key: String): Boolean = key == "default"
     def isIam(key: String): Boolean = key == "iam"
     def isEnv(key: String): Boolean = key == "env"
 
     ((awsConfig.accessKey, awsConfig.secretKey) match {
       case (a, s) if isDefault(a) && isDefault(s) =>
-        new DefaultAWSCredentialsProviderChain().right
+        new DefaultAWSCredentialsProviderChain().asRight
       case (a, s) if isDefault(a) || isDefault(s) =>
-        "accessKey and secretKey must both be set to 'default' or neither".left
+        "accessKey and secretKey must both be set to 'default' or neither".asLeft
       case (a, s) if isIam(a) && isIam(s) =>
-        InstanceProfileCredentialsProvider.getInstance().right
+        InstanceProfileCredentialsProvider.getInstance().asRight
       case (a, s) if isIam(a) && isIam(s) =>
-        "accessKey and secretKey must both be set to 'iam' or neither".left
+        "accessKey and secretKey must both be set to 'iam' or neither".asLeft
       case (a, s) if isEnv(a) && isEnv(s) =>
-        new EnvironmentVariableCredentialsProvider().right
+        new EnvironmentVariableCredentialsProvider().asRight
       case (a, s) if isEnv(a) || isEnv(s) =>
-        "accessKey and secretKey must both be set to 'env' or neither".left
+        "accessKey and secretKey must both be set to 'env' or neither".asLeft
       case _ => new AWSStaticCredentialsProvider(
-        new BasicAWSCredentials(awsConfig.accessKey, awsConfig.secretKey)).right
+        new BasicAWSCredentials(awsConfig.accessKey, awsConfig.secretKey)).asRight
     }).leftMap(new IllegalArgumentException(_))
   }
 
@@ -140,7 +139,7 @@ class KinesisSink private (
   executorService: ScheduledExecutorService
 ) extends Sink {
   // Records must not exceed MaxBytes - 1MB
-  val MaxBytes = 1000000L
+  val MaxBytes = 1000000
   val BackoffTime = 3000L
 
   val ByteThreshold = bufferConfig.byteLimit

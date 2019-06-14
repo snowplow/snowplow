@@ -16,9 +16,7 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow
-package collectors
-package scalastream
+package com.snowplowanalytics.snowplow.collectors.scalastream
 
 import sinks.Sink
 
@@ -27,7 +25,7 @@ import sinks.Sink
 class TestSink extends Sink {
 
   // Effectively no limit to the record size
-  val MaxBytes = Long.MaxValue
+  val MaxBytes = Int.MaxValue
 
   def storeRawEvents(events: List[Array[Byte]], key: String) = events
 }
