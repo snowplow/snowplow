@@ -24,6 +24,8 @@ import com.typesafe.sslconfig.akka.AkkaSSLConfig
 import com.typesafe.sslconfig.akka.util.AkkaLoggerFactory
 import com.typesafe.sslconfig.ssl.ConfigSSLContextBuilder
 import com.typesafe.sslconfig.ssl.{ClientAuth => SslClientAuth}
+import io.circe.Json
+
 import sinks.Sink
 
 package model {
@@ -32,7 +34,7 @@ package model {
    * Case class for holding both good and
    * bad sinks for the Stream Collector.
    */
-  case class CollectorSinks(good: Sink, bad: Sink)
+  final case class CollectorSinks(good: Sink, bad: Sink)
 
   /**
    * Case class for holding the results of
@@ -41,7 +43,7 @@ package model {
    * @param good All good results
    * @param bad All bad results
    */
-  case class EventSerializeResult(good: List[Array[Byte]], bad: List[Array[Byte]])
+  final case class EventSerializeResult(good: List[Array[Byte]], bad: List[Array[Byte]])
 
   /**
    * Class for the result of splitting a too-large array of events in the body of a POST request
@@ -49,7 +51,7 @@ package model {
    * @param goodBatches List of batches of events
    * @param failedBigEvents List of events that were too large
    */
-  case class SplitBatchResult(goodBatches: List[List[String]], failedBigEvents: List[String])
+  final case class SplitBatchResult(goodBatches: List[List[Json]], failedBigEvents: List[Json])
 
   final case class CookieConfig(
     enabled: Boolean,

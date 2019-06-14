@@ -33,15 +33,14 @@ object Dependencies {
     val config               = "1.3.1"
     val prometheus           = "0.5.0"
     // Scala
-    val snowplowCommonEnrich = "0.31.0"
-    val igluClient           = "0.5.0"
     val collectorPayload     = "0.0.0"
     val scalaz7              = "7.0.9"
     val akkaHttp             = "10.1.10"
     val akka                 = "2.5.23"
     val scopt                = "3.6.0"
+    val pureconfig           = "0.11.1"
     val json4s               = "3.2.11"
-    val pureconfig           = "0.8.0"
+    val badRows              = "0.1.0"
     // Scala (test only)
     val specs2               = "3.9.4"
   }
@@ -60,10 +59,8 @@ object Dependencies {
     val prometheusCommon     = "io.prometheus"         %  "simpleclient_common"    % V.prometheus
 
     // Scala
-    val snowplowCommonEnrich = "com.snowplowanalytics" %% "snowplow-common-enrich" % V.snowplowCommonEnrich
-    val igluClient           = "com.snowplowanalytics" %% "iglu-scala-client"      % V.igluClient
     val collectorPayload     = "com.snowplowanalytics" %  "collector-payload-1"    % V.collectorPayload
-    val scalaz7              = "org.scalaz"            %% "scalaz-core"            % V.scalaz7
+    val badRows              = "com.snowplowanalytics" %% "snowplow-badrows"       % V.badRows
     val scopt                = "com.github.scopt"      %% "scopt"                  % V.scopt
     val akkaHttp             = "com.typesafe.akka"     %% "akka-http"              % V.akkaHttp
     val akkaStream           = "com.typesafe.akka"     %% "akka-stream"            % V.akka
@@ -72,8 +69,8 @@ object Dependencies {
     val pureconfig           = "com.github.pureconfig" %% "pureconfig"             % V.pureconfig
 
     // Scala (test only)
-    val specs2               = "org.specs2"            %% "specs2-core"            % V.specs2   % "test"
-    val akkaTestkit          = "com.typesafe.akka"     %% "akka-testkit"           % V.akka     % "test"
-    val akkaHttpTestkit      = "com.typesafe.akka"     %% "akka-http-testkit"      % V.akkaHttp % "test"
+    val specs2               = "org.specs2"            %% "specs2-core"            % V.specs2   % Test
+    val akkaTestkit          = "com.typesafe.akka"     %% "akka-testkit"           % V.akka     % Test
+    val akkaHttpTestkit      = "com.typesafe.akka"     %% "akka-http-testkit"      % V.akkaHttp % Test
   }
 }
