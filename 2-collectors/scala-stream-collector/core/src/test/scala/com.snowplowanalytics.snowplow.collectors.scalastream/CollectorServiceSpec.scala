@@ -12,21 +12,23 @@
  * implied.  See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow
-package collectors.scalastream
+package com.snowplowanalytics.snowplow.collectors.scalastream
 
 import java.net.InetAddress
 
 import scala.collection.immutable.Seq
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
+
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.model.headers.CacheDirectives._
+
 import org.apache.thrift.{TDeserializer, TSerializer}
 
+import com.snowplowanalytics.snowplow.CollectorPayload.thrift.model1.CollectorPayload
 import org.specs2.mutable.Specification
-import CollectorPayload.thrift.model1.CollectorPayload
+
 import generated.BuildInfo
 import model._
 
@@ -306,17 +308,17 @@ class CollectorServiceSpec extends Specification {
         service.cookieHeader(HttpRequest(), None, "nuid", false) shouldEqual None
       }
       "give back None if doNoTrack is true" in {
-        val nuid = "nuid"
         val conf = CookieConfig(true, "name", 5.seconds, Some(List("domain")), None, secure = false, httpOnly = false, sameSite = None)
-
         service.cookieHeader(HttpRequest(), Some(conf), "nuid", true) shouldEqual None
       }
       "give back a cookie header with Secure, HttpOnly and SameSite=None" in {
+        val nuid = "nuid"
         val conf = CookieConfig(true, "name", 5.seconds, Some(List("domain")), None, secure = true, httpOnly = true, sameSite = Some("None"))
-        val Some(`Set-Cookie`(cookie)) = service.cookieHeader(HttpRequest(), Some(conf), networkUserId = "nuid", doNotTrack = false)
+        val Some(`Set-Cookie`(cookie)) = service.cookieHeader(HttpRequest(), Some(conf), networkUserId = nuid, doNotTrack = false)
         cookie.secure must beTrue
         cookie.httpOnly must beTrue
         cookie.extension must beSome("SameSite=None")
+        service.cookieHeader(HttpRequest(), Some(conf), nuid, true) shouldEqual None
       }
     }
 

@@ -10,15 +10,16 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.collectors
-package scalastream
+package com.snowplowanalytics.snowplow.collectors.scalastream
 package sinks
 
 import java.util.Properties
 
-import org.apache.kafka.clients.producer._
-import model._
 import scala.collection.JavaConverters._
+
+import org.apache.kafka.clients.producer._
+
+import model._
 
 /**
  * Kafka Sink for the Scala collector
@@ -30,7 +31,7 @@ class KafkaSink(
 ) extends Sink {
 
   // Records must not exceed MaxBytes - 1MB
-  val MaxBytes = 1000000L
+  val MaxBytes = 1000000
 
   private val kafkaProducer = createProducer
 

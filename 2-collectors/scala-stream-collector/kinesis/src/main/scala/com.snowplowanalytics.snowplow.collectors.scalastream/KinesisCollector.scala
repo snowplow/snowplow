@@ -12,14 +12,11 @@
  * implied.  See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow
-package collectors
-package scalastream
+package com.snowplowanalytics.snowplow.collectors.scalastream
 
 import java.util.concurrent.ScheduledThreadPoolExecutor
 
-import scalaz._
-import Scalaz._
+import cats.syntax.either._
 
 import model._
 import sinks.KinesisSink
@@ -29,10 +26,10 @@ object KinesisCollector extends Collector {
   def main(args: Array[String]): Unit = {
     val (collectorConf, akkaConf) = parseConfig(args)
 
-    val sinks = for {
+    val sinks: Either[Throwable, CollectorSinks] = for {
       kc <- collectorConf.streams.sink match {
-        case kc: Kinesis => kc.right
-        case _ => new IllegalArgumentException("Configured sink is not Kinesis").left
+        case kc: Kinesis => kc.asRight
+        case _ => new IllegalArgumentException("Configured sink is not Kinesis").asLeft
       }
       es = new ScheduledThreadPoolExecutor(kc.threadPoolSize)
       goodStream = collectorConf.streams.good
@@ -43,8 +40,8 @@ object KinesisCollector extends Collector {
     } yield CollectorSinks(good, bad)
 
     sinks match {
-      case \/-(s) => run(collectorConf, akkaConf, s)
-      case -\/(e) => throw e
+      case Right(s) => run(collectorConf, akkaConf, s)
+      case Left(e) => throw e
     }
   }
 }

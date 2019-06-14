@@ -25,11 +25,9 @@ lazy val commonDependencies = Seq(
   Dependencies.Libraries.prometheusCommon,
   // Scala
   Dependencies.Libraries.scopt,
-  Dependencies.Libraries.scalaz7,
   Dependencies.Libraries.akkaHttp,
   Dependencies.Libraries.akkaSlf4j,
-  Dependencies.Libraries.json4sJackson,
-  Dependencies.Libraries.snowplowCommonEnrich,
+  Dependencies.Libraries.badRows,
   Dependencies.Libraries.collectorPayload,
   Dependencies.Libraries.pureconfig,
   // Scala (test)
