@@ -12,28 +12,23 @@
  * implied.  See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow
-package collectors
-package scalastream
+package com.snowplowanalytics.snowplow.collectors.scalastream
 
 import model._
 import sinks.NsqSink
 
 object NsqCollector extends Collector {
-
   def main(args: Array[String]): Unit = {
-  val (collectorConf, akkaConf) = parseConfig(args)
-
-  val sinks = {
-    val goodStream = collectorConf.streams.good
-    val badStream = collectorConf.streams.bad
-    val (good, bad) = collectorConf.streams.sink match {
-      case nc: Nsq => (new NsqSink(nc, goodStream), new NsqSink(nc, badStream))
-      case _ => throw new IllegalArgumentException("Configured sink is not NSQ")
+    val (collectorConf, akkaConf) = parseConfig(args)
+    val sinks = {
+      val goodStream = collectorConf.streams.good
+      val badStream = collectorConf.streams.bad
+      val (good, bad) = collectorConf.streams.sink match {
+        case nc: Nsq => (new NsqSink(nc, goodStream), new NsqSink(nc, badStream))
+        case _ => throw new IllegalArgumentException("Configured sink is not NSQ")
+      }
+      CollectorSinks(good, bad)
     }
-    CollectorSinks(good, bad)
-  }
-
-  run(collectorConf, akkaConf, sinks)
+    run(collectorConf, akkaConf, sinks)
   }
 }

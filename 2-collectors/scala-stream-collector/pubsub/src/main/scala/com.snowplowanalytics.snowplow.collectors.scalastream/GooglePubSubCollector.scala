@@ -12,12 +12,9 @@
  * implied.  See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow
-package collectors
-package scalastream
+package com.snowplowanalytics.snowplow.collectors.scalastream
 
-import scalaz._
-import Scalaz._
+import cats.syntax.either._
 
 import model._
 import sinks.GooglePubSubSink
@@ -27,10 +24,10 @@ object GooglePubSubCollector extends Collector {
   def main(args: Array[String]): Unit = {
     val (collectorConf, akkaConf) = parseConfig(args)
 
-    val sinks = for {
+    val sinks: Either[Throwable, CollectorSinks] = for {
       pc <- collectorConf.streams.sink match {
-        case pc: GooglePubSub => pc.right
-        case _ => new IllegalArgumentException("Configured sink is not PubSub").left
+        case pc: GooglePubSub => pc.asRight
+        case _ => new IllegalArgumentException("Configured sink is not PubSub").asLeft
       }
       goodStream = collectorConf.streams.good
       badStream = collectorConf.streams.bad
@@ -40,8 +37,8 @@ object GooglePubSubCollector extends Collector {
     } yield CollectorSinks(good, bad)
 
     sinks match {
-      case \/-(s) => run(collectorConf, akkaConf, s)
-      case -\/(e) => throw e
+      case Right(s) => run(collectorConf, akkaConf, s)
+      case Left(e) => throw e
     }
   }
 }

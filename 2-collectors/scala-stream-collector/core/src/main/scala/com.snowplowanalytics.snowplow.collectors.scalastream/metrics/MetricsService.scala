@@ -15,12 +15,12 @@
 package com.snowplowanalytics.snowplow.collectors.scalastream
 package metrics
 
+import java.io.StringWriter
 import java.time.Duration
 
 import akka.http.scaladsl.model.{HttpMethod, StatusCode, Uri}
 import io.prometheus.client.exporter.common.TextFormat
 import io.prometheus.client.{CollectorRegistry, Counter, Gauge, Histogram}
-import org.apache.commons.io.output.StringBuilderWriter
 
 import generated.BuildInfo
 import PrometheusMetricsService.Metrics._
@@ -32,11 +32,8 @@ import model.PrometheusMetricsConfig
   * and report generation based on collected statistics
   */
 trait MetricsService {
-
   def observeRequest(method: HttpMethod, uri: Uri, status: StatusCode, duration: Duration): Unit
-
   def report(): String
-
 }
 
 /**
@@ -70,15 +67,13 @@ class PrometheusMetricsService(metricsConfig: PrometheusMetricsConfig) extends M
   }
 
   override def report(): String = {
-    val writer = new StringBuilderWriter()
+    val writer = new StringWriter()
     TextFormat.write004(writer, registry.metricFamilySamples())
-    writer.getBuilder.toString
+    writer.toString
   }
-
 }
 
 object PrometheusMetricsService {
-
   final val NanosecondsInSecond: Double = Math.pow(10, 9)
 
   object Metrics {
@@ -90,5 +85,4 @@ object PrometheusMetricsService {
 
     final val Labels = Seq("endpoint", "method", "code")
   }
-
 }
