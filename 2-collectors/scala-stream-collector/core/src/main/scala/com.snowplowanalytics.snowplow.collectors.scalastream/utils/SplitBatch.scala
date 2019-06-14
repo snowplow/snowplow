@@ -10,30 +10,26 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package collectors
-package scalastream
+package com.snowplowanalytics.snowplow.collectors.scalastream
 package utils
 
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets.UTF_8
+import java.time.Instant
 
-import scala.util.control.NonFatal
-
+import cats.syntax.either._
+import com.snowplowanalytics.iglu.core._
+import com.snowplowanalytics.iglu.core.circe.CirceIgluCodecs._
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.CollectorPayload.thrift.model1.CollectorPayload
+import io.circe.Json
+import io.circe.parser._
+import io.circe.syntax._
 import org.apache.thrift.TSerializer
-import org.joda.time.{DateTime, DateTimeZone}
-import org.joda.time.format.DateTimeFormat
-import scalaz._
 
-import CollectorPayload.thrift.model1.CollectorPayload
-import enrich.common.outputs.BadRow
-import iglu.client.validation.ProcessingMessageMethods._
 import model._
 
-/**
- * Object handling splitting an array of strings correctly
- */
+/** Object handling splitting an array of strings correctly */
 object SplitBatch {
 
   // Serialize Thrift CollectorPayload objects
@@ -41,43 +37,30 @@ object SplitBatch {
     override def initialValue = new TSerializer()
   }
 
-  // An ISO valid timestamp formatter
-  private val TstampFormat = DateTimeFormat
-    .forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
-    .withZone(DateTimeZone.UTC)
-
-  // json4s
-  import org.json4s._
-  import org.json4s.JsonDSL._
-  import org.json4s.jackson.JsonMethods._
-
   /**
    * Split a list of strings into batches, none of them exceeding a given size
    * Input strings exceeding the given size end up in the failedBigEvents field of the result
-   *
    * @param input List of strings
    * @param maximum No good batch can exceed this size
    * @param joinSize Constant to add to the size of the string representing the additional comma
    *                 needed to join separate event JSONs in a single array
    * @return split batch containing list of good batches and list of events that were too big
    */
-  def split(input: List[String], maximum: Long, joinSize: Long = 1): SplitBatchResult = {
-
-    import scala.annotation.tailrec
-    @tailrec
+  def split(input: List[Json], maximum: Int, joinSize: Int = 1): SplitBatchResult = {
+    @scala.annotation.tailrec
     def iterbatch(
-      l: List[String],
-      currentBatch: List[String],
+      l: List[Json],
+      currentBatch: List[Json],
       currentTotal: Long,
-      acc: List[List[String]],
-      failedBigEvents: List[String]): SplitBatchResult = l match {
-
+      acc: List[List[Json]],
+      failedBigEvents: List[Json]
+    ): SplitBatchResult = l match {
       case Nil => currentBatch match {
         case Nil => SplitBatchResult(acc, failedBigEvents)
         case nonemptyBatch => SplitBatchResult(nonemptyBatch :: acc, failedBigEvents)
       }
       case h :: t =>
-        val headSize = ByteBuffer.wrap(h.getBytes(UTF_8)).capacity
+        val headSize = getSize(h.noSpaces)
         if (headSize + joinSize > maximum) {
           iterbatch(t, currentBatch, currentTotal, acc, h :: failedBigEvents)
         } else if (headSize + currentTotal + joinSize > maximum) {
@@ -91,93 +74,53 @@ object SplitBatch {
   }
 
   /**
-   * If the CollectorPayload is too big to fit
-   * in a single record, attempt to split it into
+   * If the CollectorPayload is too big to fit in a single record, attempt to split it into
    * multiple records.
-   *
    * @param event Incoming CollectorPayload
    * @return a List of Good and Bad events
    */
-  def splitAndSerializePayload(event: CollectorPayload, maxBytes: Long): EventSerializeResult = {
-
+  def splitAndSerializePayload(event: CollectorPayload, maxBytes: Int): EventSerializeResult = {
     val serializer = ThriftSerializer.get()
     val everythingSerialized = serializer.serialize(event)
-    val wholeEventBytes = ByteBuffer.wrap(everythingSerialized).capacity.toLong
+    val wholeEventBytes = getSize(everythingSerialized)
 
     // If the event is below the size limit, no splitting is necessary
     if (wholeEventBytes < maxBytes) {
       EventSerializeResult(List(everythingSerialized), Nil)
     } else {
-      event.getBody match {
-        case null =>
-          // Event was a GET
-          val err = "cannot split record with null body"
-          val payload = oversizedPayload(event, wholeEventBytes, maxBytes, err)
-          EventSerializeResult(Nil, List(payload))
-        case body =>
-          try {
-            // Try to parse the body
-            val initialBody = parse(body)
-
-            // Event was a POST
-            val bodyDataArray = initialBody \ "data" match {
-              case JNothing => None
-              case data => Some(data)
-            }
-
-            val initialBodyDataBytes =
-              ByteBuffer.wrap(compact(bodyDataArray).getBytes(UTF_8)).capacity
-
-            // If the event minus the data array is too big, splitting is hopeless
-            if (wholeEventBytes - initialBodyDataBytes >= maxBytes) {
-              val err = "event without \"data\" field is still too big"
-              val payload = oversizedPayload(event, wholeEventBytes, maxBytes, err)
-              EventSerializeResult(Nil, List(payload))
-            } else {
-
-              val bodySchema = initialBody \ "schema"
-
-              // The body array converted to a list of events
-              val individualEvents: Option[List[String]] =
-                bodyDataArray.map(b => b.children.map(compact))
-
-              val batchedIndividualEvents = individualEvents.map(
-                split(_, maxBytes - wholeEventBytes + initialBodyDataBytes))
-
-              batchedIndividualEvents match {
-                case None =>
-                  val err = "record has no data field"
-                  val payload = oversizedPayload(event, wholeEventBytes, maxBytes, err)
-                  EventSerializeResult(Nil, List(payload))
-                case Some(batches) =>
-                  // Copy all data from the original payload into the smaller payloads
-                  val goodList = batches.goodBatches.map { batch =>
-                    val payload = event.deepCopy()
-                    val data = batch.map(evt => parse(evt))
-                    val body = getGoodRow(bodySchema, data)
-                    payload.setBody(body)
-                    serializer.serialize(payload)
-                  }
-
-                  val badList = batches.failedBigEvents.map { e =>
-                    val size = ByteBuffer.wrap(e.getBytes(UTF_8)).capacity.toLong
-                    val err = "one of the split event is still too large"
-                    oversizedPayload(event, size, maxBytes, err)
-                  }
-
-                  // Return Good and Bad Lists
-                  EventSerializeResult(goodList, badList)
-              }
-            }
-          } catch {
-            case NonFatal(e) =>
-              val err = s"could not parse payload body ${e.getMessage}"
-              val payload = oversizedPayload(event, wholeEventBytes, maxBytes, err)
-              EventSerializeResult(Nil, List(payload))
-          }
-      }
+      (for {
+        body <- Option(event.getBody).toRight("GET requests cannot be split")
+        children <- splitBody(body)
+        initialBodyDataBytes = getSize(Json.arr(children._2: _*).noSpaces)
+        _ <- Either.cond[String, Unit](
+          wholeEventBytes - initialBodyDataBytes < maxBytes,
+          (),
+          "cannot split this POST request because event without \"data\" field is still too big"
+        )
+        splitted = split(children._2, maxBytes - wholeEventBytes + initialBodyDataBytes)
+        goodSerialized = serializeBatch(serializer, event, splitted.goodBatches, children._1)
+        badList = splitted.failedBigEvents.map { e =>
+          val msg = "this POST request split is still too large"
+          oversizedPayload(event, getSize(e), maxBytes, msg)
+        }
+      } yield EventSerializeResult(goodSerialized, badList)).fold({
+        msg =>
+          val tooBigPayload = oversizedPayload(event, wholeEventBytes, maxBytes, msg)
+          EventSerializeResult(Nil, List(tooBigPayload))
+        },
+        identity
+      )
     }
   }
+
+  def splitBody(body: String): Either[String, (SchemaKey, List[Json])] = for {
+    json <- parse(body)
+      .leftMap(e => s"cannot split POST requests which are not json ${e.getMessage}")
+    sdd <- json.as[SelfDescribingData[Json]]
+      .leftMap(e => s"cannot split POST requests which are not self-describing ${e.getMessage}")
+    array <- sdd.data.asArray
+      .toRight("cannot split POST requests which do not contain a data array")
+  } yield (sdd.schema, array.toList)
 
   /**
    * Creates a bad row while maintaining a truncation of the original payload to ease debugging.
@@ -185,39 +128,37 @@ object SplitBatch {
    * @param event original payload
    * @param size size of the oversized payload
    * @param maxSize maximum size allowed
-   * @param errorMessage additional context for the fact that the payload is too big
+   * @param msg error message
    * @return the created bad rows as json
    */
   private def oversizedPayload(
-      event: CollectorPayload, size: Long, maxSize: Long, errorMessage: String): Array[Byte] = {
-    val err = s"Oversized payload, size: $size, max size: $maxSize, reason: $errorMessage"
-      .toProcessingMessage
-    BadRow(event.toString.take((maxSize / 10L).intValue), NonEmptyList(err))
-      .toCompactJson
-      .getBytes(UTF_8)
-  }
+    event: CollectorPayload,
+    size: Int,
+    maxSize: Int,
+    msg: String
+  ): Array[Byte] =
+    BadRow.SizeViolation(
+      Processor(generated.BuildInfo.name, generated.BuildInfo.version),
+      Failure.SizeViolation(Instant.now(), maxSize, size, s"oversized collector payload: $msg"),
+      Payload.RawPayload(event.toString().take(maxSize / 10))
+    ).asJson.noSpaces.getBytes(UTF_8)
 
-  /**
-   * Returns a Good Row as a String
-   *
-   * @param schema The schema for this event
-   * @param data A List of JValues to embed for this event
-   */
-  private def getGoodRow(schema: JValue, data: List[JValue]): String = {
-    compact(
-      ("schema" -> schema) ~
-      ("data" -> data)
-    )
-  }
+  private def getSize(a: Array[Byte]): Int = ByteBuffer.wrap(a).capacity
 
-  /**
-   * Returns an ISO valid timestamp
-   *
-   * @param tstamp The Timestamp to convert
-   * @return the formatted Timestamp
-   */
-  private def getTimestamp(tstamp: Long): String = {
-    val dt = new DateTime(tstamp)
-    TstampFormat.print(dt)
-  }
+  private def getSize(s: String): Int = getSize(s.getBytes(UTF_8))
+
+  private def getSize(j: Json): Int = getSize(j.noSpaces)
+
+  private def serializeBatch(
+    serializer: TSerializer,
+    event: CollectorPayload,
+    batches: List[List[Json]],
+    schema: SchemaKey
+  ): List[Array[Byte]] =
+    batches.map { batch =>
+      val payload = event.deepCopy()
+      val body = SelfDescribingData[Json](schema, Json.arr(batch: _*))
+      payload.setBody(body.asJson.noSpaces)
+      serializer.serialize(payload)
+    }
 }

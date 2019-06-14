@@ -12,18 +12,14 @@
  * implied.  See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow
-package collectors
-package scalastream
+package com.snowplowanalytics.snowplow.collectors.scalastream
 
 import model._
 import sinks.StdoutSink
 
 object StdoutCollector extends Collector {
-
   def main(args: Array[String]): Unit = {
     val (collectorConf, akkaConf) = parseConfig(args)
-
     val sinks = {
       val (good, bad) = collectorConf.streams.sink match {
         case Stdout => (new StdoutSink("out"), new StdoutSink("err"))
@@ -31,7 +27,6 @@ object StdoutCollector extends Collector {
       }
       CollectorSinks(good, bad)
     }
-
     run(collectorConf, akkaConf, sinks)
   }
 }
