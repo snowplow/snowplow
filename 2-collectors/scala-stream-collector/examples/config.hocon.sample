@@ -55,10 +55,28 @@ collector {
     name = {{collectorCookieName}}
     name = ${?COLLECTOR_COOKIE_NAME}
     # The domain is optional and will make the cookie accessible to other
-    # applications on the domain. Comment out this line to tie cookies to
-    # the collector's full domain
-    domain = "{{cookieDomain}}"
-    domain = ${?COLLECTOR_COOKIE_DOMAIN}
+    # applications on the domain. Comment out these lines to tie cookies to
+    # the collector's full domain.
+    # The domain is determined by matching the domains from the Origin header of the request
+    # to the list below. The first match is used. If no matches are found, the fallback domain will be used,
+    # if configured.
+    # If you specify a main domain, all subdomains on it will be matched.
+    # If you specify a subdomain, only that subdomain will be matched.
+    # Examples:
+    # domain.com will match domain.com, www.domain.com and secure.client.domain.com
+    # client.domain.com will match secure.client.domain.com but not domain.com or www.domain.com
+    domains = [
+        "{{cookieDomain1}}" # e.g. "domain.com" -> any origin domain ending with this will be matched and domain.com will be returned
+        "{{cookieDomain2}}" # e.g. "secure.anotherdomain.com" -> any origin domain ending with this will be matched and secure.anotherdomain.com will be returned
+        # ... more domains
+    ]
+    domains += ${?COLLECTOR_COOKIE_DOMAIN_1}
+    domains += ${?COLLECTOR_COOKIE_DOMAIN_2}
+    # ... more domains
+    # If specified, the fallback domain will be used if none of the Origin header hosts matches the list of
+    # cookie domains configured above. (For example, if there is no Origin header.)
+    fallbackDomain = "{{fallbackDomain}}"
+    fallbackDomain = ${?FALLBACK_DOMAIN}
   }
 
   # If you have a do not track cookie in place, the Scala Stream Collector can respect it by
