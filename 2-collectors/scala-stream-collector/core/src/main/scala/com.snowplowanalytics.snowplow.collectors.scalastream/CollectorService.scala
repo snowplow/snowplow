@@ -16,19 +16,17 @@ package com.snowplowanalytics.snowplow
 package collectors.scalastream
 
 
-// Java
 import java.util.UUID
-import org.apache.commons.codec.binary.Base64
 import org.slf4j.LoggerFactory
 
-// Scala
 import scala.collection.JavaConverters._
+
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.model.headers.CacheDirectives._
+import org.apache.commons.codec.binary.Base64
 import scalaz._
 
-// Snowplow
 import CollectorPayload.thrift.model1.CollectorPayload
 import enrich.common.outputs.BadRow
 import generated.BuildInfo
@@ -362,15 +360,8 @@ class CollectorService(
       domainList <- domains
       origins <- headers.collectFirst { case header: `Origin` => header.origins }
       originHosts = extractHosts(origins)
-      matchingDomains = for {
-        host <- originHosts
-        matchingDomains <- domainList.collectFirst { case domain if validMatch(host, domain) => domain }
-      } yield matchingDomains
-      domainToUse <- matchingDomains.headOption
-    } yield domainToUse) match {
-      case Some(domain) => Some(domain)
-      case None => fallbackDomain
-    }
+      domainToUse <- domainList.find(domain => originHosts.exists(validMatch(_, domain)))
+    } yield domainToUse).orElse(fallbackDomain)
 
   /** Extracts the host names from a list of values in the request's Origin header. */
   def extractHosts(origins: Seq[HttpOrigin]): Seq[String] =
