@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory
 trait Sink {
 
   // Maximum number of bytes that a single record can contain
-  val MaxBytes: Long
+  val MaxBytes: Int
 
   lazy val log = LoggerFactory.getLogger(getClass())
 

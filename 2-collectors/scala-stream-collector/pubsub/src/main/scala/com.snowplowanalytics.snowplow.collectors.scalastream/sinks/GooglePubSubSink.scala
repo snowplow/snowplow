@@ -10,14 +10,12 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow
-package collectors
-package scalastream
+package com.snowplowanalytics.snowplow.collectors.scalastream
 package sinks
 
 import scala.collection.JavaConverters._
-import scala.util.Try
 
+import cats.syntax.either._
 import com.google.api.core.{ApiFutureCallback, ApiFutures}
 import com.google.api.gax.batching.BatchingSettings
 import com.google.api.gax.retrying.RetrySettings
@@ -26,8 +24,6 @@ import com.google.cloud.pubsub.v1.{Publisher, TopicAdminClient}
 import com.google.pubsub.v1.{ProjectName, PubsubMessage, ProjectTopicName}
 import com.google.protobuf.ByteString
 import org.threeten.bp.Duration
-import scalaz._
-import Scalaz._
 
 import model._
 import util._
@@ -38,15 +34,15 @@ object GooglePubSubSink {
     googlePubSubConfig: GooglePubSub,
     bufferConfig: BufferConfig,
     topicName: String
-  ): \/[Throwable, GooglePubSubSink] = for {
-    batching <- batchingSettings(bufferConfig).right
+  ): Either[Throwable, GooglePubSubSink] = for {
+    batching <- batchingSettings(bufferConfig).asRight
     retry = retrySettings(googlePubSubConfig.backoffPolicy)
-    publisher <- toEither(
-      createPublisher(googlePubSubConfig.googleProjectId, topicName, batching, retry))
+    publisher <-
+      createPublisher(googlePubSubConfig.googleProjectId, topicName, batching, retry)
     _ <- topicExists(googlePubSubConfig.googleProjectId, topicName)
       .flatMap { b =>
-        if (b) b.right
-        else new IllegalArgumentException(s"Google PubSub topic $topicName doesn't exist").left
+        if (b) b.asRight
+        else new IllegalArgumentException(s"Google PubSub topic $topicName doesn't exist").asLeft
       }
   } yield new GooglePubSubSink(publisher, topicName)
 
@@ -62,8 +58,8 @@ object GooglePubSubSink {
     topicName: String,
     batchingSettings: BatchingSettings,
     retrySettings: RetrySettings
-  ): Try[Publisher] =
-    Try(Publisher.newBuilder(ProjectTopicName.of(projectId, topicName))
+  ): Either[Throwable, Publisher] =
+    Either.catchNonFatal(Publisher.newBuilder(ProjectTopicName.of(projectId, topicName))
       .setBatchingSettings(batchingSettings)
       .setRetrySettings(retrySettings)
       .setHeaderProvider(FixedHeaderProvider.create("User-Agent", UserAgent))
@@ -89,12 +85,12 @@ object GooglePubSubSink {
       .build()
 
   /** Checks that a PubSub topic exists **/
-  private def topicExists(projectId: String, topicName: String): \/[Throwable, Boolean] = for {
-    topicAdminClient <- toEither(Try(TopicAdminClient.create()))
-    topics <- toEither(Try(topicAdminClient.listTopics(ProjectName.of(projectId))))
+  private def topicExists(projectId: String, topicName: String): Either[Throwable, Boolean] = for {
+    topicAdminClient <- Either.catchNonFatal(TopicAdminClient.create())
+    topics <- Either.catchNonFatal(topicAdminClient.listTopics(ProjectName.of(projectId)))
       .map(_.iterateAll.asScala.toList)
     exists = topics.map(_.getName).exists(_.contains(topicName))
-    _ <- toEither(Try(topicAdminClient.close()))
+    _ <- Either.catchNonFatal(topicAdminClient.close())
   } yield exists
 }
 
@@ -104,7 +100,7 @@ object GooglePubSubSink {
 class GooglePubSubSink private (publisher: Publisher, topicName: String) extends Sink {
 
   // maximum size of a pubsub message is 10MB
-  override val MaxBytes: Long = 10000000L
+  override val MaxBytes: Int = 10000000
 
   /**
    * Convert event bytes to a PubsubMessage to be published
@@ -125,7 +121,7 @@ class GooglePubSubSink private (publisher: Publisher, topicName: String) extends
     if (events.nonEmpty)
       log.debug(s"Writing ${events.size} Thrift records to Google PubSub topic ${topicName}")
     events.foreach { event =>
-      publisher.right.map { p =>
+      publisher.asRight.map { p =>
         val future = p.publish(eventToPubsubMessage(event))
         ApiFutures.addCallback(future, new ApiFutureCallback[String]() {
           override def onSuccess(messageId: String): Unit =
