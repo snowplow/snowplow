@@ -376,8 +376,7 @@ class CollectorService(
    * a substring of the Origin host, without any connection between them.
    */
   def validMatch(host: String, domain: String): Boolean =
-    if (host == domain || host.endsWith("." + domain)) true
-    else false
+    host == domain || host.endsWith("." + domain)
 
   /**
    * Gets the IP from a RemoteAddress. If ipAsPartitionKey is false, a UUID will be generated.
