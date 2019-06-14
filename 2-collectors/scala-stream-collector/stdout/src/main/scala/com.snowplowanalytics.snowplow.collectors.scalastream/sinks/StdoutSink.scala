@@ -16,17 +16,13 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow
-package collectors
-package scalastream
+package com.snowplowanalytics.snowplow.collectors.scalastream
 package sinks
 
 import org.apache.commons.codec.binary.Base64
 
 class StdoutSink(streamName: String) extends Sink {
-
-  val MaxBytes = Long.MaxValue
-
+  override val MaxBytes = Int.MaxValue
   // Print a Base64-encoded event.
   def storeRawEvents(events: List[Array[Byte]], key: String) = {
     streamName match {

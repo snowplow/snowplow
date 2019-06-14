@@ -12,9 +12,7 @@
  * implied.  See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow
-package collectors
-package scalastream
+package com.snowplowanalytics.snowplow.collectors.scalastream
 
 import java.io.File
 
@@ -22,11 +20,12 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
-import com.snowplowanalytics.snowplow.collectors.scalastream.metrics._
-import com.snowplowanalytics.snowplow.collectors.scalastream.model._
 import com.typesafe.config.{Config, ConfigFactory}
 import org.slf4j.LoggerFactory
 import pureconfig._
+
+import metrics._
+import model._
 
 // Main entry point of the Scala collector.
 trait Collector {
