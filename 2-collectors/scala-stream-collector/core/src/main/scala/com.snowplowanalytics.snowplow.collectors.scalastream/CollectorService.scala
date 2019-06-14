@@ -12,23 +12,20 @@
  * implied.  See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow
-package collectors.scalastream
-
+package com.snowplowanalytics.snowplow.collectors.scalastream
 
 import java.util.UUID
-import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.model.headers.CacheDirectives._
-import org.apache.commons.codec.binary.Base64
-import scalaz._
 
-import CollectorPayload.thrift.model1.CollectorPayload
-import enrich.common.outputs.BadRow
+import com.snowplowanalytics.snowplow.CollectorPayload.thrift.model1.CollectorPayload
+import org.apache.commons.codec.binary.Base64
+import org.slf4j.LoggerFactory
+
 import generated.BuildInfo
 import model._
 import utils.SplitBatch
@@ -281,10 +278,7 @@ class CollectorService(
           if (canReplace) target.replaceAllLiterally(token, event.networkUserId)
           else target
         (HttpResponse(StatusCodes.Found).withHeaders(`RawHeader`("Location", replacedTarget)), Nil)
-      case None =>
-        val badRow = createBadRow(event, "Redirect failed due to lack of u parameter")
-        (HttpResponse(StatusCodes.BadRequest),
-          sinks.bad.storeRawEvents(List(badRow), partitionKey))
+      case None => (HttpResponse(StatusCodes.BadRequest), Nil)
     }
 
   /**
@@ -431,10 +425,4 @@ class CollectorService(
       case Some(`Origin`(origin)) => HttpOriginRange.Default(origin)
       case _ => HttpOriginRange.`*`
     })
-
-  /** Puts together a bad row ready for sinking */
-  private def createBadRow(event: CollectorPayload, message: String): Array[Byte] =
-    BadRow(new String(SplitBatch.ThriftSerializer.get().serialize(event)), NonEmptyList(message))
-      .toCompactJson
-      .getBytes("UTF-8")
 }

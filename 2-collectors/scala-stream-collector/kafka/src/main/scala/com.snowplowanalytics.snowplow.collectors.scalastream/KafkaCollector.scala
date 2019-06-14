@@ -12,18 +12,14 @@
  * implied.  See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow
-package collectors
-package scalastream
+package com.snowplowanalytics.snowplow.collectors.scalastream
 
 import model._
 import sinks.KafkaSink
 
 object KafkaCollector extends Collector {
-
   def main(args: Array[String]): Unit = {
     val (collectorConf, akkaConf) = parseConfig(args)
-
     val sinks = {
       val goodStream = collectorConf.streams.good
       val badStream = collectorConf.streams.bad
@@ -35,7 +31,6 @@ object KafkaCollector extends Collector {
       }
       CollectorSinks(good, bad)
     }
-
     run(collectorConf, akkaConf, sinks)
   }
 }
