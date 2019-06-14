@@ -15,7 +15,9 @@
 package com.snowplowanalytics.snowplow
 package collectors.scalastream
 
+
 import java.util.UUID
+import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 
@@ -23,7 +25,6 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.model.headers.CacheDirectives._
 import org.apache.commons.codec.binary.Base64
-import org.slf4j.LoggerFactory
 import scalaz._
 
 import CollectorPayload.thrift.model1.CollectorPayload
@@ -118,7 +119,7 @@ class CollectorService(
       request,
       config.cookieBounce,
       bounce) ++
-      cookieHeader(config.cookieConfig, nuid, doNotTrack) ++
+      cookieHeader(request, config.cookieConfig, nuid, doNotTrack) ++
       cacheControl(pixelExpected) ++
       List(
         RawHeader("P3P", "policyref=\"%s\", CP=\"%s\"".format(config.p3p.policyRef, config.p3p.CP)),
@@ -282,6 +283,7 @@ class CollectorService(
    * @return the build cookie wrapped in a header
    */
   def cookieHeader(
+    request: HttpRequest,
     cookieConfig: Option[CookieConfig],
     networkUserId: String,
     doNotTrack: Boolean
@@ -294,7 +296,7 @@ class CollectorService(
           name    = config.name,
           value   = networkUserId,
           expires = Some(DateTime.now + config.expiration.toMillis),
-          domain  = config.domain,
+          domain  = cookieDomain(request.headers, config.domains, config.fallbackDomain),
           path    = Some("/")
         )
         `Set-Cookie`(responseCookie)
@@ -342,6 +344,39 @@ class CollectorService(
   def cacheControl(pixelExpected: Boolean): List[`Cache-Control`] =
     if (pixelExpected) List(`Cache-Control`(`no-cache`, `no-store`, `must-revalidate`))
     else Nil
+
+  /**
+   * Determines the cookie domain to be used by inspecting the Origin header of the request
+   * and trying to find a match in the list of domains specified in the config file.
+   * @param headers The headers from the http request.
+   * @param domains The list of cookie domains from the configuration.
+   * @param fallbackDomain The fallback domain from the configuration.
+   * @return The domain to be sent back in the response, unless no cookie domains are configured.
+   * The Origin header may include multiple domains. The first matching domain is returned.
+   * If no match is found, the fallback domain is used if configured. Otherwise, the cookie domain is not set.
+   */
+  def cookieDomain(headers: Seq[HttpHeader], domains: Option[List[String]], fallbackDomain: Option[String]): Option[String] =
+    (for {
+      domainList <- domains
+      origins <- headers.collectFirst { case header: `Origin` => header.origins }
+      originHosts = extractHosts(origins)
+      domainToUse <- domainList.find(domain => originHosts.exists(validMatch(_, domain)))
+    } yield domainToUse).orElse(fallbackDomain)
+
+  /** Extracts the host names from a list of values in the request's Origin header. */
+  def extractHosts(origins: Seq[HttpOrigin]): Seq[String] =
+    origins.map(origin => origin.host.host.address())
+
+  /**
+   * Ensures a match is valid.
+   * We only want matches where:
+   * a.) the Origin host is exactly equal to the cookie domain from the config
+   * b.) the Origin host is a subdomain of the cookie domain from the config.
+   * But we want to avoid cases where the cookie domain from the config is randomly
+   * a substring of the Origin host, without any connection between them.
+   */
+  def validMatch(host: String, domain: String): Boolean =
+    host == domain || host.endsWith("." + domain)
 
   /**
    * Gets the IP from a RemoteAddress. If ipAsPartitionKey is false, a UUID will be generated.
