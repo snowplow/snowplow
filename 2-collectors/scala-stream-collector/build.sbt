@@ -24,12 +24,14 @@ lazy val commonDependencies = Seq(
   // Scala
   Dependencies.Libraries.scopt,
   Dependencies.Libraries.akkaHttp,
+  Dependencies.Libraries.akkaStream,
   Dependencies.Libraries.akkaSlf4j,
   Dependencies.Libraries.badRows,
   Dependencies.Libraries.collectorPayload,
   Dependencies.Libraries.pureconfig,
   // Scala (test)
   Dependencies.Libraries.akkaHttpTestkit,
+  Dependencies.Libraries.akkaStreamTestkit,
   Dependencies.Libraries.specs2
 )
 
