@@ -13,6 +13,8 @@
 package com.snowplowanalytics.snowplow.collectors.scalastream
 package sinks
 
+import java.util.concurrent.Executors
+
 import scala.collection.JavaConverters._
 
 import cats.syntax.either._
@@ -132,7 +134,7 @@ class GooglePubSubSink private (publisher: Publisher, topicName: String) extends
                 apiEx.getMessage)
             case t => log.error(s"Publishing message to $topicName failed with ${t.getMessage}")
           }
-        })
+        }, Executors.newSingleThreadExecutor())
       }
     }
     Nil
