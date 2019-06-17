@@ -65,12 +65,16 @@ object Dependencies {
     val akkaHttp             = "com.typesafe.akka"     %% "akka-http"              % V.akkaHttp
     val akkaStream           = "com.typesafe.akka"     %% "akka-stream"            % V.akka
     val akkaSlf4j            = "com.typesafe.akka"     %% "akka-slf4j"             % V.akka
+<<<<<<< HEAD
     val json4sJackson        = "org.json4s"            %% "json4s-jackson"         % V.json4s
+=======
+>>>>>>> d2fe3aa9a... Scala Stream Collector: bump akka to 2.5.19 (closes #4186)
     val pureconfig           = "com.github.pureconfig" %% "pureconfig"             % V.pureconfig
 
     // Scala (test only)
     val specs2               = "org.specs2"            %% "specs2-core"            % V.specs2   % Test
     val akkaTestkit          = "com.typesafe.akka"     %% "akka-testkit"           % V.akka     % Test
     val akkaHttpTestkit      = "com.typesafe.akka"     %% "akka-http-testkit"      % V.akkaHttp % Test
+    val akkaStreamTestkit    = "com.typesafe.akka"     %% "akka-stream-testkit"    % V.akka     % Test
   }
 }
