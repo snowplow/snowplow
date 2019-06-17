@@ -40,7 +40,7 @@ object Dependencies {
     val pureconfig           = "0.11.1"
     val badRows              = "0.1.0-M2"
     // Scala (test only)
-    val specs2               = "3.9.4"
+    val specs2               = "4.5.1"
   }
 
   object Libraries {
