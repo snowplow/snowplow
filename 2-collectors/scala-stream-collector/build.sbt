@@ -30,6 +30,7 @@ lazy val commonDependencies = Seq(
 =======
 >>>>>>> 12b78d59d... Scala Stream Collector: integrate the size violation bad row type (closes #4177)
   Dependencies.Libraries.akkaHttp,
+  Dependencies.Libraries.akkaStream,
   Dependencies.Libraries.akkaSlf4j,
   Dependencies.Libraries.badRows,
   Dependencies.Libraries.collectorPayload,
@@ -37,6 +38,7 @@ lazy val commonDependencies = Seq(
   // Scala (test)
   Dependencies.Libraries.akkaTestkit,
   Dependencies.Libraries.akkaHttpTestkit,
+  Dependencies.Libraries.akkaStreamTestkit,
   Dependencies.Libraries.specs2
 )
 
