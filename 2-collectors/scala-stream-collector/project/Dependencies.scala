@@ -35,7 +35,7 @@ object Dependencies {
     // Scala
     val collectorPayload     = "0.0.0"
     val akkaHttp             = "10.1.8"
-    val akkaSlf4j            = "2.4.19"
+    val akka                 = "2.5.19"
     val scopt                = "3.6.0"
     val pureconfig           = "0.8.0"
     val badRows              = "0.1.0-M5"
@@ -61,11 +61,13 @@ object Dependencies {
     val badRows              = "com.snowplowanalytics" %% "snowplow-badrows"       % V.badRows
     val scopt                = "com.github.scopt"      %% "scopt"                  % V.scopt
     val akkaHttp             = "com.typesafe.akka"     %% "akka-http"              % V.akkaHttp
-    val akkaSlf4j            = "com.typesafe.akka"     %% "akka-slf4j"             % V.akkaSlf4j
+    val akkaStream           = "com.typesafe.akka"     %% "akka-stream"            % V.akka
+    val akkaSlf4j            = "com.typesafe.akka"     %% "akka-slf4j"             % V.akka
     val pureconfig           = "com.github.pureconfig" %% "pureconfig"             % V.pureconfig
 
     // Scala (test only)
     val specs2               = "org.specs2"            %% "specs2-core"            % V.specs2   % Test
     val akkaHttpTestkit      = "com.typesafe.akka"     %% "akka-http-testkit"      % V.akkaHttp % Test
+    val akkaStreamTestkit    = "com.typesafe.akka"     %% "akka-stream-testkit"    % V.akka     % Test
   }
 }
