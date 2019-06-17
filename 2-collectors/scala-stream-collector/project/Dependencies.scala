@@ -30,7 +30,7 @@ object Dependencies {
     val nsqClient            = "1.2.0"
     val jodaTime             = "2.10.2"
     val slf4j                = "1.7.26"
-    val config               = "1.3.1"
+    val config               = "1.3.4"
     val prometheus           = "0.5.0"
     // Scala
     val collectorPayload     = "0.0.0"
