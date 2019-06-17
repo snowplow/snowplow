@@ -42,7 +42,7 @@ object Dependencies {
     val json4s               = "3.2.11"
     val badRows              = "0.1.0"
     // Scala (test only)
-    val specs2               = "3.9.4"
+    val specs2               = "4.5.1"
   }
 
   object Libraries {
