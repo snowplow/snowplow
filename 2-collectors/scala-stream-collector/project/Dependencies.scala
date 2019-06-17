@@ -28,7 +28,7 @@ object Dependencies {
     val pubsub               = "1.78.0"
     val kafka                = "2.2.1"
     val nsqClient            = "1.2.0"
-    val yodaTime             = "2.9.9"
+    val jodaTime             = "2.10.2"
     val slf4j                = "1.7.5"
     val config               = "1.3.1"
     val prometheus           = "0.5.0"
@@ -51,7 +51,7 @@ object Dependencies {
     val pubsub               = "com.google.cloud"      %  "google-cloud-pubsub"    % V.pubsub
     val kafkaClients         = "org.apache.kafka"      %  "kafka-clients"          % V.kafka
     val nsqClient            = "com.snowplowanalytics" %  "nsq-java-client"        % V.nsqClient
-    val yodaTime             = "joda-time"             %  "joda-time"              % V.yodaTime
+    val jodaTime             = "joda-time"             %  "joda-time"              % V.jodaTime
     val slf4j                = "org.slf4j"             %  "slf4j-simple"           % V.slf4j
     val log4jOverSlf4j       = "org.slf4j"             %  "log4j-over-slf4j"       % V.slf4j
     val config               = "com.typesafe"          %  "config"                 % V.config
