@@ -34,7 +34,7 @@ object Dependencies {
     val prometheus           = "0.6.0"
     // Scala
     val collectorPayload     = "0.0.0"
-    val akkaHttp             = "10.0.15"
+    val akkaHttp             = "10.1.8"
     val akkaSlf4j            = "2.4.19"
     val scopt                = "3.6.0"
     val pureconfig           = "0.8.0"
