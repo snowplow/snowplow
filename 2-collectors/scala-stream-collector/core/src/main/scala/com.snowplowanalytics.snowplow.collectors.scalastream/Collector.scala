@@ -26,6 +26,8 @@ import com.typesafe.config.{Config, ConfigFactory}
 import com.typesafe.sslconfig.akka.AkkaSSLConfig
 import org.slf4j.LoggerFactory
 import pureconfig._
+import pureconfig.generic.{FieldCoproductHint, ProductHint}
+import pureconfig.generic.auto._
 
 import metrics._
 import model._
@@ -34,6 +36,9 @@ import model._
 trait Collector {
 
   lazy val log = LoggerFactory.getLogger(getClass())
+
+  implicit def hint[T] = ProductHint[T](ConfigFieldMapping(CamelCase, CamelCase))
+  implicit val _ = new FieldCoproductHint[SinkConfig]("enabled")
 
   def parseConfig(args: Array[String]): (CollectorConfig, Config) = {
     case class FileConfig(config: File = new File("."))
@@ -59,8 +64,6 @@ trait Collector {
       System.exit(1)
     }
 
-    implicit def hint[T] = ProductHint[T](ConfigFieldMapping(CamelCase, CamelCase))
-    implicit val sinkConfigHint = new FieldCoproductHint[SinkConfig]("enabled")
     (loadConfigOrThrow[CollectorConfig](conf.getConfig("collector")), conf)
   }
 
