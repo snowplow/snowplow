@@ -96,5 +96,6 @@ trait Collector {
         log.error("REST interface could not be bound to " +
           s"${collectorConf.interface}:${collectorConf.port}", ex.getMessage)
       }
+    ()
   }
 }
