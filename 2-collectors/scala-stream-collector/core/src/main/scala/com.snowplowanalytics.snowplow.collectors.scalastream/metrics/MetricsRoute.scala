@@ -20,7 +20,6 @@ import akka.http.scaladsl.server.Route
 import akka.util.ByteString
 
 trait MetricsRoute {
-
   def metricsService: MetricsService
 
   def metricsRoute: Route =
@@ -30,12 +29,9 @@ trait MetricsRoute {
         entity = HttpEntity.Strict(MetricsRoute.`text/plain(UTF-8) v0.0.4`, ByteString(metricsService.report()))
       ))
     }
-
 }
 
 object MetricsRoute {
-
   val `text/plain(UTF-8) v0.0.4`: ContentType.WithCharset =
     MediaTypes.`text/plain` withParams Map("version" -> "0.0.4") withCharset HttpCharsets.`UTF-8`
-
 }
