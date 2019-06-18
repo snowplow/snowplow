@@ -114,6 +114,8 @@ class GooglePubSubSink private (publisher: Publisher, topicName: String) extends
       .setData(ByteString.copyFrom(event))
       .build()
 
+  private val logExecutor = Executors.newSingleThreadExecutor()
+
   /**
    * Store raw events in the PubSub topic
    * @param events The list of events to send
@@ -134,7 +136,7 @@ class GooglePubSubSink private (publisher: Publisher, topicName: String) extends
                 apiEx.getMessage)
             case t => log.error(s"Publishing message to $topicName failed with ${t.getMessage}")
           }
-        }, Executors.newSingleThreadExecutor())
+        }, logExecutor)
       }
     }
     Nil
