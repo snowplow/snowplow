@@ -55,6 +55,7 @@ lazy val dockerSettings = Seq(
 
 lazy val allSettings = buildSettings ++
   BuildSettings.sbtAssemblySettings ++
+  BuildSettings.formatting ++
   Seq(libraryDependencies ++= commonDependencies) ++
   dockerSettings
 
