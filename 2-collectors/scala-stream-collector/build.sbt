@@ -43,10 +43,6 @@ lazy val buildSettings = Seq(
   version       :=  "0.16.0",
   description   :=  "Scala Stream Collector for Snowplow raw events",
   scalaVersion  :=  "2.12.10",
-  scalacOptions :=  BuildSettings.compilerOptions,
-  scalacOptions in (Compile, console) ~= { _.filterNot(Set("-Ywarn-unused-import")) },
-  scalacOptions in (Test, console)    := (scalacOptions in (Compile, console)).value,
-  javacOptions  :=  BuildSettings.javaCompilerOptions,
   resolvers     ++= Dependencies.resolutionRepos
 )
 
