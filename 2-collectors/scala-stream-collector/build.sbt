@@ -24,11 +24,8 @@ lazy val commonDependencies = Seq(
   Dependencies.Libraries.prometheusCommon,
   // Scala
   Dependencies.Libraries.scopt,
-<<<<<<< HEAD
   Dependencies.Libraries.scalaz7,
   Dependencies.Libraries.akkaStream,
-=======
->>>>>>> 12b78d59d... Scala Stream Collector: integrate the size violation bad row type (closes #4177)
   Dependencies.Libraries.akkaHttp,
   Dependencies.Libraries.akkaStream,
   Dependencies.Libraries.akkaSlf4j,
@@ -45,7 +42,7 @@ lazy val commonDependencies = Seq(
 lazy val buildSettings = Seq(
   organization  :=  "com.snowplowanalytics",
   name          :=  "snowplow-stream-collector",
-  version       :=  "0.17.0",
+  version       :=  "1.0.0",
   description   :=  "Scala Stream Collector for Snowplow raw events",
   scalaVersion  :=  "2.12.10",
   resolvers     ++= Dependencies.resolutionRepos
