@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright (c) 2013-2019 Snowplow Analytics Ltd.
  * All rights reserved.
  *
@@ -26,8 +26,14 @@ class StdoutSink(streamName: String) extends Sink {
   // Print a Base64-encoded event.
   def storeRawEvents(events: List[Array[Byte]], key: String) = {
     streamName match {
-      case "out" => events foreach { e => println(Base64.encodeBase64String(e)) }
-      case "err" => events foreach { e => Console.err.println(Base64.encodeBase64String(e)) }
+      case "out" =>
+        events foreach { e =>
+          println(Base64.encodeBase64String(e))
+        }
+      case "err" =>
+        events foreach { e =>
+          Console.err.println(Base64.encodeBase64String(e))
+        }
     }
     Nil
   }

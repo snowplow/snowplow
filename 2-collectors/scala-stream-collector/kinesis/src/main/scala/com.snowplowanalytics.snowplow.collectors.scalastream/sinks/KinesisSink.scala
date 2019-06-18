@@ -19,7 +19,7 @@ import java.util.concurrent.ScheduledExecutorService
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util.{Success, Failure}
+import scala.util.{Failure, Success}
 
 import cats.syntax.either._
 import com.amazonaws.auth._
@@ -49,9 +49,8 @@ object KinesisSink {
     val client = for {
       provider <- getProvider(kinesisConfig.aws)
       client = createKinesisClient(provider, kinesisConfig.endpoint, kinesisConfig.region)
-      _ <-
-        if (streamExists(client, streamName)) true.asRight
-        else new IllegalArgumentException(s"Kinesis stream $streamName doesn't exist").asLeft
+      _ <- if (streamExists(client, streamName)) true.asRight
+      else new IllegalArgumentException(s"Kinesis stream $streamName doesn't exist").asLeft
     } yield client
 
     client.map { c =>
@@ -90,8 +89,10 @@ object KinesisSink {
         new EnvironmentVariableCredentialsProvider().asRight
       case (a, s) if isEnv(a) || isEnv(s) =>
         "accessKey and secretKey must both be set to 'env' or neither".asLeft
-      case _ => new AWSStaticCredentialsProvider(
-        new BasicAWSCredentials(awsConfig.accessKey, awsConfig.secretKey)).asRight
+      case _ =>
+        new AWSStaticCredentialsProvider(
+          new BasicAWSCredentials(awsConfig.accessKey, awsConfig.secretKey)
+        ).asRight
     }).leftMap(new IllegalArgumentException(_))
   }
 
@@ -119,13 +120,14 @@ object KinesisSink {
    * @param name Name of the stream
    * @return Whether the stream exists
    */
-  private def streamExists(client: AmazonKinesis, name: String): Boolean = try {
-    val describeStreamResult = client.describeStream(name)
-    val status = describeStreamResult.getStreamDescription.getStreamStatus
-    status == "ACTIVE" || status == "UPDATING"
-  } catch {
-    case _: ResourceNotFoundException => false
-  }
+  private def streamExists(client: AmazonKinesis, name: String): Boolean =
+    try {
+      val describeStreamResult = client.describeStream(name)
+      val status = describeStreamResult.getStreamDescription.getStreamStatus
+      status == "ACTIVE" || status == "UPDATING"
+    } catch {
+      case _: ResourceNotFoundException => false
+    }
 }
 
 /**
@@ -161,18 +163,22 @@ class KinesisSink private (
    * @param interval When to schedule the next flush
    */
   def scheduleFlush(interval: Long = TimeThreshold): Unit = {
-    executorService.schedule(new Thread {
-      override def run(): Unit = {
-        val lastFlushed = EventStorage.getLastFlushTime()
-        val currentTime = System.currentTimeMillis()
-        if (currentTime - lastFlushed >= TimeThreshold) {
-          EventStorage.flush()
-          scheduleFlush(TimeThreshold)
-        } else {
-          scheduleFlush(TimeThreshold + lastFlushed - currentTime)
+    executorService.schedule(
+      new Thread {
+        override def run(): Unit = {
+          val lastFlushed = EventStorage.getLastFlushTime()
+          val currentTime = System.currentTimeMillis()
+          if (currentTime - lastFlushed >= TimeThreshold) {
+            EventStorage.flush()
+            scheduleFlush(TimeThreshold)
+          } else {
+            scheduleFlush(TimeThreshold + lastFlushed - currentTime)
+          }
         }
-      }
-    }, interval, MILLISECONDS)
+      },
+      interval,
+      MILLISECONDS
+    )
     ()
   }
 
@@ -185,7 +191,9 @@ class KinesisSink private (
       val eventBytes = ByteBuffer.wrap(event)
       val eventSize = eventBytes.capacity
       if (eventSize >= MaxBytes) {
-        log.error(s"Record of size $eventSize bytes is too large - must be less than $MaxBytes bytes")
+        log.error(
+          s"Record of size $eventSize bytes is too large - must be less than $MaxBytes bytes"
+        )
       } else {
         synchronized {
           storedEvents = (eventBytes, key) :: storedEvents
@@ -219,15 +227,14 @@ class KinesisSink private (
   def scheduleBatch(batch: List[(ByteBuffer, String)], lastBackoff: Long = minBackoff): Unit = {
     val nextBackoff = getNextBackoff(lastBackoff)
     executorService.schedule(new Thread {
-      override def run(): Unit = {
+      override def run(): Unit =
         sendBatch(batch, nextBackoff)
-      }
     }, lastBackoff, MILLISECONDS)
     ()
   }
 
   // TODO: limit max retries?
-  def sendBatch(batch: List[(ByteBuffer, String)], nextBackoff: Long = minBackoff): Unit = {
+  def sendBatch(batch: List[(ByteBuffer, String)], nextBackoff: Long = minBackoff): Unit =
     if (batch.size > 0) {
       log.info(s"Writing ${batch.size} Thrift records to Kinesis stream ${streamName}")
       val putData = for {
@@ -238,9 +245,16 @@ class KinesisSink private (
         case Success(s) => {
           val results = s.getRecords.asScala.toList
           val failurePairs = batch zip results filter { _._2.getErrorMessage != null }
-          log.info(s"Successfully wrote ${batch.size-failurePairs.size} out of ${batch.size} records")
+          log.info(
+            s"Successfully wrote ${batch.size - failurePairs.size} out of ${batch.size} records"
+          )
           if (failurePairs.size > 0) {
-            failurePairs.foreach(f => log.error(s"Record failed with error code [${f._2.getErrorCode}] and message [${f._2.getErrorMessage}]"))
+            failurePairs.foreach(
+              f =>
+                log.error(
+                  s"Record failed with error code [${f._2.getErrorCode}] and message [${f._2.getErrorMessage}]"
+                )
+            )
             log.error(s"Retrying all failed records in $nextBackoff milliseconds...")
             val failures = failurePairs.map(_._1)
             scheduleBatch(failures, nextBackoff)
@@ -253,18 +267,18 @@ class KinesisSink private (
         }
       }
     }
-  }
 
   private def multiPut(name: String, batch: List[(ByteBuffer, String)]): Future[PutRecordsResult] =
     Future {
       val putRecordsRequest = {
         val prr = new PutRecordsRequest()
         prr.setStreamName(name)
-        val putRecordsRequestEntryList = batch.map { case (b, s) =>
-          val prre = new PutRecordsRequestEntry()
-          prre.setPartitionKey(s)
-          prre.setData(b)
-          prre
+        val putRecordsRequestEntryList = batch.map {
+          case (b, s) =>
+            val prre = new PutRecordsRequestEntry()
+            prre.setPartitionKey(s)
+            prre.setData(b)
+            prre
         }
         prr.setRecords(putRecordsRequestEntryList.asJava)
         prr
@@ -277,7 +291,9 @@ class KinesisSink private (
    * @param lastBackoff The previous backoff time
    * @return Minimum of maxBackoff and a random number between minBackoff and three times lastBackoff
    */
-  private def getNextBackoff(lastBackoff: Long): Long = (minBackoff + randomGenerator.nextDouble() * (lastBackoff * 3 - minBackoff)).toLong.min(maxBackoff)
+  private def getNextBackoff(lastBackoff: Long): Long =
+    (minBackoff + randomGenerator.nextDouble() * (lastBackoff * 3 - minBackoff)).toLong
+      .min(maxBackoff)
 
   def shutdown(): Unit = {
     executorService.shutdown()

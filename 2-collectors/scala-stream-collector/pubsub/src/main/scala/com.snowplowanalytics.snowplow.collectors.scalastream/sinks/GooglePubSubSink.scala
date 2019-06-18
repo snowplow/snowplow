@@ -23,7 +23,7 @@ import com.google.api.gax.batching.BatchingSettings
 import com.google.api.gax.retrying.RetrySettings
 import com.google.api.gax.rpc.{ApiException, FixedHeaderProvider}
 import com.google.cloud.pubsub.v1.{Publisher, TopicAdminClient}
-import com.google.pubsub.v1.{ProjectName, PubsubMessage, ProjectTopicName}
+import com.google.pubsub.v1.{ProjectName, ProjectTopicName, PubsubMessage}
 import com.google.protobuf.ByteString
 import org.threeten.bp.Duration
 
@@ -36,17 +36,17 @@ object GooglePubSubSink {
     googlePubSubConfig: GooglePubSub,
     bufferConfig: BufferConfig,
     topicName: String
-  ): Either[Throwable, GooglePubSubSink] = for {
-    batching <- batchingSettings(bufferConfig).asRight
-    retry = retrySettings(googlePubSubConfig.backoffPolicy)
-    publisher <-
-      createPublisher(googlePubSubConfig.googleProjectId, topicName, batching, retry)
-    _ <- topicExists(googlePubSubConfig.googleProjectId, topicName)
-      .flatMap { b =>
-        if (b) b.asRight
-        else new IllegalArgumentException(s"Google PubSub topic $topicName doesn't exist").asLeft
-      }
-  } yield new GooglePubSubSink(publisher, topicName)
+  ): Either[Throwable, GooglePubSubSink] =
+    for {
+      batching <- batchingSettings(bufferConfig).asRight
+      retry = retrySettings(googlePubSubConfig.backoffPolicy)
+      publisher <- createPublisher(googlePubSubConfig.googleProjectId, topicName, batching, retry)
+      _ <- topicExists(googlePubSubConfig.googleProjectId, topicName)
+        .flatMap { b =>
+          if (b) b.asRight
+          else new IllegalArgumentException(s"Google PubSub topic $topicName doesn't exist").asLeft
+        }
+    } yield new GooglePubSubSink(publisher, topicName)
 
   private val UserAgent = s"snowplow/stream-enrich-${generated.BuildInfo.version}"
 
@@ -61,14 +61,18 @@ object GooglePubSubSink {
     batchingSettings: BatchingSettings,
     retrySettings: RetrySettings
   ): Either[Throwable, Publisher] =
-    Either.catchNonFatal(Publisher.newBuilder(ProjectTopicName.of(projectId, topicName))
-      .setBatchingSettings(batchingSettings)
-      .setRetrySettings(retrySettings)
-      .setHeaderProvider(FixedHeaderProvider.create("User-Agent", UserAgent))
-      .build())
+    Either.catchNonFatal(
+      Publisher
+        .newBuilder(ProjectTopicName.of(projectId, topicName))
+        .setBatchingSettings(batchingSettings)
+        .setRetrySettings(retrySettings)
+        .setHeaderProvider(FixedHeaderProvider.create("User-Agent", UserAgent))
+        .build()
+    )
 
   private def batchingSettings(bufferConfig: BufferConfig): BatchingSettings =
-    BatchingSettings.newBuilder()
+    BatchingSettings
+      .newBuilder()
       .setElementCountThreshold(bufferConfig.recordLimit)
       .setRequestByteThreshold(bufferConfig.byteLimit)
       .setDelayThreshold(Duration.ofMillis(bufferConfig.timeLimit))
@@ -76,7 +80,8 @@ object GooglePubSubSink {
 
   /** Defaults are used for the rpc configuration, see Publisher.java */
   private def retrySettings(backoffPolicy: GooglePubSubBackoffPolicyConfig): RetrySettings =
-    RetrySettings.newBuilder()
+    RetrySettings
+      .newBuilder()
       .setInitialRetryDelay(Duration.ofMillis(backoffPolicy.minBackoff))
       .setMaxRetryDelay(Duration.ofMillis(backoffPolicy.maxBackoff))
       .setRetryDelayMultiplier(backoffPolicy.multiplier)
@@ -87,13 +92,15 @@ object GooglePubSubSink {
       .build()
 
   /** Checks that a PubSub topic exists **/
-  private def topicExists(projectId: String, topicName: String): Either[Throwable, Boolean] = for {
-    topicAdminClient <- Either.catchNonFatal(TopicAdminClient.create())
-    topics <- Either.catchNonFatal(topicAdminClient.listTopics(ProjectName.of(projectId)))
-      .map(_.iterateAll.asScala.toList)
-    exists = topics.map(_.getName).exists(_.contains(topicName))
-    _ <- Either.catchNonFatal(topicAdminClient.close())
-  } yield exists
+  private def topicExists(projectId: String, topicName: String): Either[Throwable, Boolean] =
+    for {
+      topicAdminClient <- Either.catchNonFatal(TopicAdminClient.create())
+      topics <- Either
+        .catchNonFatal(topicAdminClient.listTopics(ProjectName.of(projectId)))
+        .map(_.iterateAll.asScala.toList)
+      exists = topics.map(_.getName).exists(_.contains(topicName))
+      _ <- Either.catchNonFatal(topicAdminClient.close())
+    } yield exists
 }
 
 /**
@@ -127,16 +134,22 @@ class GooglePubSubSink private (publisher: Publisher, topicName: String) extends
     events.foreach { event =>
       publisher.asRight.map { p =>
         val future = p.publish(eventToPubsubMessage(event))
-        ApiFutures.addCallback(future, new ApiFutureCallback[String]() {
-          override def onSuccess(messageId: String): Unit =
-            log.debug(s"Successfully published event with id $messageId to $topicName")
-          override def onFailure(throwable: Throwable): Unit = throwable match {
-            case apiEx: ApiException => log.error(
-              s"Publishing message to $topicName failed with code ${apiEx.getStatusCode}: " +
-                apiEx.getMessage)
-            case t => log.error(s"Publishing message to $topicName failed with ${t.getMessage}")
-          }
-        }, logExecutor)
+        ApiFutures.addCallback(
+          future,
+          new ApiFutureCallback[String]() {
+            override def onSuccess(messageId: String): Unit =
+              log.debug(s"Successfully published event with id $messageId to $topicName")
+            override def onFailure(throwable: Throwable): Unit = throwable match {
+              case apiEx: ApiException =>
+                log.error(
+                  s"Publishing message to $topicName failed with code ${apiEx.getStatusCode}: " +
+                    apiEx.getMessage
+                )
+              case t => log.error(s"Publishing message to $topicName failed with ${t.getMessage}")
+            }
+          },
+          logExecutor
+        )
       }
     }
     Nil
