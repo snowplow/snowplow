@@ -46,6 +46,7 @@ lazy val buildSettings = Seq(
 
 lazy val allSettings = buildSettings ++
   BuildSettings.sbtAssemblySettings ++
+  BuildSettings.formatting ++
   Seq(libraryDependencies ++= commonDependencies)
 
 lazy val root = project.in(file("."))
