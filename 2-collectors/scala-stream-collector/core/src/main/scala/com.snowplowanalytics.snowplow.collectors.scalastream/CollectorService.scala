@@ -137,8 +137,7 @@ class CollectorService(
       )
 
     val (httpResponse, badRedirectResponses) = buildHttpResponse(
-      event, partitionKey, queryParams, headers.toList, redirect, pixelExpected, bounce,
-      config.streams.sink, config.redirectMacro)
+      event, queryParams, headers.toList, redirect, pixelExpected, bounce, config.redirectMacro)
     (httpResponse, badRedirectResponses ++ sinkResponses)
   }
 
@@ -236,17 +235,15 @@ class CollectorService(
   /** Builds the final http response from  */
   def buildHttpResponse(
     event: CollectorPayload,
-    partitionKey: String,
     queryParams: Map[String, String],
     headers: List[HttpHeader],
     redirect: Boolean,
     pixelExpected: Boolean,
     bounce: Boolean,
-    sinkConfig: SinkConfig,
     redirectMacroConfig: RedirectMacroConfig
   ): (HttpResponse, List[Array[Byte]]) =
     if (redirect) {
-      val (r, l) = buildRedirectHttpResponse(event, partitionKey, queryParams, redirectMacroConfig)
+      val (r, l) = buildRedirectHttpResponse(event, queryParams, redirectMacroConfig)
       (r.withHeaders(r.headers ++ headers), l)
     } else {
       (buildUsualHttpResponse(pixelExpected, bounce).withHeaders(headers), Nil)
@@ -266,7 +263,6 @@ class CollectorService(
   /** Builds the appropriate http response when dealing with click redirects. */
   def buildRedirectHttpResponse(
     event: CollectorPayload,
-    partitionKey: String,
     queryParams: Map[String, String],
     redirectMacroConfig: RedirectMacroConfig
   ): (HttpResponse, List[Array[Byte]]) =

@@ -60,15 +60,13 @@ object Dependencies {
 
     // Scala
     val collectorPayload     = "com.snowplowanalytics" %  "collector-payload-1"    % V.collectorPayload
+    val scalaz7              = "org.scalaz"            %% "scalaz-core"            % V.scalaz7
     val badRows              = "com.snowplowanalytics" %% "snowplow-badrows"       % V.badRows
     val scopt                = "com.github.scopt"      %% "scopt"                  % V.scopt
     val akkaHttp             = "com.typesafe.akka"     %% "akka-http"              % V.akkaHttp
     val akkaStream           = "com.typesafe.akka"     %% "akka-stream"            % V.akka
     val akkaSlf4j            = "com.typesafe.akka"     %% "akka-slf4j"             % V.akka
-<<<<<<< HEAD
     val json4sJackson        = "org.json4s"            %% "json4s-jackson"         % V.json4s
-=======
->>>>>>> d2fe3aa9a... Scala Stream Collector: bump akka to 2.5.19 (closes #4186)
     val pureconfig           = "com.github.pureconfig" %% "pureconfig"             % V.pureconfig
 
     // Scala (test only)

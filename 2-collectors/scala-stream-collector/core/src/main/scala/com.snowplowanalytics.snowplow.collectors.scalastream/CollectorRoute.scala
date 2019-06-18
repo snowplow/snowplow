@@ -92,7 +92,7 @@ trait CollectorRoute {
             } ~
             path("""ice\.png""".r | "i".r) { path =>
               (get | head) {
-                val (r,l) = collectorService.cookie(
+                val (r, _) = collectorService.cookie(
                   qs,
                   None,
                   "/" + path,
@@ -135,7 +135,7 @@ trait CollectorRoute {
     */
   def cookieIfWanted(name: Option[String]): Directive1[Option[HttpCookiePair]] = name match {
     case Some(n) => optionalCookie(n)
-    case None => optionalHeaderValue(x => None)
+    case None => optionalHeaderValue(_ => None)
   }
 
   /**
@@ -151,13 +151,13 @@ trait CollectorRoute {
     }
 
   private def crossDomainRoute: Route = get {
-    path("""crossdomain\.xml""".r) { path =>
+    path("""crossdomain\.xml""".r) { _ =>
       complete(collectorService.flashCrossDomainPolicy)
     }
   }
 
   private def healthRoute: Route = get {
-    path("health".r) { path =>
+    path("health".r) { _ =>
       complete(HttpResponse(200, entity = "OK"))
     }
   }
