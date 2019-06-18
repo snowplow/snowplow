@@ -51,10 +51,8 @@ class KafkaSink(
     props.put("retries", kafkaConfig.retries.toString)
     props.put("buffer.memory", bufferConfig.byteLimit.toString)
     props.put("linger.ms", bufferConfig.timeLimit.toString)
-    props.put("key.serializer",
-      "org.apache.kafka.common.serialization.StringSerializer")
-    props.put("value.serializer",
-      "org.apache.kafka.common.serialization.ByteArraySerializer")
+    props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer")
+    props.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer")
 
     props.putAll(kafkaConfig.producerConf.getOrElse(Map()).asJava)
 
