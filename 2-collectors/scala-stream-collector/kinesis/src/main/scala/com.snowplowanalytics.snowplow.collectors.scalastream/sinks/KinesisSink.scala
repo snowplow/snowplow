@@ -49,7 +49,7 @@ object KinesisSink {
     val client = for {
       provider <- getProvider(kinesisConfig.aws)
       client = createKinesisClient(provider, kinesisConfig.endpoint, kinesisConfig.region)
-      exists <-
+      _ <-
         if (streamExists(client, streamName)) true.asRight
         else new IllegalArgumentException(s"Kinesis stream $streamName doesn't exist").asLeft
     } yield client
@@ -124,7 +124,7 @@ object KinesisSink {
     val status = describeStreamResult.getStreamDescription.getStreamStatus
     status == "ACTIVE" || status == "UPDATING"
   } catch {
-    case rnfe: ResourceNotFoundException => false
+    case _: ResourceNotFoundException => false
   }
 }
 
@@ -157,9 +157,7 @@ class KinesisSink private (
   /**
    * Recursively schedule a task to send everthing in EventStorage
    * Even if the incoming event flow dries up, all stored events will eventually get sent
-   *
    * Whenever TimeThreshold milliseconds have passed since the last call to flush, call flush.
-   *
    * @param interval When to schedule the next flush
    */
   def scheduleFlush(interval: Long = TimeThreshold): Unit = {
@@ -175,6 +173,7 @@ class KinesisSink private (
         }
       }
     }, interval, MILLISECONDS)
+    ()
   }
 
   object EventStorage {
@@ -224,6 +223,7 @@ class KinesisSink private (
         sendBatch(batch, nextBackoff)
       }
     }, lastBackoff, MILLISECONDS)
+    ()
   }
 
   // TODO: limit max retries?
@@ -274,7 +274,6 @@ class KinesisSink private (
 
   /**
    * How long to wait before sending the next request
-   *
    * @param lastBackoff The previous backoff time
    * @return Minimum of maxBackoff and a random number between minBackoff and three times lastBackoff
    */
@@ -283,5 +282,6 @@ class KinesisSink private (
   def shutdown(): Unit = {
     executorService.shutdown()
     executorService.awaitTermination(10000, MILLISECONDS)
+    ()
   }
 }
