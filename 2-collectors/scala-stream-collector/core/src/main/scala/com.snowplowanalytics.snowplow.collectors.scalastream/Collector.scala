@@ -127,14 +127,17 @@ trait Collector {
       bind(routes, collectorConf.interface, collectorConf.port)
 
     collectorConf.ssl match {
-      case SSLConfig(true, true, port) =>
+      case SSLConfig(true, true, _) =>
         unsecureEndpoint(redirectRoutes)
         secureEndpoint
-      case SSLConfig(true, false, port) =>
+        ()
+      case SSLConfig(true, false, _) =>
         unsecureEndpoint(routes)
         secureEndpoint
+        ()
       case _ =>
         unsecureEndpoint(routes)
+        ()
     }
   }
 }
