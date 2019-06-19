@@ -138,7 +138,6 @@ object SpecHelpers {
     """{
     "schema": "iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-0",
     "data": {
-
       "cacheSize": 500,
       "repositories": [
         {
@@ -295,5 +294,7 @@ object SpecHelpers {
   )
 
   // Init AdapterRegistry with one RemoteAdapter used for integration tests
-  val adapterRegistry = new AdapterRegistry(Map(("remoteVendor", "v42") -> new RemoteAdapter("http://localhost:9090/", None, None)))
+  val adapterRegistry = new AdapterRegistry(
+    Map(("remoteVendor", "v42") -> new RemoteAdapter("http://localhost:9090/", None, None))
+  )
 }

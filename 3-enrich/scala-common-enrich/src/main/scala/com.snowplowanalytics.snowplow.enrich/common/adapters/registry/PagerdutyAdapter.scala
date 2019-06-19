@@ -28,7 +28,7 @@ import com.snowplowanalytics.snowplow.badrows.AdapterFailure._
 import io.circe._
 
 import loaders.CollectorPayload
-import utils.JsonUtils
+import utils.{HttpClient, JsonUtils}
 
 /**
  * Transforms a collector payload which conforms to a known version of the PagerDuty Tracking
@@ -62,7 +62,7 @@ object PagerdutyAdapter extends Adapter {
    * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
     payload: CollectorPayload,
     client: Client[F, Json]
   ): F[ValidatedNel[AdapterFailure, NonEmptyList[RawEvent]]] =

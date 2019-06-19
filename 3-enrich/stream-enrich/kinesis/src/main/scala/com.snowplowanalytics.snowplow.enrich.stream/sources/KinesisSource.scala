@@ -37,7 +37,7 @@ import com.amazonaws.services.kinesis.clientlibrary.lib.worker._
 import com.amazonaws.services.kinesis.model.Record
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.snowplow.badrows.Processor
-import com.snowplowanalytics.snowplow.enrich.common.enrichments.AdapterRegistry
+import com.snowplowanalytics.snowplow.enrich.common.adapters.AdapterRegistry
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
 import com.snowplowanalytics.snowplow.scalatracker.Tracker
 import io.circe.Json

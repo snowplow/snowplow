@@ -31,6 +31,7 @@ import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import loaders._
 import SpecHelpers._
+import utils.HttpClient
 
 class AdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
@@ -50,10 +51,15 @@ class AdapterSpec extends Specification with DataTables with ValidatedMatchers {
   // TODO: add test for buildFormatter()
 
   object BaseAdapter extends Adapter {
-    def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
+    override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
       payload: CollectorPayload,
       client: Client[F, Json]
-    ) = Monad[F].pure(InputDataAdapterFailure("base", None, "base").invalidNel)
+    ) = {
+      val _ = client
+      Monad[F].pure(
+        InputDataAdapterFailure("base", None, payload.body.getOrElse("base")).invalidNel
+      )
+    }
   }
 
   object Shared {
