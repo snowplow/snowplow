@@ -70,7 +70,14 @@ trait Enrich {
       enrichmentRegistry <- EnrichmentRegistry.build[Id](enrichmentsConf).value
       adapterRegistry = new AdapterRegistry(prepareRemoteAdapters(enrichConfig.remoteAdapters))
       processor = Processor(generated.BuildInfo.name, generated.BuildInfo.version)
-      source <- getSource(enrichConfig.streams, client, enrichmentRegistry, tracker, processor)
+      source <- getSource(
+        enrichConfig.streams,
+        client,
+        adapterRegistry,
+        enrichmentRegistry,
+        tracker,
+        processor
+      )
     } yield (tracker, source)
 
     trackerSource match {
@@ -284,21 +291,21 @@ a  * @param creds optionally necessary credentials to download the resolver
   }
 
   /**
-    *  Sets up the Remote adapters for the ETL
-    * @param remoteAdaptersConfig List of configuration per remote adapter
-    * @return Mapping of vender-version and the adapter assigned for it
-    */
-  def prepareRemoteAdapters(remoteAdaptersConfig: Option[List[RemoteAdapterConfig]]) = {
+   *  Sets up the Remote adapters for the ETL
+   * @param remoteAdaptersConfig List of configuration per remote adapter
+   * @return Mapping of vender-version and the adapter assigned for it
+   */
+  def prepareRemoteAdapters(remoteAdaptersConfig: Option[List[RemoteAdapterConfig]]) =
     remoteAdaptersConfig match {
-      case Some(configList) => configList.map { config =>
-        val adapter = new RemoteAdapter(
-          config.url,
-          config.connectionTimeout,
-          config.readTimeout
-        )
-        (config.vendor, config.version) -> adapter
-      }.toMap
+      case Some(configList) =>
+        configList.map { config =>
+          val adapter = new RemoteAdapter(
+            config.url,
+            config.connectionTimeout,
+            config.readTimeout
+          )
+          (config.vendor, config.version) -> adapter
+        }.toMap
       case None => Map.empty[(String, String), RemoteAdapter]
     }
-  }
 }

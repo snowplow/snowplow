@@ -47,7 +47,13 @@ object StdinSource {
         case Stdin => ().asRight
         case _ => "Configured source/sink is not Stdin".asLeft
       }
-    } yield new StdinSource(client, enrichmentRegistry, processor, config.out.partitionKey)
+    } yield new StdinSource(
+      client,
+      adapterRegistry,
+      enrichmentRegistry,
+      processor,
+      config.out.partitionKey
+    )
 }
 
 /** Source to decode raw events (in base64) from stdin. */

@@ -31,7 +31,7 @@ import io.circe._
 import org.joda.time.DateTime
 
 import loaders.{CollectorContext, CollectorPayload}
-import utils.ConversionUtils
+import utils.{ConversionUtils, HttpClient}
 
 /** Transforms a Cloudfront access log into raw events */
 object CloudfrontAccessLogAdapter extends Adapter {
@@ -75,7 +75,7 @@ object CloudfrontAccessLogAdapter extends Adapter {
    * @param client The Iglu client used for schema lookup and validation
    * @return a validation boxing either a NEL of raw events or a NEL of failure strings
    */
-  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
     payload: CollectorPayload,
     client: Client[F, Json]
   ): F[ValidatedNel[AdapterFailure, NonEmptyList[RawEvent]]] =

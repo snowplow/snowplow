@@ -36,7 +36,7 @@ import io.circe._
 import org.apache.http.client.utils.URLEncodedUtils
 
 import loaders.CollectorPayload
-import utils.{JsonUtils => JU}
+import utils.{HttpClient, JsonUtils => JU}
 
 /**
  * Transforms a collector payload which conforms to a known version of the Unbounce Tracking webhook
@@ -61,7 +61,7 @@ object UnbounceAdapter extends Adapter {
    * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
     payload: CollectorPayload,
     client: Client[F, Json]
   ): F[ValidatedNel[AdapterFailure, NonEmptyList[RawEvent]]] =

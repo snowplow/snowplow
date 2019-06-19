@@ -71,7 +71,14 @@ object KinesisEnrich extends Enrich {
       tracker = enrichConfig.monitoring.map(c => SnowplowTracking.initializeTracker(c.snowplow))
       adapterRegistry = new AdapterRegistry(prepareRemoteAdapters(enrichConfig.remoteAdapters))
       processor = Processor(generated.BuildInfo.name, generated.BuildInfo.version)
-      source <- getSource(enrichConfig.streams, client, adapterRegistyr, enrichmentRegistry, tracker, processor)
+      source <- getSource(
+        enrichConfig.streams,
+        client,
+        adapterRegistry,
+        enrichmentRegistry,
+        tracker,
+        processor
+      )
     } yield (tracker, source)
 
     trackerSource match {
@@ -87,12 +94,19 @@ object KinesisEnrich extends Enrich {
   override def getSource(
     streamsConfig: StreamsConfig,
     client: Client[Id, Json],
-    enrichmentRegistry: EnrichmentRegistry[Id],
     adapterRegistry: AdapterRegistry,
+    enrichmentRegistry: EnrichmentRegistry[Id],
     tracker: Option[Tracker[Id]],
     processor: Processor
   ): Either[String, sources.Source] =
-    KinesisSource.createAndInitialize(streamsConfig, client, adapterRegistry, enrichmentRegistry, tracker, processor)
+    KinesisSource.createAndInitialize(
+      streamsConfig,
+      client,
+      adapterRegistry,
+      enrichmentRegistry,
+      tracker,
+      processor
+    )
 
   override lazy val parser: scopt.OptionParser[FileConfig] =
     new scopt.OptionParser[FileConfig](generated.BuildInfo.name) with FileConfigOptions {
