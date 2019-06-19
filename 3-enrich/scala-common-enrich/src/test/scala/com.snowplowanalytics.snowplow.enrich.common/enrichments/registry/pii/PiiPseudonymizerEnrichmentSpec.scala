@@ -34,6 +34,7 @@ import org.apache.commons.codec.digest.DigestUtils
 import org.specs2.Specification
 import org.specs2.matcher.ValidatedMatchers
 
+import adapters.AdapterRegistry
 import loaders._
 import outputs.EnrichedEvent
 import utils.Clock._
@@ -142,6 +143,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
     val client = Client[Eval, Json](Resolver(List(reg), None), CirceValidator)
     EtlPipeline
       .processEvents[Eval](
+        new AdapterRegistry(),
         enrichmentReg,
         client,
         Processor("spark", "0.0.0"),

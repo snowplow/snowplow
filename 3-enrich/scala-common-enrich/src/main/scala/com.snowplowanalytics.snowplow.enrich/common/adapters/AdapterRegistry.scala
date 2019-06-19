@@ -29,6 +29,7 @@ import io.circe.Json
 import loaders.CollectorPayload
 import registry._
 import registry.snowplow._
+import utils.HttpClient
 
 /**
  * The AdapterRegistry lets us convert a CollectorPayload into one or more RawEvents, using a given
@@ -37,47 +38,27 @@ import registry.snowplow._
 class AdapterRegistry(remoteAdapters: Map[(String, String), RemoteAdapter] = Map.empty) {
 
   val adapters: Map[(String, String), Adapter] = Map(
-    (Vendor.Snowplow, "tp1")             -> SpTp1Adapter,
-    (Vendor.Snowplow, "tp2")             -> SpTp2Adapter,
-    (Vendor.Redirect, "tp2")             -> SpRedirectAdapter,
-    (Vendor.Iglu, "v1")                  -> IgluAdapter,
-    (Vendor.Callrail, "v1")              -> CallrailAdapter,
-    (Vendor.Cloudfront, "wd_access_log") -> CloudfrontAccessLogAdapter.WebDistribution,
-    (Vendor.Mailchimp, "v1")             -> MailchimpAdapter,
-    (Vendor.Mailgun, "v1")               -> MailgunAdapter,
-    (Vendor.GoogleAnalytics, "v1")       -> GoogleAnalyticsAdapter,
-    (Vendor.Mandrill, "v1")              -> MandrillAdapter,
-    (Vendor.Olark, "v1")                 -> OlarkAdapter,
-    (Vendor.Pagerduty, "v1")             -> PagerdutyAdapter,
-    (Vendor.Pingdom, "v1")               -> PingdomAdapter,
-    (Vendor.Sendgrid, "v3")              -> SendgridAdapter,
-    (Vendor.StatusGator, "v1")           -> StatusGatorAdapter,
-    (Vendor.Unbounce, "v1")              -> UnbounceAdapter,
-    (Vendor.UrbanAirship, "v1")          -> UrbanAirshipAdapter,
-    (Vendor.Marketo, "v1")               -> MarketoAdapter,
-    (Vendor.Vero, "v1")                  -> VeroAdapter,
-    (Vendor.HubSpot, "v1")               -> HubSpotAdapter
+    (Vendor.Snowplow, "tp1") -> Tp1Adapter,
+    (Vendor.Snowplow, "tp2") -> Tp2Adapter,
+    (Vendor.Redirect, "tp2") -> RedirectAdapter,
+    (Vendor.Iglu, "v1") -> IgluAdapter,
+    (Vendor.Callrail, "v1") -> CallrailAdapter,
+    (Vendor.Cloudfront, "wd_access_log") -> CloudfrontAccessLogAdapter,
+    (Vendor.Mailchimp, "v1") -> MailchimpAdapter,
+    (Vendor.Mailgun, "v1") -> MailgunAdapter,
+    (Vendor.GoogleAnalytics, "v1") -> GoogleAnalyticsAdapter,
+    (Vendor.Mandrill, "v1") -> MandrillAdapter,
+    (Vendor.Olark, "v1") -> OlarkAdapter,
+    (Vendor.Pagerduty, "v1") -> PagerdutyAdapter,
+    (Vendor.Pingdom, "v1") -> PingdomAdapter,
+    (Vendor.Sendgrid, "v3") -> SendgridAdapter,
+    (Vendor.StatusGator, "v1") -> StatusGatorAdapter,
+    (Vendor.Unbounce, "v1") -> UnbounceAdapter,
+    (Vendor.UrbanAirship, "v1") -> UrbanAirshipAdapter,
+    (Vendor.Marketo, "v1") -> MarketoAdapter,
+    (Vendor.Vero, "v1") -> VeroAdapter,
+    (Vendor.HubSpot, "v1") -> HubSpotAdapter
   ) ++ remoteAdapters
-
-  /**
-   * Router to determine which adapter we use
-   * to convert the CollectorPayload into
-   * one or more RawEvents.
-   *
-   * @param payload The CollectorPayload we
-   *        are transforming
-   * @param resolver (implicit) The Iglu resolver used for
-   *        schema lookup and validation
-   * @return a Validation boxing either a
-   *         NEL of RawEvents on Success,
-   *         or a NEL of Strings on Failure
-   */
-  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
-    adapters.get((payload.api.vendor, payload.api.version)) match {
-      case Some(adapter) => adapter.toRawEvents(payload)
-      case _ =>
-        s"Payload with vendor ${payload.api.vendor} and version ${payload.api.version} not supported by this version of Scala Common Enrich".failNel
-    }
 
   private object Vendor {
     val Snowplow = "com.snowplowanalytics.snowplow"
@@ -109,33 +90,13 @@ class AdapterRegistry(remoteAdapters: Map[(String, String), RemoteAdapter] = Map
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Strings on
    * Failure
    */
-  def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
+  def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
     payload: CollectorPayload,
     client: Client[F, Json],
     processor: Processor
   ): F[Validated[SelfDescribingData[BadRow], NonEmptyList[RawEvent]]] =
-    ((payload.api.vendor, payload.api.version) match {
-      case (Vendor.Snowplow, "tp1") => Tp1Adapter.toRawEvents(payload, client)
-      case (Vendor.Snowplow, "tp2") => Tp2Adapter.toRawEvents(payload, client)
-      case (Vendor.Redirect, "tp2") => RedirectAdapter.toRawEvents(payload, client)
-      case (Vendor.Iglu, "v1") => IgluAdapter.toRawEvents(payload, client)
-      case (Vendor.Callrail, "v1") => CallrailAdapter.toRawEvents(payload, client)
-      case (Vendor.Cloudfront, "wd_access_log") =>
-        CloudfrontAccessLogAdapter.toRawEvents(payload, client)
-      case (Vendor.GoogleAnalytics, "v1") => GoogleAnalyticsAdapter.toRawEvents(payload, client)
-      case (Vendor.HubSpot, "v1") => HubSpotAdapter.toRawEvents(payload, client)
-      case (Vendor.Mailchimp, "v1") => MailchimpAdapter.toRawEvents(payload, client)
-      case (Vendor.Mailgun, "v1") => MailgunAdapter.toRawEvents(payload, client)
-      case (Vendor.Mandrill, "v1") => MandrillAdapter.toRawEvents(payload, client)
-      case (Vendor.Marketo, "v1") => MarketoAdapter.toRawEvents(payload, client)
-      case (Vendor.Olark, "v1") => OlarkAdapter.toRawEvents(payload, client)
-      case (Vendor.Pagerduty, "v1") => PagerdutyAdapter.toRawEvents(payload, client)
-      case (Vendor.Pingdom, "v1") => PingdomAdapter.toRawEvents(payload, client)
-      case (Vendor.Sendgrid, "v3") => SendgridAdapter.toRawEvents(payload, client)
-      case (Vendor.StatusGator, "v1") => StatusGatorAdapter.toRawEvents(payload, client)
-      case (Vendor.Unbounce, "v1") => UnbounceAdapter.toRawEvents(payload, client)
-      case (Vendor.UrbanAirship, "v1") => UrbanAirshipAdapter.toRawEvents(payload, client)
-      case (Vendor.Vero, "v1") => VeroAdapter.toRawEvents(payload, client)
+    (adapters.get((payload.api.vendor, payload.api.version)) match {
+      case Some(adapter) => adapter.toRawEvents(payload, client)
       case _ =>
         val f = AdapterFailure.InputDataAdapterFailure(
           "vendor/version",
