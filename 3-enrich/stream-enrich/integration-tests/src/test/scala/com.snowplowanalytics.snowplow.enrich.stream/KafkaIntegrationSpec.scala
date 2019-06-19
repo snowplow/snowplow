@@ -61,7 +61,11 @@ trait KafkaIntegrationSpec extends TryMatchers with TraversableMatchers {
     tracker: Option[Tracker[Id]]
   ): Future[Unit] = Future {
     val p = Processor("test", "1.0.0")
-    KafkaEnrich.getSource(configuration, client, adapterRegistry, registry, tracker, p).toOption.get.run()
+    KafkaEnrich
+      .getSource(configuration, client, adapterRegistry, registry, tracker, p)
+      .toOption
+      .get
+      .run()
   }
 
   def producerTimeoutSec: Int

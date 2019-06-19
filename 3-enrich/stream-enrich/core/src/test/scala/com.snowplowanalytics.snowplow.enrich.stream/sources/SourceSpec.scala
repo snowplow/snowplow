@@ -55,7 +55,7 @@ class SourceSpec extends Specification {
       f.actualSizeBytes must_== 350
       f.maximumAllowedSizeBytes must_== 200
       f.expectation must_== "bad row exceeded the maximum size"
-      res.data.payload must_== RawPayload("""{"schema":"iglu:com.snowplowanalyti""")
+      res.data.payload must_== RawPayload("""{"schema":"iglu:com.""")
       res.data.processor must_== Processor("sce", "1.0.0")
     }
   }
@@ -70,7 +70,7 @@ class SourceSpec extends Specification {
       f.actualSizeBytes must_== 25
       f.maximumAllowedSizeBytes must_== 10
       f.expectation must_== "event passed enrichment but exceeded the maximum allowed size as a result"
-      res.data.payload must_== RawPayload("ab")
+      res.data.payload must_== RawPayload("a")
       res.data.processor must_== Processor("sce", "1.0.0")
     }
   }
