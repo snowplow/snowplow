@@ -236,11 +236,11 @@ object ConversionUtils {
     URLEncoder.encode(str, enc)
 
   /**
-   * Parses a string to create a [[URI]].
+   * Parses a string to create a URI.
    * Parsing is relaxed, i.e. even if a URL is not correctly percent-encoded or not RFC 3986-compliant, it can be parsed.
    * @param uri String containing the URI to parse.
    * @return either:
-   * - the parsed URI if there was no error or with [[None]] if the input was `null`.
+   * - the parsed URI if there was no error or with None if the input was `null`.
    * - the error message if something went wrong.
    */
   def stringToUri(uri: String): Either[String, Option[URI]] =

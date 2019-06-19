@@ -233,10 +233,9 @@ object EnrichmentManager {
       currency,
       geoLocation(event, registry.ipLookups),
       weatherContext,
-      yauaaContext,
       formatDerivedContexts
-    ).mapN { (cc, ue, api, sql, es, cu, geo, w, y, _) =>
-      (
+    ).mapN { (cc, ue, api, sql, es, cu, geo, w, _) =>
+      val first = (
         useragent.toValidatedNel,
         collectorTstamp.toValidatedNel,
         derivedTstamp.toValidatedNel,
@@ -258,9 +257,10 @@ object EnrichmentManager {
         sql,
         es.toValidatedNel,
         w.toValidated,
-        y.toValidated,
         iabContext.toValidated
-      ).mapN((_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _) => event)
+      ).mapN((_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _) => event)
+
+      (first, yauaaContext.toValidated).mapN((_, _) => event)
         .leftMap(nel => (nel, EnrichedEvent.toPartiallyEnrichedEvent(event)))
     }
   }

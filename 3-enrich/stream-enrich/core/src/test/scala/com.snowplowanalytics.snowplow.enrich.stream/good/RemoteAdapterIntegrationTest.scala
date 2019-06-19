@@ -15,21 +15,33 @@
 package com.snowplowanalytics.snowplow.enrich.stream
 package good
 
-import org.specs2.mutable.Specification
-import org.specs2.execute.Result
-import org.specs2.specification.{Step, Fragments}
-
-import com.sun.net.httpserver.{HttpExchange, HttpHandler, HttpServer}
-import java.net.InetSocketAddress
-import org.json4s.DefaultFormats
-import org.json4s.jackson.JsonMethods.parse
-import org.json4s.jackson.Serialization.write
 import java.io.InputStream
-import org.apache.thrift.TSerializer
-import com.snowplowanalytics.snowplow.CollectorPayload.thrift.model1.{CollectorPayload => CollectorPayload1}
+import java.net.InetSocketAddress
 
-import scala.util.control.NonFatal
+import cats.syntax.either._
+import cats.syntax.option._
+import com.snowplowanalytics.snowplow.CollectorPayload.thrift.model1.{
+  CollectorPayload => CollectorPayload1
+}
+import com.sun.net.httpserver.{HttpExchange, HttpHandler, HttpServer}
+import io.circe.generic.auto._
+import io.circe.parser._
+import io.circe.syntax._
+import org.apache.thrift.TSerializer
+import org.specs2.execute.Result
+import org.specs2.mutable.Specification
+import org.specs2.specification.BeforeAfterAll
+
 import SpecHelpers._
+
+final case class Payload(
+  queryString: Map[String, String],
+  headers: List[String],
+  body: Option[String],
+  contentType: Option[String]
+)
+
+final case class Response(events: Option[List[Map[String, String]]], error: Option[String])
 
 // This integration test instantiates an HTTP server acting like a remote adapter
 // and creates payloads to be sent to it.
@@ -38,30 +50,17 @@ object RemoteAdapterIntegrationTest {
   val transactionId = "123456" // added to the event by the remote adapter
 
   def localHttpAdapter(tcpPort: Int, basePath: String = ""): HttpServer = {
-    implicit val formats = DefaultFormats
-
-    case class Payload(
-      queryString: Map[String, String],
-      headers: List[String],
-      body: Option[String],
-      contentType: Option[String]
-    )
-
-    case class Response(
-      events: List[Map[String, String]],
-      error: String
-    )
-
-    def _handle(body: String) = try {
-      parse(body).extract[Payload] match {
-        case payload: Payload =>
-          write(Response(List(payload.queryString ++ Map("tid" -> transactionId)), null))
-        case _ =>
-          write(Response(null, s"Received body request does not match Payload format: $body"))
-      }
-    } catch {
-      case NonFatal(e) => write(Response(null, s"An error occured in local HTTP adapter: $e"))
-    }
+    def _handle(body: String): String =
+      (for {
+        json <- parse(body).leftMap(_ => "not json")
+        payload <- json.as[Payload].leftMap(_ => "doesn't match payload format")
+      } yield List(payload.queryString ++ Map("tid" -> transactionId)))
+        .fold(
+          f => Response(None, f.some),
+          l => Response(l.some, None)
+        )
+        .asJson
+        .noSpaces
 
     def inputStreamToString(is: InputStream): String = {
       val s = new java.util.Scanner(is).useDelimiter("\\A")
@@ -85,21 +84,13 @@ object RemoteAdapterIntegrationTest {
   }
 }
 
-trait BeforeAllAfterAll extends Specification {
-  override def map(fragments: => Fragments) =
-    Step(beforeAll) ^ fragments ^ Step(afterAll)
-
-  def beforeAll(): Unit
-  def afterAll(): Unit
-}
-
-class RemoteAdapterIntegrationTest extends BeforeAllAfterAll {
+class RemoteAdapterIntegrationTest extends Specification with BeforeAfterAll {
   import RemoteAdapterIntegrationTest._
 
   val localAdapter: HttpServer = localHttpAdapter(9090)
-  
-  def beforeAll() = localAdapter.start() 
-  
+
+  def beforeAll() = localAdapter.start()
+
   def afterAll() = localAdapter.stop(0)
 
   val ThriftSerializer = new ThreadLocal[TSerializer] {
@@ -260,8 +251,8 @@ class RemoteAdapterIntegrationTest extends BeforeAllAfterAll {
       )
 
       val enrichedEvent = TestSource.enrichEvents(goodPayload)(0)
-      enrichedEvent.isSuccess must beTrue
-      
+      enrichedEvent.isValid must beTrue
+
       // "-1" prevents empty strings from being discarded from the end of the array
       val fields = enrichedEvent.toOption.get._1.split("\t", -1)
       fields.contains(transactionId) must beTrue // added by remote adapter
@@ -274,13 +265,13 @@ class RemoteAdapterIntegrationTest extends BeforeAllAfterAll {
         }
       )
     }
-    
+
     "be able to send payloads to a remote HTTP adapter and handle a problem on the remote adapter" in {
       e.body = null // required by the remote adapter
       val badPayload = serializer.serialize(e)
-    
+
       val enrichedEvent = TestSource.enrichEvents(badPayload)(0)
-      enrichedEvent.isSuccess must beFalse
+      enrichedEvent.isValid must beFalse
     }
   }
 }

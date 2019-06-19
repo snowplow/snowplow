@@ -29,7 +29,7 @@ import com.snowplowanalytics.snowplow.badrows.AdapterFailure._
 import io.circe.Json
 
 import loaders.CollectorPayload
-import utils.{JsonUtils => JU}
+import utils.{HttpClient, JsonUtils => JU}
 
 /**
  * Version 2 of the Tracker Protocol supports GET and POST. Note that with POST, data can still be
@@ -53,7 +53,7 @@ object Tp2Adapter extends Adapter {
    * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  def toRawEvents[F[_]: Monad: RegistryLookup: Clock](
+  def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
     payload: CollectorPayload,
     client: Client[F, Json]
   ): F[ValidatedNel[AdapterFailure, NonEmptyList[RawEvent]]] = {
