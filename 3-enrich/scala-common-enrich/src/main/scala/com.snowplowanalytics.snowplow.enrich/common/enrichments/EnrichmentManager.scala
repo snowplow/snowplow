@@ -162,7 +162,7 @@ object EnrichmentManager {
     val weatherContext: F[Either[NonEmptyList[EnrichmentStageIssue], Option[Json]]] =
       getWeatherContext(event, registry.weather)
 
-    val yauaaContext: Either[EnrichmentStageIssue, Option[Json]] =
+    val yauaaContext: Option[Json] =
       getYauaaContext(event, registry.yauaa)
 
     // Validate custom contexts
@@ -180,11 +180,12 @@ object EnrichmentManager {
         case Right(Some(context)) => context
       } ++ List(w).collect {
         case Right(Some(context)) => context
-      } ++ List(yauaaContext).collect {
-        case Right(Some(context)) => context
       } ++ List(iabContext).collect {
         case Right(Some(context)) => context
-      } ++ jsScript.getOrElse(Nil) ++ cookieExtractorContexts ++ httpHeaderExtractorContexts
+      } ++ jsScript.getOrElse(Nil) ++
+        cookieExtractorContexts ++
+        httpHeaderExtractorContexts ++
+        yauaaContext
     } yield res
 
     // Derive some contexts with custom SQL Query enrichment
@@ -235,7 +236,7 @@ object EnrichmentManager {
       weatherContext,
       formatDerivedContexts
     ).mapN { (cc, ue, api, sql, es, cu, geo, w, _) =>
-      val first = (
+      (
         useragent.toValidatedNel,
         collectorTstamp.toValidatedNel,
         derivedTstamp.toValidatedNel,
@@ -259,8 +260,6 @@ object EnrichmentManager {
         w.toValidated,
         iabContext.toValidated
       ).mapN((_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _) => event)
-
-      (first, yauaaContext.toValidated).mapN((_, _) => event)
         .leftMap(nel => (nel, EnrichedEvent.toPartiallyEnrichedEvent(event)))
     }
   }
@@ -408,7 +407,7 @@ object EnrichmentManager {
             iab
               .getIabContext(
                 Option(event.useragent),
-                Option(event.user_ipaddress),
+                Option(ipv4),
                 Option(event.derived_tstamp).map(EventEnrichments.fromTimestamp)
               )
               .map(_.some)
@@ -662,13 +661,8 @@ object EnrichmentManager {
     case None => Monad[F].pure(None.asRight)
   }
 
-  def getYauaaContext(
-    event: EnrichedEvent,
-    yauaa: Option[yauaaEnrichment]
-  ): Either[String, Option[Json]] = yauaa match {
-    case Some(y) => y.getYauaaContext(event.useragent).map(_.some)
-    case None => None.asRight
-  }
+  def getYauaaContext(event: EnrichedEvent, yauaa: Option[YauaaEnrichment]): Option[Json] =
+    yauaa.map(_.getYauaaContext(event.useragent))
 
   // Derive some contexts with custom SQL Query enrichment
   def getSqlQueryContexts[F[_]: Monad](

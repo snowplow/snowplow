@@ -36,7 +36,11 @@ object IpAddressExtractor {
    * @return True client IP address
    */
   @tailrec
-  def extractIpAddress(headers: List[String], lastIp: String, maybeForwardedForIp: Option[String] = None): String =
+  def extractIpAddress(
+    headers: List[String],
+    lastIp: String,
+    maybeForwardedForIp: Option[String] = None
+  ): String =
     headers match {
       case h :: t =>
         h.toLowerCase match {
@@ -49,7 +53,7 @@ object IpAddressExtractor {
       case Nil =>
         maybeForwardedForIp match {
           case Some(forwardedForIp) => forwardedForIp
-          case _                    => lastIp
+          case _ => lastIp
         }
     }
 
