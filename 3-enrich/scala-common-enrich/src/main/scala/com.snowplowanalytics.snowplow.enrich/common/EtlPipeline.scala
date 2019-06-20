@@ -31,6 +31,7 @@ import adapters.AdapterRegistry
 import enrichments.{EnrichmentManager, EnrichmentRegistry}
 import loaders.CollectorPayload
 import outputs.EnrichedEvent
+import utils.HttpClient
 
 /** Expresses the end-to-end event pipeline supported by the Scala Common Enrich project. */
 object EtlPipeline {
@@ -51,7 +52,7 @@ object EtlPipeline {
    * @return the ValidatedMaybeCanonicalOutput. Thanks to flatMap, will include any validation
    * errors contained within the ValidatedMaybeCanonicalInput
    */
-  def processEvents(
+  def processEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
     adapterRegistry: AdapterRegistry,
     enrichmentRegistry: EnrichmentRegistry[F],
     client: Client[F, Json],
@@ -80,7 +81,7 @@ object EtlPipeline {
       )
       enrichedEvents <- events.map { e =>
         val r = EnrichmentManager
-          .enrichEvent(registry, client, processor, etlTstamp, e)
+          .enrichEvent(enrichmentRegistry, client, processor, etlTstamp, e)
           .map(_.toEither)
         EitherT(r).leftMap { case (nel, pee) => buildBadRows(nel, pee, processor) }
       }.sequence

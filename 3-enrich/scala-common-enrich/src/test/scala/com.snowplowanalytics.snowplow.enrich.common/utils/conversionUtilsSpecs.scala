@@ -21,12 +21,10 @@ import com.snowplowanalytics.snowplow.badrows._
 import com.snowplowanalytics.snowplow.badrows.EnrichmentFailureMessage._
 import org.scalacheck.Arbitrary._
 import org.specs2.{ScalaCheck, Specification}
-import org.specs2.mutable.{Specification => MutableSpecification}
+import org.specs2.mutable.{Specification => MSpecification}
 import org.specs2.matcher.DataTables
 
-import outputs._
-
-class StringToUriSpec extends Specification with DataTables {
+class StringToUriSpec extends MSpecification with DataTables {
 
   /** Helper to generate URLs with `chars` at different places in the path and in the query string, doubled, tripled, etc. */
   private def generateUrlsWithChars(chars: String): List[String] = List(
@@ -41,12 +39,12 @@ class StringToUriSpec extends Specification with DataTables {
 
   "Parsing string into URI should" >> {
     "work with null" >> {
-      ConversionUtils.stringToUri(null) must_== None.success
+      ConversionUtils.stringToUri(null) must_== None.asRight
     }
 
     "work with hostname having underscore" >> {
       val url = "http://www.ex_ample.com"
-      ConversionUtils.stringToUri(url) must_== Some(URI.create(url)).success
+      ConversionUtils.stringToUri(url) must_== Some(URI.create(url)).asRight
     }
 
     "work with basic URL and not modify it" >> {
@@ -103,7 +101,7 @@ class StringToUriSpec extends Specification with DataTables {
 
       val urls = generateUrlsWithChars("|") ++
         generateUrlsWithChars("${a}") ++
-        generateUrlsWithChars("${a b}") ++
+        generateUrlsWithChars(s"$${a b}") ++
         generateUrlsWithChars("$[a]") ++
         generateUrlsWithChars("$[a b]") ++
         generateUrlsWithChars("#{a}") ++

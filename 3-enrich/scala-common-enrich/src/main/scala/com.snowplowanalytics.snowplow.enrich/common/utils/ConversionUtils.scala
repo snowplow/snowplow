@@ -244,24 +244,29 @@ object ConversionUtils {
    * - the error message if something went wrong.
    */
   def stringToUri(uri: String): Either[String, Option[URI]] =
-    Either.catchNonFatal(
-      Option(uri) // to handle null
-        .map(_.replaceAll(" ", "%20"))
-        .map(URI.create)
-    ).leftFlatMap { javaErr =>
-      implicit val c =
-        UriConfig(decoder = PercentDecoder(ignoreInvalidPercentEncoding = true), encoder = percentEncode -- '+')
-      Uri
-        .parseTry(uri)
-        .map(_.toJavaURI) match {
-        case util.Success(javaURI) =>
-          Some(javaURI).asRight
-        case util.Failure(scalaErr) =>
-          "Provided URI [%s] could not be parsed, neither by Java parsing (error: [%s]) nor by Scala parsing (error: [%s])."
-            .format(uri, javaErr.getMessage, scalaErr.getMessage)
-            .asLeft
+    Either
+      .catchNonFatal(
+        Option(uri) // to handle null
+          .map(_.replaceAll(" ", "%20"))
+          .map(URI.create)
+      )
+      .leftFlatMap { javaErr =>
+        implicit val c =
+          UriConfig(
+            decoder = PercentDecoder(ignoreInvalidPercentEncoding = true),
+            encoder = percentEncode -- '+'
+          )
+        Uri
+          .parseTry(uri)
+          .map(_.toJavaURI) match {
+          case util.Success(javaURI) =>
+            Some(javaURI).asRight
+          case util.Failure(scalaErr) =>
+            "Provided URI [%s] could not be parsed, neither by Java parsing (error: [%s]) nor by Scala parsing (error: [%s])."
+              .format(uri, javaErr.getMessage, scalaErr.getMessage)
+              .asLeft
+        }
       }
-    }
 
   /**
    * Attempt to extract the querystring from a URI as a map
