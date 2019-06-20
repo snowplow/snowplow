@@ -54,7 +54,15 @@ final case class HttpApi(
    */
   def perform[F[_]: HttpClient](url: String, body: Option[String]): F[Either[Throwable, String]] = {
     val req =
-      HttpClient.buildRequest(url, authUser = authUser, authPassword = authPassword, body, method, None, None)
+      HttpClient.buildRequest(
+        url,
+        authUser = authUser,
+        authPassword = authPassword,
+        body,
+        method,
+        None,
+        None
+      )
     HttpClient[F].getResponse(req)
   }
 
