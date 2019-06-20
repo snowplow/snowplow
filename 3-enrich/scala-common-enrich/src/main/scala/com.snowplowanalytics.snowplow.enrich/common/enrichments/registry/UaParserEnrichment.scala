@@ -72,8 +72,7 @@ object UaParserEnrichment extends ParseableEnrichment {
 
 /** Config for an ua_parser_config enrichment. Uses uap-java library to parse client attributes */
 final case class UaParserEnrichment(schemaKey: SchemaKey, parser: Parser) extends Enrichment {
-  private val enrichmentInfo =
-    EnrichmentInformation(schemaKey, "ua-parser").some
+  private val enrichmentInfo = EnrichmentInformation(schemaKey, "ua-parser").some
 
   /** Adds a period in front of a not-null version element */
   def prependDot(versionElement: String): String =

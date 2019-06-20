@@ -164,6 +164,9 @@ final case class WeatherConf(
   def enrichment[F[_]: Monad: CreateOWM]: EitherT[F, String, WeatherEnrichment[F]] =
     WeatherEnrichment[F](this)
 }
+final case class YauaaConf(cacheSize: Option[Int]) extends EnrichmentConf {
+  def enrichment: YauaaEnrichment = YauaaEnrichment(cacheSize)
+}
 
 /** Trait to hold helpers relating to enrichment config */
 trait ParseableEnrichment {
