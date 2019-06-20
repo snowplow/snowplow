@@ -11,7 +11,8 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich.common
-package enrichments.registry
+package enrichments
+package registry
 
 import java.net.URI
 
@@ -118,12 +119,11 @@ final case class IpLookupsEnrichment[F[_]](ipLookups: IpLookups[F]) extends Enri
    * @param ip The client's IP address to use to lookup the client's geo-location
    * @return an IpLookupResult
    */
-  def extractIpInformation(ip: String): IpLookupResult = {
-    val res = ip match {
+  def extractIpInformation(ip: String): F[IpLookupResult] =
+    ip match {
       case EnrichmentManager.IPv4Regex(ipv4WithoutPort) => ipLookups.performLookups(ipv4WithoutPort)
       case _ => ipLookups.performLookups(ip)
     }
-  }
 }
 
 private[enrichments] final case class IpLookupsDatabase(

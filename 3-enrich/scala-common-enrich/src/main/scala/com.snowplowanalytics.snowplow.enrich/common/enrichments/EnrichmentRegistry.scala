@@ -150,6 +150,7 @@ object EnrichmentRegistry {
             enrichment <- c.enrichment[F]
             registry <- er
           } yield registry.copy(weather = enrichment.some)
+        case c: YauaaConf => er.map(_.copy(yauaa = c.enrichment.some))
       }
     }
 
