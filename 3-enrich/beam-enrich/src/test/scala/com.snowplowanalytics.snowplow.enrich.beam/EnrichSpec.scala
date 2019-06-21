@@ -107,7 +107,7 @@ class EnrichSpec extends PipelineSpec {
       }
       .distribution(Enrich.enrichedEventSizeDistribution) { d =>
         d.getCount() shouldBe 1
-        d.getMin() shouldBe 816
+        d.getMin() shouldBe 820
         d.getMin() shouldBe d.getMax()
         d.getMin() shouldBe d.getSum()
         d.getMin() shouldBe d.getMean()
