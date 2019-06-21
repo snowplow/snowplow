@@ -35,13 +35,14 @@ import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.core._
 import com.snowplowanalytics.iglu.core.circe.CirceIgluCodecs._
 import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.Failure.SizeViolation
+import com.snowplowanalytics.snowplow.badrows.Payload.RawPayload
 import com.snowplowanalytics.snowplow.enrich.common.EtlPipeline
 import com.snowplowanalytics.snowplow.enrich.common.adapters.AdapterRegistry
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
 import com.snowplowanalytics.snowplow.enrich.common.loaders.{CollectorPayload, ThriftLoader}
 import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
 import io.circe.Json
-import io.circe.generic.auto._
 import io.circe.syntax._
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -117,7 +118,7 @@ object Source {
   }
 
   val brToString: SelfDescribingData[BadRow] => String = br =>
-    SelfDescribingData[Json](br.schema, br.asJson).asJson.noSpaces
+    SelfDescribingData[Json](br.schema, br.data.asJson).asJson.noSpaces
 
   /** The size of a string in bytes */
   val getSize: String => Int = evt => ByteBuffer.wrap(evt.getBytes(UTF_8)).capacity

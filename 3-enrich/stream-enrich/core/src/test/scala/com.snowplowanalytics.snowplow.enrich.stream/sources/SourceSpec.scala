@@ -21,6 +21,9 @@ import java.time.Instant
 import org.specs2.mutable.Specification
 import com.snowplowanalytics.iglu.core.SelfDescribingData
 import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.CPFormatViolationMessage._
+import com.snowplowanalytics.snowplow.badrows.Failure.{CPFormatViolation, SizeViolation}
+import com.snowplowanalytics.snowplow.badrows.Payload.RawPayload
 
 class SourceSpec extends Specification {
 
@@ -52,7 +55,7 @@ class SourceSpec extends Specification {
       res.schema must_== Source.oversizedBadRow
       res.data.failure must haveClass[SizeViolation]
       val f = res.data.failure.asInstanceOf[SizeViolation]
-      f.actualSizeBytes must_== 350
+      f.actualSizeBytes must_== 255
       f.maximumAllowedSizeBytes must_== 200
       f.expectation must_== "bad row exceeded the maximum size"
       res.data.payload must_== RawPayload("""{"schema":"iglu:com.""")
