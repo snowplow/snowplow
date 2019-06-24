@@ -473,7 +473,7 @@ class CollectorServiceSpec extends Specification {
       }
     }
 
-    "updateRequestPath" in {
+    "determinePath" in {
       val vendor = "com.acme"
       val version1 = "track"
       val version2 = "redirect"
