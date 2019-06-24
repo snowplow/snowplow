@@ -472,5 +472,36 @@ class CollectorServiceSpec extends Specification {
         service.validMatch(invalidHost2, domain) shouldEqual false
       }
     }
+
+    "updateRequestPath" in {
+      val vendor = "com.acme"
+      val version1 = "track"
+      val version2 = "redirect"
+      val version3 = "iglu"
+
+      "should correctly replace the path in the request if a mapping is provided" in {
+        val expected1 = "/com.snowplowanalytics.snowplow/tp2"
+        val expected2 = "/r/tp2"
+        val expected3 = "/com.snowplowanalytics.iglu/v1"
+
+        service.determinePath(vendor, version1) shouldEqual expected1
+        service.determinePath(vendor, version2) shouldEqual expected2
+        service.determinePath(vendor, version3) shouldEqual expected3
+      }
+
+      "should pass on the original path if no mapping for it can be found" in {
+        val service = new CollectorService(
+          TestUtils.testConf.copy(paths = Map.empty[String, String]),
+          CollectorSinks(new TestSink, new TestSink)
+        )
+        val expected1 = "/com.acme/track"
+        val expected2 = "/com.acme/redirect"
+        val expected3 = "/com.acme/iglu"
+
+        service.determinePath(vendor, version1) shouldEqual expected1
+        service.determinePath(vendor, version2) shouldEqual expected2
+        service.determinePath(vendor, version3) shouldEqual expected3
+      }
+    }
   }
 }
