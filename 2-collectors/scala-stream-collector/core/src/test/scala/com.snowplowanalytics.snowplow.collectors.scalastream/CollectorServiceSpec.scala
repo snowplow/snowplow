@@ -491,7 +491,7 @@ class CollectorServiceSpec extends Specification {
 
       "should pass on the original path if no mapping for it can be found" in {
         val service = new CollectorService(
-          TestUtils.testConf.copy(paths = Map.empty[String, String]),
+          TestUtils.testConf.copy(paths = None),
           CollectorSinks(new TestSink, new TestSink)
         )
         val expected1 = "/com.acme/track"

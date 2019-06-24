@@ -127,7 +127,7 @@ package model {
   final case class CollectorConfig(
     interface: String,
     port: Int,
-    paths: Map[String, String] = Map.empty[String, String],
+    paths: Option[Map[String, String]],
     p3p: P3PConfig,
     crossDomain: CrossDomainConfig,
     cookie: CookieConfig,

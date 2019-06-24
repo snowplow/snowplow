@@ -85,7 +85,8 @@ class CollectorService(
    */
   override def determinePath(vendor: String, version: String): String = {
     val original = s"$vendor/$version"
-    val mappingOrOriginal = config.paths.getOrElse(original, original)
+    val mappings = config.paths.getOrElse(Map.empty[String, String])
+    val mappingOrOriginal = mappings.getOrElse(original, original)
     s"/$mappingOrOriginal"
   }
 
