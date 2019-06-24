@@ -47,6 +47,7 @@ module Snowplow
       SHRED_STEP_OUTPUT = 'hdfs:///local/snowplow/shredded-events/'
 
       SHRED_JOB_WITH_PROCESSING_MANIFEST = Gem::Version.new('0.14.0-rc1')
+      SHRED_JOB_WITH_TSV_OUTPUT = Gem::Version.new('0.16.0-rc1')
       RDB_LOADER_WITH_PROCESSING_MANIFEST = Gem::Version.new('0.15.0-rc4')
 
       AMI_4 = Gem::Version.new("4.0.0")
@@ -496,6 +497,9 @@ module Snowplow
               {}
             end
 
+          # Add target config JSON if necessary
+          storage_target_shred_args = get_rdb_shredder_target(config, targets[:ENRICHED_EVENTS])
+
           # If we enriched, we free some space on HDFS by deleting the raw events
           # otherwise we need to copy the enriched events back to HDFS
           if enrich
@@ -532,7 +536,7 @@ module Snowplow
                 },
                 {
                   'iglu-config' => build_iglu_config_json(resolver)
-                }.merge(duplicate_storage_config).merge(processing_manifest_shred_args)
+                }.merge(duplicate_storage_config).merge(processing_manifest_shred_args).merge(storage_target_shred_args)
               )
             else
               duplicate_storage_config = build_duplicate_storage_json(targets[:DUPLICATE_TRACKING])
@@ -1225,6 +1229,18 @@ module Snowplow
       Contract TargetsHash => Maybe[String]
       def get_processing_manifest(targets)
         targets[:ENRICHED_EVENTS].select { |t| not t.data[:processingManifest].nil? }.map { |t| t.data.dig(:processingManifest, :amazonDynamoDb, :tableName) }.first
+      end
+
+      Contract ConfigHash, ArrayOf[Iglu::SelfDescribingJson] => Hash
+      def get_rdb_shredder_target(config, targets)
+        supported_targets = targets.select { |config|
+          config.schema.name == 'redshift_config' && config.schema.version.model >= 4
+        }
+        if Gem::Version.new(config[:storage][:versions][:rdb_shredder]) >= SHRED_JOB_WITH_TSV_OUTPUT && !supported_targets.empty?
+          { 'target' => Base64.strict_encode64(supported_targets.first.to_json.to_json) }
+        else
+          {}
+        end
       end
     end
   end
