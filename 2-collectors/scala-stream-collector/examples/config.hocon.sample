@@ -31,14 +31,15 @@ collector {
   # - com.snowplowanalytics.iglu/v1 for the Iglu Webhook
   # Any path that matches the 'vendor/version' protocol will result in a cookie response, for use by custom webhooks
   # downstream of the collector.
-  # But you can optionally also map any valid (i.e. two-segment) path to one of the three defaults.
-  # Your custom path must be the key and the value must be one of the corresponding default paths.
-  # Uncomment to use. Defaults to empty map.
-  #paths {
-  #  "com.acme/track" = "com.snowplowanalytics.snowplow/tp2"
-  #  "com.acme/redirect" = "r/tp2"
-  #  "com.acme/iglu" = "com.snowplowanalytics.iglu/v1"
-  #}
+  # But you can also map any valid (i.e. two-segment) path to one of the three defaults.
+  # Your custom path must be the key and the value must be one of the corresponding default paths. Both must be full
+  # valid paths starting with a leading slash.
+  # Pass in an empty map to avoid mapping.
+  paths {
+    # "/com.acme/track" = "/com.snowplowanalytics.snowplow/tp2"
+    # "/com.acme/redirect" = "/r/tp2"
+    # "/com.acme/iglu" = "/com.snowplowanalytics.iglu/v1"
+  }
 
   # Configure the P3P policy header.
   p3p {

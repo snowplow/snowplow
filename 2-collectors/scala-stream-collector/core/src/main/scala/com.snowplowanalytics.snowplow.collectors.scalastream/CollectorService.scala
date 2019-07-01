@@ -84,10 +84,8 @@ class CollectorService(
    * based on whether a mapping can be found in the config for the original request path.
    */
   override def determinePath(vendor: String, version: String): String = {
-    val original = s"$vendor/$version"
-    val mappings = config.paths.getOrElse(Map.empty[String, String])
-    val mappingOrOriginal = mappings.getOrElse(original, original)
-    s"/$mappingOrOriginal"
+    val original = s"/$vendor/$version"
+    config.paths.getOrElse(original, original)
   }
 
   override def cookie(
