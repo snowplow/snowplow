@@ -14,11 +14,6 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-import java.net.URI
-import java.nio.charset.StandardCharsets.UTF_8
-
-import scala.collection.JavaConverters._
-
 import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.effect.Clock
@@ -31,10 +26,10 @@ import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import com.snowplowanalytics.snowplow.badrows.AdapterFailure
 import com.snowplowanalytics.snowplow.badrows.AdapterFailure._
 import io.circe._
-import org.apache.http.client.utils.URLEncodedUtils
 
 import loaders.CollectorPayload
 import utils.{HttpClient, JsonUtils}
+import com.snowplowanalytics.snowplow.enrich.common.utils.ConversionUtils
 
 /**
  * Transforms a collector payload which conforms to a known version of the Mandrill Tracking webhook
@@ -135,39 +130,37 @@ object MandrillAdapter extends Adapter {
    */
   private[registry] def payloadBodyToEvents(
     rawEventString: String
-  ): Either[AdapterFailure, List[Json]] = {
-    val bodyMap = toMap(
-      URLEncodedUtils
-        .parse(URI.create("http://localhost/?" + rawEventString), UTF_8)
-        .asScala
-        .toList
-    )
-    bodyMap match {
-      case map if map.size != 1 =>
-        val msg = s"body should have size 1: actual size ${map.size}"
-        InputDataAdapterFailure("body", rawEventString.some, msg).asLeft
-      case map =>
-        map.get("mandrill_events") match {
-          case None =>
-            val msg = "no `mandrill_events` parameter provided"
-            InputDataAdapterFailure("body", rawEventString.some, msg).asLeft
-          case Some("") =>
-            val msg = "`mandrill_events` field is empty"
-            InputDataAdapterFailure("body", rawEventString.some, msg).asLeft
-          case Some(dStr) =>
-            JsonUtils
-              .extractJson(dStr)
-              .leftMap(e => NotJsonAdapterFailure("mandril_events", dStr.some, e))
-              .flatMap { json =>
-                json.asArray match {
-                  case Some(array) => array.toList.asRight
-                  case _ =>
-                    val msg = "not a json array"
-                    InputDataAdapterFailure("mandrill_events", dStr.some, msg).asLeft
+  ): Either[AdapterFailure, List[Json]] =
+    for {
+      bodyMap <- ConversionUtils
+        .parseUrlEncodedForm(rawEventString)
+        .leftMap(e => InputDataAdapterFailure("body", rawEventString.some, e))
+      res <- bodyMap match {
+        case map if map.size != 1 =>
+          val msg = s"body should have size 1: actual size ${map.size}"
+          InputDataAdapterFailure("body", rawEventString.some, msg).asLeft
+        case map =>
+          map.get("mandrill_events") match {
+            case None =>
+              val msg = "no `mandrill_events` parameter provided"
+              InputDataAdapterFailure("body", rawEventString.some, msg).asLeft
+            case Some("") =>
+              val msg = "`mandrill_events` field is empty"
+              InputDataAdapterFailure("body", rawEventString.some, msg).asLeft
+            case Some(dStr) =>
+              JsonUtils
+                .extractJson(dStr)
+                .leftMap(e => NotJsonAdapterFailure("mandril_events", dStr.some, e))
+                .flatMap { json =>
+                  json.asArray match {
+                    case Some(array) => array.toList.asRight
+                    case _ =>
+                      val msg = "not a json array"
+                      InputDataAdapterFailure("mandrill_events", dStr.some, msg).asLeft
+                  }
                 }
-              }
-        }
-    }
-  }
+          }
+      }
+    } yield res
 
 }

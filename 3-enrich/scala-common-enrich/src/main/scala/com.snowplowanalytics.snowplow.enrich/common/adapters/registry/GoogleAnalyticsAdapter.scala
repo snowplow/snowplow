@@ -15,11 +15,6 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-import java.net.URI
-import java.nio.charset.StandardCharsets.UTF_8
-
-import scala.collection.JavaConverters._
-
 import cats.{Applicative, Functor, Monad}
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.effect.Clock
@@ -31,7 +26,6 @@ import com.snowplowanalytics.snowplow.badrows.AdapterFailure
 import com.snowplowanalytics.snowplow.badrows.AdapterFailure.InputDataAdapterFailure
 import io.circe._
 import io.circe.syntax._
-import org.apache.http.client.utils.URLEncodedUtils
 
 import loaders.CollectorPayload
 import utils.HttpClient
@@ -494,72 +488,66 @@ object GoogleAnalyticsAdapter extends Adapter {
   private def parsePayload(
     bodyPart: String,
     payload: CollectorPayload
-  ): ValidatedNel[AdapterFailure, RawEvent] = {
-    val params = toMap(
-      URLEncodedUtils.parse(URI.create(s"http://localhost/?$bodyPart"), UTF_8).asScala.toList
-    )
-    params.get("t") match {
-      case None =>
+  ): ValidatedNel[AdapterFailure, RawEvent] =
+    (for {
+      params <- parseUrlEncodedForm(bodyPart)
+        .leftMap(e => NonEmptyList.one(InputDataAdapterFailure("body", bodyPart.some, e)))
+      hitType <- params.get("t").toRight {
         val msg = "no t parameter provided: cannot determine hit type"
-        InputDataAdapterFailure("body", bodyPart.some, msg).invalidNel
-      case Some(hitType) =>
-        // direct mappings
-        val mappings = translatePayload(params, directMappings(hitType))
-        val translationTable = unstructEventData
-          .get(hitType)
-          .map(_.translationTable)
-          .toValidNel(InputDataAdapterFailure("t", hitType.some, "no matching hit type"))
-        val schemaVal = lookupSchema(
-          hitType.some,
-          unstructEventData.mapValues(_.schemaKey.toSchemaUri)
-        ).toValidatedNel
-        val simpleContexts = buildContexts(params, contextData, fieldToSchemaMap)
-        val compositeContexts =
-          buildCompositeContexts(
-            params,
-            compositeContextData,
-            compositeContextsWithCU,
-            nrCompFieldsPerSchema,
-            valueInFieldNameIndicator
-          ).toValidatedNel
-
-        (for {
-          // better-monadic-for doesn't work for some reason?
-          result <- (
-            translationTable,
-            schemaVal,
-            simpleContexts,
-            compositeContexts
-          ).mapN { (trTable, schema, contexts, compContexts) =>
-            val contextJsons = (contexts.toList ++ compContexts)
-              .collect {
-                // an unnecessary pageview context might have been built so we need to remove it
-                case (s, d)
-                    if hitType != PageViewHitType ||
-                      s != unstructEventData(PageViewHitType).schemaKey =>
-                  buildJson(s.toSchemaUri, d)
-              }
-            val contextParam: Map[String, String] =
-              if (contextJsons.isEmpty) Map.empty
-              else Map("co" -> toContexts(contextJsons).noSpaces)
-            (trTable, schema, contextParam)
-          }.toEither
-          payload <- translatePayload(params, result._1)
-            .map { e =>
-              val unstructEvent = toUnstructEvent(buildJson(result._2, e)).noSpaces
-              RawEvent(
-                api = payload.api,
-                parameters = result._3 ++ mappings ++
-                  Map("e" -> "ue", "ue_pr" -> unstructEvent, "tv" -> Protocol, "p" -> "srv"),
-                contentType = payload.contentType,
-                source = payload.source,
-                context = payload.context
-              )
-            }
-            .leftMap(NonEmptyList.one)
-        } yield payload).toValidated
-    }
-  }
+        NonEmptyList.one(InputDataAdapterFailure("body", bodyPart.some, msg))
+      }
+      // direct mappings
+      mappings = translatePayload(params, directMappings(hitType))
+      translationTable = unstructEventData
+        .get(hitType)
+        .map(_.translationTable)
+        .toValidNel(InputDataAdapterFailure("t", hitType.some, "no matching hit type"))
+      schemaVal = lookupSchema(
+        hitType.some,
+        unstructEventData.mapValues(_.schemaKey.toSchemaUri)
+      ).toValidatedNel
+      simpleContexts = buildContexts(params, contextData, fieldToSchemaMap)
+      compositeContexts = buildCompositeContexts(
+        params,
+        compositeContextData,
+        compositeContextsWithCU,
+        nrCompFieldsPerSchema,
+        valueInFieldNameIndicator
+      ).toValidatedNel
+      // better-monadic-for doesn't work for some reason?
+      result <- (
+        translationTable,
+        schemaVal,
+        simpleContexts,
+        compositeContexts
+      ).mapN { (trTable, schema, contexts, compContexts) =>
+        val contextJsons = (contexts.toList ++ compContexts)
+          .collect {
+            // an unnecessary pageview context might have been built so we need to remove it
+            case (s, d)
+                if hitType != PageViewHitType ||
+                  s != unstructEventData(PageViewHitType).schemaKey =>
+              buildJson(s.toSchemaUri, d)
+          }
+        val contextParam: Map[String, String] =
+          if (contextJsons.isEmpty) Map.empty
+          else Map("co" -> toContexts(contextJsons).noSpaces)
+        (trTable, schema, contextParam)
+      }.toEither
+      payload <- translatePayload(params, result._1)
+        .map { e =>
+          val unstructEvent = toUnstructEvent(buildJson(result._2, e)).noSpaces
+          RawEvent(
+            api = payload.api,
+            parameters = result._3 ++ mappings ++
+              Map("e" -> "ue", "ue_pr" -> unstructEvent, "tv" -> Protocol, "p" -> "srv"),
+            contentType = payload.contentType,
+            source = payload.source,
+            context = payload.context
+          )
+        }
+        .leftMap(NonEmptyList.one)
+    } yield payload).toValidated
 
   /**
    * Translates a payload according to a translation table.

@@ -14,11 +14,6 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-import java.net.URI
-import java.nio.charset.StandardCharsets.UTF_8
-
-import scala.collection.JavaConverters._
-
 import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.effect.Clock
@@ -31,12 +26,11 @@ import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import com.snowplowanalytics.snowplow.badrows.AdapterFailure
 import com.snowplowanalytics.snowplow.badrows.AdapterFailure.InputDataAdapterFailure
 import io.circe._
-import org.apache.http.client.utils.URLEncodedUtils
 import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormat
 
 import loaders.CollectorPayload
-import utils.{HttpClient, JsonUtils => JU}
+import utils.{ConversionUtils, HttpClient, JsonUtils => JU}
 
 /**
  * Transforms a collector payload which conforms to a known version of the Mailchimp Tracking
@@ -95,36 +89,30 @@ object MailchimpAdapter extends Adapter {
         val failure = InputDataAdapterFailure("contentType", ct.some, s"expected $ContentType")
         Monad[F].pure(failure.invalidNel)
       case (Some(body), _) =>
-        val params = toMap(
-          URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).asScala.toList
-        )
-        params.get("type") match {
-          case None =>
+        val rawEvent = for {
+          params <- ConversionUtils
+            .parseUrlEncodedForm(body)
+            .leftMap(e => InputDataAdapterFailure("body", body.some, e))
+          eventType <- params.get("type").toRight {
             val msg = "no `type` parameter provided: cannot determine event type"
-            Monad[F].pure(InputDataAdapterFailure("body", body.some, msg).invalidNel)
-          case Some(eventType) =>
-            val _ = client
-            val allParams = toMap(payload.querystring) ++ reformatParameters(params)
-            Monad[F].pure(for {
-              schema <- lookupSchema(eventType.some, EventSchemaMap).toValidatedNel
-            } yield {
-              NonEmptyList.one(
-                RawEvent(
-                  api = payload.api,
-                  parameters = toUnstructEventParams(
-                    TrackerVersion,
-                    allParams,
-                    schema,
-                    MailchimpFormatter,
-                    "srv"
-                  ),
-                  contentType = payload.contentType,
-                  source = payload.source,
-                  context = payload.context
-                )
-              )
-            })
-        }
+            InputDataAdapterFailure("body", body.some, msg)
+          }
+          schema <- lookupSchema(eventType.some, EventSchemaMap)
+          allParams = toMap(payload.querystring) ++ reformatParameters(params)
+        } yield RawEvent(
+          api = payload.api,
+          parameters = toUnstructEventParams(
+            TrackerVersion,
+            allParams,
+            schema,
+            MailchimpFormatter,
+            "srv"
+          ),
+          contentType = payload.contentType,
+          source = payload.source,
+          context = payload.context
+        )
+        Monad[F].pure(rawEvent.map(NonEmptyList.one).toValidatedNel)
     }
 
   /**
