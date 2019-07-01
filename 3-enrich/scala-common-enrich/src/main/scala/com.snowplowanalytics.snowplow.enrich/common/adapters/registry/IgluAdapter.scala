@@ -14,14 +14,10 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-import java.net.URI
-import java.nio.charset.StandardCharsets.UTF_8
-
-import scala.collection.JavaConverters._
-
 import cats.Monad
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.effect.Clock
+import cats.syntax.either._
 import cats.syntax.option._
 import cats.syntax.validated._
 import com.snowplowanalytics.iglu.client.Client
@@ -32,10 +28,9 @@ import com.snowplowanalytics.snowplow.badrows.AdapterFailure
 import com.snowplowanalytics.snowplow.badrows.AdapterFailure._
 import io.circe._
 import io.circe.syntax._
-import org.apache.http.client.utils.URLEncodedUtils
 
 import loaders.CollectorPayload
-import utils.{HttpClient, JsonUtils}
+import utils.{ConversionUtils, HttpClient, JsonUtils}
 
 /**
  * Transforms a collector payload which either:
@@ -192,7 +187,7 @@ object IgluAdapter extends Adapter {
             contentType match {
               case contentTypes._1 => jsonBodyToEvent(payload, body, schemaUri, params)
               case contentTypes._2 => jsonBodyToEvent(payload, body, schemaUri, params)
-              case contentTypes._3 => formBodyToEvent(payload, body, schemaUri, params).valid
+              case contentTypes._3 => formBodyToEvent(payload, body, schemaUri, params)
               case _ =>
                 val msg = s"expected one of $contentTypesStr"
                 InputDataAdapterFailure("contentType", contentType.some, msg).invalidNel
@@ -259,21 +254,22 @@ object IgluAdapter extends Adapter {
     body: String,
     schemaUri: String,
     params: Map[String, String]
-  ): NonEmptyList[RawEvent] = {
-    val bodyMap =
-      toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).asScala.toList)
-    val event = bodyMap.asJson
-
-    NonEmptyList
-      .one(
-        RawEvent(
-          api = payload.api,
-          parameters =
-            toUnstructEventParams(TrackerVersion, (params - "schema"), schemaUri, event, "srv"),
-          contentType = payload.contentType,
-          source = payload.source,
-          context = payload.context
+  ): ValidatedNel[AdapterFailure, NonEmptyList[RawEvent]] =
+    (for {
+      bodyMap <- ConversionUtils
+        .parseUrlEncodedForm(body)
+        .leftMap(e => InputDataAdapterFailure("body", body.some, e))
+      event = bodyMap.asJson
+      rawEvent = NonEmptyList
+        .one(
+          RawEvent(
+            api = payload.api,
+            parameters =
+              toUnstructEventParams(TrackerVersion, (params - "schema"), schemaUri, event, "srv"),
+            contentType = payload.contentType,
+            source = payload.source,
+            context = payload.context
+          )
         )
-      )
-  }
+    } yield rawEvent).toValidatedNel
 }
