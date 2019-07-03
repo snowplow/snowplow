@@ -38,6 +38,7 @@ import com.amazonaws.services.kinesis.model.Record
 import org.apache.thrift.TDeserializer
 import scalaz._
 import Scalaz._
+import com.amazonaws.services.kinesis.metrics.impl.NullMetricsFactory
 import common.adapters.AdapterRegistry
 import common.enrichments.EnrichmentRegistry
 import iglu.client.Resolver
@@ -128,6 +129,7 @@ class KinesisSource private (
         .withRegionName(kinesisConfig.region)
         // If the record list is empty, we still check whether it is time to flush the buffer
         .withCallProcessRecordsEvenForEmptyRecordList(true)
+        .withDynamoDBEndpoint(kinesisConfig.dynamodbEndpoint)
 
       val position = InitialPositionInStream.valueOf(kinesisConfig.initialPosition)
       kinesisConfig.timestamp.right.toOption
@@ -140,11 +142,19 @@ class KinesisSource private (
     log.info(s"Processing raw input stream: ${config.in.raw}")
 
     val rawEventProcessorFactory = new RawEventProcessorFactory()
-    val worker = new Worker(
-      rawEventProcessorFactory,
-      kinesisClientLibConfiguration
-    )
-
+    val worker = kinesisConfig.disableCloudWatch match {
+      case Some(true) =>
+        new Worker(
+          rawEventProcessorFactory,
+          kinesisClientLibConfiguration,
+          new NullMetricsFactory()
+        )
+      case _ =>
+        new Worker(
+          rawEventProcessorFactory,
+          kinesisClientLibConfiguration
+        )
+    }
     worker.run()
   }
 
