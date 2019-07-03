@@ -57,6 +57,7 @@ trait Service {
   ): (HttpResponse, List[Array[Byte]])
   def cookieName: Option[String]
   def doNotTrackCookie: Option[DntCookieMatcher]
+  def determinePath(vendor: String, version: String): String
 }
 
 object CollectorService {
@@ -77,6 +78,15 @@ class CollectorService(
 
   override val cookieName = config.cookieName
   override val doNotTrackCookie = config.doNotTrackHttpCookie
+
+  /**
+   * Determines the path to be used in the response,
+   * based on whether a mapping can be found in the config for the original request path.
+   */
+  override def determinePath(vendor: String, version: String): String = {
+    val original = s"/$vendor/$version"
+    config.paths.getOrElse(original, original)
+  }
 
   override def cookie(
     queryString: Option[String],

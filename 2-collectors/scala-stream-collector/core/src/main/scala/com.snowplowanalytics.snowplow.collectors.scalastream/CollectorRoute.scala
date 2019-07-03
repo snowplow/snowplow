@@ -14,12 +14,11 @@
  */
 package com.snowplowanalytics.snowplow.collectors.scalastream
 
-import akka.http.scaladsl.model.{ContentType, HttpResponse, StatusCode, StatusCodes}
+import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.HttpCookiePair
 import akka.http.scaladsl.server.{Directive1, Route}
 import akka.http.scaladsl.server.Directives._
 import com.snowplowanalytics.snowplow.collectors.scalastream.model.DntCookieMatcher
-
 import monitoring.BeanRegistry
 
 trait CollectorRoute {
@@ -43,7 +42,7 @@ trait CollectorRoute {
           extractors { (host, ip, request) =>
             // get the adapter vendor and version from the path
             path(Segment / Segment) { (vendor, version) =>
-              val path = s"/$vendor/$version"
+              val path = collectorService.determinePath(vendor, version)
               post {
                 extractContentType { ct =>
                   entity(as[String]) { body =>
