@@ -1,0 +1,10 @@
+# Comment
+# Comment
+# Comment
+Xdroid|1|1
+user agent at the start only|1|1
+Some user agent|1|0
+#Commented browser|1|1
+Inactive Browser|0|0|03/30/2017
+# Exclude UA from IabEnrichmentSpec
+Mozilla/5.0 (Windows NT 6.1; WOW64; rv:12.0) Gecko/20100101 Firefox/12.0|1|1

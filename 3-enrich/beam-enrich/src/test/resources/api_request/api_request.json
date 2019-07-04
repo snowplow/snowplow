@@ -1,0 +1,62 @@
+{
+  "schema": "iglu:com.snowplowanalytics.snowplow.enrichments/api_request_enrichment_config/jsonschema/1-0-0",
+  "data": {
+    "vendor": "com.snowplowanalytics.snowplow.enrichments",
+    "name": "api_request_enrichment_config",
+    "enabled": true,
+    "parameters": {
+      "inputs": [
+        {
+          "key": "uhost",
+          "pojo": {
+            "field": "page_urlhost"
+          }
+        },
+        {
+          "key": "os",
+          "json": {
+            "field": "derived_contexts",
+            "schemaCriterion": "iglu:com.snowplowanalytics.snowplow/ua_parser_context/jsonschema/1-0-*",
+            "jsonPath": "$.osFamily"
+          }
+        },
+        {
+          "key": "device",
+          "json": {
+            "field": "contexts",
+            "schemaCriterion": "iglu:com.snowplowanalytics.snowplow/mobile_context/jsonschema/1-*-*",
+            "jsonPath": "$.deviceModel"
+          }
+        },
+        {
+          "key": "service",
+          "json": {
+            "field": "unstruct_event",
+            "schemaCriterion": "iglu:com.snowplowanalytics.snowplow-website/signup_form_submitted/jsonschema/1-0-*",
+            "jsonPath": "$.serviceType"
+          }
+        }
+      ],
+      "api": {
+        "http": {
+          "method": "GET",
+          "uri": "http://localhost:8000/guest/users/{{device}}/{{os}}/{{uhost}}/{{service}}?format=json",
+          "timeout": 2000,
+          "authentication": { }
+        }
+      },
+      "outputs": [
+        {
+          "schema": "iglu:com.acme/user/jsonschema/1-0-0" ,
+          "json": {
+            "jsonPath": "$"
+          }
+        }
+      ],
+      "cache": {
+        "size": 2,
+        "ttl": 60
+      }
+    }
+  }
+}

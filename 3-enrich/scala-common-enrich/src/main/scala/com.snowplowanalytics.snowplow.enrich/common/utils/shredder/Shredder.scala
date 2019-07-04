@@ -99,7 +99,7 @@ object Shredder {
     event: EnrichedEvent,
     client: Client[F, Json]
   ): F[ValidatedNel[EnrichmentStageIssue, List[SelfDescribingData[Json]]]] =
-    extractAndValidateContexts(event.contexts, "context", client)
+    extractAndValidateContexts(event.contexts, "contexts", client)
 
   /**
    * Extract list of derived contexts out of string and validate each against its schema
