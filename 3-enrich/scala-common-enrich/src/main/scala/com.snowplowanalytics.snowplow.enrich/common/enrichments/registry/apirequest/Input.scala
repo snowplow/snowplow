@@ -54,7 +54,7 @@ final case class Input(
 
   // We could short-circuit enrichment process on invalid JSONPath,
   // but it won't give user meaningful error message
-  val validatedJsonPath: Either[String, GatlingJsonPath] =
+  def validatedJsonPath: Either[String, GatlingJsonPath] =
     json.map(_.jsonPath).map(compileQuery) match {
       case Some(compiledQuery) => compiledQuery
       case None => "No JSON Input with JSONPath was given".asLeft
