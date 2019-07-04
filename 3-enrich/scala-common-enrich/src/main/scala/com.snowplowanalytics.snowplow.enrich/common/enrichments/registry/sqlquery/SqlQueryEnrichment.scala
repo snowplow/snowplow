@@ -83,21 +83,18 @@ object SqlQueryEnrichment extends ParseableEnrichment {
 
   /**
    * Transform pairs of schema and node obtained from [[utils.shredder.Shredder]] into list of
-   * regular self-describing JObject representing custom context or unstructured event.
-   * If node isn't Self-describing (doesn't contain data key) it will be filtered out.
+   * regular self-describing Json representing custom context or unstructured event.
    * @param pairs list of pairs consisting of schema and Json nodes
    * @return list of regular JObjects
    */
   def transformRawPairs(pairs: List[SelfDescribingData[Json]]): List[Json] =
     pairs.map { p =>
       val uri = p.schema.toSchemaUri
-      p.data.hcursor.downField("data").focus.map { json =>
-        Json.obj(
-          "schema" := Json.fromString(uri),
-          "data" := json
-        )
-      }
-    }.flatten
+      Json.obj(
+        "schema" := uri,
+        "data" := p.data
+      )
+    }
 
   def apply[F[_]: CreateSqlQueryEnrichment](conf: SqlQueryConf): F[SqlQueryEnrichment[F]] =
     CreateSqlQueryEnrichment[F].create(conf)
