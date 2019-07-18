@@ -57,7 +57,7 @@ object BackpopulateJob {
       val runs = getRuns(jobConfig)
       runs.foreach { runId =>
         println(s"Processing $runId")
-        val events = sc.textFile(s"s3a://${jobConfig.enrichedInBucket}run=$runId/part-*")
+        val events = sc.textFile(s"s3a://${jobConfig.enrichedInBucket}run=$runId/*")
         events.map(lineToTriple).foreach { triple => store(triple, storage) }
       }
     }

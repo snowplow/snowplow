@@ -1,3 +1,11 @@
+Release 115 Sigiriya (2019-07-17)
+---------------------------------
+EmrEtlRunner: update Contracts for get_failure_details (#4088)
+EmrEtlRunner: make sure all steps are successfully submitted in case of a transient cluster (#4092)
+EmrEtlRunner: bump to 0.34.3 (#4089)
+Event Manifest Populator: bump to 0.1.2 (#4082)
+Event Manifest Populator: remove part-* pattern (#4081)
+
 Release 114 Polonnaruwa (2019-05-17)
 ------------------------------------
 Beam Enrich: bump to 0.3.0 (#4061)
