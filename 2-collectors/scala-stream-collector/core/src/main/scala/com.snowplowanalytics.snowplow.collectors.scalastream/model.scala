@@ -50,7 +50,10 @@ package model {
     name: String,
     expiration: FiniteDuration,
     domains: Option[List[String]],
-    fallbackDomain: Option[String]
+    fallbackDomain: Option[String],
+    secure: Boolean,
+    httpOnly: Boolean,
+    sameSite: Option[String]
   )
   final case class DoNotTrackCookieConfig(
     enabled: Boolean,

@@ -307,7 +307,10 @@ class CollectorService(
           value   = networkUserId,
           expires = Some(DateTime.now + config.expiration.toMillis),
           domain  = cookieDomain(request.headers, config.domains, config.fallbackDomain),
-          path    = Some("/")
+          path    = Some("/"),
+          secure    = config.secure,
+          httpOnly  = config.httpOnly,
+          extension = config.sameSite.map(value => s"SameSite=$value")
         )
         `Set-Cookie`(responseCookie)
       }
