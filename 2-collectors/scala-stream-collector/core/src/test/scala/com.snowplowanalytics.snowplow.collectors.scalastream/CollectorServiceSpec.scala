@@ -19,12 +19,10 @@ import java.net.InetAddress
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
-
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
-import org.apache.thrift.{TSerializer, TDeserializer}
+import org.apache.thrift.{TDeserializer, TSerializer}
 import org.specs2.mutable.Specification
-
 import CollectorPayload.thrift.model1.CollectorPayload
 import generated.BuildInfo
 import model._
@@ -286,7 +284,7 @@ class CollectorServiceSpec extends Specification {
     "cookieHeader" in {
       "give back a cookie header with the appropriate configuration" in {
         val nuid = "nuid"
-        val conf = CookieConfig(true, "name", 5.seconds, Some("domain"))
+        val conf = CookieConfig(true, "name", 5.seconds, Some("domain"), secure = false, httpOnly = false, sameSite = None)
         val Some(`Set-Cookie`(cookie)) = service.cookieHeader(Some(conf), nuid, false)
         cookie.name shouldEqual conf.name
         cookie.value shouldEqual nuid
@@ -294,14 +292,24 @@ class CollectorServiceSpec extends Specification {
         cookie.path shouldEqual Some("/")
         cookie.expires must beSome
         (cookie.expires.get - DateTime.now.clicks).clicks must beCloseTo(conf.expiration.toMillis, 1000L)
+        cookie.secure must beFalse
+        cookie.httpOnly must beFalse
+        cookie.extension must beEmpty
       }
       "give back None if no configuration is given" in {
         service.cookieHeader(None, "nuid", false) shouldEqual None
       }
       "give back None if doNoTrack is true" in {
         val nuid = "nuid"
-        val conf = CookieConfig(true, "name", 5.seconds, Some("domain"))
+        val conf = CookieConfig(true, "name", 5.seconds, Some("domain"), secure = false, httpOnly = false, sameSite = None)
         service.cookieHeader(Some(conf), "nuid", true) shouldEqual None
+      }
+      "give back a cookie header with Secure, HttpOnly and SameSite=None" in {
+        val conf = CookieConfig(true, "name", 5.seconds, Some("domain"), secure = true, httpOnly = true, sameSite = Some("None"))
+        val Some(`Set-Cookie`(cookie)) = service.cookieHeader(Some(conf), networkUserId = "nuid", doNotTrack = false)
+        cookie.secure must beTrue
+        cookie.httpOnly must beTrue
+        cookie.extension must beSome("SameSite=None")
       }
     }
 

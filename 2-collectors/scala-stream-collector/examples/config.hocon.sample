@@ -59,6 +59,17 @@ collector {
     # the collector's full domain
     domain = "{{cookieDomain}}"
     domain = ${?COLLECTOR_COOKIE_DOMAIN}
+    secure = false
+    secure = ${?COLLECTOR_COOKIE_SECURE}
+    httpOnly = false
+    httpOnly = ${?COLLECTOR_COOKIE_HTTP_ONLY}
+    # The sameSite is optional. You can choose to not specify the attribute, or you can use `Strict`,
+    # `Lax` or `None` to limit the cookie sent context.
+    #   Strict: the cookie will only be sent along with "same-site" requests.
+    #   Lax: the cookie will be sent with same-site requests, and with cross-site top-level navigation.
+    #   None: the cookie will be sent with same-site and cross-site requests.
+    sameSite = "{{cookieSameSite}}"
+    sameSite = ${?COLLECTOR_COOKIE_SAME_SITE}
   }
 
   # If you have a do not track cookie in place, the Scala Stream Collector can respect it by

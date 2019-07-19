@@ -49,7 +49,10 @@ package model {
     enabled: Boolean,
     name: String,
     expiration: FiniteDuration,
-    domain: Option[String]
+    domain: Option[String],
+    secure: Boolean,
+    httpOnly: Boolean,
+    sameSite: Option[String]
   )
   final case class DoNotTrackCookieConfig(
     enabled: Boolean,

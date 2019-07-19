@@ -289,11 +289,14 @@ class CollectorService(
     } else {
       cookieConfig.map { config =>
         val responseCookie = HttpCookie(
-          name    = config.name,
-          value   = networkUserId,
-          expires = Some(DateTime.now + config.expiration.toMillis),
-          domain  = config.domain,
-          path    = Some("/")
+          name      = config.name,
+          value     = networkUserId,
+          expires   = Some(DateTime.now + config.expiration.toMillis),
+          domain    = config.domain,
+          path      = Some("/"),
+          secure    = config.secure,
+          httpOnly  = config.httpOnly,
+          extension = config.sameSite.map(value => s"SameSite=$value")
         )
         `Set-Cookie`(responseCookie)
       }
