@@ -20,13 +20,12 @@ import java.net.InetAddress
 import scala.collection.immutable.Seq
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
-
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.model.headers.CacheDirectives._
-import org.apache.thrift.{TSerializer, TDeserializer}
-import org.specs2.mutable.Specification
+import org.apache.thrift.{TDeserializer, TSerializer}
 
+import org.specs2.mutable.Specification
 import CollectorPayload.thrift.model1.CollectorPayload
 import generated.BuildInfo
 import model._
@@ -290,22 +289,34 @@ class CollectorServiceSpec extends Specification {
     "cookieHeader" in {
       "give back a cookie header with the appropriate configuration" in {
         val nuid = "nuid"
-        val conf = CookieConfig(true, "name", 5.seconds, Some(List("domain")), None)
+        val conf = CookieConfig(true, "name", 5.seconds, Some(List("domain")), None, secure = false, httpOnly = false, sameSite = None)
         val Some(`Set-Cookie`(cookie)) = service.cookieHeader(HttpRequest(), Some(conf), nuid, false)
+
         cookie.name shouldEqual conf.name
         cookie.value shouldEqual nuid
         cookie.domain shouldEqual None
         cookie.path shouldEqual Some("/")
         cookie.expires must beSome
         (cookie.expires.get - DateTime.now.clicks).clicks must beCloseTo(conf.expiration.toMillis, 1000L)
+        cookie.secure must beFalse
+        cookie.httpOnly must beFalse
+        cookie.extension must beEmpty
       }
       "give back None if no configuration is given" in {
         service.cookieHeader(HttpRequest(), None, "nuid", false) shouldEqual None
       }
       "give back None if doNoTrack is true" in {
         val nuid = "nuid"
-        val conf = CookieConfig(true, "name", 5.seconds, Some(List("domain")), None)
+        val conf = CookieConfig(true, "name", 5.seconds, Some(List("domain")), None, secure = false, httpOnly = false, sameSite = None)
+
         service.cookieHeader(HttpRequest(), Some(conf), "nuid", true) shouldEqual None
+      }
+      "give back a cookie header with Secure, HttpOnly and SameSite=None" in {
+        val conf = CookieConfig(true, "name", 5.seconds, Some(List("domain")), None, secure = true, httpOnly = true, sameSite = Some("None"))
+        val Some(`Set-Cookie`(cookie)) = service.cookieHeader(HttpRequest(), Some(conf), networkUserId = "nuid", doNotTrack = false)
+        cookie.secure must beTrue
+        cookie.httpOnly must beTrue
+        cookie.extension must beSome("SameSite=None")
       }
     }
 
@@ -407,43 +418,43 @@ class CollectorServiceSpec extends Specification {
       "not return a domain" in {
         "if a list of domains is not supplied in the config and there is no fallback domain" in {
           val request = HttpRequest()
-          val cookieConfig = CookieConfig(true, "name", 5.seconds, None, None)
+          val cookieConfig = CookieConfig(true, "name", 5.seconds, None, None, false, false, None)
           service.cookieDomain(request.headers, cookieConfig.domains, cookieConfig.fallbackDomain) shouldEqual None
         }
         "if a list of domains is supplied in the config but the Origin request header is empty and there is no fallback domain" in {
           val request = HttpRequest()
-          val cookieConfig = CookieConfig(true, "name", 5.seconds, Some(List("domain.com")), None)
+          val cookieConfig = CookieConfig(true, "name", 5.seconds, Some(List("domain.com")), None, false, false, None)
           service.cookieDomain(request.headers, cookieConfig.domains, cookieConfig.fallbackDomain) shouldEqual None
         }
         "if none of the domains in the request's Origin header has a match in the list of domains supplied with the config and there is no fallback domain" in {
           val origins = Seq(HttpOrigin("http", Host("origin.com")), HttpOrigin("http", Host("otherorigin.com", 8080)))
           val request = HttpRequest().withHeaders(`Origin`(origins))
-          val cookieConfig = CookieConfig(true, "name", 5.seconds, Some(List("domain.com", "otherdomain.com")), None)
+          val cookieConfig = CookieConfig(true, "name", 5.seconds, Some(List("domain.com", "otherdomain.com")), None, false, false, None)
           service.cookieDomain(request.headers, cookieConfig.domains, cookieConfig.fallbackDomain) shouldEqual None
         }
       }
       "return the fallback domain" in {
         "if a list of domains is not supplied in the config but a fallback domain is configured" in {
           val request = HttpRequest()
-          val cookieConfig = CookieConfig(true, "name", 5.seconds, None, Some("fallbackDomain"))
+          val cookieConfig = CookieConfig(true, "name", 5.seconds, None, Some("fallbackDomain"), false, false, None)
           service.cookieDomain(request.headers, cookieConfig.domains, cookieConfig.fallbackDomain) shouldEqual Some("fallbackDomain")
         }
         "if the Origin header is empty and a fallback domain is configured" in {
           val request = HttpRequest()
-          val cookieConfig = CookieConfig(true, "name", 5.seconds, Some(List("domain.com")), Some("fallbackDomain"))
+          val cookieConfig = CookieConfig(true, "name", 5.seconds, Some(List("domain.com")), Some("fallbackDomain"), false, false, None)
           service.cookieDomain(request.headers, cookieConfig.domains, cookieConfig.fallbackDomain) shouldEqual Some("fallbackDomain")
         }
         "if none of the domains in the request's Origin header has a match in the list of domains supplied with the config but a fallback domain is configured" in {
           val origins = Seq(HttpOrigin("http", Host("origin.com")), HttpOrigin("http", Host("otherorigin.com", 8080)))
           val request = HttpRequest().withHeaders(`Origin`(origins))
-          val cookieConfig = CookieConfig(true, "name", 5.seconds, Some(List("domain.com", "otherdomain.com")), Some("fallbackDomain"))
+          val cookieConfig = CookieConfig(true, "name", 5.seconds, Some(List("domain.com", "otherdomain.com")), Some("fallbackDomain"), false, false, None)
           service.cookieDomain(request.headers, cookieConfig.domains, cookieConfig.fallbackDomain) shouldEqual Some("fallbackDomain")
         }
       }
       "return only the first match if multiple domains from the request's Origin header have matches in the list of domains supplied with the config" in {
         val origins = Seq(HttpOrigin("http", Host("www.domain.com")), HttpOrigin("http", Host("www.otherdomain.com", 8080)))
         val request = HttpRequest().withHeaders(`Origin`(origins))
-        val cookieConfig = CookieConfig(true, "name", 5.seconds, Some(List("domain.com", "otherdomain.com")), Some("fallbackDomain"))
+        val cookieConfig = CookieConfig(true, "name", 5.seconds, Some(List("domain.com", "otherdomain.com")), Some("fallbackDomain"), false, false, None)
         service.cookieDomain(request.headers, cookieConfig.domains, cookieConfig.fallbackDomain) shouldEqual Some("domain.com")
       }
     }
