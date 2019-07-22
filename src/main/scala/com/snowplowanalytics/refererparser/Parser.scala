@@ -91,7 +91,7 @@ class Parser private[refererparser] (referers: Map[String, RefererLookup]) {
     val scheme = refererUri.getScheme
     val host   = refererUri.getHost
     val path   = refererUri.getPath
-    val query  = Option(refererUri.getQuery)
+    val query  = Option(refererUri.getRawQuery)
 
     val validUri = (scheme == "http" || scheme == "https") && host != null && path != null
 
