@@ -22,7 +22,10 @@ import org.specs2.Specification
 import org.specs2.matcher.DataTables
 
 class ParseTest extends Specification with DataTables { def is =
-  "This is a specification to test the parse function"
+  s2"""This is a specification to test the parse function
+    usual               $e1
+    unknown referer uri $e2
+    false positives     $e3"""
 
   val resource = getClass.getResource("/referers.json").getPath
   val ioParser = CreateParser[IO].create(resource).unsafeRunSync().fold(throw _, identity)
@@ -44,7 +47,7 @@ class ParseTest extends Specification with DataTables { def is =
     "Yahoo! search"        !! "http://es.search.yahoo.com/search;_ylt=A7x9QbwbZXxQ9EMAPCKT.Qt.?p=BIEDERMEIER+FORTUNE+TELLING+CARDS&ei=utf-8&type=685749&fr=chr-greentree_gc&xargs=0&pstart=1&b=11" ! Medium.Search ! Some("Yahoo!") ! Some("BIEDERMEIER FORTUNE TELLING CARDS") |
     "Yahoo! Images search" !! "http://it.images.search.yahoo.com/images/view;_ylt=A0PDodgQmGBQpn4AWQgdDQx.;_ylu=X3oDMTBlMTQ4cGxyBHNlYwNzcgRzbGsDaW1n?back=http%3A%2F%2Fit.images.search.yahoo.com%2Fsearch%2Fimages%3Fp%3DEarth%2BMagic%2BOracle%2BCards%26fr%3Dmcafee%26fr2%3Dpiv-web%26tab%3Dorganic%26ri%3D5&w=1064&h=1551&imgurl=mdm.pbzstatic.com%2Foracles%2Fearth-magic-oracle-cards%2Fcard-1.png&rurl=http%3A%2F%2Fwww.psychicbazaar.com%2Foracles%2F143-earth-magic-oracle-cards.html&size=2.8+KB&name=Earth+Magic+Oracle+Cards+-+Psychic+Bazaar&p=Earth+Magic+Oracle+Cards&oid=f0a5ad5c4211efe1c07515f56cf5a78e&fr2=piv-web&fr=mcafee&tt=Earth%2BMagic%2BOracle%2BCards%2B-%2BPsychic%2BBazaar&b=0&ni=90&no=5&ts=&tab=organic&sigr=126n355ib&sigb=13hbudmkc&sigi=11ta8f0gd&.crumb=IZBOU1c0UHU" ! Medium.Search ! Some("Yahoo! Images") ! Some("Earth Magic Oracle Cards") |
     "PriceRunner search"   !! "http://www.pricerunner.co.uk/search?displayNoHitsMessage=1&q=wild+wisdom+of+the+faery+oracle"    ! Medium.Search    ! Some("PriceRunner") ! Some("wild wisdom of the faery oracle")  |
-    "Bing Search"          !! "https://www4.bing.com/search?q=AAA&qs=n&form=QBLH&sp=-1&pq=aaa&sc=8-3&sk=&cvid=D009ED86675A4D4184DCFC3BCF5849A5"    ! Medium.Search ! Some("Bing")        ! Some("AAA") |
+    "Bing Search"          !! "https://www.bing.com/search?q=AAA&qs=n&form=QBLH&sp=-1&pq=aaa&sc=8-3&sk=&cvid=D009ED86675A4D4184DCFC3BCF5849A5"     ! Medium.Search ! Some("Bing")        ! Some("AAA") |
     "Bing Images search"   !! "http://www.bing.com/images/search?q=psychic+oracle+cards&view=detail&id=D268EDDEA8D3BF20AF887E62AF41E8518FE96F08"   ! Medium.Search ! Some("Bing Images") ! Some("psychic oracle cards") |
     "IXquick search"       !! "https://s3-us3.ixquick.com/do/search"                                                            ! Medium.Search    ! Some("IXquick")     ! None                                     |
     "AOL search"           !! "http://aolsearch.aol.co.uk/aol/search?s_chn=hp&enabled_terms=&s_it=aoluk-homePage50&q=pendulums" ! Medium.Search    ! Some("AOL")         ! Some("pendulums")                        |
@@ -75,9 +78,15 @@ class ParseTest extends Specification with DataTables { def is =
     "Unknown referer #3"            !! "http://www.spyfu.com/domain.aspx?d=3897225171967988459"  ! None             |
     "Unknown referer #4"            !! "http://seaqueen.wordpress.com/"                          ! None             |
     "Non-search Yahoo! site"        !! "http://finance.yahoo.com"                                ! Some("Yahoo!")   |> {
-      (_, refererUri, _) =>
-        ioParser.parse(refererUri, pageHost) must_== Some(UnknownReferer)
-        evalParser.parse(refererUri, pageHost) must_== Some(UnknownReferer)
+      (_, refererUri, refererSrc) =>
+        refererSrc match {
+          case Some(src) if src == "Yahoo!" =>
+            ioParser.parse(refererUri, pageHost) must_== Some(SearchReferer(SearchMedium, src, None))
+            evalParser.parse(refererUri, pageHost) must_== Some(SearchReferer(SearchMedium, src, None))
+          case _ =>
+            ioParser.parse(refererUri, pageHost) must_== Some(UnknownReferer(UnknownMedium))
+            evalParser.parse(refererUri, pageHost) must_== Some(UnknownReferer(UnknownMedium))
+        }
     }
 
   // Unavoidable false positives

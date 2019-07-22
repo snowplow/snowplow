@@ -453,6 +453,17 @@
                 "text"
             ]
         },
+        "Bing": {
+            "domains": [
+                "bing.com",
+                "www.bing.com",
+                "m.bing.com"
+            ],
+            "parameters": [
+                "q",
+                "Q"
+            ]
+        },
         "Bing Images": {
             "domains": [
                 "bing.com/images/search",
