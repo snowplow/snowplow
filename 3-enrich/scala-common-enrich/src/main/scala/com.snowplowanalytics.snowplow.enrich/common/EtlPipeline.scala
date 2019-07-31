@@ -27,7 +27,7 @@ import com.snowplowanalytics.snowplow.badrows.Payload._
 import io.circe.Json
 import org.joda.time.DateTime
 
-import adapters.AdapterRegistry
+import adapters.{AdapterRegistry, RawEvent => RE}
 import enrichments.{EnrichmentManager, EnrichmentRegistry}
 import loaders.CollectorPayload
 import outputs.EnrichedEvent
@@ -83,7 +83,9 @@ object EtlPipeline {
         val r = EnrichmentManager
           .enrichEvent(enrichmentRegistry, client, processor, etlTstamp, e)
           .map(_.toEither)
-        EitherT(r).leftMap { case (nel, pee) => buildBadRows(nel, pee, processor) }
+        EitherT(r).leftMap {
+          case (nel, pee) => buildBadRows(nel, pee, RE.toRawEvent(e), processor)
+        }
       }.sequence
     } yield enrichedEvents).value.map(_.toValidated)
 
@@ -93,12 +95,13 @@ object EtlPipeline {
   def buildBadRows(
     nel: NonEmptyList[EnrichmentStageIssue],
     pee: PartiallyEnrichedEvent,
+    re: RawEvent,
     processor: Processor
   ): NonEmptyList[BR] = {
     val (fs, vs) = splitIssues(nel)
     val brs = List(
-      buildEnrichmentBadRow(fs, pee, processor),
-      buildSchemaBadRow(vs, pee, processor)
+      buildEnrichmentBadRow(fs, pee, re, processor),
+      buildSchemaBadRow(vs, pee, re, processor)
     ).flatten
     // can't be empty
     NonEmptyList.fromList(brs).get
@@ -107,6 +110,7 @@ object EtlPipeline {
   def buildEnrichmentBadRow(
     fs: List[EnrichmentFailure],
     pee: PartiallyEnrichedEvent,
+    re: RawEvent,
     processor: Processor
   ): Option[BR] = {
     val schemaKey = SchemaKey(
@@ -120,7 +124,7 @@ object EtlPipeline {
       .map { fs =>
         val br = BadRow(
           EnrichmentFailures(Instant.now(), fs),
-          pee,
+          EnrichmentPayload(pee, re),
           processor
         )
         SelfDescribingData(schemaKey, br)
@@ -130,6 +134,7 @@ object EtlPipeline {
   def buildSchemaBadRow(
     vs: List[SchemaViolation],
     pee: PartiallyEnrichedEvent,
+    re: RawEvent,
     processor: Processor
   ): Option[BR] = {
     val schemaKey = SchemaKey(
@@ -143,7 +148,7 @@ object EtlPipeline {
       .map { vs =>
         val br = BadRow(
           SchemaViolations(Instant.now(), vs),
-          pee,
+          EnrichmentPayload(pee, re),
           processor
         )
         SelfDescribingData(schemaKey, br)
