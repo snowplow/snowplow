@@ -13,6 +13,8 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 
+import com.snowplowanalytics.snowplow.badrows.Payload.{RawEvent => RE}
+
 import loaders.{CollectorApi, CollectorContext, CollectorSource}
 
 /**
@@ -30,3 +32,22 @@ final case class RawEvent(
   source: CollectorSource,
   context: CollectorContext
 )
+
+object RawEvent {
+  def toRawEvent(re: RawEvent): RE =
+    RE(
+      re.api.vendor,
+      re.api.version,
+      re.parameters,
+      re.contentType,
+      re.source.name,
+      re.source.encoding,
+      re.source.hostname,
+      re.context.timestamp.map(_.toString),
+      re.context.ipAddress,
+      re.context.useragent,
+      re.context.refererUri,
+      re.context.headers,
+      re.context.userId
+    )
+}
