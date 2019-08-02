@@ -62,6 +62,7 @@ module Snowplow
               "core" => {
                 "type" => config[:aws][:emr][:jobflow][:core_instance_type],
                 "count" => config[:aws][:emr][:jobflow][:core_instance_count],
+                "bid" => config[:aws][:emr][:jobflow][:core_instance_bid].to_s,
                 "ebsConfiguration" =>
                   get_ebs_configuration(config[:aws][:emr][:jobflow][:core_instance_ebs])
               },

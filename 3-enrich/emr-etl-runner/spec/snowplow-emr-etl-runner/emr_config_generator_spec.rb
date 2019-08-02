@@ -79,6 +79,7 @@ describe EmrConfigGenerator do
             "core" => {
               "type" => "m1.medium",
               "count" => 2,
+              "bid" => "0.015",
               "ebsConfiguration" => {
                 "ebsOptimized" => false,
                 "ebsBlockDeviceConfigs" => [
