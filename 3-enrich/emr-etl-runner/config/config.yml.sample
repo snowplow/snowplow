@@ -45,6 +45,7 @@ aws:
       master_instance_type: m1.medium
       core_instance_count: 2
       core_instance_type: m1.medium
+      core_instance_bid: 0.015
       core_instance_ebs:    # Optional. Attach an EBS volume to each core instance.
         volume_size: 100    # Gigabytes
         volume_type: "gp2"

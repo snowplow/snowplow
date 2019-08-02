@@ -308,6 +308,21 @@ module Snowplow
           end
         end
 
+       # Now let's add our core group
+       core_instance_group = Elasticity::InstanceGroup.new.tap { |ig|
+         ig.type = config[:aws][:emr][:jobflow][:core_instance_type]
+         # check if bid exists
+         cib = config[:aws][:emr][:jobflow][:core_instance_bid]
+         if cib.nil?
+           ig.set_on_demand_instances
+         else
+           ig.set_spot_instances(cib)
+         end
+       }
+
+       @jobflow.set_core_instance_group(core_instance_group)
+
+
         # Now let's add our task group if required
         tic = config[:aws][:emr][:jobflow][:task_instance_count]
         if tic > 0
