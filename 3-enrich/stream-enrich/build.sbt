@@ -10,6 +10,7 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
+import com.typesafe.sbt.packager.docker._
 
 lazy val commonDependencies = Seq(
   // Java
@@ -37,9 +38,19 @@ lazy val buildSettings = Seq(
   resolvers     ++= Dependencies.resolutionRepos
 )
 
+lazy val dockerSettings = Seq(
+  maintainer in Docker := "Snowplow Analytics Ltd. <support@snowplowanalytics.com>",
+  dockerBaseImage := "snowplow-docker-registry.bintray.io/snowplow/base-debian:0.1.0",
+  daemonUser in Docker := "snowplow",
+  daemonUserUid in Docker := None,
+  defaultLinuxInstallLocation in Docker := "/home/snowplow", // must be home directory of daemonUser
+  dockerUpdateLatest := true
+)
+
 lazy val allSettings = buildSettings ++
   BuildSettings.sbtAssemblySettings ++
-  Seq(libraryDependencies ++= commonDependencies)
+  Seq(libraryDependencies ++= commonDependencies) ++
+  dockerSettings
 
 lazy val root = project.in(file("."))
   .settings(buildSettings)
@@ -61,6 +72,7 @@ lazy val kinesis = project
   .settings(moduleName := "snowplow-stream-enrich-kinesis")
   .settings(allSettings)
   .settings(BuildSettings.formatting)
+  .settings(packageName in Docker := "snowplow/stream-enrich-kinesis")
   .settings(libraryDependencies ++= Seq(
     Dependencies.Libraries.kinesisClient,
     Dependencies.Libraries.kinesisSdk,
@@ -68,22 +80,27 @@ lazy val kinesis = project
     Dependencies.Libraries.dynamodbSdk,
     Dependencies.Libraries.jacksonCbor
   ))
+  .enablePlugins(JavaAppPackaging, DockerPlugin)
   .dependsOn(core)
 
 lazy val kafka = project
   .settings(moduleName := "snowplow-stream-enrich-kafka")
   .settings(allSettings)
   .settings(BuildSettings.formatting)
+  .settings(packageName in Docker := "snowplow/stream-enrich-kafka")
   .settings(libraryDependencies ++= Seq(
     Dependencies.Libraries.kafkaClients
   ))
+  .enablePlugins(JavaAppPackaging, DockerPlugin)
   .dependsOn(core)
 
 lazy val nsq = project
   .settings(moduleName := "snowplow-stream-enrich-nsq")
   .settings(allSettings)
   .settings(BuildSettings.formatting)
+  .settings(packageName in Docker := "snowplow/stream-enrich-nsq")
   .settings(libraryDependencies ++= Seq(Dependencies.Libraries.nsqClient))
+  .enablePlugins(JavaAppPackaging, DockerPlugin)
   .dependsOn(core)
 
 lazy val stdin = project
