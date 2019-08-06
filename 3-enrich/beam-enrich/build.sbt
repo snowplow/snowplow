@@ -37,11 +37,11 @@ lazy val noPublishSettings = Seq(
 )
 
 import com.typesafe.sbt.packager.docker._
-dockerRepository := Some("snowplow-docker-registry.bintray.io")
-dockerUsername := Some("snowplow")
-dockerBaseImage := "snowplow-docker-registry.bintray.io/snowplow/base-debian:0.1.0"
+packageName in Docker := "snowplow/beam-enrich"
 maintainer in Docker := "Snowplow Analytics Ltd. <support@snowplowanalytics.com>"
+dockerBaseImage := "snowplow-docker-registry.bintray.io/snowplow/base-debian:0.1.0"
 daemonUser in Docker := "snowplow"
+dockerUpdateLatest := true
 
 lazy val scioVersion = "0.7.4"
 lazy val beamVersion = "2.11.0"
@@ -71,7 +71,7 @@ lazy val root: Project = Project(
     "org.scalatest" %% "scalatest" % scalatestVersion,
     "io.circe" %% "circe-literal" % circeVersion
   ).map(_ % "test")
-).enablePlugins(JavaAppPackaging, BuildInfoPlugin)
+).enablePlugins(JavaAppPackaging, DockerPlugin, BuildInfoPlugin)
 
 lazy val repl: Project = Project(
   "repl",
