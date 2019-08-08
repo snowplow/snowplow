@@ -13,6 +13,8 @@
  * governing permissions and limitations there under.
  */
 
+import com.typesafe.sbt.packager.docker._
+
 lazy val commonDependencies = Seq(
   // Java
   Dependencies.Libraries.yodaTime,
@@ -48,9 +50,17 @@ lazy val buildSettings = Seq(
   resolvers     ++= Dependencies.resolutionRepos
 )
 
+lazy val dockerSettings = Seq(
+  maintainer in Docker := "Snowplow Analytics Ltd. <support@snowplowanalytics.com>",
+  dockerBaseImage := "snowplow-docker-registry.bintray.io/snowplow/base-debian:0.1.0",
+  daemonUser in Docker := "snowplow",
+  dockerUpdateLatest := true
+)
+
 lazy val allSettings = buildSettings ++
   BuildSettings.sbtAssemblySettings ++
-  Seq(libraryDependencies ++= commonDependencies)
+  Seq(libraryDependencies ++= commonDependencies) ++
+  dockerSettings
 
 lazy val root = project.in(file("."))
   .settings(buildSettings)
@@ -69,25 +79,33 @@ lazy val core = project
 lazy val kinesis = project
   .settings(moduleName := "snowplow-stream-collector-kinesis")
   .settings(allSettings)
+  .settings(packageName in Docker := "snowplow/scala-stream-collector-kinesis")
   .settings(libraryDependencies ++= Seq(Dependencies.Libraries.kinesis))
+  .enablePlugins(JavaAppPackaging, DockerPlugin)
   .dependsOn(core)
 
 lazy val pubsub = project
   .settings(moduleName := "snowplow-stream-collector-google-pubsub")
   .settings(allSettings)
+  .settings(packageName in Docker := "snowplow/scala-stream-collector-pubsub")
   .settings(libraryDependencies ++= Seq(Dependencies.Libraries.pubsub))
+  .enablePlugins(JavaAppPackaging, DockerPlugin)
   .dependsOn(core)
 
 lazy val kafka = project
   .settings(moduleName := "snowplow-stream-collector-kafka")
   .settings(allSettings)
+  .settings(packageName in Docker := "snowplow/scala-stream-collector-kafka")
   .settings(libraryDependencies ++= Seq(Dependencies.Libraries.kafkaClients))
+  .enablePlugins(JavaAppPackaging, DockerPlugin)
   .dependsOn(core)
 
 lazy val nsq = project
   .settings(moduleName := "snowplow-stream-collector-nsq")
   .settings(allSettings)
+  .settings(packageName in Docker := "snowplow/scala-stream-collector-nsq")
   .settings(libraryDependencies ++= Seq(Dependencies.Libraries.nsqClient))
+  .enablePlugins(JavaAppPackaging, DockerPlugin)
   .dependsOn(core)
 
 lazy val stdout = project
