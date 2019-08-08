@@ -45,6 +45,10 @@ env:
   - secure: Pav87F57y6QVUs5/NMiH8sTa3u7UmCeQIgtLIRJprj4CFN6yBqnVXxF8VJ5ozVUikgJlEf4L7KagX+MTyxImId017/4In4A2vxql0wCT2R4qZ4pu4zEWF1gYm+ZqRB9llPrm85CjI5j1MYslrb4aglyi4l3iITksDI6RUXrHazM=
   # BINTRAY_SNOWPLOW_DOCKER_API_KEY
   - secure: LXoplmEfqUpjSD95jwOIysCJBn43OgUaZDvncX+a9LSGpSv8EenvJSdzVKEpywYPGdt0jAi/cKMRYMDjtms+DW4TXWkm+2qHGcWLG2SBiKJyQe486zNCdU/JpP24wXZ4FV+iK8d8oE9kSLi+Pi+hZvD9p1BKBTXP8IYpjoIYsP8=
+  # DOCKER_USERNAME
+  - secure: raLw23n0ruhIPOprVsq+AR6CcQZVqEXcfOBVGsQ1UfcP00gsxSP2H0HbCtHLTqonNSDvG6aZPsg2KgiB9oxoe+1TZAhSqYycPh6WBriTl+6dWHgeog9yVXxYWK4VlPeIvJNenkO53Cn8j/jVPrTNY9tdmLNtAwbrPfepfXwIBdk=
+  # DOCKER_PASSWORD
+  - secure: UhleYVVkQKnw8OfZjagQqLzHgV7pUXD6qYQfa2iOsIR9oazFmgbsbiPwThzAITcyP+USFXq8I2xMVN6mjPo0EzzPN4yzOx8a+ZVK/4Q37hGt210JbfOcgrlIxTIdTTEujcwcZRuv9L303ypL0LNe/0n0mF3KmYH5PSiIc+4qKro=
   matrix:
   - TEST_DIR=2-collectors/scala-stream-collector/
   - TEST_DIR=3-enrich/scala-common-enrich/
@@ -63,6 +67,7 @@ before_install:
   - rvm install jruby-9.1.6.0
   - gem uninstall -i /home/travis/.rvm/gems/jruby-9.1.6.0 bundler -a -x
   - gem install bundler -v 1.15.4
+  - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
 addons:
   postgresql: '9.3'
 services:
@@ -81,7 +86,7 @@ deploy:
       tags: true
       condition: '$([[ "$TEST_DIR" == "3-enrich/scala-common-enrich/" ]] && .travis/is_release_tag.sh scala_common_enrich $TRAVIS_TAG && [ $? -eq 0 ] && echo "Deploying")'
   - provider: script
-    script: ./.travis/deploy.sh scala_stream_collector $TRAVIS_TAG
+    script: cd 2-collectors/scala-stream-collector/ && sbt "project kinesis" docker:publish && sbt "project pubsub" docker:publish && sbt "project kafka" docker:publish && sbt "project nsq" docker:publish && cd ../.. && ./.travis/deploy.sh scala_stream_collector $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
