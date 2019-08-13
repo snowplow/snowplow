@@ -34,7 +34,7 @@ lazy val commonDependencies = Seq(
 lazy val buildSettings = Seq(
   organization  :=  "com.snowplowanalytics",
   name          :=  "snowplow-stream-enrich",
-  version       :=  "1.0.0-rc2",
+  version       :=  "1.0.0-rc3",
   description   :=  "The streaming Snowplow Enrichment process",
   scalaVersion  :=  "2.12.8",
   resolvers     ++= Dependencies.resolutionRepos
@@ -44,6 +44,8 @@ lazy val dockerSettings = Seq(
   maintainer in Docker := "Snowplow Analytics Ltd. <support@snowplowanalytics.com>",
   dockerBaseImage := "snowplow-docker-registry.bintray.io/snowplow/base-debian:0.1.0",
   daemonUser in Docker := "snowplow",
+  daemonUserUid in Docker := None,
+  defaultLinuxInstallLocation in Docker := "/home/snowplow", // must be home directory of daemonUser
   dockerUpdateLatest := true
 )
 
