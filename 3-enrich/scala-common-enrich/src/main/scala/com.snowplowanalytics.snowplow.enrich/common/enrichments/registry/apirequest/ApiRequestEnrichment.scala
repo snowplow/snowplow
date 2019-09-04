@@ -48,7 +48,7 @@ object ApiRequestEnrichmentConfig extends ParseableEnrichment {
                     "jsonschema",
                     1,
                     0,
-                    0)
+                    2)
 
   /**
    * Creates an ApiRequestEnrichment instance from a JValue.
@@ -117,7 +117,11 @@ case class ApiRequestEnrichment(inputs: List[Input], api: HttpApi, outputs: List
       output          <- outputs
       body = api.buildBody(templateContext)
     } yield cachedOrRequest(url, body, output).leftMap(_.toString)
-    result.sequenceU
+
+    result.sequenceU match {
+      case Failure(r) if !api.failOnException => Success(Nil)
+      case other => other
+    }
   }
 
   /**

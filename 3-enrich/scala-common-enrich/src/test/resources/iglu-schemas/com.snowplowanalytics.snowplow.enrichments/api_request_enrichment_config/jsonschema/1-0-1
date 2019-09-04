@@ -1,0 +1,166 @@
+{
+  
+	"$schema": "http://iglucentral.com/schemas/com.snowplowanalytics.self-desc/schema/jsonschema/1-0-0#",
+	"description": "Schema for API Request Enrichment configuration",
+	"self": {
+		"vendor": "com.snowplowanalytics.snowplow.enrichments",
+		"name": "api_request_enrichment_config",
+		"format": "jsonschema",
+		"version": "1-0-1"
+	},
+	"type": "object",
+	"properties": {
+		"vendor": {
+			"type": "string"
+		},
+		"name": {
+			"type": "string"
+		},
+		"enabled": {
+			"type": "boolean"
+		},
+		"parameters": {
+			"type": "object",
+			"properties": {
+				"inputs": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {
+							"key": {
+								"type": "string",
+								"pattern": "^[A-Za-z0-9_-]+$"
+							},
+							"pojo": {
+								"type": "object",
+								"properties": {
+									"field": {
+										"type": "string"
+									}
+								},
+								"additionalProperties": false
+							},
+							"json": {
+								"type": "object",
+								"properties": {
+									"field": {
+										"type": "string",
+										"enum": ["unstruct_event", "contexts", "derived_contexts"]
+									},
+									"schemaCriterion": {
+										"type": "string",
+										"pattern": "^iglu:[a-zA-Z0-9-_.]+/[a-zA-Z0-9-_]+/[a-zA-Z0-9-_]+/([1-9][0-9]*|\\*)-((?:0|[1-9][0-9]*)|\\*)-((?:0|[1-9][0-9]*)|\\*)$"
+									},
+									"jsonPath": {
+										"type": "string",
+										"pattern": "^\\$.*$"
+									}
+								},
+								"additionalProperties": false
+							}
+						},
+						"additionalProperties": false,
+						"minProperties": 2,
+						"maxProperties": 2,
+						"required": ["key"]
+					}
+				},
+				"api": {
+					"type": "object",
+					"minProperties": 1,
+					"maxProperties": 1,
+					"properties": {
+						"http": {
+							"type": "object",
+							"properties": {
+								"method": {
+									"type": "string",
+									"enum": ["GET", "POST", "PUT"]
+								},
+								"uri": {
+									"type": "string"
+								},
+								"timeout": {
+									"type": "integer",
+									"minimum": 1,
+									"maximum": 60000
+								},
+								"authentication": {
+									"type": "object",
+									"properties": {
+										"httpBasic": {
+											"type": "object",
+											"properties": {
+												"username": {
+													"type": "string"
+												},
+												"password": {
+													"type": "string"
+												}
+											},
+											"required": ["username", "password"],
+											"additionalProperties": false
+										}
+									},
+									"additionalProperties": false
+								}
+							},
+							"required": ["method", "uri", "timeout", "authentication"],
+							"additionalProperties": false
+						}
+					},
+					"additionalProperties": false
+				},
+				"outputs": {
+					"type": "array",
+					"minItems": 1,
+					"items": {
+						"type": "object",
+						"properties": {
+							"schema": {
+								"type": "string",
+								"pattern": "^iglu:([a-zA-Z0-9-_.]+)/([a-zA-Z0-9-_]+)/([a-zA-Z0-9-_]+)/([1-9][0-9]*(?:-(?:0|[1-9][0-9]*)){2})$"
+							},
+							"json": {
+								"type": "object",
+								"properties": {
+									"jsonPath": {
+										"type": "string",
+ 										"pattern": "^\\$.*$"
+									}
+								},
+								"required": ["jsonPath"],
+								"additionalProperties": false
+							}
+						},
+						"required": ["schema"],
+						"minProperties": 2,
+						"maxProperties": 2,
+						"additionalProperties": false
+					}
+				},
+				"cache": {
+					"type": "object",
+					"properties": {
+						"size": {
+							"type": "integer",
+							"minimum": 0
+						},
+						"ttl": {
+							"type": "integer",
+							"minimum": 0,
+							"maximum": 86400
+						}
+					},
+					"additionalProperties": false,
+					"required": ["size", "ttl"]
+				}
+			},
+			"additionalProperties": false,
+			"required": ["inputs", "api", "outputs", "cache"]
+		}
+	},
+	"additionalProperties": false,
+	"required": ["name", "vendor", "enabled", "parameters"]
+}
+

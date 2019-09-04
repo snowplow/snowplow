@@ -38,7 +38,11 @@ import com.snowplowanalytics.snowplow.enrich.common.utils.HttpClient
  * @param authentication auth preferences
  * @param timeout time in milliseconds after which request can be considered failed
  */
-case class HttpApi(method: String, uri: String, timeout: Int, authentication: Authentication) {
+case class HttpApi(method: String,
+                   uri: String,
+                   timeout: Int,
+                   authentication: Authentication,
+                   failOnException: Boolean = true) {
   import HttpApi._
 
   private val authUser = for {
