@@ -1,3 +1,17 @@
+Release 116 Madara Rider (2019-09-12)
+---------------------------------
+Beam Enrich: fix unit tests failing after update of MaxMind database (#4129)
+EmrEtlRunner: add support for shredded TSV data (#4074)
+EmrEtlRunner: update spark_enrich version in config samples to 1.18.0 (#4091)
+EmrEtlRunner: bump to 0.35.0 (#4112)
+Scala Stream Collector: add options to configure secure, same-site and http-only for the cookie (#3753)
+Scala Stream Collector: allow multiple cookie domains to be used (#3994)
+Scala Stream Collector: provide a way to specify custom path mappings (#4087)
+Scala Stream Collector: send back a Cache-Control header (#4017)
+Scala Stream Collector: add sbt-native-packager and Docker config (#4128)
+Scala Stream Collector: bump Akka HTTP to 10.0.15 (#4131)
+Scala Stream Collector: bump version to 0.16.0 (#4134)
+
 Release 115 Sigiriya (2019-07-17)
 ---------------------------------
 EmrEtlRunner: update Contracts for get_failure_details (#4088)
