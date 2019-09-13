@@ -37,7 +37,7 @@ object Dependencies {
     val igluClient           = "0.5.0"
     val collectorPayload     = "0.0.0"
     val scalaz7              = "7.0.9"
-    val akkaHttp             = "10.0.9"
+    val akkaHttp             = "10.0.15"
     val akkaSlf4j            = "2.4.19"
     val scopt                = "3.6.0"
     val json4s               = "3.2.11"

@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2013-2019 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0, and
 # you may not use this file except in compliance with the Apache License
@@ -11,7 +11,7 @@
 # implied.  See the Apache License Version 2.0 for the specific language
 # governing permissions and limitations there under.
 
-# This file (application.conf.example) contains a template with
+# This file (config.hocon.sample) contains a template with
 # configuration options for the Scala Stream Collector.
 #
 # To use, copy this to 'application.conf' and modify the configuration options.
@@ -23,6 +23,23 @@ collector {
   interface = ${?COLLECTOR_INTERFACE}
   port = {{collectorPort}}
   port = ${?COLLECTOR_PORT}
+
+  # The collector responds with a cookie to requests with a path that matches the 'vendor/version' protocol.
+  # The expected values are:
+  # - com.snowplowanalytics.snowplow/tp2 for Tracker Protocol 2
+  # - r/tp2 for redirects
+  # - com.snowplowanalytics.iglu/v1 for the Iglu Webhook
+  # Any path that matches the 'vendor/version' protocol will result in a cookie response, for use by custom webhooks
+  # downstream of the collector.
+  # But you can also map any valid (i.e. two-segment) path to one of the three defaults.
+  # Your custom path must be the key and the value must be one of the corresponding default paths. Both must be full
+  # valid paths starting with a leading slash.
+  # Pass in an empty map to avoid mapping.
+  paths {
+    # "/com.acme/track" = "/com.snowplowanalytics.snowplow/tp2"
+    # "/com.acme/redirect" = "/r/tp2"
+    # "/com.acme/iglu" = "/com.snowplowanalytics.iglu/v1"
+  }
 
   # Configure the P3P policy header.
   p3p {
@@ -55,10 +72,39 @@ collector {
     name = {{collectorCookieName}}
     name = ${?COLLECTOR_COOKIE_NAME}
     # The domain is optional and will make the cookie accessible to other
-    # applications on the domain. Comment out this line to tie cookies to
-    # the collector's full domain
-    domain = "{{cookieDomain}}"
-    domain = ${?COLLECTOR_COOKIE_DOMAIN}
+    # applications on the domain. Comment out these lines to tie cookies to
+    # the collector's full domain.
+    # The domain is determined by matching the domains from the Origin header of the request
+    # to the list below. The first match is used. If no matches are found, the fallback domain will be used,
+    # if configured.
+    # If you specify a main domain, all subdomains on it will be matched.
+    # If you specify a subdomain, only that subdomain will be matched.
+    # Examples:
+    # domain.com will match domain.com, www.domain.com and secure.client.domain.com
+    # client.domain.com will match secure.client.domain.com but not domain.com or www.domain.com
+    domains = [
+        "{{cookieDomain1}}" # e.g. "domain.com" -> any origin domain ending with this will be matched and domain.com will be returned
+        "{{cookieDomain2}}" # e.g. "secure.anotherdomain.com" -> any origin domain ending with this will be matched and secure.anotherdomain.com will be returned
+        # ... more domains
+    ]
+    domains += ${?COLLECTOR_COOKIE_DOMAIN_1}
+    domains += ${?COLLECTOR_COOKIE_DOMAIN_2}
+    # ... more domains
+    # If specified, the fallback domain will be used if none of the Origin header hosts matches the list of
+    # cookie domains configured above. (For example, if there is no Origin header.)
+    fallbackDomain = "{{fallbackDomain}}"
+    fallbackDomain = ${?FALLBACK_DOMAIN}
+    secure = false
+    secure = ${?COLLECTOR_COOKIE_SECURE}
+    httpOnly = false
+    httpOnly = ${?COLLECTOR_COOKIE_HTTP_ONLY}
+    # The sameSite is optional. You can choose to not specify the attribute, or you can use `Strict`,
+    # `Lax` or `None` to limit the cookie sent context.
+    #   Strict: the cookie will only be sent along with "same-site" requests.
+    #   Lax: the cookie will be sent with same-site requests, and with cross-site top-level navigation.
+    #   None: the cookie will be sent with same-site and cross-site requests.
+    sameSite = "{{cookieSameSite}}"
+    sameSite = ${?COLLECTOR_COOKIE_SAME_SITE}
   }
 
   # If you have a do not track cookie in place, the Scala Stream Collector can respect it by

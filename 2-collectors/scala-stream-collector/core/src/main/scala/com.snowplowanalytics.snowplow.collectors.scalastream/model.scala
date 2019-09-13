@@ -49,7 +49,11 @@ package model {
     enabled: Boolean,
     name: String,
     expiration: FiniteDuration,
-    domain: Option[String]
+    domains: Option[List[String]],
+    fallbackDomain: Option[String],
+    secure: Boolean,
+    httpOnly: Boolean,
+    sameSite: Option[String]
   )
   final case class DoNotTrackCookieConfig(
     enabled: Boolean,
@@ -126,6 +130,7 @@ package model {
   final case class CollectorConfig(
     interface: String,
     port: Int,
+    paths: Map[String, String],
     p3p: P3PConfig,
     crossDomain: CrossDomainConfig,
     cookie: CookieConfig,
@@ -145,7 +150,8 @@ package model {
         None
 
     def cookieName = cookieConfig.map(_.name)
-    def cookieDomain = cookieConfig.flatMap(_.domain)
+    def cookieDomain = cookieConfig.flatMap(_.domains)
+    def fallbackDomain = cookieConfig.flatMap(_.fallbackDomain)
     def cookieExpiration = cookieConfig.map(_.expiration)
   }
 }
