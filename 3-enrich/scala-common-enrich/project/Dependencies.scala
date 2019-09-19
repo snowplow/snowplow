@@ -25,6 +25,7 @@ object Dependencies {
     // For Snowplow libs
     "Snowplow Analytics Maven repo" at "http://maven.snplow.com/releases/",
     "Snowplow Analytics Maven snapshot repo" at "http://maven.snplow.com/snapshots/",
+    "snowplow" at "https://snowplow.bintray.com/snowplow-maven",
     // For uaParser utils
     "user-agent-parser repo" at "https://clojars.org/repo/"
   )
