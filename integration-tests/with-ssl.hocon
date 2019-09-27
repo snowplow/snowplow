@@ -19,20 +19,12 @@
 # 'collector' contains configuration options for the main Scala collector.
 collector {
   # The collector runs as a web service specified on the following interface and port.
-  interface = "0.0.0.0"
-  interface = ${?COLLECTOR_INTERFACE}
-  port = {{collectorPort}}
-  port = ${?COLLECTOR_PORT}
-
-  # optional SSL/TLS configuration
+  interface = "localhost"
+  port = 9000
   ssl {
-    enable = false
-    enable = ${?COLLECTOR_SSL}
-    # whether to redirect HTTP to HTTPS
-    redirect = false
-    redirect = ${?COLLECTOR_SSL_REDIRECT}
+    enable = true
+    redirect = true
     port = 9543
-    port = ${?COLLECTOR_SSL_PORT}
   }
 
   # The collector responds with a cookie to requests with a path that matches the 'vendor/version' protocol.
@@ -62,25 +54,25 @@ collector {
   # If "enabled" is set to "false", the collector will respond with a 404 to the /crossdomain.xml
   # route.
   crossDomain {
-    enabled = false
+    enabled = true
     # Domains that are granted access, *.acme.com will match http://acme.com and http://sub.acme.com
     enabled = ${?COLLECTOR_CROSS_DOMAIN_ENABLED}
     domains = [ "*" ]
     domains = [ ${?COLLECTOR_CROSS_DOMAIN_DOMAIN} ]
     # Whether to only grant access to HTTPS or both HTTPS and HTTP sources
-    secure = true
+    secure = false
     secure = ${?COLLECTOR_CROSS_DOMAIN_SECURE}
   }
 
   # The collector returns a cookie to clients for user identification
   # with the following domain and expiration.
   cookie {
-    enabled = true
+    enabled = false
     enabled = ${?COLLECTOR_COOKIE_ENABLED}
-    expiration = {{cookieExpiration}} # e.g. "365 days"
+    expiration = "365 days" #{{cookieExpiration}} # e.g. "365 days"
     expiration = ${?COLLECTOR_COOKIE_EXPIRATION}
     # Network cookie name
-    name = {{collectorCookieName}}
+    name = "cookie" #{{collectorCookieName}}
     name = ${?COLLECTOR_COOKIE_NAME}
     # The domain is optional and will make the cookie accessible to other
     # applications on the domain. Comment out these lines to tie cookies to
@@ -93,18 +85,14 @@ collector {
     # Examples:
     # domain.com will match domain.com, www.domain.com and secure.client.domain.com
     # client.domain.com will match secure.client.domain.com but not domain.com or www.domain.com
-    domains = [
-        "{{cookieDomain1}}" # e.g. "domain.com" -> any origin domain ending with this will be matched and domain.com will be returned
-        "{{cookieDomain2}}" # e.g. "secure.anotherdomain.com" -> any origin domain ending with this will be matched and secure.anotherdomain.com will be returned
-        # ... more domains
-    ]
+    domains = ["*"]
     domains += ${?COLLECTOR_COOKIE_DOMAIN_1}
     domains += ${?COLLECTOR_COOKIE_DOMAIN_2}
     # ... more domains
     # If specified, the fallback domain will be used if none of the Origin header hosts matches the list of
     # cookie domains configured above. (For example, if there is no Origin header.)
-    fallbackDomain = "{{fallbackDomain}}"
-    fallbackDomain = ${?FALLBACK_DOMAIN}
+    # fallbackDomain = "{{fallbackDomain}}"
+    # fallbackDomain = ${?FALLBACK_DOMAIN}
     secure = false
     secure = ${?COLLECTOR_COOKIE_SECURE}
     httpOnly = false
@@ -114,8 +102,8 @@ collector {
     #   Strict: the cookie will only be sent along with "same-site" requests.
     #   Lax: the cookie will be sent with same-site requests, and with cross-site top-level navigation.
     #   None: the cookie will be sent with same-site and cross-site requests.
-    sameSite = "{{cookieSameSite}}"
-    sameSite = ${?COLLECTOR_COOKIE_SAME_SITE}
+    # sameSite = "{{cookieSameSite}}"
+    # sameSite = ${?COLLECTOR_COOKIE_SAME_SITE}
   }
 
   # If you have a do not track cookie in place, the Scala Stream Collector can respect it by
@@ -125,11 +113,11 @@ collector {
   # match entirely and the value could be a regular expression.
   doNotTrackCookie {
     enabled = false
-    enabled = ${?COLLECTOR_DO_NOT_TRACK_COOKIE_ENABLED}
-    name = {{doNotTrackCookieName}}
-    name = ${?COLLECTOR_DO_NOT_TRACK_COOKIE_NAME}
-    value = {{doNotTrackCookieValue}}
-    value = ${?COLLECTOR_DO_NOT_TRACK_COOKIE_VALUE}
+    # enabled = ${?COLLECTOR_DO_NOT_TRACK_COOKIE_ENABLED}
+    name = "do-not-track"#{{doNotTrackCookieName}}
+    # name = ${?COLLECTOR_DO_NOT_TRACK_COOKIE_NAME}
+    value = "true"#{{doNotTrackCookieValue}}
+    # value = ${?COLLECTOR_DO_NOT_TRACK_COOKIE_VALUE}
   }
 
   # When enabled and the cookie specified above is missing, performs a redirect to itself to check
@@ -137,11 +125,11 @@ collector {
   # fallbackNetworkId is used instead of generating a new random one.
   cookieBounce {
     enabled = false
-    enabled = ${?COLLECTOR_COOKIE_BOUNCE_ENABLED}
+    # enabled = ${?COLLECTOR_COOKIE_BOUNCE_ENABLED}
     # The name of the request parameter which will be used on redirects checking that third-party
     # cookies work.
     name = "n3pc"
-    name = ${?COLLECTOR_COOKIE_BOUNCE_NAME}
+    # name = ${?COLLECTOR_COOKIE_BOUNCE_NAME}
     # Network user id to fallback to when third-party cookies are blocked.
     fallbackNetworkUserId = "00000000-0000-4000-A000-000000000000"
     fallbackNetworkUserId = ${?COLLECTOR_COOKIE_BOUNCE_FALLBACK_NETWORK_USER_ID}
@@ -151,12 +139,6 @@ collector {
     forwardedProtocolHeader = "X-Forwarded-Proto"
     forwardedProtocolHeader = ${?COLLECTOR_COOKIE_BOUNCE_FORWARDED_PROTOCOL_HEADER}
   }
-
-  # When enabled, redirect prefix `r/` will be enabled and its query parameters resolved.
-  # Otherwise the request prefixed with `r/` will be dropped with `404 Not Found`
-  # Custom redirects configured in `paths` can still be used.
-  enableDefaultRedirect = true
-  enableDefaultRedirect = ${?COLLECTOR_ALLOW_REDIRECTS}
 
   # When enabled, the redirect url passed via the `u` query parameter is scanned for a placeholder
   # token. All instances of that token are replaced withe the network ID. If the placeholder isn't
@@ -172,7 +154,7 @@ collector {
   # Customize response handling for requests for the root path ("/").
   # Useful if you need to redirect to web content or privacy policies regarding the use of this collector.
   rootResponse {
-    enabled = false
+    enabled = true
     enabled = ${?COLLECTOR_ROOT_RESPONSE_ENABLED}
     statusCode = 302
     statusCode = ${?COLLECTOR_ROOT_RESPONSE_STATUS_CODE}
@@ -206,22 +188,13 @@ collector {
     #durationbucketsInSeconds = ${?COLLECTOR_PROMETHEUS_METRICS_DURATION_BUCKETS_IN_SECONDS}
   }
 
-  # Configuration of prometheus http metrics
-  prometheusMetrics {
-    # If metrics are enabled then all requests will be logged as prometheus metrics
-    # and '/metrics' endpoint will return the report about the requests
-    enabled = false
-    # Custom buckets for http_request_duration_seconds_bucket duration metric
-    #durationBucketsInSeconds = [0.1, 3, 10]
-  }
-
   streams {
     # Events which have successfully been collected will be stored in the good stream/topic
-    good = {{good}}
+    good = "good"
     good = ${?COLLECTOR_STREAMS_GOOD}
 
     # Events that are too big (w.r.t Kinesis 1MB limit) will be stored in the bad stream/topic
-    bad = {{bad}}
+    bad = "bad"
     bad = ${?COLLECTOR_STREAMS_BAD}
 
     # Whether to use the incoming event's ip as the partition key for the good stream/topic
@@ -234,75 +207,75 @@ collector {
       # Choose between kinesis, googlepubsub, kafka, nsq, or stdout.
       # To use stdout, comment or remove everything in the "collector.streams.sink" section except
       # "enabled" which should be set to "stdout".
-      enabled = kinesis
-      enabled = ${?COLLECTOR_STREAMS_SINK_ENABLED}
+      enabled = stdout
+      # enabled = ${?COLLECTOR_STREAMS_SINK_ENABLED}
 
-      # Region where the streams are located
-      region = {{kinesisRegion}}
-      region = ${?COLLECTOR_STREAMS_SINK_REGION}
+      # # Region where the streams are located
+      # region = {{kinesisRegion}}
+      # region = ${?COLLECTOR_STREAMS_SINK_REGION}
 
-      ## Optional endpoint url configuration to override aws kinesis endpoints,
-      ## this can be used to specify local endpoints when using localstack
-      # customEndpoint = {{kinesisEndpoint}}
-      # customEndpoint = ${?COLLECTOR_STREAMS_SINK_CUSTOM_ENDPOINT}
+      # ## Optional endpoint url configuration to override aws kinesis endpoints,
+      # ## this can be used to specify local endpoints when using localstack
+      # # customEndpoint = {{kinesisEndpoint}}
+      # # customEndpoint = ${?COLLECTOR_STREAMS_SINK_CUSTOM_ENDPOINT}
 
-      # Thread pool size for Kinesis API requests
-      threadPoolSize = 10
-      threadPoolSize = ${?COLLECTOR_STREAMS_SINK_THREAD_POOL_SIZE}
+      # # Thread pool size for Kinesis API requests
+      # threadPoolSize = 10
+      # threadPoolSize = ${?COLLECTOR_STREAMS_SINK_THREAD_POOL_SIZE}
 
-      # The following are used to authenticate for the Amazon Kinesis sink.
-      # If both are set to 'default', the default provider chain is used
-      # (see http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/auth/DefaultAWSCredentialsProviderChain.html)
-      # If both are set to 'iam', use AWS IAM Roles to provision credentials.
-      # If both are set to 'env', use environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
-      aws {
-        accessKey = iam
-        accessKey = ${?COLLECTOR_STREAMS_SINK_AWS_ACCESS_KEY}
-        secretKey = iam
-        secretKey = ${?COLLECTOR_STREAMS_SINK_AWS_SECRET_KEY}
-      }
+      # # The following are used to authenticate for the Amazon Kinesis sink.
+      # # If both are set to 'default', the default provider chain is used
+      # # (see http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/auth/DefaultAWSCredentialsProviderChain.html)
+      # # If both are set to 'iam', use AWS IAM Roles to provision credentials.
+      # # If both are set to 'env', use environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
+      # aws {
+      #   accessKey = iam
+      #   accessKey = ${?COLLECTOR_STREAMS_SINK_AWS_ACCESS_KEY}
+      #   secretKey = iam
+      #   secretKey = ${?COLLECTOR_STREAMS_SINK_AWS_SECRET_KEY}
+      # }
 
-      # Minimum and maximum backoff periods, in milliseconds
-      backoffPolicy {
-        minBackoff = {{minBackoffMillis}}
-        minBackoff = ${?COLLECTOR_STREAMS_SINK_MIN_BACKOFF}
-        maxBackoff = {{maxBackoffMillis}}
-        maxBackoff = ${?COLLECTOR_STREAMS_SINK_MAX_BACKOFF}
-      }
+      # # Minimum and maximum backoff periods, in milliseconds
+      # backoffPolicy {
+      #   minBackoff = {{minBackoffMillis}}
+      #   minBackoff = ${?COLLECTOR_STREAMS_SINK_MIN_BACKOFF}
+      #   maxBackoff = {{maxBackoffMillis}}
+      #   maxBackoff = ${?COLLECTOR_STREAMS_SINK_MAX_BACKOFF}
+      # }
 
-      # Or Google Pubsub
-      #googleProjectId = ID
-      ## Minimum, maximum and total backoff periods, in milliseconds
-      ## and multiplier between two backoff
-      #backoffPolicy {
-      #  minBackoff = {{minBackoffMillis}}
-      #  maxBackoff = {{maxBackoffMillis}}
-      #  totalBackoff = {{totalBackoffMillis}} # must be >= 10000
-      #  multiplier = {{backoffMultiplier}}
-      #}
+      # # Or Google Pubsub
+      # #googleProjectId = ID
+      # ## Minimum, maximum and total backoff periods, in milliseconds
+      # ## and multiplier between two backoff
+      # #backoffPolicy {
+      # #  minBackoff = {{minBackoffMillis}}
+      # #  maxBackoff = {{maxBackoffMillis}}
+      # #  totalBackoff = {{totalBackoffMillis}} # must be >= 10000
+      # #  multiplier = {{backoffMultiplier}}
+      # #}
 
-      # Or Kafka
-      #brokers = "{{kafkaBrokers}}"
-      ## Number of retries to perform before giving up on sending a record
-      #retries = 0
-      # The kafka producer has a variety of possible configuration options defined at
-      # https://kafka.apache.org/documentation/#producerconfigs
-      # Some values are set to other values from this config by default:
-      # "bootstrap.servers" -> brokers
-      # retries             -> retries
-      # "buffer.memory"     -> buffer.byteLimit
-      # "linger.ms"         -> buffer.timeLimit
-      #producerConf {
-      #  acks = all
-      #  "key.serializer"     = "org.apache.kafka.common.serialization.StringSerializer"
-      #  "value.serializer"   = "org.apache.kafka.common.serialization.StringSerializer"
-      #}
+      # # Or Kafka
+      # #brokers = "{{kafkaBrokers}}"
+      # ## Number of retries to perform before giving up on sending a record
+      # #retries = 0
+      # # The kafka producer has a variety of possible configuration options defined at
+      # # https://kafka.apache.org/documentation/#producerconfigs
+      # # Some values are set to other values from this config by default:
+      # # "bootstrap.servers" -> brokers
+      # # retries             -> retries
+      # # "buffer.memory"     -> buffer.byteLimit
+      # # "linger.ms"         -> buffer.timeLimit
+      # #producerConf {
+      # #  acks = all
+      # #  "key.serializer"     = "org.apache.kafka.common.serialization.StringSerializer"
+      # #  "value.serializer"   = "org.apache.kafka.common.serialization.StringSerializer"
+      # #}
 
-      # Or NSQ
-      ## Host name for nsqd
-      #host = "{{nsqHost}}"
-      ## TCP port for nsqd, 4150 by default
-      #port = {{nsqdPort}}
+      # # Or NSQ
+      # ## Host name for nsqd
+      # #host = "{{nsqHost}}"
+      # ## TCP port for nsqd, 4150 by default
+      # #port = {{nsqdPort}}
     }
 
     # Incoming events are stored in a buffer before being sent to Kinesis/Kafka.
@@ -312,11 +285,11 @@ collector {
     # - the combined size of the stored records reaches byte-limit or
     # - the time in milliseconds since the buffer was last emptied reaches time-limit
     buffer {
-      byteLimit = {{bufferByteThreshold}}
+      byteLimit = 1000#{{bufferByteThreshold}}
       byteLimit = ${?COLLECTOR_STREAMS_BUFFER_BYTE_LIMIT}
-      recordLimit = {{bufferRecordThreshold}} # Not supported by Kafka; will be ignored
+      recordLimit = 1000#{{bufferRecordThreshold}} # Not supported by Kafka; will be ignored
       recordLimit = ${?COLLECTOR_STREAMS_BUFFER_RECORD_LIMIT}
-      timeLimit = {{bufferTimeThreshold}}
+      timeLimit = 1000#{{bufferTimeThreshold}}
       timeLimit = ${?COLLECTOR_STREAMS_BUFFER_TIME_LIMIT}
     }
   }
@@ -328,7 +301,7 @@ collector {
 akka {
   loglevel = DEBUG # 'OFF' for no logging, 'DEBUG' for all logging.
   loglevel = ${?AKKA_LOGLEVEL}
-  loggers = ["akka.event.slf4j.Slf4jLogger"]
+  loggers = []
   loggers = [${?AKKA_LOGGERS}]
 
   # akka-http is the server the Stream collector uses and has configurable options defined at
@@ -337,10 +310,10 @@ akka {
     # To obtain the hostname in the collector, the 'remote-address' header
     # should be set. By default, this is disabled, and enabling it
     # adds the 'Remote-Address' header to every request automatically.
-    remote-address-header = on
+    remote-address-header = off
     remote-address-header = ${?AKKA_HTTP_SERVER_REMOTE_ADDRESS_HEADER}
 
-    raw-request-uri-header = on
+    raw-request-uri-header = off
     raw-request-uri-header = ${?AKKA_HTTP_SERVER_RAW_REQUEST_URI_HEADER}
 
     # Define the maximum request length (the default is 2048)
@@ -352,21 +325,25 @@ akka {
     }
   }
 
-  # By default setting `collector.ssl` relies on JSSE (Java Secure Socket
-  # Extension) to enable secure communication.
-  # To override the default settings set the following section as per
-  # https://lightbend.github.io/ssl-config/ExampleSSLConfig.html
-  # ssl-config {
-  #   debug = {
-  #     ssl = true
-  #   }
-  #   keyManager = {
-  #     stores = [
-  #       {type = "PKCS12", classpath = false, path = "/etc/ssl/mycert.p12", password = "mypassword" }
-  #     ]
-  #   }
-  #   loose {
-  #     disableHostnameVerification = false
-  #   }
-  # }
+  ssl-config {
+    debug = {
+      ssl = true
+    }
+    keyManager = {
+      stores = [
+        {type = "PKCS12", classpath = false, path = ${CERT_FILE}, password = "pass" }
+      ]
+    }
+    # trustManager = {
+    #   stores = [
+    #     {type = "JKS", classpath = false, path = "./pe/trust.jks", password = "abcd"}
+    #   ]
+    # }
+    loose {
+      disableHostnameVerification = false
+    }
+    # sslParameters = {
+    #   clientAuth = "need" // indicate if client authentication is not needed, wanted or required for server-side configuartion
+    # }
+  }
 }
