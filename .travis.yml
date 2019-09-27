@@ -13,6 +13,7 @@ script:
   - python integration-tests/api-lookup-test.py &
   - cd 3-enrich/scala-common-enrich && sbt publishLocal && cd ../..
   - cd $TEST_DIR && sbt test && cd ../..
+  - test "${TEST_DIR}" == "2-collectors/scala-stream-collector/" && cd $TRAVIS_BUILD_DIR/integration-tests && bash -c ./ssc-ssl-test.sh && cd - || true
 env:
   global:
   # OER_KEY
