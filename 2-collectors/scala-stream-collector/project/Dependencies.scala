@@ -37,8 +37,8 @@ object Dependencies {
     val igluClient           = "0.5.0"
     val collectorPayload     = "0.0.0"
     val scalaz7              = "7.0.9"
-    val akkaHttp             = "10.0.15"
-    val akkaSlf4j            = "2.4.19"
+    val akkaHttp             = "10.1.10"
+    val akka                 = "2.5.23"
     val scopt                = "3.6.0"
     val json4s               = "3.2.11"
     val pureconfig           = "0.8.0"
@@ -66,12 +66,14 @@ object Dependencies {
     val scalaz7              = "org.scalaz"            %% "scalaz-core"            % V.scalaz7
     val scopt                = "com.github.scopt"      %% "scopt"                  % V.scopt
     val akkaHttp             = "com.typesafe.akka"     %% "akka-http"              % V.akkaHttp
-    val akkaSlf4j            = "com.typesafe.akka"     %% "akka-slf4j"             % V.akkaSlf4j
+    val akkaStream           = "com.typesafe.akka"     %% "akka-stream"            % V.akka
+    val akkaSlf4j            = "com.typesafe.akka"     %% "akka-slf4j"             % V.akka
     val json4sJackson        = "org.json4s"            %% "json4s-jackson"         % V.json4s
     val pureconfig           = "com.github.pureconfig" %% "pureconfig"             % V.pureconfig
 
     // Scala (test only)
     val specs2               = "org.specs2"            %% "specs2-core"            % V.specs2   % "test"
+    val akkaTestkit          = "com.typesafe.akka"     %% "akka-testkit"           % V.akka     % "test"
     val akkaHttpTestkit      = "com.typesafe.akka"     %% "akka-http-testkit"      % V.akkaHttp % "test"
   }
 }
