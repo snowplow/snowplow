@@ -58,6 +58,7 @@ trait Service {
   def cookieName: Option[String]
   def doNotTrackCookie: Option[DntCookieMatcher]
   def determinePath(vendor: String, version: String): String
+  def allowRedirects: Boolean
 }
 
 object CollectorService {
@@ -78,6 +79,7 @@ class CollectorService(
 
   override val cookieName = config.cookieName
   override val doNotTrackCookie = config.doNotTrackHttpCookie
+  override val allowRedirects = config.allowRedirects
 
   /**
    * Determines the path to be used in the response,
@@ -106,7 +108,7 @@ class CollectorService(
 
     val (ipAddress, partitionKey) = ipAndPartitionKey(ip, config.streams.useIpAddressAsPartitionKey)
 
-    val redirect = path.startsWith("/r/")
+    val redirect = config.allowRedirects && path.startsWith("/r/")
 
     val nuidOpt = networkUserId(request, cookie)
     val bouncing = queryParams.get(config.cookieBounce.name).isDefined

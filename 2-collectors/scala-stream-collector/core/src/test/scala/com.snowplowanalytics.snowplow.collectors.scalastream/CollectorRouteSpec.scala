@@ -22,7 +22,7 @@ import com.snowplowanalytics.snowplow.collectors.scalastream.model.DntCookieMatc
 import org.specs2.mutable.Specification
 
 class CollectorRouteSpec extends Specification with Specs2RouteTest {
-  val route = new CollectorRoute {
+  val mkRoute = (withRedirects: Boolean) => new CollectorRoute {
     override val collectorService = new Service {
       def preflightResponse(req: HttpRequest): HttpResponse =
         HttpResponse(200, entity = "preflight response")
@@ -45,8 +45,11 @@ class CollectorRouteSpec extends Specification with Specs2RouteTest {
       def cookieName: Option[String] = Some("name")
       def doNotTrackCookie: Option[DntCookieMatcher] = None
       def determinePath(vendor: String, version: String): String = "/p1/p2"
+      def allowRedirects = withRedirects
     }
   }
+  val route = mkRoute(true)
+  val routeWithoutRedirects = mkRoute(false)
 
   "The collector route" should {
     "respond to the cors route with a preflight response" in {
@@ -98,6 +101,11 @@ class CollectorRouteSpec extends Specification with Specs2RouteTest {
     "respond to customizable root requests" in {
       Get("/") ~> route.collectorRoute ~> check {
         responseAs[String] shouldEqual "200 collector root"
+      }
+    }
+    "disallow redirect routes when redirects disabled" in {
+      Get("/r/abc") ~> routeWithoutRedirects.collectorRoute ~> check {
+        responseAs[String] shouldEqual "redirects disabled"
       }
     }
     "respond to anything else with a not found" in {
