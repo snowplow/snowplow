@@ -33,7 +33,15 @@ trait CollectorRoute {
   def extractContentType: Directive1[ContentType] =
     extractRequestContext.map(_.request.entity.contentType)
 
-  def collectorRoute: Route =
+  def collectorRoute =
+    if (collectorService.enableDefaultRedirect) routes else rejectRedirect ~ routes
+
+  def rejectRedirect: Route =
+    path("r" / Segment) { _ =>
+      complete(StatusCodes.NotFound -> "redirects disabled")
+    }
+
+  def routes: Route =
     doNotTrack(collectorService.doNotTrackCookie) { dnt =>
       cookieIfWanted(collectorService.cookieName) { reqCookie =>
         val cookie = reqCookie.map(_.toCookie)
