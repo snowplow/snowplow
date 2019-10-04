@@ -140,7 +140,8 @@ package model {
     rootResponse: RootResponseConfig,
     cors: CORSConfig,
     streams: StreamsConfig,
-    prometheusMetrics: PrometheusMetricsConfig
+    prometheusMetrics: PrometheusMetricsConfig,
+    enableDefaultRedirect: Boolean = true
   ) {
     val cookieConfig = if (cookie.enabled) Some(cookie) else None
     val doNotTrackHttpCookie =
