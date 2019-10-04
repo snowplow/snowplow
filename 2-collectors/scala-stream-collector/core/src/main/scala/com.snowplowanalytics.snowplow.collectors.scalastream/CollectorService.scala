@@ -58,6 +58,7 @@ trait Service {
   def cookieName: Option[String]
   def doNotTrackCookie: Option[DntCookieMatcher]
   def determinePath(vendor: String, version: String): String
+  def enableDefaultRedirect: Boolean
 }
 
 object CollectorService {
@@ -78,6 +79,7 @@ class CollectorService(
 
   override val cookieName = config.cookieName
   override val doNotTrackCookie = config.doNotTrackHttpCookie
+  override val enableDefaultRedirect = config.enableDefaultRedirect
 
   /**
    * Determines the path to be used in the response,
