@@ -141,6 +141,11 @@ collector {
     forwardedProtocolHeader = ${?COLLECTOR_COOKIE_BOUNCE_FORWARDED_PROTOCOL_HEADER}
   }
 
+  # When enabled, redirect prefix `r/` will be enabled and its query parameters resolved.
+  # Otherwise the request prefixed with `r/` will be dropped with `404 Not Found`
+  allowRedirects = false
+  allowRedirects = ${?COLLECTOR_ALLOW_REDIRECTS}
+
   # When enabled, the redirect url passed via the `u` query parameter is scanned for a placeholder
   # token. All instances of that token are replaced withe the network ID. If the placeholder isn't
   # specified, the default value is `${SP_NUID}`.
