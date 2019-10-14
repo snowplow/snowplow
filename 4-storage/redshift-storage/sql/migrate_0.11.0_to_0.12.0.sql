@@ -1,4 +1,4 @@
--- Copyright (c) 2013-2019 Snowplow Analytics Ltd. All rights reserved.
+-- Copyright (c) 2019 Snowplow Analytics Ltd. All rights reserved.
 --
 -- This program is licensed to you under the Apache License Version 2.0,
 -- and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -9,17 +9,17 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.12.0
+-- Version:     Ports version 0.11.0 to version 0.12.0
 -- URL:         -
 --
--- Authors:     Yali Sassoon, Alex Dean, Peter van Wesep, Fred Blundun, Konstantinos Servis, Mike Robins
--- Copyright:   Copyright (c) 2013-2019 Snowplow Analytics Ltd
+-- Authors:     Mike Robins
+-- Copyright:   Copyright (c) 2019 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
--- Create the schema
-CREATE SCHEMA atomic;
+-- First rename the existing table (don't delete it)
+ALTER TABLE atomic.events RENAME TO events_011;
 
--- Create events table
+-- Create 0.12.0 events table
 CREATE TABLE atomic.events (
 	-- App
 	app_id varchar(255) encode ZSTD,
@@ -197,5 +197,11 @@ CREATE TABLE atomic.events (
 DISTSTYLE KEY
 DISTKEY (event_id)
 SORTKEY (collector_tstamp);
+
+-- Now copy into new from events_old
+INSERT INTO atomic.events
+    SELECT
+    *
+    FROM atomic.events_011;
 
 COMMENT ON TABLE "atomic"."events" IS '0.12.0';
