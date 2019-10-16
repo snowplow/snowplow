@@ -110,12 +110,6 @@ deploy:
       tags: true
       condition: '"$(.travis/is_release_tag.sh beam_enrich $TRAVIS_TAG)" == "" && $? == 0 && $TEST_DIR = 3-enrich/beam-enrich/'
   - provider: script
-    script: ./.travis/deploy.sh hadoop_event_recovery $TRAVIS_TAG
-    skip_cleanup: true
-    on:
-      tags: true
-      condition: '$([[ "$TEST_DIR" == "3-enrich/scala-common-enrich/" ]] && .travis/is_release_tag.sh hadoop_event_recovery $TRAVIS_TAG && [ $? -eq 0 ] && echo "Deploying")'
-  - provider: script
     script: ./.travis/deploy.sh emr $TRAVIS_TAG
     skip_cleanup: true
     on:
