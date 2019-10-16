@@ -51,7 +51,7 @@ import org.specs2.scalaz.ValidationMatchers
 class EnrichmentConfigsSpec extends Specification with ValidationMatchers with DataTables {
 
   "Parsing a valid anon_ip enrichment JSON" should {
-    "successfully construct an AnonIpEnrichment case class" in {
+    "successfully construct an AnonIpEnrichment case class with default value for IPv6" in {
 
       val ipAnonJson = parse("""{
         "enabled": true,
@@ -63,7 +63,26 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers with D
       val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "anon_ip", "jsonschema", "1-0-0")
 
       val result = AnonIpEnrichment.parse(ipAnonJson, schemaKey)
-      result must beSuccessful(AnonIpEnrichment(AnonOctets(2)))
+      result must beSuccessful(AnonIpEnrichment(AnonIPv4Octets(2), AnonIPv6Segments(2)))
+
+    }
+  }
+
+  "Parsing a valid anon_ip enrichment JSON" should {
+    "successfully construct an AnonIpEnrichment case class" in {
+
+      val ipAnonJson = parse("""{
+        "enabled": true,
+        "parameters": {
+          "anonOctets": 2,
+          "anonSegments": 3
+        }
+      }""")
+
+      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "anon_ip", "jsonschema", "1-0-1")
+
+      val result = AnonIpEnrichment.parse(ipAnonJson, schemaKey)
+      result must beSuccessful(AnonIpEnrichment(AnonIPv4Octets(2), AnonIPv6Segments(3)))
 
     }
   }
