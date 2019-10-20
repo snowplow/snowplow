@@ -32,6 +32,10 @@ class EventFingerprintEnrichmentSpec extends Specification with ValidationMatche
   getEventFingerprint should not depend on the order of fields                $e2
   getEventFingerprint should not depend on excluded fields                    $e3
   getEventFingerprint should return different values even when fields overlap $e4
+  getEventFingerprint should return SHA1 length of 40 bytes                   $e5
+  getEventFingerprint should return SHA256 length of 64 bytes                 $e6
+  getEventFingerprint should return SHA384 length of 96 bytes                 $e7
+  getEventFingerprint should return SHA512 length of 128 bytes                $e8
   """
 
   val standardConfig =
@@ -93,6 +97,57 @@ class EventFingerprintEnrichmentSpec extends Specification with ValidationMatche
     val overlappingVersion = Map("prefi" -> "xsuffix")
 
     standardConfig.getEventFingerprint(initialVersion) should not be standardConfig.getEventFingerprint(initialVersion)
+  }
+
+  def e5 = {
+    val sha1Config =
+      EventFingerprintEnrichment(EventFingerprintEnrichmentConfig.getAlgorithm("SHA1").toOption.get, List("stm", "eid"))
+
+    val initialVersion = Map(
+      "e"     -> "se",
+      "se_ac" -> "action"
+    )
+
+    sha1Config.getEventFingerprint(initialVersion).length() must_== 40
+  }
+
+  def e6 = {
+    val sha256Config =
+      EventFingerprintEnrichment(EventFingerprintEnrichmentConfig.getAlgorithm("SHA256").toOption.get,
+                                 List("stm", "eid"))
+
+    val initialVersion = Map(
+      "e"     -> "se",
+      "se_ac" -> "action"
+    )
+
+    sha256Config.getEventFingerprint(initialVersion).length() must_== 64
+  }
+
+  def e7 = {
+    val sha384Config =
+      EventFingerprintEnrichment(EventFingerprintEnrichmentConfig.getAlgorithm("SHA384").toOption.get,
+                                 List("stm", "eid"))
+
+    val initialVersion = Map(
+      "e"     -> "se",
+      "se_ac" -> "action"
+    )
+
+    sha384Config.getEventFingerprint(initialVersion).length() must_== 96
+  }
+
+  def e8 = {
+    val sha512Config =
+      EventFingerprintEnrichment(EventFingerprintEnrichmentConfig.getAlgorithm("SHA512").toOption.get,
+                                 List("stm", "eid"))
+
+    val initialVersion = Map(
+      "e"     -> "se",
+      "se_ac" -> "action"
+    )
+
+    sha512Config.getEventFingerprint(initialVersion).length() must_== 128
   }
 
 }
