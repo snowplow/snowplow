@@ -200,17 +200,6 @@ collector {
     # If metrics are enabled then all requests will be logged as prometheus metrics
     # and '/metrics' endpoint will return the report about the requests
     enabled = false
-    enabled = ${?COLLECTOR_PROMETHEUS_METRICS_ENABLED}
-    # Custom buckets for http_request_duration_seconds_bucket duration metric
-    #durationBucketsInSeconds = [0.1, 3, 10]
-    #durationbucketsInSeconds = ${?COLLECTOR_PROMETHEUS_METRICS_DURATION_BUCKETS_IN_SECONDS}
-  }
-
-  # Configuration of prometheus http metrics
-  prometheusMetrics {
-    # If metrics are enabled then all requests will be logged as prometheus metrics
-    # and '/metrics' endpoint will return the report about the requests
-    enabled = false
     # Custom buckets for http_request_duration_seconds_bucket duration metric
     #durationBucketsInSeconds = [0.1, 3, 10]
   }
