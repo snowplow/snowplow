@@ -33,7 +33,7 @@ import Tests._
 
 lazy val commonSettings = Defaults.coreDefaultSettings ++ Seq(
   organization  := "com.snowplowanalytics",
-  version       := "0.4.0",
+  version       := "0.4.0-rc7",
   scalaVersion  := "2.11.12",
   javacOptions  ++= Seq("-source", "1.8", "-target", "1.8"),
   scalacOptions ++= compilerOptions,
@@ -68,7 +68,7 @@ dockerUpdateLatest := true
 
 lazy val scioVersion = "0.6.0"
 lazy val beamVersion = "2.5.0"
-lazy val sceVersion = "0.38.0"
+lazy val sceVersion = "0.38.0-M7"
 lazy val scalaMacrosVersion = "2.1.0"
 lazy val slf4jVersion = "1.7.25"
 lazy val scalatestVersion = "3.0.5"
