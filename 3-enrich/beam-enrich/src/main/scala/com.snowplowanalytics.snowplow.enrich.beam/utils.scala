@@ -28,8 +28,6 @@ import cats.effect.Clock
 import com.snowplowanalytics.iglu.core._
 import com.snowplowanalytics.snowplow.badrows._
 import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
-import io.circe.Json
-import io.circe.syntax._
 import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.format.DateTimeFormat
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.EnrichmentConf
@@ -98,13 +96,6 @@ object utils {
   // We want to take one-tenth of the payload characters (not taking into account multi-bytes char)
   private val ReductionFactor = 10
 
-  val oversizedBadRow = SchemaKey(
-    "com.snowplowanalytics.snowplow.badrow",
-    "size_violation",
-    "jsonschema",
-    SchemaVer.Full(1, 0, 0)
-  )
-
   /**
    * Truncate an oversized formatted enriched event into a bad row.
    * @param value TSV-formatted oversized enriched event
@@ -117,7 +108,7 @@ object utils {
     size: Int,
     maxSizeBytes: Int,
     processor: Processor
-  ): Json = {
+  ): BadRow = {
     val msg = "event passed enrichment but exceeded the maximum allowed size as a result"
     BadRow
       .SizeViolation(
@@ -125,7 +116,6 @@ object utils {
         Failure.SizeViolation(Instant.now(), maxSizeBytes, size, msg),
         Payload.RawPayload(value.take(maxSizeBytes / ReductionFactor))
       )
-      .asJson
   }
 
   /**
@@ -135,11 +125,11 @@ object utils {
    * @return a bad row where the line is 10 times less than the max size
    */
   def resizeBadRow(
-    value: Json,
+    value: BadRow,
     maxSizeBytes: Int,
     processor: Processor
-  ): Json = {
-    val json = value.noSpaces
+  ): BadRow = {
+    val json = value.compact
     val size = getSize(json)
     if (size > maxSizeBytes) {
       BadRow
@@ -149,7 +139,6 @@ object utils {
             .SizeViolation(Instant.now(), maxSizeBytes, size, "bad row exceeded the maximum size"),
           Payload.RawPayload(json.take(maxSizeBytes / ReductionFactor))
         )
-        .asJson
     } else value
   }
 

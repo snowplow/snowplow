@@ -29,7 +29,6 @@ import com.spotify.scio._
 import com.spotify.scio.pubsub.PubSubAdmin
 import com.spotify.scio.values.{DistCache, SCollection}
 import _root_.io.circe.Json
-import _root_.io.circe.syntax._
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubOptions
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -51,7 +50,7 @@ object Enrich {
   val timeToEnrichDistribution =
     ScioMetrics.distribution(MetricsNamespace, "time_to_enrich_ms")
 
-  val processor = Processor("beam-enrich", generated.BuildInfo.version)
+  val processor = Processor(generated.BuildInfo.name, generated.BuildInfo.version)
 
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
@@ -96,7 +95,7 @@ object Enrich {
 
     val raw: SCollection[Array[Byte]] =
       sc.withName("raw").pubsubSubscription[Array[Byte]](config.raw)
-    val enriched: SCollection[ValidatedNel[Json, EnrichedEvent]] =
+    val enriched: SCollection[ValidatedNel[BadRow, EnrichedEvent]] =
       enrichEvents(raw, config.resolver, config.enrichmentConfs, cachedFiles)
 
     val (successes, failures) = enriched.partition(_.isValid)
@@ -117,7 +116,7 @@ object Enrich {
         .saveAsPubsub(pii)
     }
 
-    val failureCollection: SCollection[Json] =
+    val failureCollection: SCollection[BadRow] =
       failures
         .withName("enrichment-bad-rows")
         .collect { case Validated.Invalid(badRows) => badRows.toList }
@@ -138,9 +137,10 @@ object Enrich {
               }
           }
           .getOrElse(sc.withName("no-pii").parallelize(List.empty))
+
     failureCollection
       .withName("all-bad-rows")
-      .map(_.noSpaces)
+      .map(_.compact)
       .withName("enriched-bad")
       .saveAsPubsub(config.bad)
     ()
@@ -158,7 +158,7 @@ object Enrich {
     resolver: Json,
     enrichmentConfs: List[EnrichmentConf],
     cachedFiles: DistCache[List[Either[String, String]]]
-  ): SCollection[ValidatedNel[Json, EnrichedEvent]] =
+  ): SCollection[ValidatedNel[BadRow, EnrichedEvent]] =
     raw
       .withName("enriched")
       .map { rawEvent =>
@@ -171,9 +171,10 @@ object Enrich {
           )
         }
         timeToEnrichDistribution.update(time)
-        enriched.map {
-          _.leftMap(_.map(br => br.asJson))
-        }
+        enriched
+      //enriched.map {
+      //  _.leftMap(_.map(br => br.asJson))
+      //}
       }
       .withName("enriched-flattened")
       .flatten
@@ -186,7 +187,7 @@ object Enrich {
    * @return a collection of properly-sized enriched events and another of oversized ones
    */
   private def formatEnrichedEvents(
-    enriched: SCollection[ValidatedNel[Json, EnrichedEvent]]
+    enriched: SCollection[ValidatedNel[BadRow, EnrichedEvent]]
   ): (SCollection[(String, Int)], SCollection[(String, Int)]) =
     enriched
       .collect {
@@ -211,7 +212,7 @@ object Enrich {
    * events
    */
   private def generatePiiEvents(
-    enriched: SCollection[ValidatedNel[Json, EnrichedEvent]],
+    enriched: SCollection[ValidatedNel[BadRow, EnrichedEvent]],
     confs: List[EnrichmentConf]
   ): Option[(SCollection[(String, Int)], SCollection[(String, Int)])] =
     if (emitPii(confs)) {
@@ -241,7 +242,7 @@ object Enrich {
     enrichmentRegistry: EnrichmentRegistry[Id],
     client: Client[Id, Json]
   ): List[ValidatedNel[BadRow, EnrichedEvent]] = {
-    val processor = Processor("beam-enrich", generated.BuildInfo.version)
+    val processor = Processor(generated.BuildInfo.name, generated.BuildInfo.version)
     val collectorPayload = ThriftLoader.toCollectorPayload(data, processor)
     EtlPipeline.processEvents(
       new AdapterRegistry,
