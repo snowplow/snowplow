@@ -17,7 +17,7 @@ lazy val root = project
   .enablePlugins(BuildInfoPlugin)
   .settings(
     name := "snowplow-spark-enrich",
-    version := "1.19.0",
+    version := "1.19.0-rc6",
     description := "The Snowplow Spark Enrichment process"
   )
   .settings(BuildSettings.formatting)
