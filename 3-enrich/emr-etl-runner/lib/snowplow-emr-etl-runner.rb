@@ -37,6 +37,6 @@ require_relative 'snowplow-emr-etl-runner/linter'
 module Snowplow
   module EmrEtlRunner
     NAME    = "snowplow-emr-etl-runner"
-    VERSION = "0.36.0"
+    VERSION = "0.36.0-rc8"
   end
 end

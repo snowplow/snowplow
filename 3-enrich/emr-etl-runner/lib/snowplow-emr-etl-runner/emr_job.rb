@@ -49,7 +49,7 @@ module Snowplow
 
       SHRED_JOB_WITH_PROCESSING_MANIFEST = Gem::Version.new('0.14.0-rc1')
       SHRED_JOB_WITH_TSV_OUTPUT = Gem::Version.new('0.16.0-rc1')
-      RDB_LOADER_WITH_PROCESSING_MANIFEST = Gem::Version.new('0.15.0-rc4')
+      RDB_LOADER_WITH_PROCESSING_MANIFEST = Gem::Version.new('0.15.0-rc8')
 
       AMI_4 = Gem::Version.new("4.0.0")
       AMI_5 = Gem::Version.new("5.0.0")
