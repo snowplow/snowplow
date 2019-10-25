@@ -12,6 +12,7 @@ cd $TEST_DIR
 
 project_version=$(sbt version -Dsbt.log.noformat=true | perl -ne 'print "$1\n" if /info.*(\d+\.\d+\.\d+[^\r\n]*)/' | tail -n 1 | tr -d '\n')
 if [[ "${tag}" = *"${project_version}" ]]; then
+    docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
     sbt docker:publishLocal
     formatted_tag="${tag////:}"
     docker push "${docker_repo}/snowplow/${formatted_tag//_/-}"
@@ -19,4 +20,3 @@ else
     echo "Tag version '${tag}' doesn't match version in scala project ('${project_version}'). Aborting!"
     exit 1
 fi
-
