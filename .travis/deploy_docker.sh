@@ -4,9 +4,7 @@ tag=$1
 
 file="${HOME}/.dockercfg"
 docker_repo="snowplow-docker-registry.bintray.io"
-curl -X GET \
-    -u${BINTRAY_SNOWPLOW_DOCKER_USER}:${BINTRAY_SNOWPLOW_DOCKER_API_KEY} \
-    https://${docker_repo}/v2/auth > $file
+docker login -u ${BINTRAY_SNOWPLOW_DOCKER_USER} -p ${BINTRAY_SNOWPLOW_DOCKER_API_KEY} ${docker_repo}
 
 cd $TEST_DIR
 
@@ -14,9 +12,10 @@ project_version=$(sbt version -Dsbt.log.noformat=true | perl -ne 'print "$1\n" i
 if [[ "${tag}" = *"${project_version}" ]]; then
     sbt docker:publishLocal
     formatted_tag="${tag////:}"
-    docker push "${docker_repo}/snowplow/${formatted_tag//_/-}"
+    docker_push_url="${docker_repo}/snowplow/${formatted_tag//_/-}"
+    echo "Pushing ${docker_push_url}"
+    docker push ${docker_push_url}
 else
     echo "Tag version '${tag}' doesn't match version in scala project ('${project_version}'). Aborting!"
     exit 1
 fi
-
