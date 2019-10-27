@@ -19,8 +19,11 @@ import java.time.Instant
 
 import com.snowplowanalytics.snowplow.badrows._
 import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
-import io.circe.literal._
-import io.circe.syntax._
+import cats.implicits._
+import io.circe.parser
+import com.snowplowanalytics.iglu.core.SelfDescribingData
+import com.snowplowanalytics.iglu.core.circe.instances._
+
 import org.scalatest._
 
 import utils._
@@ -86,7 +89,7 @@ class UtilsSpec extends FreeSpec with Matchers {
             ),
             Payload.RawPayload("ah")
           )
-          .asJson
+          .compact
         resizeBadRow(badRow, 500, processor) shouldEqual badRow
       }
 
@@ -101,23 +104,23 @@ class UtilsSpec extends FreeSpec with Matchers {
             ),
             Payload.RawPayload("ah")
           )
-          .asJson
+          .compact
 
         val res = resizeBadRow(original, 150, processor)
-        val resSdd = res.as[BadRow].toOption.get
+        val resSdd = parseBadRow(res).right.get
         resSdd shouldBe a[BadRow.SizeViolation]
         val badRowSizeViolation = resSdd.asInstanceOf[BadRow.SizeViolation]
         badRowSizeViolation.failure.maximumAllowedSizeBytes shouldEqual 150
-        badRowSizeViolation.failure.actualSizeBytes shouldEqual 151
+        badRowSizeViolation.failure.actualSizeBytes shouldEqual 267
         badRowSizeViolation.failure.expectation shouldEqual "bad row exceeded the maximum size"
-        badRowSizeViolation.payload.line shouldEqual "{\"processor\":{\""
+        badRowSizeViolation.payload.line shouldEqual "{\"schema\":\"iglu"
         badRowSizeViolation.processor shouldEqual processor
       }
     }
     "make a resizeEnrichedEvent function available" - {
       "which truncates a formatted enriched event and wrap it in a bad row" in {
         val res = resizeEnrichedEvent("a" * 100, 100, 400, processor)
-        val resSdd = res.as[BadRow].toOption.get
+        val resSdd = parseBadRow(res).right.get
         resSdd shouldBe a[BadRow.SizeViolation]
         val badRowSizeViolation = resSdd.asInstanceOf[BadRow.SizeViolation]
         badRowSizeViolation.failure.maximumAllowedSizeBytes shouldEqual 400
@@ -175,4 +178,11 @@ class UtilsSpec extends FreeSpec with Matchers {
       }
     }
   }
+
+  def parseBadRow(jsonStr: String): Either[String, BadRow] =
+    for {
+      json <- parser.parse(jsonStr).leftMap(_.getMessage)
+      sdj <- SelfDescribingData.parse(json).leftMap(_.code)
+      res <- sdj.data.as[BadRow].leftMap(_.getMessage)
+    } yield res
 }

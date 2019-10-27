@@ -25,7 +25,8 @@ import scala.util.Try
 
 import cats.Id
 import cats.effect.Clock
-import com.snowplowanalytics.iglu.core._
+import io.circe.Json
+import io.circe.syntax._
 import com.snowplowanalytics.snowplow.badrows._
 import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
 import org.joda.time.{DateTime, DateTimeZone}
@@ -101,14 +102,14 @@ object utils {
    * @param value TSV-formatted oversized enriched event
    * @param maxBytesSize maximum size in bytes a record can take
    * @param processor metadata about this artifact
-   * @return a bad row containing a the truncated enriched event (10 times less than the max size)
+   * @return a bad row (JSON string) containing a the truncated enriched event (10 times less than the max size)
    */
   def resizeEnrichedEvent(
     value: String,
     size: Int,
     maxSizeBytes: Int,
     processor: Processor
-  ): BadRow = {
+  ): String = {
     val msg = "event passed enrichment but exceeded the maximum allowed size as a result"
     BadRow
       .SizeViolation(
@@ -116,30 +117,31 @@ object utils {
         Failure.SizeViolation(Instant.now(), maxSizeBytes, size, msg),
         Payload.RawPayload(value.take(maxSizeBytes / ReductionFactor))
       )
+      .compact
   }
 
   /**
    * Resize a bad row if it exceeds the maximum allowed size.
    * @param value the original bad row which can be oversized
    * @param maxBytesSize maximum size in bytes a record can take
-   * @return a bad row where the line is 10 times less than the max size
+   * @return a bad row (JSON string) where the line is 10 times less than the max size
    */
   def resizeBadRow(
-    value: BadRow,
+    originalBadRow: String,
     maxSizeBytes: Int,
     processor: Processor
-  ): BadRow = {
-    val json = value.compact
-    val size = getSize(json)
+  ): String = {
+    val size = getSize(originalBadRow)
     if (size > maxSizeBytes) {
       BadRow
         .SizeViolation(
           processor,
           Failure
             .SizeViolation(Instant.now(), maxSizeBytes, size, "bad row exceeded the maximum size"),
-          Payload.RawPayload(json.take(maxSizeBytes / ReductionFactor))
+          Payload.RawPayload(originalBadRow.take(maxSizeBytes / ReductionFactor))
         )
-    } else value
+        .compact
+    } else originalBadRow
   }
 
   /** The size of a string in bytes */
