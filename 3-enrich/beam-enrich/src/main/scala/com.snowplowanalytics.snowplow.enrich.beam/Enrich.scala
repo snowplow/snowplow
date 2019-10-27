@@ -15,7 +15,7 @@
 package com.snowplowanalytics.snowplow.enrich.beam
 
 import cats.Id
-import cats.data.{Validated, ValidatedNel}
+import cats.data.Validated
 import cats.implicits._
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.snowplow.badrows._
@@ -94,55 +94,76 @@ object Enrich {
       buildDistCache(sc, config.enrichmentConfs)
 
     val raw: SCollection[Array[Byte]] =
-      sc.withName("raw").pubsubSubscription[Array[Byte]](config.raw)
-    val enriched: SCollection[ValidatedNel[BadRow, EnrichedEvent]] =
+      sc.withName("raw-from-pubsub").pubsubSubscription[Array[Byte]](config.raw)
+
+    val enriched: SCollection[Validated[List[String], EnrichedEvent]] =
       enrichEvents(raw, config.resolver, config.enrichmentConfs, cachedFiles)
 
-    val (successes, failures) = enriched.partition(_.isValid)
+    val (failures, successes): (SCollection[String], SCollection[EnrichedEvent]) = {
+      val enrichedPartitioned = enriched.withName("split-enriched-good-bad").partition(_.isValid)
+
+      val successes = enrichedPartitioned._1
+        .withName("get-enriched-good")
+        .collect { case Validated.Valid(enriched) => enriched }
+
+      val failures = enrichedPartitioned._2
+        .withName("get-enriched-bad")
+        .collect { case Validated.Invalid(badRows) => badRows.toList }
+        .withName("flatten-bad-rows")
+        .flatten
+        .withName("resize-bad-rows")
+        .map(resizeBadRow(_, MaxRecordSize, processor))
+
+      (failures, successes)
+    }
+
     val (tooBigSuccesses, properlySizedSuccesses) = formatEnrichedEvents(successes)
     properlySizedSuccesses
-      .withName("properly-sized-enriched-successes")
+      .withName("get-properly-sized-enriched")
       .map(_._1)
-      .withName("enriched-good")
+      .withName("write-enriched-to-pubsub")
       .saveAsPubsub(config.enriched)
 
     val piis = generatePiiEvents(successes, config.enrichmentConfs)
     (piis, config.pii).mapN { (piis, pii) =>
       val properlySizedPiis = piis._2
       properlySizedPiis
-        .withName("properly-sized-piis")
+        .withName("get-properly-sized-pii")
         .map(_._1)
-        .withName("pii-good")
+        .withName("write-pii-to-pubsub")
         .saveAsPubsub(pii)
     }
 
-    val failureCollection: SCollection[BadRow] =
-      failures
-        .withName("enrichment-bad-rows")
-        .collect { case Validated.Invalid(badRows) => badRows.toList }
-        .withName("enrichment-bad-rows-flattened")
-        .flatten
-        .withName("properly-sized-enrichment-bad-rows")
-        .map(resizeBadRow(_, MaxRecordSize, processor)) ++
-        tooBigSuccesses
-          .withName("resized-enriched-events-bad-rows")
-          .map { case (event, size) => resizeEnrichedEvent(event, size, MaxRecordSize, processor) } ++
-        (piis, config.pii)
-          .mapN { (piis, _) =>
-            val tooBigPiis = piis._1
-            tooBigPiis
-              .withName("resized-pii-events-bad-rows")
-              .map {
-                case (event, size) => resizeEnrichedEvent(event, size, MaxRecordSize, processor)
-              }
-          }
-          .getOrElse(sc.withName("no-pii").parallelize(List.empty))
+    val resizedEnriched = tooBigSuccesses
+      .withName("resize-oversized-enriched")
+      .map {
+        case (event, size) => resizeEnrichedEvent(event, size, MaxRecordSize, processor)
+      }
 
-    failureCollection
-      .withName("all-bad-rows")
-      .map(_.compact)
-      .withName("enriched-bad")
+    val resizedPii: SCollection[String] =
+      (piis, config.pii)
+        .mapN { (piis, _) =>
+          val tooBigPiis = piis._1
+          tooBigPiis
+            .withName("resize-oversized-pii")
+            .map {
+              case (event, size) =>
+                resizeEnrichedEvent(event, size, MaxRecordSize, processor)
+            }
+        }
+        .getOrElse(sc.withName("no-pii").parallelize(List.empty))
+
+    val allBadRows: SCollection[String] =
+      resizedPii
+        .withName("join-bad-resized")
+        .union(resizedEnriched)
+        .withName("join-bad-all")
+        .union(failures)
+
+    allBadRows
+      .withName("write-bad-rows-to-pubsub")
       .saveAsPubsub(config.bad)
+
     ()
   }
 
@@ -158,9 +179,9 @@ object Enrich {
     resolver: Json,
     enrichmentConfs: List[EnrichmentConf],
     cachedFiles: DistCache[List[Either[String, String]]]
-  ): SCollection[ValidatedNel[BadRow, EnrichedEvent]] =
+  ): SCollection[Validated[List[String], EnrichedEvent]] =
     raw
-      .withName("enriched")
+      .withName("enrich")
       .map { rawEvent =>
         cachedFiles()
         val (enriched, time) = timeMs {
@@ -172,13 +193,9 @@ object Enrich {
         }
         timeToEnrichDistribution.update(time)
         enriched
-      //enriched.map {
-      //  _.leftMap(_.map(br => br.asJson))
-      //}
       }
-      .withName("enriched-flattened")
+      .withName("flatten-enriched")
       .flatten
-      .withName("enriched-partitioned")
 
   /**
    * Turns successfully enriched events into TSV partitioned by whether or no they exceed the
@@ -187,19 +204,19 @@ object Enrich {
    * @return a collection of properly-sized enriched events and another of oversized ones
    */
   private def formatEnrichedEvents(
-    enriched: SCollection[ValidatedNel[BadRow, EnrichedEvent]]
+    enriched: SCollection[EnrichedEvent]
   ): (SCollection[(String, Int)], SCollection[(String, Int)]) =
     enriched
-      .collect {
-        case Validated.Valid(enrichedEvent) =>
-          getEnrichedEventMetrics(enrichedEvent)
-            .foreach(ScioMetrics.counter(MetricsNamespace, _).inc())
-          val formattedEnrichedEvent = tabSeparatedEnrichedEvent(enrichedEvent)
-          val size = getSize(formattedEnrichedEvent)
-          enrichedEventSizeDistribution.update(size.toLong)
-          (formattedEnrichedEvent, size)
+      .withName("format-enriched")
+      .map { enrichedEvent =>
+        getEnrichedEventMetrics(enrichedEvent)
+          .foreach(ScioMetrics.counter(MetricsNamespace, _).inc())
+        val formattedEnrichedEvent = tabSeparatedEnrichedEvent(enrichedEvent)
+        val size = getSize(formattedEnrichedEvent)
+        enrichedEventSizeDistribution.update(size.toLong)
+        (formattedEnrichedEvent, size)
       }
-      .withName("enriched-successes")
+      .withName("split-oversized")
       .partition(_._2 >= MaxRecordSize)
 
   /**
@@ -212,20 +229,20 @@ object Enrich {
    * events
    */
   private def generatePiiEvents(
-    enriched: SCollection[ValidatedNel[BadRow, EnrichedEvent]],
+    enriched: SCollection[EnrichedEvent],
     confs: List[EnrichmentConf]
   ): Option[(SCollection[(String, Int)], SCollection[(String, Int)])] =
     if (emitPii(confs)) {
       val (tooBigPiis, properlySizedPiis) = enriched
-        .withName("pii-successes")
-        .collect {
-          case Validated.Valid(enrichedEvent) =>
-            getPiiEvent(enrichedEvent)
-              .map(tabSeparatedEnrichedEvent)
-              .map(formatted => (formatted, getSize(formatted)))
+        .withName("generate-pii-events")
+        .map { enrichedEvent =>
+          getPiiEvent(enrichedEvent)
+            .map(tabSeparatedEnrichedEvent)
+            .map(formatted => (formatted, getSize(formatted)))
         }
-        .withName("pii-successes-flattened")
+        .withName("flatten-pii-events")
         .flatten
+        .withName("split-oversized-pii")
         .partition(_._2 >= MaxRecordSize)
       Some((tooBigPiis, properlySizedPiis))
     } else {
@@ -241,10 +258,10 @@ object Enrich {
     data: Array[Byte],
     enrichmentRegistry: EnrichmentRegistry[Id],
     client: Client[Id, Json]
-  ): List[ValidatedNel[BadRow, EnrichedEvent]] = {
+  ): List[Validated[List[String], EnrichedEvent]] = {
     val processor = Processor(generated.BuildInfo.name, generated.BuildInfo.version)
     val collectorPayload = ThriftLoader.toCollectorPayload(data, processor)
-    EtlPipeline.processEvents(
+    val enriched = EtlPipeline.processEvents(
       new AdapterRegistry,
       enrichmentRegistry,
       client,
@@ -252,6 +269,9 @@ object Enrich {
       new DateTime(System.currentTimeMillis),
       collectorPayload
     )
+    enriched.map {
+      _.leftMap(_.map(br => br.compact).toList)
+    }
   }
 
   /**
