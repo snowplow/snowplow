@@ -266,6 +266,17 @@ object EnrichJobSpec {
                 |"uri": "http://iglucentral.com"
               |}
             |}
+          |},
+          |
+          |{
+          |"name": "Iglu Central R110",
+          |"priority": 0,
+          |"vendorPrefixes": [ "com.snowplowanalytics" ],
+          |"connection": {
+          |"http": {
+          |"uri": "http://iglucentral-dev.com.s3-website-us-east-1.amazonaws.com/release/r110"
+          |}
+          |}
           |}
           |]
         |}
