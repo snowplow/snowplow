@@ -38,7 +38,7 @@ object Dependencies {
     val akka                 = "2.5.19"
     val scopt                = "3.6.0"
     val pureconfig           = "0.11.1"
-    val badRows              = "0.1.0"
+    val badRows              = "0.1.0-M6"
     // Scala (test only)
     val specs2               = "4.5.1"
   }
