@@ -80,7 +80,7 @@ class IpLookupsEnrichmentSpec extends PipelineSpec {
       }
       .distribution(Enrich.enrichedEventSizeDistribution) { d =>
         d.getCount() shouldBe 1
-        d.getMin() shouldBe 675
+        d.getMin() shouldBe 679
         d.getMin() shouldBe d.getMax()
         d.getMin() shouldBe d.getSum()
         d.getMin() shouldBe d.getMean()
