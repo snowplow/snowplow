@@ -40,7 +40,7 @@ object Dependencies {
     val scopt                = "3.6.0"
     val pureconfig           = "0.11.1"
     val json4s               = "3.2.11"
-    val badRows              = "0.1.0"
+    val badRows              = "0.1.0-M6"
     // Scala (test only)
     val specs2               = "4.5.1"
   }
