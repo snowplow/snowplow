@@ -25,6 +25,7 @@ object Dependencies {
     // For Snowplow libs
     "Snowplow Analytics Maven repo" at "http://maven.snplow.com/releases/",
     "Snowplow Analytics Maven snapshot repo" at "http://maven.snplow.com/snapshots/",
+    "snowplow" at "https://snowplow.bintray.com/snowplow-maven",
     // For uaParser utils
     "user-agent-parser repo" at "https://clojars.org/repo/"
   )
@@ -46,18 +47,18 @@ object Dependencies {
     val rhino            = "1.7.10"
     // Scala
     val cats             = "1.6.0"
-    val refererParser    = "0.6.0"
-    val maxmindIplookups = "0.6.1"
+    val refererParser    = "0.6.0-M2"
+    val maxmindIplookups = "0.6.1-M1"
     val circe            = "0.11.1"
     val circeOptics      = "0.11.0"
     val circeJackson     = "0.11.1"
-    val scalaForex       = "0.7.0"
-    val scalaWeather     = "0.5.0"
+    val scalaForex       = "0.7.0-M4"
+    val scalaWeather     = "0.5.0-M2"
     val scalaj           = "2.4.1"
     val gatlingJsonpath  = "0.6.14"
     val scalaUri         = "1.4.5"
     val scalaLruMap      = "0.3.0"
-    val badRows          = "0.1.0"
+    val badRows          = "0.1.0-M6"
     // Thrift schemas
     val snowplowRawEvent = "0.1.0"
     val collectorPayload = "0.0.0"
