@@ -28,7 +28,6 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
   val processor = Processor("CloudfrontAccessLogAdapterSpec", "v1")
 
   def is = s2"""
-  This is a specification to test the CloudfrontAccessLogAdapter functionality
   toRawEvents should return a NEL containing one RawEvent if the line contains 12 fields   $e1
   toRawEvents should return a NEL containing one RawEvent if the line contains 15 fields   $e2
   toRawEvents should return a NEL containing one RawEvent if the line contains 18 fields   $e3

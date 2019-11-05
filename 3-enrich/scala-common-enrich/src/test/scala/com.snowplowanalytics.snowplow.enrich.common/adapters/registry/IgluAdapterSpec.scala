@@ -26,7 +26,6 @@ import utils.Clock._
 
 class IgluAdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
-  This is a specification to test the IgluAdapter functionality
   toRawEvents should return a NEL containing one RawEvent if the CloudFront querystring is minimally populated           $e1
   toRawEvents should return a NEL containing one RawEvent if the CloudFront querystring is maximally populated           $e2
   toRawEvents should return a NEL containing one RawEvent if the Clojure-Tomcat querystring is populated                 $e3

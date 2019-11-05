@@ -28,14 +28,13 @@ import utils.Clock._
 
 class HubSpotAdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
-  This is a specification to test the HubSpotAdapter functionality
-  payloadBodyToEvents must return a Success list of event JSON's from a valid payload body           $e1
-  payloadBodyToEvents must return a Failure Nel for an invalid payload body being passed             $e2
-  toRawEvents must return a Success Nel if all events are successful                                 $e3
-  toRawEvents must return a Failure Nel if any of the events where not successes                     $e4
-  toRawEvents must return a Nel Failure if the request body is missing                               $e5
-  toRawEvents must return a Nel Failure if the content type is missing                               $e6
-  toRawEvents must return a Nel Failure if the content type is incorrect                             $e7
+  payloadBodyToEvents must return a Success list of event JSON's from a valid payload body $e1
+  payloadBodyToEvents must return a Failure Nel for an invalid payload body being passed   $e2
+  toRawEvents must return a Success Nel if all events are successful                       $e3
+  toRawEvents must return a Failure Nel if any of the events where not successes           $e4
+  toRawEvents must return a Nel Failure if the request body is missing                     $e5
+  toRawEvents must return a Nel Failure if the content type is missing                     $e6
+  toRawEvents must return a Nel Failure if the content type is incorrect                   $e7
   """
 
   object Shared {

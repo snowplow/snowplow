@@ -16,7 +16,6 @@ import org.specs2.Specification
 
 class CookieExtractorEnrichmentSpec extends Specification {
   def is = s2"""
-  This is a specification to test the CookieExtractorEnrichment
   returns an empty list when no cookie header                $e1
   returns an empty list when no cookie matches configuration $e2
   returns contexts for found cookies                         $e3

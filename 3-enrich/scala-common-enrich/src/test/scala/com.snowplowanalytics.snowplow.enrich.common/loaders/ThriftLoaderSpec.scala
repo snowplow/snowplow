@@ -37,7 +37,6 @@ class ThriftLoaderSpec
   val Process = Processor("ThriftLoaderSpec", "v1")
 
   def is = s2"""
-  This is a specification to test the ThriftLoader functionality
   toCollectorPayload should return a CollectorPayload for a valid Thrift CollectorPayload (even if parameterless) $e1
   toCollectorPayload should return a Validation Failure for an invalid or corrupted Thrift CollectorPayload       $e2
   """

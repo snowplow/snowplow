@@ -17,7 +17,6 @@ import org.specs2.matcher.DataTables
 
 class ValidateAndReformatJsonSpec extends Specification with DataTables {
   def is = s2"""
-  This is a specification to test the validateAndReformatJson function
   extracting and reformatting (where necessary) valid JSONs with work $e1
   extracting invalid JSONs should fail $e2
   """

@@ -36,7 +36,6 @@ class CurrencyConversionEnrichmentSpec extends Specification with DataTables {
   def is =
     skipAllIf(sys.env.get(OerApiKey).isEmpty) ^
       s2"""
-  This is a specification to test convertCurrencies
   Failure test for Currency Conversion $e1
   Success test for Currency Conversion $e2
   """

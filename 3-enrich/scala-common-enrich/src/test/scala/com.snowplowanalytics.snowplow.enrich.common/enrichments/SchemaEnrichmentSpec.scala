@@ -28,8 +28,8 @@ class SchemaEnrichmentSpec extends Specification with DataTables {
     """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.snowplowanalytics.snowplow-website/signup_form_submitted/jsonschema/1-0-0","data":{"serviceType":"unsure"}}}"""
 
   def is = s2"""
-    Extracting SchemaKeys from valid events should work $e1
-    Invalid events should fail when extracting SchemaKeys $e2
+  extracting SchemaKeys from valid events should work $e1
+  invalid events should fail when extracting SchemaKeys $e2
   """
 
   def e1 =

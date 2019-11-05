@@ -39,17 +39,16 @@ import utils.HttpClient
 
 class AdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
-  This is a specification to test the Adapter trait's functionality
-  toMap should convert a list of name-value pairs into a map                                                 $e1
-  toUnstructEventParams should generate a boilerplate set of parameters for an empty unstructured event      $e2
-  toUnstructEventParams should preserve nuid, aid, cv, url, eid, ttm and p outside of the unstructured event $e3
-  lookupSchema must return a Validated.Valid Nel for a valid key being passed against an event-schema map            $e4
-  lookupSchema must return a Validated.Invalid Nel for an invalid key being passed against an event-schema map         $e5
-  lookupSchema must return a Validated.Invalid Nel with an index if one is passed to it                                $e6
-  rawEventsListProcessor must return a Validated.Invalid Nel if there are any Validated.Invalids in the list                     $e7
-  rawEventsListProcessor must return a Validated.Valid Nel of RawEvents if the list is full of success               $e8
-  cleanupJsonEventValues must clean 'ts':[JInt, JString] fields into to a valid JsonSchema date-time format  $e9
-  cleanupJsonEventValues must remove key-pairs if specified                                                  $e10
+  toMap should convert a list of name-value pairs into a map                                                   $e1
+  toUnstructEventParams should generate a boilerplate set of parameters for an empty unstructured event        $e2
+  toUnstructEventParams should preserve nuid, aid, cv, url, eid, ttm and p outside of the unstructured event   $e3
+  lookupSchema must return a Validated.Valid Nel for a valid key being passed against an event-schema map      $e4
+  lookupSchema must return a Validated.Invalid Nel for an invalid key being passed against an event-schema map $e5
+  lookupSchema must return a Validated.Invalid Nel with an index if one is passed to it                        $e6
+  rawEventsListProcessor must return a Validated.Invalid Nel if there are any Validated.Invalids in the list   $e7
+  rawEventsListProcessor must return a Validated.Valid Nel of RawEvents if the list is full of success         $e8
+  cleanupJsonEventValues must clean 'ts':[JInt, JString] fields into to a valid JsonSchema date-time format    $e9
+  cleanupJsonEventValues must remove key-pairs if specified                                                    $e10
   """
 
   // TODO: add test for buildFormatter()

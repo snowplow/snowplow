@@ -20,10 +20,9 @@ import org.specs2.matcher.ValidatedMatchers
 
 class SqlQueryEnrichmentSpec extends Specification with ValidatedMatchers {
   def is = s2"""
-  This is a specification to test the SqlQueryEnrichment configuration
-  Extract correct configuration       $e1
-  Fail to parse invalid configuration $e2
-  Extract correct MySQL configuration $e3
+  extract correct configuration       $e1
+  fail to parse invalid configuration $e2
+  extract correct MySQL configuration $e3
   """
 
   val SCHEMA_KEY =

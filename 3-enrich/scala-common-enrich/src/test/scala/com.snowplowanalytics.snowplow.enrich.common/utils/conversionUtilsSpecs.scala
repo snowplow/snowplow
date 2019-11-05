@@ -126,7 +126,9 @@ class StringToUriSpec extends MSpecification with DataTables {
 
 class ExplodeUriSpec extends Specification with DataTables {
 
-  def is = s2"Exploding URIs into their component pieces with explodeUri should work $e1"
+  def is = s2"""
+  Exploding URIs into their component pieces with explodeUri should work $e1
+  """
 
   def e1 =
     "SPEC NAME" || "URI" | "EXP. SCHEME" | "EXP. HOST" | "EXP. PORT" | "EXP. PATH" | "EXP. QUERY" | "EXP. FRAGMENT" |
@@ -173,7 +175,9 @@ class FixTabsNewlinesSpec extends Specification with DataTables {
 
   val SafeTab = "    "
 
-  def is = s2"Replacing tabs, newlines and control characters with fixTabsNewlines should work $e1"
+  def is = s2"""
+  Replacing tabs, newlines and control characters with fixTabsNewlines should work $e1
+  """
 
   def e1 =
     "SPEC NAME" || "INPUT STR" | "EXPECTED" |
@@ -197,7 +201,6 @@ class FixTabsNewlinesSpec extends Specification with DataTables {
 // See comments on ConversionUtils.decodeBase64Url for details.
 class DecodeBase64UrlSpec extends Specification with DataTables with ScalaCheck {
   def is = s2"""
-  This is a specification to test the decodeBase64Url function
   decodeBase64Url should return failure if passed a null                          $e1
   decodeBase64Url should not return failure on any other string                   $e2
   decodeBase64Url should correctly decode valid Base64 (URL-safe) encoded strings $e3
@@ -236,7 +239,6 @@ class DecodeBase64UrlSpec extends Specification with DataTables with ScalaCheck 
 
 class ValidateUuidSpec extends Specification with DataTables with ScalaCheck {
   def is = s2"""
-  This is a specification to test the validateUuid function
   validateUuid should return a lowercased UUID for a valid lower/upper-case UUID       $e1
   validateUuid should fail if the supplied String is not a valid lower/upper-case UUID $e2
   """
@@ -276,7 +278,6 @@ class ValidateUuidSpec extends Specification with DataTables with ScalaCheck {
 
 class StringToDoubleLikeSpec extends Specification with DataTables {
   def is = s2"""
-  This is a specification to test the stringToDoublelike function
   stringToDoublelike should fail if the supplied String is not parseable as a number                    $e1
   stringToDoublelike should convert numeric Strings to 'Double-like' Strings loadable by Redshift       $e2
   stringToDoublelike will alas *not* fail numbers having more significant digits than Redshift supports $e3
@@ -332,7 +333,6 @@ class StringToDoubleLikeSpec extends Specification with DataTables {
 
 class StringToJIntegerSpec extends Specification with DataTables {
   def is = s2"""
-  This is a specification to test the stringToJInteger function
   stringToJInteger should fail if the supplied String is not parseable as an Integer $e1
   stringToJInteger should convert valid Strings to Java Integers                     $e2
   """
@@ -363,7 +363,6 @@ class StringToJIntegerSpec extends Specification with DataTables {
 
 class StringToBooleanLikeJByteSpec extends Specification with DataTables {
   def is = s2"""
-  This is a specification to test the stringToBooleanlikeJByte function
   stringToBooleanlikeJByte should fail if the supplied String is not parseable as a 1 or 0 JByte           $e1
   stringToBooleanlikeJByte should convert '1' or '0' Strings to 'Boolean-like' JBytes loadable by Redshift $e2
   """
