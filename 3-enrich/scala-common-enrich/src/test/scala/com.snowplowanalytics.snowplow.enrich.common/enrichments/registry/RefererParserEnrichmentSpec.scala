@@ -29,9 +29,8 @@ import org.specs2.matcher.DataTables
  */
 class RefererParserEnrichmentSpec extends Specification with DataTables {
   def is = s2"""
-  This is a specification to test extractRefererDetails
-  Parsing referer URIs should work                     $e1
-  Tabs and newlines in search terms should be replaced $e2
+  parsing referer URIs should work                     $e1
+  tabs and newlines in search terms should be replaced $e2
   """
 
   val PageHost = "www.snowplowanalytics.com"

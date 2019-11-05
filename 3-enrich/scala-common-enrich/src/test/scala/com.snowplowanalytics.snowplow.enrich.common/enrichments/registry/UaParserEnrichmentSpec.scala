@@ -39,21 +39,6 @@ class UaParserEnrichmentSpec extends Specification with DataTables {
 
   val schemaKey = SchemaKey("vendor", "name", "format", SchemaVer.Full(1, 0, 0))
 
-  "useragent parser" should {
-    "parse useragent according to configured rules" in {
-      "Custom Rules" | "Input UserAgent" | "Parsed UserAgent" |
-        None !! mobileSafariUserAgent !! mobileSafariJson |
-        None !! safariUserAgent !! safariJson |
-        Some(customRules) !! mobileSafariUserAgent !! testAgentJson |> { (rules, input, expected) =>
-        (for {
-          c <- EitherT.rightT[Eval, String](UaParserConf(schemaKey, rules))
-          e <- c.enrichment[Eval].leftMap(_.toString)
-          res <- EitherT.fromEither[Eval](e.extractUserAgent(input)).leftMap(_.toString)
-        } yield res).value.value must_== Right(expected)
-      }
-    }
-  }
-
   val badRulefile = (new URI("s3://private-bucket/files/uap-rules.yml"), "NotAFile")
 
   "useragent parser" should {
@@ -68,6 +53,20 @@ class UaParserEnrichmentSpec extends Specification with DataTables {
           } yield res).value.value must beLeft.like {
             case a => a must startWith(errorPrefix)
           }
+      }
+    }
+
+    "parse useragent according to configured rules" in {
+      "Custom Rules" | "Input UserAgent" | "Parsed UserAgent" |
+        None !! mobileSafariUserAgent !! mobileSafariJson |
+        None !! safariUserAgent !! safariJson |
+        Some(customRules) !! mobileSafariUserAgent !! testAgentJson |> { (rules, input, expected) =>
+        val json = for {
+          c <- EitherT.rightT[Eval, String](UaParserConf(schemaKey, rules))
+          e <- c.enrichment[Eval].leftMap(_.toString)
+          res <- EitherT.fromEither[Eval](e.extractUserAgent(input)).leftMap(_.toString)
+        } yield res
+        json.value.value must beRight(expected)
       }
     }
   }

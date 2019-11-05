@@ -22,10 +22,9 @@ import org.specs2.mock.Mockito
 
 class HttpApiSpec extends Specification with ValidatedMatchers with Mockito {
   def is = s2"""
-  This is a specification to test the HTTP API of API Request Enrichment
-  Fail to build request string without all keys $e1
-  Build request string from template context    $e2
-  Failure on failed HTTP connection             $e3
+  fail to build request string without all keys $e1
+  build request string from template context    $e2
+  failure on failed HTTP connection             $e3
   """
 
   def e1 = {

@@ -20,7 +20,6 @@ import org.specs2.matcher.DataTables
 
 class ExtractPageUriSpec extends Specification with DataTables {
   def is = s2"""
-  This is a specification to test the extractPageUri function
   extractPageUri should return a None when no page URI provided                             $e1
   extractPageUri should choose the URI from the tracker if it has one or two to choose from $e2
   extractPageUri will alas assume a browser-truncated page URL is a custom URL not an error $e3

@@ -22,10 +22,9 @@ import outputs.EnrichedEvent
 /** Tests the anonymzeIp function */
 class JavascriptScriptEnrichmentSpec extends Specification {
   def is = s2"""
-  This is a specification to test the JavascriptScriptEnrichment
-  Compiling an invalid JavaScript script should fail              $e1
-  A JavaScript script should be able to throw an exception safely $e2
-  A JavaScript script should successfully generate a new context  $e3
+  compiling an invalid JavaScript script should fail              $e1
+  a JavaScript script should be able to throw an exception safely $e2
+  a JavaScript script should successfully generate a new context  $e3
   """
 
   val PreparedEnrichment = {

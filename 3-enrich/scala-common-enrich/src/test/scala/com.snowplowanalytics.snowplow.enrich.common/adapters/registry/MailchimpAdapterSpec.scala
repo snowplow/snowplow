@@ -28,21 +28,20 @@ import utils.Clock._
 
 class MailchimpAdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
-  This is a specification to test the MailchimpAdapter functionality
-  toKeys should return a valid List of Keys from a string containing braces (or not)                 $e1
-  toNestedJson should return a valid JField nested to contain all keys and then the supplied value $e2
-  toJsons should return a valid list of Jsons based on the Map supplied                            $e3
-  mergeJsons should return a correctly merged JSON which matches the expectation                   $e4
-  reformatParameters should return a parameter Map with correctly formatted values                   $e5
-  toRawEvents must return a Nel Success with a correctly formatted ue_pr json                        $e6
-  toRawEvents must return a Nel Success with a correctly merged and formatted ue_pr json             $e7
-  toRawEvents must return a Nel Success for a supported event type                                   $e8
-  toRawEvents must return a Nel Failure error for an unsupported event type                          $e9
-  toRawEvents must return a Nel Success containing an unsubscribe event and query string parameters  $e10
-  toRawEvents must return a Nel Failure if the request body is missing                               $e11
-  toRawEvents must return a Nel Failure if the content type is missing                               $e12
-  toRawEvents must return a Nel Failure if the content type is incorrect                             $e13
-  toRawEvents must return a Nel Failure if the request body does not contain a type parameter        $e14
+  toKeys should return a valid List of Keys from a string containing braces (or not)                $e1
+  toNestedJson should return a valid JField nested to contain all keys and then the supplied value  $e2
+  toJsons should return a valid list of Jsons based on the Map supplied                             $e3
+  mergeJsons should return a correctly merged JSON which matches the expectation                    $e4
+  reformatParameters should return a parameter Map with correctly formatted values                  $e5
+  toRawEvents must return a Nel Success with a correctly formatted ue_pr json                       $e6
+  toRawEvents must return a Nel Success with a correctly merged and formatted ue_pr json            $e7
+  toRawEvents must return a Nel Success for a supported event type                                  $e8
+  toRawEvents must return a Nel Failure error for an unsupported event type                         $e9
+  toRawEvents must return a Nel Success containing an unsubscribe event and query string parameters $e10
+  toRawEvents must return a Nel Failure if the request body is missing                              $e11
+  toRawEvents must return a Nel Failure if the content type is missing                              $e12
+  toRawEvents must return a Nel Failure if the content type is incorrect                            $e13
+  toRawEvents must return a Nel Failure if the request body does not contain a type parameter       $e14
   """
 
   object Shared {

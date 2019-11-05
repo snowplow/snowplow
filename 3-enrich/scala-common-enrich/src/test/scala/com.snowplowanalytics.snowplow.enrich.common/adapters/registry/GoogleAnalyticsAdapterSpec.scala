@@ -32,23 +32,22 @@ import utils.Clock._
 class GoogleAnalyticsAdapterSpec extends Specification with DataTables with ValidatedMatchers {
 
   def is = s2"""
-    This is a specification to test the GoogleAnalyticsAdapter functionality
-    toRawEvents returns a failNel if the query string is empty               $e1
-    toRawEvents returns a failNel if there is no t param in the query string $e2
-    toRawEvents returns a failNel if there are no corresponding hit types    $e3
-    toRawEvents returns a succNel if the payload is correct                  $e4
-    toRawEvents returns a succNel containing the added contexts              $e5
-    toRawEvents returns a succNel containing the direct mappings             $e6
-    toRawEvents returns a succNel containing properly typed contexts         $e7
-    toRawEvents returns a succNel containing pageview as a context           $e8
-    toRawEvents returns a succNel with product composite contexts            $e9
-    toRawEvents returns a succNel with impression composite contexts         $e10
-    toRawEvents returns a succNel with conflicting composite contexts        $e11
-    toRawEvents returns a succNel with repeated composite contexts           $e12
-    toRawEvents returns a succNel with promo composite contexts              $e13
-    toRawEvents returns a succnel with multiple raw events                   $e14
-    toRawEvents returns a succNel with multiple composite contexts with cu   $e15
-    breakDownCompositeField should work properly                             $e20
+  toRawEvents returns a failNel if the query string is empty               $e1
+  toRawEvents returns a failNel if there is no t param in the query string $e2
+  toRawEvents returns a failNel if there are no corresponding hit types    $e3
+  toRawEvents returns a succNel if the payload is correct                  $e4
+  toRawEvents returns a succNel containing the added contexts              $e5
+  toRawEvents returns a succNel containing the direct mappings             $e6
+  toRawEvents returns a succNel containing properly typed contexts         $e7
+  toRawEvents returns a succNel containing pageview as a context           $e8
+  toRawEvents returns a succNel with product composite contexts            $e9
+  toRawEvents returns a succNel with impression composite contexts         $e10
+  toRawEvents returns a succNel with conflicting composite contexts        $e11
+  toRawEvents returns a succNel with repeated composite contexts           $e12
+  toRawEvents returns a succNel with promo composite contexts              $e13
+  toRawEvents returns a succnel with multiple raw events                   $e14
+  toRawEvents returns a succNel with multiple composite contexts with cu   $e15
+  breakDownCompositeField should work properly                             $e20
   """
 
   val api = CollectorPayload.Api("com.google.analytics.measurement-protocol", "v1")

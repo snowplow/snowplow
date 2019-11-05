@@ -31,7 +31,6 @@ import utils.Clock._
 
 class PingdomAdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
-  This is a specification to test the PingdomAdapter functionality
   reformatParameters should return either an updated JSON without the 'action' field or the same JSON $e1
   reformatMapParams must return a Failure Nel for any Python Unicode wrapped values                   $e2
   toRawEvents must return a Success Nel for a valid querystring                                       $e3

@@ -29,7 +29,6 @@ import utils.Clock._
 
 class CallrailAdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
-  This is a specification to test the CallrailAdapter functionality
   toRawEvents should return a NEL containing one RawEvent if the querystring is correctly populated $e1
   toRawEvents should return a Validation Failure if there are no parameters on the querystring      $e2
   """

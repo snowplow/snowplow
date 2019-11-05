@@ -26,23 +26,22 @@ import utils.Clock._
 
 class MailgunAdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
-    This is a specification to test the MailgunAdapter functionality
-    toRawEvents must return a Success Nel if every event 'delivered' in the payload is successful                $e1
-    toRawEvents must return a Success Nel if every event 'opened' in the payload is successful                   $e2
-    toRawEvents must return a Success Nel if every event 'clicked' in the payload is successful                  $e3
-    toRawEvents must return a Success Nel if every event 'unsubscribed' in the payload is successful    $e4
-    toRawEvents must return a Success Nel if the content type is 'multipart/form-data' and parsing is successful $e5
-    toRawEvents must return a Nel Failure if the request body is missing                                         $e6
-    toRawEvents must return a Nel Failure if the content type is missing                                         $e7
-    toRawEvents must return a Nel Failure if the content type is incorrect                                       $e8
-    toRawEvents must return a Failure Nel if the request body is empty                                           $e9
-    toRawEvents must return a Failure if the request body could not be parsed                                    $e10
-    toRawEvents must return a Failure if the request body does not contain an event parameter                    $e11
-    toRawEvents must return a Failure if the event type is not recognized                                        $e12
-    payloadBodyToEvent must return a Failure if the event data is missing 'timestamp'                            $e13
-    payloadBodyToEvent must return a Failure if the event data is missing 'token'                                $e14
-    payloadBodyToEvent must return a Failure if the event data is missing 'signature'                            $e15
-    """
+  toRawEvents must return a Success Nel if every event 'delivered' in the payload is successful                $e1
+  toRawEvents must return a Success Nel if every event 'opened' in the payload is successful                   $e2
+  toRawEvents must return a Success Nel if every event 'clicked' in the payload is successful                  $e3
+  toRawEvents must return a Success Nel if every event 'unsubscribed' in the payload is successful             $e4
+  toRawEvents must return a Success Nel if the content type is 'multipart/form-data' and parsing is successful $e5
+  toRawEvents must return a Nel Failure if the request body is missing                                         $e6
+  toRawEvents must return a Nel Failure if the content type is missing                                         $e7
+  toRawEvents must return a Nel Failure if the content type is incorrect                                       $e8
+  toRawEvents must return a Failure Nel if the request body is empty                                           $e9
+  toRawEvents must return a Failure if the request body could not be parsed                                    $e10
+  toRawEvents must return a Failure if the request body does not contain an event parameter                    $e11
+  toRawEvents must return a Failure if the event type is not recognized                                        $e12
+  payloadBodyToEvent must return a Failure if the event data is missing 'timestamp'                            $e13
+  payloadBodyToEvent must return a Failure if the event data is missing 'token'                                $e14
+  payloadBodyToEvent must return a Failure if the event data is missing 'signature'                            $e15
+  """
 
   object Shared {
     val api = CollectorPayload.Api("com.mailgun", "v1")

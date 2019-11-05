@@ -23,9 +23,8 @@ import org.specs2.matcher.DataTables
 
 class IpLookupsEnrichmentSpec extends Specification with DataTables {
   def is = s2"""
-  This is a specification to test the IpLookupsEnrichment
-  extractIpInformation should correctly extract location data from IP addresses where possible      $e1
-  extractIpInformation should correctly extract ISP data from IP addresses where possible           $e2
+  extractIpInformation should correctly extract location data from IP addresses where possible $e1
+  extractIpInformation should correctly extract ISP data from IP addresses where possible      $e2
   """
 
   // When testing, localMode is set to true, so the URIs are ignored and the databases are loaded from test/resources

@@ -44,7 +44,9 @@ class ExtractPlatformSpec extends Specification with DataTables {
         )
       )
 
-  def is = s2"Extracting platforms with extractPlatform should work $e1"
+  def is = s2"""
+  Extracting platforms with extractPlatform should work $e1
+  """
 
   def e1 =
     "SPEC NAME" || "INPUT VAL" | "EXPECTED OUTPUT" |
@@ -65,7 +67,9 @@ class ExtractPlatformSpec extends Specification with DataTables {
 
 class ExtractIpSpec extends Specification with DataTables {
 
-  def is = s2"Extracting ips with extractIp should work $e1"
+  def is = s2"""
+  Extracting ips with extractIp should work $e1
+  """
 
   val nullString: String = null
 

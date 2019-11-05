@@ -30,7 +30,6 @@ class CljTomcatLoaderSpec
   val Process = Processor("CljTomcatLoaderSpec", "v1")
 
   def is = s2"""
-  This is a specification to test the CljTomcatLoader functionality
   toCollectorPayload should return a CanonicalInput for a valid raw event                                             $e1
   toCollectorPayload should return a Validation Failure for a log record with body but with operation other than POST $e2
   toCollectorPayload should return a Validation Failure for a POST log record with corrupted API vendor/version       $e3
