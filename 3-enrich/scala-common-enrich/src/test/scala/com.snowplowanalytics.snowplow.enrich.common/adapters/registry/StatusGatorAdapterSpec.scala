@@ -26,14 +26,13 @@ import utils.Clock._
 
 class StatusGatorAdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
-    This is a specification to test the StatusgatorAdapter functionality
-    toRawEvents must return a Success Nel if every event in the payload is successful          $e1
-    toRawEvents must return a Nel Failure if the request body is missing                       $e2
-    toRawEvents must return a Nel Failure if the content type is missing                       $e3
-    toRawEvents must return a Nel Failure if the content type is incorrect                     $e4
-    toRawEvents must return a Failure Nel if the event in the payload is incorrect             $e5
-    toRawEvents must return a Failure String if the event string could not be parsed into JSON $e6
-    """
+  toRawEvents must return a Success Nel if every event in the payload is successful          $e1
+  toRawEvents must return a Nel Failure if the request body is missing                       $e2
+  toRawEvents must return a Nel Failure if the content type is missing                       $e3
+  toRawEvents must return a Nel Failure if the content type is incorrect                     $e4
+  toRawEvents must return a Failure Nel if the event in the payload is incorrect             $e5
+  toRawEvents must return a Failure String if the event string could not be parsed into JSON $e6
+  """
 
   object Shared {
     val api = CollectorPayload.Api("com.statusgator", "v1")

@@ -17,10 +17,9 @@ import org.specs2.Specification
 
 class HttpHeaderExtractorEnrichmentSpec extends Specification {
   def is = s2"""
-  This is a specification to test the HttpHeaderExtractorEnrichment
   returns X-Forwarded-For header             $e1
   returns Accept header after Regex matching $e2
-  No headers                                 $e3
+  no headers                                 $e3
   """
 
   def e1 = {

@@ -17,7 +17,9 @@ import org.specs2.matcher.DataTables
 
 class AnonIpEnrichmentSpec extends Specification with DataTables {
 
-  def is = s2"Anonymizing 0-4 octets across a variety of IP addresses should work $e1"
+  def is = s2"""
+  Anonymizing 0-4 octets across a variety of IP addresses should work $e1
+  """
 
   def e1 =
     "SPEC NAME" || "IP ADDRESS" | "ANONYMIZE OCTETS" | "EXPECTED OUTPUT" |

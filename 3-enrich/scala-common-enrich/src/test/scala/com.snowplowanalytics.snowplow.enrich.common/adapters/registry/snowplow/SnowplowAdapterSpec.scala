@@ -41,7 +41,6 @@ class SnowplowAdapterSpec
     with ValidatedMatchers
     with ScalaCheck {
   def is = s2"""
-  This is a specification to test the SnowplowAdapter functionality
   Tp1.toRawEvents should return a NEL containing one RawEvent if the querystring is populated                             $e1
   Tp1.toRawEvents should return a Validation Failure if the querystring is empty                                          $e2
   Tp2.toRawEvents should return a NEL containing one RawEvent if only the querystring is populated                        $e3
@@ -294,7 +293,7 @@ class SnowplowAdapterSpec
     actual must beInvalid(
       NonEmptyList.one(
         FailureDetails.TrackerProtocolViolation
-          .NotSD(json"""{"not":"self-desc"}""", ParseError.InvalidData)
+          .NotIglu(json"""{"not":"self-desc"}""", ParseError.InvalidData)
       )
     )
   }

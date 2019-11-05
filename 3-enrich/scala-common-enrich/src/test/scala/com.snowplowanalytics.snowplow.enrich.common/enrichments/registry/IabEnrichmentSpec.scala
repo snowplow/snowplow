@@ -21,13 +21,11 @@ import org.specs2.matcher.DataTables
 
 class IabEnrichmentSpec extends Specification with DataTables {
 
-  def is =
-    s2"""
-  This is a specification to test the IabEnrichment
-  performCheck should correctly perform IAB checks on valid input   $e1
-  performCheck should fail on invalid IP                            $e2
-  getIabContext should fail on missing fields                       $e3
-  getIabContext should return a valid JObject on valid input        $e4
+  def is = s2"""
+  performCheck should correctly perform IAB checks on valid input $e1
+  performCheck should fail on invalid IP                          $e2
+  getIabContext should fail on missing fields                     $e3
+  getIabContext should return a valid JObject on valid input      $e4
   """
 
   // When testing, localMode is set to true, so the URIs are ignored and the databases are loaded from test/resources

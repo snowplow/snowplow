@@ -16,7 +16,6 @@ import org.specs2.Specification
 
 class CampaignAttributionEnrichmentSpec extends Specification {
   def is = s2"""
-  This is a specification to test the CampaignAttributionEnrichment
   extractMarketingFields should create an empty MarketingCampaign if no campaign fields are specified $e1
   extractMarketingFields should create a MarketingCampaign using the standard Google-style settings   $e2
   extractMarketingFields should create a MarketingCampaign using the standard Omniture settings       $e3

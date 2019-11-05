@@ -26,7 +26,6 @@ import utils.Clock._
 
 class MarketoAdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
-  This is a specification to test the MarketoAdapter functionality
   toRawEvents must return a success for a valid "event" type payload body being passed                $e1
   toRawEvents must return a Failure Nel if the payload body is empty                                  $e2
   """

@@ -16,7 +16,6 @@ import org.specs2.Specification
 
 class EventFingerprintEnrichmentSpec extends Specification {
   def is = s2"""
-  This is a specification to test the EventFingerprintEnrichment
   getEventFingerprint should combine fields into a hash                       $e1
   getEventFingerprint should not depend on the order of fields                $e2
   getEventFingerprint should not depend on excluded fields                    $e3

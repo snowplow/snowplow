@@ -26,7 +26,6 @@ import utils.Clock._
 
 class VeroAdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
-  This is a specification to test the VeroAdapter functionality
   toRawEvents must return a success for a valid "sent" type payload body being passed                $e1
   toRawEvents must return a success for a valid "delivered" type payload body being passed           $e2
   toRawEvents must return a success for a valid "opened" type payload body being passed              $e3

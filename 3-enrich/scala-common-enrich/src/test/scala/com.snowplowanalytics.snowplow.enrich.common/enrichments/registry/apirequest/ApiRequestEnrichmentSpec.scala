@@ -30,12 +30,11 @@ import utils.HttpClient
 
 class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with Mockito {
   def is = s2"""
-  This is a specification to test the ApiRequestEnrichment configuration
-  Extract correct configuration for GET request and perform the request  $e1
-  Skip incorrect input (none of json or pojo) in configuration           $e2
-  Skip incorrect input (both json and pojo) in configuration             $e3
-  Extract correct configuration for POST request and perform the request $e4
-  """"
+  extract correct configuration for GET request and perform the request  $e1
+  skip incorrect input (none of json or pojo) in configuration           $e2
+  skip incorrect input (both json and pojo) in configuration             $e3
+  extract correct configuration for POST request and perform the request $e4
+  """
 
   val SCHEMA_KEY =
     SchemaKey(
