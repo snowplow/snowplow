@@ -32,9 +32,7 @@ object SqlQueryEnrichmentIntegrationTest {
 import SqlQueryEnrichmentIntegrationTest._
 class SqlQueryEnrichmentIntegrationTest extends Specification {
   def is =
-    skipAllUnless(continuousIntegration) ^
-      s2"""
-  This is an integration test for the SqlQueryEnrichment
+    skipAllUnless(continuousIntegration) ^ s2"""
   Basic case        $e1
   All-features test $e2
   """

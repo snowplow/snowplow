@@ -18,7 +18,6 @@ import org.specs2.Specification
 
 class OutputSpec extends Specification {
   def is = s2"""
-  This is a specification to test the HTTP API of API Request Enrichment
   Not found value result in Failure                   $e1
   Successfully generate context                       $e2
   Successfully generate context out of complex object $e3

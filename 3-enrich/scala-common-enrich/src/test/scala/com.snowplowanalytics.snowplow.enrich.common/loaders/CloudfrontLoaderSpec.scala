@@ -36,7 +36,6 @@ class CloudfrontLoaderSpec
   val Process = Processor("CloudfrontLoaderSpec", "v1")
 
   def is = s2"""
-  This is a specification to test the CloudfrontLoader functionality
   toTimestamp should create a DateTime from valid date and time Strings                                   $e1
   toOption should return a None if the querystring is empty                                               $e2
   toCleanUri should remove a trailing % from a URI correctly                                              $e3

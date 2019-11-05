@@ -44,28 +44,26 @@ import utils.Clock._
 
 class RemoteAdapterSpec extends Specification with ValidatedMatchers {
 
-  override def is =
-    sequential ^
-      s2"""
-   This is a specification to test the RemoteAdapter functionality.
-   RemoteAdapter must return any events parsed by this local test adapter                        ${testWrapperLocal(
-        e1
-      )}
-   This local enricher (well, any remote enricher) must treat an empty list as an error          ${testWrapperLocal(
-        e2
-      )}
-   RemoteAdapter must also return any other errors issued by this local adapter                  ${testWrapperLocal(
-        e3
-      )}
-   HTTP response contains string that is not a correct JSON, should fail                         ${testWrapperLocal(
-        e4
-      )}
-   HTTP response contains well-formatted JSON but without events and error, will fail            ${testWrapperLocal(
-        e5
-      )}
-   HTTP response contains well-formatted JSON, events that contains an empty list, will fail     ${testWrapperLocal(
-        e6
-      )}
+  def is =
+    sequential ^ s2"""
+  RemoteAdapter must return any events parsed by this local test adapter                    ${testWrapperLocal(
+      e1
+    )}
+  This local enricher (well, any remote enricher) must treat an empty list as an error      ${testWrapperLocal(
+      e2
+    )}
+  RemoteAdapter must also return any other errors issued by this local adapter              ${testWrapperLocal(
+      e3
+    )}
+  HTTP response contains string that is not a correct JSON, should fail                     ${testWrapperLocal(
+      e4
+    )}
+  HTTP response contains well-formatted JSON but without events and error, will fail        ${testWrapperLocal(
+      e5
+    )}
+  HTTP response contains well-formatted JSON, events that contains an empty list, will fail ${testWrapperLocal(
+      e6
+    )}
    """
 
   val actionTimeout = Duration(5, TimeUnit.SECONDS)

@@ -27,14 +27,13 @@ import utils.Clock._
 
 class PagerdutyAdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
-  This is a specification to test the PagerdutyAdapter functionality
   reformatParameters must return an updated JSON whereby all null Strings have been replaced by null $e1
   reformatParameters must return an updated JSON where 'incident.xxx' is replaced by xxx             $e2
   reformatParameters must return an updated JSON whereby all invalid datetime strings are corrected  $e3
   payloadBodyToEvents must return a Success list of event JSON's from a valid payload body           $e4
   payloadBodyToEvents must return a Failure Nel for an invalid payload body being passed             $e5
   toRawEvents must return a Success Nel if all events are successful                                 $e6
-  toRawEvents must return a Failure Nel if any of the events were not successes                     $e7
+  toRawEvents must return a Failure Nel if any of the events were not successes                      $e7
   toRawEvents must return a Nel Failure if the request body is missing                               $e8
   toRawEvents must return a Nel Failure if the content type is missing                               $e9
   toRawEvents must return a Nel Failure if the content type is incorrect                             $e10

@@ -21,7 +21,6 @@ class TsvLoaderSpec extends Specification with DataTables with ValidatedMatchers
   val processor = Processor("TsvLoaderSpec", "v1")
 
   def is = s2"""
-  This is a specification to test the TsvLoader functionality
   toCollectorPayload should return a CollectorPayload for a normal TSV                                      $e1
   toCollectorPayload should return None for the first two lines of a Cloudfront web distribution access log $e2
   """

@@ -20,7 +20,6 @@ import org.specs2.Specification
 
 class OutputSpec extends Specification {
   def is = s2"""
-  This is a specification to test the Output of SQL Query Enrichment
   Parse Integer without type hint        $e1
   Parse Double without type hint         $e2
   Handle null                            $e3

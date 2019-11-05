@@ -27,7 +27,6 @@ import utils.Clock._
 
 class MandrillAdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
-  This is a specification to test the MandrillAdapter functionality
   payloadBodyToEvents must return a Success List[JValue] for a valid events string                      $e1
   payloadBodyToEvents must return a Failure String if the mapped events string is not in a valid format $e2
   payloadBodyToEvents must return a Failure String if the event string could not be parsed into JSON    $e3

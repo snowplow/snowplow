@@ -40,15 +40,14 @@ import utils.Clock._
 
 class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatchers {
   def is = s2"""
-    This is a specification to test PII
-    Hashing configured scalar fields in POJO should work                                                         $e1
-    Hashing configured JSON fields in POJO should work in the simplest case and not affect anything else         $e2
-    Hashing configured JSON fields in POJO should work when the field is not there in a message                  $e3
-    Hashing configured JSON fields in POJO should work when multiple fields are matched through jsonpath         $e4
-    Hashing configured JSON fields in POJO should work when multiple fields are matched through schemacriterion  $e5
-    Hashing configured JSON fields in POJO should silently ignore unsupported types                              $e6
-    Hashing configured JSON and scalar fields in POJO emits a correct pii_transformation event                   $e7
-    Hashing configured JSON fields in POJO should not create new fields                                          $e8
+  Hashing configured scalar fields in POJO should work                                                        $e1
+  Hashing configured JSON fields in POJO should work in the simplest case and not affect anything else        $e2
+  Hashing configured JSON fields in POJO should work when the field is not there in a message                 $e3
+  Hashing configured JSON fields in POJO should work when multiple fields are matched through jsonpath        $e4
+  Hashing configured JSON fields in POJO should work when multiple fields are matched through schemacriterion $e5
+  Hashing configured JSON fields in POJO should silently ignore unsupported types                             $e6
+  Hashing configured JSON and scalar fields in POJO emits a correct pii_transformation event                  $e7
+  Hashing configured JSON fields in POJO should not create new fields                                         $e8
   """
 
   def commonSetup(

@@ -20,7 +20,6 @@ import utils.Clock._
 
 class ShredderSpec extends Specification {
   def is = s2"""
-  This is a specification to test the Shredder functionality
   makePartialHierarchy should initialize a partial TypeHierarchy                   $e1
   shred should extract the JSONs from an unstructured event with multiple contexts $e2
   """

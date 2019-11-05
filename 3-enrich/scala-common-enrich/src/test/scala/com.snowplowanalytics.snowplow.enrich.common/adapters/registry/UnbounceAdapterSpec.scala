@@ -26,20 +26,19 @@ import utils.Clock._
 
 class UnbounceAdapterSpec extends Specification with DataTables with ValidatedMatchers {
   def is = s2"""
-    This is a specification to test the UnbounceAdapter functionality
-    toRawEvents must return a Success Nel if the query string is valid                            $e1
-    toRawEvents must return a Nel Failure if the request body is missing                          $e2
-    toRawEvents must return a Nel Failure if the content type is missing                          $e3
-    toRawEvents must return a Nel Failure if the content type is incorrect                        $e4
-    toRawEvents must return a Failure Nel if the event body is empty                              $e5
-    payloadBodyToEvent must return a Failure if the event data does not have 'data.json' as a key $e6
-    payloadBodyToEvent must return a Failure if the event data is empty                           $e7
-    payloadBodyToEvent must return a Failure if the event string failed to parse into JSON        $e8
-    payloadBodyToContext must return a Failure if the context data is missing 'page_id'           $e9
-    payloadBodyToContext must return a Failure if the context data is missing 'page_name'         $e10
-    payloadBodyToContext must return a Failure if the context data is missing 'variant'           $e11
-    payloadBodyToContext must return a Failure if the context data is missing 'page_url'          $e12
-    """
+  toRawEvents must return a Success Nel if the query string is valid                            $e1
+  toRawEvents must return a Nel Failure if the request body is missing                          $e2
+  toRawEvents must return a Nel Failure if the content type is missing                          $e3
+  toRawEvents must return a Nel Failure if the content type is incorrect                        $e4
+  toRawEvents must return a Failure Nel if the event body is empty                              $e5
+  payloadBodyToEvent must return a Failure if the event data does not have 'data.json' as a key $e6
+  payloadBodyToEvent must return a Failure if the event data is empty                           $e7
+  payloadBodyToEvent must return a Failure if the event string failed to parse into JSON        $e8
+  payloadBodyToContext must return a Failure if the context data is missing 'page_id'           $e9
+  payloadBodyToContext must return a Failure if the context data is missing 'page_name'         $e10
+  payloadBodyToContext must return a Failure if the context data is missing 'variant'           $e11
+  payloadBodyToContext must return a Failure if the context data is missing 'page_url'          $e12
+  """
 
   object Shared {
     val api = CollectorPayload.Api("com.unbounce", "v1")

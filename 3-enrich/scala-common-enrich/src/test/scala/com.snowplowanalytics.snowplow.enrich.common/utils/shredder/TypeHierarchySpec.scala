@@ -19,7 +19,6 @@ import org.specs2.Specification
 
 class TypeHierarchySpec extends Specification {
   def is = s2"""
-  This is a specification to test the TypeHierarchy case class
   a TypeHierarchy should be convertible to JSON               $e1
   the complete method should finalize a partial TypeHierarchy $e2
   """

@@ -22,7 +22,6 @@ import org.specs2.matcher.DataTables
 
 class ExtractEventTypeSpec extends Specification with DataTables {
   def is = s2"""
-  This is a specification to test the extractEventType function
   extractEventType should return the event name for any valid event code         $e1
   extractEventType should return a validation failure for any invalid event code $e2
   formatCollectorTstamp should validate collector timestamps                     $e3
@@ -106,11 +105,9 @@ class ExtractEventTypeSpec extends Specification with DataTables {
 }
 
 class DerivedTimestampSpec extends Specification with DataTables {
-  def is =
-    "This is a specification to test the getDerivedTimestamp function" ^
-      p ^
-      "getDerivedTimestamp should correctly calculate the derived timestamp " ! e1 ^
-      end
+  def is = s2"""
+  getDerivedTimestamp should correctly calculate the derived timestamp $e1"""
+
   def e1 =
     "SPEC NAME" || "DVCE_CREATED_TSTAMP" | "DVCE_SENT_TSTAMP" | "COLLECTOR_TSTAMP" | "TRUE_TSTAMP" | "EXPECTED DERIVED_TSTAMP" |
       "No dvce_sent_tstamp" !! "2014-04-29 12:00:54.555" ! null ! "2014-04-29 09:00:54.000" ! null ! "2014-04-29 09:00:54.000" |

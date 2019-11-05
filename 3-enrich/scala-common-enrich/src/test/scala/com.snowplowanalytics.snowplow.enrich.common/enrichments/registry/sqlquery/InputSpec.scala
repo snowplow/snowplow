@@ -28,18 +28,17 @@ import Input._
 
 class InputSpec extends Specification with ValidatedMatchers {
   def is = s2"""
-  This is a specification to test the Inputs and placeholder-map building of SQL Query Enrichment
-  Create template context from POJO inputs                 $e1
-  Create template context from JSON inputs                 $e8
-  Encountered null in JSON means absent value              $e2
-  Colliding inputs from JSON and POJO didn't get merged    $e3
-  Collect failures                                         $e4
+  create template context from POJO inputs                 $e1
+  create template context from JSON inputs                 $e8
+  encountered null in JSON means absent value              $e2
+  colliding inputs from JSON and POJO didn't get merged    $e3
+  collect failures                                         $e4
   POJO null value return successful None                   $e5
   POJO invalid key return failure                          $e6
-  Extract correct path-dependent values from JSON          $e7
-  Create Some empty IntMap for empty list of Inputs        $e9
-  Check all EnrichedEvent properties can be handled        $e10
-  Extract correct path-dependent values from EnrichedEvent $e11
+  extract correct path-dependent values from JSON          $e7
+  create Some empty IntMap for empty list of Inputs        $e9
+  check all EnrichedEvent properties can be handled        $e10
+  extract correct path-dependent values from EnrichedEvent $e11
   """
 
   object ContextCase {

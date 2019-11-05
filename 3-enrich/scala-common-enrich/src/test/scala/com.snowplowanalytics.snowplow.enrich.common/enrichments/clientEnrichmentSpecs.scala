@@ -42,8 +42,8 @@ class ExtractViewDimensionsSpec extends Specification with DataTables {
         )
       )
 
-  def is =
-    s2"Extracting screen dimensions (viewports, screen resolution etc) with extractViewDimensions should work $e1"
+  def is = s2"""
+  Extracting screen dimensions (viewports, screen resolution etc) with extractViewDimensions should work $e1"""
 
   def e1 =
     "SPEC NAME" || "INPUT VAL" | "EXPECTED OUTPUT" |

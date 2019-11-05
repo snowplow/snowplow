@@ -18,13 +18,12 @@ import org.specs2.Specification
 
 class JsonPathSpec extends Specification {
   def is = s2"""
-  This is a specification to test the JSONPath utils
-  Test JSONPath query                     $e1
-  Test query of non-exist value           $e2
-  Test query of empty array               $e3
-  Test primtive JSON type (JString)       $e6
-  Invalid JSONPath (JQ syntax) must fail  $e4
-  Invalid JSONPath must fail              $e5
+  test JSONPath query                     $e1
+  test query of non-exist value           $e2
+  test query of empty array               $e3
+  test primtive JSON type (JString)       $e6
+  invalid JSONPath (JQ syntax) must fail  $e4
+  invalid JSONPath must fail              $e5
   """
 
   val someJson = Json.obj(
