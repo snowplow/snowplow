@@ -20,12 +20,16 @@ import cats.Monad
 import cats.data.{EitherT, NonEmptyList, OptionT, Validated, ValidatedNel}
 import cats.effect.Clock
 import cats.implicits._
+
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core.SelfDescribingData
-import com.snowplowanalytics.snowplow.badrows._
+
+import com.snowplowanalytics.snowplow.badrows.{FailureDetails, Payload, Processor}
 import com.snowplowanalytics.refererparser._
+
 import io.circe.Json
+
 import org.joda.time.DateTime
 
 import adapters.RawEvent
@@ -38,9 +42,8 @@ import enrichments.registry.pii.PiiPseudonymizerEnrichment
 import enrichments.registry.sqlquery.SqlQueryEnrichment
 import enrichments.web.{PageEnrichments => WPE}
 import outputs.EnrichedEvent
-import utils.{ConversionUtils => CU, JsonUtils => JU}
+import utils.{Shredder, ConversionUtils => CU, JsonUtils => JU}
 import utils.MapTransformer._
-import utils.shredder.Shredder
 
 /**
  * A module to hold our enrichment process.
@@ -52,12 +55,12 @@ object EnrichmentManager {
   val IPv4Regex = """(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*""".r
 
   /**
-   * Runs our enrichment process.
+   * Run the enrichment process
    * @param registry Contains configuration for all enrichments to apply
-   * @param client Our Iglu client, for schema lookups and validation
-   * @param hostEtlVersion ETL version
+   * @param client Iglu Client, for schema lookups and validation
+   * @param processor meta information about processing asset
    * @param etlTstamp ETL timestamp
-   * @param raw Our canonical input to enrich
+   * @param raw canonical input to enrich
    * @return a MaybeCanonicalOutput - i.e. a ValidationNel containing either failure Strings
    */
   def enrichEvent[F[_]: Monad: RegistryLookup: Clock](
@@ -174,12 +177,12 @@ object EnrichmentManager {
     // Validate custom contexts
     val customContexts
       : F[ValidatedNel[FailureDetails.EnrichmentStageIssue, List[SelfDescribingData[Json]]]] =
-      Shredder.extractAndValidateCustomContexts(event, client)
+      Shredder.extractAndValidateCustomContexts(event, client).map(_.toValidatedNel)
 
     // Validate unstructured event
     val unstructEvent
-      : F[ValidatedNel[FailureDetails.EnrichmentStageIssue, List[SelfDescribingData[Json]]]] =
-      Shredder.extractAndValidateUnstructEvent(event, client)
+      : F[ValidatedNel[FailureDetails.EnrichmentStageIssue, Option[SelfDescribingData[Json]]]] =
+      Shredder.extractAndValidateUnstructEvent(event, client).map(_.toValidatedNel)
 
     // Assemble array of contexts prepared by built-in enrichments
     val preparedDerivedContexts: F[List[Json]] = for {
@@ -698,7 +701,7 @@ object EnrichmentManager {
       ValidatedNel[FailureDetails.EnrichmentStageIssue, List[SelfDescribingData[Json]]]
     ],
     unstructEvent: F[
-      ValidatedNel[FailureDetails.EnrichmentStageIssue, List[SelfDescribingData[Json]]]
+      ValidatedNel[FailureDetails.EnrichmentStageIssue, Option[SelfDescribingData[Json]]]
     ],
     sqlQuery: Option[SqlQueryEnrichment[F]]
   ): F[ValidatedNel[FailureDetails.EnrichmentStageIssue, List[Json]]] =
@@ -726,7 +729,7 @@ object EnrichmentManager {
       ValidatedNel[FailureDetails.EnrichmentStageIssue, List[SelfDescribingData[Json]]]
     ],
     unstructEvent: F[
-      ValidatedNel[FailureDetails.EnrichmentStageIssue, List[SelfDescribingData[Json]]]
+      ValidatedNel[FailureDetails.EnrichmentStageIssue, Option[SelfDescribingData[Json]]]
     ],
     apiRequest: Option[ApiRequestEnrichment[F]]
   ): F[ValidatedNel[FailureDetails.EnrichmentStageIssue, List[Json]]] =

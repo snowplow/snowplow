@@ -170,7 +170,7 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
         event = fakeEnrichedEvent,
         derivedContexts = List.empty,
         customContexts = List(clientSession),
-        unstructEvent = List.empty
+        unstructEvent = None
       )
 
     enrichedContextResult must beValid(List(user))
@@ -410,7 +410,7 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
         event = fakeEnrichedEvent,
         derivedContexts = List.empty,
         customContexts = List(clientSession),
-        unstructEvent = List.empty
+        unstructEvent = None
       )
 
     enrichedContextResult must beValid(List(user))
