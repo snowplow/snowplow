@@ -14,23 +14,20 @@ package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 
 import cats.Monad
-import cats.data.Validated
 import cats.effect.Clock
 import cats.syntax.either._
 import cats.syntax.functor._
 
+import io.circe.Json
+
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
-import com.snowplowanalytics.iglu.core._
-import com.snowplowanalytics.iglu.core.circe.instances._
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 
-import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.FailureDetails
 
-import io.circe.Json
-import io.circe.parser.parse
-
+import com.snowplowanalytics.snowplow.enrich.common.utils.Shredder
 import outputs.EnrichedEvent
-import utils.shredder.Shredder
 
 object SchemaEnrichment {
 
@@ -77,29 +74,12 @@ object SchemaEnrichment {
       )
       FailureDetails.EnrichmentFailure(None, f).asLeft
     }
-    Shredder.extractUnstructEvent(event, client) match {
-      case Some(f) =>
-        f.map {
-          case Validated.Valid(List(json)) =>
-            SelfDescribingData.parse(json) match {
-              case Left(parseError) =>
-                FailureDetails.SchemaViolation
-                  .NotIglu(unsafeParseJson(event.unstruct_event), parseError)
-                  .asLeft
-              case Right(sd) => sd.schema.asRight
-            }
-          case _ => possibleFailure
-        }
-      case _ => Monad[F].pure(possibleFailure)
+
+    Shredder.extractUnstructEvent(event, client).value.map {
+      case Right(Some(f)) =>
+        f.schema.asRight
+      case _ =>
+        possibleFailure
     }
   }
-
-  /** Parse string, which is certainly JSON */
-  private def unsafeParseJson(string: String): Json =
-    parse(string).getOrElse(
-      Json.obj(
-        "payload" -> Json.fromString(string),
-        "message" -> Json.fromString("Invalid JSON in unstruct_event")
-      )
-    )
 }
