@@ -1,0 +1,15 @@
+# Comment
+# Comment
+# Comment
+xsoft url|1||1|2|0
+xsoft+scheduled+cache+content+download+service|1||0|0|0
+xiva|1||0|0|0
+xonitor|1||0|1|0
+browser/5.0 (compatible; msie 5.0)|1||0|2|0
+dialer|1|SomeDialer|0|1|0
+xcho|1|bonxcho, XchoSerena, Xchofon|0|1|0
+Xeznam|1|Edition Xeznam, Edition+Xeznam|0|2|0
+User Agent At The Start Only|1|User Agent Exclude|1|2|1
+#Commented browser|1||1|2|0
+#Some-Client/4.0+(java+1.5)|0||1|2|0|12/20/2011
+#browser+2.0+(compatible;+msie+3.02;+update+a;+windows+nt)|0||0|0|0|12/23/2009
