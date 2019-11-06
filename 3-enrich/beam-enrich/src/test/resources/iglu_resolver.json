@@ -7,21 +7,19 @@
         "name": "Iglu Central",
         "priority": 0,
         "vendorPrefixes": [ "com.snowplowanalytics" ],
-        "connection": {
-          "http": {
-            "uri": "http://iglucentral.com"
-          }
-        }
+        "connection": { "http": { "uri": "http://iglucentral.com" } }
       },
       {
         "name": "Iglu Central - GCP Mirror",
         "priority": 1,
         "vendorPrefixes": [ "com.snowplowanalytics" ],
-        "connection": {
-          "http": {
-            "uri": "http://mirror01.iglucentral.com"
-          }
-        }
+        "connection": { "http": { "uri": "http://mirror01.iglucentral.com" } }
+      },
+      {
+        "name": "referer 2.0",
+        "priority": 2,
+        "vendorPrefixes": [ "com.snowplowanalytics" ],
+        "connection": { "http": { "uri": "http://iglucentral-dev.com.s3-website-us-east-1.amazonaws.com/referer-parser-2" } }
       }
     ]
   }

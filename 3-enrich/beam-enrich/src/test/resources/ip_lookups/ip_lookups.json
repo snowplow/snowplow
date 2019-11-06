@@ -6,8 +6,8 @@
     "enabled": true,
     "parameters": {
       "geo": {
-      "database": "GeoLite2-City.mmdb",
-      "uri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind"
+        "database": "GeoLite2-City.mmdb",
+        "uri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind"
       }
     }
   }
