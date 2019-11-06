@@ -85,7 +85,7 @@ class SqlQueryEnrichmentIntegrationTest extends Specification {
     val event = new EnrichedEvent
 
     val config = SqlQueryEnrichment.parse(configuration, SCHEMA_KEY).map(_.enrichment)
-    val context = config.toEither.flatMap(_.lookup(event, Nil, Nil, Nil).toEither)
+    val context = config.toEither.flatMap(_.lookup(event, Nil, Nil, None).toEither)
 
     val correctContext = json"""
       {
@@ -313,7 +313,7 @@ class SqlQueryEnrichmentIntegrationTest extends Specification {
     val config = SqlQueryEnrichment.parse(configuration, SCHEMA_KEY).toEither.map(_.enrichment)
 
     val context1 =
-      config.flatMap(_.lookup(event1, List(weatherContext1), List(geoContext1), List(ue1)).toEither)
+      config.flatMap(_.lookup(event1, List(weatherContext1), List(geoContext1), Some(ue1)).toEither)
     val result_context1 = json"""
       {
         "schema":"iglu:com.acme/demographic/jsonschema/1-0-0",
@@ -325,7 +325,7 @@ class SqlQueryEnrichmentIntegrationTest extends Specification {
       }"""
 
     val context2 =
-      config.flatMap(_.lookup(event2, List(weatherContext2), List(geoContext2), List(ue2)).toEither)
+      config.flatMap(_.lookup(event2, List(weatherContext2), List(geoContext2), Some(ue2)).toEither)
     val result_context2 = json"""
       {
         "schema":"iglu:com.acme/demographic/jsonschema/1-0-0",
@@ -337,7 +337,7 @@ class SqlQueryEnrichmentIntegrationTest extends Specification {
       }"""
 
     val context3 =
-      config.flatMap(_.lookup(event3, List(weatherContext3), List(geoContext3), List(ue3)).toEither)
+      config.flatMap(_.lookup(event3, List(weatherContext3), List(geoContext3), Some(ue3)).toEither)
     val result_context3 = json"""
       {
         "schema":"iglu:com.acme/demographic/jsonschema/1-0-0",
@@ -349,7 +349,7 @@ class SqlQueryEnrichmentIntegrationTest extends Specification {
       }"""
 
     val context4 = config.flatMap(
-      _.lookup(event4, List(weatherContext4), List(geoContext4, clientSession4), List(ue4)).toEither
+      _.lookup(event4, List(weatherContext4), List(geoContext4, clientSession4), Some(ue4)).toEither
     )
     val result_context4 = json"""
       {

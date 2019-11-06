@@ -49,7 +49,7 @@ object SpecHelpers {
     .value
     .getOrElse(throw new RuntimeException("invalid resolver configuration"))
 
-  private type NvPair = Tuple2[String, String]
+  private type NvPair = (String, String)
 
   /**
    * Converts an NvPair into a
@@ -62,17 +62,9 @@ object SpecHelpers {
   private def toNvPair(pair: NvPair): BasicNameValuePair =
     new BasicNameValuePair(pair._1, pair._2)
 
-  /**
-   * Converts the supplied NvPairs into a
-   * a NameValueNel.
-   *
-   * @param head The first NvPair to convert
-   * @param tail The rest of the NvPairs to
-   * convert
-   * @return the populated NvGetPayload
-   */
+  /** Converts the supplied NvPairs into a NameValueNel */
   def toNameValuePairs(pairs: NvPair*): List[NameValuePair] =
-    List(pairs.map(toNvPair(_)): _*)
+    List(pairs.map(toNvPair): _*)
 
   /**
    * Builds a self-describing JSON by

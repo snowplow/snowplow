@@ -20,12 +20,15 @@ import cats.{Eval, Id, Monad}
 import cats.data.{EitherT, NonEmptyList, ValidatedNel}
 import cats.effect.Sync
 import cats.implicits._
+
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SelfDescribingData}
+import com.snowplowanalytics.iglu.core.circe.implicits._
 import com.snowplowanalytics.lrumap._
-import com.snowplowanalytics.snowplow.badrows._
+
+import com.snowplowanalytics.snowplow.badrows.FailureDetails
+
 import io.circe._
 import io.circe.generic.auto._
-import io.circe.syntax._
 
 import outputs.EnrichedEvent
 import utils.{CirceUtils, HttpClient}
@@ -75,21 +78,6 @@ object ApiRequestEnrichment extends ParseableEnrichment {
       .toValidated
 
   /**
-   * Transform pairs of schema and node obtained from [[utils.shredder.Shredder]] into list of
-   * regular self-describing instance representing custom context or unstruct event
-   * @param pairs list of pairs consisting of schema and Json nodes
-   * @return list of regular Json
-   */
-  def transformRawPairs(pairs: List[SelfDescribingData[Json]]): List[Json] =
-    pairs.map { p =>
-      val uri = p.schema.toSchemaUri
-      Json.obj(
-        "schema" := Json.fromString(uri),
-        "data" := p.data.hcursor.downField("data").focus.getOrElse(p.data)
-      )
-    }
-
-  /**
    * Creates an UUID based on url and optional body.
    * @param url URL to query
    * @param body optional request body
@@ -128,14 +116,14 @@ final case class ApiRequestEnrichment[F[_]: Monad: HttpClient](
     event: EnrichedEvent,
     derivedContexts: List[Json],
     customContexts: List[SelfDescribingData[Json]],
-    unstructEvent: List[SelfDescribingData[Json]]
+    unstructEvent: Option[SelfDescribingData[Json]]
   ): F[ValidatedNel[FailureDetails.EnrichmentStageIssue, List[Json]]] = {
     // Note that SelfDescribingData have specific structure - it is a pair,
     // where first element is a SchemaKey, second element is a Json
     // with keys: `data`, `schema` and `hierarchy` and `schema` contains again SchemaKey
     // but as nested Json. `schema` and `hierarchy` can be ignored here
-    val jsonCustomContexts = transformRawPairs(customContexts)
-    val jsonUnstructEvent = transformRawPairs(unstructEvent).headOption
+    val jsonCustomContexts = customContexts.map(_.normalize)
+    val jsonUnstructEvent = unstructEvent.map(_.normalize)
 
     val templateContext =
       Input.buildTemplateContext(
