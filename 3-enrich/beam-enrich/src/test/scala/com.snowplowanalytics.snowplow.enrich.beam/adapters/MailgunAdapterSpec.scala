@@ -61,7 +61,6 @@ class MailgunAdapterSpec extends PipelineSpec {
       }
       .output(PubsubIO[String]("out")) { o =>
         o should satisfySingleValue { c: String =>
-          println(SpecHelpers.buildEnrichedEvent(c))
           SpecHelpers.compareEnrichedEvent(expected, c)
         }; ()
       }
