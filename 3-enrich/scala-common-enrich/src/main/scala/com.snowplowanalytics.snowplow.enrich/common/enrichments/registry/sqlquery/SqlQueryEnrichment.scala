@@ -20,12 +20,15 @@ import cats.{Eval, Id, Monad}
 import cats.data.{EitherT, NonEmptyList, ValidatedNel}
 import cats.effect.Sync
 import cats.implicits._
+
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SelfDescribingData}
+import com.snowplowanalytics.iglu.core.circe.implicits._
 import com.snowplowanalytics.lrumap._
-import com.snowplowanalytics.snowplow.badrows._
+
+import com.snowplowanalytics.snowplow.badrows.FailureDetails
+
 import io.circe._
 import io.circe.generic.auto._
-import io.circe.syntax._
 
 import outputs.EnrichedEvent
 import utils.CirceUtils
@@ -80,24 +83,6 @@ object SqlQueryEnrichment extends ParseableEnrichment {
       }
       .toValidated
 
-  /**
-   * Transform pairs of schema and node obtained from [[utils.shredder.Shredder]] into list of
-   * regular self-describing JObject representing custom context or unstructured event.
-   * If node isn't Self-describing (doesn't contain data key) it will be filtered out.
-   * @param pairs list of pairs consisting of schema and Json nodes
-   * @return list of regular JObjects
-   */
-  def transformRawPairs(pairs: List[SelfDescribingData[Json]]): List[Json] =
-    pairs.map { p =>
-      val uri = p.schema.toSchemaUri
-      p.data.hcursor.downField("data").focus.map { json =>
-        Json.obj(
-          "schema" := Json.fromString(uri),
-          "data" := json
-        )
-      }
-    }.flatten
-
   def apply[F[_]: CreateSqlQueryEnrichment](conf: SqlQueryConf): F[SqlQueryEnrichment[F]] =
     CreateSqlQueryEnrichment[F].create(conf)
 }
@@ -111,8 +96,6 @@ final case class SqlQueryEnrichment[F[_]: Monad: DbExecutor](
   ttl: Int,
   cache: LruMap[F, IntMap[Input.ExtractedValue], (EitherThrowable[List[Json]], Long)]
 ) extends Enrichment {
-  import SqlQueryEnrichment._
-
   private val enrichmentInfo =
     FailureDetails.EnrichmentInformation(schemaKey, "sql-query").some
 
@@ -130,10 +113,10 @@ final case class SqlQueryEnrichment[F[_]: Monad: DbExecutor](
     event: EnrichedEvent,
     derivedContexts: List[Json],
     customContexts: List[SelfDescribingData[Json]],
-    unstructEvent: List[SelfDescribingData[Json]]
+    unstructEvent: Option[SelfDescribingData[Json]]
   ): F[ValidatedNel[FailureDetails.EnrichmentStageIssue, List[Json]]] = {
-    val jsonCustomContexts = transformRawPairs(customContexts)
-    val jsonUnstructEvent = transformRawPairs(unstructEvent).headOption
+    val jsonCustomContexts = customContexts.map(_.normalize)
+    val jsonUnstructEvent = unstructEvent.map(_.normalize)
 
     val placeholderMap: Either[NonEmptyList[String], Input.PlaceholderMap] =
       Input
@@ -150,7 +133,7 @@ final case class SqlQueryEnrichment[F[_]: Monad: DbExecutor](
               FailureDetails.EnrichmentFailure(
                 enrichmentInfo,
                 FailureDetails.EnrichmentFailureMessage
-                  .Simple(e.getMessage())
+                  .Simple(e.getMessage)
               )
           )
           .leftWiden

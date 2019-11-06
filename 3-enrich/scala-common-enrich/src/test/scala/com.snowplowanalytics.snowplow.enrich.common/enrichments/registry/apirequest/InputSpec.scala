@@ -230,7 +230,7 @@ class InputSpec extends Specification with ValidatedMatchers {
     val event = new outputs.EnrichedEvent
     event.setUser_id("chuwy")
     // time in true_tstamp won't be found
-    val request = enrichment.value.lookup(event, Nil, Nil, Nil).value
+    val request = enrichment.value.lookup(event, Nil, Nil, None).value
     request must beValid.like {
       case response => response must be(Nil)
     }

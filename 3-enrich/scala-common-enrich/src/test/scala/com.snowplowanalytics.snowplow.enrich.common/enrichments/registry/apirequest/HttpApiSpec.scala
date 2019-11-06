@@ -61,7 +61,7 @@ class HttpApiSpec extends Specification with ValidatedMatchers with Mockito {
     ).enrichment[Eval]
 
     val event = new outputs.EnrichedEvent
-    val request = enrichment.value.lookup(event, Nil, Nil, Nil).value
+    val request = enrichment.value.lookup(event, Nil, Nil, None).value
     request must beInvalid
   }
 }

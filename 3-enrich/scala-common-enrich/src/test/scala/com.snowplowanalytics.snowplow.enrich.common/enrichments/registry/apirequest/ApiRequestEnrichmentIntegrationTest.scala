@@ -272,7 +272,7 @@ class ApiRequestEnrichmentIntegrationTest extends Specification {
     val event = new EnrichedEvent
     event.setApp_id("lookup-test")
     event.setUser_id("snowplower")
-    val context = enrichment.flatMap(_.lookup(event, Nil, Nil, Nil).value.toEither)
+    val context = enrichment.flatMap(_.lookup(event, Nil, Nil, None).value.toEither)
     context must beRight.like {
       case context =>
         context must contain(IntegrationTests.correctResultContext) and (context must have size (1))
@@ -294,7 +294,7 @@ class ApiRequestEnrichmentIntegrationTest extends Specification {
         event,
         List(IntegrationTests.weatherContext),
         List(IntegrationTests.customContexts),
-        List(IntegrationTests.unstructEvent)
+        Some(IntegrationTests.unstructEvent)
       ).value.toEither
     )
     enrichment.flatMap(
@@ -302,7 +302,7 @@ class ApiRequestEnrichmentIntegrationTest extends Specification {
         event,
         List(IntegrationTests.weatherContext),
         List(IntegrationTests.customContexts),
-        List(IntegrationTests.unstructEvent)
+        Some(IntegrationTests.unstructEvent)
       ).value.toEither
     )
 
@@ -311,7 +311,7 @@ class ApiRequestEnrichmentIntegrationTest extends Specification {
         event,
         List(IntegrationTests.weatherContext),
         List(IntegrationTests.customContexts),
-        List(IntegrationTests.unstructEvent)
+        Some(IntegrationTests.unstructEvent)
       ).value.toEither
     )
 
