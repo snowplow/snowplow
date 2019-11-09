@@ -15,7 +15,9 @@ package enrichments.registry
 
 import cats.data.ValidatedNel
 import cats.syntax.either._
-import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
+
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SchemaVer, SelfDescribingData}
+
 import io.circe._
 import io.circe.syntax._
 
@@ -30,6 +32,7 @@ object HttpHeaderExtractorEnrichment extends ParseableEnrichment {
       1,
       0
     )
+  val outputSchema = SchemaKey("org.ietf", "http_header", "jsonschema", SchemaVer.Full(1, 0, 0))
 
   /**
    * Creates a HttpHeaderExtractorConf from a Json.
@@ -55,7 +58,7 @@ object HttpHeaderExtractorEnrichment extends ParseableEnrichment {
 final case class HttpHeaderExtractorEnrichment(headersPattern: String) extends Enrichment {
   case class Header(name: String, value: String)
 
-  def extract(headers: List[String]): List[Json] = {
+  def extract(headers: List[String]): List[SelfDescribingData[Json]] = {
     val httpHeaders = headers.flatMap { header =>
       header.split(":", 2) match {
         case Array(name, value) if name.matches(headersPattern) =>
@@ -65,9 +68,9 @@ final case class HttpHeaderExtractorEnrichment(headersPattern: String) extends E
     }
 
     httpHeaders.map { header =>
-      Json.obj(
-        "schema" := Json.fromString("iglu:org.ietf/http_header/jsonschema/1-0-0"),
-        "data" := Json.obj(
+      SelfDescribingData(
+        HttpHeaderExtractorEnrichment.outputSchema,
+        Json.obj(
           "name" := Json.fromString(header.name.trim),
           "value" := Json.fromString(header.value.trim)
         )

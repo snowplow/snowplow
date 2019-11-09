@@ -14,12 +14,12 @@ package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry.apirequest
 
 import cats.Eval
-import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer, SelfDescribingData}
+
 import io.circe._
-import io.circe.generic.auto._
 import io.circe.literal._
-import io.circe.parser._
-import io.circe.syntax._
+
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer, SelfDescribingData}
+
 import org.specs2.Specification
 import org.specs2.matcher.Matcher
 
@@ -29,26 +29,6 @@ object ApiRequestEnrichmentIntegrationTest {
   def continuousIntegration: Boolean = sys.env.get("CI") match {
     case Some("true") => true
     case _ => false
-  }
-
-  /**
-   * Helper function creating almost real [[JsonSchemaPair]] for context/unstruct event
-   * out of *valid* JSON string and [[SchemaKey]].
-   * Useful only if we're passing unstruct event or custom context (but not derived) straight into
-   * ApiRequestEnrichment.lookup method
-   */
-  def createPair(key: SchemaKey, validJson: String): SelfDescribingData[Json] = {
-    val hierarchy = parse(
-      s"""{"rootId":null,"rootTstamp":null,"refRoot":"events","refTree":["events","${key.name}"],"refParent":"events"}"""
-    ).toOption.get
-    SelfDescribingData(
-      key,
-      Json.obj(
-        "data" := parse(validJson).toOption.get,
-        "hierarchy" := hierarchy,
-        "schema" := key.asJson
-      )
-    )
   }
 }
 
@@ -63,8 +43,7 @@ class ApiRequestEnrichmentIntegrationTest extends Specification {
   """
 
   object IntegrationTests {
-    val configuration = parse(
-      """{
+    val configuration = json"""{
       "vendor": "com.snowplowanalytics.snowplow.enrichments",
       "name": "api_request_enrichment_config",
       "enabled": true,
@@ -94,7 +73,7 @@ class ApiRequestEnrichmentIntegrationTest extends Specification {
         "outputs": [{
           "schema": "iglu:com.acme/unauth/jsonschema/1-0-0",
           "json": {
-            "jsonPath": "$"
+            "jsonPath": "$$"
           }
         }],
         "cache": {
@@ -103,15 +82,14 @@ class ApiRequestEnrichmentIntegrationTest extends Specification {
         }
       }
     }"""
-    ).toOption.get
 
-    val correctResultContext = json"""{
-      "schema": "iglu:com.acme/unauth/jsonschema/1-0-0",
-      "data": {"path": "/guest/api/lookup-test/snowplower?format=json", "message": "unauthorized", "method": "GET"}
-    }"""
+    val correctResultContext =
+      SelfDescribingData(
+        SchemaKey("com.acme", "unauth", "jsonschema", SchemaVer.Full(1, 0, 0)),
+        json"""{"path": "/guest/api/lookup-test/snowplower?format=json", "message": "unauthorized", "method": "GET"}"""
+      )
 
-    val configuration2 = parse(
-      """{
+    val configuration2 = json"""{
       "vendor": "com.snowplowanalytics.snowplow.enrichments",
       "name": "api_request_enrichment_config",
       "enabled": true,
@@ -133,7 +111,7 @@ class ApiRequestEnrichmentIntegrationTest extends Specification {
           "key": "jobflow",
           "json": {
             "field": "unstruct_event",
-            "jsonPath": "$.jobflow_id",
+            "jsonPath": "$$.jobflow_id",
             "schemaCriterion": "iglu:com.snowplowanalytics.monitoring.batch/emr_job_status/jsonschema/*-*-*"
           }
         },
@@ -141,7 +119,7 @@ class ApiRequestEnrichmentIntegrationTest extends Specification {
          "key": "latitude",
          "json": {
            "field": "contexts",
-           "jsonPath": "$.latitude",
+           "jsonPath": "$$.latitude",
            "schemaCriterion": "iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-1-0"
         }
         },
@@ -149,7 +127,7 @@ class ApiRequestEnrichmentIntegrationTest extends Specification {
           "key": "datetime",
           "json": {
             "field": "derived_contexts",
-            "jsonPath": "$.dt",
+            "jsonPath": "$$.dt",
             "schemaCriterion": "iglu:org.openweathermap/weather/jsonschema/1-*-*"
           }
         }],
@@ -169,12 +147,12 @@ class ApiRequestEnrichmentIntegrationTest extends Specification {
         "outputs": [{
           "schema": "iglu:com.acme/user/jsonschema/1-0-0",
           "json": {
-            "jsonPath": "$.data.lookupArray[0]"
+            "jsonPath": "$$.data.lookupArray[0]"
           }
         }, {
           "schema": "iglu:com.acme/onlypath/jsonschema/1-0-0",
           "json": {
-            "jsonPath": "$.data.lookupArray[1]"
+            "jsonPath": "$$.data.lookupArray[1]"
           }
         }],
         "cache": {
@@ -183,69 +161,72 @@ class ApiRequestEnrichmentIntegrationTest extends Specification {
         }
       }
     }"""
-    ).toOption.get
 
     // NOTE: akka-http 1.0 was sending "2014-11-10T08:38:30.000Z" as is with ':', this behavior was changed in 2.0
 
-    val correctResultContext2 = json"""{
-      "schema": "iglu:com.acme/user/jsonschema/1-0-0",
-      "data": {"path": "/api/lookup+test/snowplower/j-ZKIY4CKQRX72/32.1?date=2014-11-10T08%3A38%3A30.000Z","method": "POST", "auth_header": "snowplower:supersecret", "request": 1}
-    }"""
+    val correctResultContext2 =
+      SelfDescribingData(
+        SchemaKey("com.acme", "user", "jsonschema", SchemaVer.Full(1, 0, 0)),
+        json"""{
+          "path": "/api/lookup+test/snowplower/j-ZKIY4CKQRX72/32.1?date=2014-11-10T08%3A38%3A30.000Z",
+          "method": "POST",
+          "auth_header": "snowplower:supersecret",
+          "request": 1
+        }"""
+      )
 
-    val correctResultContext3 = json"""{
-      "schema": "iglu:com.acme/onlypath/jsonschema/1-0-0",
-      "data": {"path": "/api/lookup+test/snowplower/j-ZKIY4CKQRX72/32.1?date=2014-11-10T08%3A38%3A30.000Z", "request": 1}
-    }"""
+    val correctResultContext3 =
+      SelfDescribingData(
+        SchemaKey("com.acme", "onlypath", "jsonschema", SchemaVer.Full(1, 0, 0)),
+        json"""{"path": "/api/lookup+test/snowplower/j-ZKIY4CKQRX72/32.1?date=2014-11-10T08%3A38%3A30.000Z", "request": 1}"""
+      )
 
     // Usual self-describing instance
-    val weatherContext = json"""{
-     "schema": "iglu:org.openweathermap/weather/jsonschema/1-0-0",
-     "data": {
-        "clouds": {
-            "all": 0
-        },
-        "dt": "2014-11-10T08:38:30.000Z",
-        "main": {
-            "grnd_level": 1021.91,
-            "humidity": 90,
-            "pressure": 1021.91,
-            "sea_level": 1024.77,
-            "temp": 301.308,
-            "temp_max": 301.308,
-            "temp_min": 301.308
-        },
-        "weather": [ { "description": "Sky is Clear", "icon": "01d", "id": 800, "main": "Clear" } ],
-        "wind": {
-            "deg": 190.002,
-            "speed": 4.39
-        }
-      }
-    }"""
+    val weatherContext =
+      SelfDescribingData(
+        SchemaKey("org.openweathermap", "weather", "jsonschema", SchemaVer.Full(1, 0, 0)),
+        json"""{
+          "clouds": {
+              "all": 0
+          },
+          "dt": "2014-11-10T08:38:30.000Z",
+          "main": {
+              "grnd_level": 1021.91,
+              "humidity": 90,
+              "pressure": 1021.91,
+              "sea_level": 1024.77,
+              "temp": 301.308,
+              "temp_max": 301.308,
+              "temp_min": 301.308
+          },
+          "weather": [ { "description": "Sky is Clear", "icon": "01d", "id": 800, "main": "Clear" } ],
+          "wind": {
+              "deg": 190.002,
+              "speed": 4.39
+          }
+        }"""
+      )
 
     // JsonSchemaPair built by Shredder
-    val customContexts = createPair(
+    val customContexts = SelfDescribingData(
       SchemaKey(
         "com.snowplowanalytics.snowplow",
         "geolocation_context",
         "jsonschema",
         SchemaVer.Full(1, 1, 0)
       ),
-      """
-        |{"latitude": 32.1, "longitude": 41.1}
-      """.stripMargin
+      json"""{"latitude": 32.1, "longitude": 41.1}"""
     )
 
     // JsonSchemaPair built by Shredder
-    val unstructEvent = createPair(
+    val unstructEvent = SelfDescribingData(
       SchemaKey(
         "com.snowplowanalytics.monitoring.batch",
         "emr_job_status",
         "jsonschema",
         SchemaVer.Full(1, 0, 0)
       ),
-      """
-        |{"name": "Snowplow ETL", "jobflow_id": "j-ZKIY4CKQRX72", "state": "RUNNING", "created_at": "2016-01-21T13:14:10.193+03:00"}
-      """.stripMargin
+      json"""{"name": "Snowplow ETL", "jobflow_id": "j-ZKIY4CKQRX72", "state": "RUNNING", "created_at": "2016-01-21T13:14:10.193+03:00"}"""
     )
   }
 
@@ -260,8 +241,20 @@ class ApiRequestEnrichmentIntegrationTest extends Specification {
   /**
    * Helper matcher to print JSON
    */
-  def beJson(expected: Json): Matcher[Json] = { actual: Json =>
-    (actual == expected, "actual:\n" + actual.spaces2 + "\n expected:\n" + expected.spaces2 + "\n")
+  def beJson(expected: SelfDescribingData[Json]): Matcher[SelfDescribingData[Json]] = {
+    actual: SelfDescribingData[Json] =>
+      {
+        val result = actual == expected
+        val schemaMatch = actual.schema == expected.schema
+        val dataMatch = actual.data == expected.data
+        val message =
+          if (schemaMatch)
+            s"Schema ${actual.schema} matches, data doesn't.\nActual data: ${actual.data.spaces2}\nExpected data: ${expected.data.spaces2}"
+          else if (dataMatch)
+            s"Data payloads match, schemas don't.\nActual schema: ${actual.schema.toSchemaUri}\nExpected schema: ${expected.schema.toSchemaUri}"
+          else "actual:\n" + actual + "\n expected:\n" + expected + "\n"
+        (result, message)
+      }
   }
 
   def e1 = {
@@ -275,7 +268,7 @@ class ApiRequestEnrichmentIntegrationTest extends Specification {
     val context = enrichment.flatMap(_.lookup(event, Nil, Nil, None).value.toEither)
     context must beRight.like {
       case context =>
-        context must contain(IntegrationTests.correctResultContext) and (context must have size (1))
+        context must contain(IntegrationTests.correctResultContext) and (context must have size 1)
     }
   }
 
@@ -316,11 +309,11 @@ class ApiRequestEnrichmentIntegrationTest extends Specification {
     )
 
     context must beRight.like {
-      case context =>
-        context must contain(
-          beJson(IntegrationTests.correctResultContext2),
-          beJson(IntegrationTests.correctResultContext3)
-        ) and (context must have size (2))
+      case contexts =>
+        contexts must contain(
+          beJson(IntegrationTests.correctResultContext3),
+          beJson(IntegrationTests.correctResultContext2)
+        ) and (contexts must have size 2)
     }
   }
 }

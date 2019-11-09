@@ -14,8 +14,12 @@ package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 
 import cats.syntax.either._
-import com.snowplowanalytics.snowplow.badrows._
+
 import io.circe.literal._
+
+import com.snowplowanalytics.snowplow.badrows.{FailureDetails, Processor}
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer, SelfDescribingData}
+
 import org.specs2.mutable.{Specification => MutSpecification}
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
@@ -93,24 +97,14 @@ class FormatDerivedContextsSpec extends MutSpecification {
     "convert a list of JObjects to a self-describing contexts JSON" in {
 
       val derivedContextsList = List(
-        json"""
-          {
-            "schema": "iglu:com.acme/user/jsonschema/1-0-0",
-            "data": {
-              "type": "tester",
-              "name": "bethany"
-            }
-          }
-        """,
-        json"""
-          {
-            "schema": "iglu:com.acme/design/jsonschema/1-0-0",
-            "data": {
-              "color": "red",
-              "fontSize": 14
-            }
-          }
-        """
+        SelfDescribingData(
+          SchemaKey("com.acme", "user", "jsonschema", SchemaVer.Full(1, 0, 0)),
+          json"""{"type": "tester", "name": "bethany"}"""
+        ),
+        SelfDescribingData(
+          SchemaKey("com.acme", "design", "jsonschema", SchemaVer.Full(1, 0, 0)),
+          json"""{"color": "red", "fontSize": 14}"""
+        )
       )
 
       val expected = """

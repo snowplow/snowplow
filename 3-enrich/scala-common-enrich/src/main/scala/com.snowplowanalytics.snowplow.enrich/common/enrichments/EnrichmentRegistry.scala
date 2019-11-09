@@ -17,16 +17,19 @@ import cats.Monad
 import cats.data.{EitherT, NonEmptyList, ValidatedNel}
 import cats.effect.Clock
 import cats.implicits._
-import com.snowplowanalytics.forex.CreateForex
+
+import io.circe._
+import io.circe.syntax._
+
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SelfDescribingData}
 import com.snowplowanalytics.iglu.core.circe.instances._
+
+import com.snowplowanalytics.forex.CreateForex
 import com.snowplowanalytics.maxmind.iplookups.CreateIpLookups
 import com.snowplowanalytics.refererparser.CreateParser
 import com.snowplowanalytics.weather.providers.openweather.CreateOWM
-import io.circe._
-import io.circe.syntax._
 
 import registry._
 import registry.apirequest.ApiRequestEnrichment

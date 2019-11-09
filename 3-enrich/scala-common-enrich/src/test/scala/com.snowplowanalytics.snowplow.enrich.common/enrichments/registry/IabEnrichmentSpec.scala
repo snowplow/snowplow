@@ -13,9 +13,13 @@
 package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
 import cats.Eval
-import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
+
 import io.circe.literal._
+
 import org.joda.time.DateTime
+
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer, SelfDescribingData}
+
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
 
@@ -96,17 +100,11 @@ class IabEnrichmentSpec extends Specification with DataTables {
     validConfig.enrichment[Eval].map(_.getIabContext(None, None, None)).value must beLeft
 
   def e4 = {
-    val responseJson = json"""
-      {
-          "schema": "iglu:com.iab.snowplow/spiders_and_robots/jsonschema/1-0-0",
-          "data": {
-              "spiderOrRobot": false,
-              "category": "BROWSER",
-              "reason": "PASSED_ALL",
-              "primaryImpact": "NONE"
-          }
-      }
-    """
+    val responseJson =
+      SelfDescribingData(
+        SchemaKey("com.iab.snowplow", "spiders_and_robots", "jsonschema", SchemaVer.Full(1, 0, 0)),
+        json"""{"spiderOrRobot": false, "category": "BROWSER", "reason": "PASSED_ALL", "primaryImpact": "NONE"}"""
+      )
     validConfig
       .enrichment[Eval]
       .map(_.getIabContext(Some("Xdroid"), Some("192.168.0.1"), Some(DateTime.now())))

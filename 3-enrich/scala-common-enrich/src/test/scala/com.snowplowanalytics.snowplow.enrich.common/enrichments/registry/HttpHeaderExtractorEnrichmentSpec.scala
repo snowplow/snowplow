@@ -13,6 +13,9 @@ package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
 import io.circe._
 import io.circe.literal._
+
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer, SelfDescribingData}
+
 import org.specs2.Specification
 
 class HttpHeaderExtractorEnrichmentSpec extends Specification {
@@ -24,7 +27,10 @@ class HttpHeaderExtractorEnrichmentSpec extends Specification {
 
   def e1 = {
     val expected = List(
-      json"""{"schema":"iglu:org.ietf/http_header/jsonschema/1-0-0","data":{"name":"X-Forwarded-For","value":"129.78.138.66, 129.78.64.103"}}"""
+      SelfDescribingData(
+        SchemaKey("org.ietf", "http_header", "jsonschema", SchemaVer.Full(1, 0, 0)),
+        json"""{"name":"X-Forwarded-For","value":"129.78.138.66, 129.78.64.103"}"""
+      )
     )
     HttpHeaderExtractorEnrichment("X-Forwarded-For")
       .extract(List("X-Forwarded-For: 129.78.138.66, 129.78.64.103")) must_== expected
@@ -32,7 +38,10 @@ class HttpHeaderExtractorEnrichmentSpec extends Specification {
 
   def e2 = {
     val expected = List(
-      json"""{"schema":"iglu:org.ietf/http_header/jsonschema/1-0-0","data":{"name":"Accept","value":"text/html"}}"""
+      SelfDescribingData(
+        SchemaKey("org.ietf", "http_header", "jsonschema", SchemaVer.Full(1, 0, 0)),
+        json"""{"name":"Accept","value":"text/html"}"""
+      )
     )
     HttpHeaderExtractorEnrichment(".*").extract(List("Accept: text/html")) must_== expected
   }

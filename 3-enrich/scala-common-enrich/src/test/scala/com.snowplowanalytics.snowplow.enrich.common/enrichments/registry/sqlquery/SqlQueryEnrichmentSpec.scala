@@ -13,8 +13,13 @@
 package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 package sqlquery
 
-import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import io.circe.parser._
+import io.circe.literal._
+
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SchemaVer}
+
+import com.snowplowanalytics.snowplow.enrich.common.utils.CirceUtils
+
 import org.specs2.Specification
 import org.specs2.matcher.ValidatedMatchers
 
@@ -35,39 +40,35 @@ class SqlQueryEnrichmentSpec extends Specification with ValidatedMatchers {
 
   def e1 = {
     val inputs = List(
-      Input(1, pojo = Some(PojoInput("user_id")), json = None),
-      Input(
+      Input.Pojo(1, "user_id"),
+      Input.Json(
         1,
-        pojo = None,
-        json = Some(
-          JsonInput(
-            "contexts",
-            "iglu:com.snowplowanalytics.snowplow/client_session/jsonschema/1-*-*",
-            "$.userId"
-          )
-        )
+        "contexts",
+        SchemaCriterion("com.snowplowanalytics.snowplow", "client_session", "jsonschema", 1),
+        "$.userId"
       ),
-      Input(2, pojo = Some(PojoInput("app_id")), json = None)
+      Input.Pojo(2, "app_id")
     )
-    val db = Db(
-      postgresql = Some(
-        PostgresqlDb(
-          "cluster01.redshift.acme.com",
-          5439,
-          sslMode = true,
-          "snowplow_enrich_ro",
-          "1asIkJed",
-          "crm"
-        )
-      ),
-      mysql = None
+    val db =
+      Rdbms.PostgresqlDb(
+        "cluster01.redshift.acme.com",
+        5439,
+        sslMode = true,
+        "snowplow_enrich_ro",
+        "1asIkJed",
+        "crm"
+      )
+    val output = JsonOutput(
+      SchemaKey("com.acme", "user", "jsonschema", SchemaVer.Full(1, 0, 0)),
+      Output.DescribeMode.AllRows,
+      JsonOutput.CamelCase
     )
-    val output = JsonOutput("iglu:com.acme/user/jsonschema/1-0-0", "ALL_ROWS", "CAMEL_CASE")
-    val cache = Cache(3000, 60)
-    val query = Query(
+    val cache = SqlQueryEnrichment.Cache(3000, 60)
+    val query = SqlQueryEnrichment.Query(
       "SELECT username, email_address, date_of_birth FROM tbl_users WHERE user = ? AND client = ? LIMIT 1"
     )
-    val config = SqlQueryConf(SCHEMA_KEY, inputs, db, query, Output(output, "AT_MOST_ONE"), cache)
+    val config =
+      SqlQueryConf(SCHEMA_KEY, inputs, db, query, Output(output, Output.AtMostOne), cache)
 
     val configuration = parse(
       """
@@ -253,5 +254,10 @@ class SqlQueryEnrichmentSpec extends Specification with ValidatedMatchers {
     ).toOption.get
 
     SqlQueryEnrichment.parse(configuration, SCHEMA_KEY) must beValid
+  }
+
+  def e4 = {
+    val pojoInput = json"""{"input": {"placeholder": 1, "pojo": { "field": "user_id" }}}"""
+    CirceUtils.extract[Input](pojoInput, "input") must beValid(Input.Pojo(1, "user_id"))
   }
 }

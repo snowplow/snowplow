@@ -11,7 +11,22 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich.common
-package enrichments.registry.sqlquery
 
-/** Cache configuration */
-final case class Cache(size: Int, ttl: Int)
+import cats.data.ValidatedNel
+
+import com.snowplowanalytics.iglu.core.SelfDescribingData
+import com.snowplowanalytics.snowplow.badrows.FailureDetails
+
+import io.circe.Json
+
+package object enrichments {
+
+  /** A context, potentially added by an enrichment or single failure */
+  type EnrichContext =
+    Either[FailureDetails.EnrichmentStageIssue, Option[SelfDescribingData[Json]]]
+
+  /** Contexts, potentially added by an enrichment or list of aggregated failures */
+  type EnrichContextsComplex =
+    ValidatedNel[FailureDetails.EnrichmentStageIssue, List[SelfDescribingData[Json]]]
+
+}
