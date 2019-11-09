@@ -20,12 +20,16 @@ import cats.{Eval, Id, Monad}
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.effect.Sync
 import cats.implicits._
-import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
+
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SchemaVer, SelfDescribingData}
+
 import com.snowplowanalytics.iab.spidersandrobotsclient.IabClient
-import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.badrows.FailureDetails
+
 import io.circe._
 import io.circe.generic.auto._
 import io.circe.syntax._
+
 import org.joda.time.DateTime
 
 import utils.CirceUtils
@@ -111,7 +115,8 @@ object IabEnrichment extends ParseableEnrichment {
  * @param localMode Whether to use the local database file. Enabled for tests.
  */
 final case class IabEnrichment(schemaKey: SchemaKey, iabClient: IabClient) extends Enrichment {
-  private val schemaUri = "iglu:com.iab.snowplow/spiders_and_robots/jsonschema/1-0-0"
+  val outputSchema =
+    SchemaKey("com.iab.snowplow", "spiders_and_robots", "jsonschema", SchemaVer.Full(1, 0, 0))
   private val enrichmentInfo =
     FailureDetails.EnrichmentInformation(schemaKey, "iab-spiders-and-robots").some
 
@@ -160,8 +165,10 @@ final case class IabEnrichment(schemaKey: SchemaKey, iabClient: IabClient) exten
     userAgent: Option[String],
     ipAddress: Option[String],
     accurateAt: Option[DateTime]
-  ): Either[NonEmptyList[FailureDetails.EnrichmentStageIssue], Json] =
-    getIab(userAgent, ipAddress, accurateAt).map(addSchema)
+  ): Either[NonEmptyList[FailureDetails.EnrichmentStageIssue], SelfDescribingData[Json]] =
+    getIab(userAgent, ipAddress, accurateAt).map { iab =>
+      SelfDescribingData(outputSchema, iab)
+    }
 
   /**
    * Get IAB check response received from the client library and extracted as a JSON object
@@ -200,17 +207,6 @@ final case class IabEnrichment(schemaKey: SchemaKey, iabClient: IabClient) exten
           })
           .asLeft
     }
-
-  /**
-   * Add Iglu URI to JSON Object
-   * @param context IAB context as JSON Object
-   * @return JSON Object wrapped as Self-describing JSON
-   */
-  private def addSchema(context: Json): Json =
-    Json.obj(
-      "schema" := schemaUri,
-      "data" := context
-    )
 }
 
 trait CreateIabClient[F[_]] {

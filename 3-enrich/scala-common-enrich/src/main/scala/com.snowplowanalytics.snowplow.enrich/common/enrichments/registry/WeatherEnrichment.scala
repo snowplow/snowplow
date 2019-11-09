@@ -22,13 +22,17 @@ import scala.concurrent.duration.FiniteDuration
 import cats.Monad
 import cats.data.{EitherT, NonEmptyList, ValidatedNel}
 import cats.implicits._
-import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
-import com.snowplowanalytics.snowplow.badrows._
+
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SchemaVer, SelfDescribingData}
+import com.snowplowanalytics.snowplow.badrows.FailureDetails
+
 import com.snowplowanalytics.weather.providers.openweather._
 import com.snowplowanalytics.weather.providers.openweather.responses._
+
 import io.circe._
 import io.circe.generic.auto._
 import io.circe.syntax._
+
 import org.joda.time.{DateTime, DateTimeZone}
 
 import utils.CirceUtils
@@ -88,7 +92,7 @@ object WeatherEnrichment extends ParseableEnrichment {
  */
 final case class WeatherEnrichment[F[_]: Monad](schemaKey: SchemaKey, client: OWMCacheClient[F])
     extends Enrichment {
-  private val schemaUri = "iglu:org.openweathermap/weather/jsonschema/1-0-0"
+  val Schema = SchemaKey("org.openweathermap", "weather", "jsonschema", SchemaVer.Full(1, 0, 0))
   private val enrichmentInfo =
     FailureDetails.EnrichmentInformation(schemaKey, "weather").some
 
@@ -106,11 +110,8 @@ final case class WeatherEnrichment[F[_]: Monad](schemaKey: SchemaKey, client: OW
     latitude: Option[JFloat],
     longitude: Option[JFloat],
     time: Option[DateTime]
-  ): F[Either[NonEmptyList[FailureDetails.EnrichmentStageIssue], Json]] =
-    (for {
-      weather <- getWeather(latitude, longitude, time)
-      schemaed = addSchema(weather)
-    } yield schemaed).value
+  ): F[Either[NonEmptyList[FailureDetails.EnrichmentStageIssue], SelfDescribingData[Json]]] =
+    getWeather(latitude, longitude, time).map(weather => SelfDescribingData(Schema, weather)).value
 
   /**
    * Get weather stamp as JSON received from OpenWeatherMap and extracted with Scala Weather
@@ -165,17 +166,6 @@ final case class WeatherEnrichment[F[_]: Monad](schemaKey: SchemaKey, client: OW
             )
         )
     }
-
-  /**
-   * Add Iglu URI to JSON Object
-   * @param context weather context as JSON Object
-   * @return JSON Object wrapped as Self-describing JSON
-   */
-  private def addSchema(context: Json): Json =
-    Json.obj(
-      "schema" := schemaUri,
-      "data" := context
-    )
 
   /**
    * Apply all necessary transformations (currently only dt(epoch -> db timestamp)

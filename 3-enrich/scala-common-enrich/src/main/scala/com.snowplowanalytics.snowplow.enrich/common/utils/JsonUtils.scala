@@ -17,15 +17,18 @@ import java.math.{BigInteger => JBigInteger}
 
 import cats.data.NonEmptyList
 import cats.syntax.either._
-import com.snowplowanalytics.snowplow.badrows._
-import io.circe._
+
+import com.snowplowanalytics.snowplow.badrows.FailureDetails
+
+import io.circe.Json
+
 import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 
 /** Contains general purpose extractors and other utilities for JSONs. Jackson-based. */
 object JsonUtils {
 
-  type DateTimeFields = Option[Tuple2[NonEmptyList[String], DateTimeFormatter]]
+  type DateTimeFields = Option[(NonEmptyList[String], DateTimeFormatter)]
 
   // Defines the maximalist JSON Schema-compatible date-time format
   private val JsonSchemaDateTimeFormat =
@@ -108,7 +111,7 @@ object JsonUtils {
    * @param value The value of the field
    * @param bools A List of keys whose values should be processed as boolean-like Strings
    * @param ints A List of keys whose values should be processed as integer-like Strings
-   * @param dates If Some, a NEL of keys whose values should be treated as date-time-like Strings,
+   * @param dateTimes If Some, a NEL of keys whose values should be treated as date-time-like Strings,
    * which will require processing from the specified format
    * @return a JField, containing the original key and the processed String, now as a JValue
    */

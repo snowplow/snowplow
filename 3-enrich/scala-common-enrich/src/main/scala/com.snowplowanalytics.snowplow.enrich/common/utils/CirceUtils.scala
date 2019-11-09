@@ -15,6 +15,7 @@ package utils
 
 import cats.data.Validated
 import cats.syntax.either._
+
 import io.circe._
 
 object CirceUtils {

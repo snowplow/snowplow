@@ -15,9 +15,12 @@ package enrichments.registry
 
 import cats.data.ValidatedNel
 import cats.syntax.either._
-import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
+
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SchemaVer, SelfDescribingData}
+
 import io.circe._
 import io.circe.syntax._
+
 import org.apache.http.message.BasicHeaderValueParser
 
 import utils.CirceUtils
@@ -25,6 +28,7 @@ import utils.CirceUtils
 object CookieExtractorEnrichment extends ParseableEnrichment {
   override val supportedSchema =
     SchemaCriterion("com.snowplowanalytics.snowplow", "cookie_extractor_config", "jsonschema", 1, 0)
+  val outputSchema = SchemaKey("org.ietf", "http_cookie", "jsonschema", SchemaVer.Full(1, 0, 0))
 
   /**
    * Creates a CookieExtractorConf instance from a Json.
@@ -49,7 +53,7 @@ object CookieExtractorEnrichment extends ParseableEnrichment {
  */
 final case class CookieExtractorEnrichment(cookieNames: List[String]) extends Enrichment {
 
-  def extract(headers: List[String]): List[Json] = {
+  def extract(headers: List[String]): List[SelfDescribingData[Json]] = {
     // rfc6265 - sections 4.2.1 and 4.2.2
     val cookies = headers.flatMap { header =>
       header.split(":", 2) match {
@@ -67,12 +71,9 @@ final case class CookieExtractorEnrichment(cookieNames: List[String]) extends En
     }.flatten
 
     cookies.map { cookie =>
-      Json.obj(
-        "schema" := "iglu:org.ietf/http_cookie/jsonschema/1-0-0",
-        "data" := Json.obj(
-          "name" := stringToJson(cookie.getName),
-          "value" := stringToJson(cookie.getValue)
-        )
+      SelfDescribingData(
+        CookieExtractorEnrichment.outputSchema,
+        Json.obj("name" := stringToJson(cookie.getName), "value" := stringToJson(cookie.getValue))
       )
     }
   }

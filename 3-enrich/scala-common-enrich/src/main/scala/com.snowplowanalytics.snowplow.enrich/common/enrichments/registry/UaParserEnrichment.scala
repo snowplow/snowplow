@@ -19,10 +19,14 @@ import cats.{Eval, Id, Monad}
 import cats.data.{EitherT, NonEmptyList, ValidatedNel}
 import cats.effect.Sync
 import cats.implicits._
-import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
-import com.snowplowanalytics.snowplow.badrows._
+
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SchemaVer, SelfDescribingData}
+
+import com.snowplowanalytics.snowplow.badrows.FailureDetails
+
 import io.circe._
 import io.circe.syntax._
+
 import ua_parser.Parser
 import ua_parser.Client
 
@@ -32,6 +36,13 @@ import utils.CirceUtils
 object UaParserEnrichment extends ParseableEnrichment {
   override val supportedSchema =
     SchemaCriterion("com.snowplowanalytics.snowplow", "ua_parser_config", "jsonschema", 1, 0)
+  val Schema = SchemaKey(
+    "com.snowplowanalytics.snowplow",
+    "ua_parser_context",
+    "jsonschema",
+    SchemaVer.Full(1, 0, 0)
+  )
+
   private val localFile = "./ua-parser-rules.yml"
 
   override def parse(
@@ -102,7 +113,9 @@ final case class UaParserEnrichment(schemaKey: SchemaKey, parser: Parser) extend
    * @param useragent to extract from. Should be encoded, i.e. not previously decoded.
    * @return the json or the message of the exception, boxed in a Scalaz Validation
    */
-  def extractUserAgent(useragent: String): Either[FailureDetails.EnrichmentStageIssue, Json] =
+  def extractUserAgent(
+    useragent: String
+  ): Either[FailureDetails.EnrichmentStageIssue, SelfDescribingData[Json]] =
     Either
       .catchNonFatal(parser.parse(useragent))
       .leftMap { e =>
@@ -117,7 +130,7 @@ final case class UaParserEnrichment(schemaKey: SchemaKey, parser: Parser) extend
       .map(assembleContext)
 
   /** Assembles ua_parser_context from a parsed user agent. */
-  def assembleContext(c: Client): Json = {
+  def assembleContext(c: Client): SelfDescribingData[Json] = {
     // To display useragent version
     val useragentVersion = checkNull(c.userAgent.family) + prependSpace(c.userAgent.major) + prependDot(
       c.userAgent.minor
@@ -130,10 +143,9 @@ final case class UaParserEnrichment(schemaKey: SchemaKey, parser: Parser) extend
     def getJson(s: String): Json =
       Option(s).map(Json.fromString).getOrElse(Json.Null)
 
-    Json.obj(
-      "schema" :=
-        Json.fromString("iglu:com.snowplowanalytics.snowplow/ua_parser_context/jsonschema/1-0-0"),
-      "data" := Json.obj(
+    SelfDescribingData(
+      UaParserEnrichment.Schema,
+      Json.obj(
         "useragentFamily" := getJson(c.userAgent.family),
         "useragentMajor" := getJson(c.userAgent.major),
         "useragentMinor" := getJson(c.userAgent.minor),
