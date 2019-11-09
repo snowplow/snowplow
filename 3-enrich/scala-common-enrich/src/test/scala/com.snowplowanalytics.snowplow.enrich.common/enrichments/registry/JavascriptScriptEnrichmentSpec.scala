@@ -13,8 +13,10 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry
 
-import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import io.circe.literal._
+
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer, SelfDescribingData}
+
 import org.specs2.Specification
 
 import outputs.EnrichedEvent
@@ -71,8 +73,12 @@ class JavascriptScriptEnrichmentSpec extends Specification {
   def e3 = {
     val event = buildEvent("secret")
     val actual = PreparedEnrichment.process(event)
+
     val expected =
-      json"""{"schema":"iglu:com.acme/foo/jsonschema/1-0-0","data":{"appIdUpper":"SECRET"}}"""
+      SelfDescribingData(
+        SchemaKey("com.acme", "foo", "jsonschema", SchemaVer.Full(1, 0, 0)),
+        json"""{"appIdUpper":"SECRET"}"""
+      )
     actual must beRight.like { case head :: Nil => head must_== expected }
   }
 

@@ -16,14 +16,18 @@ package apirequest
 
 import cats.Id
 import cats.syntax.either._
-import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer, SelfDescribingData}
+
 import io.circe.Json
 import io.circe.literal._
 import io.circe.parser._
+
 import org.specs2.Specification
 import org.specs2.matcher.ValidatedMatchers
 import org.specs2.mock.Mockito
+
 import scalaj.http.HttpRequest
+
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SchemaVer, SelfDescribingData}
 
 import outputs.EnrichedEvent
 import utils.HttpClient
@@ -46,19 +50,14 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
 
   def e1 = {
     val inputs = List(
-      Input("user", pojo = Some(PojoInput("user_id")), json = None),
-      Input(
+      Input.Pojo("user", "user_id"),
+      Input.Json(
         "userSession",
-        pojo = None,
-        json = Some(
-          JsonInput(
-            "contexts",
-            "iglu:com.snowplowanalytics.snowplow/client_session/jsonschema/1-*-*",
-            "$.userId"
-          )
-        )
+        "contexts",
+        SchemaCriterion("com.snowplowanalytics.snowplow", "client_session", "jsonschema", 1),
+        "$.userId"
       ),
-      Input("client", pojo = Some(PojoInput("app_id")), json = None)
+      Input.Pojo("client", "app_id")
     )
     val api =
       HttpApi(
@@ -73,8 +72,7 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
     }
     val output = Output("iglu:com.acme/user/jsonschema/1-0-0", Some(JsonOutput("$.record")))
     val cache = Cache(3000, 60)
-    val schemaKey = SchemaKey("vendor", "name", "format", SchemaVer.Full(1, 0, 0))
-    val config = ApiRequestConf(schemaKey, inputs, api, List(output), cache)
+    val config = ApiRequestConf(SCHEMA_KEY, inputs, api, List(output), cache)
 
     val fakeEnrichedEvent = new EnrichedEvent {
       app_id = "some-fancy-app-id"
@@ -99,8 +97,7 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
       }"""
     )
 
-    val configuration = parse(
-      """{
+    val configuration = json"""{
       "vendor": "com.snowplowanalytics.snowplow.enrichments",
       "name": "api_request_enrichment_config",
       "enabled": true,
@@ -117,7 +114,7 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
             "json": {
               "field": "contexts",
               "schemaCriterion": "iglu:com.snowplowanalytics.snowplow/client_session/jsonschema/1-*-*",
-              "jsonPath": "$.userId"
+              "jsonPath": "$$.userId"
             }
           },
           {
@@ -143,7 +140,7 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
         "outputs": [{
           "schema": "iglu:com.acme/user/jsonschema/1-0-0",
           "json": {
-            "jsonPath": "$.record"
+            "jsonPath": "$$.record"
           }
         }],
         "cache": {
@@ -152,17 +149,13 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
         }
       }
     }"""
-    ).toOption.get
+    val validConfig = ApiRequestEnrichment.parse(configuration, SCHEMA_KEY) must beValid(config)
 
-    ApiRequestEnrichment.parse(configuration, SCHEMA_KEY) must beValid(config)
-
-    val user = json"""{
-      "schema": "iglu:com.acme/user/jsonschema/1-0-0",
-      "data": {
-        "name": "Fancy User",
-        "company": "Acme"
-      }
-    }"""
+    val user =
+      SelfDescribingData(
+        SchemaKey("com.acme", "user", "jsonschema", SchemaVer.Full(1, 0, 0)),
+        json"""{"name": "Fancy User", "company": "Acme" }"""
+      )
 
     val enrichedContextResult = config
       .enrichment[Id]
@@ -173,11 +166,13 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
         unstructEvent = None
       )
 
-    enrichedContextResult must beValid(List(user))
+    val validResult = enrichedContextResult must beValid(List(user))
+
+    validConfig and validResult
   }
 
   def e2 = {
-    val configuration = parse("""{
+    val configuration = json"""{
       "vendor": "com.snowplowanalytics.snowplow.enrichments",
       "name": "api_request_enrichment_config",
       "enabled": true,
@@ -215,7 +210,7 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
         "outputs": [{
           "schema": "iglu:com.acme/user/jsonschema/1-0-0",
           "json": {
-            "jsonPath": "$.record"
+            "jsonPath": "$$.record"
           }
         }],
         "cache": {
@@ -223,13 +218,12 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
           "ttl": 60
         }
       }
-    }""").toOption.get
+    }"""
     ApiRequestEnrichment.parse(configuration, SCHEMA_KEY) must beInvalid
   }
 
   def e3 = {
-    val configuration = parse(
-      """{
+    val configuration = json"""{
       "vendor": "com.snowplowanalytics.snowplow.enrichments",
       "name": "api_request_enrichment_config",
       "enabled": true,
@@ -249,7 +243,7 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
            "json": {
               "field": "contexts",
               "schemaCriterion": "iglu:com.snowplowanalytics.snowplow/client_session/jsonschema/1-*-*",
-              "jsonPath": "$.userId"
+              "jsonPath": "$$.userId"
            }
           }
         ],
@@ -269,7 +263,7 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
         "outputs": [{
           "schema": "iglu:com.acme/user/jsonschema/1-0-0",
           "json": {
-            "jsonPath": "$.record"
+            "jsonPath": "$$.record"
           }
         }],
         "cache": {
@@ -278,25 +272,19 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
         }
       }
     }"""
-    ).toOption.get
     ApiRequestEnrichment.parse(configuration, SCHEMA_KEY) must beInvalid
   }
 
   def e4 = {
     val inputs = List(
-      Input(key = "user", pojo = Some(PojoInput("user_id")), json = None),
-      Input(
-        key = "userSession",
-        pojo = None,
-        json = Some(
-          JsonInput(
-            "contexts",
-            "iglu:com.snowplowanalytics.snowplow/client_session/jsonschema/1-*-*",
-            "$.userId"
-          )
-        )
+      Input.Pojo("user", "user_id"),
+      Input.Json(
+        "userSession",
+        "contexts",
+        SchemaCriterion("com.snowplowanalytics.snowplow", "client_session", "jsonschema", 1),
+        "$.userId"
       ),
-      Input(key = "client", pojo = Some(PojoInput("app_id")), json = None)
+      Input.Pojo("client", "app_id")
     )
 
     val api = HttpApi(
@@ -313,8 +301,7 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
     val output =
       Output(schema = "iglu:com.acme/user/jsonschema/1-0-0", json = Some(JsonOutput("$.record")))
     val cache = Cache(size = 3000, ttl = 60)
-    val schemaKey = SchemaKey("vendor", "name", "format", SchemaVer.Full(1, 0, 0))
-    val config = ApiRequestConf(schemaKey, inputs, api, List(output), cache)
+    val config = ApiRequestConf(SCHEMA_KEY, inputs, api, List(output), cache)
 
     val fakeEnrichedEvent = new EnrichedEvent {
       app_id = "some-fancy-app-id"
@@ -394,15 +381,13 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
    }"""
     ).toOption.get
 
-    ApiRequestEnrichment.parse(configuration, SCHEMA_KEY) must beValid(config)
+    val validConfig = ApiRequestEnrichment.parse(configuration, SCHEMA_KEY) must beValid(config)
 
-    val user = json"""{
-      "schema": "iglu:com.acme/user/jsonschema/1-0-0",
-      "data": {
-        "name": "Fancy User",
-        "company": "Acme"
-      }
-    }"""
+    val user =
+      SelfDescribingData(
+        SchemaKey("com.acme", "user", "jsonschema", SchemaVer.Full(1, 0, 0)),
+        json"""{"name": "Fancy User", "company": "Acme" }"""
+      )
 
     val enrichedContextResult = config
       .enrichment[Id]
@@ -413,6 +398,8 @@ class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with
         unstructEvent = None
       )
 
-    enrichedContextResult must beValid(List(user))
+    val validResult = enrichedContextResult must beValid(List(user))
+
+    validConfig and validResult
   }
 }

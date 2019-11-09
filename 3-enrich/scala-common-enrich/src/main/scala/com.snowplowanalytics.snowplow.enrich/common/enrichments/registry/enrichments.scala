@@ -65,10 +65,10 @@ final case class PiiPseudonymizerConf(
 final case class SqlQueryConf(
   override val schemaKey: SchemaKey,
   inputs: List[sqlquery.Input],
-  db: Db,
-  query: Query,
+  db: Rdbms,
+  query: SqlQueryEnrichment.Query,
   output: sqlquery.Output,
-  cache: sqlquery.Cache
+  cache: SqlQueryEnrichment.Cache
 ) extends EnrichmentConf {
   def enrichment[F[_]: Monad: CreateSqlQueryEnrichment]: F[SqlQueryEnrichment[F]] =
     SqlQueryEnrichment[F](this)
@@ -181,9 +181,9 @@ trait ParseableEnrichment {
   /**
    * Tentatively parses an enrichment configuration and sends back the files that need to be cached
    * prior to the EnrichmentRegistry construction.
-   * @param config Json configuration for the enrichment
+   * @param config Json configuration for the enrichment (not self-describing)
    * @param schemaKey Version of the schema we want to run
-   * @param whether to have an enrichment conf which will produce an enrichment running locally,
+   * @param localMode whether to have an enrichment conf which will produce an enrichment running locally,
    * used for testing
    * @return the configuration for this enrichment as well as the list of files it needs cached
    */

@@ -12,6 +12,9 @@
 package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
 import io.circe.literal._
+
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer, SelfDescribingData}
+
 import org.specs2.Specification
 
 class CookieExtractorEnrichmentSpec extends Specification {
@@ -36,13 +39,29 @@ class CookieExtractorEnrichmentSpec extends Specification {
     val cookies = List("ck1", "=cv2", "ck3=", "ck4=cv4", "ck5=\"cv5\"")
     val cookieKeys = List("ck1", "", "ck3", "ck4", "ck5")
 
-    val expected = List(
-      json"""{"schema":"iglu:org.ietf/http_cookie/jsonschema/1-0-0","data":{"name":"ck1","value":null}}""",
-      json"""{"schema":"iglu:org.ietf/http_cookie/jsonschema/1-0-0","data":{"name":"","value":"cv2"}}""",
-      json"""{"schema":"iglu:org.ietf/http_cookie/jsonschema/1-0-0","data":{"name":"ck3","value":""}}""",
-      json"""{"schema":"iglu:org.ietf/http_cookie/jsonschema/1-0-0","data":{"name":"ck4","value":"cv4"}}""",
-      json"""{"schema":"iglu:org.ietf/http_cookie/jsonschema/1-0-0","data":{"name":"ck5","value":"cv5"}}"""
-    )
+    val expected =
+      List(
+        SelfDescribingData(
+          SchemaKey("org.ietf", "http_cookie", "jsonschema", SchemaVer.Full(1, 0, 0)),
+          json"""{"name":"ck1","value":null}"""
+        ),
+        SelfDescribingData(
+          SchemaKey("org.ietf", "http_cookie", "jsonschema", SchemaVer.Full(1, 0, 0)),
+          json"""{"name":"","value":"cv2"}"""
+        ),
+        SelfDescribingData(
+          SchemaKey("org.ietf", "http_cookie", "jsonschema", SchemaVer.Full(1, 0, 0)),
+          json"""{"name":"ck3","value":""}"""
+        ),
+        SelfDescribingData(
+          SchemaKey("org.ietf", "http_cookie", "jsonschema", SchemaVer.Full(1, 0, 0)),
+          json"""{"name":"ck4","value":"cv4"}"""
+        ),
+        SelfDescribingData(
+          SchemaKey("org.ietf", "http_cookie", "jsonschema", SchemaVer.Full(1, 0, 0)),
+          json"""{"name":"ck5","value":"cv5"}"""
+        )
+      )
 
     val actual = CookieExtractorEnrichment(cookieKeys)
       .extract(List("Cookie: " + cookies.mkString(";")))
