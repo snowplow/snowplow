@@ -19,16 +19,22 @@ import scala.collection.mutable.MutableList
 
 import cats.data.ValidatedNel
 import cats.implicits._
+
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode, TextNode}
+
 import com.jayway.jsonpath.{Configuration, JsonPath => JJsonPath}
 import com.jayway.jsonpath.MapFunction
-import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SchemaVer}
+
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SelfDescribingData}
+
 import io.circe._
 import io.circe.jackson._
 import io.circe.syntax._
+
 import org.apache.commons.codec.digest.DigestUtils
 
+import adapters.registry.Adapter
 import outputs.EnrichedEvent
 import serializers._
 import utils.CirceUtils
@@ -144,34 +150,21 @@ object PiiPseudonymizerEnrichment extends ParseableEnrichment {
  * effectively a scalar field in the EnrichedEvent, whereas a `json` is a "context" formatted field
  * and it can either contain a single value in the case of unstruct_event, or an array in the case
  * of derived_events and contexts.
- * @param a list of configured PiiFields
- * @param whether to emit an identification event
- * @param the pseudonymization strategy to use
+ * @param fieldList list of configured PiiFields
+ * @param emitIdentificationEvent to emit an identification event
+ * @param strategy pseudonymization strategy to use
  */
 final case class PiiPseudonymizerEnrichment(
   fieldList: List[PiiField],
   emitIdentificationEvent: Boolean,
   strategy: PiiStrategy
 ) extends Enrichment {
-  private val UnstructEventSchema = SchemaKey(
-    "com.snowplowanalytics.snowplow",
-    "unstruct_event",
-    "jsonschema",
-    SchemaVer.Full(1, 0, 0)
-  ).toSchemaUri
 
-  def transformer(event: EnrichedEvent): Unit = {
+  def transformer(event: EnrichedEvent): Option[SelfDescribingData[Json]] = {
     val modifiedFields = fieldList.flatMap(_.transform(event, strategy))
-
-    event.pii =
-      if (emitIdentificationEvent && modifiedFields.nonEmpty)
-        Json
-          .obj(
-            "schema" := UnstructEventSchema,
-            "data" := PiiModifiedFields(modifiedFields, strategy)
-          )
-          .noSpaces
-      else null
+    if (emitIdentificationEvent && modifiedFields.nonEmpty)
+      SelfDescribingData(Adapter.UnstructEvent, PiiModifiedFields(modifiedFields, strategy).asJson).some
+    else None
   }
 }
 
@@ -212,7 +205,7 @@ final case class PiiJson(
           val contextMapped = jObjectMap.map(mapContextTopFields(_, strategy))
           (
             Json.obj(contextMapped.mapValues(_._1).toList: _*),
-            contextMapped.values.map(_._2).flatten
+            contextMapped.values.flatMap(_._2)
           )
         }
         .getOrElse((parsed, List.empty[JsonModifiedField]))
@@ -229,7 +222,7 @@ final case class PiiJson(
           val updatedAndModified = array.map(getModifiedContext(_, strategy))
           (
             Json.fromValues(updatedAndModified.map(_._1)),
-            updatedAndModified.map(_._2).flatten.toList
+            updatedAndModified.flatMap(_._2).toList
           )
         case None => getModifiedContext(contexts, strategy)
       })

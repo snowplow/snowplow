@@ -11,7 +11,8 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich.common
-package enrichments.registry
+package enrichments
+package registry
 package apirequest
 
 import java.util.UUID
@@ -46,7 +47,7 @@ object ApiRequestEnrichment extends ParseableEnrichment {
 
   /**
    * Creates an ApiRequestEnrichment instance from a JValue.
-   * @param c The enrichment JSON
+   * @param c The enrichment JSON (not self-describing)
    * @param schemaKey The SchemaKey provided for the enrichment
    * Must be a supported SchemaKey for this enrichment
    * @return a configured ApiRequestEnrichment instance
@@ -114,42 +115,32 @@ final case class ApiRequestEnrichment[F[_]: Monad: HttpClient](
    */
   def lookup(
     event: EnrichedEvent,
-    derivedContexts: List[Json],
+    derivedContexts: List[SelfDescribingData[Json]],
     customContexts: List[SelfDescribingData[Json]],
     unstructEvent: Option[SelfDescribingData[Json]]
-  ): F[ValidatedNel[FailureDetails.EnrichmentStageIssue, List[Json]]] = {
-    // Note that SelfDescribingData have specific structure - it is a pair,
-    // where first element is a SchemaKey, second element is a Json
-    // with keys: `data`, `schema` and `hierarchy` and `schema` contains again SchemaKey
-    // but as nested Json. `schema` and `hierarchy` can be ignored here
-    val jsonCustomContexts = customContexts.map(_.normalize)
-    val jsonUnstructEvent = unstructEvent.map(_.normalize)
-
+  ): F[EnrichContextsComplex] = {
     val templateContext =
       Input.buildTemplateContext(
         inputs,
         event,
         derivedContexts,
-        jsonCustomContexts,
-        jsonUnstructEvent
+        customContexts,
+        unstructEvent
       )
 
-    (for {
-      context <- EitherT
-        .fromEither[F](templateContext.toEither)
-        .leftMap(
-          _.map(FailureDetails.EnrichmentFailureMessage.Simple.apply)
-        )
-      outputs <- EitherT(getOutputs(context))
-        .leftMap(
-          e =>
-            NonEmptyList
-              .one(FailureDetails.EnrichmentFailureMessage.Simple(e))
-        )
-    } yield outputs)
-      .leftMap(_.map(FailureDetails.EnrichmentFailure(enrichmentInfo, _)))
-      .leftWiden
-      .toValidated
+    val contexts: EitherT[F, NonEmptyList[String], List[SelfDescribingData[Json]]] =
+      for {
+        context <- EitherT.fromEither[F](templateContext.toEither)
+        jsons <- getOutputs(context)
+        contexts = jsons.parTraverse { json =>
+          SelfDescribingData
+            .parse(json)
+            .leftMap(e => NonEmptyList.one(s"${json.noSpaces} is not self-describing, ${e.code}"))
+        }
+        outputs <- EitherT.fromEither[F](contexts)
+      } yield outputs
+
+    contexts.leftMap(failureDetails).toValidated
   }
 
   /**
@@ -159,14 +150,21 @@ final case class ApiRequestEnrichment[F[_]: Monad: HttpClient](
    */
   private[apirequest] def getOutputs(
     validInputs: Option[Map[String, String]]
-  ): F[Either[String, List[Json]]] = {
-    val result: List[F[Either[String, Json]]] = for {
-      templateContext <- validInputs.toList
-      url <- api.buildUrl(templateContext).toList
-      output <- outputs
-      body = api.buildBody(templateContext)
-    } yield cachedOrRequest(url, body, output).map(_.leftMap(_.toString))
-    result.sequence.map(_.sequence)
+  ): EitherT[F, NonEmptyList[String], List[Json]] = {
+    import cats.instances.parallel._
+    val result: List[F[Either[Throwable, Json]]] =
+      for {
+        templateContext <- validInputs.toList
+        url <- api.buildUrl(templateContext).toList
+        output <- outputs
+        body = api.buildBody(templateContext)
+      } yield cachedOrRequest(url, body, output)
+
+    result.parTraverse { action =>
+      EitherT(action.map { result =>
+        result.leftMap(_.getMessage).toEitherNel
+      })
+    }
   }
 
   /**
@@ -204,6 +202,12 @@ final case class ApiRequestEnrichment[F[_]: Monad: HttpClient](
       json = response.flatMap(output.parseResponse)
       _ <- cache.put(key, (json, System.currentTimeMillis() / 1000))
     } yield json
+
+  private def failureDetails(errors: NonEmptyList[String]) =
+    errors.map { error =>
+      val message = FailureDetails.EnrichmentFailureMessage.Simple(error)
+      FailureDetails.EnrichmentFailure(enrichmentInfo, message): FailureDetails.EnrichmentStageIssue
+    }
 }
 
 sealed trait CreateApiRequestEnrichment[F[_]] {

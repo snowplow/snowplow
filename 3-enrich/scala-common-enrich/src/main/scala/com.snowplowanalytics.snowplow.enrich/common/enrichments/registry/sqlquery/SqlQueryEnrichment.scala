@@ -11,24 +11,22 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich.common
-package enrichments.registry
+package enrichments
+package registry
 package sqlquery
 
 import scala.collection.immutable.IntMap
 
-import cats.{Eval, Id, Monad}
+import cats.Monad
 import cats.data.{EitherT, NonEmptyList, ValidatedNel}
-import cats.effect.Sync
 import cats.implicits._
 
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SelfDescribingData}
-import com.snowplowanalytics.iglu.core.circe.implicits._
-import com.snowplowanalytics.lrumap._
 
 import com.snowplowanalytics.snowplow.badrows.FailureDetails
 
 import io.circe._
-import io.circe.generic.auto._
+import io.circe.generic.semiauto._
 
 import outputs.EnrichedEvent
 import utils.CirceUtils
@@ -56,45 +54,66 @@ object SqlQueryEnrichment extends ParseableEnrichment {
     schemaKey: SchemaKey,
     localMode: Boolean = false
   ): ValidatedNel[String, SqlQueryConf] =
-    isParseable(c, schemaKey)
-      .leftMap(e => NonEmptyList.one(e))
-      .flatMap { _ =>
-        // input ctor throws exception
-        val inputs: ValidatedNel[String, List[Input]] = Either.catchNonFatal(
-          CirceUtils.extract[List[Input]](c, "parameters", "inputs").toValidatedNel
-        ) match {
-          case Left(e) => e.getMessage.invalidNel
-          case Right(r) => r
-        }
-        // output ctor throws exception
-        val output: ValidatedNel[String, Output] = Either.catchNonFatal(
-          CirceUtils.extract[Output](c, "parameters", "output").toValidatedNel
-        ) match {
-          case Left(e) => e.getMessage.invalidNel
-          case Right(r) => r
-        }
-        (
-          inputs,
-          CirceUtils.extract[Db](c, "parameters", "database").toValidatedNel,
-          CirceUtils.extract[Query](c, "parameters", "query").toValidatedNel,
-          output,
-          CirceUtils.extract[Cache](c, "parameters", "cache").toValidatedNel
-        ).mapN { SqlQueryConf(schemaKey, _, _, _, _, _) }.toEither
+    isParseable(c, schemaKey).toEitherNel.flatMap { _ =>
+      // input ctor throws exception
+      val inputs: ValidatedNel[String, List[Input]] = Either.catchNonFatal(
+        CirceUtils.extract[List[Input]](c, "parameters", "inputs").toValidatedNel
+      ) match {
+        case Left(e) => e.getMessage.invalidNel
+        case Right(r) => r
       }
-      .toValidated
+      // output ctor throws exception
+      val output: ValidatedNel[String, Output] = Either.catchNonFatal(
+        CirceUtils.extract[Output](c, "parameters", "output").toValidatedNel
+      ) match {
+        case Left(e) => e.getMessage.invalidNel
+        case Right(r) => r
+      }
+      (
+        inputs,
+        CirceUtils.extract[Rdbms](c, "parameters", "database").toValidatedNel,
+        CirceUtils.extract[Query](c, "parameters", "query").toValidatedNel,
+        output,
+        CirceUtils.extract[Cache](c, "parameters", "cache").toValidatedNel
+      ).mapN { SqlQueryConf(schemaKey, _, _, _, _, _) }.toEither
+    }.toValidated
 
   def apply[F[_]: CreateSqlQueryEnrichment](conf: SqlQueryConf): F[SqlQueryEnrichment[F]] =
     CreateSqlQueryEnrichment[F].create(conf)
+
+  /** Just a string with SQL, not escaped */
+  final case class Query(sql: String) extends AnyVal
+
+  /** Cache configuration */
+  final case class Cache(size: Int, ttl: Int)
+
+  implicit val queryCirceDecoder: Decoder[Query] =
+    deriveDecoder[Query]
+
+  implicit val cacheCirceDecoder: Decoder[Cache] =
+    deriveDecoder[Cache]
 }
 
+/**
+ *
+ * @param schemaKey configuration schema
+ * @param inputs list of inputs, extracted from an original event
+ * @param db source DB configuration
+ * @param query string representation of prepared SQL statement
+ * @param output configuration of output context
+ * @param ttl cache TTL
+ * @param cache actual mutable LRU cache
+ * @param connection initialized DB connection (a mutable single-value cache)
+ */
 final case class SqlQueryEnrichment[F[_]: Monad: DbExecutor](
   schemaKey: SchemaKey,
   inputs: List[Input],
-  db: Db,
-  query: Query,
+  db: Rdbms,
+  query: SqlQueryEnrichment.Query,
   output: Output,
   ttl: Int,
-  cache: LruMap[F, IntMap[Input.ExtractedValue], (EitherThrowable[List[Json]], Long)]
+  cache: SqlCache[F],
+  connection: ConnectionRef[F]
 ) extends Enrichment {
   private val enrichmentInfo =
     FailureDetails.EnrichmentInformation(schemaKey, "sql-query").some
@@ -111,44 +130,25 @@ final case class SqlQueryEnrichment[F[_]: Monad: DbExecutor](
    */
   def lookup(
     event: EnrichedEvent,
-    derivedContexts: List[Json],
+    derivedContexts: List[SelfDescribingData[Json]],
     customContexts: List[SelfDescribingData[Json]],
     unstructEvent: Option[SelfDescribingData[Json]]
-  ): F[ValidatedNel[FailureDetails.EnrichmentStageIssue, List[Json]]] = {
-    val jsonCustomContexts = customContexts.map(_.normalize)
-    val jsonUnstructEvent = unstructEvent.map(_.normalize)
+  ): F[EnrichContextsComplex] = {
+    val contexts = for {
+      map <- Input
+        .buildPlaceholderMap(inputs, event, derivedContexts, customContexts, unstructEvent)
+        .toEitherT[F]
+      _ <- EitherT(DbExecutor.allPlaceholdersFilled(db, connection, query.sql, map))
+        .leftMap(NonEmptyList.one)
+      result <- map match {
+        case Some(m) =>
+          EitherT(get(m)).leftMap(NonEmptyList.one)
+        case None =>
+          EitherT.rightT[F, NonEmptyList[String]](List.empty[SelfDescribingData[Json]])
+      }
+    } yield result
 
-    val placeholderMap: Either[NonEmptyList[String], Input.PlaceholderMap] =
-      Input
-        .buildPlaceholderMap(inputs, event, derivedContexts, jsonCustomContexts, jsonUnstructEvent)
-        .toEither
-        .leftMap(_.map(_.getMessage))
-        .flatMap(m => allPlaceholdersFilled(m).leftMap(NonEmptyList.one))
-
-    placeholderMap match {
-      case Right(Some(intMap)) =>
-        EitherT(get(intMap))
-          .leftMap(
-            e =>
-              FailureDetails.EnrichmentFailure(
-                enrichmentInfo,
-                FailureDetails.EnrichmentFailureMessage
-                  .Simple(e.getMessage)
-              )
-          )
-          .leftWiden
-          .toValidatedNel
-      case Right(None) => Monad[F].pure(Nil.validNel)
-      case Left(es) =>
-        val fs = es.map(
-          e =>
-            FailureDetails.EnrichmentFailure(
-              enrichmentInfo,
-              FailureDetails.EnrichmentFailureMessage.Simple(e)
-            )
-        )
-        Monad[F].pure(fs.invalid)
-    }
+    contexts.leftMap(failureDetails).value.map(_.toValidated)
   }
 
   /**
@@ -156,7 +156,7 @@ final case class SqlQueryEnrichment[F[_]: Monad: DbExecutor](
    * @param intMap IntMap of extracted values
    * @return validated list of Self-describing contexts
    */
-  def get(intMap: IntMap[Input.ExtractedValue]): F[EitherThrowable[List[Json]]] =
+  def get(intMap: IntMap[Input.ExtractedValue]): F[Either[String, List[SelfDescribingData[Json]]]] =
     for {
       gotten <- cache.get(intMap)
       res <- gotten match {
@@ -165,11 +165,13 @@ final case class SqlQueryEnrichment[F[_]: Monad: DbExecutor](
           else put(intMap)
         case None => put(intMap)
       }
-    } yield res
+    } yield res.leftMap(_.getMessage)
 
-  private def put(intMap: IntMap[Input.ExtractedValue]): F[EitherThrowable[List[Json]]] =
+  private def put(
+    intMap: IntMap[Input.ExtractedValue]
+  ): F[Either[Throwable, List[SelfDescribingData[Json]]]] =
     for {
-      res <- query(intMap)
+      res <- query(intMap).value
       _ <- cache.put(intMap, (res, System.currentTimeMillis() / 1000))
     } yield res
 
@@ -179,113 +181,19 @@ final case class SqlQueryEnrichment[F[_]: Monad: DbExecutor](
    * prepared statement
    * @return validated list of Self-describing contexts
    */
-  def query(intMap: IntMap[Input.ExtractedValue]): F[EitherThrowable[List[Json]]] =
-    (for {
-      sqlQuery <- EitherT.fromEither[F](db.createStatement(query.sql, intMap))
-      resultSet <- EitherT(db.execute[F](sqlQuery))
-      context <- EitherT.fromEither[F](output.convert(resultSet))
-    } yield context).value
+  def query(
+    intMap: IntMap[Input.ExtractedValue]
+  ): EitherT[F, Throwable, List[SelfDescribingData[Json]]] =
+    for {
+      sqlQuery <- DbExecutor.createStatement(db, connection, query.sql, intMap)
+      resultSet <- DbExecutor[F].execute(sqlQuery)
+      context <- DbExecutor[F].convert(resultSet, output.json.propertyNames)
+      result <- output.envelope(context).toEitherT[F]
+    } yield result
 
-  /**
-   * Transform [[Input.PlaceholderMap]] to None if not enough input values were extracted
-   * This prevents db from start building a statement while not failing event enrichment
-   * @param placeholderMap some IntMap with extracted values or None if it is known already that not
-   * all values were extracted
-   * @return Some unchanged value if all placeholder were filled, None otherwise
-   */
-  private def allPlaceholdersFilled(
-    placeholderMap: Input.PlaceholderMap
-  ): Either[String, Input.PlaceholderMap] =
-    getPlaceholderCount.map { placeholderCount =>
-      placeholderMap match {
-        case Some(intMap) if intMap.keys.size == placeholderCount => Some(intMap)
-        case _ => None
-      }
+  private def failureDetails(errors: NonEmptyList[String]) =
+    errors.map { error =>
+      val message = FailureDetails.EnrichmentFailureMessage.Simple(error)
+      FailureDetails.EnrichmentFailure(enrichmentInfo, message): FailureDetails.EnrichmentStageIssue
     }
-
-  /** Stored amount of ?-signs in query.sql. Initialized once */
-  private var lastPlaceholderCount: Either[Throwable, Int] =
-    InvalidStateException("SQL Query Enrichment: placeholderCount hasn't been initialized").asLeft
-
-  /**
-   * If lastPlaceholderCount is successful return it
-   * If it's unsucessfult - try to count save result for future use
-   */
-  def getPlaceholderCount: Either[String, Int] =
-    lastPlaceholderCount
-      .orElse {
-        val newCount = db.getPlaceholderCount(query.sql)
-        lastPlaceholderCount = newCount
-        newCount.leftMap(_.toString)
-      }
-}
-
-sealed trait CreateSqlQueryEnrichment[F[_]] {
-  def create(conf: SqlQueryConf): F[SqlQueryEnrichment[F]]
-}
-
-object CreateSqlQueryEnrichment {
-  def apply[F[_]](implicit ev: CreateSqlQueryEnrichment[F]): CreateSqlQueryEnrichment[F] = ev
-
-  implicit def syncCreateSqlQueryEnrichment[F[_]: Sync: DbExecutor](
-    implicit CLM: CreateLruMap[F, IntMap[Input.ExtractedValue], (EitherThrowable[List[Json]], Long)]
-  ): CreateSqlQueryEnrichment[F] = new CreateSqlQueryEnrichment[F] {
-    override def create(conf: SqlQueryConf): F[SqlQueryEnrichment[F]] =
-      CLM
-        .create(conf.cache.size)
-        .map(
-          c =>
-            SqlQueryEnrichment(
-              conf.schemaKey,
-              conf.inputs,
-              conf.db,
-              conf.query,
-              conf.output,
-              conf.cache.ttl,
-              c
-            )
-        )
-  }
-
-  implicit def evalCreateSqlQueryEnrichment(
-    implicit CLM: CreateLruMap[Eval, IntMap[Input.ExtractedValue], (EitherThrowable[List[Json]], Long)],
-    DB: DbExecutor[Eval]
-  ): CreateSqlQueryEnrichment[Eval] = new CreateSqlQueryEnrichment[Eval] {
-    override def create(conf: SqlQueryConf): Eval[SqlQueryEnrichment[Eval]] =
-      CLM
-        .create(conf.cache.size)
-        .map(
-          c =>
-            SqlQueryEnrichment(
-              conf.schemaKey,
-              conf.inputs,
-              conf.db,
-              conf.query,
-              conf.output,
-              conf.cache.ttl,
-              c
-            )
-        )
-  }
-
-  implicit def idCreateSqlQueryEnrichment(
-    implicit CLM: CreateLruMap[Id, IntMap[Input.ExtractedValue], (EitherThrowable[List[Json]], Long)],
-    DB: DbExecutor[Id]
-  ): CreateSqlQueryEnrichment[Id] = new CreateSqlQueryEnrichment[Id] {
-    override def create(conf: SqlQueryConf): Id[SqlQueryEnrichment[Id]] =
-      CLM
-        .create(conf.cache.size)
-        .map(
-          c =>
-            SqlQueryEnrichment(
-              conf.schemaKey,
-              conf.inputs,
-              conf.db,
-              conf.query,
-              conf.output,
-              conf.cache.ttl,
-              c
-            )
-        )
-  }
 }

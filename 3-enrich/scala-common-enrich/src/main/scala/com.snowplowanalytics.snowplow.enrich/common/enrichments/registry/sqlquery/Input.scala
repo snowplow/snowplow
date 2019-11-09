@@ -18,10 +18,14 @@ import java.sql.PreparedStatement
 import scala.collection.immutable.IntMap
 import scala.util.control.NonFatal
 
-import cats.data.ValidatedNel
+import cats.data.{EitherNel, ValidatedNel}
 import cats.data.Validated._
 import cats.implicits._
-import io.circe._
+
+import io.circe.{Json => JSON, Decoder, DecodingFailure}
+
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SelfDescribingData}
+import com.snowplowanalytics.snowplow.badrows.igluSchemaCriterionDecoder
 
 import utils.JsonPath._
 import outputs.EnrichedEvent
@@ -30,126 +34,45 @@ import outputs.EnrichedEvent
  * Container for key with one (and only one) of possible input sources
  * Basically, represents a key for future template context and way to get value
  * out of EnrichedEvent, custom context, derived event or unstruct event.
- * @param placeholder extracted key
- * @param pojo optional pojo source to take straight from EnrichedEvent
- * @param json optional JSON source to take from context or unstruct event
  */
-final case class Input(
-  placeholder: Int,
-  pojo: Option[PojoInput],
-  json: Option[JsonInput]
-) {
-  import Input._
-
-  // Constructor validation for mapping JSON to `Input` instance
-  (pojo, json) match {
-    case (None, None) =>
-      throw new Exception("Input must represent either json OR pojo, none present")
-    case (Some(_), Some(_)) =>
-      throw new Exception("Input must represent either json OR pojo, both present")
-    case _ => ()
-  }
+sealed trait Input extends Product with Serializable {
+  def placeholder: Int
 
   /**
-   * Get placeholder/input value pair from specific `event` for composing
-   * @param event currently enriching event
-   * @return validated pair of placeholder's postition and extracted value ready to be set on
-   * PreparedStatement
-   */
-  def getFromEvent(event: EnrichedEvent): Either[Throwable, (Int, Option[ExtractedValue])] =
-    pojo match {
-      case Some(pojoInput) =>
-        getFieldType(pojoInput.field) match {
-          case Some(placeholderType) =>
-            try {
-              val anyRef = event.getClass.getMethod(pojoInput.field).invoke(event)
-              val option = Option(anyRef.asInstanceOf[placeholderType.PlaceholderType])
-              (placeholder, option.map(placeholderType.Value.apply)).asRight
-            } catch {
-              case NonFatal(e) =>
-                InvalidInput("SQL Query Enrichment: Extracting from POJO failed: " + e.toString).asLeft
-            }
-          case None =>
-            InvalidInput("SQL Query Enrichment: Wrong POJO input field was specified").asLeft
-        }
-
-      case None => (placeholder, none).asRight
-    }
-
-  /**
-   * Get placeholder-value pair input from list of JSON contexts
+   * Get placeholder-value pair input from list of JSON payloads or Event POJO
+   * @param event Event POJO with classic parameters
    * @param derived list of self-describing JObjects representing derived contexts
    * @param custom list of self-describing JObjects representing custom contexts
    * @param unstruct optional self-describing JObject representing unstruct event
    * @return validated pair of placeholder's postition and extracted value ready to be setted on
    * PreparedStatement
    */
-  def getFromJson(
-    derived: List[Json],
-    custom: List[Json],
-    unstruct: Option[Json]
-  ): ValidatedNel[Throwable, (Int, Option[ExtractedValue])] =
-    json match {
-      case Some(jsonInput) =>
-        jsonInput
+  def pull(
+    event: EnrichedEvent,
+    derived: List[SelfDescribingData[JSON]],
+    custom: List[SelfDescribingData[JSON]],
+    unstruct: Option[SelfDescribingData[JSON]]
+  ): ValidatedNel[Throwable, (Int, Option[Input.ExtractedValue])] =
+    this match {
+      case json: Input.Json =>
+        json
           .extract(derived, custom, unstruct)
-          .map(json => (placeholder, json.flatMap(extractFromJson)))
-      case None => (placeholder, none).validNel
+          .map(json => (placeholder, json.flatMap(Input.extractFromJson)))
+      case pojoInput: Input.Pojo =>
+        Input.getFieldType(pojoInput.field) match {
+          case Some(placeholderType) =>
+            try {
+              val anyRef = event.getClass.getMethod(pojoInput.field).invoke(event)
+              val option = Option(anyRef.asInstanceOf[placeholderType.PlaceholderType])
+              (placeholder, option.map(placeholderType.Value.apply)).validNel
+            } catch {
+              case NonFatal(e) =>
+                InvalidInput("SQL Query Enrichment: Extracting from POJO failed: " + e.toString).invalidNel
+            }
+          case None =>
+            InvalidInput("SQL Query Enrichment: Wrong POJO input field was specified").invalidNel
+        }
     }
-}
-
-/**
- * Describes how to take key from POJO source
- * @param field `EnrichedEvent` object field
- */
-final case class PojoInput(field: String)
-
-/**
- * @param field where to get this json, one of unstruct_event, contexts or derived_contexts
- * @param schemaCriterion self-describing JSON you are looking for in the given JSON field.
- * You can specify only the SchemaVer MODEL (e.g. 1-), MODEL plus REVISION (e.g. 1-1-) etc
- * @param jsonPath JSON Path statement to navigate to the field inside the JSON that you want to
- * use as the input
- */
-final case class JsonInput(
-  field: String,
-  schemaCriterion: String,
-  jsonPath: String
-) {
-  import Input._
-
-  /**
-   * Extract JSON from contexts or unstruct event
-   * @param derived list of derived contexts
-   * @param custom list of custom contexts
-   * @param unstruct optional unstruct event
-   * @return validated optional JSON failure means fatal error which should abort enrichment
-   * none means not-found value
-   */
-  def extract(
-    derived: List[Json],
-    custom: List[Json],
-    unstruct: Option[Json]
-  ): ValidatedNel[Throwable, Option[Json]] = {
-    val validatedJson = field match {
-      case "derived_contexts" => getBySchemaCriterion(derived, schemaCriterion).validNel
-      case "contexts" => getBySchemaCriterion(custom, schemaCriterion).validNel
-      case "unstruct_event" => getBySchemaCriterion(unstruct.toList, schemaCriterion).validNel
-      case other =>
-        InvalidInput(
-          s"SQL Query Enrichment: wrong field [$other] passed to Input.getFromJson. " +
-            "Should be one of: derived_contexts, contexts, unstruct_event"
-        ).invalidNel
-    }
-
-    val validatedJsonPath = compileQuery(jsonPath).leftMap(new Exception(_)).toValidatedNel
-
-    (validatedJsonPath, validatedJson).mapN { (jsonPath, validJson) =>
-      validJson
-        .map(jsonPath.circeQuery) // Query context/UE (always valid)
-        .map(wrapArray) // Check if array
-    }
-  }
 }
 
 /**
@@ -157,8 +80,90 @@ final case class JsonInput(
  * building
  */
 object Input {
-  private val criterionRegex =
-    "^(iglu:[a-zA-Z0-9-_.]+/[a-zA-Z0-9-_]+/[a-zA-Z0-9-_]+/)([1-9][0-9]*|\\*)-((?:0|[1-9][0-9]*)|\\*)-((?:0|[1-9][0-9]*)|\\*)$".r
+
+  /**
+   * Describes how to take key from POJO source
+   * @param field `EnrichedEvent` object field
+   */
+  final case class Pojo(placeholder: Int, field: String) extends Input
+
+  /**
+   * @param field where to get this json, one of unstruct_event, contexts or derived_contexts
+   * @param schemaCriterion self-describing JSON you are looking for in the given JSON field.
+   * You can specify only the SchemaVer MODEL (e.g. 1-), MODEL plus REVISION (e.g. 1-1-) etc
+   * @param jsonPath JSON Path statement to navigate to the field inside the JSON that you want to
+   * use as the input
+   */
+  final case class Json(
+    placeholder: Int,
+    field: String,
+    schemaCriterion: SchemaCriterion,
+    jsonPath: String
+  ) extends Input {
+
+    /**
+     * Extract JSON from contexts or unstruct event
+     * @param derived list of derived contexts
+     * @param custom list of custom contexts
+     * @param unstruct optional unstruct event
+     * @return validated optional JSON failure means fatal error which should abort enrichment
+     * none means not-found value
+     */
+    def extract(
+      derived: List[SelfDescribingData[JSON]],
+      custom: List[SelfDescribingData[JSON]],
+      unstruct: Option[SelfDescribingData[JSON]]
+    ): ValidatedNel[Throwable, Option[JSON]] = {
+      val validatedJson = field match {
+        case "derived_contexts" => getBySchemaCriterion(derived, schemaCriterion).validNel
+        case "contexts" => getBySchemaCriterion(custom, schemaCriterion).validNel
+        case "unstruct_event" => getBySchemaCriterion(unstruct.toList, schemaCriterion).validNel
+        case other =>
+          InvalidInput(
+            s"SQL Query Enrichment: wrong field [$other] passed to Input.getFromJson. " +
+              "Should be one of: derived_contexts, contexts, unstruct_event"
+          ).invalidNel
+      }
+
+      val validatedJsonPath = compileQuery(jsonPath).leftMap(new Exception(_)).toValidatedNel
+
+      (validatedJsonPath, validatedJson).mapN { (jsonPath, validJson) =>
+        validJson
+          .map(jsonPath.circeQuery) // Query context/UE (always valid)
+          .map(wrapArray) // Check if array
+      }
+    }
+  }
+
+  implicit val inputCirceDecoder: Decoder[Input] =
+    Decoder.instance { cur =>
+      for {
+        obj <- cur.value.as[Map[String, JSON]]
+        placeholder <- obj
+          .get("placeholder")
+          .toRight(DecodingFailure("Placeholder is missing", cur.history))
+        placeholderInt <- placeholder
+          .as[Int]
+          .ensure(DecodingFailure("Placeholder must be greater than 1", cur.history))(s => s >= 1)
+        pojo = obj.get("pojo").map { pojoJson =>
+          pojoJson.hcursor.downField("field").as[String].map(field => Pojo(placeholderInt, field))
+        }
+        json = obj.get("json").map { jsonJson =>
+          for {
+            field <- jsonJson.hcursor.downField("field").as[String]
+            criterion <- jsonJson.hcursor.downField("schemaCriterion").as[SchemaCriterion]
+            jsonPath <- jsonJson.hcursor.downField("jsonPath").as[String]
+          } yield Json(placeholderInt, field, criterion, jsonPath)
+        }
+        _ <- if (json.isDefined && pojo.isDefined)
+          DecodingFailure("Either json or pojo input must be specified, both provided", cur.history).asLeft
+        else ().asRight
+        result <- pojo
+          .orElse(json)
+          .toRight(DecodingFailure("Either json or pojo input must be specified", cur.history))
+          .flatten
+      } yield result
+    }
 
   /**
    * Map all properties inside EnrichedEvent to textual representations of their types
@@ -202,30 +207,14 @@ object Input {
    * Get data out of all JSON contexts matching `schemaCriterion`
    * If more than one context match schemaCriterion, first will be picked
    * @param contexts list of self-describing JSON contexts attached to event
-   * @param schemaCriterion part of URI
+   * @param criterion part of URI
    * @return first (optional) self-desc JSON matched `schemaCriterion`
    */
-  def getBySchemaCriterion(contexts: List[Json], schemaCriterion: String): Option[Json] =
-    criterionMatch(schemaCriterion).flatMap { criterion =>
-      val matched = contexts.filter { context =>
-        context.hcursor.get[String]("schema").toOption.map(_.startsWith(criterion)).getOrElse(false)
-      }
-      matched.map(_.hcursor.downField("data").focus).flatten.headOption
-    }
-
-  /**
-   * Transform Schema Criterion to plain string without asterisks
-   * @param schemaCriterion schema criterion of format "iglu:vendor/name/schematype/1-*-*"
-   * @return schema criterion of format iglu:vendor/name/schematype/1-
-   */
-  private def criterionMatch(schemaCriterion: String): Option[String] =
-    schemaCriterion match {
-      case criterionRegex(schema, "*", _, _) => s"$schema".some
-      case criterionRegex(schema, m, "*", _) => s"$schema$m-".some
-      case criterionRegex(schema, m, rev, "*") => s"$schema$m-$rev-".some
-      case criterionRegex(schema, m, rev, add) => s"$schema$m-$rev-$add".some
-      case _ => None
-    }
+  def getBySchemaCriterion(
+    contexts: List[SelfDescribingData[JSON]],
+    criterion: SchemaCriterion
+  ): Option[JSON] =
+    contexts.find(context => criterion.matches(context.schema)).map(_.data)
 
   /**
    * Build IntMap with all sequental input values. It returns Failure if **any** of inputs were
@@ -241,23 +230,18 @@ object Input {
   def buildPlaceholderMap(
     inputs: List[Input],
     event: EnrichedEvent,
-    derivedContexts: List[Json],
-    customContexts: List[Json],
-    unstructEvent: Option[Json]
-  ): ValidatedNel[Throwable, PlaceholderMap] = {
-    val eventInputs = inputs.map(_.getFromEvent(event)).map(_.toValidatedNel)
-    val jsonInputs = inputs.map(_.getFromJson(derivedContexts, customContexts, unstructEvent))
-
-    val pairs = (eventInputs ++ jsonInputs).sequence
+    derivedContexts: List[SelfDescribingData[JSON]],
+    customContexts: List[SelfDescribingData[JSON]],
+    unstructEvent: Option[SelfDescribingData[JSON]]
+  ): EitherNel[String, PlaceholderMap] =
+    inputs
+      .traverse(_.pull(event, derivedContexts, customContexts, unstructEvent))
       .map(_.collect { case (position, Some(value)) => (position, value) })
-
-    // Fail if some indexes are missing
-    pairs.map(list => IntMap(list: _*)) match {
-      case Valid(map) if isConsistent(map) => Some(map).valid
-      case Valid(_) => None.valid
-      case Invalid(err) => err.invalid
+      .map(list => IntMap(list: _*)) match {
+      case Valid(map) if isConsistent(map) => Some(map).asRight
+      case Valid(_) => None.asRight
+      case Invalid(err) => err.map(_.getMessage).asLeft
     }
-  }
 
   /**
    * Check if there any gaps in keys of IntMap (like 1,2,4,5) and keys contain "1", so they fill
@@ -271,7 +255,7 @@ object Input {
       case ((prev, accum), cur) =>
         (cur, (prev + 1) == cur && accum)
     }
-    result && sortedKeys.headOption.map(_ == 1).getOrElse(true)
+    result && sortedKeys.headOption.forall(_ == 1)
   }
 
   /**
@@ -288,7 +272,7 @@ object Input {
    * @param json JSON, probably extracted by JSONPath
    * @return Some runtime-typed representation of JSON value or None if it is object, array, null
    */
-  def extractFromJson(json: Json): Option[ExtractedValue] = json.fold(
+  def extractFromJson(json: JSON): Option[ExtractedValue] = json.fold(
     none,
     b => BooleanPlaceholder.Value(b).some,
     n =>

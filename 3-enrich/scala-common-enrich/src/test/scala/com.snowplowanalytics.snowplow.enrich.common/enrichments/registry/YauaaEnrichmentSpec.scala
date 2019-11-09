@@ -14,9 +14,13 @@ package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 package registry
 
-import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer, SelfDescribingData}
+
 import io.circe.parser._
+import io.circe.literal._
+
 import nl.basjes.parse.useragent.UserAgent
+
 import org.specs2.matcher.ValidatedMatchers
 import org.specs2.mutable.Specification
 
@@ -182,16 +186,19 @@ class YauaaEnrichmentSpec extends Specification with ValidatedMatchers {
     }
 
     "create a JSON with the schema and the data" >> {
-      val expected = parse(
-        s"""{"schema":"${yauaaEnrichment.contextSchema}","data":{"deviceBrand":"Samsung","deviceName":"Samsung SM-G960F","layoutEngineNameVersion":"Blink 62.0","operatingSystemNameVersion":"Android 8.0.0","operatingSystemVersionBuild":"R16NW","layoutEngineNameVersionMajor":"Blink 62","operatingSystemName":"Android","agentVersionMajor":"62","layoutEngineVersionMajor":"62","deviceClass":"Phone","agentNameVersionMajor":"Chrome 62","operatingSystemClass":"Mobile","layoutEngineName":"Blink","agentName":"Chrome","agentVersion":"62.0.3202.84","layoutEngineClass":"Browser","agentNameVersion":"Chrome 62.0.3202.84","operatingSystemVersion":"8.0.0","agentClass":"Browser","layoutEngineVersion":"62.0"}}"""
-      ).toOption.get
-      val actual = yauaaEnrichment
-        .getYauaaContext(uaGalaxyS9)
+      val expected =
+        SelfDescribingData(
+          yauaaEnrichment.outputSchema,
+          json"""{"deviceBrand":"Samsung","deviceName":"Samsung SM-G960F","layoutEngineNameVersion":"Blink 62.0","operatingSystemNameVersion":"Android 8.0.0","operatingSystemVersionBuild":"R16NW","layoutEngineNameVersionMajor":"Blink 62","operatingSystemName":"Android","agentVersionMajor":"62","layoutEngineVersionMajor":"62","deviceClass":"Phone","agentNameVersionMajor":"Chrome 62","operatingSystemClass":"Mobile","layoutEngineName":"Blink","agentName":"Chrome","agentVersion":"62.0.3202.84","layoutEngineClass":"Browser","agentNameVersion":"Chrome 62.0.3202.84","operatingSystemVersion":"8.0.0","agentClass":"Browser","layoutEngineVersion":"62.0"}"""
+        )
+      val actual = yauaaEnrichment.getYauaaContext(uaGalaxyS9)
       actual shouldEqual expected
 
-      val defaultJson = parse(
-        s"""{"schema":"${yauaaEnrichment.contextSchema}","data":{"deviceClass":"${yauaaEnrichment.defaultDeviceClass}"}}"""
-      ).toOption.get
+      val defaultJson =
+        SelfDescribingData(
+          yauaaEnrichment.outputSchema,
+          json"""{"deviceClass":"UNKNOWN"}"""
+        )
       yauaaEnrichment.getYauaaContext("") shouldEqual defaultJson
     }
   }

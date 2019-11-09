@@ -19,9 +19,12 @@ import java.net.URI
 import cats.Functor
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.implicits._
+
 import com.snowplowanalytics.maxmind.iplookups._
 import com.snowplowanalytics.maxmind.iplookups.model._
+
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
+
 import io.circe._
 
 import utils.CirceUtils

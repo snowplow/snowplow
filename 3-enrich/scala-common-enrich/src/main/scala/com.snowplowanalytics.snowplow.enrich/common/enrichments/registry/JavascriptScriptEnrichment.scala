@@ -15,11 +15,16 @@ package enrichments.registry
 
 import scala.util.control.NonFatal
 
-import cats.data.ValidatedNel
+import cats.data.{NonEmptyList, ValidatedNel}
 import cats.implicits._
-import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
-import com.snowplowanalytics.snowplow.badrows._
+
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SelfDescribingData}
+import com.snowplowanalytics.iglu.core.circe.implicits._
+
+import com.snowplowanalytics.snowplow.badrows.FailureDetails
+
 import org.mozilla.javascript._
+
 import io.circe._
 import io.circe.parser._
 
@@ -100,7 +105,9 @@ final case class JavascriptScriptEnrichment(schemaKey: SchemaKey, script: Script
    * @param event The enriched event to pass into our process function
    * @return either a JSON array of contexts on Success, or an error String on Failure
    */
-  def process(event: EnrichedEvent): Either[FailureDetails.EnrichmentStageIssue, List[Json]] =
+  def process(
+    event: EnrichedEvent
+  ): Either[FailureDetails.EnrichmentStageIssue, List[SelfDescribingData[Json]]] =
     process(script, event)
 
   import JavascriptScriptEnrichment.Variables
@@ -114,7 +121,7 @@ final case class JavascriptScriptEnrichment(schemaKey: SchemaKey, script: Script
   private[registry] def process(
     script: Script,
     event: EnrichedEvent
-  ): Either[FailureDetails.EnrichmentStageIssue, List[Json]] = {
+  ): Either[FailureDetails.EnrichmentStageIssue, List[SelfDescribingData[Json]]] = {
     val cx = Context.enter()
     val scope = cx.initStandardObjects
 
@@ -143,7 +150,24 @@ final case class JavascriptScriptEnrichment(schemaKey: SchemaKey, script: Script
             parse(obj.asInstanceOf[String]) match {
               case Right(js) =>
                 js.asArray match {
-                  case Some(array) => array.toList.asRight
+                  case Some(array) =>
+                    array
+                      .parTraverse(
+                        json =>
+                          SelfDescribingData
+                            .parse(json)
+                            .leftMap(error => (error, json))
+                            .leftMap(NonEmptyList.one)
+                      )
+                      .map(_.toList)
+                      .leftMap { s =>
+                        val msg = s.toList.map {
+                          case (error, json) => s"${json.noSpaces}. ${error.code}"
+                        }.mkString
+                        FailureDetails.EnrichmentFailureMessage.Simple(
+                          s"Resulting contexts are not self-desribing: $msg"
+                        )
+                      }
                   case None =>
                     val msg = s"JavaScript script must return an Array; got [$obj]"
                     FailureDetails.EnrichmentFailureMessage

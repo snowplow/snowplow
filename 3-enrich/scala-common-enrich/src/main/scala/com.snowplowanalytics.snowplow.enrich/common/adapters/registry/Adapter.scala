@@ -44,22 +44,6 @@ import utils.{HttpClient, JsonUtils => JU}
 
 trait Adapter {
 
-  // The Iglu schema URI for a Snowplow unstructured event
-  private val UnstructEvent = SchemaKey(
-    "com.snowplowanalytics.snowplow",
-    "unstruct_event",
-    "jsonschema",
-    SchemaVer.Full(1, 0, 0)
-  )
-
-  // The Iglu schema URI for a Snowplow custom contexts
-  private val Contexts = SchemaKey(
-    "com.snowplowanalytics.snowplow",
-    "contexts",
-    "jsonschema",
-    SchemaVer.Full(1, 0, 1)
-  )
-
   // Signature for a Formatter function
   type FormatterFunc = (RawEventParameters) => Json
 
@@ -203,7 +187,7 @@ trait Adapter {
    * @return the self-describing unstructured event
    */
   protected[registry] def toUnstructEvent(eventJson: SelfDescribingData[Json]): Json =
-    SelfDescribingData(UnstructEvent, eventJson.asJson).asJson
+    SelfDescribingData(Adapter.UnstructEvent, eventJson.asJson).asJson
 
   /**
    * Creates a Snowplow custom contexts entity by nesting the provided JValue in a self-describing
@@ -221,7 +205,7 @@ trait Adapter {
    * @return the self-describing custom contexts
    */
   protected[registry] def toContexts(contextJsons: List[SelfDescribingData[Json]]): Json =
-    SelfDescribingData(Contexts, Json.arr(contextJsons.map(_.asJson): _*)).asJson
+    SelfDescribingData(Adapter.Contexts, Json.arr(contextJsons.map(_.asJson): _*)).asJson
 
   /**
    * Fabricates a Snowplow unstructured event from the supplied parameters. Note that to be a
@@ -425,4 +409,23 @@ trait Adapter {
           case None => json
         }
     }
+}
+
+object Adapter {
+
+  /** The Iglu schema URI for a Snowplow unstructured event */
+  val UnstructEvent = SchemaKey(
+    "com.snowplowanalytics.snowplow",
+    "unstruct_event",
+    "jsonschema",
+    SchemaVer.Full(1, 0, 0)
+  )
+
+  /** The Iglu schema URI for a Snowplow custom contexts */
+  val Contexts = SchemaKey(
+    "com.snowplowanalytics.snowplow",
+    "contexts",
+    "jsonschema",
+    SchemaVer.Full(1, 0, 1)
+  )
 }

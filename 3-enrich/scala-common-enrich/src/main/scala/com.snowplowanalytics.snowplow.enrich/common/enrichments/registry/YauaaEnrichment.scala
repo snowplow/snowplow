@@ -17,9 +17,12 @@ import scala.collection.JavaConverters._
 
 import cats.data.ValidatedNel
 import cats.syntax.either._
-import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
+
 import io.circe.Json
 import io.circe.syntax._
+
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SchemaVer, SelfDescribingData}
+
 import nl.basjes.parse.useragent.{UserAgent, UserAgentAnalyzer}
 
 import utils.CirceUtils
@@ -77,7 +80,7 @@ final case class YauaaEnrichment(cacheSize: Option[Int]) extends Enrichment {
     a
   }
 
-  val contextSchema = "iglu:nl.basjes/yauaa_context/jsonschema/1-0-0"
+  val outputSchema = SchemaKey("nl.basjes", "yauaa_context", "jsonschema", SchemaVer.Full(1, 0, 0))
 
   val defaultDeviceClass = "UNKNOWN"
   val defaultResult = Map(decapitalize(UserAgent.DEVICE_CLASS) -> defaultDeviceClass)
@@ -87,10 +90,8 @@ final case class YauaaEnrichment(cacheSize: Option[Int]) extends Enrichment {
    * @param userAgent User agent of the event.
    * @return Attributes retrieved thanks to the user agent (if any), as self-describing JSON.
    */
-  def getYauaaContext(userAgent: String): Json = {
-    val parsed = parseUserAgent(userAgent)
-    addSchema(parsed.asJson)
-  }
+  def getYauaaContext(userAgent: String): SelfDescribingData[Json] =
+    SelfDescribingData(outputSchema, parseUserAgent(userAgent).asJson)
 
   /** Gets the map of attributes retrieved by YAUAA from the user agent.
    * @return Map with all the fields extracted by YAUAA by parsing the user agent.
@@ -106,16 +107,4 @@ final case class YauaaEnrichment(cacheSize: Option[Int]) extends Enrichment {
           .map(field => decapitalize(field) -> parsedUA.getValue(field))
           .toMap
     }
-
-  /**
-   * Add schema URI on Iglu to JSON Object
-   *
-   * @param context Yauaa context as JSON Object
-   * @return Self-describing JSON with the result of YAUAA enrichment.
-   */
-  private def addSchema(context: Json): Json =
-    Json.obj(
-      "schema" := contextSchema,
-      "data" := context
-    )
 }

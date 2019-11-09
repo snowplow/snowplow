@@ -15,7 +15,7 @@ package utils
 
 import java.util.concurrent.TimeUnit
 
-import cats.Eval
+import cats.{Eval, Id}
 import cats.effect.{Clock => CEClock}
 
 object Clock {
@@ -24,5 +24,12 @@ object Clock {
       Eval.later(unit.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS))
     final def monotonic(unit: TimeUnit): Eval[Long] =
       Eval.later(unit.convert(System.nanoTime(), TimeUnit.NANOSECONDS))
+  }
+
+  implicit val idClock: CEClock[Id] = new CEClock[Id] {
+    final def realTime(unit: TimeUnit): Id[Long] =
+      unit.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+    final def monotonic(unit: TimeUnit): Id[Long] =
+      unit.convert(System.nanoTime(), TimeUnit.NANOSECONDS)
   }
 }

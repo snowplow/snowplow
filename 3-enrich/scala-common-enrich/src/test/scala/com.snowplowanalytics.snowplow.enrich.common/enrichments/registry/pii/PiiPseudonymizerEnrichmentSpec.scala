@@ -15,21 +15,28 @@ package enrichments
 package registry
 package pii
 
-import cats.Eval
+import cats.Id
 import cats.data.ValidatedNel
 import cats.syntax.option._
 import cats.syntax.validated._
+
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.Resolver
 import com.snowplowanalytics.iglu.client.resolver.registries.Registry
 import com.snowplowanalytics.iglu.client.validator.CirceValidator
+
 import com.snowplowanalytics.iglu.core._
-import com.snowplowanalytics.snowplow.badrows._
+
+import com.snowplowanalytics.snowplow.badrows.{BadRow, Processor}
+
 import io.circe.Json
 import io.circe.literal._
 import io.circe.parser._
+
 import org.joda.time.DateTime
+
 import org.apache.commons.codec.digest.DigestUtils
+
 import org.specs2.Specification
 import org.specs2.matcher.ValidatedMatchers
 
@@ -51,7 +58,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
   """
 
   def commonSetup(
-    enrichmentReg: EnrichmentRegistry[Eval]
+    enrichmentReg: EnrichmentRegistry[Id]
   ): List[ValidatedNel[BadRow, EnrichedEvent]] = {
     val context =
       CollectorPayload.Context(
@@ -138,9 +145,9 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
       List("com.snowplowanalytics.snowplow", "com.acme", "com.mailgun")
     )
     val reg = Registry.Embedded(regConf, path = "/iglu-schemas")
-    val client = Client[Eval, Json](Resolver(List(reg), None), CirceValidator)
+    val client = Client[Id, Json](Resolver(List(reg), None), CirceValidator)
     EtlPipeline
-      .processEvents[Eval](
+      .processEvents[Id](
         new AdapterRegistry(),
         enrichmentReg,
         client,
@@ -148,7 +155,6 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
         new DateTime(1500000000L),
         input
       )
-      .value
   }
 
   private val ipEnrichment = {
@@ -171,11 +177,11 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
       "jsonschema",
       SchemaVer.Full(2, 0, 0)
     )
-    IpLookupsEnrichment.parse(js, schemaKey, true).toOption.get.enrichment[Eval].value
+    IpLookupsEnrichment.parse(js, schemaKey, true).toOption.get.enrichment[Id]
   }
 
   def e1 = {
-    val enrichmentReg = EnrichmentRegistry[Eval](
+    val enrichmentReg = EnrichmentRegistry[Id](
       ipLookups = ipEnrichment.some,
       piiPseudonymizer = PiiPseudonymizerEnrichment(
         List(
@@ -222,7 +228,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
   }
 
   def e2 = {
-    val enrichmentReg = EnrichmentRegistry[Eval](
+    val enrichmentReg = EnrichmentRegistry[Id](
       ipLookups = ipEnrichment.some,
       piiPseudonymizer = PiiPseudonymizerEnrichment(
         List(
@@ -303,7 +309,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
   }
 
   def e3 = {
-    val enrichmentReg = EnrichmentRegistry[Eval](
+    val enrichmentReg = EnrichmentRegistry[Id](
       ipLookups = ipEnrichment.some,
       piiPseudonymizer = PiiPseudonymizerEnrichment(
         List(
@@ -347,7 +353,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
   }
 
   def e4 = {
-    val enrichmentReg = EnrichmentRegistry[Eval](
+    val enrichmentReg = EnrichmentRegistry[Id](
       ipLookups = ipEnrichment.some,
       piiPseudonymizer = PiiPseudonymizerEnrichment(
         List(
@@ -394,7 +400,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
   }
 
   def e5 = {
-    val enrichmentReg = EnrichmentRegistry[Eval](
+    val enrichmentReg = EnrichmentRegistry[Id](
       ipLookups = ipEnrichment.some,
       piiPseudonymizer = PiiPseudonymizerEnrichment(
         List(
@@ -440,7 +446,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
   }
 
   def e6 = {
-    val enrichmentReg = EnrichmentRegistry[Eval](
+    val enrichmentReg = EnrichmentRegistry[Id](
       ipLookups = ipEnrichment.some,
       piiPseudonymizer = PiiPseudonymizerEnrichment(
         List(
@@ -484,7 +490,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
   }
 
   def e7 = {
-    val enrichmentReg = EnrichmentRegistry[Eval](
+    val enrichmentReg = EnrichmentRegistry[Id](
       ipLookups = ipEnrichment.some,
       piiPseudonymizer = PiiPseudonymizerEnrichment(
         List(
@@ -554,7 +560,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
   }
 
   def e8 = {
-    val enrichmentReg = EnrichmentRegistry[Eval](
+    val enrichmentReg = EnrichmentRegistry[Id](
       ipLookups = ipEnrichment.some,
       piiPseudonymizer = PiiPseudonymizerEnrichment(
         List(

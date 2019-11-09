@@ -14,16 +14,23 @@ package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 
 import cats.syntax.either._
+
 import io.circe._
-import io.circe.syntax._
 
 import com.snowplowanalytics.snowplow.badrows.{FailureDetails, Processor}
 
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer, SelfDescribingData}
+import com.snowplowanalytics.iglu.core.circe.implicits._
+
 import generated.ProjectSettings
+
 import utils.{ConversionUtils => CU}
 
 /** Miscellaneous enrichments which don't fit into one of the other modules. */
 object MiscEnrichments {
+
+  val ContextsSchema =
+    SchemaKey("com.snowplowanalytics.snowplow", "contexts", "jsonschema", SchemaVer.Full(1, 0, 1))
 
   /**
    * The version of this ETL. Appends this version to the supplied "host" ETL.
@@ -76,16 +83,7 @@ object MiscEnrichments {
       CU.makeTsvSafe(lastIp).asRight
     }
 
-  /**
-   * Turn a list of custom contexts into a self-describing JSON
-   * @param derivedContexts
-   * @return Self-describing JSON of custom contexts
-   */
-  def formatDerivedContexts(derivedContexts: List[Json]): String =
-    Json
-      .obj(
-        "schema" := "iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-1",
-        "data" := Json.arr(derivedContexts: _*)
-      )
-      .noSpaces
+  /** Turn a list of custom contexts into a self-describing JSON property */
+  def formatDerivedContexts(derivedContexts: List[SelfDescribingData[Json]]): String =
+    SelfDescribingData(ContextsSchema, Json.arr(derivedContexts.map(_.normalize): _*)).asString
 }

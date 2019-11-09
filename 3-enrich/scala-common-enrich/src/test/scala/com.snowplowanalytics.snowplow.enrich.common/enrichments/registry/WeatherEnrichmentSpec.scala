@@ -124,7 +124,7 @@ class WeatherEnrichmentSpec extends Specification {
     } yield stamp
     res.value.value must beRight.like {
       case weather =>
-        val temp = weather.hcursor.downField("data").downField("main").get[Double]("humidity")
+        val temp = weather.data.hcursor.downField("main").get[Double]("humidity")
         temp must beRight(87.0d)
     }
   }
@@ -175,7 +175,7 @@ class WeatherEnrichmentSpec extends Specification {
     } yield stamp
     res.value.value must beRight.like { // successful request
       case weather =>
-        weather.hcursor.get[TransformedWeather]("data") must beRight.like {
+        weather.data.hcursor.as[TransformedWeather] must beRight.like {
           case w => w.dt must equalTo("2019-05-01T00:00:00.000Z")
         }
     }
