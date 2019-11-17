@@ -25,7 +25,7 @@ object BuildSettings {
   // Basic settings for our app
   lazy val basicSettings = Seq(
     organization  := "com.snowplowanalytics",
-    scalaVersion  := "2.11.11",
+    scalaVersion  := "2.12.10",
     scalacOptions := compilerOptions,
     javacOptions  := javaCompilerOptions,
     parallelExecution in Test := false, // Parallel tests cause havoc with Spark
@@ -79,6 +79,7 @@ object BuildSettings {
       case PathList("com", "google", "common", tail@_*) => MergeStrategy.first
       case PathList("org", "apache", "spark", "unused", tail@_*) => MergeStrategy.first
       case "build.properties" => MergeStrategy.first
+      case "module-info.class" => MergeStrategy.first // for joda-money-1.0.1.jar and joda-convert-2.2.0.jar
       case x =>
         val oldStrategy = (assemblyMergeStrategy in assembly).value
         oldStrategy(x)

@@ -81,7 +81,7 @@ object CljTomcatMarketoEventSpec {
     null, //
     null, //
     null, //
-    """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.marketo/event/jsonschema/2-0-0","data":{"name":"webhook for A","step":6,"campaign":{"id":987,"name":"triggered event"},"lead":{"acquisition_date":"2010-11-11T11:11:11.000Z","black_listed":false,"first_name":"the hulk","updated_at":"2018-06-16T11:23:58.000Z","created_at":"2018-06-16T11:23:58.000Z","last_interesting_moment_date":"2018-09-26T20:26:40.000Z"},"company":{"name":"iron man","notes":"the something dog leapt over the lazy fox"},"datetime":"2018-03-07T14:28:16.000Z"}}}""",
+    """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.marketo/event/jsonschema/2-0-0","data":{"lead":{"first_name":"the hulk","acquisition_date":"2010-11-11T11:11:11.000Z","black_listed":false,"last_interesting_moment_date":"2018-09-26T20:26:40.000Z","created_at":"2018-06-16T11:23:58.000Z","updated_at":"2018-06-16T11:23:58.000Z"},"name":"webhook for A","step":6,"campaign":{"id":987,"name":"triggered event"},"datetime":"2018-03-07T14:28:16.000Z","company":{"name":"iron man","notes":"the something dog leapt over the lazy fox"}}}}""",
     null, // Transaction fields empty
     null, //
     null, //

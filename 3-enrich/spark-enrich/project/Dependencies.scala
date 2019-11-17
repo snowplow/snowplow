@@ -33,13 +33,11 @@ object Dependencies {
     val elephantBird     = "4.14"
     val geoip2           = "2.5.0"
     // Scala
-    val spark            = "2.2.0"
-    val scalaz7          = "7.0.9"
+    val spark            = "2.4.4"
     val decline          = "1.0.0"
-    val commonEnrich     = "0.38.0"
-    val igluClient       = "0.5.0"
+    val commonEnrich     = "1.0.0"
     // Scala (test only)
-    val specs2           = "2.3.13"
+    val specs2           = "4.8.1"
     // Thrift (test only)
     val snowplowRawEvent = "0.1.0"
     val collectorPayload = "0.0.0"
@@ -48,21 +46,22 @@ object Dependencies {
   object Libraries {
     // Java
     val hadoopLZO         = "com.snowplowanalytics"     %  "hadoop-lzo"               % V.hadoopLZO
-    val elephantBird      = "com.twitter.elephantbird"  %  "elephant-bird-core"       % V.elephantBird
+    val elephantBird      = ("com.twitter.elephantbird"  %  "elephant-bird-core"       % V.elephantBird)
+      .exclude("com.hadoop.gplcompression", "hadoop-lzo") // to avoid assembly merge deduplicate problem with Snowplow hosted one
     // Downgrading needed to resolve conflicts between Spark's jackson (2.6.7) and geoip2's (2.9.3)
     val geoip2            = "com.maxmind.geoip2"        %  "geoip2"                   % V.geoip2
     // Scala
     val sparkCore         = "org.apache.spark"          %% "spark-core"               % V.spark        % "provided"
     val sparkSQL          = "org.apache.spark"          %% "spark-sql"                % V.spark        % "provided"
-    val scalaz7           = "org.scalaz"                %% "scalaz-core"              % V.scalaz7
     val decline           = "com.monovore"              %% "decline"                  % V.decline
     val commonEnrich      = ("com.snowplowanalytics"    %% "snowplow-common-enrich"   % V.commonEnrich)
       .exclude("com.maxmind.geoip2", "geoip2")
-    val igluClient        = "com.snowplowanalytics"     %% "iglu-scala-client"        % V.igluClient
+      .exclude("com.fasterxml.jackson.core", "jackson-databind")
+      .exclude("com.google.guava", "guava")
     // Thrift
     val snowplowRawEvent  = "com.snowplowanalytics"     % "snowplow-thrift-raw-event" % V.snowplowRawEvent
     val collectorPayload  = "com.snowplowanalytics"     % "collector-payload-1"       % V.collectorPayload
     // Scala (test only)
-    val specs2            = "org.specs2"                %% "specs2-core"              % V.specs2           % "test"
+    val specs2            = "org.specs2"                %% "specs2-core"              % V.specs2           % Test
   }
 }
