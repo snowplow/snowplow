@@ -30,9 +30,9 @@ import com.hadoop.compression.lzo.GPLNativeCodeLoader
 import org.apache.commons.codec.binary.Base64
 import org.apache.commons.io.{FileUtils => FU}
 import org.apache.commons.io.filefilter.TrueFileFilter
-// Json4s
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods.{compact, parse}
+// circe
+import io.circe.Json
+import io.circe.parser.parse
 // Specs2
 import org.specs2.execute.{AsResult, ResultExecution}
 import org.specs2.matcher.{Expectable, Matcher}
@@ -214,12 +214,35 @@ object EnrichJobSpec {
       s"snowplow-enrich-job-${tag}-${Random.nextInt(Int.MaxValue)}")
 
   /** Remove the timestamp from bad rows so that what remains is deterministic */
-  def removeTstamp(badRow: String): String = {
-    val badRowJson = parse(badRow)
-    val badRowWithoutTimestamp =
-      ("line", (badRowJson \ "line")) ~ (("errors", (badRowJson \ "errors")))
-    compact(badRowWithoutTimestamp)
-  }
+  def removeTstamp(json: String): String =
+    parse(json) match {
+      case Right(j) =>
+        j.hcursor
+          .downField("data")
+          .downField("failure")
+          .downField("timestamp")
+          .set(Json.fromString("2019-11-22T09:37:21.643Z"))
+          .top
+          .getOrElse(j)
+          .noSpaces
+      case Left(_) => json
+    }
+
+  /** Remove the timestamp from bad rows so that what remains is deterministic */
+  def removeId(json: String): String =
+    parse(json) match {
+      case Right(j) =>
+        j.hcursor
+          .downField("data")
+          .downField("payload")
+          .downField("enriched")
+          .downField("event_id")
+          .set(Json.fromString("ff30c659-682a-4bf6-a378-4081d3c34c76"))
+          .top
+          .getOrElse(Json.Null)
+          .noSpaces
+      case Left(_) => json
+    }
 
   /**
    * Base64-encoded urlsafe resolver config used by default if `HADOOP_ENRICH_RESOLVER_CONFIG` env
@@ -529,13 +552,15 @@ object EnrichJobSpec {
                 |}
               |},
               |{
-                |"schema": "iglu:com.snowplowanalytics.snowplow/referer_parser/jsonschema/1-0-0",
+                |"schema": "iglu:com.snowplowanalytics.snowplow/referer_parser/jsonschema/2-0-0",
                 |"data": {
                   |"vendor": "com.snowplowanalytics.snowplow",
                   |"name": "referer_parser",
                   |"enabled": true,
                   |"parameters": {
-                    |"internalDomains": ["www.subdomain1.snowplowanalytics.com"]
+                    |"internalDomains": ["www.subdomain1.snowplowanalytics.com"],
+                    |"database": "referer-tests.json",
+                    |"uri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/referer-parser"
                   |}
                 |}
               |},
@@ -714,8 +739,7 @@ trait EnrichJobSpec extends SparkSpec {
       "--local"
     )
 
-    val job = EnrichJob(spark, config)
-    job.run()
+    EnrichJob(spark, config).run()
   }
 
   /**
