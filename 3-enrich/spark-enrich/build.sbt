@@ -32,10 +32,8 @@ lazy val root = project
       // Scala
       Dependencies.Libraries.sparkCore,
       Dependencies.Libraries.sparkSQL,
-      Dependencies.Libraries.scalaz7,
       Dependencies.Libraries.decline,
       Dependencies.Libraries.commonEnrich,
-      Dependencies.Libraries.igluClient,
       // Scala (test only)
       Dependencies.Libraries.specs2,
       // Thrift (test only)

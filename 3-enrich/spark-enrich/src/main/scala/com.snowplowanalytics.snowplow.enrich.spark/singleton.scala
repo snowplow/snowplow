@@ -16,60 +16,50 @@ package com.snowplowanalytics
 package snowplow.enrich
 package spark
 
-// Jackson
-import com.fasterxml.jackson.databind.JsonNode
+// cats
+import cats.Id
+import cats.data.NonEmptyList
+import cats.syntax.either._
 
-// Json4s
-import org.json4s.jackson.JsonMethods.fromJsonNode
+// circe
+import io.circe.Json
 
 // Snowplow
-import common.{FatalEtlError, ValidatedMessage, ValidatedNelMessage}
+import common.FatalEtlError
 import common.enrichments.EnrichmentRegistry
-import common.utils.{ConversionUtils, JsonUtils}
 
 // Iglu
-import iglu.client.Resolver
-import iglu.client.validation.ProcessingMessageMethods._
+import iglu.client.Client
 
 /** Singletons needed for unserializable classes. */
 object singleton {
 
   /** Singleton for Iglu's Resolver to maintain one Resolver per node. */
   object ResolverSingleton {
-    @volatile private var instance: Resolver = _
+    @volatile private var instance: Client[Id, Json] = _
 
     /**
      * Retrieve or build an instance of Iglu's Resolver.
      * @param igluConfig JSON representing the Iglu configuration
      */
-    def get(igluConfig: String): Resolver = {
+    def get(igluConfig: Json): Client[Id, Json] = {
       if (instance == null) {
         synchronized {
           if (instance == null) {
-            instance = getIgluResolver(igluConfig)
+            instance = Client
+              .parseDefault[Id](igluConfig)
               .valueOr(e => throw new FatalEtlError(e.toString))
           }
         }
       }
       instance
     }
-
-    /**
-     * Build an Iglu resolver from a JSON.
-     * @param json JSON representing the Iglu resolver
-     * @return A Resolver or one or more error messages boxed in a Scalaz ValidationNel
-     */
-    private[spark] def getIgluResolver(json: String): ValidatedNelMessage[Resolver] =
-      for {
-        node <- base64ToJsonNode(json, "iglu").toValidationNel: ValidatedNelMessage[JsonNode]
-        reso <- Resolver.parse(node)
-      } yield reso
   }
 
   /** Singleton for EnrichmentRegistry. */
   object RegistrySingleton {
-    @volatile private var instance: EnrichmentRegistry = _
-    @volatile private var enrichments: String          = _
+    @volatile private var instance: EnrichmentRegistry[Id] = _
+    @volatile private var enrichments: Json                = _
 
     /**
      * Retrieve or build an instance of EnrichmentRegistry.
@@ -77,13 +67,16 @@ object singleton {
      * @param enrichments JSON representing the enrichments that need performing
      * @param local Whether to build a registry from local data
      */
-    def get(igluConfig: String, enrichments: String, local: Boolean): EnrichmentRegistry = {
+    def get(igluConfig: Json, enrichments: Json, local: Boolean): EnrichmentRegistry[Id] = {
       if (instance == null || this.enrichments != enrichments) {
         synchronized {
           if (instance == null || this.enrichments != enrichments) {
-            implicit val resolver = ResolverSingleton.get(igluConfig)
-            instance = getEnrichmentRegistry(enrichments, local)
-              .valueOr(e => throw new FatalEtlError(e.toString))
+            val client = ResolverSingleton.get(igluConfig)
+            val registry =
+              EnrichmentRegistry.parse[Id](enrichments, client, local).toEither.toEitherT[Id]
+            instance = registry
+              .flatMap(x => EnrichmentRegistry.build[Id](x).leftMap(NonEmptyList.one))
+              .valueOr(e => throw new FatalEtlError(e.toList.mkString("\n")))
             this.enrichments = enrichments
           }
         }
@@ -91,20 +84,6 @@ object singleton {
       instance
     }
 
-    /**
-     * Build an EnrichmentRegistry from the enrichments arg.
-     * @param enrichments The JSON of all enrichments constructed by EmrEtlRunner
-     * @param local Whether to build a registry from local data
-     * @param resolver (implicit) The Iglu resolver used for schema lookup and validation
-     * @return An EnrichmentRegistry or one or more error messages boxed in a Scalaz ValidationNel
-     */
-    private[spark] def getEnrichmentRegistry(enrichments: String, local: Boolean)(
-      implicit resolver: Resolver): ValidatedNelMessage[EnrichmentRegistry] =
-      for {
-        node <- base64ToJsonNode(enrichments, "enrichments").toValidationNel: ValidatedNelMessage[
-          JsonNode]
-        reg <- EnrichmentRegistry.parse(fromJsonNode(node), local)
-      } yield reg
   }
 
   /** Singleton for Loader. */
@@ -131,16 +110,4 @@ object singleton {
       instance
     }
   }
-
-  /**
-   * Convert a base64-encoded JSON String into a JsonNode.
-   * @param str base64-encoded JSON
-   * @param field name of the field to be decoded
-   * @return a JsonNode on Success, a NonEmptyList of ProcessingMessages on Failure
-   */
-  private def base64ToJsonNode(str: String, field: String): ValidatedMessage[JsonNode] =
-    (for {
-      raw  <- ConversionUtils.decodeBase64Url(field, str)
-      node <- JsonUtils.extractJson(field, raw)
-    } yield node).toProcessingMessage
 }

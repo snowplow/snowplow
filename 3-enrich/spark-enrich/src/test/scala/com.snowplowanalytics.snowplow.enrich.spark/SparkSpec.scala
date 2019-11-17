@@ -19,6 +19,8 @@ import org.apache.spark.SparkConf
 import org.apache.spark.serializer.KryoSerializer
 import org.apache.spark.sql.SparkSession
 
+import org.specs2.specification.BeforeAfterAll
+
 /**
  * Trait to mix in in every spec which has to run a Spark job.
  * Create a spark session before the spec and delete it afterwards.

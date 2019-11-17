@@ -23,9 +23,8 @@ object InvalidCfLinesSpec {
     "NOT VALID",
     "2012-05-21  07:14:47  FRA2  3343  83.4.209.35 GET d3t05xllj8hhgj.cloudfront.net"
   )
-  val expected = (line: String) =>
-    """{"line":"%s","errors":[{"level":"error","message":"Line does not match CloudFront header or data row formats"}]}"""
-      .format(line)
+  val expected = (payload: String) =>
+    s"""{"schema":"iglu:com.snowplowanalytics.snowplow.badrows/collector_payload_format_violation/jsonschema/1-0-0","data":{"processor":{"artifact":"spark","version":"1.18.0"},"failure":{"timestamp":"2019-11-22T09:37:21.643Z","loader":"cloudfront","message":{"error":"does not match header or data row formats"}},"payload":"$payload"}}"""
 }
 
 /** Input data _is_ not in the expected CloudFront format. */

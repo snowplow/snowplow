@@ -12,21 +12,18 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and
  * limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.spark
+package com.snowplowanalytics.snowplow.enrich
 
-import org.specs2.mutable.SpecificationLike
-import org.specs2.specification.Fragments
-import org.specs2.specification.Step
+import java.util.concurrent.TimeUnit
 
-/**
- * The content of `beforeAll` is executed before a spec and the content of `afterAll` is executed
- * once the spec is done.
- * TODO: To remove once specs2 has been updated.
- */
-trait BeforeAfterAll extends SpecificationLike {
-  override def map(fragments: => Fragments) =
-    Step(beforeAll) ^ fragments ^ Step(afterAll)
+import cats.Id
+import cats.effect.Clock
 
-  def beforeAll(): Unit
-  def afterAll(): Unit
+package object spark {
+  implicit val catsClockIdInstance: Clock[Id] = new Clock[Id] {
+    def realTime(unit: TimeUnit): Id[Long] =
+      unit.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+    def monotonic(unit: TimeUnit): Id[Long] =
+      unit.convert(System.nanoTime(), TimeUnit.NANOSECONDS)
+  }
 }
