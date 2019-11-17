@@ -25,7 +25,7 @@ object BuildSettings {
   // Basic settings for our app
   lazy val basicSettings = Seq(
     organization  := "com.snowplowanalytics",
-    scalaVersion  := "2.11.11",
+    scalaVersion  := "2.12.10",
     scalacOptions := compilerOptions,
     javacOptions  := javaCompilerOptions,
     parallelExecution in Test := false, // Parallel tests cause havoc with Spark

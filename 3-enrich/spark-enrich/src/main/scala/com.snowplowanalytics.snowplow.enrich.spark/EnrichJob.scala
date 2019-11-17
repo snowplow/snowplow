@@ -19,16 +19,13 @@ package spark
 import java.net.URI
 import java.nio.file.{Files, Paths}
 
-// Apache commons
-import org.apache.commons.codec.binary.Base64
+import cats.data.ValidatedNel
 
-// Scalaz
-import scalaz._
+import cats.data.{NonEmptyList, Validated}
 
 // Spark
-import org.apache.spark.{SparkConf, SparkContext, SparkFiles}
+import org.apache.spark.{SparkContext, SparkFiles}
 import org.apache.spark.rdd.RDD
-import org.apache.spark.serializer.KryoSerializer
 import org.apache.spark.sql.{Encoders, Row, SaveMode, SparkSession}
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
@@ -38,17 +35,18 @@ import com.twitter.elephantbird.mapreduce.input.MultiInputFormat
 import com.twitter.elephantbird.mapreduce.io.BinaryWritable
 
 // Hadoop
-import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.LongWritable
 
 // Hadop LZO
 import com.hadoop.compression.lzo.{LzoCodec, LzopCodec}
 
 // Snowplow
-import common.{EtlPipeline, FatalEtlError, ValidatedEnrichedEvent}
+import common.{EtlPipeline, FatalEtlError}
 import common.adapters.AdapterRegistry
-import common.loaders.{Loader, ThriftLoader}
-import common.outputs.{BadRow, EnrichedEvent}
+import common.loaders.Loader
+import common.outputs.EnrichedEvent
+
+import com.snowplowanalytics.snowplow.badrows.{BadRow, Processor}
 
 import EnrichJobConfig.ParsedEnrichJobConfig
 
@@ -72,25 +70,26 @@ object EnrichJob {
     classOf[com.snowplowanalytics.snowplow.collectors.thrift.TrackerPayload],
     classOf[com.snowplowanalytics.snowplow.collectors.thrift.PayloadFormat],
     classOf[com.snowplowanalytics.snowplow.collectors.thrift.PayloadProtocol],
-    classOf[scala.collection.convert.Wrappers$],
-    classOf[scala.collection.immutable.Map$EmptyMap$],
-    classOf[scala.collection.immutable.Set$EmptySet$],
-    classOf[scala.collection.mutable.WrappedArray$ofRef],
-    classOf[org.apache.spark.internal.io.FileCommitProtocol$TaskCommitMessage],
-    classOf[org.apache.spark.sql.execution.datasources.FileFormatWriter$WriteTaskResult]
+    classOf[org.apache.spark.sql.execution.datasources.WriteTaskResult],
+    Class.forName("org.apache.spark.internal.io.FileCommitProtocol$TaskCommitMessage"),
+    classOf[org.apache.spark.sql.execution.datasources.ExecutedWriteSummary],
+    classOf[org.apache.spark.sql.execution.datasources.BasicWriteTaskStats],
+    Class.forName("scala.collection.convert.Wrappers$")
   )
 
   def apply(spark: SparkSession, args: Array[String]) = new EnrichJob(spark, args)
 
-  val etlVersion = s"spark-${generated.BuildInfo.version}"
+  val processor = Processor("spark", generated.BuildInfo.version)
+
+  type ValidatedEnrichedEvent = ValidatedNel[BadRow, EnrichedEvent]
 
   /**
    * Project our Failures into a List of Nel of strings.
    * @param all A List of Validations each containing either an EnrichedEvent or Failure strings
    * @return A (possibly empty) List of failures, where each failure is a Nel of strings
    */
-  def projectBads(all: List[ValidatedEnrichedEvent]): List[NonEmptyList[String]] =
-    all.collect { case Failure(errs) => errs }
+  def projectBads(all: List[ValidatedEnrichedEvent]): List[NonEmptyList[BadRow]] =
+    all.collect { case Validated.Invalid(errs) => errs }
 
   /**
    * Project our Sucesses into EnrichedEvents.
@@ -98,7 +97,7 @@ object EnrichJob {
    * @return A (possibly empty) List of EnrichedEvent
    */
   def projectGoods(all: List[ValidatedEnrichedEvent]): List[EnrichedEvent] =
-    all.collect { case Success(e) => e }
+    all.collect { case Validated.Valid(e) => e }
 
   /**
    * Turn a raw line into an EnrichedEvent.
@@ -106,19 +105,20 @@ object EnrichJob {
    * @param config config for the job
    * @return the input raw line as well as the EnrichedEvent boxed in a Validation
    */
-  def enrich(line: Any, config: ParsedEnrichJobConfig): (Any, List[ValidatedEnrichedEvent]) = {
+  def enrich(line: Any, config: ParsedEnrichJobConfig): List[ValidatedEnrichedEvent] = {
     import singleton._
     val adapterRegistry = new AdapterRegistry
     val enrichmentRegistry =
       RegistrySingleton.get(config.igluConfig, config.enrichments, config.local)
     val loader = LoaderSingleton.get(config.inFormat).asInstanceOf[Loader[Any]]
-    val event = EtlPipeline.processEvents(
+    val input  = loader.toCollectorPayload(line, processor)
+    EtlPipeline.processEvents(
       adapterRegistry,
       enrichmentRegistry,
-      etlVersion,
+      ResolverSingleton.get(config.igluConfig),
+      processor,
       config.etlTstamp,
-      loader.toCollectorPayload(line))(ResolverSingleton.get(config.igluConfig))
-    (line, event)
+      input)
   }
 
   /**
@@ -191,15 +191,10 @@ class EnrichJob(@transient val spark: SparkSession, args: Array[String]) extends
 
     // Handling of malformed rows
     val bad = common
-      .map { case (line, enriched) => (line, projectBads(enriched)) }
-      .flatMap {
-        case (line, errors) =>
-          val originalLine = line match {
-            case bytes: Array[Byte] => new String(Base64.encodeBase64(bytes), "UTF-8")
-            case other              => other.toString
-          }
-          errors.map(e => Row(BadRow(originalLine, e).toCompactJson))
+      .flatMap { enriched =>
+        projectBads(enriched).flatMap(_.toList).map(e => Row(e.compact))
       }
+
     spark
       .createDataFrame(bad, StructType(StructField("_", StringType, true) :: Nil))
       .write
@@ -207,8 +202,8 @@ class EnrichJob(@transient val spark: SparkSession, args: Array[String]) extends
       .text(enrichConfig.badFolder)
 
     // Handling of properly-formed rows
-    val good = common
-      .flatMap { case (_, enriched) => projectGoods(enriched) }
+    val good = common.flatMap(projectGoods)
+
     spark
       .createDataset(good)(Encoders.bean(classOf[EnrichedEvent]))
       .toDF()
@@ -222,6 +217,8 @@ class EnrichJob(@transient val spark: SparkSession, args: Array[String]) extends
       .option("sep", "\t")
       .option("escape", "")
       .option("quote", "")
+      .option("emptyValue", "")
+      .option("nullValue", "")
       .mode(SaveMode.Overwrite)
       .csv(enrichConfig.outFolder)
   }
