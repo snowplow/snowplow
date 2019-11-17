@@ -50,7 +50,9 @@ import common.adapters.AdapterRegistry
 import common.loaders.{Loader, ThriftLoader}
 import common.outputs.{BadRow, EnrichedEvent}
 
-object EnrichJob extends SparkJob {
+import EnrichJobConfig.ParsedEnrichJobConfig
+
+object EnrichJob {
   // Classes that need registering for Kryo
   private[spark] val classesToRegister: Array[Class[_]] = Array(
     classOf[Array[String]],
@@ -77,17 +79,6 @@ object EnrichJob extends SparkJob {
     classOf[org.apache.spark.internal.io.FileCommitProtocol$TaskCommitMessage],
     classOf[org.apache.spark.sql.execution.datasources.FileFormatWriter$WriteTaskResult]
   )
-  override def sparkConfig(): SparkConf =
-    new SparkConf()
-      .setAppName(getClass().getSimpleName())
-      .setIfMissing("spark.master", "local[*]")
-      .set("spark.serializer", classOf[KryoSerializer].getName())
-      .registerKryoClasses(classesToRegister)
-
-  override def run(spark: SparkSession, args: Array[String]): Unit = {
-    val job = EnrichJob(spark, args)
-    job.run()
-  }
 
   def apply(spark: SparkSession, args: Array[String]) = new EnrichJob(spark, args)
 
@@ -118,8 +109,9 @@ object EnrichJob extends SparkJob {
   def enrich(line: Any, config: ParsedEnrichJobConfig): (Any, List[ValidatedEnrichedEvent]) = {
     import singleton._
     val adapterRegistry = new AdapterRegistry
-    val enrichmentRegistry = RegistrySingleton.get(config.igluConfig, config.enrichments, config.local)
-    val loader   = LoaderSingleton.get(config.inFormat).asInstanceOf[Loader[Any]]
+    val enrichmentRegistry =
+      RegistrySingleton.get(config.igluConfig, config.enrichments, config.local)
+    val loader = LoaderSingleton.get(config.inFormat).asInstanceOf[Loader[Any]]
     val event = EtlPipeline.processEvents(
       adapterRegistry,
       enrichmentRegistry,

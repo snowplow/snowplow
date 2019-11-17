@@ -35,7 +35,7 @@ object Dependencies {
     // Scala
     val spark            = "2.2.0"
     val scalaz7          = "7.0.9"
-    val scopt            = "3.5.0"
+    val decline          = "1.0.0"
     val commonEnrich     = "0.38.0"
     val igluClient       = "0.5.0"
     // Scala (test only)
@@ -55,7 +55,7 @@ object Dependencies {
     val sparkCore         = "org.apache.spark"          %% "spark-core"               % V.spark        % "provided"
     val sparkSQL          = "org.apache.spark"          %% "spark-sql"                % V.spark        % "provided"
     val scalaz7           = "org.scalaz"                %% "scalaz-core"              % V.scalaz7
-    val scopt             = "com.github.scopt"          %% "scopt"                    % V.scopt
+    val decline           = "com.monovore"              %% "decline"                  % V.decline
     val commonEnrich      = ("com.snowplowanalytics"    %% "snowplow-common-enrich"   % V.commonEnrich)
       .exclude("com.maxmind.geoip2", "geoip2")
     val igluClient        = "com.snowplowanalytics"     %% "iglu-scala-client"        % V.igluClient

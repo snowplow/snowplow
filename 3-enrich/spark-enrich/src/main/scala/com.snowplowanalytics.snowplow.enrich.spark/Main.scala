@@ -14,23 +14,25 @@
  */
 package com.snowplowanalytics.snowplow.enrich.spark
 
-// Spark
 import org.apache.spark.SparkConf
+import org.apache.spark.serializer.KryoSerializer
 import org.apache.spark.sql.SparkSession
 
-/** Utility trait to mix in when writing a Spark job. */
-trait SparkJob {
-  def run(spark: SparkSession, args: Array[String]): Unit
+import com.snowplowanalytics.snowplow.enrich.spark.EnrichJob.classesToRegister
 
-  def sparkConfig(): SparkConf
-
+object Main {
   def main(args: Array[String]): Unit = {
-    val config = sparkConfig()
+    val config = new SparkConf()
+      .setAppName(getClass.getSimpleName)
+      .setIfMissing("spark.master", "local[*]")
+      .set("spark.serializer", classOf[KryoSerializer].getName)
+      .registerKryoClasses(classesToRegister)
+
     val spark = SparkSession
       .builder()
       .config(config)
       .getOrCreate()
-    run(spark, args)
+    EnrichJob(spark, args).run()
     spark.stop()
   }
 }
