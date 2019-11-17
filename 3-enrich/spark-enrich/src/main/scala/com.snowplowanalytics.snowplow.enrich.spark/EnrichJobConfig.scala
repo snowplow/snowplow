@@ -19,6 +19,12 @@ package spark
 // Java
 import java.net.URI
 
+// Decline
+import com.monovore.decline.Visibility
+
+// cats
+import cats.implicits._
+
 // Joda
 import org.joda.time.DateTime
 
@@ -27,7 +33,7 @@ import scalaz._
 import Scalaz._
 
 // Scopt
-import scopt._
+import com.monovore.decline.{Command, Opts}
 
 // Snowplow
 import common.ValidatedNelMessage
@@ -35,98 +41,80 @@ import common.enrichments.EnrichmentRegistry
 import common.loaders.Loader
 import iglu.client.validation.ProcessingMessageMethods._
 
-sealed trait EnrichJobConfig {
-  def inFolder: String
-  def inFormat: String
-  def outFolder: String
-  def badFolder: String
-  def enrichments: String
-  def igluConfig: String
-  def local: Boolean
-}
-
-private case class RawEnrichJobConfig(
-  override val inFolder: String = "",
-  override val inFormat: String = "",
-  override val outFolder: String = "",
-  override val badFolder: String = "",
-  override val enrichments: String = "",
-  override val igluConfig: String = "",
-  override val local: Boolean = false,
-  etlTstamp: Long = 0L
-) extends EnrichJobConfig
-
-/**
- * Case class representing the configuration for the enrich job.
- * @param inFolder Folder where the input events are located
- * @param inFormat Collector format in which the data is coming in
- * @param outFolder Output folder where the enriched events will be stored
- * @param badFolder Output folder where the malformed events will be stored
- * @param enrichments JSON representing the enrichments that need performing
- * @param igluConfig JSON representing the Iglu configuration
- * @param local Whether to build a registry from local data
- * @param etlTstamp Timestamp at which the job was launched
- */
-case class ParsedEnrichJobConfig(
-  override val inFolder: String,
-  override val inFormat: String,
-  override val outFolder: String,
-  override val badFolder: String,
-  override val enrichments: String,
-  override val igluConfig: String,
-  override val local: Boolean,
-  etlTstamp: DateTime,
-  filesToCache: List[(URI, String)]
-) extends EnrichJobConfig
+final case class EnrichJobConfig(
+  inFolder: String,
+  inFormat: String,
+  outFolder: String,
+  badFolder: String,
+  enrichments: String,
+  igluConfig: String,
+  local: Boolean,
+  etlTstamp: Long)
 
 object EnrichJobConfig {
-  private val parser = new scopt.OptionParser[RawEnrichJobConfig]("EnrichJob") {
-    head("EnrichJob")
-    opt[String]("input-folder")
-      .required()
-      .valueName("<input folder>")
-      .action((f, c) => c.copy(inFolder = f))
-      .text("Folder where the input events are located")
-    opt[String]("input-format")
-      .required()
-      .valueName("<input format>")
-      .action((f, c) => c.copy(inFormat = f))
-      .text("The format in which the collector is saving data")
-    opt[String]("output-folder")
-      .required()
-      .valueName("<output folder>")
-      .action((f, c) => c.copy(outFolder = f))
-      .text("Output folder where the enriched events will be stored")
-    opt[String]("bad-folder")
-      .required()
-      .valueName("<bad folder>")
-      .action((f, c) => c.copy(badFolder = f))
-      .text("Output folder where the malformed events will be stored")
-    opt[String]("enrichments")
-      .required()
-      .valueName("<enrichments>")
-      .action((e, c) => c.copy(enrichments = e))
-      .text("Directory where the JSONs describing the enrichments are stored")
-    opt[String]("iglu-config")
-      .required()
-      .valueName("<iglu config>")
-      .action((i, c) => c.copy(igluConfig = i))
-      .text("Iglu resolver configuration")
-    opt[Long]("etl-timestamp")
-      .required()
-      .valueName("<ETL timestamp>")
-      .action((t, c) => c.copy(etlTstamp = t))
-      .text("Timestamp at which the job was launched, in milliseconds")
-    opt[Unit]("local")
-      .hidden()
-      .action((_, c) => c.copy(local = true))
-      .text("Whether to build a local enrichment registry")
-    help("help").text("Prints this usage text")
-  }
+
+  /**
+   * Case class representing the configuration for the enrich job.
+   * @param inFolder Folder where the input events are located
+   * @param inFormat Collector format in which the data is coming in
+   * @param outFolder Output folder where the enriched events will be stored
+   * @param badFolder Output folder where the malformed events will be stored
+   * @param enrichments JSON representing the enrichments that need performing
+   * @param igluConfig JSON representing the Iglu configuration
+   * @param local Whether to build a registry from local data
+   * @param etlTstamp Timestamp at which the job was launched
+   */
+  case class ParsedEnrichJobConfig(inFolder: String,
+                                   inFormat: String,
+                                   outFolder: String,
+                                   badFolder: String,
+                                   enrichments: String,
+                                   igluConfig: String,
+                                   local: Boolean,
+                                   etlTstamp: DateTime,
+                                   filesToCache: List[(URI, String)])
+
+  val inFolder =
+    Opts.option[String]("input-folder", "Folder where the input events are located", "i", "folder")
+  val inFormat = Opts.option[String](
+    "input-format",
+    "The format in which the collector is saving data",
+    "f",
+    "format")
+  val outFolder = Opts.option[String](
+    "output-folder",
+    "Output folder where the enriched events will be stored",
+    "o",
+    "folder")
+  val badFolder = Opts.option[String](
+    "bad-folder",
+    "Output folder where the malformed events will be stored",
+    "b",
+    "folder")
+  val enrichments = Opts.option[String](
+    "enrichments",
+    "Base64-encoded JSON string with enrichment configurations",
+    "e",
+    "base64")
+  val igluConfig =
+    Opts.option[String]("iglu-config", "Iglu resolver configuration JSON", "r", "base64")
+  val etlTstamp =
+    Opts.option[Long]("etl-timestamp", "Iglu resolver configuration JSON", "r", "base64")
+  val local =
+    Opts
+      .flag("local", "Whether to build a local enrichment registry", "l", Visibility.Partial)
+      .orFalse
+
+  val enrichedJobConfig: Opts[EnrichJobConfig] =
+    (inFolder, inFormat, outFolder, badFolder, enrichments, igluConfig, local, etlTstamp).mapN(
+      EnrichJobConfig.apply)
+
+  val command =
+    Command("Snowplow Spark Enrich", s"spark-enrich-${BuildInfo.version}")(enrichedJobConfig)
 
   /** Turn a RawEnrichJobConfig into a ParsedEnrichJobConfig */
   private def transform(
-    c: RawEnrichJobConfig
+    c: EnrichJobConfig
   ): ValidatedNelMessage[ParsedEnrichJobConfig] = {
     // We try to build all the components early to detect failures before starting the job
     import singleton._
@@ -155,12 +143,10 @@ object EnrichJobConfig {
    * @param args The command line arguments
    * @return The job config or one or more error messages boxed in a Scalaz ValidationNel
    */
-  def loadConfigFrom(
-    args: Array[String]
-  ): ValidatedNelMessage[ParsedEnrichJobConfig] =
-    parser.parse(args, RawEnrichJobConfig()).map(transform) match {
-      case Some(c) => c
-      case _       => "Parsing of the configuration failed".toProcessingMessage.failureNel
+  def loadConfigFrom(args: Array[String]): ValidatedNelMessage[ParsedEnrichJobConfig] =
+    command.parse(args).map(transform) match {
+      case Right(c)    => c
+      case Left(error) => error.toString.toProcessingMessage.failureNel
     }
 
   /**
