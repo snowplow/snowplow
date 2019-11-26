@@ -114,7 +114,7 @@ object SpecHelpers {
     contentType: Option[String] = None,
     headers: List[String] = Nil,
     ipAddress: String = "",
-    networkUserId: String = "",
+    networkUserId: String = java.util.UUID.randomUUID().toString(),
     path: String = "",
     querystring: Option[String] = None,
     refererUri: Option[String] = None,

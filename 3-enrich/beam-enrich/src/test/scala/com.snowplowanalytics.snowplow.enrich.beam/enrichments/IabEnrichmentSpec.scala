@@ -31,7 +31,7 @@ object IabEnrichmentSpec {
       userAgent =
         "Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0".some,
       ipAddress = "216.160.83.56",
-      networkUserId = "1"
+      networkUserId = "11111111-1111-1111-1111-111111111111"
     ),
     SpecHelpers.buildCollectorPayload(
       path = "/i",
@@ -39,7 +39,7 @@ object IabEnrichmentSpec {
       userAgent =
         "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Googlebot/2.1; +http://www.google.com/bot.html) Safari/537.36".some,
       ipAddress = "216.160.83.56",
-      networkUserId = "2"
+      networkUserId = "22222222-2222-2222-2222-222222222222"
     ),
     SpecHelpers.buildCollectorPayload(
       path = "/i",
@@ -47,7 +47,7 @@ object IabEnrichmentSpec {
       userAgent =
         "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Googlebot/2.1; +http://www.google.com/bot.html) Safari/537.36".some,
       ipAddress = "216.160.83.56:8080",
-      networkUserId = "3"
+      networkUserId = "33333333-3333-3333-3333-333333333333"
     ),
     SpecHelpers.buildCollectorPayload(
       path = "/i",
@@ -55,13 +55,13 @@ object IabEnrichmentSpec {
       userAgent =
         "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Googlebot/2.1; +http://www.google.com/bot.html) Safari/537.36".some,
       ipAddress = "2001:db8:0:0:0:ff00:42:8329",
-      networkUserId = "4"
+      networkUserId = "44444444-4444-4444-4444-444444444444"
     ),
     SpecHelpers.buildCollectorPayload(
       path = "/i",
       querystring = "e=pp".some,
       ipAddress = "216.160.83.56",
-      networkUserId = "5"
+      networkUserId = "55555555-5555-5555-5555-555555555555"
     )
   )
   val expecteds = List(
