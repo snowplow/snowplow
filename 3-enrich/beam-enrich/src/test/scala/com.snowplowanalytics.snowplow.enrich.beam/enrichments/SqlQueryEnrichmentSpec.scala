@@ -31,7 +31,7 @@ object SqlQueryEnrichmentSpec {
     SpecHelpers.buildCollectorPayload(
       querystring = s"e=ue&cx=$contexts&ue_pr=$unstructEvent".some,
       path = "/i",
-      networkUserId = "Milton"
+      userAgent = Some("Milton")
     )
   )
   val expected = Map(

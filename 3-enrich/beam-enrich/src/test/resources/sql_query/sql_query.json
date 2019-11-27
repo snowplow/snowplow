@@ -9,7 +9,7 @@
         {
           "placeholder": 1,
           "pojo": {
-            "field": "network_userid"
+            "field": "useragent"
           }
         },
         {
