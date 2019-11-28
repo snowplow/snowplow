@@ -151,10 +151,6 @@ object EnrichmentManager {
     val extractSchema: F[Either[FailureDetails.EnrichmentStageIssue, Unit]] =
       extractSchemaFields(event, client)
 
-    // Execute the JavaScript scripting enrichment
-    val jsScript: Either[FailureDetails.EnrichmentStageIssue, List[SelfDescribingData[Json]]] =
-      getJsScript(event, registry.javascriptScript)
-
     // Execute cookie extractor enrichment
     val cookieExtractorContexts: List[SelfDescribingData[Json]] =
       headerContexts[CookieExtractorEnrichment](
@@ -189,6 +185,13 @@ object EnrichmentManager {
     val unstructEvent
       : F[ValidatedNel[FailureDetails.EnrichmentStageIssue, Option[SelfDescribingData[Json]]]] =
       Shredder.extractAndValidateUnstructEvent(event, client).map(_.toValidatedNel)
+
+    // Execute IP lookup enrichment
+    val geoloc = geoLocation(event, registry.ipLookups)
+
+    // Execute the JavaScript scripting enrichment
+    val jsScript: Either[FailureDetails.EnrichmentStageIssue, List[SelfDescribingData[Json]]] =
+      getJsScript(event, registry.javascriptScript)
 
     // Assemble array of contexts prepared by built-in enrichments
     val preparedDerivedContexts: F[List[SelfDescribingData[Json]]] =
@@ -249,7 +252,7 @@ object EnrichmentManager {
       sqlQueryContexts,
       extractSchema,
       currency,
-      geoLocation(event, registry.ipLookups),
+      geoloc,
       weatherContext,
       formatDerivedContexts
     ).mapN { (cc, ue, api, sql, es, cu, geo, w, _) =>
