@@ -18,6 +18,7 @@ import java.time.Instant
 import java.util.UUID
 
 import scala.collection.JavaConverters._
+import scala.util.control.NonFatal
 
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.implicits._
@@ -34,7 +35,7 @@ import com.snowplowanalytics.snowplow.badrows._
 import com.snowplowanalytics.snowplow.badrows.FailureDetails.CPFormatViolationMessage
 
 import org.apache.commons.codec.binary.Base64
-import org.apache.thrift.{TDeserializer, TException}
+import org.apache.thrift.TDeserializer
 
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, ParseError => IgluParseError}
 
@@ -92,7 +93,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
           payload.toValidated
         } else convertOldSchema(line)
       } catch {
-        case e: TException =>
+        case NonFatal(e) =>
           FailureDetails.CPFormatViolationMessage
             .Fallback(s"error deserializing raw event: ${e.getMessage}")
             .invalidNel
