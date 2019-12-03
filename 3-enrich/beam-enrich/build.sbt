@@ -33,7 +33,7 @@ import Tests._
 
 lazy val commonSettings = Defaults.coreDefaultSettings ++ Seq(
   organization  := "com.snowplowanalytics",
-  version       := "0.3.0",
+  version       := "0.4.0",
   scalaVersion  := "2.11.12",
   javacOptions  ++= Seq("-source", "1.8", "-target", "1.8"),
   scalacOptions ++= compilerOptions,
@@ -60,15 +60,15 @@ lazy val noPublishSettings = Seq(
 )
 
 import com.typesafe.sbt.packager.docker._
-dockerRepository := Some("snowplow-docker-registry.bintray.io")
-dockerUsername := Some("snowplow")
-dockerBaseImage := "snowplow-docker-registry.bintray.io/snowplow/base-debian:0.1.0"
+packageName in Docker := "snowplow/beam-enrich"
 maintainer in Docker := "Snowplow Analytics Ltd. <support@snowplowanalytics.com>"
+dockerBaseImage := "snowplow-docker-registry.bintray.io/snowplow/base-debian:0.1.0"
 daemonUser in Docker := "snowplow"
+dockerUpdateLatest := true
 
 lazy val scioVersion = "0.6.0"
 lazy val beamVersion = "2.5.0"
-lazy val sceVersion = "0.37.0"
+lazy val sceVersion = "0.38.0"
 lazy val scalaMacrosVersion = "2.1.0"
 lazy val slf4jVersion = "1.7.25"
 lazy val scalatestVersion = "3.0.5"
@@ -90,7 +90,7 @@ lazy val root: Project = Project(
     "com.spotify" %% "scio-test" % scioVersion,
     "org.scalatest" %% "scalatest" % scalatestVersion
   ).map(_ % "test")
-).enablePlugins(JavaAppPackaging, BuildInfoPlugin)
+).enablePlugins(JavaAppPackaging, DockerPlugin, BuildInfoPlugin)
 
 lazy val repl: Project = Project(
   "repl",

@@ -23,7 +23,8 @@ object Dependencies {
     // For user-agent-utils
     "Clojars Maven Repo" at "http://clojars.org/repo",
     // For hadoop-lzo
-    "Twitter" at "https://maven.twttr.com/"
+    "Twitter" at "https://maven.twttr.com/",
+    "Snowplow Bintray Maven repo" at "https://snowplow.bintray.com/snowplow-maven"
   )
 
   object V {
@@ -35,7 +36,7 @@ object Dependencies {
     val spark            = "2.2.0"
     val scalaz7          = "7.0.9"
     val scopt            = "3.5.0"
-    val commonEnrich     = "0.37.0"
+    val commonEnrich     = "0.38.0"
     val igluClient       = "0.5.0"
     // Scala (test only)
     val specs2           = "2.3.13"
@@ -46,7 +47,7 @@ object Dependencies {
 
   object Libraries {
     // Java
-    val hadoopLZO         = "com.hadoop.gplcompression" %  "hadoop-lzo"               % V.hadoopLZO
+    val hadoopLZO         = "com.snowplowanalytics"     %  "hadoop-lzo"               % V.hadoopLZO
     val elephantBird      = "com.twitter.elephantbird"  %  "elephant-bird-core"       % V.elephantBird
     // Downgrading needed to resolve conflicts between Spark's jackson (2.6.7) and geoip2's (2.9.3)
     val geoip2            = "com.maxmind.geoip2"        %  "geoip2"                   % V.geoip2

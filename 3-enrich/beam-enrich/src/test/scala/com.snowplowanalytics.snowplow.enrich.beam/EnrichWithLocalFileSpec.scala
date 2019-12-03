@@ -48,12 +48,12 @@ class EnrichWithLocalFileSpec extends PipelineSpec {
     "37.228.225.32",
     "10d96bc7-e400-4b29-8a41-6911ad00ee98",
     "IE",
-    "G", 
-    "Galway", 
-    "H91", 
-    "53.2709", 
-    "-9.0497", 
-    "County Galway", 
+    "L",
+    "Dublin",
+    "D02",
+    "53.3338",
+    "-6.2488",
+    "Leinster",
     """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.snowplowanalytics.snowplow/screen_view/jsonschema/1-0-0","data":{"name":"hello from Snowplow"}}}""",
     "curl/7.50.3",
     "com.snowplowanalytics.snowplow",
@@ -81,7 +81,7 @@ class EnrichWithLocalFileSpec extends PipelineSpec {
       .output(PubsubIO[String]("bad"))(_ should beEmpty)
       .distribution(Enrich.enrichedEventSizeDistribution) { d =>
         d.getCount() shouldBe 1
-        d.getMin() shouldBe 681 
+        d.getMin() shouldBe 676
         d.getMin() shouldBe d.getMax()
         d.getMin() shouldBe d.getSum()
         d.getMin() shouldBe d.getMean()

@@ -12,7 +12,6 @@
  * implied.  See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-
 import com.typesafe.sbt.packager.docker._
 
 lazy val commonDependencies = Seq(
@@ -26,6 +25,7 @@ lazy val commonDependencies = Seq(
   // Scala
   Dependencies.Libraries.scopt,
   Dependencies.Libraries.scalaz7,
+  Dependencies.Libraries.akkaStream,
   Dependencies.Libraries.akkaHttp,
   Dependencies.Libraries.akkaSlf4j,
   Dependencies.Libraries.json4sJackson,
@@ -33,6 +33,7 @@ lazy val commonDependencies = Seq(
   Dependencies.Libraries.collectorPayload,
   Dependencies.Libraries.pureconfig,
   // Scala (test)
+  Dependencies.Libraries.akkaTestkit,
   Dependencies.Libraries.akkaHttpTestkit,
   Dependencies.Libraries.specs2
 )
@@ -40,9 +41,9 @@ lazy val commonDependencies = Seq(
 lazy val buildSettings = Seq(
   organization  :=  "com.snowplowanalytics",
   name          :=  "snowplow-stream-collector",
-  version       :=  "0.16.0",
+  version       :=  "0.17.0",
   description   :=  "Scala Stream Collector for Snowplow raw events",
-  scalaVersion  :=  "2.11.11",
+  scalaVersion  :=  "2.11.12",
   scalacOptions :=  BuildSettings.compilerOptions,
   scalacOptions in (Compile, console) ~= { _.filterNot(Set("-Ywarn-unused-import")) },
   scalacOptions in (Test, console)    := (scalacOptions in (Compile, console)).value,
