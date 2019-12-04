@@ -19,7 +19,7 @@ import org.specs2.mutable.Specification
 
 object CorruptedThriftLinesSpec {
   val expected =
-    """{"schema":"iglu:com.snowplowanalytics.snowplow.badrows/collector_payload_format_violation/jsonschema/1-0-0","data":{"processor":{"artifact":"spark","version":"1.18.0"},"failure":{"timestamp":"2019-11-22T09:37:21.643Z","loader":"thrift","message":{"error":"error deserializing raw event: Cannot read. Remote side has closed. Tried to read 2 bytes, but only got 1 bytes. (This is often indicative of an internal error on the server side. Please check your server logs.)"}},"payload":"bac="}}"""
+    s"""{"schema":"iglu:com.snowplowanalytics.snowplow.badrows/collector_payload_format_violation/jsonschema/1-0-0","data":{"processor":{"artifact":"spark","version":"${generated.BuildInfo.version}"},"failure":{"timestamp":"2019-11-22T09:37:21.643Z","loader":"thrift","message":{"error":"error deserializing raw event: Cannot read. Remote side has closed. Tried to read 2 bytes, but only got 1 bytes. (This is often indicative of an internal error on the server side. Please check your server logs.)"}},"payload":"bac="}}"""
 }
 
 /** Input Thrift data cannot be decoded so should be base 64 encoded in the resulting bad row. */
