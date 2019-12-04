@@ -15,7 +15,7 @@
 package com.snowplowanalytics.snowplow.enrich.spark
 package good
 
-import scala.collection.mutable.{ArrayBuffer, Buffer, ListBuffer}
+import scala.collection.mutable.ArrayBuffer
 
 import org.specs2.mutable.Specification
 

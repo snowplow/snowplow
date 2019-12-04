@@ -16,8 +16,6 @@ package com.snowplowanalytics.snowplow
 package enrich.spark
 package good
 
-import java.io.File
-
 import scala.collection.JavaConverters._
 
 import org.specs2.mutable.Specification
