@@ -29,7 +29,7 @@ if [ -z $1 ]; then CC_VERSION="1.5"; else CC_VERSION=$1; fi
 # we download appropriate version to the classpath.
 # See https://forums.aws.amazon.com/thread.jspa?threadID=173258
 function fix_commons_codec() {
-    wget "http://central.maven.org/maven2/commons-codec/commons-codec/$CC_VERSION/commons-codec-$CC_VERSION.jar"
+    wget "https://repo1.maven.org/maven2/commons-codec/commons-codec/$CC_VERSION/commons-codec-$CC_VERSION.jar"
     sudo mkdir -p /usr/lib/hadoop/lib
     sudo cp "commons-codec-$CC_VERSION.jar" "/usr/lib/hadoop/lib/remedial-commons-codec-$CC_VERSION.jar"
     rm "commons-codec-$CC_VERSION.jar"
