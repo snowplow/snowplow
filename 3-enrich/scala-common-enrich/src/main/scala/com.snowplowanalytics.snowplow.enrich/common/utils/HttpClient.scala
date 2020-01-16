@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,43 +10,56 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich
-package common
-package utils
+package com.snowplowanalytics.snowplow.enrich.common.utils
 
 import scala.util.control.NonFatal
 
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// Scalaj
+import cats.{Eval, Id}
+import cats.effect.Sync
+import cats.syntax.either._
 import scalaj.http._
 
+trait HttpClient[F[_]] {
+  def getResponse(request: HttpRequest): F[Either[Throwable, String]]
+}
+
 object HttpClient {
+  def apply[F[_]](implicit ev: HttpClient[F]): HttpClient[F] = ev
+
+  implicit def syncHttpClient[F[_]: Sync]: HttpClient[F] = new HttpClient[F] {
+    override def getResponse(request: HttpRequest): F[Either[Throwable, String]] =
+      Sync[F].delay(getBody(request))
+  }
+
+  implicit def evalHttpClient: HttpClient[Eval] = new HttpClient[Eval] {
+    override def getResponse(request: HttpRequest): Eval[Either[Throwable, String]] =
+      Eval.later(getBody(request))
+  }
+
+  implicit def idHttpClient: HttpClient[Id] = new HttpClient[Id] {
+    override def getResponse(request: HttpRequest): Id[Either[Throwable, String]] = getBody(request)
+  }
 
   // The defaults are from scalaj library
   val DEFAULT_CONNECTION_TIMEOUT_MS = 1000
-  val DEFAULT_READ_TIMEOUT_MS       = 5000
+  val DEFAULT_READ_TIMEOUT_MS = 5000
 
   /**
    * Blocking method to get body of HTTP response
-   *
    * @param request assembled request object
    * @return validated body of HTTP request
    */
-  def getBody(request: HttpRequest): Validation[Throwable, String] =
+  private def getBody(request: HttpRequest): Either[Throwable, String] =
     try {
       val res = request.asString
-      if (res.isSuccess) res.body.success
-      else new Exception(s"Request failed with status ${res.code} and body ${res.body}").failure
+      if (res.isSuccess) res.body.asRight
+      else new Exception(s"Request failed with status ${res.code} and body ${res.body}").asLeft
     } catch {
-      case NonFatal(e) => e.failure
+      case NonFatal(e) => e.asLeft
     }
 
   /**
    * Build HTTP request object
-   *
    * @param uri full URI to request
    * @param authUser optional username for basic auth
    * @param authPassword optional password for basic auth
@@ -72,18 +85,21 @@ object HttpClient {
   implicit class RichHttpRequest(request: HttpRequest) {
 
     def maybeAuth(user: Option[String], password: Option[String]): HttpRequest =
-      if (user.isDefined || password.isDefined) request.auth(user.getOrElse(""), password.getOrElse(""))
+      if (user.isDefined || password.isDefined)
+        request.auth(user.getOrElse(""), password.getOrElse(""))
       else request
 
     def maybeTimeout(connectionTimeout: Option[Long], readTimeout: Option[Long]): HttpRequest =
       (connectionTimeout, readTimeout) match {
         case (Some(ct), Some(rt)) => request.timeout(ct.toInt, rt.toInt)
-        case (Some(ct), None)     => request.timeout(ct.toInt, DEFAULT_READ_TIMEOUT_MS)
-        case (None, Some(rt))     => request.timeout(DEFAULT_CONNECTION_TIMEOUT_MS, rt.toInt)
-        case _                    => request.timeout(DEFAULT_CONNECTION_TIMEOUT_MS, DEFAULT_READ_TIMEOUT_MS)
+        case (Some(ct), None) => request.timeout(ct.toInt, DEFAULT_READ_TIMEOUT_MS)
+        case (None, Some(rt)) => request.timeout(DEFAULT_CONNECTION_TIMEOUT_MS, rt.toInt)
+        case _ => request.timeout(DEFAULT_CONNECTION_TIMEOUT_MS, DEFAULT_READ_TIMEOUT_MS)
       }
 
     def maybePostData(body: Option[String]): HttpRequest =
-      body.map(data => request.postData(data).header("content-type", "application/json")).getOrElse(request)
+      body
+        .map(data => request.postData(data).header("content-type", "application/json"))
+        .getOrElse(request)
   }
 }

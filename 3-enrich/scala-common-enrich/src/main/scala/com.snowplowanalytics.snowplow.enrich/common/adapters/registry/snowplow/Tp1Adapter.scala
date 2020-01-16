@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,56 +10,59 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 package snowplow
 
-// Iglu
-import iglu.client.Resolver
+import cats.Monad
+import cats.data.{NonEmptyList, ValidatedNel}
+import cats.effect.Clock
+import cats.syntax.validated._
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
+import com.snowplowanalytics.snowplow.badrows._
+import io.circe.Json
 
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// This project
 import loaders.CollectorPayload
+import utils.HttpClient
 
-/**
- * Version 1 of the Tracker Protocol is GET only.
- * All data comes in on the querystring.
- */
+/** Version 1 of the Tracker Protocol is GET only. All data comes in on the querystring. */
 object Tp1Adapter extends Adapter {
 
   /**
-   * Converts a CollectorPayload instance into raw events.
-   * Tracker Protocol 1 only supports a single event in a
-   * payload.
-   *
-   * @param payload The CollectorPaylod containing one or more
-   *        raw events as collected by a Snowplow collector
-   * @param resolver (implicit) The Iglu resolver used for
-   *        schema lookup and validation. Not used
-   * @return a Validation boxing either a NEL of RawEvents on
-   *         Success, or a NEL of Failure Strings
+   * Converts a CollectorPayload instance into raw events. Tracker Protocol 1 only supports a single
+   * event in a payload.
+   * @param payload The CollectorPaylod containing one or more raw events
+   * @param client The Iglu client used for schema lookup and validation
+   * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = {
-
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
+    payload: CollectorPayload,
+    client: Client[F, Json]
+  ): F[
+    ValidatedNel[FailureDetails.AdapterFailureOrTrackerProtocolViolation, NonEmptyList[RawEvent]]
+  ] = {
+    val _ = client
     val params = toMap(payload.querystring)
     if (params.isEmpty) {
-      "Querystring is empty: no raw event to process".failNel
+      val msg = "empty querystring: not a valid URI redirect"
+      val failure = FailureDetails.AdapterFailure.InputData("querystring", None, msg)
+      Monad[F].pure(failure.invalidNel)
     } else {
-      NonEmptyList(
-        RawEvent(
-          api         = payload.api,
-          parameters  = params,
-          contentType = payload.contentType,
-          source      = payload.source,
-          context     = payload.context
-        )).success
+      Monad[F].pure(
+        NonEmptyList
+          .one(
+            RawEvent(
+              api = payload.api,
+              parameters = params,
+              contentType = payload.contentType,
+              source = payload.source,
+              context = payload.context
+            )
+          )
+          .valid
+      )
     }
   }
 }

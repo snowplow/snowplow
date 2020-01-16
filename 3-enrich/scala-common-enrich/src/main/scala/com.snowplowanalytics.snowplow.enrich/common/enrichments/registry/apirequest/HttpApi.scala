@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,84 +10,84 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich
-package common
-package enrichments
-package registry
-package apirequest
+package com.snowplowanalytics.snowplow.enrich.common
+package enrichments.registry.apirequest
 
-// Java
 import java.net.URLEncoder
 
-// json4s
-import org.json4s.DefaultFormats
-import org.json4s.jackson.Serialization
+import cats.syntax.option._
+import io.circe.syntax._
 
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// This project
-import com.snowplowanalytics.snowplow.enrich.common.utils.HttpClient
+import utils.HttpClient
 
 /**
  * API client able to make HTTP requests
- *
  * @param method HTTP method
  * @param uri URI template
  * @param authentication auth preferences
  * @param timeout time in milliseconds after which request can be considered failed
  */
-case class HttpApi(method: String, uri: String, timeout: Int, authentication: Authentication) {
+final case class HttpApi(
+  method: String,
+  uri: String,
+  timeout: Int,
+  authentication: Authentication
+) {
   import HttpApi._
 
   private val authUser = for {
     httpBasic <- authentication.httpBasic
-    user      <- httpBasic.username
+    user <- httpBasic.username
   } yield user
 
   private val authPassword = for {
     httpBasic <- authentication.httpBasic
-    password  <- httpBasic.password
+    password <- httpBasic.password
   } yield password
 
   /**
    * Primary API method, taking kv-context derived from event (POJO and contexts),
    * generating request and sending it
-   *
    * @param url URL to query
    * @param body optional request body
    * @return self-describing JSON ready to be attached to event contexts
    */
-  def perform(url: String, body: Option[String] = None): Validation[Throwable, String] = {
-    val req = HttpClient.buildRequest(url, authUser = authUser, authPassword = authPassword, body, method, None, None)
-    HttpClient.getBody(req)
+  def perform[F[_]: HttpClient](url: String, body: Option[String]): F[Either[Throwable, String]] = {
+    val req =
+      HttpClient.buildRequest(
+        url,
+        authUser = authUser,
+        authPassword = authPassword,
+        body,
+        method,
+        None,
+        None
+      )
+    HttpClient[F].getResponse(req)
   }
 
   /**
    * Build URL from URI templates (http://acme.com/{{key1}}/{{key2}}
    * Context values taken from event will be URL-encoded
-   *
    * @param context key-value context to substitute
    * @return Some request if everything is built correct,
    *         None if some placeholders weren't matched
    */
   private[apirequest] def buildUrl(context: Map[String, String]): Option[String] = {
     val encodedContext = context.map { case (k, v) => (k, URLEncoder.encode(v, "UTF-8")) }
-    val url            = encodedContext.toList.foldLeft(uri)(replace)
-    everythingMatched(url).option(url)
+    val url = encodedContext.toList.foldLeft(uri)(replace)
+    if (everythingMatched(url)) url.some
+    else none
   }
 
   /**
    * Build request data body when the method supports this
-   *
    * @param context key-value context
-   * @return Some body data if method supports body,
-   *         None if method does not support body
+   * @return Some body data if method supports body, None if method does not support body
    */
   private[apirequest] def buildBody(context: Map[String, String]): Option[String] =
     method match {
-      case "POST" | "PUT" => Some(Serialization.write(context)(DefaultFormats))
+      case "POST" | "PUT" => Some(context.asJson.noSpaces)
       case "GET" => None
     }
 }
@@ -96,7 +96,6 @@ object HttpApi {
 
   /**
    * Check if URI still contain any braces (it's impossible for URL-encoded string)
-   *
    * @param uri URI generated out of template
    * @return true if uri contains no curly braces
    */
@@ -104,11 +103,9 @@ object HttpApi {
     !(uri.contains('{') || uri.contains('}'))
 
   /**
-   * Replace all keys (within curly braces) inside template `t`
-   * with corresponding value.
+   * Replace all keys (within curly braces) inside template `t` with corresponding value.
    * This function also double checks pair's key contains only allowed characters
    * (as specified in ALE config schema), otherwise regex can be injected
-   *
    * @param t string with placeholders
    * @param pair key-value pair
    * @return template with replaced placehoders for pair's key
@@ -122,12 +119,9 @@ object HttpApi {
 
 /**
  * Helper class to configure authentication for HTTP API
- *
  * @param httpBasic single possible auth type is http-basic
  */
-case class Authentication(httpBasic: Option[HttpBasic])
+final case class Authentication(httpBasic: Option[HttpBasic])
 
-/**
- * Container for HTTP Basic auth credentials
- */
-case class HttpBasic(username: Option[String], password: Option[String])
+/** Container for HTTP Basic auth credentials */
+final case class HttpBasic(username: Option[String], password: Option[String])

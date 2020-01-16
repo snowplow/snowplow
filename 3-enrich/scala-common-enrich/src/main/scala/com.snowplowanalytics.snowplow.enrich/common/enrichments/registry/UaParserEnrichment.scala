@@ -1,4 +1,4 @@
-/*Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+/*Copyright (c) 2012-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -9,123 +9,82 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
-package enrichments
-package registry
+package com.snowplowanalytics.snowplow.enrich.common
+package enrichments.registry
 
-// Maven Artifact
 import java.io.{FileInputStream, InputStream}
 import java.net.URI
 
-import com.snowplowanalytics.snowplow.enrich.common.utils.ConversionUtils
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion
+import cats.{Eval, Id, Monad}
+import cats.data.{EitherT, NonEmptyList, ValidatedNel}
+import cats.effect.Sync
+import cats.implicits._
 
-// Scala
-import scala.util.control.NonFatal
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SchemaVer, SelfDescribingData}
 
-// Scalaz
-import scalaz._
-import Scalaz._
+import com.snowplowanalytics.snowplow.badrows.FailureDetails
 
-// ua-parser
+import io.circe._
+import io.circe.syntax._
+
 import ua_parser.Parser
 import ua_parser.Client
-import ua_parser.Client
 
-// json4s
-import org.json4s._
-import org.json4s.DefaultFormats
-import org.json4s.JValue
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
+import utils.CirceUtils
 
-// Iglu
-import iglu.client.{SchemaCriterion, SchemaKey}
-import iglu.client.validation.ProcessingMessageMethods._
-import utils.ScalazJson4sUtils
+/** Companion object. Lets us create a UaParserEnrichment from a Json. */
+object UaParserEnrichment extends ParseableEnrichment {
+  override val supportedSchema =
+    SchemaCriterion("com.snowplowanalytics.snowplow", "ua_parser_config", "jsonschema", 1, 0)
+  val Schema = SchemaKey(
+    "com.snowplowanalytics.snowplow",
+    "ua_parser_context",
+    "jsonschema",
+    SchemaVer.Full(1, 0, 0)
+  )
 
-/**
- * Companion object. Lets us create a UaParserEnrichment
- * from a JValue.
- */
-object UaParserEnrichmentConfig extends ParseableEnrichment {
-  implicit val formats = DefaultFormats
+  private val localFile = "./ua-parser-rules.yml"
 
-  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "ua_parser_config", "jsonschema", 1, 0)
+  override def parse(
+    c: Json,
+    schemaKey: SchemaKey,
+    localMode: Boolean = false
+  ): ValidatedNel[String, UaParserConf] =
+    (for {
+      _ <- isParseable(c, schemaKey).leftMap(NonEmptyList.one)
+      rules <- getCustomRules(c).toEither
+    } yield UaParserConf(schemaKey, rules)).toValidated
 
-  private val localRulefile = "./ua-parser-rules.yml"
+  /**
+   * Creates a UaParserEnrichment from a UaParserConf
+   * @param conf Configuration for the ua parser enrichment
+   * @return a ua parser enrichment
+   */
+  def apply[F[_]: Monad: CreateUaParser](
+    conf: UaParserConf
+  ): EitherT[F, String, UaParserEnrichment] =
+    EitherT(CreateUaParser[F].create(conf.uaDatabase.map(_._2)))
+      .map(p => UaParserEnrichment(conf.schemaKey, p))
 
-  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[UaParserEnrichment] = {
-    val c = UaParserEnrichment(None)
-    isParseable(config, schemaKey).flatMap(conf => {
+  private def getCustomRules(conf: Json): ValidatedNel[String, Option[(URI, String)]] =
+    if (conf.hcursor.downField("parameters").downField("uri").focus.isDefined) {
       (for {
-        rules <- getCustomRules(conf)
-      } yield UaParserEnrichment(rules)).toValidationNel
-    })
-  }
-
-  private def getCustomRules(conf: JValue): ValidatedMessage[Option[(URI, String)]] =
-    if (ScalazJson4sUtils.fieldExists(conf, "parameters", "uri")) {
-      for {
-        uri    <- ScalazJson4sUtils.extract[String](conf, "parameters", "uri")
-        db     <- ScalazJson4sUtils.extract[String](conf, "parameters", "database")
-        source <- getUri(uri, db)
-      } yield (source, localRulefile).some
+        uriAndDb <- (
+          CirceUtils.extract[String](conf, "parameters", "uri").toValidatedNel,
+          CirceUtils.extract[String](conf, "parameters", "database").toValidatedNel
+        ).mapN((_, _)).toEither
+        source <- getDatabaseUri(uriAndDb._1, uriAndDb._2).leftMap(NonEmptyList.one)
+      } yield (source, localFile)).toValidated.map(_.some)
     } else {
-      None.success
+      None.validNel
     }
-
-  private def getUri(uri: String, database: String): ValidatedMessage[URI] =
-    ConversionUtils
-      .stringToUri(uri + (if (uri.endsWith("/")) "" else "/") + database)
-      .flatMap {
-        case Some(u) => u.success
-        case None    => "A valid URI to ua-parser regex file must be provided".fail
-      }
-      .toProcessingMessage
 }
 
-/**
- * Config for an ua_parser_config enrichment
- *
- * Uses uap-java library to parse client attributes
- */
-case class UaParserEnrichment(customRulefile: Option[(URI, String)]) extends Enrichment {
+/** Config for an ua_parser_config enrichment. Uses uap-java library to parse client attributes */
+final case class UaParserEnrichment(schemaKey: SchemaKey, parser: Parser) extends Enrichment {
+  private val enrichmentInfo = FailureDetails.EnrichmentInformation(schemaKey, "ua-parser").some
 
-  override val filesToCache: List[(URI, String)] =
-    customRulefile.map(List(_)).getOrElse(List.empty)
-
-  lazy val uaParser = {
-    def constructParser(input: Option[InputStream]) = input match {
-      case Some(is) =>
-        try {
-          new Parser(is)
-        } finally {
-          is.close()
-        }
-      case None => new Parser()
-    }
-
-    def tryWithCatch[T](a: => T): Validation[Throwable, T] =
-      try {
-        a.success
-      } catch {
-        case NonFatal(e) => e.failure
-      }
-
-    val parser = for {
-      input <- tryWithCatch(customRulefile.map(f => new FileInputStream(f._2)))
-      p     <- tryWithCatch(constructParser(input))
-    } yield p
-    parser.leftMap(e => s"Failed to initialize ua parser: [${e.getMessage}]")
-  }
-
-  /*
-   * Adds a period in front of a not-null version element
-   */
+  /** Adds a period in front of a not-null version element */
   def prependDot(versionElement: String): String =
     if (versionElement != null) {
       "." + versionElement
@@ -133,9 +92,7 @@ case class UaParserEnrichment(customRulefile: Option[(URI, String)]) extends Enr
       ""
     }
 
-  /*
-   * Prepends space before the versionElement
-   */
+  /** Prepends space before the versionElement */
   def prependSpace(versionElement: String): String =
     if (versionElement != null) {
       " " + versionElement
@@ -143,9 +100,7 @@ case class UaParserEnrichment(customRulefile: Option[(URI, String)]) extends Enr
       ""
     }
 
-  /*
-   * Checks for null value in versionElement for family parameter
-   */
+  /** Checks for null value in versionElement for family parameter */
   def checkNull(versionElement: String): String =
     if (versionElement == null) {
       ""
@@ -154,54 +109,95 @@ case class UaParserEnrichment(customRulefile: Option[(URI, String)]) extends Enr
     }
 
   /**
-   * Extracts the client attributes
-   * from a useragent string, using
-   * UserAgentEnrichment.
-   *
-   * @param useragent The useragent
-   *                  String to extract from.
-   *                  Should be encoded (i.e.
-   *                  not previously decoded).
-   * @return the json or
-   *         the message of the
-   *         exception, boxed in a
-   *         Scalaz Validation
+   * Extracts the client attributes from a useragent string, using UserAgentEnrichment.
+   * @param useragent to extract from. Should be encoded, i.e. not previously decoded.
+   * @return the json or the message of the exception, boxed in a Scalaz Validation
    */
-  def extractUserAgent(useragent: String): Validation[String, JsonAST.JObject] =
-    for {
-      parser <- uaParser
-      c <- try {
-        parser.parse(useragent).success
-      } catch {
-        case NonFatal(e) => s"Exception parsing useragent [${useragent}]: [${e.getMessage}]".fail
+  def extractUserAgent(
+    useragent: String
+  ): Either[FailureDetails.EnrichmentStageIssue, SelfDescribingData[Json]] =
+    Either
+      .catchNonFatal(parser.parse(useragent))
+      .leftMap { e =>
+        val msg = s"could not parse useragent: ${e.getMessage}"
+        val f = FailureDetails.EnrichmentFailureMessage.InputData(
+          "useragent",
+          useragent.some,
+          msg
+        )
+        FailureDetails.EnrichmentFailure(enrichmentInfo, f)
       }
-    } yield assembleContext(c)
+      .map(assembleContext)
 
-  /**
-   * Assembles ua_parser_context from a parsed user agent.
-   */
-  def assembleContext(c: Client): JsonAST.JObject = {
+  /** Assembles ua_parser_context from a parsed user agent. */
+  def assembleContext(c: Client): SelfDescribingData[Json] = {
     // To display useragent version
     val useragentVersion = checkNull(c.userAgent.family) + prependSpace(c.userAgent.major) + prependDot(
-      c.userAgent.minor) + prependDot(c.userAgent.patch)
+      c.userAgent.minor
+    ) + prependDot(c.userAgent.patch)
 
     // To display operating system version
-    val osVersion = checkNull(c.os.family) + prependSpace(c.os.major) + prependDot(c.os.minor) + prependDot(c.os.patch) + prependDot(
-      c.os.patchMinor)
+    val osVersion = checkNull(c.os.family) + prependSpace(c.os.major) + prependDot(c.os.minor) +
+      prependDot(c.os.patch) + prependDot(c.os.patchMinor)
 
-    (("schema" -> "iglu:com.snowplowanalytics.snowplow/ua_parser_context/jsonschema/1-0-0") ~
-      ("data" ->
-        ("useragentFamily"    -> c.userAgent.family) ~
-          ("useragentMajor"   -> c.userAgent.major) ~
-          ("useragentMinor"   -> c.userAgent.minor) ~
-          ("useragentPatch"   -> c.userAgent.patch) ~
-          ("useragentVersion" -> useragentVersion) ~
-          ("osFamily"         -> c.os.family) ~
-          ("osMajor"          -> c.os.major) ~
-          ("osMinor"          -> c.os.minor) ~
-          ("osPatch"          -> c.os.patch) ~
-          ("osPatchMinor"     -> c.os.patchMinor) ~
-          ("osVersion"        -> osVersion) ~
-          ("deviceFamily"     -> c.device.family)))
+    def getJson(s: String): Json =
+      Option(s).map(Json.fromString).getOrElse(Json.Null)
+
+    SelfDescribingData(
+      UaParserEnrichment.Schema,
+      Json.obj(
+        "useragentFamily" := getJson(c.userAgent.family),
+        "useragentMajor" := getJson(c.userAgent.major),
+        "useragentMinor" := getJson(c.userAgent.minor),
+        "useragentPatch" := getJson(c.userAgent.patch),
+        "useragentVersion" := getJson(useragentVersion),
+        "osFamily" := getJson(c.os.family),
+        "osMajor" := getJson(c.os.major),
+        "osMinor" := getJson(c.os.minor),
+        "osPatch" := getJson(c.os.patch),
+        "osPatchMinor" := getJson(c.os.patchMinor),
+        "osVersion" := getJson(osVersion),
+        "deviceFamily" := getJson(c.device.family)
+      )
+    )
   }
+}
+
+trait CreateUaParser[F[_]] {
+  def create(uaFile: Option[String]): F[Either[String, Parser]]
+}
+
+object CreateUaParser {
+  def apply[F[_]](implicit ev: CreateUaParser[F]): CreateUaParser[F] = ev
+
+  implicit def syncCreateUaParser[F[_]: Sync]: CreateUaParser[F] = new CreateUaParser[F] {
+    def create(uaFile: Option[String]): F[Either[String, Parser]] =
+      Sync[F].delay { parser(uaFile) }
+  }
+
+  implicit def evalCreateUaParser: CreateUaParser[Eval] = new CreateUaParser[Eval] {
+    def create(uaFile: Option[String]): Eval[Either[String, Parser]] =
+      Eval.later { parser(uaFile) }
+  }
+
+  implicit def idCreateUaParser: CreateUaParser[Id] = new CreateUaParser[Id] {
+    def create(uaFile: Option[String]): Id[Either[String, Parser]] =
+      parser(uaFile)
+  }
+
+  private def constructParser(input: Option[InputStream]) = input match {
+    case Some(is) =>
+      try {
+        new Parser(is)
+      } finally {
+        is.close()
+      }
+    case None => new Parser()
+  }
+
+  private def parser(file: Option[String]): Either[String, Parser] =
+    (for {
+      input <- Either.catchNonFatal(file.map(new FileInputStream(_)))
+      p <- Either.catchNonFatal(constructParser(input))
+    } yield p).leftMap(e => s"Failed to initialize ua parser: [${e.getMessage}]")
 }

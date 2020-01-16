@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2016-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,51 +10,37 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-// Java
 import java.net.URI
-import org.apache.http.client.utils.URLEncodedUtils
+import java.nio.charset.StandardCharsets.UTF_8
 
-// Scala
-import scala.collection.JavaConversions._
-import scala.util.control.NonFatal
+import scala.collection.JavaConverters._
 import scala.util.{Try, Success => TS, Failure => TF}
 
-// Scalaz
-import scalaz._
-import Scalaz._
+import cats.Monad
+import cats.data.{NonEmptyList, ValidatedNel}
+import cats.effect.Clock
+import cats.syntax.option._
+import cats.syntax.validated._
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
+import com.snowplowanalytics.snowplow.badrows._
+import io.circe.Json
+import io.circe.syntax._
+import org.apache.http.client.utils.URLEncodedUtils
 
-// Jackson
-import com.fasterxml.jackson.core.JsonParseException
-
-// json4s
-import org.json4s._
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
-
-// Iglu
-import iglu.client.{Resolver, SchemaKey}
-
-// This project
 import loaders.CollectorPayload
-import utils.{JsonUtils => JU}
+import utils.{HttpClient, JsonUtils => JU}
 
 /**
- * Transforms a collector payload which conforms to
- * a known version of the StatusGator Tracking webhook
- * into raw events.
+ * Transforms a collector payload which conforms to a known version of the StatusGator Tracking
+ * webhook into raw events.
  */
 object StatusGatorAdapter extends Adapter {
-
-  // Vendor name for Failure Message
-  private val VendorName = "StatusGator"
-
   // Tracker version for an StatusGator Tracking webhook
   private val TrackerVersion = "com.statusgator-v1"
 
@@ -62,54 +48,84 @@ object StatusGatorAdapter extends Adapter {
   private val ContentType = "application/x-www-form-urlencoded"
 
   // Schemas for reverse-engineering a Snowplow unstructured event
-  private val EventSchema = SchemaKey("com.statusgator", "status_change", "jsonschema", "1-0-0").toSchemaUri
+  private val EventSchema =
+    SchemaKey("com.statusgator", "status_change", "jsonschema", SchemaVer.Full(1, 0, 0))
 
   /**
-   * Converts a CollectorPayload instance into raw events.
-   *
-   * A StatusGator Tracking payload contains one single event
-   * in the body of the payload, stored within a HTTP encoded
-   * string.
-   *
-   * @param payload  The CollectorPayload containing one or more
-   *                 raw events as collected by a Snowplow collector
-   * @param resolver (implicit) The Iglu resolver used for
-   *                 schema lookup and validation. Not used
-   * @return a Validation boxing either a NEL of RawEvents on
-   *         Success, or a NEL of Failure Strings
+   * Converts a CollectorPayload instance into raw events. A StatusGator Tracking payload contains
+   * one single event in the body of the payload, stored within a HTTP encoded string.
+   * @param payload The CollectorPayload containing one or more raw events
+   * @param client The Iglu client used for schema lookup and validation
+   * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
+    payload: CollectorPayload,
+    client: Client[F, Json]
+  ): F[
+    ValidatedNel[FailureDetails.AdapterFailureOrTrackerProtocolViolation, NonEmptyList[RawEvent]]
+  ] =
     (payload.body, payload.contentType) match {
-      case (None, _) => s"Request body is empty: no ${VendorName} events to process".failureNel
+      case (None, _) =>
+        val failure = FailureDetails.AdapterFailure.InputData(
+          "body",
+          none,
+          "empty body: no events to process"
+        )
+        Monad[F].pure(failure.invalidNel)
+      case (Some(body), _) if (body.isEmpty) =>
+        val failure = FailureDetails.AdapterFailure.InputData(
+          "body",
+          none,
+          "empty body: no events to process"
+        )
+        Monad[F].pure(failure.invalidNel)
       case (_, None) =>
-        s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failureNel
+        val msg = s"no content type: expected $ContentType"
+        Monad[F].pure(
+          FailureDetails.AdapterFailure.InputData("contentType", none, msg).invalidNel
+        )
       case (_, Some(ct)) if ct != ContentType =>
-        s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failureNel
-      case (Some(body), _) if (body.isEmpty) => s"${VendorName} event body is empty: nothing to process".failureNel
-      case (Some(body), _) => {
+        val msg = s"expected $ContentType"
+        Monad[F].pure(
+          FailureDetails.AdapterFailure
+            .InputData("contentType", ct.some, msg)
+            .invalidNel
+        )
+      case (Some(body), _) =>
+        val _ = client
         val qsParams = toMap(payload.querystring)
         Try {
-          toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), "UTF-8").toList)
+          toMap(
+            URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).asScala.toList
+          )
         } match {
           case TF(e) =>
-            s"${VendorName} incorrect event string : [${JU.stripInstanceEtc(e.getMessage).orNull}]".failureNel
+            val msg = s"could not parse body: ${JU.stripInstanceEtc(e.getMessage).orNull}"
+            Monad[F].pure(
+              FailureDetails.AdapterFailure
+                .InputData("body", body.some, msg)
+                .invalidNel
+            )
           case TS(bodyMap) =>
-            try {
-              val a: Map[String, String] = bodyMap
-              val event                  = parse(compact(render(a)))
-              NonEmptyList(
-                RawEvent(
-                  api         = payload.api,
-                  parameters  = toUnstructEventParams(TrackerVersion, qsParams, EventSchema, camelize(event), "srv"),
-                  contentType = payload.contentType,
-                  source      = payload.source,
-                  context     = payload.context
-                )).success
-            } catch {
-              case e: JsonParseException =>
-                s"${VendorName} event string failed to parse into JSON: [${JU.stripInstanceEtc(e.getMessage).orNull}]".failureNel
-            }
+            Monad[F].pure(
+              NonEmptyList
+                .one(
+                  RawEvent(
+                    api = payload.api,
+                    parameters = toUnstructEventParams(
+                      TrackerVersion,
+                      qsParams,
+                      EventSchema,
+                      camelize(bodyMap.asJson),
+                      "srv"
+                    ),
+                    contentType = payload.contentType,
+                    source = payload.source,
+                    context = payload.context
+                  )
+                )
+                .valid
+            )
         }
-      }
     }
 }

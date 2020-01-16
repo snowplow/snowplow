@@ -1,21 +1,6 @@
 import sbt._
 import Keys._
 
-lazy val compilerOptions = Seq(
-  "-target:jvm-1.8",
-  "-deprecation",
-  "-feature",
-  "-unchecked",
-  "-language:existentials",
-  "-language:higherKinds",
-  "-language:implicitConversions",
-  "-Yno-adapted-args",
-  "-Ywarn-dead-code",
-  "-Ywarn-numeric-widen",
-  "-Ywarn-unused-import",
-  "-Xfuture"
-)
-
 lazy val resolutionRepos = Seq(
   // For Snowplow
   "Snowplow Analytics Maven releases repo" at "http://maven.snplow.com/releases/",
@@ -33,16 +18,8 @@ import Tests._
 
 lazy val commonSettings = Defaults.coreDefaultSettings ++ Seq(
   organization  := "com.snowplowanalytics",
-  version       := "0.4.0",
-  scalaVersion  := "2.11.12",
-  javacOptions  ++= Seq("-source", "1.8", "-target", "1.8"),
-  scalacOptions ++= compilerOptions,
-   scalacOptions in (Compile, console) ~= {
-    _.filterNot(Set("-Ywarn-unused-import"))
-  },
-  scalacOptions in (Test, console) ~= {
-    _.filterNot(Set("-Ywarn-unused-import"))
-  },
+  version       := "1.0.0",
+  scalaVersion  := "2.12.10",
   resolvers     ++= resolutionRepos
 )
 
@@ -66,12 +43,13 @@ dockerBaseImage := "snowplow-docker-registry.bintray.io/snowplow/base-debian:0.1
 daemonUser in Docker := "snowplow"
 dockerUpdateLatest := true
 
-lazy val scioVersion = "0.6.0"
-lazy val beamVersion = "2.5.0"
-lazy val sceVersion = "0.38.0"
-lazy val scalaMacrosVersion = "2.1.0"
+lazy val scioVersion = "0.7.4"
+lazy val beamVersion = "2.11.0"
+lazy val sceVersion = "1.0.0"
+lazy val scalaMacrosVersion = "2.1.1"
 lazy val slf4jVersion = "1.7.25"
-lazy val scalatestVersion = "3.0.5"
+lazy val circeVersion = "0.11.1"
+lazy val scalatestVersion = "3.0.8"
 
 lazy val root: Project = Project(
   "beam-enrich",
@@ -81,6 +59,8 @@ lazy val root: Project = Project(
   description := "Streaming enrich job written using SCIO",
   buildInfoKeys := Seq[BuildInfoKey](organization, name, version, "sceVersion" -> sceVersion),
   buildInfoPackage := "com.snowplowanalytics.snowplow.enrich.beam.generated",
+  scalafmtConfig := file(".scalafmt.conf"),
+  scalafmtOnCompile := true,
   libraryDependencies ++= Seq(
     "com.spotify" %% "scio-core" % scioVersion,
     "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion,
@@ -88,7 +68,8 @@ lazy val root: Project = Project(
     "org.slf4j" % "slf4j-simple" % slf4jVersion
   ) ++ Seq(
     "com.spotify" %% "scio-test" % scioVersion,
-    "org.scalatest" %% "scalatest" % scalatestVersion
+    "org.scalatest" %% "scalatest" % scalatestVersion,
+    "io.circe" %% "circe-literal" % circeVersion
   ).map(_ % "test")
 ).enablePlugins(JavaAppPackaging, DockerPlugin, BuildInfoPlugin)
 

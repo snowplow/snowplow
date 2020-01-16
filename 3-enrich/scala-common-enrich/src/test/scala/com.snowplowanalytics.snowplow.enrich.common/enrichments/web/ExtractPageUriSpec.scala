@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,25 +10,16 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common
-package enrichments
-package web
+package com.snowplowanalytics.snowplow.enrich.common.enrichments.web
 
-// Java
 import java.net.URI
 
-// Specs2 & Scalaz-Specs2
+import cats.syntax.option._
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
 
-// Scalaz
-import scalaz._
-import Scalaz._
-
-class ExtractPageUriSpec extends Specification with DataTables with ValidationMatchers {
+class ExtractPageUriSpec extends Specification with DataTables {
   def is = s2"""
-  This is a specification to test the extractPageUri function
   extractPageUri should return a None when no page URI provided                             $e1
   extractPageUri should choose the URI from the tracker if it has one or two to choose from $e2
   extractPageUri will alas assume a browser-truncated page URL is a custom URL not an error $e3
@@ -36,23 +27,23 @@ class ExtractPageUriSpec extends Specification with DataTables with ValidationMa
 
   // No URI
   def e1 =
-    PageEnrichments.extractPageUri(None, None) must beSuccessful(None)
+    PageEnrichments.extractPageUri(None, None) must beRight(None)
 
   // Valid URI combinations
   val originalUri = "http://www.mysite.com/shop/session/_internal/checkout"
-  val customUri   = "http://www.mysite.com/shop/checkout" // E.g. set by setCustomUrl in JS Tracker
+  val customUri = "http://www.mysite.com/shop/checkout" // E.g. set by setCustomUrl in JS Tracker
   val originalURI = new URI(originalUri)
-  val customURI   = new URI(customUri)
+  val customURI = new URI(customUri)
 
   def e2 =
-    "SPEC NAME"                                         || "URI TAKEN FROM COLLECTOR'S REFERER" | "URI SENT BY TRACKER" | "EXPECTED URI" |
-      "both URIs match (98% of the time)"               !! originalUri.some                     ! originalUri.some      ! originalURI.some |
-      "tracker didn't send URI (e.g. No-JS Tracker)"    !! originalUri.some                     ! None                  ! originalURI.some |
-      "collector didn't record the referer (rare)"      !! None                                 ! originalUri.some      ! originalURI.some |
-      "collector and tracker URIs differ - use tracker" !! originalUri.some                     ! customUri.some        ! customURI.some |> {
+    "SPEC NAME" || "URI TAKEN FROM COLLECTOR'S REFERER" | "URI SENT BY TRACKER" | "EXPECTED URI" |
+      "both URIs match (98% of the time)" !! originalUri.some ! originalUri.some ! originalURI.some |
+      "tracker didn't send URI (e.g. No-JS Tracker)" !! originalUri.some ! None ! originalURI.some |
+      "collector didn't record the referer (rare)" !! None ! originalUri.some ! originalURI.some |
+      "collector and tracker URIs differ - use tracker" !! originalUri.some ! customUri.some ! customURI.some |> {
 
       (_, fromReferer, fromTracker, expected) =>
-        PageEnrichments.extractPageUri(fromReferer, fromTracker) must beSuccessful(expected)
+        PageEnrichments.extractPageUri(fromReferer, fromTracker) must beRight(expected)
     }
 
   // Truncate
@@ -61,5 +52,7 @@ class ExtractPageUriSpec extends Specification with DataTables with ValidationMa
 
   // See https://github.com/snowplow/snowplow/issues/268 for background behind this test
   def e3 =
-    PageEnrichments.extractPageUri(originalUri.some, truncatedUri.some) must beSuccessful(truncatedURI.some)
+    PageEnrichments.extractPageUri(originalUri.some, truncatedUri.some) must beRight(
+      truncatedURI.some
+    )
 }

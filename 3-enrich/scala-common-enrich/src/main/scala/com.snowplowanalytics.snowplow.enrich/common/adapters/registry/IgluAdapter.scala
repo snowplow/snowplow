@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2014-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,261 +10,285 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-// Java
-import java.net.URI
-import org.apache.http.client.utils.URLEncodedUtils
+import cats.Monad
+import cats.data.{NonEmptyList, ValidatedNel}
+import cats.effect.Clock
+import cats.syntax.either._
+import cats.syntax.option._
+import cats.syntax.validated._
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
+import com.snowplowanalytics.iglu.core.{SchemaKey, SelfDescribingData}
+import com.snowplowanalytics.iglu.core.circe.instances._
+import com.snowplowanalytics.snowplow.badrows._
+import io.circe._
+import io.circe.syntax._
 
-// Iglu
-import iglu.client.{Resolver, SchemaKey}
-
-// Scala
-import scala.collection.JavaConversions._
-
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// json4s
-import org.json4s._
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
-import com.fasterxml.jackson.core.JsonParseException
-
-// This project
 import loaders.CollectorPayload
-import utils.{JsonUtils => JU}
+import utils.{ConversionUtils, HttpClient, JsonUtils}
 
 /**
  * Transforms a collector payload which either:
- * 1. Provides a set of name-value pairs on a GET querystring
- *    with a &schema=[[iglu schema uri]] parameter.
- * 2. Provides a &schema=[[iglu schema uri]] parameter on a POST
- *    querystring and a set of name-value pairs in the body.
+ * 1. Provides a set of kv pairs on a GET querystring with a &schema={iglu schema uri} parameter.
+ * 2. Provides a &schema={iglu schema uri} parameter on a POST querystring and a set of kv pairs in
+ * the body.
  *    - Formatted as JSON
  *    - Formatted as a Form Body
  */
 object IgluAdapter extends Adapter {
-
-  // Vendor name for Failure Message
-  private val VendorName = "Iglu"
-
   // Tracker version for an Iglu-compatible webhook
   private val TrackerVersion = "com.snowplowanalytics.iglu-v1"
 
   // Create a simple formatter function
   private val IgluFormatter: FormatterFunc = buildFormatter() // For defaults
 
+  private val contentTypes = (
+    "application/json",
+    "application/json; charset=utf-8",
+    "application/x-www-form-urlencoded"
+  )
+  private val contentTypesStr = contentTypes.productIterator.mkString(", ")
+
   /**
-   * Converts a CollectorPayload instance into raw events.
-   * Currently we only support a single event Iglu-compatible
-   * self-describing event passed in on the querystring.
-   *
-   * @param payload The CollectorPaylod containing one or more
-   *        raw events as collected by a Snowplow collector
-   * @param resolver (implicit) The Iglu resolver used for
-   *        schema lookup and validation. Not used
-   * @return a Validation boxing either a NEL of RawEvents on
-   *         Success, or a NEL of Failure Strings
+   * Converts a CollectorPayload instance into raw events. Currently we only support a single event
+   * Iglu-compatible self-describing event passed in on the querystring.
+   * @param payload The CollectorPaylod containing one or more raw events as collected by a Snowplow
+   * collector
+   * @param client The Iglu client used for schema lookup and validation
+   * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = {
-
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
+    payload: CollectorPayload,
+    client: Client[F, Json]
+  ): F[
+    ValidatedNel[FailureDetails.AdapterFailureOrTrackerProtocolViolation, NonEmptyList[RawEvent]]
+  ] = {
+    val _ = client
     val params = toMap(payload.querystring)
-
     (params.get("schema"), payload.body, payload.contentType) match {
-      case (_, Some(body), None)                            => s"$VendorName event failed: ContentType must be set for a POST payload".failNel
-      case (None, Some(body), Some(contentType))            => payloadSdJsonToEvent(payload, body, contentType, params)
-      case (Some(schemaUri), Some(body), Some(contentType)) => payloadToEventWithSchema(payload, schemaUri, params)
-      case (Some(schemaUri), None, _)                       => payloadToEventWithSchema(payload, schemaUri, params)
-      case (_, _, _)                                        => s"$VendorName event failed: is not a sd-json or a valid GET or POST request".failNel
+      case (_, Some(_), None) =>
+        val msg = s"expected one of $contentTypesStr"
+        Monad[F].pure(
+          FailureDetails.AdapterFailure.InputData("contentType", none, msg).invalidNel
+        )
+      case (None, Some(body), Some(contentType)) =>
+        Monad[F].pure(payloadSdJsonToEvent(payload, body, contentType, params))
+      case (Some(schemaUri), Some(_), Some(_)) =>
+        Monad[F].pure(payloadToEventWithSchema(payload, schemaUri, params))
+      case (Some(schemaUri), None, _) =>
+        Monad[F].pure(payloadToEventWithSchema(payload, schemaUri, params))
+      case (None, None, _) =>
+        val nel = NonEmptyList.of(
+          FailureDetails.AdapterFailure
+            .InputData("schema", none, "empty `schema` field"),
+          FailureDetails.AdapterFailure.InputData("body", none, "empty body")
+        )
+        Monad[F].pure(nel.invalid)
     }
   }
 
   // --- SelfDescribingJson Payloads
 
   /**
-   * Processes a potential SelfDescribingJson into a
-   * validated raw-event.
-   *
-   * @param payload The CollectorPaylod containing one or more
-   *        raw events as collected by a Snowplow collector
+   * Processes a potential SelfDescribingJson into a validated raw-event.
+   * @param payload The CollectorPaylod containing one or more raw events
    * @param body The extracted body string
    * @param contentType The extracted contentType string
    * @param params The raw map of params from the querystring.
    */
-  private[registry] def payloadSdJsonToEvent(payload: CollectorPayload,
-                                             body: String,
-                                             contentType: String,
-                                             params: Map[String, String]): ValidatedRawEvents =
+  private[registry] def payloadSdJsonToEvent(
+    payload: CollectorPayload,
+    body: String,
+    contentType: String,
+    params: Map[String, String]
+  ): ValidatedNel[FailureDetails.AdapterFailure, NonEmptyList[RawEvent]] =
     contentType match {
-      case "application/json"                => sdJsonBodyToEvent(payload, body, params)
-      case "application/json; charset=utf-8" => sdJsonBodyToEvent(payload, body, params)
-      case _                                 => "Content type not supported".failNel
+      case contentTypes._1 => sdJsonBodyToEvent(payload, body, params)
+      case contentTypes._2 => sdJsonBodyToEvent(payload, body, params)
+      case _ =>
+        val msg = s"expected one of ${List(contentTypes._1, contentTypes._2).mkString(", ")}"
+        FailureDetails.AdapterFailure
+          .InputData("contentType", contentType.some, msg)
+          .invalidNel
     }
 
   /**
-   * Processes a potential SelfDescribingJson into a
-   * validated raw-event.
-   *
-   * @param payload The CollectorPaylod containing one or more
-   *        raw events as collected by a Snowplow collector
+   * Processes a potential SelfDescribingJson into a validated raw-event.
+   * @param payload The CollectorPaylod containing one or more raw events
    * @param body The extracted body string
    * @param params The raw map of params from the querystring.
    */
-  private[registry] def sdJsonBodyToEvent(payload: CollectorPayload,
-                                          body: String,
-                                          params: Map[String, String]): ValidatedRawEvents = {
-
-    implicit val formats = org.json4s.DefaultFormats
-
-    parseJsonSafe(body) match {
-      case Success(parsed) => {
-        ((parsed \ "schema").extractOpt[String], (parsed \ "data").extractOpt[JObject]) match {
-          case (Some(schemaUri), Some(data)) => {
-            SchemaKey.parse(schemaUri) match {
-              case Failure(procMsg) => procMsg.getMessage.failNel
-              case Success(_) => {
-                NonEmptyList(
-                  RawEvent(
-                    api         = payload.api,
-                    parameters  = toUnstructEventParams(TrackerVersion, params, schemaUri, data, "app"),
-                    contentType = payload.contentType,
-                    source      = payload.source,
-                    context     = payload.context
-                  )).success
-              }
-            }
-          }
-          case (None, _) => s"$VendorName event failed: detected SelfDescribingJson but schema key is missing".failNel
-          case (_, None) => s"$VendorName event failed: detected SelfDescribingJson but data key is missing".failNel
+  private[registry] def sdJsonBodyToEvent(
+    payload: CollectorPayload,
+    body: String,
+    params: Map[String, String]
+  ): ValidatedNel[FailureDetails.AdapterFailure, NonEmptyList[RawEvent]] =
+    JsonUtils.extractJson(body) match {
+      case Right(parsed) =>
+        SelfDescribingData.parse(parsed) match {
+          case Left(parseError) =>
+            FailureDetails.AdapterFailure.NotIglu(parsed, parseError).invalidNel
+          case Right(sd) =>
+            NonEmptyList
+              .one(
+                RawEvent(
+                  api = payload.api,
+                  parameters = toUnstructEventParams(
+                    TrackerVersion,
+                    params,
+                    sd.schema,
+                    sd.data,
+                    "app"
+                  ),
+                  contentType = payload.contentType,
+                  source = payload.source,
+                  context = payload.context
+                )
+              )
+              .valid
         }
-      }
-      case Failure(err) => err.fail
+      case Left(e) =>
+        FailureDetails.AdapterFailure.NotJson("body", Option(body), e).invalidNel
     }
-  }
 
   // --- Payloads with the Schema in the Query-String
 
   /**
-   * Processes a payload that has the schema field in
-   * the query-string.
-   *
-   * @param payload The CollectorPaylod containing one or more
-   *        raw events as collected by a Snowplow collector
-   * @param schemaUri The schema-uri found
+   * Processes a payload that has the schema field in the query-string.
+   * @param payload The CollectorPaylod containing one or more raw events
+   * @param schemaUri The schema-uri found (potentially invalid)
    * @param params The raw map of params from the querystring.
    */
-  private[registry] def payloadToEventWithSchema(payload: CollectorPayload,
-                                                 schemaUri: String,
-                                                 params: Map[String, String]): ValidatedRawEvents =
-    SchemaKey.parse(schemaUri) match {
-      case Failure(procMsg) => procMsg.getMessage.failNel
-      case Success(_) =>
+  private[registry] def payloadToEventWithSchema(
+    payload: CollectorPayload,
+    schemaUri: String,
+    params: Map[String, String]
+  ): ValidatedNel[FailureDetails.AdapterFailure, NonEmptyList[RawEvent]] =
+    SchemaKey.fromUri(schemaUri) match {
+      case Left(parseError) =>
+        FailureDetails.AdapterFailure
+          .InputData("schema", schemaUri.some, parseError.code)
+          .invalidNel
+      case Right(key) =>
         (payload.body, payload.contentType) match {
-          case (None, _) => {
-            NonEmptyList(
-              RawEvent(
-                api         = payload.api,
-                parameters  = toUnstructEventParams(TrackerVersion, (params - "schema"), schemaUri, IgluFormatter, "app"),
-                contentType = payload.contentType,
-                source      = payload.source,
-                context     = payload.context
-              )).success
-          }
-          case (Some(body), Some(contentType)) => {
+          case (None, _) =>
+            NonEmptyList
+              .one(
+                RawEvent(
+                  api = payload.api,
+                  parameters = toUnstructEventParams(
+                    TrackerVersion,
+                    params - "schema",
+                    key,
+                    IgluFormatter,
+                    "app"
+                  ),
+                  contentType = payload.contentType,
+                  source = payload.source,
+                  context = payload.context
+                )
+              )
+              .valid
+          case (Some(body), Some(contentType)) =>
             contentType match {
-              case "application/json"                  => jsonBodyToEvent(payload, body, schemaUri, params)
-              case "application/json; charset=utf-8"   => jsonBodyToEvent(payload, body, schemaUri, params)
-              case "application/x-www-form-urlencoded" => formBodyToEvent(payload, body, schemaUri, params)
-              case _                                   => "Content type not supported".failNel
+              case contentTypes._1 => jsonBodyToEvent(payload, body, key, params)
+              case contentTypes._2 => jsonBodyToEvent(payload, body, key, params)
+              case contentTypes._3 => formBodyToEvent(payload, body, key, params)
+              case _ =>
+                val msg = s"expected one of $contentTypesStr"
+                FailureDetails.AdapterFailure
+                  .InputData("contentType", contentType.some, msg)
+                  .invalidNel
             }
-          }
-          case (_, None) => "Content type has not been specified".failNel
+          case (_, None) =>
+            val msg = s"expected one of $contentTypesStr"
+            FailureDetails.AdapterFailure
+              .InputData("contentType", none, msg)
+              .invalidNel
         }
     }
 
   /**
    * Converts a json payload into a single validated event
-   *
    * @param body json payload as POST'd by a webhook
    * @param payload the rest of the payload details
    * @param schemaUri the schemaUri for the event
    * @param params The query string parameters
    * @return a single validated event
    */
-  private[registry] def jsonBodyToEvent(payload: CollectorPayload,
-                                        body: String,
-                                        schemaUri: String,
-                                        params: Map[String, String]): ValidatedRawEvents = {
-    def buildRawEvent(e: JValue): RawEvent =
+  private[registry] def jsonBodyToEvent(
+    payload: CollectorPayload,
+    body: String,
+    schemaUri: SchemaKey,
+    params: Map[String, String]
+  ): ValidatedNel[FailureDetails.AdapterFailure, NonEmptyList[RawEvent]] = {
+    def buildRawEvent(e: Json): RawEvent =
       RawEvent(
-        api         = payload.api,
-        parameters  = toUnstructEventParams(TrackerVersion, (params - "schema"), schemaUri, e, "app"),
+        api = payload.api,
+        parameters = toUnstructEventParams(TrackerVersion, params - "schema", schemaUri, e, "app"),
         contentType = payload.contentType,
-        source      = payload.source,
-        context     = payload.context
+        source = payload.source,
+        context = payload.context
       )
 
-    parseJsonSafe(body) match {
-      case Success(parsed) =>
-        parsed match {
-          case a: JArray =>
-            a.arr match {
-              case h :: t => (NonEmptyList(buildRawEvent(h)) :::> t.map(buildRawEvent)).success
-              case Nil    => s"$VendorName event failed json sanity check: array of events cannot be empty".failNel
+    JsonUtils.extractJson(body) match {
+      case Right(parsed) =>
+        parsed.asArray match {
+          case Some(array) =>
+            array.toList match {
+              case h :: t => NonEmptyList.of(buildRawEvent(h), t.map(buildRawEvent): _*).valid
+              case _ =>
+                FailureDetails.AdapterFailure
+                  .InputData("body", body.some, "empty array of events")
+                  .invalidNel
             }
           case _ =>
-            if (parsed.children.isEmpty) {
-              s"$VendorName event failed json sanity check: has no key-value pairs".failNel
+            if (parsed.asObject.fold(true)(_.isEmpty)) {
+              FailureDetails.AdapterFailure
+                .InputData("body", body.some, "has no key-value pairs")
+                .invalidNel
             } else {
-              NonEmptyList(buildRawEvent(parsed)).success
+              NonEmptyList.one(buildRawEvent(parsed)).valid
             }
         }
-      case Failure(err) => err.fail
+      case Left(e) =>
+        FailureDetails.AdapterFailure.NotJson("body", Option(body), e).invalidNel
     }
   }
 
   /**
    * Converts a form body payload into a single validated event
-   *
-   * @param body the form body from the payload as
-   *        POST'd by a webhook
+   * @param body the form body from the payload as POST'd by a webhook
    * @param payload the rest of the payload details
    * @param schemaUri the schemaUri for the event
    * @param params The query string parameters
    * @return a single validated event
    */
-  private[registry] def formBodyToEvent(payload: CollectorPayload,
-                                        body: String,
-                                        schemaUri: String,
-                                        params: Map[String, String]): ValidatedRawEvents =
-    try {
-      val bodyMap = toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), "UTF-8").toList)
-      val json    = compact(render(bodyMap))
-      val event   = parse(json)
-
-      NonEmptyList(
-        RawEvent(
-          api         = payload.api,
-          parameters  = toUnstructEventParams(TrackerVersion, (params - "schema"), schemaUri, event, "srv"),
-          contentType = payload.contentType,
-          source      = payload.source,
-          context     = payload.context
-        )).success
-    } catch {
-      case e: JsonParseException => {
-        val exception = JU.stripInstanceEtc(e.toString).orNull
-        s"${VendorName} event string failed to parse into JSON: [${exception}]".failNel
-      }
-      case e: Exception => {
-        val exception = JU.stripInstanceEtc(e.toString).orNull
-        s"${VendorName} incorrect event string : [${exception}]".failNel
-      }
-    }
+  private[registry] def formBodyToEvent(
+    payload: CollectorPayload,
+    body: String,
+    schemaUri: SchemaKey,
+    params: Map[String, String]
+  ): ValidatedNel[FailureDetails.AdapterFailure, NonEmptyList[RawEvent]] =
+    (for {
+      bodyMap <- ConversionUtils
+        .parseUrlEncodedForm(body)
+        .leftMap(e => FailureDetails.AdapterFailure.InputData("body", body.some, e))
+      event = bodyMap.asJson
+      rawEvent = NonEmptyList
+        .one(
+          RawEvent(
+            api = payload.api,
+            parameters =
+              toUnstructEventParams(TrackerVersion, params - "schema", schemaUri, event, "srv"),
+            contentType = payload.contentType,
+            source = payload.source,
+            context = payload.context
+          )
+        )
+    } yield rawEvent).toValidatedNel
 }

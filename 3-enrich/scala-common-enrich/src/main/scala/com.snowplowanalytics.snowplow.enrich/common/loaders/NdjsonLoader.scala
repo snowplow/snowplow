@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2015-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,69 +10,60 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common.loaders
+package com.snowplowanalytics.snowplow.enrich.common
+package loaders
 
-import com.snowplowanalytics.snowplow.enrich.common.ValidatedMaybeCollectorPayload
-import org.joda.time.{DateTime, DateTimeZone}
+import java.time.Instant
 
-// Scalaz
-import scalaz._
-import Scalaz._
+import cats.data.ValidatedNel
+import cats.syntax.either._
+import cats.syntax.option._
 
-// json4s
-import org.json4s._
-import org.json4s.jackson.JsonMethods._
+import com.snowplowanalytics.snowplow.badrows._
 
-// Java
-import com.fasterxml.jackson.core.JsonParseException
+import utils.JsonUtils
 
-case class NdjsonLoader(adapter: String) extends Loader[String] {
+final case class NdjsonLoader(adapter: String) extends Loader[String] {
 
-  private val CollectorName     = "ndjson"
+  private val CollectorName = "ndjson"
   private val CollectorEncoding = "UTF-8"
 
   /**
-   * Converts the source string into a
-   * CanonicalInput.
-   *
+   * Converts the source string into a CanonicalInput.
    * @param line A line of data to convert
-   * @return a CanonicalInput object, Option-
-   *         boxed, or None if no input was
-   *         extractable.
+   * @return a CanonicalInput object, Option-boxed, or None if no input was extractable.
    */
-  override def toCollectorPayload(line: String): ValidatedMaybeCollectorPayload =
-    try {
+  override def toCollectorPayload(
+    line: String,
+    processor: Processor
+  ): ValidatedNel[BadRow.CPFormatViolation, Option[CollectorPayload]] = {
+    val collectorPayload =
+      if (line.replaceAll("\r?\n", "").isEmpty)
+        None.asRight
+      else if (line.split("\r?\n").length > 1)
+        FailureDetails.CPFormatViolationMessage
+          .Fallback(s"expected a single line, found ${line.split("\r?\n").length}")
+          .asLeft
+      else
+        for {
+          _ <- JsonUtils
+            .extractJson(line)
+            .leftMap(FailureDetails.CPFormatViolationMessage.Fallback.apply)
+          api <- CollectorPayload.parseApi(adapter)
+          source = CollectorPayload.Source(CollectorName, CollectorEncoding, None)
+          context = CollectorPayload.Context(None, None, None, None, Nil, None)
+          payload = CollectorPayload(api, Nil, None, Some(line), source, context)
+        } yield payload.some
 
-      if (line.replaceAll("\r?\n", "").isEmpty) {
-        Success(None)
-      } else if (line.split("\r?\n").size > 1) {
-        "Too many lines! Expected single line".failNel
-      } else {
-        parse(line)
-        CollectorApi
-          .parse(adapter)
-          .map(
-            CollectorPayload(
-              Nil,
-              CollectorName,
-              CollectorEncoding,
-              None,
-              None,
-              None,
-              None,
-              None,
-              Nil,
-              None,
-              _,
-              None,
-              Some(line)
-            ).some
+    collectorPayload
+      .leftMap(
+        message =>
+          BadRow.CPFormatViolation(
+            processor,
+            Failure.CPFormatViolation(Instant.now(), CollectorName, message),
+            Payload.RawPayload(line)
           )
-          .toValidationNel
-      }
-
-    } catch {
-      case e: JsonParseException => "Unparsable JSON".failNel
-    }
-
+      )
+      .toValidatedNel
+  }
 }

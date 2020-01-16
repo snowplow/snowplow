@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,96 +10,95 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry
 
-// Maven Artifact
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion
-
-// Java
 import java.lang.{Float => JFloat}
+import java.time.{Instant, ZoneOffset, ZonedDateTime}
+import java.util.concurrent.TimeUnit
 
-// Scala
-import scala.util.control.NonFatal
+import scala.concurrent.duration.FiniteDuration
 
-// Scalaz
-import scalaz._
-import Scalaz._
+import cats.Monad
+import cats.data.{EitherT, NonEmptyList, ValidatedNel}
+import cats.implicits._
 
-// Joda time
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SchemaVer, SelfDescribingData}
+import com.snowplowanalytics.snowplow.badrows.FailureDetails
+
+import com.snowplowanalytics.weather.providers.openweather._
+import com.snowplowanalytics.weather.providers.openweather.responses._
+
+import io.circe._
+import io.circe.generic.auto._
+import io.circe.syntax._
+
 import org.joda.time.{DateTime, DateTimeZone}
 
-// json4s
-import org.json4s.{DefaultFormats, JObject, JValue}
-import org.json4s.Extraction
-import org.json4s.JsonDSL._
+import utils.CirceUtils
 
-// Iglu
-import iglu.client.SchemaKey
+/** Companion object. Lets us create an WeatherEnrichment instance from a Json */
+object WeatherEnrichment extends ParseableEnrichment {
+  override val supportedSchema =
+    SchemaCriterion(
+      "com.snowplowanalytics.snowplow.enrichments",
+      "weather_enrichment_config",
+      "jsonschema",
+      1,
+      0
+    )
 
-// Scala-Weather
-import com.snowplowanalytics.weather.providers.openweather.OwmCacheClient
-import com.snowplowanalytics.weather.providers.openweather.Responses._
-
-// Iglu
-import iglu.client.SchemaCriterion
-
-// This project
-import utils.ScalazJson4sUtils
-import enrichments.EventEnrichments
-
-/**
- * Companion object. Lets us create an WeatherEnrichment instance from a JValue
- */
-object WeatherEnrichmentConfig extends ParseableEnrichment {
-
-  implicit val formats = DefaultFormats
-
-  val supportedSchema =
-    SchemaCriterion("com.snowplowanalytics.snowplow.enrichments", "weather_enrichment_config", "jsonschema", 1, 0)
-
-  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[WeatherEnrichment] =
-    isParseable(config, schemaKey).flatMap { conf =>
-      {
-        (for {
-          apiKey       <- ScalazJson4sUtils.extract[String](config, "parameters", "apiKey")
-          cacheSize    <- ScalazJson4sUtils.extract[Int](config, "parameters", "cacheSize")
-          geoPrecision <- ScalazJson4sUtils.extract[Int](config, "parameters", "geoPrecision")
-          apiHost      <- ScalazJson4sUtils.extract[String](config, "parameters", "apiHost")
-          timeout      <- ScalazJson4sUtils.extract[Int](config, "parameters", "timeout")
-          enrich = WeatherEnrichment(apiKey, cacheSize, geoPrecision, apiHost, timeout)
-        } yield enrich).toValidationNel
+  override def parse(
+    c: Json,
+    schemaKey: SchemaKey,
+    localMode: Boolean = false
+  ): ValidatedNel[String, WeatherConf] =
+    isParseable(c, schemaKey)
+      .leftMap(e => NonEmptyList.one(e))
+      .flatMap { _ =>
+        (
+          CirceUtils.extract[String](c, "parameters", "apiHost").toValidatedNel,
+          CirceUtils.extract[String](c, "parameters", "apiKey").toValidatedNel,
+          CirceUtils.extract[Int](c, "parameters", "timeout").toValidatedNel,
+          CirceUtils.extract[Int](c, "parameters", "cacheSize").toValidatedNel,
+          CirceUtils.extract[Int](c, "parameters", "geoPrecision").toValidatedNel
+        ).mapN { WeatherConf(schemaKey, _, _, _, _, _) }.toEither
       }
-    }
+      .toValidated
+
+  /**
+   * Creates a WeatherEnrichment from a WeatherConf
+   * @param conf Configuration for the weather enrichment
+   * @return a weather enrichment
+   */
+  def apply[F[_]: Monad: CreateOWM](conf: WeatherConf): EitherT[F, String, WeatherEnrichment[F]] =
+    EitherT(
+      CreateOWM[F]
+        .create(
+          conf.apiHost,
+          conf.apiKey,
+          FiniteDuration(conf.timeout.toLong, TimeUnit.SECONDS),
+          true,
+          conf.cacheSize,
+          conf.geoPrecision
+        )
+    ).leftMap(_.message)
+      .map(c => WeatherEnrichment(conf.schemaKey, c))
 }
 
 /**
  * Contains weather enrichments based on geo coordinates and time
- *
- * @param apiKey weather provider API KEY
- * @param cacheSize amount of days with prefetched weather
- * @param geoPrecision rounder for geo lat/long floating, which allows to use
- *                     more spatial precise weather stamps
- * @param apiHost address of weather provider's API host
- * @param timeout timeout in seconds to fetch weather from server
+ * @param client OWM client to get the weather from
  */
-case class WeatherEnrichment(apiKey: String, cacheSize: Int, geoPrecision: Int, apiHost: String, timeout: Int)
+final case class WeatherEnrichment[F[_]: Monad](schemaKey: SchemaKey, client: OWMCacheClient[F])
     extends Enrichment {
-
-  private lazy val client = OwmCacheClient(apiKey, cacheSize, geoPrecision, apiHost, timeout)
-
-  private val schemaUri = "iglu:org.openweathermap/weather/jsonschema/1-0-0"
-
-  private implicit val formats = DefaultFormats
+  val Schema = SchemaKey("org.openweathermap", "weather", "jsonschema", SchemaVer.Full(1, 0, 0))
+  private val enrichmentInfo =
+    FailureDetails.EnrichmentInformation(schemaKey, "weather").some
 
   /**
-   * Get weather context as JSON for specific event
-   * Any non-fatal error will return failure and thus whole event will be
-   * filtered out in future
-   *
+   * Get weather context as JSON for specific event. Any non-fatal error will return failure and
+   * thus whole event will be filtered out in future
    * @param latitude enriched event optional latitude (probably null)
    * @param longitude enriched event optional longitude (probably null)
    * @param time enriched event optional time (probably null)
@@ -107,60 +106,66 @@ case class WeatherEnrichment(apiKey: String, cacheSize: Int, geoPrecision: Int, 
    */
   // It accepts Java Float (JFloat) instead of Scala's because it will throw NullPointerException
   // on conversion step if `EnrichedEvent` has nulls as geo_latitude or geo_longitude
-  def getWeatherContext(latitude: Option[JFloat],
-                        longitude: Option[JFloat],
-                        time: Option[DateTime]): Validation[String, JObject] =
-    try {
-      getWeather(latitude, longitude, time).map(addSchema)
-    } catch {
-      case NonFatal(exc) => exc.toString.fail
-    }
+  def getWeatherContext(
+    latitude: Option[JFloat],
+    longitude: Option[JFloat],
+    time: Option[DateTime]
+  ): F[Either[NonEmptyList[FailureDetails.EnrichmentStageIssue], SelfDescribingData[Json]]] =
+    getWeather(latitude, longitude, time).map(weather => SelfDescribingData(Schema, weather)).value
 
   /**
    * Get weather stamp as JSON received from OpenWeatherMap and extracted with Scala Weather
-   *
    * @param latitude enriched event optional latitude
    * @param longitude enriched event optional longitude
    * @param time enriched event optional time
    * @return weather stamp as JSON object
    */
-  private def getWeather(latitude: Option[JFloat],
-                         longitude: Option[JFloat],
-                         time: Option[DateTime]): Validation[String, JObject] =
+  private def getWeather(
+    latitude: Option[JFloat],
+    longitude: Option[JFloat],
+    time: Option[DateTime]
+  ): EitherT[F, NonEmptyList[FailureDetails.EnrichmentStageIssue], Json] =
     (latitude, longitude, time) match {
       case (Some(lat), Some(lon), Some(t)) =>
-        getCachedOrRequest(lat, lon, (t.getMillis / 1000).toInt).flatMap { weatherStamp =>
-          val transformedWeather = transformWeather(weatherStamp)
-          Extraction.decompose(transformedWeather) match {
-            case obj: JObject => obj.success
-            case _            => s"Couldn't transform weather object $transformedWeather into JSON".fail // Shouldn't ever happen
+        val ts = ZonedDateTime.ofInstant(Instant.ofEpochMilli(t.getMillis()), ZoneOffset.UTC)
+        for {
+          weather <- EitherT(client.cachingHistoryByCoords(lat, lon, ts))
+            .leftMap { e =>
+              val f =
+                FailureDetails.EnrichmentFailure(
+                  enrichmentInfo,
+                  FailureDetails.EnrichmentFailureMessage
+                    .Simple(e.getMessage)
+                )
+              NonEmptyList.one(f)
+            }
+            .leftWiden[NonEmptyList[FailureDetails.EnrichmentStageIssue]]
+          transformed = transformWeather(weather)
+        } yield transformed.asJson
+      case (a, b, c) =>
+        val failures = List((a, "geo_latitude"), (b, "geo_longitude"), (c, "derived_tstamp"))
+          .collect {
+            case (None, n) =>
+              FailureDetails.EnrichmentFailure(
+                enrichmentInfo,
+                FailureDetails.EnrichmentFailureMessage
+                  .InputData(n, none, "missing")
+              )
           }
-        }
-      case _ => s"One of required event fields missing. latitude: $latitude, longitude: $longitude, tstamp: $time".fail
+        EitherT.leftT(
+          NonEmptyList
+            .fromList(failures)
+            .getOrElse(
+              NonEmptyList.one(
+                FailureDetails.EnrichmentFailure(
+                  enrichmentInfo,
+                  FailureDetails.EnrichmentFailureMessage
+                    .Simple("could not construct failures")
+                )
+              )
+            )
+        )
     }
-
-  /**
-   * Return weather, convert disjunction to validation and stringify error
-   *
-   * @param latitude event latitude
-   * @param longitude event longitude
-   * @param timestamp event timestamp
-   * @return optional weather stamp
-   */
-  private def getCachedOrRequest(latitude: Float, longitude: Float, timestamp: Int): Validation[String, Weather] =
-    client.getCachedOrRequest(latitude, longitude, timestamp) match {
-      case Right(w) => w.success
-      case Left(e)  => e.toString.failure
-    }
-
-  /**
-   * Add Iglu URI to JSON Object
-   *
-   * @param context weather context as JSON Object
-   * @return JSON Object wrapped as Self-describing JSON
-   */
-  private def addSchema(context: JObject): JObject =
-    ("schema", schemaUri) ~ (("data", context))
 
   /**
    * Apply all necessary transformations (currently only dt(epoch -> db timestamp)
@@ -170,20 +175,28 @@ case class WeatherEnrichment(apiKey: String, cacheSize: Int, geoPrecision: Int, 
    * @param origin original OpenWeatherMap Weather stamp
    * @return tranfsormed weather
    */
-  private[enrichments] def transformWeather(origin: Weather): TransformedWeather = {
-    val time = new DateTime(origin.dt.toLong * 1000, DateTimeZone.UTC).toString
-    TransformedWeather(origin.main, origin.wind, origin.clouds, origin.rain, origin.snow, origin.weather, time)
-  }
+  private[enrichments] def transformWeather(origin: Weather): TransformedWeather =
+    TransformedWeather(
+      origin.main,
+      origin.wind,
+      origin.clouds,
+      origin.rain,
+      origin.snow,
+      origin.weather,
+      new DateTime(origin.dt.toLong * 1000, DateTimeZone.UTC).toString()
+    )
 }
 
 /**
  * Copy of `com.snowplowanalytics.weather.providers.openweather.Responses.Weather` intended to
  * execute typesafe (as opposed to JSON) transformation
  */
-private[enrichments] case class TransformedWeather(main: MainInfo,
-                                                   wind: Wind,
-                                                   clouds: Clouds,
-                                                   rain: Option[Rain],
-                                                   snow: Option[Snow],
-                                                   weather: List[WeatherCondition],
-                                                   dt: String)
+private[enrichments] final case class TransformedWeather(
+  main: MainInfo,
+  wind: Wind,
+  clouds: Clouds,
+  rain: Option[Rain],
+  snow: Option[Snow],
+  weather: List[WeatherCondition],
+  dt: String
+)

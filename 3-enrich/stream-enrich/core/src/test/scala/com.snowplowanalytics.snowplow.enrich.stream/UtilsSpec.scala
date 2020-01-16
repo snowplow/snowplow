@@ -16,21 +16,19 @@
 package com.snowplowanalytics.snowplow.enrich.stream
 package sources
 
-import scalaz._
-
 import org.specs2.mutable.Specification
 
 class UtilsSpec extends Specification {
   "validatePii" should {
     "return left if the enrichment is on and there is no stream name" in {
       utils.validatePii(true, None) must_==
-        -\/("PII was configured to emit, but no PII stream name was given")
+        Left("PII was configured to emit, but no PII stream name was given")
     }
 
     "return right otherwise" in {
-      utils.validatePii(true, Some("s")) must_== \/-(())
-      utils.validatePii(false, Some("s")) must_== \/-(())
-      utils.validatePii(false, None) must_== \/-(())
+      utils.validatePii(true, Some("s")) must_== Right(())
+      utils.validatePii(false, Some("s")) must_== Right(())
+      utils.validatePii(false, None) must_== Right(())
     }
   }
 

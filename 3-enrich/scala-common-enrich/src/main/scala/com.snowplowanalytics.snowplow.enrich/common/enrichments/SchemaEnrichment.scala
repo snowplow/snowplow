@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,62 +10,76 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 
-// Iglu
-import iglu.client.SchemaKey
-import iglu.client.Resolver
+import cats.Monad
+import cats.effect.Clock
+import cats.syntax.either._
+import cats.syntax.functor._
 
-// Jackson
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.node.TextNode
+import io.circe.Json
 
-// Common
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
+
+import com.snowplowanalytics.snowplow.badrows.FailureDetails
+
+import com.snowplowanalytics.snowplow.enrich.common.utils.Shredder
 import outputs.EnrichedEvent
-import utils.shredder.Shredder
-
-// Scalaz
-import scalaz._
-import Scalaz._
 
 object SchemaEnrichment {
 
   private object Schemas {
-    val pageViewSchema    = SchemaKey("com.snowplowanalytics.snowplow", "page_view", "jsonschema", "1-0-0").success
-    val pagePingSchema    = SchemaKey("com.snowplowanalytics.snowplow", "page_ping", "jsonschema", "1-0-0").success
-    val transactionSchema = SchemaKey("com.snowplowanalytics.snowplow", "transaction", "jsonschema", "1-0-0").success
-    val transactionItemSchema =
-      SchemaKey("com.snowplowanalytics.snowplow", "transaction_item", "jsonschema", "1-0-0").success
-    val structSchema = SchemaKey("com.google.analytics", "event", "jsonschema", "1-0-0").success
+    private val Vendor = "com.snowplowanalytics.snowplow"
+    private val Format = "jsonschema"
+    private val SchemaVersion = SchemaVer.Full(1, 0, 0)
+    val pageViewSchema = SchemaKey(Vendor, "page_view", Format, SchemaVersion)
+    val pagePingSchema = SchemaKey(Vendor, "page_ping", Format, SchemaVersion)
+    val transactionSchema = SchemaKey(Vendor, "transaction", Format, SchemaVersion)
+    val transactionItemSchema = SchemaKey(Vendor, "transaction_item", Format, SchemaVersion)
+    val structSchema = SchemaKey("com.google.analytics", "event", Format, SchemaVersion)
   }
 
-  def extractSchema(event: EnrichedEvent)(implicit resolver: Resolver): Validation[String, SchemaKey] =
+  def extractSchema[F[_]: Monad: RegistryLookup: Clock](
+    event: EnrichedEvent,
+    client: Client[F, Json]
+  ): F[Either[FailureDetails.EnrichmentStageIssue, SchemaKey]] =
     event.event match {
-      case "page_view"        => Schemas.pageViewSchema
-      case "page_ping"        => Schemas.pagePingSchema
-      case "struct"           => Schemas.structSchema
-      case "transaction"      => Schemas.transactionSchema
-      case "transaction_item" => Schemas.transactionItemSchema
-      case "unstruct"         => extractUnstructSchema(event)
-      case eventType          => "Unrecognized event [%s]".format(eventType).fail
+      case "page_view" => Monad[F].pure(Schemas.pageViewSchema.asRight)
+      case "page_ping" => Monad[F].pure(Schemas.pagePingSchema.asRight)
+      case "struct" => Monad[F].pure(Schemas.structSchema.asRight)
+      case "transaction" => Monad[F].pure(Schemas.transactionSchema.asRight)
+      case "transaction_item" => Monad[F].pure(Schemas.transactionItemSchema.asRight)
+      case "unstruct" => extractUnstructSchema(event, client)
+      case eventType =>
+        val f = FailureDetails.EnrichmentFailureMessage.InputData(
+          "event",
+          Option(eventType),
+          "unrecognized"
+        )
+        Monad[F].pure(FailureDetails.EnrichmentFailure(None, f).asLeft)
     }
 
-  private def extractUnstructSchema(event: EnrichedEvent)(implicit resolver: Resolver): Validation[String, SchemaKey] =
-    Shredder.extractUnstructEvent(event) match {
-      case Some(Success(List(json))) =>
-        parseSchemaKey(Option(json.get("schema")))
+  private def extractUnstructSchema[F[_]: Monad: RegistryLookup: Clock](
+    event: EnrichedEvent,
+    client: Client[F, Json]
+  ): F[Either[FailureDetails.EnrichmentStageIssue, SchemaKey]] = {
+    val possibleFailure = {
+      val f = FailureDetails.EnrichmentFailureMessage.InputData(
+        "unstruct_event",
+        Option(event.unstruct_event),
+        "could not be extracted"
+      )
+      FailureDetails.EnrichmentFailure(None, f).asLeft
+    }
+
+    Shredder.extractUnstructEvent(event, client).value.map {
+      case Right(Some(f)) =>
+        f.schema.asRight
       case _ =>
-        "Unstructured event couldn't be extracted".fail
+        possibleFailure
     }
-
-  private def parseSchemaKey(node: Option[JsonNode]): Validation[String, SchemaKey] = node match {
-    case Some(textNode: TextNode) =>
-      SchemaKey.parse(textNode.textValue()).<-:(_.toString)
-    case _ =>
-      "Unrecognized unstructured event structure".fail // It's validated by the Shredder, so it should never happen
   }
 }

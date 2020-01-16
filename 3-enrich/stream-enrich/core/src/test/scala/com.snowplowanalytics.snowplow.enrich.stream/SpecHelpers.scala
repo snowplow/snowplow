@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
  * you may not use this file except in compliance with the Apache License
@@ -12,41 +12,37 @@
  * implied.  See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package stream
+package com.snowplowanalytics.snowplow.enrich.stream
 
 import java.util.regex.Pattern
 
-import org.json4s.jackson.JsonMethods._
-import org.specs2.matcher.{Expectable, Matcher}
-import scalaz._
-import Scalaz._
+import scala.util.matching.Regex
+
+import cats.Id
+import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.snowplow.enrich.common.adapters.AdapterRegistry
 import com.snowplowanalytics.snowplow.enrich.common.adapters.registry.RemoteAdapter
-import common.outputs.EnrichedEvent
-import common.utils.JsonUtils
-import common.enrichments.EnrichmentRegistry
-import iglu.client.Resolver
-import model._
+import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
+import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
+import com.snowplowanalytics.snowplow.enrich.common.utils.JsonUtils
+import org.specs2.matcher.{Expectable, Matcher}
 
-import scala.util.matching.Regex
 import sources.TestSource
+import utils._
 
 /**
  * Defines some useful helpers for the specs.
  */
 object SpecHelpers {
 
-
   implicit def stringToJustString(s: String) = JustString(s)
-  implicit def regexToJustRegex(r: Regex)    = JustRegex(r)
+  implicit def regexToJustRegex(r: Regex) = JustRegex(r)
 
   /**
    * The Stream Enrich being used
    */
-  val EnrichVersion = s"stream-enrich-${generated.BuildInfo.version}-common-${generated.BuildInfo.commonEnrichVersion}"
+  val EnrichVersion =
+    s"stream-enrich-${generated.BuildInfo.version}-common-${generated.BuildInfo.commonEnrichVersion}"
 
   val TimestampRegex =
     "[0-9]{1,4}-[0-9]{1,2}-[0-9]{1,2} [0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}(\\.\\d{3})?".r
@@ -64,15 +60,11 @@ object SpecHelpers {
   val ContextWithUuid4Regexp =
     new Regex(
       Pattern.quote(
-        """{"schema":"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0","data":[{"schema":"iglu:com.snowplowanalytics.snowplow/parent_event/jsonschema/1-0-0","data":{"parentEventId":"""") +
+        """{"schema":"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0","data":[{"schema":"iglu:com.snowplowanalytics.snowplow/parent_event/jsonschema/1-0-0","data":{"parentEventId":""""
+      ) +
         "[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}" +
-        Pattern.quote("\"}}]}"))
-
-  /**
-   * Fields in our EnrichedEvent which will be checked
-   * against a regexp, not for equality.
-   */
-  private val UseRegexpFields = List("event_id", "etl_tstamp")
+        Pattern.quote("\"}}]}")
+    )
 
   /**
    * The names of the fields written out
@@ -103,7 +95,7 @@ object SpecHelpers {
     private val field = OutputFields(index)
 
     private val regexp = expected match {
-      case JustRegex(_)  => true
+      case JustRegex(_) => true
       case JustString(_) => false
     }
 
@@ -115,7 +107,6 @@ object SpecHelpers {
       lazy val failureMsg =
         s"$field: ${actual.description} does not %s $expected"
           .format(if (regexp) "match" else "equal")
-
 
       result(equalsOrMatches(actual.value, expected), successMsg, failureMsg, actual)
     }
@@ -132,20 +123,9 @@ object SpecHelpers {
      * matches expected, false otherwise
      */
     private def equalsOrMatches(actual: String, expected: StringOrRegex): Boolean = expected match {
-      case JustRegex(r)  => r.pattern.matcher(actual).matches
+      case JustRegex(r) => r.pattern.matcher(actual).matches
       case JustString(s) => actual == s
     }
-
-    /**
-     * Whether a field in EnrichedEvent needs
-     * a regexp-based comparison.
-     *
-     * @param field The name of the field
-     * @return true if the field is regexpable,
-     *         false otherwise
-     */
-    private def useRegexp(field: String): Boolean =
-      UseRegexpFields.contains(field)
   }
 
   /**
@@ -153,26 +133,11 @@ object SpecHelpers {
    * Built using an inline configuration file
    * with both source and sink set to test.
    */
-  lazy val TestSource = {
-
-    val config = EnrichConfig(
-      streams = StreamsConfig(
-        InConfig("raw"),
-        OutConfig("enriched", Some("pii"), "bad", "partitionkey"),
-        Kafka("brokers", 1, None, None),
-        BufferConfig(1000L, 100L, 1200L),
-        "appName"
-      ),
-      None,
-      monitoring = None
-    )
-    new TestSource(config, resolver, adapterRegistry, enrichmentRegistry, None)
-  }
+  lazy val TestSource = new TestSource(client, adapterRegistry, enrichmentRegistry)
   val igluCentralDefaultConfig =
     """{
     "schema": "iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-0",
     "data": {
-
       "cacheSize": 500,
       "repositories": [
         {
@@ -182,6 +147,16 @@ object SpecHelpers {
           "connection": {
             "http": {
               "uri": "http://iglucentral.com"
+            }
+          }
+        },
+        {
+          "name": "referer 2.0",
+          "priority": 0,
+          "vendorPrefixes": [ "com.snowplowanalytics" ],
+          "connection": {
+            "http": {
+              "uri": "http://iglucentral-dev.com.s3-website-us-east-1.amazonaws.com/referer-parser-2"
             }
           }
         }
@@ -198,16 +173,17 @@ object SpecHelpers {
     resolverEnvVar.getOrElse(igluCentralDefaultConfig)
   }
   val validatedResolver = for {
-    json     <- JsonUtils.extractJson("", igluConfig)
-    resolver <- Resolver.parse(json).leftMap(_.toString)
+    json <- JsonUtils.extractJson(igluConfig)
+    resolver <- Client.parseDefault[Id](json).leftMap(_.toString).value
   } yield resolver
 
-  implicit val resolver: Resolver = validatedResolver.fold(
+  val client = validatedResolver.fold(
     e => throw new RuntimeException(e),
     s => s
   )
 
-   val enrichmentConfig = """|{
+  val enrichmentConfig =
+    """|{
       |"schema": "iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0",
       |"data": [
         |{
@@ -250,13 +226,15 @@ object SpecHelpers {
           |}
         |},
         |{
-          |"schema": "iglu:com.snowplowanalytics.snowplow/referer_parser/jsonschema/1-0-0",
+          |"schema": "iglu:com.snowplowanalytics.snowplow/referer_parser/jsonschema/2-0-0",
           |"data": {
             |"vendor": "com.snowplowanalytics.snowplow",
             |"name": "referer_parser",
             |"enabled": true,
             |"parameters": {
-              |"internalDomains": ["www.subdomain1.snowplowanalytics.com"]
+              |"internalDomains": ["www.subdomain1.snowplowanalytics.com"],
+              |"database": "referer-tests.json",
+              |"uri": "http://snowplow.com"
             |}
           |}
         |},
@@ -307,13 +285,16 @@ object SpecHelpers {
   |}""".stripMargin.replaceAll("[\n\r]", "").stripMargin.replaceAll("[\n\r]", "")
 
   val enrichmentRegistry = (for {
-    registryConfig <- JsonUtils.extractJson("", enrichmentConfig)
-    reg            <- EnrichmentRegistry.parse(fromJsonNode(registryConfig), true).leftMap(_.toString)
+    registryConfig <- JsonUtils.extractJson(enrichmentConfig)
+    confs <- EnrichmentRegistry.parse(registryConfig, client, true).leftMap(_.toString).toEither
+    reg <- EnrichmentRegistry.build[Id](confs).value
   } yield reg) fold (
     e => throw new RuntimeException(e),
     s => s
   )
 
   // Init AdapterRegistry with one RemoteAdapter used for integration tests
-  val adapterRegistry = new AdapterRegistry(Map(("remoteVendor", "v42") -> new RemoteAdapter("http://localhost:9090/", None, None)))
+  val adapterRegistry = new AdapterRegistry(
+    Map(("remoteVendor", "v42") -> new RemoteAdapter("http://localhost:9090/", None, None))
+  )
 }

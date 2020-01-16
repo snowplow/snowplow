@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,257 +10,259 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
-package enrichments
-package registry
+package com.snowplowanalytics.snowplow.enrich.common
+package enrichments.registry
 
-// Java
 import java.io.File
-import java.net.{InetAddress, URI, UnknownHostException}
+import java.net.{InetAddress, URI}
 
-// joda-time
+import cats.{Eval, Id, Monad}
+import cats.data.{NonEmptyList, ValidatedNel}
+import cats.effect.Sync
+import cats.implicits._
+
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SchemaVer, SelfDescribingData}
+
+import com.snowplowanalytics.iab.spidersandrobotsclient.IabClient
+import com.snowplowanalytics.snowplow.badrows.FailureDetails
+
+import io.circe._
+import io.circe.generic.auto._
+import io.circe.syntax._
+
 import org.joda.time.DateTime
 
-// Scala
-import scala.util.control.NonFatal
+import utils.CirceUtils
 
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// json4s
-import org.json4s.{DefaultFormats, Extraction, JObject, JValue}
-import org.json4s.JsonDSL._
-
-// Iglu
-import iglu.client.validation.ProcessingMessageMethods._
-import iglu.client.{SchemaCriterion, SchemaKey}
-
-// IAB client
-import iab.spidersandrobotsclient.IabClient
-
-// This project
-import utils.{ConversionUtils, ScalazJson4sUtils}
-
-/**
- * Companion object. Lets us create an IabEnrichment
- * instance from a JValue.
- */
+/** Companion object. Lets us create an IabEnrichment instance from a Json. */
 object IabEnrichment extends ParseableEnrichment {
-
-  implicit val formats = DefaultFormats
-
-  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow.enrichments",
-                                        "iab_spiders_and_robots_enrichment",
-                                        "jsonschema",
-                                        1,
-                                        0)
+  override val supportedSchema = SchemaCriterion(
+    "com.snowplowanalytics.snowplow.enrichments",
+    "iab_spiders_and_robots_enrichment",
+    "jsonschema",
+    1,
+    0
+  )
 
   /**
-   * Creates an IabEnrichment instance from a JValue.
-   *
-   * @param config    The iab_spiders_and_robots_enrichment JSON
-   * @param schemaKey The SchemaKey provided for the enrichment
-   *                  Must be a supported SchemaKey for this enrichment
-   * @param localMode Whether to use the local IAB database file
-   *                  Enabled for tests
-   * @return a configured IabEnrichment instance
+   * Creates an IabConf from a Json.
+   * @param c The iab_spiders_and_robots_enrichment JSON
+   * @param schemaKey provided for the enrichment, must be supported by this enrichment
+   * @param localMode Whether to use the local IAB database file, enabled for tests
+   * @return a Iab configuration
    */
-  def parse(config: JValue, schemaKey: SchemaKey, localMode: Boolean): ValidatedNelMessage[IabEnrichment] =
-    isParseable(config, schemaKey).flatMap { conf =>
-      def uri(name: String) = getIabDbFromName(conf, name).sequenceU
-
-      def string(name: String) = getStringFromName(conf, name).sequenceU
-
-      (uri("ipFile") |@| uri("excludeUseragentFile") |@| uri("includeUseragentFile")) {
-        IabEnrichment(_, _, _, localMode)
+  override def parse(
+    c: Json,
+    schemaKey: SchemaKey,
+    localMode: Boolean
+  ): ValidatedNel[String, IabConf] =
+    isParseable(c, schemaKey)
+      .leftMap(e => NonEmptyList.one(e))
+      .flatMap { _ =>
+        (
+          getIabDbFromName(c, "ipFile"),
+          getIabDbFromName(c, "excludeUseragentFile"),
+          getIabDbFromName(c, "includeUseragentFile")
+        ).mapN { (ip, exclude, include) =>
+          IabConf(
+            schemaKey,
+            file(ip, localMode),
+            file(exclude, localMode),
+            file(include, localMode)
+          )
+        }.toEither
       }
-    }
+      .toValidated
+
+  private def file(db: IabDatabase, localMode: Boolean): (URI, String) =
+    if (localMode) (db.uri, getClass.getResource(db.db).toURI.getPath)
+    else (db.uri, s"./iab_${db.name}")
+
+  /**
+   * Creates an IabEnrichment from a IabConf
+   * @param conf Configuration for the iab enrichment
+   * @return an iab enrichment
+   */
+  def apply[F[_]: Monad: CreateIabClient](conf: IabConf): F[IabEnrichment] =
+    CreateIabClient[F]
+      .create(conf.ipFile._2, conf.excludeUaFile._2, conf.includeUaFile._2)
+      .map(c => IabEnrichment(conf.schemaKey, c))
 
   /**
    * Creates IabDatabase instances used in the IabEnrichment case class.
-   *
    * @param config The iab_spiders_and_robots_enrichment JSON
-   * @param name   The name of the field.
-   *               e.g. "ipFile", "excluseUseragentFile", "includeUseragentFile"
-   * @return None if the field does not exist,
-   *         Some(Failure) if the URI is invalid,
-   *         Some(Success) if it is found
+   * @param name of the field, e.g. "ipFile", "excluseUseragentFile", "includeUseragentFile"
+   * @return None if the field does not exist, Some(Failure) if the URI is invalid, Some(Success) if
+   * it is found
    */
-  private def getIabDbFromName(config: JValue, name: String): Option[ValidatedNelMessage[IabDatabase]] =
-    if (ScalazJson4sUtils.fieldExists(config, "parameters", name)) {
-      val uri = ScalazJson4sUtils.extract[String](config, "parameters", name, "uri")
-      val db  = ScalazJson4sUtils.extract[String](config, "parameters", name, "database")
+  private def getIabDbFromName(config: Json, name: String): ValidatedNel[String, IabDatabase] = {
+    val uri = CirceUtils.extract[String](config, "parameters", name, "uri")
+    val db = CirceUtils.extract[String](config, "parameters", name, "database")
 
-      (uri.toValidationNel |@| db.toValidationNel) { (uri, db) =>
-        getDatabaseUri(uri, db).toValidationNel.map[IabDatabase](u => IabDatabase(name, u, db))
-      }.flatMap(identity).some
-
-    } else None
-
-  /**
-   * Extracts simple string fields from an enrichment JSON.
-   *
-   * @param config The iab_spiders_and_robots_enrichment JSON
-   * @param name   The name of the field.
-   *               e.g. "ipFile", "excluseUseragentFile", "includeUseragentFile"
-   * @return None if the field does not exist,
-   *         Some(Success) if it is found
-   */
-  private def getStringFromName(config: JValue, name: String): Option[ValidatedNelMessage[String]] =
-    if (ScalazJson4sUtils.fieldExists(config, "parameters", name)) {
-      ScalazJson4sUtils.extract[String](config, "parameters", name).toValidationNel.some
-    } else None
-
-  /**
-   * Convert the path to the IAB file from a
-   * String to a Validation[URI].
-   *
-   * @param uri      URI to the IAB database file
-   * @param database Name of the IAB database
-   * @return a Validation-boxed URI
-   */
-  private def getDatabaseUri(uri: String, database: String): ValidatedMessage[URI] =
-    ConversionUtils
-      .stringToUri(uri + (if (uri.endsWith("/")) "" else "/") + database)
-      .flatMap(_ match {
-        case Some(u) => u.success
-        case None    => "URI to IAB file must be provided".fail
-      })
-      .toProcessingMessage
+    // better-monadic-for
+    (for {
+      uriAndDb <- (uri.toValidatedNel, db.toValidatedNel).mapN { (_, _) }.toEither
+      uri <- getDatabaseUri(uriAndDb._1, uriAndDb._2).leftMap(NonEmptyList.one)
+    } yield IabDatabase(name, uri, uriAndDb._2)).toValidated
+  }
 }
 
 /**
  * Contains enrichments based on IAB Spiders&Robots lookup.
- *
- * @param ipFile             (Full URI to the IAB excluded IP list, database name)
- * @param excludeUaFile      (Full URI to the IAB excluded user agent list, database name)
- * @param includeUaFile      (Full URI to the IAB included user agent list, database name)
- * @param localMode          Whether to use the local database file. Enabled for tests.
+ * @param ipFile (Full URI to the IAB excluded IP list, database name)
+ * @param excludeUaFile (Full URI to the IAB excluded user agent list, database name)
+ * @param includeUaFile (Full URI to the IAB included user agent list, database name)
+ * @param localMode Whether to use the local database file. Enabled for tests.
  */
-case class IabEnrichment(
-  ipFile: Option[IabDatabase],
-  excludeUaFile: Option[IabDatabase],
-  includeUaFile: Option[IabDatabase],
-  localMode: Boolean
-) extends Enrichment {
-
-  private type DbEntry = Option[(Option[URI], String)]
-
-  private val schemaUri        = "iglu:com.iab.snowplow/spiders_and_robots/jsonschema/1-0-0"
-  private implicit val formats = DefaultFormats
-
-  // Construct a Tuple3 of all IAB files
-  private val dbs: (DbEntry, DbEntry, DbEntry) = {
-
-    def db(iabDb: Option[IabDatabase]): DbEntry = iabDb.map {
-      case IabDatabase(name, uri, db) =>
-        if (localMode) {
-          (None, getClass.getResource(db).toURI.getPath)
-        } else {
-          (Some(uri), "./iab_" + name)
-        }
-    }
-
-    (db(ipFile), db(excludeUaFile), db(includeUaFile))
-  }
-
-  // Collect a cache of IAB files for local download
-  override val filesToCache: List[(URI, String)] =
-    (dbs._1 ++ dbs._2 ++ dbs._3).collect {
-      case (Some(uri), path) => (uri, path)
-    }.toList
-
-  // Create an IAB client based on the IAB files list
-  private lazy val iabClient = {
-    def file(db: DbEntry): File = new File(db.get._2)
-
-    new IabClient(file(dbs._1), file(dbs._2), file(dbs._3))
-  }
+final case class IabEnrichment(schemaKey: SchemaKey, iabClient: IabClient) extends Enrichment {
+  val outputSchema =
+    SchemaKey("com.iab.snowplow", "spiders_and_robots", "jsonschema", SchemaVer.Full(1, 0, 0))
+  private val enrichmentInfo =
+    FailureDetails.EnrichmentInformation(schemaKey, "iab-spiders-and-robots").some
 
   /**
-   * Get the IAB response containing information about whether an event is a
-   * spider or robot using the IAB client library.
-   *
-   * @param userAgent  User agent used to perform the check
-   * @param ipAddress  IP address used to perform the check
-   * @param accurateAt Date of the event, used to determine whether entries in the
-   *                   IAB list are relevant or outdated
+   * Get the IAB response containing information about whether an event is a spider or robot using
+   * the IAB client library.
+   * @param userAgent User agent used to perform the check
+   * @param ipAddress IP address used to perform the check
+   * @param accurateAt Date of the event, used to determine whether entries in the IAB list are
+   * relevant or outdated
    * @return an IabResponse object
    */
-  private[enrichments] def performCheck(userAgent: String,
-                                        ipAddress: String,
-                                        accurateAt: DateTime): Validation[String, IabEnrichmentResponse] =
-    try {
-      val result = iabClient.checkAt(userAgent, InetAddress.getByName(ipAddress), accurateAt.toDate)
-      IabEnrichmentResponse(result.isSpiderOrRobot,
-                            result.getCategory.toString,
-                            result.getReason.toString,
-                            result.getPrimaryImpact.toString).success
-    } catch {
-      case exc: UnknownHostException => s"IP address $ipAddress was invald".failure
-    }
+  private[enrichments] def performCheck(
+    userAgent: String,
+    ipAddress: String,
+    accurateAt: DateTime
+  ): Either[FailureDetails.EnrichmentStageIssue, IabEnrichmentResponse] =
+    (for {
+      ip <- Either
+        .catchNonFatal(InetAddress.getByName(ipAddress))
+        .leftMap(
+          e =>
+            FailureDetails.EnrichmentFailureMessage
+              .InputData("user_ipaddress", ipAddress.some, e.getMessage)
+        )
+      result <- Either
+        .catchNonFatal(iabClient.checkAt(userAgent, ip, accurateAt.toDate))
+        .leftMap(
+          e => FailureDetails.EnrichmentFailureMessage.Simple(e.getMessage)
+        )
+    } yield IabEnrichmentResponse(
+      result.isSpiderOrRobot,
+      result.getCategory.toString,
+      result.getReason.toString,
+      result.getPrimaryImpact.toString
+    )).leftMap(FailureDetails.EnrichmentFailure(enrichmentInfo, _))
 
   /**
    * Get the IAB response as a JSON context for a specific event
-   *
-   * @param userAgent  enriched event optional user agent
-   * @param ipAddress  enriched event optional IP address
+   * @param userAgent enriched event optional user agent
+   * @param ipAddress enriched event optional IP address
    * @param accurateAt enriched event optional datetime
    * @return IAB response as a self-describing JSON object
    */
-  def getIabContext(userAgent: Option[String],
-                    ipAddress: Option[String],
-                    accurateAt: Option[DateTime]): Validation[String, JObject] =
-    getIab(userAgent, ipAddress, accurateAt).map(addSchema)
-
-  /**
-   * Get IAB check response received from the client library and extracted as a JSON object
-   *
-   * @param userAgent enriched event optional user agent
-   * @param ipAddress enriched event optional IP address
-   * @param time      enriched event optional datetime
-   * @return IAB response as JSON object
-   */
-  private def getIab(userAgent: Option[String],
-                     ipAddress: Option[String],
-                     time: Option[DateTime]): Validation[String, JObject] =
-    (userAgent, ipAddress, time) match {
-      case (Some(ua), Some(ip), Some(t)) =>
-        performCheck(ua, ip, t) match {
-          case Success(response) =>
-            Extraction.decompose(response) match {
-              case obj: JObject => obj.success
-              case _            => s"Couldn't transform IAB response $response into JSON".failure
-            }
-          case Failure(message) => message.failure
-        }
-      case _ =>
-        s"One of required event fields missing. user agent: $userAgent, ip address: $ipAddress, time: $time".failure
+  def getIabContext(
+    userAgent: Option[String],
+    ipAddress: Option[String],
+    accurateAt: Option[DateTime]
+  ): Either[NonEmptyList[FailureDetails.EnrichmentStageIssue], SelfDescribingData[Json]] =
+    getIab(userAgent, ipAddress, accurateAt).map { iab =>
+      SelfDescribingData(outputSchema, iab)
     }
 
   /**
-   * Add Iglu URI to JSON Object
-   *
-   * @param context IAB context as JSON Object
-   * @return JSON Object wrapped as Self-describing JSON
+   * Get IAB check response received from the client library and extracted as a JSON object
+   * @param userAgent enriched event optional user agent
+   * @param ipAddress enriched event optional IP address
+   * @param time enriched event optional datetime
+   * @return IAB response as JSON object
    */
-  private def addSchema(context: JObject): JObject =
-    ("schema", schemaUri) ~ (("data", context))
+  private def getIab(
+    userAgent: Option[String],
+    ipAddress: Option[String],
+    time: Option[DateTime]
+  ): Either[NonEmptyList[FailureDetails.EnrichmentStageIssue], Json] =
+    (userAgent, ipAddress, time) match {
+      case (Some(ua), Some(ip), Some(t)) =>
+        performCheck(ua, ip, t)
+          .map(_.asJson)
+          .leftMap(NonEmptyList.one)
+      case (a, b, c) =>
+        val failures = List((a, "useragent"), (b, "user_ipaddress"), (c, "derived_tstamp"))
+          .collect {
+            case (None, n) =>
+              val f = FailureDetails.EnrichmentFailureMessage.InputData(
+                n,
+                none,
+                "missing"
+              )
+              FailureDetails.EnrichmentFailure(enrichmentInfo, f)
+          }
+        NonEmptyList
+          .fromList(failures)
+          .getOrElse(NonEmptyList.of {
+            val f = FailureDetails.EnrichmentFailureMessage
+              .Simple("could not construct failures")
+            FailureDetails.EnrichmentFailure(enrichmentInfo, f)
+          })
+          .asLeft
+    }
 }
 
-/**
- * Case class copy of `com.snowplowanalytics.iab.spidersandrobotsclient.IabResponse`
- */
-private[enrichments] case class IabEnrichmentResponse(spiderOrRobot: Boolean,
-                                                      category: String,
-                                                      reason: String,
-                                                      primaryImpact: String)
+trait CreateIabClient[F[_]] {
+  def create(
+    ipFile: String,
+    excludeUaFile: String,
+    includeUaFile: String
+  ): F[IabClient]
+}
 
-/**
- * Case class representing an IAB database location
- */
-case class IabDatabase(name: String, uri: URI, db: String)
+object CreateIabClient {
+  def apply[F[_]](implicit ev: CreateIabClient[F]): CreateIabClient[F] = ev
+
+  implicit def syncCreateIabClient[F[_]: Sync]: CreateIabClient[F] = new CreateIabClient[F] {
+    def create(
+      ipFile: String,
+      excludeUaFile: String,
+      includeUaFile: String
+    ): F[IabClient] =
+      Sync[F].delay {
+        new IabClient(new File(ipFile), new File(excludeUaFile), new File(includeUaFile))
+      }
+  }
+
+  implicit def evalCreateIabClient: CreateIabClient[Eval] = new CreateIabClient[Eval] {
+    def create(
+      ipFile: String,
+      excludeUaFile: String,
+      includeUaFile: String
+    ): Eval[IabClient] =
+      Eval.later {
+        new IabClient(new File(ipFile), new File(excludeUaFile), new File(includeUaFile))
+      }
+  }
+
+  implicit def idCreateIabClient: CreateIabClient[Id] = new CreateIabClient[Id] {
+    def create(
+      ipFile: String,
+      excludeUaFile: String,
+      includeUaFile: String
+    ): Id[IabClient] =
+      new IabClient(new File(ipFile), new File(excludeUaFile), new File(includeUaFile))
+  }
+}
+
+/** Case class copy of `com.snowplowanalytics.iab.spidersandrobotsclient.IabResponse` */
+private[enrichments] final case class IabEnrichmentResponse(
+  spiderOrRobot: Boolean,
+  category: String,
+  reason: String,
+  primaryImpact: String
+)
+
+/** Case class representing an IAB database location */
+private[enrichments] final case class IabDatabase(
+  name: String,
+  uri: URI,
+  db: String
+)

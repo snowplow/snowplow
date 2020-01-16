@@ -1,4 +1,4 @@
-/**Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+/**Copyright (c) 2012-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -9,55 +9,45 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common
-package enrichments
-package registry
+package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
-// Specs2
+import io.circe._
+import io.circe.literal._
+
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer, SelfDescribingData}
+
 import org.specs2.Specification
-import org.specs2.scalaz._
 
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// Json4s
-import org.json4s._
-import org.json4s.JValue
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
-
-class HttpHeaderExtractorEnrichmentSpec extends Specification with ValidationMatchers {
+class HttpHeaderExtractorEnrichmentSpec extends Specification {
   def is = s2"""
-  This is a specification to test the HttpHeaderExtractorEnrichment
   returns X-Forwarded-For header             $e1
   returns Accept header after Regex matching $e2
-  No headers                                 $e3
+  no headers                                 $e3
   """
 
   def e1 = {
     val expected = List(
-      """{"schema":"iglu:org.ietf/http_header/jsonschema/1-0-0","data":{"name":"X-Forwarded-For","value":"129.78.138.66, 129.78.64.103"}}"""
+      SelfDescribingData(
+        SchemaKey("org.ietf", "http_header", "jsonschema", SchemaVer.Full(1, 0, 0)),
+        json"""{"name":"X-Forwarded-For","value":"129.78.138.66, 129.78.64.103"}"""
+      )
     )
-
     HttpHeaderExtractorEnrichment("X-Forwarded-For")
-      .extract(List("X-Forwarded-For: 129.78.138.66, 129.78.64.103"))
-      .map(h => compact(render(h))) must_== expected.map(e => compact(render(parse(e))))
+      .extract(List("X-Forwarded-For: 129.78.138.66, 129.78.64.103")) must_== expected
   }
 
   def e2 = {
     val expected = List(
-      """{"schema":"iglu:org.ietf/http_header/jsonschema/1-0-0","data":{"name":"Accept","value":"text/html"}}"""
+      SelfDescribingData(
+        SchemaKey("org.ietf", "http_header", "jsonschema", SchemaVer.Full(1, 0, 0)),
+        json"""{"name":"Accept","value":"text/html"}"""
+      )
     )
-
-    HttpHeaderExtractorEnrichment(".*").extract(List("Accept: text/html")).map(h => compact(render(h))) must_== expected
-      .map(e                                                                     => compact(render(parse(e))))
+    HttpHeaderExtractorEnrichment(".*").extract(List("Accept: text/html")) must_== expected
   }
 
   def e3 = {
-    val expected = List()
-
-    HttpHeaderExtractorEnrichment(".*").extract(Nil).map(h => compact(render(h))) must_== expected.map(e =>
-      compact(render(parse(e))))
+    val expected = List.empty[Json]
+    HttpHeaderExtractorEnrichment(".*").extract(Nil) must_== expected
   }
 }

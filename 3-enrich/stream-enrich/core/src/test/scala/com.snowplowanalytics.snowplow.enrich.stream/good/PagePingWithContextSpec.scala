@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
  * you may not use this file except in compliance with the Apache License
@@ -304,10 +304,10 @@ class PagePingWithContextSpec extends Specification {
       val rawEvent = Base64.decodeBase64(PagePingWithContextSpec.raw)
 
       val enrichedEvent = TestSource.enrichEvents(rawEvent)(0)
-      enrichedEvent.isSuccess must beTrue
+      enrichedEvent.isValid must beTrue
 
       // "-1" prevents empty strings from being discarded from the end of the array
-      val fields    = enrichedEvent.toOption.get._1.split("\t", -1)
+      val fields = enrichedEvent.toOption.get._1.split("\t", -1)
       val piiFields = enrichedEvent.toOption.get._3.get.split("\t", -1)
       fields.size must beEqualTo(PagePingWithContextSpec.expected.size)
       piiFields.size must beEqualTo(PagePingWithContextSpec.pii.size)

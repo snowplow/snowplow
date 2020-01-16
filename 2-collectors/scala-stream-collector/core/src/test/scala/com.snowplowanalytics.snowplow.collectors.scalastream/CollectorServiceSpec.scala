@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
  * you may not use this file except in compliance with the Apache License
@@ -12,21 +12,23 @@
  * implied.  See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow
-package collectors.scalastream
+package com.snowplowanalytics.snowplow.collectors.scalastream
 
 import java.net.InetAddress
 
 import scala.collection.immutable.Seq
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
+
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.model.headers.CacheDirectives._
+
 import org.apache.thrift.{TDeserializer, TSerializer}
 
+import com.snowplowanalytics.snowplow.CollectorPayload.thrift.model1.CollectorPayload
 import org.specs2.mutable.Specification
-import CollectorPayload.thrift.model1.CollectorPayload
+
 import generated.BuildInfo
 import model._
 
@@ -202,17 +204,16 @@ class CollectorServiceSpec extends Specification {
     }
 
     "buildHttpResponse" in {
-      val sinkConf = TestUtils.testConf.streams.sink
       val redirConf = TestUtils.testConf.redirectMacro
       "rely on buildRedirectHttpResponse if redirect is true" in {
         val (res, Nil) = service.buildHttpResponse(
-          event, "k", Map("u" -> "12"), hs, true, true, false, sinkConf, redirConf)
+          event, Map("u" -> "12"), hs, true, true, false, redirConf)
         res shouldEqual HttpResponse(302)
           .withHeaders(`RawHeader`("Location", "12") :: hs)
       }
       "send back a gif if pixelExpected is true" in {
         val (res, Nil) = service.buildHttpResponse(
-          event, "k", Map.empty, hs, false, true, false, sinkConf, redirConf)
+          event, Map.empty, hs, false, true, false, redirConf)
         res shouldEqual HttpResponse(200)
           .withHeaders(hs)
           .withEntity(HttpEntity(contentType = ContentType(MediaTypes.`image/gif`),
@@ -220,13 +221,13 @@ class CollectorServiceSpec extends Specification {
       }
       "send back a found if pixelExpected and bounce is true" in {
         val (res, Nil) = service.buildHttpResponse(
-          event, "k", Map.empty, hs, false, true, true, sinkConf, redirConf)
+          event, Map.empty, hs, false, true, true, redirConf)
         res shouldEqual HttpResponse(302)
           .withHeaders(hs)
       }
       "send back ok otherwise" in {
         val (res, Nil) = service.buildHttpResponse(
-          event, "k", Map.empty, hs, false, false, false, sinkConf, redirConf)
+          event, Map.empty, hs, false, false, false, redirConf)
         res shouldEqual HttpResponse(200, entity = "ok")
           .withHeaders(hs)
       }
@@ -249,24 +250,23 @@ class CollectorServiceSpec extends Specification {
     "buildRedirectHttpResponse" in {
       val redirConf = TestUtils.testConf.redirectMacro
       "give back a 302 if redirecting and there is a u query param" in {
-        val (res, Nil) = service.buildRedirectHttpResponse(event, "k", Map("u" -> "12"), redirConf)
+        val (res, Nil) = service.buildRedirectHttpResponse(event, Map("u" -> "12"), redirConf)
         res shouldEqual HttpResponse(302).withHeaders(`RawHeader`("Location", "12"))
       }
-      /* scalaz incompat
       "give back a 400 if redirecting and there are no u query params" in {
-        val (res, _) = service.buildRedirectHttpResponse(event, "k", Map.empty, redirConf)
+        val (res, _) = service.buildRedirectHttpResponse(event, Map.empty, redirConf)
         res shouldEqual HttpResponse(400)
-      }*/
+      }
       "the redirect url should ignore a cookie replacement macro on redirect if not enabled" in {
         event.networkUserId = "1234"
         val (res, Nil) = service.buildRedirectHttpResponse(
-          event, "k", Map("u" -> s"http://localhost/?uid=$${SP_NUID}"), redirConf)
+          event, Map("u" -> s"http://localhost/?uid=$${SP_NUID}"), redirConf)
         res shouldEqual HttpResponse(302)
           .withHeaders(`RawHeader`("Location", s"http://localhost/?uid=$${SP_NUID}"))
       }
       "the redirect url should support a cookie replacement macro on redirect if enabled" in {
         event.networkUserId = "1234"
-        val (res, Nil) = service.buildRedirectHttpResponse(event, "k",
+        val (res, Nil) = service.buildRedirectHttpResponse(event,
           Map("u" -> s"http://localhost/?uid=$${SP_NUID}"), redirConf.copy(enabled = true))
         res shouldEqual HttpResponse(302)
           .withHeaders(`RawHeader`("Location", "http://localhost/?uid=1234"))
@@ -274,14 +274,14 @@ class CollectorServiceSpec extends Specification {
       "the redirect url should allow for custom token placeholders" in {
         event.networkUserId = "1234"
         val (res, Nil) = service.buildRedirectHttpResponse(
-          event, "k", Map("u" -> "http://localhost/?uid=[TOKEN]"),
+          event, Map("u" -> "http://localhost/?uid=[TOKEN]"),
           redirConf.copy(enabled = true, Some("[TOKEN]")))
         res shouldEqual HttpResponse(302)
           .withHeaders(`RawHeader`("Location", "http://localhost/?uid=1234"))
       }
       "the redirect url should allow for double encoding for return redirects" in {
         val (res, Nil) =
-          service.buildRedirectHttpResponse(event, "k", Map("u" -> "a%3Db"), redirConf)
+          service.buildRedirectHttpResponse(event, Map("u" -> "a%3Db"), redirConf)
         res shouldEqual HttpResponse(302).withHeaders(`RawHeader`("Location", "a%3Db"))
       }
     }
@@ -306,17 +306,17 @@ class CollectorServiceSpec extends Specification {
         service.cookieHeader(HttpRequest(), None, "nuid", false) shouldEqual None
       }
       "give back None if doNoTrack is true" in {
-        val nuid = "nuid"
         val conf = CookieConfig(true, "name", 5.seconds, Some(List("domain")), None, secure = false, httpOnly = false, sameSite = None)
-
         service.cookieHeader(HttpRequest(), Some(conf), "nuid", true) shouldEqual None
       }
       "give back a cookie header with Secure, HttpOnly and SameSite=None" in {
+        val nuid = "nuid"
         val conf = CookieConfig(true, "name", 5.seconds, Some(List("domain")), None, secure = true, httpOnly = true, sameSite = Some("None"))
-        val Some(`Set-Cookie`(cookie)) = service.cookieHeader(HttpRequest(), Some(conf), networkUserId = "nuid", doNotTrack = false)
+        val Some(`Set-Cookie`(cookie)) = service.cookieHeader(HttpRequest(), Some(conf), networkUserId = nuid, doNotTrack = false)
         cookie.secure must beTrue
         cookie.httpOnly must beTrue
         cookie.extension must beSome("SameSite=None")
+        service.cookieHeader(HttpRequest(), Some(conf), nuid, true) shouldEqual None
       }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
  * you may not use this file except in compliance with the Apache License
@@ -18,8 +18,8 @@
 lazy val root = project
   .in(file("."))
   .settings(
-    name        := "snowplow-common-enrich",
-    version     := "0.38.0",
+    name := "snowplow-common-enrich",
+    version := "1.0.0",
     description := "Common functionality for enriching raw Snowplow events"
   )
   .settings(BuildSettings.formatting)
@@ -29,16 +29,10 @@ lazy val root = project
   .settings(
     libraryDependencies ++= Seq(
       // Java
-      Dependencies.Libraries.httpClient,
-      Dependencies.Libraries.yodaTime,
-      Dependencies.Libraries.yodaConvert,
-      Dependencies.Libraries.commonsLang,
-      Dependencies.Libraries.commonsIo,
+      Dependencies.Libraries.jodaTime,
       Dependencies.Libraries.commonsCodec,
       Dependencies.Libraries.useragent,
       Dependencies.Libraries.jacksonDatabind,
-      Dependencies.Libraries.jsonValidator,
-      Dependencies.Libraries.mavenArtifact,
       Dependencies.Libraries.uaParser,
       Dependencies.Libraries.postgresDriver,
       Dependencies.Libraries.mysqlConnector,
@@ -46,26 +40,29 @@ lazy val root = project
       Dependencies.Libraries.iabClient,
       Dependencies.Libraries.yauaa,
       Dependencies.Libraries.kryo,
+      Dependencies.Libraries.rhino,
+      Dependencies.Libraries.guava,
       // Scala
-      Dependencies.Libraries.scalaz7,
-      Dependencies.Libraries.snowplowRawEvent,
-      Dependencies.Libraries.collectorPayload,
-      Dependencies.Libraries.schemaSniffer,
+      Dependencies.Libraries.cats,
+      Dependencies.Libraries.circeOptics,
+      Dependencies.Libraries.circeJackson,
       Dependencies.Libraries.refererParser,
       Dependencies.Libraries.maxmindIplookups,
-      Dependencies.Libraries.json4sJackson,
-      Dependencies.Libraries.json4sScalaz,
-      Dependencies.Libraries.igluClient,
       Dependencies.Libraries.scalaUri,
       Dependencies.Libraries.scalaForex,
       Dependencies.Libraries.scalaWeather,
       Dependencies.Libraries.scalaj,
       Dependencies.Libraries.gatlingJsonpath,
+      Dependencies.Libraries.scalaLruMap,
+      Dependencies.Libraries.badRows,
+      // Thrift schemas
+      Dependencies.Libraries.snowplowRawEvent,
+      Dependencies.Libraries.collectorPayload,
+      Dependencies.Libraries.schemaSniffer,
       // Scala (test only)
       Dependencies.Libraries.specs2,
-      Dependencies.Libraries.scalazSpecs2,
-      Dependencies.Libraries.scalaCheck,
-      Dependencies.Libraries.scaldingArgs,
-      Dependencies.Libraries.mockito
-    )
+      Dependencies.Libraries.specs2Cats,
+      Dependencies.Libraries.specs2Scalacheck,
+      Dependencies.Libraries.specs2Mock
+    ) ++ Dependencies.Libraries.circeDeps
   )

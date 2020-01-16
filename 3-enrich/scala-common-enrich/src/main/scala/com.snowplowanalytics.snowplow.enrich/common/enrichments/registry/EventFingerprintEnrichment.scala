@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,98 +10,82 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
-package enrichments
-package registry
+package com.snowplowanalytics.snowplow.enrich.common
+package enrichments.registry
 
-// Maven Artifact
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion
-
-// Apache Commons
+import cats.data.{NonEmptyList, ValidatedNel}
+import cats.implicits._
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
+import io.circe._
 import org.apache.commons.codec.digest.DigestUtils
 
-// Scalaz
-import scalaz._
-import Scalaz._
+import utils.CirceUtils
 
-// json4s
-import org.json4s._
-import org.json4s.jackson.JsonMethods
+/** Lets us create an EventFingerprintEnrichment from a Json. */
+object EventFingerprintEnrichment extends ParseableEnrichment {
+  override val supportedSchema =
+    SchemaCriterion(
+      "com.snowplowanalytics.snowplow",
+      "event_fingerprint_config",
+      "jsonschema",
+      1,
+      0
+    )
 
-// Iglu
-import iglu.client.{SchemaCriterion, SchemaKey}
-import iglu.client.validation.ProcessingMessageMethods._
-
-// This project
-import utils.ScalazJson4sUtils
-
-/**
- * Lets us create an EventFingerprintEnrichmentConfig from a JValue.
- */
-object EventFingerprintEnrichmentConfig extends ParseableEnrichment {
-
-  implicit val formats = DefaultFormats
-
-  val supportedSchema =
-    SchemaCriterion("com.snowplowanalytics.snowplow", "event_fingerprint_config", "jsonschema", 1, 0)
+  private val UnitSeparator = "\u001f"
 
   /**
-   * Creates an EventFingerprintEnrichment instance from a JValue.
-   *
-   * @param config The enrichment JSON
-   * @param schemaKey The SchemaKey provided for the enrichment
-   *        Must be a supported SchemaKey for this enrichment
-   * @return a configured EventFingerprintEnrichment instance
+   * Creates an EventFingerprintEnrichment instance from a Json.
+   * @param c The enrichment JSON
+   * @param schemaKey provided for the enrichment, must be supported fby this enrichment
+   * @return a EventFingerprintEnrichment configuration
    */
-  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[EventFingerprintEnrichment] =
-    isParseable(config, schemaKey).flatMap(conf => {
-      (for {
-        excludedParameters <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "excludeParameters")
-        algorithmName      <- ScalazJson4sUtils.extract[String](config, "parameters", "hashAlgorithm")
-        algorithm          <- getAlgorithm(algorithmName)
-      } yield EventFingerprintEnrichment(algorithm, excludedParameters)).toValidationNel
-    })
+  override def parse(
+    c: Json,
+    schemaKey: SchemaKey,
+    localMode: Boolean = false
+  ): ValidatedNel[String, EventFingerprintConf] =
+    (for {
+      _ <- isParseable(c, schemaKey).leftMap(e => NonEmptyList.one(e))
+      // better-monadic-for
+      paramsAndAlgo <- (
+        CirceUtils.extract[List[String]](c, "parameters", "excludeParameters").toValidatedNel,
+        CirceUtils.extract[String](c, "parameters", "hashAlgorithm").toValidatedNel
+      ).mapN { (_, _) }.toEither
+      algorithm <- getAlgorithm(paramsAndAlgo._2)
+        .leftMap(e => NonEmptyList.one(e))
+    } yield EventFingerprintConf(algorithm, paramsAndAlgo._1)).toValidated
 
   /**
    * Look up the fingerprinting algorithm by name
-   *
    * @param algorithmName
    * @return A hashing algorithm
    */
-  private[registry] def getAlgorithm(algorithmName: String): ValidatedMessage[String => String] = algorithmName match {
-    case "MD5"    => ((s: String) => DigestUtils.md5Hex(s)).success
-    case "SHA1"   => ((s: String) => DigestUtils.sha1Hex(s)).success
-    case "SHA256" => ((s: String) => DigestUtils.sha256Hex(s)).success
-    case "SHA384" => ((s: String) => DigestUtils.sha384Hex(s)).success
-    case "SHA512" => ((s: String) => DigestUtils.sha512Hex(s)).success
-    case other    => s"[$other] is not a supported event fingerprint generation algorithm".toProcessingMessage.fail
-  }
-
-}
-
-/**
- * Companion object
- */
-object EventFingerprintEnrichment {
-  private val UnitSeparator = "\u001f"
+  private[registry] def getAlgorithm(algorithmName: String): Either[String, String => String] =
+    algorithmName match {
+      case "MD5" => ((s: String) => DigestUtils.md5Hex(s)).asRight
+      case "SHA1" => ((s: String) => DigestUtils.sha1Hex(s)).asRight
+      case "SHA256" => ((s: String) => DigestUtils.sha256Hex(s)).asRight
+      case "SHA384" => ((s: String) => DigestUtils.sha384Hex(s)).asRight
+      case "SHA512" => ((s: String) => DigestUtils.sha512Hex(s)).asRight
+      case other =>
+        s"[$other] is not a supported event fingerprint generation algorithm".asLeft
+    }
 }
 
 /**
  * Config for an event fingerprint enrichment
- *
  * @param algorithm Hashing algorithm
  * @param excludedParameters List of querystring parameters to exclude from the calculation
  * @return Event fingerprint
  */
-case class EventFingerprintEnrichment(algorithm: String => String, excludedParameters: List[String])
-    extends Enrichment {
+final case class EventFingerprintEnrichment(
+  algorithm: String => String,
+  excludedParameters: List[String]
+) extends Enrichment {
 
   /**
    * Calculate an event fingerprint using all querystring fields except the excludedParameters
-   *
    * @param parameterMap
    * @return Event fingerprint
    */

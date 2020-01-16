@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,74 +10,214 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
-package enrichments
-package registry
+package com.snowplowanalytics.snowplow.enrich.common
+package enrichments.registry
 
-// Scalaz
 import java.net.URI
 
-import scalaz._
-import Scalaz._
+import cats.{Functor, Monad}
+import cats.data.{EitherT, ValidatedNel}
+import cats.syntax.either._
+import com.snowplowanalytics.forex.CreateForex
+import com.snowplowanalytics.forex.model.AccountType
+import com.snowplowanalytics.iglu.core._
+import com.snowplowanalytics.maxmind.iplookups.CreateIpLookups
+import com.snowplowanalytics.refererparser.CreateParser
+import com.snowplowanalytics.weather.providers.openweather.CreateOWM
+import io.circe._
+import org.joda.money.CurrencyUnit
+import org.mozilla.javascript.Script
 
-// Maven Artifact
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion
+import apirequest._
+import sqlquery._
+import utils.ConversionUtils
 
-// json4s
-import org.json4s.JValue
+/** Trait inherited by every enrichment config case class */
+trait Enrichment
 
-// Iglu
-import iglu.client.{SchemaCriterion, SchemaKey}
-import iglu.client.validation.ProcessingMessageMethods._
-
-// This project
-import utils.ScalazJson4sUtils
-
-/**
- * Trait inherited by every enrichment config case class
- */
-trait Enrichment {
-
-  /**
-   * Gets the list of files the enrichment requires cached locally.
-   * The default implementation returns an empty list; if an
-   * enrichment requires files, it must override this method.
-   *
-   * @return A list of pairs, where the first entry in the pair
-   * indicates the (remote) location of the source file and the
-   * second indicates the local path where the enrichment expects
-   * to find the file.
-   */
-  def filesToCache: List[(URI, String)] = List.empty
+sealed trait EnrichmentConf {
+  def schemaKey: SchemaKey = SchemaKey(
+    "com.acme",
+    "placeholder",
+    "jsonschema",
+    SchemaVer.Full(1, 0, 0)
+  )
+  def filesToCache: List[(URI, String)] = Nil
+}
+final case class ApiRequestConf(
+  override val schemaKey: SchemaKey,
+  inputs: List[apirequest.Input],
+  api: HttpApi,
+  outputs: List[apirequest.Output],
+  cache: apirequest.Cache
+) extends EnrichmentConf {
+  def enrichment[F[_]: CreateApiRequestEnrichment]: F[ApiRequestEnrichment[F]] =
+    ApiRequestEnrichment[F](this)
+}
+final case class PiiPseudonymizerConf(
+  fieldList: List[pii.PiiField],
+  emitIdentificationEvent: Boolean,
+  strategy: pii.PiiStrategy
+) extends EnrichmentConf {
+  def enrichment: pii.PiiPseudonymizerEnrichment =
+    pii.PiiPseudonymizerEnrichment(fieldList, emitIdentificationEvent, strategy)
+}
+final case class SqlQueryConf(
+  override val schemaKey: SchemaKey,
+  inputs: List[sqlquery.Input],
+  db: Rdbms,
+  query: SqlQueryEnrichment.Query,
+  output: sqlquery.Output,
+  cache: SqlQueryEnrichment.Cache
+) extends EnrichmentConf {
+  def enrichment[F[_]: Monad: CreateSqlQueryEnrichment]: F[SqlQueryEnrichment[F]] =
+    SqlQueryEnrichment[F](this)
+}
+final case class AnonIpConf(
+  octets: AnonIPv4Octets.AnonIPv4Octets,
+  segments: AnonIPv6Segments.AnonIPv6Segments
+) extends EnrichmentConf {
+  override val filesToCache: List[(URI, String)] = Nil
+  def enrichment: AnonIpEnrichment = AnonIpEnrichment(octets, segments)
+}
+final case class CampaignAttributionConf(
+  mediumParameters: List[String],
+  sourceParameters: List[String],
+  termParameters: List[String],
+  contentParameters: List[String],
+  campaignParameters: List[String],
+  clickIdParameters: List[(String, String)]
+) extends EnrichmentConf {
+  def enrichment: CampaignAttributionEnrichment = CampaignAttributionEnrichment(
+    mediumParameters,
+    sourceParameters,
+    termParameters,
+    contentParameters,
+    campaignParameters,
+    clickIdParameters
+  )
+}
+final case class CookieExtractorConf(cookieNames: List[String]) extends EnrichmentConf {
+  def enrichment: CookieExtractorEnrichment = CookieExtractorEnrichment(cookieNames)
+}
+final case class CurrencyConversionConf(
+  override val schemaKey: SchemaKey,
+  accountType: AccountType,
+  apiKey: String,
+  baseCurrency: CurrencyUnit
+) extends EnrichmentConf {
+  def enrichment[F[_]: Monad: CreateForex]: F[CurrencyConversionEnrichment[F]] =
+    CurrencyConversionEnrichment[F](this)
+}
+final case class EventFingerprintConf(algorithm: String => String, excludedParameters: List[String])
+    extends EnrichmentConf {
+  def enrichment: EventFingerprintEnrichment =
+    EventFingerprintEnrichment(algorithm, excludedParameters)
+}
+final case class HttpHeaderExtractorConf(headersPattern: String) extends EnrichmentConf {
+  def enrichment: HttpHeaderExtractorEnrichment = HttpHeaderExtractorEnrichment(headersPattern)
+}
+final case class IabConf(
+  override val schemaKey: SchemaKey,
+  ipFile: (URI, String),
+  excludeUaFile: (URI, String),
+  includeUaFile: (URI, String)
+) extends EnrichmentConf {
+  override val filesToCache: List[(URI, String)] = List(ipFile, excludeUaFile, includeUaFile)
+  def enrichment[F[_]: Monad: CreateIabClient]: F[IabEnrichment] =
+    IabEnrichment[F](this)
+}
+final case class IpLookupsConf(
+  geoFile: Option[(URI, String)],
+  ispFile: Option[(URI, String)],
+  domainFile: Option[(URI, String)],
+  connectionTypeFile: Option[(URI, String)]
+) extends EnrichmentConf {
+  override val filesToCache: List[(URI, String)] =
+    List(geoFile, ispFile, domainFile, connectionTypeFile).flatten
+  def enrichment[F[_]: Functor: CreateIpLookups]: F[IpLookupsEnrichment[F]] =
+    IpLookupsEnrichment[F](this)
+}
+final case class JavascriptScriptConf(override val schemaKey: SchemaKey, script: Script)
+    extends EnrichmentConf {
+  def enrichment: JavascriptScriptEnrichment = JavascriptScriptEnrichment(schemaKey, script)
+}
+final case class RefererParserConf(refererDatabase: (URI, String), internalDomains: List[String])
+    extends EnrichmentConf {
+  override val filesToCache: List[(URI, String)] = List(refererDatabase)
+  def enrichment[F[_]: Monad: CreateParser]: EitherT[F, String, RefererParserEnrichment] =
+    RefererParserEnrichment[F](this)
+}
+final case class UaParserConf(override val schemaKey: SchemaKey, uaDatabase: Option[(URI, String)])
+    extends EnrichmentConf {
+  override val filesToCache: List[(URI, String)] = List(uaDatabase).flatten
+  def enrichment[F[_]: Monad: CreateUaParser]: EitherT[F, String, UaParserEnrichment] =
+    UaParserEnrichment[F](this)
+}
+final case class UserAgentUtilsConf(override val schemaKey: SchemaKey) extends EnrichmentConf {
+  def enrichment: UserAgentUtilsEnrichment = UserAgentUtilsEnrichment(schemaKey)
+}
+final case class WeatherConf(
+  override val schemaKey: SchemaKey,
+  apiHost: String,
+  apiKey: String,
+  timeout: Int,
+  cacheSize: Int,
+  geoPrecision: Int
+) extends EnrichmentConf {
+  def enrichment[F[_]: Monad: CreateOWM]: EitherT[F, String, WeatherEnrichment[F]] =
+    WeatherEnrichment[F](this)
+}
+final case class YauaaConf(cacheSize: Option[Int]) extends EnrichmentConf {
+  def enrichment: YauaaEnrichment = YauaaEnrichment(cacheSize)
 }
 
-/**
- * Trait to hold helpers relating to enrichment config
- */
+/** Trait to hold helpers relating to enrichment config */
 trait ParseableEnrichment {
 
-  val supportedSchema: SchemaCriterion
+  /** The schemas supported by this enrichment */
+  def supportedSchema: SchemaCriterion
 
   /**
-   * Tests whether a JSON is parseable by a
-   * specific EnrichmentConfig constructor
-   *
+   * Tentatively parses an enrichment configuration and sends back the files that need to be cached
+   * prior to the EnrichmentRegistry construction.
+   * @param config Json configuration for the enrichment (not self-describing)
+   * @param schemaKey Version of the schema we want to run
+   * @param localMode whether to have an enrichment conf which will produce an enrichment running locally,
+   * used for testing
+   * @return the configuration for this enrichment as well as the list of files it needs cached
+   */
+  def parse(
+    config: Json,
+    schemaKey: SchemaKey,
+    localMode: Boolean
+  ): ValidatedNel[String, EnrichmentConf]
+
+  /**
+   * Tests whether a JSON is parseable by a specific EnrichmentConfig constructor
    * @param config The JSON
-   * @param schemaKey The schemaKey which needs
-   *        to be checked
+   * @param schemaKey The schemaKey which needs to be checked
    * @return The JSON or an error message, boxed
    */
-  def isParseable(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[JValue] =
-    if (supportedSchema matches schemaKey) {
-      config.success
+  def isParseable(config: Json, schemaKey: SchemaKey): Either[String, Json] =
+    if (supportedSchema.matches(schemaKey)) {
+      config.asRight
     } else {
-      ("Schema key %s is not supported. A '%s' enrichment must have schema '%s'.")
-        .format(schemaKey, supportedSchema.name, supportedSchema)
-        .toProcessingMessage
-        .fail
-        .toValidationNel
+      (s"Schema key ${schemaKey.toSchemaUri} is not supported. A '${supportedSchema.name}' " +
+        s"enrichment must have schema ${supportedSchema.asString}.").asLeft
     }
+
+  /**
+   * Convert the path to a file from a String to a URI.
+   * @param uri URI to a database file
+   * @param database Name of the database
+   * @return an Either-boxed URI
+   */
+  protected def getDatabaseUri(uri: String, database: String): Either[String, URI] =
+    ConversionUtils
+      .stringToUri(uri + (if (uri.endsWith("/")) "" else "/") + database)
+      .flatMap {
+        case Some(u) => u.asRight
+        case None => "URI to IAB file must be provided".asLeft
+      }
 }

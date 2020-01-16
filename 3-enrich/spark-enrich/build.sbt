@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -17,7 +17,7 @@ lazy val root = project
   .enablePlugins(BuildInfoPlugin)
   .settings(
     name := "snowplow-spark-enrich",
-    version := "1.19.0",
+    version := "2.0.0",
     description := "The Snowplow Spark Enrichment process"
   )
   .settings(BuildSettings.formatting)
@@ -32,10 +32,8 @@ lazy val root = project
       // Scala
       Dependencies.Libraries.sparkCore,
       Dependencies.Libraries.sparkSQL,
-      Dependencies.Libraries.scalaz7,
-      Dependencies.Libraries.scopt,
+      Dependencies.Libraries.decline,
       Dependencies.Libraries.commonEnrich,
-      Dependencies.Libraries.igluClient,
       // Scala (test only)
       Dependencies.Libraries.specs2,
       // Thrift (test only)

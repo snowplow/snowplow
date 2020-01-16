@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -13,97 +13,82 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 
-// Specs2 & ScalaCheck
+import cats.syntax.either._
+
+import io.circe.literal._
+
+import com.snowplowanalytics.snowplow.badrows.{FailureDetails, Processor}
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer, SelfDescribingData}
+
 import org.specs2.mutable.{Specification => MutSpecification}
-import org.specs2.{ScalaCheck, Specification}
+import org.specs2.Specification
 import org.specs2.matcher.DataTables
-import org.scalacheck._
 
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// json4s
-import org.json4s._
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
-
-/**
- * Tests the etlVersion variable.
- * Uses mutable.Specification.
- */
 class EtlVersionSpec extends MutSpecification {
-
   "The ETL version" should {
     "be successfully returned using an x.y.z format" in {
-      val anyString = "spark-x.x.x"
-      MiscEnrichments.etlVersion(anyString) must beMatching(s"${anyString}-common-\\d+\\.\\d+\\.\\d+(-\\w+)?".r)
+      MiscEnrichments.etlVersion(Processor("spark", "x.x.x")) must beMatching(
+        s"spark-x.x.x-common-\\d+\\.\\d+\\.\\d+(-\\w+)?".r
+      )
     }
   }
 }
 
-/**
- * Tests the extractPlatform function.
- * Uses DataTables.
- */
+/** Tests the extractPlatform function. Uses DataTables. */
 class ExtractPlatformSpec extends Specification with DataTables {
-
   val FieldName = "p"
-  def err: (String) => String =
-    input => "Field [%s]: [%s] is not a supported tracking platform".format(FieldName, input)
+  def err: String => FailureDetails.EnrichmentFailure =
+    input =>
+      FailureDetails.EnrichmentFailure(
+        None,
+        FailureDetails.EnrichmentFailureMessage.InputData(
+          FieldName,
+          Option(input),
+          "not recognized as a tracking platform"
+        )
+      )
 
-  def is = s2"Extracting platforms with extractPlatform should work $e1"
+  def is = s2"""
+  Extracting platforms with extractPlatform should work $e1
+  """
 
   def e1 =
-    "SPEC NAME"                        || "INPUT VAL" | "EXPECTED OUTPUT" |
-      "valid web"                      !! "web"       ! "web".success |
-      "valid mobile/tablet"            !! "mob"       ! "mob".success |
-      "valid desktop/laptop/netbook"   !! "pc"        ! "pc".success |
-      "valid server-side app"          !! "srv"       ! "srv".success |
-      "valid general app"              !! "app"       ! "app".success |
-      "valid connected TV"             !! "tv"        ! "tv".success |
-      "valid games console"            !! "cnsl"      ! "cnsl".success |
-      "valid iot (internet of things)" !! "iot"       ! "iot".success |
-      "invalid empty"                  !! ""          ! err("").fail |
-      "invalid null"                   !! null        ! err(null).fail |
-      "invalid platform"               !! "ma"        ! err("ma").fail |> { (_, input, expected) =>
+    "SPEC NAME" || "INPUT VAL" | "EXPECTED OUTPUT" |
+      "valid web" !! "web" ! "web".asRight |
+      "valid mobile/tablet" !! "mob" ! "mob".asRight |
+      "valid desktop/laptop/netbook" !! "pc" ! "pc".asRight |
+      "valid server-side app" !! "srv" ! "srv".asRight |
+      "valid general app" !! "app" ! "app".asRight |
+      "valid connected TV" !! "tv" ! "tv".asRight |
+      "valid games console" !! "cnsl" ! "cnsl".asRight |
+      "valid iot (internet of things)" !! "iot" ! "iot".asRight |
+      "invalid empty" !! "" ! err("").asLeft |
+      "invalid null" !! null ! err(null).asLeft |
+      "invalid platform" !! "ma" ! err("ma").asLeft |> { (_, input, expected) =>
       MiscEnrichments.extractPlatform(FieldName, input) must_== expected
     }
 }
 
 class ExtractIpSpec extends Specification with DataTables {
 
-  def is = s2"Extracting ips with extractIp should work $e1"
+  def is = s2"""
+  Extracting ips with extractIp should work $e1
+  """
 
   val nullString: String = null
 
   def e1 =
-    "SPEC NAME"                       || "INPUT VAL"            | "EXPECTED OUTPUT" |
-      "single ip"                     !! "127.0.0.1"            ! "127.0.0.1".success |
-      "ips ', '-separated"            !! "127.0.0.1, 127.0.0.2" ! "127.0.0.1".success |
-      "ips ','-separated"             !! "127.0.0.1,127.0.0.2"  ! "127.0.0.1".success |
-      "ips separated out of the spec" !! "1.0.0.1!1.0.0.2"      ! "1.0.0.1!1.0.0.2".success |
+    "SPEC NAME" || "INPUT VAL" | "EXPECTED OUTPUT" |
+      "single ip" !! "127.0.0.1" ! "127.0.0.1".asRight |
+      "ips ', '-separated" !! "127.0.0.1, 127.0.0.2" ! "127.0.0.1".asRight |
+      "ips ','-separated" !! "127.0.0.1,127.0.0.2" ! "127.0.0.1".asRight |
+      "ips separated out of the spec" !! "1.0.0.1!1.0.0.2" ! "1.0.0.1!1.0.0.2".asRight |
       // ConversionUtils.makeTsvSafe returns null for empty string
-      "empty" !! ""   ! Success(null) |
-      "null"  !! null ! Success(null) |> { (_, input, expected) =>
+      "empty" !! "" ! Right(null) |
+      "null" !! null ! Right(null) |> { (_, input, expected) =>
       MiscEnrichments.extractIp("ip", input) must_== expected
     }
 
-}
-
-/**
- * Tests the identity function.
- * Uses ScalaCheck.
- */
-class IdentitySpec extends Specification with ScalaCheck {
-
-  def is =
-    "The identity function should work for any pair of Strings" ! e1
-
-  def e1 =
-    check { (field: String, value: String) =>
-      MiscEnrichments.identity(field, value) must_== value.success
-    }
 }
 
 class FormatDerivedContextsSpec extends MutSpecification {
@@ -112,14 +97,14 @@ class FormatDerivedContextsSpec extends MutSpecification {
     "convert a list of JObjects to a self-describing contexts JSON" in {
 
       val derivedContextsList = List(
-        (("schema" -> "iglu:com.acme/user/jsonschema/1-0-0") ~
-          ("data" ->
-            ("type"   -> "tester") ~
-              ("name" -> "bethany"))),
-        (("schema"    -> "iglu:com.acme/design/jsonschema/1-0-0") ~
-          ("data" ->
-            ("color"      -> "red") ~
-              ("fontSize" -> 14)))
+        SelfDescribingData(
+          SchemaKey("com.acme", "user", "jsonschema", SchemaVer.Full(1, 0, 0)),
+          json"""{"type": "tester", "name": "bethany"}"""
+        ),
+        SelfDescribingData(
+          SchemaKey("com.acme", "design", "jsonschema", SchemaVer.Full(1, 0, 0)),
+          json"""{"color": "red", "fontSize": 14}"""
+        )
       )
 
       val expected = """

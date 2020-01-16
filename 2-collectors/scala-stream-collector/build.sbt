@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
  * you may not use this file except in compliance with the Apache License
@@ -16,7 +16,7 @@ import com.typesafe.sbt.packager.docker._
 
 lazy val commonDependencies = Seq(
   // Java
-  Dependencies.Libraries.yodaTime,
+  Dependencies.Libraries.jodaTime,
   Dependencies.Libraries.slf4j,
   Dependencies.Libraries.log4jOverSlf4j,
   Dependencies.Libraries.config,
@@ -27,27 +27,24 @@ lazy val commonDependencies = Seq(
   Dependencies.Libraries.scalaz7,
   Dependencies.Libraries.akkaStream,
   Dependencies.Libraries.akkaHttp,
+  Dependencies.Libraries.akkaStream,
   Dependencies.Libraries.akkaSlf4j,
-  Dependencies.Libraries.json4sJackson,
-  Dependencies.Libraries.snowplowCommonEnrich,
+  Dependencies.Libraries.badRows,
   Dependencies.Libraries.collectorPayload,
   Dependencies.Libraries.pureconfig,
   // Scala (test)
   Dependencies.Libraries.akkaTestkit,
   Dependencies.Libraries.akkaHttpTestkit,
+  Dependencies.Libraries.akkaStreamTestkit,
   Dependencies.Libraries.specs2
 )
 
 lazy val buildSettings = Seq(
   organization  :=  "com.snowplowanalytics",
   name          :=  "snowplow-stream-collector",
-  version       :=  "0.17.0",
+  version       :=  "1.0.0",
   description   :=  "Scala Stream Collector for Snowplow raw events",
-  scalaVersion  :=  "2.11.12",
-  scalacOptions :=  BuildSettings.compilerOptions,
-  scalacOptions in (Compile, console) ~= { _.filterNot(Set("-Ywarn-unused-import")) },
-  scalacOptions in (Test, console)    := (scalacOptions in (Compile, console)).value,
-  javacOptions  :=  BuildSettings.javaCompilerOptions,
+  scalaVersion  :=  "2.12.10",
   resolvers     ++= Dependencies.resolutionRepos
 )
 
@@ -60,6 +57,7 @@ lazy val dockerSettings = Seq(
 
 lazy val allSettings = buildSettings ++
   BuildSettings.sbtAssemblySettings ++
+  BuildSettings.formatting ++
   Seq(libraryDependencies ++= commonDependencies) ++
   dockerSettings
 

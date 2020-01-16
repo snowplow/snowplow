@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright (c) 2013-2019 Snowplow Analytics Ltd.
  * All rights reserved.
  *
@@ -16,22 +16,24 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow
-package collectors
-package scalastream
+package com.snowplowanalytics.snowplow.collectors.scalastream
 package sinks
 
 import org.apache.commons.codec.binary.Base64
 
 class StdoutSink(streamName: String) extends Sink {
-
-  val MaxBytes = Long.MaxValue
-
+  override val MaxBytes = Int.MaxValue
   // Print a Base64-encoded event.
   def storeRawEvents(events: List[Array[Byte]], key: String) = {
     streamName match {
-      case "out" => events foreach { e => println(Base64.encodeBase64String(e)) }
-      case "err" => events foreach { e => Console.err.println(Base64.encodeBase64String(e)) }
+      case "out" =>
+        events foreach { e =>
+          println(Base64.encodeBase64String(e))
+        }
+      case "err" =>
+        events foreach { e =>
+          Console.err.println(Base64.encodeBase64String(e))
+        }
     }
     Nil
   }

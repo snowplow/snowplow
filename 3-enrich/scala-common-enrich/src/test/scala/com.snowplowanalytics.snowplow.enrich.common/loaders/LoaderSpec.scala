@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -13,72 +13,86 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
-// Scalaz
-import scalaz._
-import Scalaz._
+import java.nio.charset.StandardCharsets.UTF_8
+import java.time.Instant
 
-// Snowplow
+import cats.data.ValidatedNel
+import cats.syntax.option._
+import cats.syntax.validated._
+import com.snowplowanalytics.snowplow.badrows._
+import org.specs2.mutable.Specification
+import org.specs2.matcher.{DataTables, ValidatedMatchers}
+
 import SpecHelpers._
 
-// Specs2
-import org.specs2.mutable.Specification
-import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
-
 object LoaderSpec {
+  val processor = Processor("LoaderSpec", "v1")
 
   val loader = new Loader[String] {
     // Make our trait whole
-    def toCollectorPayload(line: String): ValidatedMaybeCollectorPayload = "FAIL".failNel
+    override def toCollectorPayload(
+      line: String,
+      processor: Processor
+    ): ValidatedNel[BadRow.CPFormatViolation, Option[CollectorPayload]] =
+      BadRow
+        .CPFormatViolation(
+          processor,
+          Failure.CPFormatViolation(
+            Instant.now(),
+            "test",
+            FailureDetails.CPFormatViolationMessage.Fallback("FAIL")
+          ),
+          Payload.RawPayload(line)
+        )
+        .invalidNel
   }
 }
 
-class LoaderSpec extends Specification with DataTables with ValidationMatchers {
-
+class LoaderSpec extends Specification with DataTables with ValidatedMatchers {
   import LoaderSpec._
 
   "getLoader" should {
-
     "return the CloudfrontLoader" in {
-      Loader.getLoader("cloudfront") must beSuccessful(CloudfrontLoader)
+      Loader.getLoader("cloudfront") must beRight(CloudfrontLoader)
     }
 
     "return the CljTomcatLoader" in {
-      Loader.getLoader("clj-tomcat") must beSuccessful(CljTomcatLoader)
+      Loader.getLoader("clj-tomcat") must beRight(CljTomcatLoader)
     }
 
     "return the ThriftLoader" in {
-      Loader.getLoader("thrift") must beSuccessful(ThriftLoader)
+      Loader.getLoader("thrift") must beRight(ThriftLoader)
     }
 
     "return the NDJSON loader" in {
-      Loader.getLoader("ndjson/example.test/v1") must beSuccessful(NdjsonLoader("example.test/v1"))
+      Loader.getLoader("ndjson/example.test/v1") must beRight(NdjsonLoader("example.test/v1"))
     }
-
   }
 
   "extractGetPayload" should {
-
-    val Encoding = "UTF-8"
-
+    val Encoding = UTF_8
     // TODO: add more tests
     "return a Success-boxed NonEmptyList of NameValuePairs for a valid or empty querystring" in {
 
-      "SPEC NAME"               || "QUERYSTRING" | "EXP. NEL" |
-        "Simple querystring #1" !! "e=pv&dtm=1376487150616&tid=483686".some ! toNameValuePairs("e" -> "pv",
-                                                                                               "dtm" -> "1376487150616",
-                                                                                               "tid" -> "483686") |
+      "SPEC NAME" || "QUERYSTRING" | "EXP. NEL" |
+        "Simple querystring #1" !! "e=pv&dtm=1376487150616&tid=483686".some ! toNameValuePairs(
+          "e" -> "pv",
+          "dtm" -> "1376487150616",
+          "tid" -> "483686"
+        ) |
         "Simple querystring #2" !! "page=Celestial%2520Tarot%2520-%2520Psychic%2520Bazaar&vp=1097x482&ds=1097x1973".some ! toNameValuePairs(
           "page" -> "Celestial%20Tarot%20-%20Psychic%20Bazaar",
-          "vp"   -> "1097x482",
-          "ds"   -> "1097x1973") |
+          "vp" -> "1097x482",
+          "ds" -> "1097x1973"
+        ) |
         "Superfluous ? ends up in first param's name" !! "?e=pv&dtm=1376487150616&tid=483686".some ! toNameValuePairs(
-          "?e"  -> "pv",
+          "?e" -> "pv",
           "dtm" -> "1376487150616",
-          "tid" -> "483686") |
+          "tid" -> "483686"
+        ) |
         "Empty querystring" !! None ! toNameValuePairs() |> { (_, qs, expected) =>
         {
-          loader.parseQuerystring(qs, Encoding) must beSuccessful(expected)
+          loader.parseQuerystring(qs, Encoding) must beRight(expected)
         }
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2016-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,174 +10,188 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-// Java
 import java.net.URI
+import java.nio.charset.StandardCharsets.UTF_8
+
+import scala.collection.JavaConverters._
+import scala.util.{Try, Success => TS, Failure => TF}
+
+import cats.Monad
+import cats.data.{NonEmptyList, ValidatedNel}
+import cats.instances.either._
+import cats.syntax.either._
+import cats.syntax.option._
+import cats.syntax.validated._
+
+import cats.effect.Clock
+
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
+import com.snowplowanalytics.snowplow.badrows.FailureDetails
+
+import io.circe._
+import io.circe.optics.JsonPath._
 
 import org.apache.http.client.utils.URLEncodedUtils
 import org.joda.time.DateTime
 
-// Scala
-import scala.util.matching.Regex
-import scala.util.control.NonFatal
-import scala.collection.JavaConversions._
-import scala.util.{Try, Success => TS, Failure => TF}
-
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// Jackson
-import com.fasterxml.jackson.core.JsonParseException
-
-// json4s
-import org.json4s._
-import org.json4s.jackson.JsonMethods._
-
-// Iglu
-import iglu.client.{Resolver, SchemaKey}
-
-// This project
 import loaders.CollectorPayload
-import utils.{JsonUtils => JU}
+import utils.{HttpClient, JsonUtils => JU}
 
 /**
- * Transforms a collector payload which conforms to
- * a known version of the Olark Tracking webhook
+ * Transforms a collector payload which conforms to a known version of the Olark Tracking webhook
  * into raw events.
  */
 object OlarkAdapter extends Adapter {
-
-  // Vendor name for Failure Message
-  private val VendorName = "Olark"
-
   // Tracker version for an Olark Tracking webhook
   private val TrackerVersion = "com.olark-v1"
 
   // Expected content type for a request body
   private val ContentType = "application/x-www-form-urlencoded"
 
+  private val Vendor = "com.olark"
+  private val Format = "jsonschema"
+  private val SchemaVersion = SchemaVer.Full(1, 0, 0)
+
   // Schemas for reverse-engineering a Snowplow unstructured event
   private val EventSchemaMap = Map(
-    "transcript"      -> SchemaKey("com.olark", "transcript", "jsonschema", "1-0-0").toSchemaUri,
-    "offline_message" -> SchemaKey("com.olark", "offline_message", "jsonschema", "1-0-0").toSchemaUri
+    "transcript" -> SchemaKey(Vendor, "transcript", Format, SchemaVersion),
+    "offline_message" -> SchemaKey(Vendor, "offline_message", Format, SchemaVersion)
   )
 
   /**
-   * Converts a CollectorPayload instance into raw events.
-   *
-   * An Olark Tracking payload contains one single event
-   * in the body of the payload, stored within a HTTP encoded
-   * string.
-   *
-   * @param payload The CollectorPayload containing one or more
-   *        raw events as collected by a Snowplow collector
-   * @param resolver (implicit) The Iglu resolver used for
-   *        schema lookup and validation. Not used
-   * @return a Validation boxing either a NEL of RawEvents on
-   *         Success, or a NEL of Failure Strings
+   * Converts a CollectorPayload instance into raw events. An Olark Tracking payload contains one
+   * single event in the body of the payload, stored within a HTTP encoded string.
+   * @param payload The CollectorPayload containing one or more raw events
+   * @param client The Iglu client used for schema lookup and validation
+   * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
+    payload: CollectorPayload,
+    client: Client[F, Json]
+  ): F[
+    ValidatedNel[FailureDetails.AdapterFailureOrTrackerProtocolViolation, NonEmptyList[RawEvent]]
+  ] =
     (payload.body, payload.contentType) match {
-      case (None, _) => s"Request body is empty: no ${VendorName} events to process".failureNel
+      case (None, _) =>
+        val failure = FailureDetails.AdapterFailure.InputData(
+          "body",
+          none,
+          "empty body: no events to process"
+        )
+        Monad[F].pure(failure.invalidNel)
+      case (Some(body), _) if (body.isEmpty) =>
+        val failure = FailureDetails.AdapterFailure.InputData(
+          "body",
+          none,
+          "empty body: no events to process"
+        )
+        Monad[F].pure(failure.invalidNel)
       case (_, None) =>
-        s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failureNel
+        val msg = s"no content type: expected $ContentType"
+        Monad[F].pure(
+          FailureDetails.AdapterFailure.InputData("contentType", none, msg).invalidNel
+        )
       case (_, Some(ct)) if ct != ContentType =>
-        s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failureNel
-      case (Some(body), _) if (body.isEmpty) => s"${VendorName} event body is empty: nothing to process".failureNel
-      case (Some(body), _) => {
+        val msg = s"expected $ContentType"
+        Monad[F].pure(
+          FailureDetails.AdapterFailure.InputData("contentType", none, msg).invalidNel
+        )
+      case (Some(body), _) =>
+        val _ = client
         val qsParams = toMap(payload.querystring)
-        Try { toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), "UTF-8").toList) } match {
-          case TF(e) => s"${VendorName} could not parse body: [${JU.stripInstanceEtc(e.getMessage).orNull}]".failureNel
+        Try {
+          toMap(
+            URLEncodedUtils.parse(URI.create("http://localhost/?" + body), UTF_8).asScala.toList
+          )
+        } match {
+          case TF(e) =>
+            val msg = s"could not parse body: ${JU.stripInstanceEtc(e.getMessage).orNull}"
+            Monad[F].pure(
+              FailureDetails.AdapterFailure.InputData(body, body.some, msg).invalidNel
+            )
           case TS(bodyMap) =>
-            payloadBodyToEvent(bodyMap).flatMap {
-              case event => {
-                val eventType = (event \ "operators") match {
-                  case (JNothing) => Some("offline_message")
-                  case (_)        => Some("transcript")
+            Monad[F].pure(
+              (for {
+                event <- payloadBodyToEvent(bodyMap)
+                eventType = event.hcursor.get[Json]("operators").toOption match {
+                  case Some(_) => "transcript"
+                  case _ => "offline_message"
                 }
-                lookupSchema(eventType, VendorName, EventSchemaMap).flatMap {
-                  case schema =>
-                    transformTimestamps(event).flatMap {
-                      case transformedEvent =>
-                        NonEmptyList(
-                          RawEvent(
-                            api = payload.api,
-                            parameters = toUnstructEventParams(TrackerVersion,
-                                                               qsParams,
-                                                               schema,
-                                                               camelize(transformedEvent),
-                                                               "srv"),
-                            contentType = payload.contentType,
-                            source      = payload.source,
-                            context     = payload.context
-                          )).success
-                    }
-                }
-              }
-            }
+                schema <- lookupSchema(eventType.some, EventSchemaMap)
+                transformedEvent <- transformTimestamps(event)
+              } yield NonEmptyList.one(
+                RawEvent(
+                  api = payload.api,
+                  parameters = toUnstructEventParams(
+                    TrackerVersion,
+                    qsParams,
+                    schema,
+                    camelize(transformedEvent),
+                    "srv"
+                  ),
+                  contentType = payload.contentType,
+                  source = payload.source,
+                  context = payload.context
+                )
+              )).toValidatedNel
+            )
         }
-      }
     }
 
   /**
-   * Converts all olark timestamps in a parsed transcript or offline_message json object to iso8601 strings
-   *
+   * Converts all olark timestamps in a parsed transcript or offline_message json object to iso8601
+   * strings
    * @param json a parsed event
    * @return JObject the event with timstamps replaced
    */
-  private def transformTimestamps(json: JValue): Validated[JValue] = {
-    def toMsec(oTs: String): Long =
-      (oTs.split('.') match {
-        case Array(sec)       => s"${sec}000"
-        case Array(sec, msec) => s"${sec}${msec.take(3).padTo(3, '0')}"
-      }).toLong
+  private def transformTimestamps(json: Json): Either[FailureDetails.AdapterFailure, Json] = {
+    def toMsec(oTs: String): Either[FailureDetails.AdapterFailure, Long] =
+      for {
+        formatted <- oTs.split('.') match {
+          case Array(sec) => s"${sec}000".asRight
+          case Array(sec, msec) => s"${sec}${msec.take(3).padTo(3, '0')}".asRight
+          case _ =>
+            FailureDetails.AdapterFailure
+              .InputData("timestamp", oTs.some, "unexpected timestamp format")
+              .asLeft
+        }
+        long <- Either
+          .catchNonFatal(formatted.toLong)
+          .leftMap { _ =>
+            FailureDetails.AdapterFailure.InputData(
+              "timestamp",
+              formatted.some,
+              "cannot be converted to Double"
+            )
+          }
+      } yield long
 
-    Try {
-      json.transformField {
-        case JField("items", jArray) =>
-          ("items", jArray.transform {
-            case jo: JObject =>
-              jo.transformField {
-                case JField("timestamp", JString(value)) =>
-                  ("timestamp", JString(JsonSchemaDateTimeFormat.print(new DateTime(toMsec(value)))))
-              }
-          })
-      }.successNel
-    } match {
-      case TF(e) =>
-        s"${VendorName} could not convert timestamps: [${JU.stripInstanceEtc(e.getMessage).orNull}]".failureNel
-      case TS(s) => s
-    }
+    type EitherAF[A] = Either[FailureDetails.AdapterFailure, A]
+    root.items.each.timestamp.string.modifyF[EitherAF] { v =>
+      toMsec(v).map(long => JsonSchemaDateTimeFormat.print(new DateTime(long)))
+    }(json)
   }
 
   /**
    * Converts a querystring payload into an event
    * @param bodyMap The converted map from the querystring
    */
-  private def payloadBodyToEvent(bodyMap: Map[String, String]): Validated[JObject] =
+  private def payloadBodyToEvent(
+    bodyMap: Map[String, String]
+  ): Either[FailureDetails.AdapterFailure, Json] =
     bodyMap.get("data") match {
-      case None     => s"${VendorName} event data does not have 'data' as a key".failureNel
-      case Some("") => s"${VendorName} event data is empty: nothing to process".failureNel
-      case Some(json) => {
-        try {
-          val event = parse(json)
-          event match {
-            case obj: JObject => obj.successNel
-            case _            => s"${VendorName} event wrong type: [%s]".format(event.getClass).failureNel
-          }
-        } catch {
-          case e: JsonParseException =>
-            s"${VendorName} event string failed to parse into JSON: [${JU.stripInstanceEtc(e.getMessage).orNull}]".failureNel
-          case NonFatal(e) =>
-            s"${VendorName} incorrect event string : [${JU.stripInstanceEtc(e.getMessage).orNull}]".failureNel
-        }
-      }
+      case None | Some("") =>
+        FailureDetails.AdapterFailure
+          .InputData("data", none, "missing 'data' field")
+          .asLeft
+      case Some(json) =>
+        JU.extractJson(json)
+          .leftMap(e => FailureDetails.AdapterFailure.NotJson("data", json.some, e))
     }
 }

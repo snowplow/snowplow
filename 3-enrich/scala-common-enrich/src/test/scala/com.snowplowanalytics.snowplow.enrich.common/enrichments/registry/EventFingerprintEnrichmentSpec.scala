@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,24 +10,12 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common
-package enrichments
-package registry
+package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
-// Specs2
 import org.specs2.Specification
-import org.specs2.scalaz.ValidationMatchers
 
-// Scalaz
-import scalaz._
-import Scalaz._
-
-/**
- * Tests EventFingerprintEnrichment
- */
-class EventFingerprintEnrichmentSpec extends Specification with ValidationMatchers {
+class EventFingerprintEnrichmentSpec extends Specification {
   def is = s2"""
-  This is a specification to test the EventFingerprintEnrichment
   getEventFingerprint should combine fields into a hash                       $e1
   getEventFingerprint should not depend on the order of fields                $e2
   getEventFingerprint should not depend on excluded fields                    $e3
@@ -39,7 +27,10 @@ class EventFingerprintEnrichmentSpec extends Specification with ValidationMatche
   """
 
   val standardConfig =
-    EventFingerprintEnrichment(EventFingerprintEnrichmentConfig.getAlgorithm("MD5").toOption.get, List("stm", "eid"))
+    EventFingerprintEnrichment(
+      EventFingerprintEnrichment.getAlgorithm("MD5").right.get,
+      List("stm", "eid")
+    )
 
   def e1 = {
     val config = EventFingerprintEnrichment(
@@ -49,16 +40,16 @@ class EventFingerprintEnrichmentSpec extends Specification with ValidationMatche
 
     config.getEventFingerprint(
       Map(
-        "stm"   -> "1000000000000",
-        "e"     -> "se",
+        "stm" -> "1000000000000",
+        "e" -> "se",
         "se_ac" -> "buy"
-      )) must_== "15"
+      )
+    ) must_== "15"
   }
 
   def e2 = {
-
     val initialVersion = Map(
-      "e"     -> "se",
+      "e" -> "se",
       "se_ac" -> "action",
       "se_ca" -> "category",
       "se_pr" -> "property"
@@ -68,43 +59,50 @@ class EventFingerprintEnrichmentSpec extends Specification with ValidationMatche
       "se_ca" -> "category",
       "se_ac" -> "action",
       "se_pr" -> "property",
-      "e"     -> "se"
+      "e" -> "se"
     )
 
-    standardConfig.getEventFingerprint(permutedVersion) must_== standardConfig.getEventFingerprint(initialVersion)
+    standardConfig.getEventFingerprint(permutedVersion) must_== standardConfig.getEventFingerprint(
+      initialVersion
+    )
   }
 
   def e3 = {
     val initialVersion = Map(
-      "stm"   -> "1000000000000",
-      "eid"   -> "123e4567-e89b-12d3-a456-426655440000",
-      "e"     -> "se",
+      "stm" -> "1000000000000",
+      "eid" -> "123e4567-e89b-12d3-a456-426655440000",
+      "e" -> "se",
       "se_ac" -> "buy"
     )
     val delayedVersion = Map(
-      "stm"   -> "9999999999999",
-      "e"     -> "se",
+      "stm" -> "9999999999999",
+      "e" -> "se",
       "se_ac" -> "buy"
     )
 
-    standardConfig.getEventFingerprint(delayedVersion) must_== standardConfig.getEventFingerprint(initialVersion)
+    standardConfig.getEventFingerprint(delayedVersion) must_== standardConfig.getEventFingerprint(
+      initialVersion
+    )
   }
 
   def e4 = {
     val initialVersion = Map(
       "prefix" -> "suffix"
     )
-    val overlappingVersion = Map("prefi" -> "xsuffix")
 
-    standardConfig.getEventFingerprint(initialVersion) should not be standardConfig.getEventFingerprint(initialVersion)
+    standardConfig.getEventFingerprint(initialVersion) should not be standardConfig
+      .getEventFingerprint(initialVersion)
   }
 
   def e5 = {
     val sha1Config =
-      EventFingerprintEnrichment(EventFingerprintEnrichmentConfig.getAlgorithm("SHA1").toOption.get, List("stm", "eid"))
+      EventFingerprintEnrichment(
+        EventFingerprintEnrichment.getAlgorithm("SHA1").toOption.get,
+        List("stm", "eid")
+      )
 
     val initialVersion = Map(
-      "e"     -> "se",
+      "e" -> "se",
       "se_ac" -> "action"
     )
 
@@ -113,11 +111,13 @@ class EventFingerprintEnrichmentSpec extends Specification with ValidationMatche
 
   def e6 = {
     val sha256Config =
-      EventFingerprintEnrichment(EventFingerprintEnrichmentConfig.getAlgorithm("SHA256").toOption.get,
-                                 List("stm", "eid"))
+      EventFingerprintEnrichment(
+        EventFingerprintEnrichment.getAlgorithm("SHA256").toOption.get,
+        List("stm", "eid")
+      )
 
     val initialVersion = Map(
-      "e"     -> "se",
+      "e" -> "se",
       "se_ac" -> "action"
     )
 
@@ -126,11 +126,13 @@ class EventFingerprintEnrichmentSpec extends Specification with ValidationMatche
 
   def e7 = {
     val sha384Config =
-      EventFingerprintEnrichment(EventFingerprintEnrichmentConfig.getAlgorithm("SHA384").toOption.get,
-                                 List("stm", "eid"))
+      EventFingerprintEnrichment(
+        EventFingerprintEnrichment.getAlgorithm("SHA384").toOption.get,
+        List("stm", "eid")
+      )
 
     val initialVersion = Map(
-      "e"     -> "se",
+      "e" -> "se",
       "se_ac" -> "action"
     )
 
@@ -139,11 +141,13 @@ class EventFingerprintEnrichmentSpec extends Specification with ValidationMatche
 
   def e8 = {
     val sha512Config =
-      EventFingerprintEnrichment(EventFingerprintEnrichmentConfig.getAlgorithm("SHA512").toOption.get,
-                                 List("stm", "eid"))
+      EventFingerprintEnrichment(
+        EventFingerprintEnrichment.getAlgorithm("SHA512").toOption.get,
+        List("stm", "eid")
+      )
 
     val initialVersion = Map(
-      "e"     -> "se",
+      "e" -> "se",
       "se_ac" -> "action"
     )
 

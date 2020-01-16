@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
  * you may not use this file except in compliance with the Apache License
@@ -12,9 +12,7 @@
  * implied.  See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow
-package collectors
-package scalastream
+package com.snowplowanalytics.snowplow.collectors.scalastream
 
 import java.io.File
 
@@ -24,17 +22,23 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
-import com.snowplowanalytics.snowplow.collectors.scalastream.metrics._
-import com.snowplowanalytics.snowplow.collectors.scalastream.model._
 import com.typesafe.config.{Config, ConfigFactory}
 import com.typesafe.sslconfig.akka.AkkaSSLConfig
 import org.slf4j.LoggerFactory
 import pureconfig._
+import pureconfig.generic.{FieldCoproductHint, ProductHint}
+import pureconfig.generic.auto._
+
+import metrics._
+import model._
 
 // Main entry point of the Scala collector.
 trait Collector {
 
   lazy val log = LoggerFactory.getLogger(getClass())
+
+  implicit def hint[T] = ProductHint[T](ConfigFieldMapping(CamelCase, CamelCase))
+  implicit val _ = new FieldCoproductHint[SinkConfig]("enabled")
 
   def parseConfig(args: Array[String]): (CollectorConfig, Config) = {
     case class FileConfig(config: File = new File("."))
@@ -60,8 +64,6 @@ trait Collector {
       System.exit(1)
     }
 
-    implicit def hint[T] = ProductHint[T](ConfigFieldMapping(CamelCase, CamelCase))
-    implicit val sinkConfigHint = new FieldCoproductHint[SinkConfig]("enabled")
     (loadConfigOrThrow[CollectorConfig](conf.getConfig("collector")), conf)
   }
 
@@ -125,14 +127,17 @@ trait Collector {
       bind(routes, collectorConf.interface, collectorConf.port)
 
     collectorConf.ssl match {
-      case SSLConfig(true, true, port) =>
+      case SSLConfig(true, true, _) =>
         unsecureEndpoint(redirectRoutes)
         secureEndpoint
-      case SSLConfig(true, false, port) =>
+        ()
+      case SSLConfig(true, false, _) =>
         unsecureEndpoint(routes)
         secureEndpoint
+        ()
       case _ =>
         unsecureEndpoint(routes)
+        ()
     }
   }
 }

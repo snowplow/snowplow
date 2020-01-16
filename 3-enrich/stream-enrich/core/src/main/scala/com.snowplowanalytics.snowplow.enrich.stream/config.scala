@@ -22,6 +22,8 @@ package stream
 
 import java.io.File
 
+import scopt.{OptionDef, OptionParser}
+
 object config {
 
   final case class FileConfig(
@@ -31,20 +33,22 @@ object config {
     forceDownload: Boolean = false
   )
 
-  trait FileConfigOptions { self: scopt.OptionParser[FileConfig] =>
+  trait FileConfigOptions { self: OptionParser[FileConfig] =>
 
-    val FilepathRegex    = "^file:(.+)$".r
+    val FilepathRegex = "^file:(.+)$".r
     private val regexMsg = "'file:[filename]'"
 
-    def configOption(): Unit =
+    def configOption(): OptionDef[File, FileConfig] =
       opt[File]("config")
         .required()
         .valueName("<filename>")
         .action((f: File, c: FileConfig) => c.copy(config = f))
-        .validate(f =>
-          if (f.exists) success
-          else failure(s"Configuration file $f does not exist"))
-    def localResolverOption(): Unit =
+        .validate(
+          f =>
+            if (f.exists) success
+            else failure(s"Configuration file $f does not exist")
+        )
+    def localResolverOption(): OptionDef[String, FileConfig] =
       opt[String]("resolver")
         .required()
         .valueName("<resolver uri>")
@@ -52,9 +56,9 @@ object config {
         .action((r: String, c: FileConfig) => c.copy(resolver = r))
         .validate(_ match {
           case FilepathRegex(_) => success
-          case _                => failure(s"Resolver doesn't match accepted uris: $regexMsg")
+          case _ => failure(s"Resolver doesn't match accepted uris: $regexMsg")
         })
-    def localEnrichmentsOption(): Unit =
+    def localEnrichmentsOption(): OptionDef[String, FileConfig] =
       opt[String]("enrichments")
         .optional()
         .valueName("<enrichment directory uri>")
@@ -62,9 +66,9 @@ object config {
         .action((e: String, c: FileConfig) => c.copy(enrichmentsDir = Some(e)))
         .validate(_ match {
           case FilepathRegex(_) => success
-          case _                => failure(s"Enrichments directory doesn't match accepted uris: $regexMsg")
+          case _ => failure(s"Enrichments directory doesn't match accepted uris: $regexMsg")
         })
-    def forceCachedFilesDownloadOption(): Unit =
+    def forceCachedFilesDownloadOption(): OptionDef[Unit, FileConfig] =
       opt[Unit]("force-cached-files-download")
         .text("Invalidate the cached IP lookup / IAB database files and download them anew")
         .action((_, c) => c.copy(forceDownload = true))

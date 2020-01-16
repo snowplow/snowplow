@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,23 +10,16 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common.enrichments.web
+package com.snowplowanalytics.snowplow.enrich.common
+package enrichments.web
 
-// Java
-import java.net.URI
-
-// Specs2 & Scalaz-Specs2
+import cats.syntax.option._
+import com.snowplowanalytics.snowplow.badrows._
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
 
-// Scalaz
-import scalaz._
-import Scalaz._
-
-class ParseCrossDomainSpec extends Specification with DataTables with ValidationMatchers {
+class ParseCrossDomainSpec extends Specification with DataTables {
   def is = s2"""
-  This is a specification to test the parseCrossDomain function
   parseCrossDomain should return None when the querystring contains no _sp parameter           $e1
   parseCrossDomain should return a failure when the _sp timestamp is unparseable               $e2
   parseCrossDomain should successfully extract the domain user ID when available               $e3
@@ -34,20 +27,28 @@ class ParseCrossDomainSpec extends Specification with DataTables with Validation
   parseCrossDomain should extract neither field from an empty _sp parameter                    $e5
   """
   def e1 =
-    PageEnrichments.parseCrossDomain(Map()) must beSuccessful((None, None))
+    PageEnrichments.parseCrossDomain(Map()) must beRight((None, None))
 
   def e2 = {
-    val expected = "Field [sp_dtm]: [not-a-timestamp] is not in the expected format (ms since epoch)"
-    PageEnrichments.parseCrossDomain(Map("_sp" -> "abc.not-a-timestamp")) must beFailing(expected)
+    val expected = FailureDetails.EnrichmentFailure(
+      None,
+      FailureDetails.EnrichmentFailureMessage.InputData(
+        "sp_dtm",
+        "not-a-timestamp".some,
+        "not in the expected format: ms since epoch"
+      )
+    )
+    PageEnrichments.parseCrossDomain(Map("_sp" -> "abc.not-a-timestamp")) must beLeft(expected)
   }
 
   def e3 =
-    PageEnrichments.parseCrossDomain(Map("_sp" -> "abc")) must beSuccessful(("abc".some, None))
+    PageEnrichments.parseCrossDomain(Map("_sp" -> "abc")) must beRight(("abc".some, None))
 
   def e4 =
-    PageEnrichments.parseCrossDomain(Map("_sp" -> "abc.1426245561368")) must beSuccessful(
-      ("abc".some, "2015-03-13 11:19:21.368".some))
+    PageEnrichments.parseCrossDomain(Map("_sp" -> "abc.1426245561368")) must beRight(
+      ("abc".some, "2015-03-13 11:19:21.368".some)
+    )
 
   def e5 =
-    PageEnrichments.parseCrossDomain(Map("_sp" -> "")) must beSuccessful(None -> None)
+    PageEnrichments.parseCrossDomain(Map("_sp" -> "")) must beRight(None -> None)
 }

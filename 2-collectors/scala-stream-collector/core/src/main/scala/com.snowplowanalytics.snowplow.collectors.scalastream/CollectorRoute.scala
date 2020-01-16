@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
  * you may not use this file except in compliance with the Apache License
@@ -18,7 +18,8 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.HttpCookiePair
 import akka.http.scaladsl.server.{Directive1, Route}
 import akka.http.scaladsl.server.Directives._
-import com.snowplowanalytics.snowplow.collectors.scalastream.model.DntCookieMatcher
+
+import model.DntCookieMatcher
 import monitoring.BeanRegistry
 
 trait CollectorRoute {
@@ -91,7 +92,7 @@ trait CollectorRoute {
             } ~
             path("""ice\.png""".r | "i".r) { path =>
               (get | head) {
-                val (r,l) = collectorService.cookie(
+                val (r, _) = collectorService.cookie(
                   qs,
                   None,
                   "/" + path,
@@ -134,7 +135,7 @@ trait CollectorRoute {
     */
   def cookieIfWanted(name: Option[String]): Directive1[Option[HttpCookiePair]] = name match {
     case Some(n) => optionalCookie(n)
-    case None => optionalHeaderValue(x => None)
+    case None => optionalHeaderValue(_ => None)
   }
 
   /**
@@ -150,13 +151,13 @@ trait CollectorRoute {
     }
 
   private def crossDomainRoute: Route = get {
-    path("""crossdomain\.xml""".r) { path =>
+    path("""crossdomain\.xml""".r) { _ =>
       complete(collectorService.flashCrossDomainPolicy)
     }
   }
 
   private def healthRoute: Route = get {
-    path("health".r) { path =>
+    path("health".r) { _ =>
       complete(HttpResponse(200, entity = "OK"))
     }
   }

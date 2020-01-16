@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -13,40 +13,50 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 
-// Specs2
+import cats.syntax.either._
+import com.snowplowanalytics.snowplow.badrows._
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
-import org.specs2.scalaz._
 
-// Scalaz
-import scalaz._
-import Scalaz._
-
-/**
- * Tests the extractViewDimensions function
- */
 class ExtractViewDimensionsSpec extends Specification with DataTables {
 
   val FieldName = "res"
-  def err: (String) => String =
-    input => "Field [%s]: [%s] does not contain valid view dimensions".format(FieldName, input)
-  def err2: (String) => String =
-    input => "Field [%s]: view dimensions [%s] exceed Integer's max range".format(FieldName, input)
+  def err: String => FailureDetails.EnrichmentFailure =
+    input =>
+      FailureDetails.EnrichmentFailure(
+        None,
+        FailureDetails.EnrichmentFailureMessage.InputData(
+          FieldName,
+          Option(input),
+          """does not conform to regex (\d+)x(\d+)"""
+        )
+      )
+  def err2: String => FailureDetails.EnrichmentFailure =
+    input =>
+      FailureDetails.EnrichmentFailure(
+        None,
+        FailureDetails.EnrichmentFailureMessage.InputData(
+          FieldName,
+          Option(input),
+          "could not be converted to java.lang.Integer s"
+        )
+      )
 
-  def is =
-    s2"Extracting screen dimensions (viewports, screen resolution etc) with extractViewDimensions should work $e1"
+  def is = s2"""
+  Extracting screen dimensions (viewports, screen resolution etc) with extractViewDimensions should work $e1"""
 
   def e1 =
-    "SPEC NAME"          || "INPUT VAL"       | "EXPECTED OUTPUT" |
-      "valid desktop"    !! "1200x800"        ! (1200, 800).success |
-      "valid mobile"     !! "76x128"          ! (76, 128).success |
-      "invalid empty"    !! ""                ! err("").fail |
-      "invalid null"     !! null              ! err(null).fail |
-      "invalid hex"      !! "76xEE"           ! err("76xEE").fail |
-      "invalid negative" !! "1200x-17"        ! err("1200x-17").fail |
-      "Arabic number"    !! "٤٥٦٧x680"        ! err("٤٥٦٧x680").fail |
-      "number > int #1"  !! "760x3389336768"  ! err2("760x3389336768").fail |
-      "number > int #2"  !! "9989336768x1200" ! err2("9989336768x1200").fail |> { (_, input, expected) =>
-      ClientEnrichments.extractViewDimensions(FieldName, input) must_== expected
+    "SPEC NAME" || "INPUT VAL" | "EXPECTED OUTPUT" |
+      "valid desktop" !! "1200x800" ! (1200, 800).asRight |
+      "valid mobile" !! "76x128" ! (76, 128).asRight |
+      "invalid empty" !! "" ! err("").asLeft |
+      "invalid null" !! null ! err(null).asLeft |
+      "invalid hex" !! "76xEE" ! err("76xEE").asLeft |
+      "invalid negative" !! "1200x-17" ! err("1200x-17").asLeft |
+      "Arabic number" !! "٤٥٦٧x680" ! err("٤٥٦٧x680").asLeft |
+      "number > int #1" !! "760x3389336768" ! err2("760x3389336768").asLeft |
+      "number > int #2" !! "9989336768x1200" ! err2("9989336768x1200").asLeft |> {
+      (_, input, expected) =>
+        ClientEnrichments.extractViewDimensions(FieldName, input) must_== expected
     }
 }
