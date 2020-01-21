@@ -110,7 +110,7 @@ final case class WeatherEnrichment[F[_]: Monad](schemaKey: SchemaKey, client: OW
     latitude: Option[JFloat],
     longitude: Option[JFloat],
     time: Option[DateTime]
-  ): F[Either[NonEmptyList[FailureDetails.EnrichmentStageIssue], SelfDescribingData[Json]]] =
+  ): F[Either[NonEmptyList[FailureDetails.EnrichmentFailure], SelfDescribingData[Json]]] =
     getWeather(latitude, longitude, time).map(weather => SelfDescribingData(Schema, weather)).value
 
   /**
@@ -124,7 +124,7 @@ final case class WeatherEnrichment[F[_]: Monad](schemaKey: SchemaKey, client: OW
     latitude: Option[JFloat],
     longitude: Option[JFloat],
     time: Option[DateTime]
-  ): EitherT[F, NonEmptyList[FailureDetails.EnrichmentStageIssue], Json] =
+  ): EitherT[F, NonEmptyList[FailureDetails.EnrichmentFailure], Json] =
     (latitude, longitude, time) match {
       case (Some(lat), Some(lon), Some(t)) =>
         val ts = ZonedDateTime.ofInstant(Instant.ofEpochMilli(t.getMillis()), ZoneOffset.UTC)
@@ -139,7 +139,7 @@ final case class WeatherEnrichment[F[_]: Monad](schemaKey: SchemaKey, client: OW
                 )
               NonEmptyList.one(f)
             }
-            .leftWiden[NonEmptyList[FailureDetails.EnrichmentStageIssue]]
+            .leftWiden[NonEmptyList[FailureDetails.EnrichmentFailure]]
           transformed = transformWeather(weather)
         } yield transformed.asJson
       case (a, b, c) =>
