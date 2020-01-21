@@ -48,7 +48,7 @@ class CurrencyConversionEnrichmentSpec extends Specification with DataTables {
       )
     )
   type Result = ValidatedNel[
-    FailureDetails.EnrichmentStageIssue,
+    FailureDetails.EnrichmentFailure,
     (Option[String], Option[String], Option[String], Option[String])
   ]
   val schemaKey = SchemaKey("vendor", "name", "format", SchemaVer.Full(1, 0, 0))

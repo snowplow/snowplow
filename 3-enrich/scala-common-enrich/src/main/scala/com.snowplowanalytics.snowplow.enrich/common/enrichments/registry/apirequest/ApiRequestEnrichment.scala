@@ -118,7 +118,7 @@ final case class ApiRequestEnrichment[F[_]: Monad: HttpClient](
     derivedContexts: List[SelfDescribingData[Json]],
     customContexts: List[SelfDescribingData[Json]],
     unstructEvent: Option[SelfDescribingData[Json]]
-  ): F[EnrichContextsComplex] = {
+  ): F[ValidatedNel[FailureDetails.EnrichmentFailure, List[SelfDescribingData[Json]]]] = {
     val templateContext =
       Input.buildTemplateContext(
         inputs,
@@ -206,7 +206,7 @@ final case class ApiRequestEnrichment[F[_]: Monad: HttpClient](
   private def failureDetails(errors: NonEmptyList[String]) =
     errors.map { error =>
       val message = FailureDetails.EnrichmentFailureMessage.Simple(error)
-      FailureDetails.EnrichmentFailure(enrichmentInfo, message): FailureDetails.EnrichmentStageIssue
+      FailureDetails.EnrichmentFailure(enrichmentInfo, message)
     }
 }
 

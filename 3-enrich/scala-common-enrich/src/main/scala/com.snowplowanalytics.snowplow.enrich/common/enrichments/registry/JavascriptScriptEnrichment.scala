@@ -107,7 +107,7 @@ final case class JavascriptScriptEnrichment(schemaKey: SchemaKey, script: Script
    */
   def process(
     event: EnrichedEvent
-  ): Either[FailureDetails.EnrichmentStageIssue, List[SelfDescribingData[Json]]] =
+  ): Either[FailureDetails.EnrichmentFailure, List[SelfDescribingData[Json]]] =
     process(script, event)
 
   import JavascriptScriptEnrichment.Variables
@@ -121,7 +121,7 @@ final case class JavascriptScriptEnrichment(schemaKey: SchemaKey, script: Script
   private[registry] def process(
     script: Script,
     event: EnrichedEvent
-  ): Either[FailureDetails.EnrichmentStageIssue, List[SelfDescribingData[Json]]] = {
+  ): Either[FailureDetails.EnrichmentFailure, List[SelfDescribingData[Json]]] = {
     val cx = Context.enter()
     val scope = cx.initStandardObjects
 
