@@ -133,7 +133,7 @@ final case class SqlQueryEnrichment[F[_]: Monad: DbExecutor](
     derivedContexts: List[SelfDescribingData[Json]],
     customContexts: List[SelfDescribingData[Json]],
     unstructEvent: Option[SelfDescribingData[Json]]
-  ): F[EnrichContextsComplex] = {
+  ): F[ValidatedNel[FailureDetails.EnrichmentFailure, List[SelfDescribingData[Json]]]] = {
     val contexts = for {
       map <- Input
         .buildPlaceholderMap(inputs, event, derivedContexts, customContexts, unstructEvent)
@@ -194,6 +194,6 @@ final case class SqlQueryEnrichment[F[_]: Monad: DbExecutor](
   private def failureDetails(errors: NonEmptyList[String]) =
     errors.map { error =>
       val message = FailureDetails.EnrichmentFailureMessage.Simple(error)
-      FailureDetails.EnrichmentFailure(enrichmentInfo, message): FailureDetails.EnrichmentStageIssue
+      FailureDetails.EnrichmentFailure(enrichmentInfo, message)
     }
 }

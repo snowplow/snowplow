@@ -78,7 +78,7 @@ final case class UserAgentUtilsEnrichment(schemaKey: SchemaKey) extends Enrichme
    */
   def extractClientAttributes(
     useragent: String
-  ): Either[FailureDetails.EnrichmentStageIssue, ClientAttributes] =
+  ): Either[FailureDetails.EnrichmentFailure, ClientAttributes] =
     try {
       val ua = UserAgent.parseUserAgentString(useragent)
       val b = ua.getBrowser

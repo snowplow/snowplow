@@ -54,7 +54,7 @@ final class TargetBean {
 
 class MapTransformerSpec extends Specification with ValidatedMatchers {
 
-  val identity: (String, String) => Either[FailureDetails.EnrichmentStageIssue, String] =
+  val identity: (String, String) => Either[FailureDetails.EnrichmentFailure, String] =
     (_, value) => value.asRight
 
   val sourceMap = Map(

@@ -35,7 +35,7 @@ object PageEnrichments {
   def extractPageUri(
     fromReferer: Option[String],
     fromTracker: Option[String]
-  ): Either[FailureDetails.EnrichmentStageIssue, Option[URI]] =
+  ): Either[FailureDetails.EnrichmentFailure, Option[URI]] =
     ((fromReferer, fromTracker) match {
       case (Some(r), None) => CU.stringToUri(r)
       case (None, Some(t)) => CU.stringToUri(t)
@@ -58,7 +58,7 @@ object PageEnrichments {
    */
   def parseCrossDomain(
     qsMap: Map[String, String]
-  ): Either[FailureDetails.EnrichmentStageIssue, (Option[String], Option[String])] =
+  ): Either[FailureDetails.EnrichmentFailure, (Option[String], Option[String])] =
     qsMap.get("_sp") match {
       case Some("") => (None, None).asRight
       case Some(sp) =>

@@ -51,7 +51,7 @@ object EventEnrichments {
    */
   def formatCollectorTstamp(
     collectorTstamp: Option[DateTime]
-  ): Either[FailureDetails.EnrichmentStageIssue, String] =
+  ): Either[FailureDetails.EnrichmentFailure, String] =
     (collectorTstamp match {
       case None =>
         FailureDetails.EnrichmentFailureMessage
@@ -87,7 +87,7 @@ object EventEnrichments {
     dvceCreatedTstamp: Option[String],
     collectorTstamp: Option[String],
     trueTstamp: Option[String]
-  ): Either[FailureDetails.EnrichmentStageIssue, Option[String]] = trueTstamp match {
+  ): Either[FailureDetails.EnrichmentFailure, Option[String]] = trueTstamp match {
     case Some(ttm) => Some(ttm).asRight
     case None =>
       try {
@@ -121,7 +121,7 @@ object EventEnrichments {
    * @param tstamp The timestamp as stored in the Tracker Protocol
    * @return a Tuple of two Strings (date and time), or an error message if the format was invalid
    */
-  val extractTimestamp: (String, String) => Either[FailureDetails.EnrichmentStageIssue, String] =
+  val extractTimestamp: (String, String) => Either[FailureDetails.EnrichmentFailure, String] =
     (field, tstamp) =>
       try {
         val dt = new DateTime(tstamp.toLong)
@@ -155,7 +155,7 @@ object EventEnrichments {
    * @param eventCode The event code
    * @return the event type, or an error message if not recognised, boxed in a Scalaz Validation
    */
-  val extractEventType: (String, String) => Either[FailureDetails.EnrichmentStageIssue, String] =
+  val extractEventType: (String, String) => Either[FailureDetails.EnrichmentFailure, String] =
     (field, code) =>
       code match {
         case "se" => "struct".asRight

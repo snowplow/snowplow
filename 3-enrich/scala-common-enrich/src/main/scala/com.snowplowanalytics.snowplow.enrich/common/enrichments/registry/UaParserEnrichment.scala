@@ -115,7 +115,7 @@ final case class UaParserEnrichment(schemaKey: SchemaKey, parser: Parser) extend
    */
   def extractUserAgent(
     useragent: String
-  ): Either[FailureDetails.EnrichmentStageIssue, SelfDescribingData[Json]] =
+  ): Either[FailureDetails.EnrichmentFailure, SelfDescribingData[Json]] =
     Either
       .catchNonFatal(parser.parse(useragent))
       .leftMap { e =>

@@ -68,7 +68,7 @@ object MapTransformer {
   type Field = String
 
   // A transformation takes a Key and Value and returns either a failure or anything
-  type TransformFunc = Function2[Key, Value, Either[FailureDetails.EnrichmentStageIssue, _]]
+  type TransformFunc = Function2[Key, Value, Either[FailureDetails.EnrichmentFailure, _]]
 
   // Our source map
   type SourceMap = Map[Key, Value]
@@ -90,7 +90,7 @@ object MapTransformer {
     transformMap: TransformMap
   )(
     implicit m: Manifest[T]
-  ): ValidatedNel[FailureDetails.EnrichmentStageIssue, T] = {
+  ): ValidatedNel[FailureDetails.EnrichmentFailure, T] = {
     val newInst = m.runtimeClass.newInstance()
     val result = _transform(newInst, sourceMap, transformMap, getSetters(m.runtimeClass))
     // On success, replace the field count with the new instance
@@ -121,7 +121,7 @@ object MapTransformer {
     def transform(
       sourceMap: SourceMap,
       transformMap: TransformMap
-    ): ValidatedNel[FailureDetails.EnrichmentStageIssue, Int] =
+    ): ValidatedNel[FailureDetails.EnrichmentFailure, Int] =
       _transform[T](obj, sourceMap, transformMap, setters)
   }
 
@@ -139,8 +139,8 @@ object MapTransformer {
     sourceMap: SourceMap,
     transformMap: TransformMap,
     setters: SettersMap
-  ): ValidatedNel[FailureDetails.EnrichmentStageIssue, Int] = {
-    val results: List[Either[FailureDetails.EnrichmentStageIssue, Int]] = sourceMap.map {
+  ): ValidatedNel[FailureDetails.EnrichmentFailure, Int] = {
+    val results: List[Either[FailureDetails.EnrichmentFailure, Int]] = sourceMap.map {
       case (key, in) =>
         transformMap.get(key) match {
           case Some((func, field)) =>
@@ -177,7 +177,7 @@ object MapTransformer {
         }
     }.toList
 
-    results.foldLeft(0.validNel[FailureDetails.EnrichmentStageIssue]) {
+    results.foldLeft(0.validNel[FailureDetails.EnrichmentFailure]) {
       case (acc, e) =>
         acc.combine(e.toValidatedNel)
     }
