@@ -147,7 +147,7 @@ object ConversionUtils {
    * @param str The String hopefully containing a UUID
    * @return either the original String, or an error String
    */
-  val validateUuid: (String, String) => Either[FailureDetails.EnrichmentStageIssue, String] =
+  val validateUuid: (String, String) => Either[FailureDetails.EnrichmentFailure, String] =
     (field, str) => {
       def check(s: String)(u: UUID): Boolean = (u != null && s.toLowerCase == u.toString)
       val uuid = Try(UUID.fromString(str)).toOption.filter(check(str))
@@ -168,7 +168,7 @@ object ConversionUtils {
    * @param str The String hopefully parseable as an integer
    * @return either the original String, or an error String
    */
-  val validateInteger: (String, String) => Either[FailureDetails.EnrichmentStageIssue, String] =
+  val validateInteger: (String, String) => Either[FailureDetails.EnrichmentFailure, String] =
     (field, str) => {
       Either
         .catchNonFatal { str.toInt; str }
@@ -288,7 +288,7 @@ object ConversionUtils {
   def extractQuerystring(
     uri: URI,
     encoding: Charset
-  ): Either[FailureDetails.EnrichmentStageIssue, Map[String, String]] =
+  ): Either[FailureDetails.EnrichmentFailure, Map[String, String]] =
     Try(URLEncodedUtils.parse(uri, encoding).asScala.map(p => (p.getName -> p.getValue)))
       .recoverWith {
         case NonFatal(_) =>
@@ -323,7 +323,7 @@ object ConversionUtils {
       }
     }
 
-  val stringToJInteger2: (String, String) => Either[FailureDetails.EnrichmentStageIssue, JInteger] =
+  val stringToJInteger2: (String, String) => Either[FailureDetails.EnrichmentFailure, JInteger] =
     (field, str) =>
       stringToJInteger(str).leftMap { e =>
         val f = FailureDetails.EnrichmentFailureMessage.InputData(
@@ -343,7 +343,7 @@ object ConversionUtils {
    * @param field The name of the field we are validating. To use in our error message
    * @return either a failure or a String
    */
-  val stringToDoubleLike: (String, String) => Either[FailureDetails.EnrichmentStageIssue, String] =
+  val stringToDoubleLike: (String, String) => Either[FailureDetails.EnrichmentFailure, String] =
     (field, str) =>
       Either
         .catchNonFatal {
@@ -373,7 +373,7 @@ object ConversionUtils {
   def stringToMaybeDouble(
     field: String,
     str: String
-  ): Either[FailureDetails.EnrichmentStageIssue, Option[Double]] =
+  ): Either[FailureDetails.EnrichmentFailure, Option[Double]] =
     Either
       .catchNonFatal {
         if (Option(str).isEmpty || str == "null") {
@@ -424,7 +424,7 @@ object ConversionUtils {
    * @return either a Failure String or a Success Byte
    */
   val stringToBooleanLikeJByte
-    : (String, String) => Either[FailureDetails.EnrichmentStageIssue, JByte] =
+    : (String, String) => Either[FailureDetails.EnrichmentFailure, JByte] =
     (field, str) =>
       str match {
         case "1" => (1.toByte: JByte).asRight

@@ -13,20 +13,12 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 
-import cats.Monad
-import cats.effect.Clock
-import cats.syntax.either._
-import cats.syntax.functor._
-
 import io.circe.Json
 
-import com.snowplowanalytics.iglu.client.Client
-import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
-import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer, SelfDescribingData}
 
 import com.snowplowanalytics.snowplow.badrows.FailureDetails
 
-import com.snowplowanalytics.snowplow.enrich.common.utils.Shredder
 import outputs.EnrichedEvent
 
 object SchemaEnrichment {
@@ -42,44 +34,32 @@ object SchemaEnrichment {
     val structSchema = SchemaKey("com.google.analytics", "event", Format, SchemaVersion)
   }
 
-  def extractSchema[F[_]: Monad: RegistryLookup: Clock](
+  /** Returns an Option so that if there has already been a failure to validate the unstructured event,
+   * it returns `None` instead of creating an `EnrichmentFailure` for this enrichment,
+   * thus making it 2 bad rows for the same problem. */
+  def extractSchema(
     event: EnrichedEvent,
-    client: Client[F, Json]
-  ): F[Either[FailureDetails.EnrichmentStageIssue, SchemaKey]] =
+    unstructEvent: Option[SelfDescribingData[Json]]
+  ): Either[FailureDetails.EnrichmentFailure, Option[SchemaKey]] =
     event.event match {
-      case "page_view" => Monad[F].pure(Schemas.pageViewSchema.asRight)
-      case "page_ping" => Monad[F].pure(Schemas.pagePingSchema.asRight)
-      case "struct" => Monad[F].pure(Schemas.structSchema.asRight)
-      case "transaction" => Monad[F].pure(Schemas.transactionSchema.asRight)
-      case "transaction_item" => Monad[F].pure(Schemas.transactionItemSchema.asRight)
-      case "unstruct" => extractUnstructSchema(event, client)
+      case "page_view" => Right(Some(Schemas.pageViewSchema))
+      case "page_ping" => Right(Some(Schemas.pagePingSchema))
+      case "struct" => Right(Some(Schemas.structSchema))
+      case "transaction" => Right(Some(Schemas.transactionSchema))
+      case "transaction_item" => Right(Some(Schemas.transactionItemSchema))
+      case "unstruct" =>
+        unstructEvent match {
+          case Some(sdj) => Right(Some(sdj.schema))
+          case _ => Right(None)
+        }
       case eventType =>
         val f = FailureDetails.EnrichmentFailureMessage.InputData(
           "event",
           Option(eventType),
-          "unrecognized"
+          s"""trying to extract the schema of the enriched event but event type [$eventType] doesn't match
+          any of page_view, page_ping, struct, transaction, transaction_item and unstruct
+          """
         )
-        Monad[F].pure(FailureDetails.EnrichmentFailure(None, f).asLeft)
+        Left(FailureDetails.EnrichmentFailure(None, f))
     }
-
-  private def extractUnstructSchema[F[_]: Monad: RegistryLookup: Clock](
-    event: EnrichedEvent,
-    client: Client[F, Json]
-  ): F[Either[FailureDetails.EnrichmentStageIssue, SchemaKey]] = {
-    val possibleFailure = {
-      val f = FailureDetails.EnrichmentFailureMessage.InputData(
-        "unstruct_event",
-        Option(event.unstruct_event),
-        "could not be extracted"
-      )
-      FailureDetails.EnrichmentFailure(None, f).asLeft
-    }
-
-    Shredder.extractUnstructEvent(event, client).value.map {
-      case Right(Some(f)) =>
-        f.schema.asRight
-      case _ =>
-        possibleFailure
-    }
-  }
 }

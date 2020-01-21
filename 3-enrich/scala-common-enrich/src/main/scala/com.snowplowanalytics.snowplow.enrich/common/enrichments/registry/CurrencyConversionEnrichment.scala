@@ -109,10 +109,10 @@ final case class CurrencyConversionEnrichment[F[_]: Monad](
    * otherwise Validation[Option[_]] boxing the result of the conversion
    */
   private def performConversion(
-    initialCurrency: Option[Either[FailureDetails.EnrichmentStageIssue, CurrencyUnit]],
+    initialCurrency: Option[Either[FailureDetails.EnrichmentFailure, CurrencyUnit]],
     value: Option[Double],
     tstamp: ZonedDateTime
-  ): F[Either[FailureDetails.EnrichmentStageIssue, Option[String]]] =
+  ): F[Either[FailureDetails.EnrichmentFailure, Option[String]]] =
     (initialCurrency, value) match {
       case (Some(ic), Some(v)) =>
         (for {
@@ -131,7 +131,7 @@ final case class CurrencyConversionEnrichment[F[_]: Monad](
                     val f =
                       FailureDetails.EnrichmentFailureMessage.Simple(msg)
                     FailureDetails
-                      .EnrichmentFailure(enrichmentInfo, f): FailureDetails.EnrichmentStageIssue
+                      .EnrichmentFailure(enrichmentInfo, f)
                   },
                   r => (r.getAmount().toPlainString()).some
                 )
@@ -161,7 +161,7 @@ final case class CurrencyConversionEnrichment[F[_]: Monad](
     tiPrice: Option[Double],
     collectorTstamp: Option[DateTime]
   ): F[ValidatedNel[
-    FailureDetails.EnrichmentStageIssue,
+    FailureDetails.EnrichmentFailure,
     (Option[String], Option[String], Option[String], Option[String])
   ]] =
     collectorTstamp match {

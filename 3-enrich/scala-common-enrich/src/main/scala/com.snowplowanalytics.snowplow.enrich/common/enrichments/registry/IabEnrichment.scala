@@ -133,7 +133,7 @@ final case class IabEnrichment(schemaKey: SchemaKey, iabClient: IabClient) exten
     userAgent: String,
     ipAddress: String,
     accurateAt: DateTime
-  ): Either[FailureDetails.EnrichmentStageIssue, IabEnrichmentResponse] =
+  ): Either[FailureDetails.EnrichmentFailure, IabEnrichmentResponse] =
     (for {
       ip <- Either
         .catchNonFatal(InetAddress.getByName(ipAddress))
@@ -165,7 +165,7 @@ final case class IabEnrichment(schemaKey: SchemaKey, iabClient: IabClient) exten
     userAgent: Option[String],
     ipAddress: Option[String],
     accurateAt: Option[DateTime]
-  ): Either[NonEmptyList[FailureDetails.EnrichmentStageIssue], SelfDescribingData[Json]] =
+  ): Either[NonEmptyList[FailureDetails.EnrichmentFailure], SelfDescribingData[Json]] =
     getIab(userAgent, ipAddress, accurateAt).map { iab =>
       SelfDescribingData(outputSchema, iab)
     }
@@ -181,7 +181,7 @@ final case class IabEnrichment(schemaKey: SchemaKey, iabClient: IabClient) exten
     userAgent: Option[String],
     ipAddress: Option[String],
     time: Option[DateTime]
-  ): Either[NonEmptyList[FailureDetails.EnrichmentStageIssue], Json] =
+  ): Either[NonEmptyList[FailureDetails.EnrichmentFailure], Json] =
     (userAgent, ipAddress, time) match {
       case (Some(ua), Some(ip), Some(t)) =>
         performCheck(ua, ip, t)
