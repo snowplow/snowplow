@@ -40,12 +40,12 @@ lazy val commonDependencies = Seq(
 )
 
 lazy val buildSettings = Seq(
-  organization  :=  "com.snowplowanalytics",
-  name          :=  "snowplow-stream-collector",
-  version       :=  "1.0.0",
-  description   :=  "Scala Stream Collector for Snowplow raw events",
-  scalaVersion  :=  "2.12.10",
-  resolvers     ++= Dependencies.resolutionRepos
+  organization := "com.snowplowanalytics",
+  name := "snowplow-stream-collector",
+  version := "1.0.0",
+  description := "Scala Stream Collector for Snowplow raw events",
+  scalaVersion := "2.12.10",
+  resolvers ++= Dependencies.resolutionRepos
 )
 
 lazy val dockerSettings = Seq(
@@ -61,7 +61,8 @@ lazy val allSettings = buildSettings ++
   Seq(libraryDependencies ++= commonDependencies) ++
   dockerSettings
 
-lazy val root = project.in(file("."))
+lazy val root = project
+  .in(file("."))
   .settings(buildSettings)
   .aggregate(core, kinesis, pubsub, kafka, nsq, stdout)
 
@@ -71,7 +72,13 @@ lazy val core = project
   .settings(libraryDependencies ++= commonDependencies)
   .enablePlugins(BuildInfoPlugin)
   .settings(
-    buildInfoKeys := Seq[BuildInfoKey](organization, name, version, "shortName" -> "ssc", scalaVersion),
+    buildInfoKeys := Seq[BuildInfoKey](
+      organization,
+      name,
+      version,
+      "shortName" -> "ssc",
+      scalaVersion
+    ),
     buildInfoPackage := "com.snowplowanalytics.snowplow.collectors.scalastream.generated"
   )
 
@@ -79,7 +86,7 @@ lazy val kinesis = project
   .settings(moduleName := "snowplow-stream-collector-kinesis")
   .settings(allSettings)
   .settings(packageName in Docker := "snowplow/scala-stream-collector-kinesis")
-  .settings(libraryDependencies ++= Seq(Dependencies.Libraries.kinesis))
+  .settings(libraryDependencies ++= Seq(Dependencies.Libraries.kinesis, Dependencies.Libraries.sqs))
   .enablePlugins(JavaAppPackaging, DockerPlugin)
   .dependsOn(core)
 
