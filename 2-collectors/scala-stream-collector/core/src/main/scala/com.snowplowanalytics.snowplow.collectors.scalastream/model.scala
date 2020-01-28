@@ -70,7 +70,8 @@ package model {
   )
   final case class DntCookieMatcher(name: String, value: String) {
     private val pattern = value.r.pattern
-    def matches(httpCookiePair: HttpCookiePair): Boolean = pattern.matcher(httpCookiePair.value).matches()
+    def matches(httpCookiePair: HttpCookiePair): Boolean =
+      pattern.matcher(httpCookiePair.value).matches()
   }
   final case class CookieBounceConfig(
     enabled: Boolean,
@@ -78,10 +79,7 @@ package model {
     fallbackNetworkUserId: String,
     forwardedProtocolHeader: Option[String]
   )
-  final case class RedirectMacroConfig(
-    enabled: Boolean,
-    placeholder: Option[String]
-  )
+  final case class RedirectMacroConfig(enabled: Boolean, placeholder: Option[String])
   final case class RootResponseConfig(
     enabled: Boolean,
     statusCode: Int,
@@ -89,7 +87,11 @@ package model {
     body: String = ""
   )
   final case class P3PConfig(policyRef: String, CP: String)
-  final case class CrossDomainConfig(enabled: Boolean, domains: List[String], secure: Boolean)
+  final case class CrossDomainConfig(
+    enabled: Boolean,
+    domains: List[String],
+    secure: Boolean
+  )
   final case class CORSConfig(accessControlMaxAge: FiniteDuration)
   final case class KinesisBackoffPolicyConfig(minBackoff: Long, maxBackoff: Long)
   final case class GooglePubSubBackoffPolicyConfig(
@@ -105,10 +107,12 @@ package model {
     threadPoolSize: Int,
     aws: AWSConfig,
     backoffPolicy: KinesisBackoffPolicyConfig,
-    customEndpoint: Option[String]
+    customEndpoint: Option[String],
+    sqsGoodBuffer: Option[String],
+    sqsBadBuffer: Option[String]
   ) extends SinkConfig {
     val endpoint = customEndpoint.getOrElse(region match {
-      case cn@"cn-north-1" => s"https://kinesis.$cn.amazonaws.com.cn"
+      case cn @ "cn-north-1" => s"https://kinesis.$cn.amazonaws.com.cn"
       case _ => s"https://kinesis.$region.amazonaws.com"
     })
   }
@@ -119,11 +123,15 @@ package model {
   final case class Kafka(
     brokers: String,
     retries: Int,
-    producerConf: Option[Map[String,String]]
+    producerConf: Option[Map[String, String]]
   ) extends SinkConfig
   final case class Nsq(host: String, port: Int) extends SinkConfig
   case object Stdout extends SinkConfig
-  final case class BufferConfig(byteLimit: Long, recordLimit: Long, timeLimit: Long)
+  final case class BufferConfig(
+    byteLimit: Long,
+    recordLimit: Long,
+    timeLimit: Long
+  )
   final case class StreamsConfig(
     good: String,
     bad: String,
@@ -179,18 +187,19 @@ package model {
         SSLContext.getDefault
       } else {
         val mkLogger = new AkkaLoggerFactory(system)
-        val keyManagerFactory   = sslConfig.buildKeyManagerFactory(config)
+        val keyManagerFactory = sslConfig.buildKeyManagerFactory(config)
         val trustManagerFactory = sslConfig.buildTrustManagerFactory(config)
-        new ConfigSSLContextBuilder(mkLogger, config, keyManagerFactory, trustManagerFactory).build()
+        new ConfigSSLContextBuilder(mkLogger, config, keyManagerFactory, trustManagerFactory)
+          .build()
       }
 
-      val defaultParams    = sslContext.getDefaultSSLParameters
+      val defaultParams = sslContext.getDefaultSSLParameters
       val defaultProtocols = defaultParams.getProtocols
-      val protocols        = sslConfig.configureProtocols(defaultProtocols, config)
+      val protocols = sslConfig.configureProtocols(defaultProtocols, config)
       defaultParams.setProtocols(protocols)
 
       val defaultCiphers = defaultParams.getCipherSuites
-      val cipherSuites   = sslConfig.configureCipherSuites(defaultCiphers, config)
+      val cipherSuites = sslConfig.configureCipherSuites(defaultCiphers, config)
       defaultParams.setCipherSuites(cipherSuites)
 
       val clientAuth: Option[TLSClientAuth] = config.sslParametersConfig.clientAuth match {
