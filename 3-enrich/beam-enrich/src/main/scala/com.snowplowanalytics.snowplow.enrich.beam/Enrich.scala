@@ -20,6 +20,7 @@ package beam
 import java.nio.charset.StandardCharsets.UTF_8
 
 import com.spotify.scio._
+import com.spotify.scio.coders._
 import com.spotify.scio.pubsub.PubSubAdmin
 import com.spotify.scio.values.{DistCache, SCollection}
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubOptions
@@ -48,6 +49,7 @@ object Enrich {
   private val MaxRecordSize = 10000000
   private val MetricsNamespace = "snowplow"
 
+  implicit val badRowC: Coder[BadRow] = Coder.kryo[BadRow]
   val enrichedEventSizeDistribution =
     ScioMetrics.distribution(MetricsNamespace, "enriched_event_size_bytes")
   val timeToEnrichDistribution =
@@ -87,7 +89,7 @@ object Enrich {
     val cachedFiles: DistCache[List[Either[String, String]]] =
       buildDistCache(sc, config.resolver, config.enrichmentRegistry)
 
-    val raw: SCollection[Array[Byte]] = sc.pubsubSubscription(config.raw).withName("raw")
+    val raw: SCollection[Array[Byte]] = sc.pubsubSubscription[Array[Byte]](config.raw).withName("raw")
     val enriched: SCollection[Validation[BadRow, EnrichedEvent]] =
       enrichEvents(raw, config.resolver, config.enrichmentRegistry, cachedFiles)
 
