@@ -28,12 +28,10 @@ import com.amazonaws.services.kinesis.{AmazonKinesis, AmazonKinesisClientBuilder
 import com.amazonaws.services.sqs.{AmazonSQS, AmazonSQSClientBuilder}
 import com.amazonaws.services.sqs.model.{SendMessageBatchRequest, SendMessageBatchRequestEntry}
 import model._
-import java.{util => ju}
+import scala.util.Try
 
 /** KinesisSink companion object with factory method */
 object KinesisSink {
-
-  @volatile var shuttingDown = false
 
   /**
    * Create a KinesisSink and schedule a task to flush its EventStorage
@@ -55,21 +53,29 @@ object KinesisSink {
       sqsClient <- sqsBuffer(sqsBufferName, provider, kinesisConfig.region)
     } yield (kinesisClient, sqsClient)
 
-    clients.map { c =>
-      val ks =
-        new KinesisSink(c._1, kinesisConfig, bufferConfig, streamName, executorService, c._2)
-      ks.scheduleFlush()
+    clients.map {
+      case (kinesisClient, sqsClient) =>
+        val ks =
+          new KinesisSink(
+            kinesisClient,
+            kinesisConfig,
+            bufferConfig,
+            streamName,
+            executorService,
+            sqsClient,
+            sqsBufferName
+          )
+        ks.scheduleFlush()
 
-      // When the application is shut down, stop accepting incoming requests
-      // and send all stored events
-      Runtime.getRuntime.addShutdownHook(new Thread {
-        override def run(): Unit = {
-          shuttingDown = true
-          ks.EventStorage.flush()
-          ks.shutdown()
-        }
-      })
-      ks
+        // When the application is shut down, stop accepting incoming requests
+        // and send all stored events
+        Runtime.getRuntime.addShutdownHook(new Thread {
+          override def run(): Unit = {
+            ks.EventStorage.flush()
+            ks.shutdown()
+          }
+        })
+        ks
     }
   }
 
@@ -137,16 +143,16 @@ object KinesisSink {
     provider: AWSCredentialsProvider,
     region: String
   ) =
-    AmazonSQSClientBuilder
-      .standard()
-      .withCredentials(provider)
-      .withEndpointConfiguration(new EndpointConfiguration(sqsBufferName, region))
-      .build
+    Try(
+      AmazonSQSClientBuilder
+        .standard()
+        .withCredentials(provider)
+        .withEndpointConfiguration(new EndpointConfiguration(sqsBufferName, region))
+        .build
+    ).toEither
 
-  private def queueExists(client: AmazonSQS, name: String): Boolean = {
-    val _ = (client, name) //todo: implement
-    true
-  }
+  private def queueExists(client: AmazonSQS, name: String): Either[Throwable, Boolean] =
+    Try(client.getQueueUrl(name)).map(_ => true).toEither
 
   def sqsBuffer(
     sqsBufferName: Option[String],
@@ -154,10 +160,11 @@ object KinesisSink {
     region: String
   ): Either[Throwable, Option[AmazonSQS]] =
     sqsBufferName match {
-      case Some(sqsName) =>
-        val amazonSqs = createSqsClient(sqsName, provider, region)
-        if (queueExists(amazonSqs, sqsName)) Some(amazonSqs).asRight
-        else new IllegalArgumentException(s"SQS queue $sqsBufferName doesn't exist").asLeft
+      case Some(name) =>
+        for {
+          amazonSqs <- createSqsClient(name, provider, region)
+          _ <- queueExists(amazonSqs, name)
+        } yield Some(amazonSqs)
       case None => None.asRight
     }
 
@@ -172,7 +179,8 @@ class KinesisSink private (
   bufferConfig: BufferConfig,
   streamName: String,
   executorService: ScheduledExecutorService,
-  sqs: Option[AmazonSQS]
+  sqs: Option[AmazonSQS],
+  sqsBufferName: Option[String]
 ) extends Sink {
   // Records must not exceed MaxBytes - 1MB
   val MaxBytes = 1000000
@@ -183,6 +191,14 @@ class KinesisSink private (
   val TimeThreshold = bufferConfig.timeLimit
 
   log.info("Creating thread pool of size " + kinesisConfig.threadPoolSize)
+  sqs match {
+    case Some(_) =>
+      log.info(s"SQS buffer for failed Kinesis stream '$streamName' is set up as: $sqsBufferName")
+    case None =>
+      log.info(
+        s"No SQS buffer set up, all failed events from Kinesis stream '$streamName' will be dropped. (consider setting a SQS Buffer in config.hocon)"
+      )
+  }
 
   implicit lazy val ec = concurrent.ExecutionContext.fromExecutorService(executorService)
 
@@ -213,7 +229,7 @@ class KinesisSink private (
   }
 
   object EventStorage {
-    private var storedEvents = List[(ByteBuffer, String)]()
+    private var storedEvents = List.empty[(ByteBuffer, String)]
     private var byteCount = 0L
     @volatile private var lastFlushedTime = 0L
 
@@ -274,10 +290,10 @@ class KinesisSink private (
             )
             sqs match {
               case Some(client) =>
-                log.error(s"Sending all failed records to SQS buffer queue")
+                log.error(s"Sending all failed records to SQS buffer queue: $sqsBufferName")
                 putToSqs(client, failurePairs.map(_._1))
               case None =>
-                log.error(s"Dropping failed events (consider setting SQS Buffer in config.hocon)")
+                log.error("Dropping failed events (consider setting a SQS Buffer in config.hocon)")
             }
           }
         }
@@ -285,11 +301,11 @@ class KinesisSink private (
           log.error("Writing failed.", f)
           sqs match {
             case Some(client) =>
-              log.error(s"Sending all events from a batch to SQS")
+              log.error(s"Sending all events from a batch to SQS buffer queue: $sqsBufferName")
               putToSqs(client, batch)
             case None =>
               log.error(
-                s"Dropping all events from a batch (consider setting SQS Buffer in config.hocon)"
+                "Dropping all events from a batch (consider setting a SQS Buffer in config.hocon)"
               )
           }
         }
@@ -298,26 +314,28 @@ class KinesisSink private (
 
   private def putToSqs(sqs: AmazonSQS, batch: List[(ByteBuffer, String)]): Future[Unit] =
     Future {
-      log.info(s"Writing ${batch.size} messages to SQS queue")
+      log.info(s"Writing ${batch.size} messages to SQS queue: $sqsBufferName")
       val encoded = batch.map {
         case (msg, key) =>
           val b64Encoded = encode(msg)
-          //todo: check message size, log oversized msg and drop it.
-          println(s"Sending $key")
           new SendMessageBatchRequestEntry(key, b64Encoded)
       }
-      val batchRequest = new SendMessageBatchRequest().withEntries(encoded.asJava)
-
-      try {
-        sqs.sendMessageBatch(batchRequest)
-        ()
-      } catch {
-        case e: Throwable => println(s"Error sending to SQS: ${e.getMessage()}")
+      val MaxSqsBatchSize = 10
+      encoded.grouped(MaxSqsBatchSize).foreach { encodedGroup =>
+        val batchRequest = new SendMessageBatchRequest().withEntries(encodedGroup.asJava)
+        Try {
+          sqs.sendMessageBatch(batchRequest)
+          log.info(s"Batch of ${encodedGroup.size} was sent to SQS queue: $sqsBufferName")
+          ()
+        }.recover {
+          case e =>
+            log.error(s"Error sending to SQS queue($sqsBufferName): ${e.getMessage()}")
+        }
       }
     }
 
   private def encode(bufMsg: ByteBuffer): String = {
-    val buffer = ju.Base64.getEncoder.encode(bufMsg)
+    val buffer = java.util.Base64.getEncoder.encode(bufMsg)
     new String(buffer.array())
   }
 
