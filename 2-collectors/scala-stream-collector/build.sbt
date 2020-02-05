@@ -110,4 +110,6 @@ lazy val nsq = project
 lazy val stdout = project
   .settings(moduleName := "snowplow-stream-collector-stdout")
   .settings(allSettings)
+  .settings(packageName in Docker := "snowplow/scala-stream-collector-stdout")
+  .enablePlugins(JavaAppPackaging, DockerPlugin)
   .dependsOn(core)
