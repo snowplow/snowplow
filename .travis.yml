@@ -86,7 +86,7 @@ deploy:
       tags: true
       condition: '$([[ "$TEST_DIR" == "3-enrich/scala-common-enrich/" ]] && .travis/is_release_tag.sh scala_common_enrich $TRAVIS_TAG && [ $? -eq 0 ] && echo "Deploying")'
   - provider: script
-    script: cd 2-collectors/scala-stream-collector/ && sbt "project kinesis" docker:publish && sbt "project pubsub" docker:publish && sbt "project kafka" docker:publish && sbt "project nsq" docker:publish && cd ../.. && ./.travis/deploy.sh scala_stream_collector $TRAVIS_TAG
+    script: cd 2-collectors/scala-stream-collector/ && sbt "project kinesis" docker:publish && sbt "project pubsub" docker:publish && sbt "project kafka" docker:publish && sbt "project nsq" docker:publish && sbt "project stdout" docker:publish && cd ../.. && ./.travis/deploy.sh scala_stream_collector $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
