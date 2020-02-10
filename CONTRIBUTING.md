@@ -49,8 +49,6 @@ and Scala Common Enrich
 - [`3-enrich/stream-enrich`](https://github.com/snowplow/snowplow/tree/master/3-enrich/stream-enrich), the pipeline which
 turns a stream of raw events into a stream of validated and enriched events and pushes them to a streaming platform (Kafka,
 Kinesis, NSQ or PubSub)
-- [`3-enrich/beam-enrich`](https://github.com/snowplow/snowplow/tree/master/3-enrich/stream-enrich), the successor of
-Stream Enrich built on [Apache Beam](https://beam.apache.org/).
 
 All of these projects can be built and tested with [SBT](https://www.scala-sbt.org/).
 
