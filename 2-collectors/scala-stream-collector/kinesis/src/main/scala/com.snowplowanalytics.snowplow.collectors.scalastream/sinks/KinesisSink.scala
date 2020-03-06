@@ -51,7 +51,7 @@ object KinesisSink {
       kinesisClient = createKinesisClient(provider, kinesisConfig.endpoint, kinesisConfig.region)
       _ <- if (streamExists(kinesisClient, streamName)) true.asRight
       else new IllegalArgumentException(s"Kinesis stream $streamName doesn't exist").asLeft
-      sqsClient <- sqsBuffer(sqsBufferName, provider, kinesisConfig.region)
+      sqsClient <- sqsBuffer(sqsBufferName, provider)
     } yield (kinesisClient, sqsClient)
 
     clients.map {
@@ -139,16 +139,11 @@ object KinesisSink {
       case _: ResourceNotFoundException => false
     }
 
-  private def createSqsClient(
-    sqsBufferName: String,
-    provider: AWSCredentialsProvider,
-    region: String
-  ) =
+  private def createSqsClient(provider: AWSCredentialsProvider) =
     Try(
       AmazonSQSClientBuilder
         .standard()
         .withCredentials(provider)
-        .withEndpointConfiguration(new EndpointConfiguration(sqsBufferName, region))
         .build
     ).toEither
 
@@ -157,13 +152,12 @@ object KinesisSink {
 
   def sqsBuffer(
     sqsBufferName: Option[String],
-    provider: AWSCredentialsProvider,
-    region: String
+    provider: AWSCredentialsProvider
   ): Either[Throwable, Option[AmazonSQS]] =
     sqsBufferName match {
       case Some(name) =>
         for {
-          amazonSqs <- createSqsClient(name, provider, region)
+          amazonSqs <- createSqsClient(provider)
           _ <- queueExists(amazonSqs, name)
         } yield Some(amazonSqs)
       case None => None.asRight
