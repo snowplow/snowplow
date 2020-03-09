@@ -117,7 +117,7 @@ module Snowplow
           if emr_jobflow_id.nil?
             @jobflow = Elasticity::JobFlow.new
           else
-            @jobflow = Elasticity::JobFlow.from_jobflow_id(emr_jobflow_id, config[:aws][:emr][:region])
+            @jobflow = get_emr_jobflow(emr_jobflow_id, config[:aws][:emr][:region])
             found_persistent_jobflow = true
           end
 
@@ -1095,6 +1095,18 @@ module Snowplow
 
         # Loop until we can quit...
         while true do
+          retries = 0
+
+          handleException = ->(ex, description) {
+            retries += 1
+            if retries < 4
+              logger.warn "Got #{description} #{ex}, waiting 5 minutes before checking jobflow again"
+              sleep(300)
+            else
+              raise ex
+            end
+          }
+
           begin
             cluster_step_status_for_run = cluster_step_status_for_run(@jobflow)
 
@@ -1121,38 +1133,41 @@ module Snowplow
             end
 
           rescue SocketError => se
-            logger.warn "Got socket error #{se}, waiting 5 minutes before checking jobflow again"
-            sleep(300)
+            handleException.call se, "socket error"
+            retry
           rescue Errno::ECONNREFUSED => ref
-            logger.warn "Got connection refused #{ref}, waiting 5 minutes before checking jobflow again"
-            sleep(300)
+            handleException.call ref, "connection refused"
+            retry
           rescue Errno::ECONNRESET => res
-            logger.warn "Got connection reset #{res}, waiting 5 minutes before checking jobflow again"
-            sleep(300)
+            handleException.call res, "connection reset"
+            retry
           rescue Errno::ETIMEDOUT => to
-            logger.warn "Got connection timeout #{to}, waiting 5 minutes before checking jobflow again"
-            sleep(300)
+            handleException.call to, "connection timeout"
+            retry
           rescue RestClient::InternalServerError => ise
-            logger.warn "Got internal server error #{ise}, waiting 5 minutes before checking jobflow again"
-            sleep(300)
+            handleException.call ise, "internal server error"
+            retry
           rescue Elasticity::ThrottlingException => te
-            logger.warn "Got Elasticity throttling exception #{te}, waiting 5 minutes before checking jobflow again"
-            sleep(300)
+            handleException.call te, "Elasticity throttling exception"
+            retry
           rescue ArgumentError => ae
-            logger.warn "Got Elasticity argument error #{ae}, waiting 5 minutes before checking jobflow again"
-            sleep(300)
+            handleException.call ae, "Elasticity argument error"
+            retry
           rescue IOError => ioe
-            logger.warn "Got IOError #{ioe}, waiting 5 minutes before checking jobflow again"
-            sleep(300)
+            handleException.call ioe, "IOError"
+            retry
           rescue RestClient::SSLCertificateNotVerified => sce
-            logger.warn "Got RestClient::SSLCertificateNotVerified #{sce}, waiting 5 minutes before checking jobflow again"
-            sleep(300)
+            handleException.call sce, "RestClient::SSLCertificateNotVerified"
+            retry
           rescue RestClient::RequestTimeout => rt
-            logger.warn "Got RestClient::RequestTimeout #{rt}, waiting 5 minutes before checking jobflow again"
-            sleep(300)
+            handleException.call rt, "RestClient::RequestTimeout"
+            retry
           rescue RestClient::ServiceUnavailable => su
-            logger.warn "Got RestClient::ServiceUnavailable #{su}, waiting 5 minutes before checking jobflow again"
-            sleep(300)
+            handleException.call su, "RestClient::ServiceUnavailable"
+            retry
+          rescue OpenSSL::SSL::SSLError => se
+            handleException.call se, "OpenSSL::SSL::SSLError"
+            retry
           end
         end
 
