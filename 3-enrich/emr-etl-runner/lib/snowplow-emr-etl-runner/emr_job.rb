@@ -158,9 +158,7 @@ module Snowplow
         @jobflow.enable_debugging     = debug
         @jobflow.visible_to_all_users = true
 
-        @jobflow.instance_count       = config[:aws][:emr][:jobflow][:core_instance_count] + 1 # +1 for the master instance
         @jobflow.master_instance_type = config[:aws][:emr][:jobflow][:master_instance_type]
-        @jobflow.slave_instance_type  = config[:aws][:emr][:jobflow][:core_instance_type]
 
         @jobflow.timeout = 120
 
@@ -214,27 +212,6 @@ module Snowplow
           end
         end
 
-        # EBS
-        unless config[:aws][:emr][:jobflow][:core_instance_ebs].nil?
-          ebs_bdc = Elasticity::EbsBlockDeviceConfig.new
-
-          ebs_bdc.volume_type          = config[:aws][:emr][:jobflow][:core_instance_ebs][:volume_type]
-          ebs_bdc.size_in_gb           = config[:aws][:emr][:jobflow][:core_instance_ebs][:volume_size]
-          ebs_bdc.volumes_per_instance = 1
-          if config[:aws][:emr][:jobflow][:core_instance_ebs][:volume_type] == "io1"
-            ebs_bdc.iops = config[:aws][:emr][:jobflow][:core_instance_ebs][:volume_iops]
-          end
-
-          ebs_c = Elasticity::EbsConfiguration.new
-          ebs_c.add_ebs_block_device_config(ebs_bdc)
-          ebs_c.ebs_optimized = true
-
-          unless config[:aws][:emr][:jobflow][:core_instance_ebs][:ebs_optimized].nil?
-            ebs_c.ebs_optimized = config[:aws][:emr][:jobflow][:core_instance_ebs][:ebs_optimized]
-          end
-
-          @jobflow.set_core_ebs_configuration(ebs_c)
-        end
         @jobflow.add_application("Hadoop") unless found_persistent_jobflow
 
         if collector_format == 'thrift'
@@ -311,19 +288,20 @@ module Snowplow
           end
         end
 
-       # Now let's add our core group
-       core_instance_group = Elasticity::InstanceGroup.new.tap { |ig|
-         ig.type = config[:aws][:emr][:jobflow][:core_instance_type]
-         # check if bid exists
-         cib = config[:aws][:emr][:jobflow][:core_instance_bid]
-         if cib.nil?
-           ig.set_on_demand_instances
-         else
-           ig.set_spot_instances(cib)
-         end
-       }
+        # Now let's add our core group
+        core_instance_group = Elasticity::InstanceGroup.new.tap { |ig|
+          ig.type = config[:aws][:emr][:jobflow][:core_instance_type]
+          ig.count = config[:aws][:emr][:jobflow][:core_instance_count]
+          # check if bid exists
+          cib = config[:aws][:emr][:jobflow][:core_instance_bid]
+          if cib.nil?
+            ig.set_on_demand_instances
+          else
+            ig.set_spot_instances(cib)
+          end
+        }
 
-       @jobflow.set_core_instance_group(core_instance_group)
+        @jobflow.set_core_instance_group(core_instance_group)
 
 
         # Now let's add our task group if required
@@ -342,6 +320,28 @@ module Snowplow
           }
 
           @jobflow.set_task_instance_group(instance_group)
+        end
+
+        # EBS
+        unless config[:aws][:emr][:jobflow][:core_instance_ebs].nil?
+          ebs_bdc = Elasticity::EbsBlockDeviceConfig.new
+
+          ebs_bdc.volume_type          = config[:aws][:emr][:jobflow][:core_instance_ebs][:volume_type]
+          ebs_bdc.size_in_gb           = config[:aws][:emr][:jobflow][:core_instance_ebs][:volume_size]
+          ebs_bdc.volumes_per_instance = 1
+          if config[:aws][:emr][:jobflow][:core_instance_ebs][:volume_type] == "io1"
+            ebs_bdc.iops = config[:aws][:emr][:jobflow][:core_instance_ebs][:volume_iops]
+          end
+
+          ebs_c = Elasticity::EbsConfiguration.new
+          ebs_c.add_ebs_block_device_config(ebs_bdc)
+          ebs_c.ebs_optimized = true
+
+          unless config[:aws][:emr][:jobflow][:core_instance_ebs][:ebs_optimized].nil?
+            ebs_c.ebs_optimized = config[:aws][:emr][:jobflow][:core_instance_ebs][:ebs_optimized]
+          end
+
+          @jobflow.set_core_ebs_configuration(ebs_c)
         end
 
         stream_enrich_mode = !csbe[:stream].nil?
