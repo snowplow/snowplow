@@ -148,8 +148,8 @@ object KinesisSink {
         .build
     ).toEither
 
-  private def queueExists(client: AmazonSQS, name: String): Either[Throwable, Boolean] =
-    Try(client.getQueueUrl(name)).map(_ => true).toEither
+  // private def queueExists(client: AmazonSQS, name: String): Either[Throwable, Boolean] =
+  //   Try(client.getQueueUrl(name)).map(_ => true).toEither
 
   def sqsBuffer(
     sqsBufferName: Option[String],
@@ -157,10 +157,10 @@ object KinesisSink {
     region: String
   ): Either[Throwable, Option[AmazonSQS]] =
     sqsBufferName match {
-      case Some(name) =>
+      case Some(_) =>
         for {
           amazonSqs <- createSqsClient(provider, region)
-          _ <- queueExists(amazonSqs, name)
+          // _ <- queueExists(amazonSqs, name)
         } yield Some(amazonSqs)
       case None => None.asRight
     }
