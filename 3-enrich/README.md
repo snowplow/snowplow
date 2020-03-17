@@ -10,12 +10,14 @@ The **Enrich** process takes raw Snowplow events logged by a [Collector][collect
 
 | ETL                             | Description                                                              | Status           |
 |---------------------------------|--------------------------------------------------------------------------|------------------|
-| [spark-enrich][e1] (1)  | The Snowplow Enrichment process built using Apache Spark   | Production-ready |
+| [spark-enrich][e1] (1)  | The Snowplow Enrichment process built using Apache Spark   | Deprecated |
 | [stream-enrich][e3] (3)        | The Snowplow Enrichment process built as an Amazon Kinesis application   | Production-ready |
 | [scala-common-enrich][e4]      | A shared library for processing raw Snowplow events, used in (1) and (3) | Production-ready |
 | [emr-etl-runner][e5]           | A Ruby app for running (1) and (2) on Amazon Elastic MapReduce           | Production-ready |
 
 ## How to add an enrichment?
+
+**TO BE UPDATED**
 
 5 things to update:
 1. [iglu-central](https://github.com/snowplow/iglu-central): holds the JSON schema(s) required for the enrichments.
