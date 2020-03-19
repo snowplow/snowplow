@@ -320,7 +320,10 @@ class KinesisSink private (
       }
       val MaxSqsBatchSize = 10
       encoded.grouped(MaxSqsBatchSize).foreach { encodedGroup =>
-        val batchRequest = new SendMessageBatchRequest().withEntries(encodedGroup.asJava)
+        val batchRequest =
+          new SendMessageBatchRequest()
+            .withQueueUrl(sqsBufferName.get) //TODO: remove .get
+            .withEntries(encodedGroup.asJava)
         Try {
           sqs.sendMessageBatch(batchRequest)
           log.info(s"Batch of ${encodedGroup.size} was sent to SQS queue: $sqsBufferName")
