@@ -27,12 +27,20 @@ object model {
   sealed trait Credentials
   case object NoCredentials extends Credentials
   final case class AWSCredentials(accessKey: String, secretKey: String) extends Credentials
+  final case class GCPCredentials(creds: String) extends Credentials
+
+  /**
+   * Pair of optional AWS Credentials and optional GCP Credentials
+   * @param aws optional AWS Credentials
+   * @param gcp optional GCP Credentials
+   */
+  final case class DualCloudCredentialsPair(aws: Credentials, gcp: Credentials)
 
   // Case classes necessary to the decoding of the configuration
   final case class StreamsConfig(
     in: InConfig,
     out: OutConfig,
-    sourceSink: SourceSinkConfig,
+    sourceSink: TargetPlatformConfig,
     buffer: BufferConfig,
     appName: String
   )
@@ -44,16 +52,38 @@ object model {
     partitionKey: String
   )
   final case class KinesisBackoffPolicyConfig(minBackoff: Long, maxBackoff: Long)
-  sealed trait SourceSinkConfig
+
+  /** Represents configurations of all target platforms */
+  sealed trait TargetPlatformConfig
+
+  /** Represents configurations of all Stream Enrich targets that is AWS native
+   *  Credentials of other cloud providers might be provided in case an enrichment
+   *  requires a private data hosted on that platform
+   */
+  sealed trait AWSNativePlatformConfig extends TargetPlatformConfig {
+    def aws: AWSCredentials
+    def gcp: Option[GCPCredentials]
+  }
+
+  /** Represents configurations of all Stream Enrich targets that is cloud agnostic
+   *  Credentials of any cloud provider might be provided in case an enrichment
+   *  requires a private data hosted on that platform
+   */
+  sealed trait CloudAgnosticPlatformConfig extends TargetPlatformConfig {
+    def aws: Option[AWSCredentials]
+    def gcp: Option[GCPCredentials]
+  }
+
   final case class Kinesis(
-    region: String,
     aws: AWSCredentials,
+    gcp: Option[GCPCredentials],
+    region: String,
     maxRecords: Int,
     initialPosition: String,
     initialTimestamp: Option[String],
     backoffPolicy: KinesisBackoffPolicyConfig,
     customEndpoint: Option[String]
-  ) extends SourceSinkConfig {
+  ) extends AWSNativePlatformConfig {
     val timestamp = initialTimestamp
       .toRight("An initial timestamp needs to be provided when choosing AT_TIMESTAMP")
       .right
@@ -69,19 +99,25 @@ object model {
     })
   }
   final case class Kafka(
+    aws: Option[AWSCredentials],
+    gcp: Option[GCPCredentials],
     brokers: String,
     retries: Int,
     consumerConf: Option[Map[String, String]],
     producerConf: Option[Map[String, String]]
-  ) extends SourceSinkConfig
+  ) extends CloudAgnosticPlatformConfig
   final case class Nsq(
+    aws: Option[AWSCredentials],
+    gcp: Option[GCPCredentials],
     rawChannel: String,
     host: String,
     port: Int,
     lookupHost: String,
     lookupPort: Int
-  ) extends SourceSinkConfig
-  case object Stdin extends SourceSinkConfig
+  ) extends CloudAgnosticPlatformConfig
+  final case class Stdin(aws: Option[AWSCredentials], gcp: Option[GCPCredentials])
+      extends CloudAgnosticPlatformConfig
+
   final case class BufferConfig(
     byteLimit: Long,
     recordLimit: Long,
