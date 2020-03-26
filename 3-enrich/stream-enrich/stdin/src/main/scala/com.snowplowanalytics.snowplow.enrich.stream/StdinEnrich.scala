@@ -18,9 +18,6 @@
  */
 package com.snowplowanalytics.snowplow.enrich.stream
 
-import java.io.File
-import java.net.URI
-
 import cats.Id
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.snowplow.badrows.Processor
@@ -49,14 +46,6 @@ object StdinEnrich extends Enrich {
     StdinSource.create(streamsConfig, client, adapterRegistry, enrichmentRegistry, processor)
 
   override val parser: scopt.OptionParser[FileConfig] = localParser
-
-  override def download(
-    uri: URI,
-    targetFile: File
-  )(
-    implicit creds: Credentials
-  ): Either[String, Int] =
-    httpDownloader(uri, targetFile)
 
   override def extractResolver(
     resolverArgument: String

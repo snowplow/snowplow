@@ -18,9 +18,6 @@
  */
 package com.snowplowanalytics.snowplow.enrich.stream
 
-import java.io.File
-import java.net.URI
-
 import cats.Id
 import cats.syntax.either._
 import com.snowplowanalytics.snowplow.enrich.common.adapters.AdapterRegistry
@@ -52,14 +49,6 @@ object NsqEnrich extends Enrich {
       .leftMap(_.getMessage)
 
   override val parser: scopt.OptionParser[FileConfig] = localParser
-
-  override def download(
-    uri: URI,
-    targetFile: File
-  )(
-    implicit creds: Credentials
-  ): Either[String, Int] =
-    httpDownloader(uri, targetFile)
 
   override def extractResolver(
     resolverArgument: String
