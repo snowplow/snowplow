@@ -38,12 +38,13 @@ import com.amazonaws.services.kinesis.{AmazonKinesis, AmazonKinesisClientBuilder
 
 import model._
 import scalatracker.Tracker
+import utils.getAWSCredentialsProvider
 
 /** KinesisSink companion object with factory method */
 object KinesisSink {
   def validate(kinesisConfig: Kinesis, streamName: String): Either[String, Unit] =
     for {
-      provider <- KinesisEnrich.getProvider(kinesisConfig.aws)
+      provider <- getAWSCredentialsProvider(kinesisConfig.aws)
       endpointConfiguration = new EndpointConfiguration(
         kinesisConfig.streamEndpoint,
         kinesisConfig.region

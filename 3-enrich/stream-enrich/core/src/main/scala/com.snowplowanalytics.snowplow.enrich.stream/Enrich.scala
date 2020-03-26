@@ -34,6 +34,7 @@ import com.snowplowanalytics.snowplow.enrich.common.adapters.registry.RemoteAdap
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.EnrichmentConf
 import com.snowplowanalytics.snowplow.enrich.common.utils.JsonUtils
+import com.snowplowanalytics.snowplow.enrich.stream.sources.Source
 import com.snowplowanalytics.snowplow.scalatracker.Tracker
 import com.typesafe.config.ConfigFactory
 import io.circe.Json
@@ -45,7 +46,6 @@ import pureconfig.generic.{FieldCoproductHint, ProductHint}
 
 import config._
 import model._
-import sources.Source
 import utils._
 
 /** Interface for the entry point for Stream Enrich. */
@@ -63,9 +63,20 @@ trait Enrich {
     val trackerSource: Either[String, (Option[Tracker[Id]], Source)] = for {
       config <- parseConfig(args)
       (enrichConfig, resolverArg, enrichmentsArg, forceDownload) = config
+      credsWithRegion <- enrichConfig.streams.sourceSink match {
+        case c: CloudAgnosticPlatformConfig => (extractCredentials(c), c.region).asRight
+        case _ => "Configured source/sink is not a cloud agnostic target".asLeft
+      }
+      (credentials, awsRegion) = credsWithRegion
       client <- parseClient(resolverArg)
       enrichmentsConf <- parseEnrichmentRegistry(enrichmentsArg, client)(implicitly)
-      _ <- cacheFiles(enrichmentsConf, forceDownload)
+      _ <- cacheFiles(
+        enrichmentsConf,
+        forceDownload,
+        credentials.aws,
+        credentials.gcp,
+        awsRegion
+      )
       tracker = enrichConfig.monitoring.map(c => SnowplowTracking.initializeTracker(c.snowplow))
       enrichmentRegistry <- EnrichmentRegistry.build[Id](enrichmentsConf).value
       adapterRegistry = new AdapterRegistry(prepareRemoteAdapters(enrichConfig.remoteAdapters))
@@ -93,7 +104,7 @@ trait Enrich {
   /**
    * Source of events
    * @param streamsConfig configuration for the streams
-   * @param resolver iglu resolver
+   * @param client iglu client
    * @param enrichmentRegistry registry of enrichments
    * @param tracker optional tracker
    * @return a validated source, ready to be read from
@@ -108,7 +119,7 @@ trait Enrich {
   ): Either[String, sources.Source]
 
   implicit def hint[T]: ProductHint[T] = ProductHint[T](ConfigFieldMapping(CamelCase, CamelCase))
-  implicit val _ = new FieldCoproductHint[SourceSinkConfig]("enabled")
+  implicit val _ = new FieldCoproductHint[TargetPlatformConfig]("enabled")
 
   /**
    * Parses the configuration from cli arguments
@@ -190,7 +201,7 @@ a  * @param creds optionally necessary credentials to download the resolver
   /**
    * Retrieve and parse an enrichment registry from the corresponding cli argument value
    * @param enrichmentsDirArg location of the enrichments directory as a cli argument
-   * @param resolver iglu resolver
+   * @param client iglu client
    * @param creds optionally necessary credentials to download the enrichments
    * @return a validated enrichment registry
    */
@@ -245,50 +256,71 @@ a  * @param creds optionally necessary credentials to download the resolver
    * Download a file locally
    * @param uri of the file to be downloaded
    * @param targetFile local file to download to
-   * @param creds optionally necessary credentials to download the file
+   * @param awsCreds optionally necessary credentials to download the file
+   * @param gcpCreds optionally necessary credentials to download the file
    * @return the return code of the downloading command
    */
-  def download(uri: URI, targetFile: File)(implicit creds: Credentials): Either[String, Int]
-  val httpDownloader = (uri: URI, targetFile: File) =>
+  def download(
+    uri: URI,
+    targetFile: File,
+    awsCreds: Credentials,
+    gcpCreds: Credentials,
+    awsRegion: Option[String]
+  ): Either[String, Unit] =
     uri.getScheme match {
-      case "http" | "https" => (uri.toURL #> targetFile).!.asRight
+      case "http" | "https" =>
+        (uri.toURL #> targetFile).! match {
+          case 0 => ().asRight
+          case exitCode => s"http(s) download failed with exit code $exitCode".asLeft
+        }
+      case "s3" =>
+        for {
+          provider <- getAWSCredentialsProvider(awsCreds)
+          downloadResult <- downloadFromS3(provider, uri, targetFile, awsRegion)
+        } yield downloadResult
+      case "gs" =>
+        for {
+          creds <- getGoogleCredentials(gcpCreds)
+          downloadResult <- downloadFromGCS(creds, uri, targetFile)
+        } yield downloadResult
       case s => s"Scheme $s for file $uri not supported".asLeft
     }
 
   /**
    * Download the IP lookup files locally.
-   * @param registry Enrichment registry
+   * @param confs List of enrichment configuration
    * @param forceDownload CLI flag that invalidates the cached files on each startup
-   * @param creds optionally necessary credentials to cache the files
+   * @param awsCreds optionally necessary aws credentials to cache the files
+   * @param gcpCreds optionally necessary gcp credentials to cache the files
    * @return a list of download command return codes
    */
   def cacheFiles(
     confs: List[EnrichmentConf],
-    forceDownload: Boolean
-  )(
-    implicit creds: Credentials
-  ): Either[String, List[Int]] = {
-    val filesToCache: List[(URI, String)] = confs.map(_.filesToCache).flatten
-    val cleanedFiles: List[(URI, File)] = filesToCache.map {
-      case (uri, path) =>
-        (
-          new URI(uri.toString.replaceAll("(?<!(http:|https:|s3:))//", "/")),
-          new File(path)
-        )
-    }
-    val filteredFiles = cleanedFiles.filter {
-      case (_, targetFile) =>
-        forceDownload || targetFile.length == 0L
-    }
-    val downloadedFiles: List[Either[String, Int]] = filteredFiles.map {
-      case (cleanURI, targetFile) =>
-        download(cleanURI, targetFile).flatMap {
-          case i if i != 0 => s"Attempt to download $cleanURI to $targetFile failed".asLeft
-          case o => o.asRight
-        }
-    }
-    downloadedFiles.sequence[EitherS, Int]
-  }
+    forceDownload: Boolean,
+    awsCreds: Credentials,
+    gcpCreds: Credentials,
+    awsRegion: Option[String]
+  ): Either[String, Unit] =
+    confs
+      .flatMap(_.filesToCache)
+      .map {
+        case (uri, path) =>
+          (
+            new URI(uri.toString.replaceAll("(?<!(http:|https:|s3:|gs:))//", "/")),
+            new File(path)
+          )
+      }
+      .filter {
+        case (_, targetFile) =>
+          forceDownload || targetFile.length == 0L
+      }
+      .map {
+        case (cleanURI, targetFile) =>
+          download(cleanURI, targetFile, awsCreds, gcpCreds, awsRegion).leftMap { err =>
+            s"Attempt to download $cleanURI to $targetFile failed: $err"
+          }
+      }
+      .sequence_
 
   /**
    *  Sets up the Remote adapters for the ETL

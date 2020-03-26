@@ -18,6 +18,8 @@ lazy val commonDependencies = Seq(
   Dependencies.Libraries.slf4j,
   Dependencies.Libraries.log4jOverSlf4j,
   Dependencies.Libraries.jacksonDatabind,
+  Dependencies.Libraries.s3Sdk,
+  Dependencies.Libraries.gsSdk,
   // Scala
   Dependencies.Libraries.scopt,
   Dependencies.Libraries.pureconfig,
@@ -76,7 +78,6 @@ lazy val kinesis = project
   .settings(libraryDependencies ++= Seq(
     Dependencies.Libraries.kinesisClient,
     Dependencies.Libraries.kinesisSdk,
-    Dependencies.Libraries.s3Sdk,
     Dependencies.Libraries.dynamodbSdk,
     Dependencies.Libraries.jacksonCbor
   ))

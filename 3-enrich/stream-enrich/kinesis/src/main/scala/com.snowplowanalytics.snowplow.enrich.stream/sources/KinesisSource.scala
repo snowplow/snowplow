@@ -44,6 +44,7 @@ import io.circe.Json
 
 import model.{Kinesis, StreamsConfig}
 import sinks._
+import utils.getAWSCredentialsProvider
 
 /** KinesisSource companion object with factory method */
 object KinesisSource {
@@ -64,7 +65,7 @@ object KinesisSource {
       _ <- KinesisSink.validate(kinesisConfig, config.out.enriched)
       _ <- utils.validatePii(emitPii, config.out.pii)
       _ <- KinesisSink.validate(kinesisConfig, config.out.bad)
-      provider <- KinesisEnrich.getProvider(kinesisConfig.aws)
+      provider <- getAWSCredentialsProvider(kinesisConfig.aws)
     } yield new KinesisSource(
       client,
       adapterRegistry,
