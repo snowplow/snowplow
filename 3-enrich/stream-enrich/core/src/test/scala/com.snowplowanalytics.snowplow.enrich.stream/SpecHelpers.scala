@@ -17,7 +17,6 @@ package com.snowplowanalytics.snowplow.enrich.stream
 import java.util.regex.Pattern
 
 import scala.util.matching.Regex
-
 import cats.Id
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.snowplow.enrich.common.adapters.AdapterRegistry
@@ -25,8 +24,15 @@ import com.snowplowanalytics.snowplow.enrich.common.adapters.registry.RemoteAdap
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
 import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
 import com.snowplowanalytics.snowplow.enrich.common.utils.JsonUtils
+import com.snowplowanalytics.snowplow.enrich.stream.model.{
+  AWSCredentials,
+  CloudAgnosticPlatformConfig,
+  GCPCredentials,
+  Kafka,
+  Nsq,
+  Stdin
+}
 import org.specs2.matcher.{Expectable, Matcher}
-
 import sources.TestSource
 import utils._
 
@@ -297,4 +303,20 @@ object SpecHelpers {
   val adapterRegistry = new AdapterRegistry(
     Map(("remoteVendor", "v42") -> new RemoteAdapter("http://localhost:9090/", None, None))
   )
+
+  val kafkaConfig: CloudAgnosticPlatformConfig =
+    Kafka(Some(AWSCredentials("access1", "secret1")), None, None, "", 0, None, None)
+  val nsqConfigWithoutCreds: CloudAgnosticPlatformConfig = Nsq(None, None, None, "", "", 0, "", 0)
+  val nsqConfigWithCreds: CloudAgnosticPlatformConfig = Nsq(
+    Some(AWSCredentials("access2", "secret2")),
+    Some(GCPCredentials("credsPath1")),
+    None,
+    "",
+    "",
+    0,
+    "",
+    0
+  )
+  val stdinConfig: CloudAgnosticPlatformConfig =
+    Stdin(None, Some(GCPCredentials("credsPath2")), None)
 }
