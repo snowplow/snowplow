@@ -19,13 +19,10 @@
 package com.snowplowanalytics.snowplow.enrich.stream
 
 import java.io.File
-import java.net.URI
 
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.io.Source
-import scala.sys.process._
-
 import cats.Id
 import cats.implicits._
 import com.amazonaws.auth._
@@ -33,8 +30,6 @@ import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import com.amazonaws.services.dynamodbv2.model.{AttributeValue, ScanRequest}
 import com.amazonaws.services.dynamodbv2.document.{DynamoDB, Item}
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder
-import com.amazonaws.services.s3.AmazonS3ClientBuilder
-import com.amazonaws.services.s3.model.GetObjectRequest
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.core._
 import com.snowplowanalytics.iglu.core.circe.CirceIgluCodecs._
@@ -45,10 +40,10 @@ import com.snowplowanalytics.snowplow.enrich.common.utils.JsonUtils
 import com.snowplowanalytics.snowplow.scalatracker.Tracker
 import io.circe.Json
 import io.circe.syntax._
-
 import config._
-import model.{AWSCredentials, Credentials, Kinesis, NoCredentials, StreamsConfig}
+import model.{Credentials, DualCloudCredentialsPair, Kinesis, NoCredentials, StreamsConfig}
 import sources.KinesisSource
+import utils.getAWSCredentialsProvider
 
 /** The main entry point for Stream Enrich for Kinesis. */
 object KinesisEnrich extends Enrich {
@@ -61,12 +56,13 @@ object KinesisEnrich extends Enrich {
       config <- parseConfig(args)
       (enrichConfig, resolverArg, enrichmentsArg, forceDownload) = config
       creds <- enrichConfig.streams.sourceSink match {
-        case c: Kinesis => c.aws.asRight
+        case c: Kinesis =>
+          DualCloudCredentialsPair(c.aws, c.gcp.fold[Credentials](NoCredentials)(identity)).asRight
         case _ => "Configured source/sink is not Kinesis".asLeft
       }
-      client <- parseClient(resolverArg)(creds)
-      enrichmentsConf <- parseEnrichmentRegistry(enrichmentsArg, client)(creds)
-      _ <- cacheFiles(enrichmentsConf, forceDownload)(creds)
+      client <- parseClient(resolverArg)(creds.aws)
+      enrichmentsConf <- parseEnrichmentRegistry(enrichmentsArg, client)(creds.aws)
+      _ <- cacheFiles(enrichmentsConf, forceDownload, creds.aws, creds.gcp)
       enrichmentRegistry <- EnrichmentRegistry.build[Id](enrichmentsConf).value
       tracker = enrichConfig.monitoring.map(c => SnowplowTracking.initializeTracker(c.snowplow))
       adapterRegistry = new AdapterRegistry(prepareRemoteAdapters(enrichConfig.remoteAdapters))
@@ -135,50 +131,6 @@ object KinesisEnrich extends Enrich {
       forceCachedFilesDownloadOption()
     }
 
-  override def download(
-    uri: URI,
-    targetFile: File
-  )(
-    implicit creds: Credentials
-  ): Either[String, Int] =
-    uri.getScheme match {
-      case "http" | "https" => (uri.toURL #> targetFile).!.asRight
-      case "s3" =>
-        for {
-          provider <- getProvider(creds)
-          downloadResult <- downloadFromS3(provider, uri, targetFile).leftMap(_.getMessage)
-        } yield downloadResult
-      case s => s"Scheme $s for file $uri not supported".asLeft
-    }
-
-  /**
-   * Downloads an object from S3 and returns whether or not it was successful.
-   * @param uri The URI to reconstruct into a signed S3 URL
-   * @param targetFile The file object to write to
-   * @param creds necessary credentials to download from S3
-   * @return the download result
-   */
-  private def downloadFromS3(
-    provider: AWSCredentialsProvider,
-    uri: URI,
-    targetFile: File
-  ): Either[Throwable, Int] = {
-    val s3Client = AmazonS3ClientBuilder
-      .standard()
-      .withCredentials(provider)
-      .build()
-    val bucket = uri.getHost
-    val key = uri.getPath match { // Need to remove leading '/'
-      case s if s.length > 0 && s.charAt(0) == '/' => s.substring(1)
-      case s => s
-    }
-
-    Either.catchNonFatal {
-      s3Client.getObject(new GetObjectRequest(bucket, key), targetFile)
-      0
-    }
-  }
-
   override def extractResolver(
     resolverArgument: String
   )(
@@ -191,7 +143,7 @@ object KinesisEnrich extends Enrich {
         else "Iglu resolver configuration file \"%s\" does not exist".format(filepath).asLeft
       case DynamoDBRegex(region, table, key) =>
         for {
-          provider <- getProvider(creds)
+          provider <- getAWSCredentialsProvider(creds)
           resolver <- lookupDynamoDBResolver(provider, region, table, key)
         } yield resolver
       case _ => s"Resolver argument [$resolverArgument] must match $regexMsg".asLeft
@@ -244,7 +196,7 @@ object KinesisEnrich extends Enrich {
             .asRight
         case DynamoDBRegex(region, table, keyNamePrefix) =>
           for {
-            provider <- getProvider(creds)
+            provider <- getAWSCredentialsProvider(creds)
             enrichmentList = lookupDynamoDBEnrichments(provider, region, table, keyNamePrefix)
             enrichments <- enrichmentList match {
               case Nil => s"No enrichments found with prefix $keyNamePrefix".asLeft
@@ -313,35 +265,6 @@ object KinesisEnrich extends Enrich {
         }
       }
       .flatMap(_.get("json"))
-  }
-
-  def getProvider(creds: Credentials): Either[String, AWSCredentialsProvider] = {
-    def isDefault(key: String): Boolean = key == "default"
-    def isIam(key: String): Boolean = key == "iam"
-    def isEnv(key: String): Boolean = key == "env"
-
-    for {
-      awsCreds <- creds match {
-        case NoCredentials => "No AWS credentials provided".asLeft
-        case c: AWSCredentials => c.asRight
-      }
-      provider <- awsCreds match {
-        case AWSCredentials(a, s) if isDefault(a) && isDefault(s) =>
-          new DefaultAWSCredentialsProviderChain().asRight
-        case AWSCredentials(a, s) if isDefault(a) || isDefault(s) =>
-          "accessKey and secretKey must both be set to 'default' or neither".asLeft
-        case AWSCredentials(a, s) if isIam(a) && isIam(s) =>
-          InstanceProfileCredentialsProvider.getInstance().asRight
-        case AWSCredentials(a, s) if isIam(a) && isIam(s) =>
-          "accessKey and secretKey must both be set to 'iam' or neither".asLeft
-        case AWSCredentials(a, s) if isEnv(a) && isEnv(s) =>
-          new EnvironmentVariableCredentialsProvider().asRight
-        case AWSCredentials(a, s) if isEnv(a) || isEnv(s) =>
-          "accessKey and secretKey must both be set to 'env' or neither".asLeft
-        case AWSCredentials(a, s) =>
-          new AWSStaticCredentialsProvider(new BasicAWSCredentials(a, s)).asRight
-      }
-    } yield provider
   }
 
   private def getDynamodbEndpoint(region: String): String =
