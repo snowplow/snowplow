@@ -21,7 +21,6 @@ import scala.util.{Failure, Success, Try}
 import scala.collection.JavaConverters._
 import scala.concurrent.duration.FiniteDuration
 import scala.io.Source
-
 import com.hubspot.jinjava.Jinjava
 import com.typesafe.config.ConfigFactory
 import org.apache.commons.codec.binary.Base64
@@ -32,9 +31,8 @@ import org.specs2.specification.BeforeAfterAll
 import pureconfig._
 import pureconfig.generic.auto._
 import pureconfig.generic.{FieldCoproductHint, ProductHint}
-
 import good._
-import model.{SourceSinkConfig, StreamsConfig}
+import model.{StreamsConfig, TargetPlatformConfig}
 
 class PiiEmitSpec(implicit ee: ExecutionEnv)
     extends Specification
@@ -112,8 +110,8 @@ class PiiEmitSpec(implicit ee: ExecutionEnv)
 
   implicit def hint[T]: ProductHint[T] =
     ProductHint[T](ConfigFieldMapping(CamelCase, CamelCase))
-  implicit val _: FieldCoproductHint[SourceSinkConfig] =
-    new FieldCoproductHint[SourceSinkConfig]("enabled")
+  implicit val _: FieldCoproductHint[TargetPlatformConfig] =
+    new FieldCoproductHint[TargetPlatformConfig]("enabled")
 
   "Pii" should {
     "emit all events" in {
