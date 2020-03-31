@@ -1,5 +1,5 @@
 {
-	"schema": "iglu:com.snowplowanalytics.snowplow/referer_parser/jsonschema/1-0-0",
+	"schema": "iglu:com.snowplowanalytics.snowplow/referer_parser/jsonschema/2-0-0",
 
 	"data": {
 
@@ -7,7 +7,9 @@
 		"vendor": "com.snowplowanalytics.snowplow",
 		"enabled": true,
 		"parameters": {
-			"internalDomains": []
+			"internalDomains": [],
+			"database": "referers-latest.json",
+      			"uri": "https://s3-eu-west-1.amazonaws.com/snowplow-hosted-assets/third-party/referer-parser/"
 		}
 	}
 }
