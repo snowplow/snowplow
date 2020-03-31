@@ -192,7 +192,7 @@ class KinesisSink private (
     case Some(_) =>
       log.info(s"SQS buffer for failed Kinesis stream '$streamName' is set up as: $sqsBufferName")
     case None =>
-      log.info(
+      log.warn(
         s"No SQS buffer set up, all failed events from Kinesis stream '$streamName' will be dropped. (consider setting a SQS Buffer in config.hocon)"
       )
   }
@@ -287,10 +287,12 @@ class KinesisSink private (
             )
             sqs match {
               case Some(client) =>
-                log.error(s"Sending all failed records to SQS buffer queue: $sqsBufferName")
+                log.info(s"Sending all failed records to SQS buffer queue: $sqsBufferName")
                 putToSqs(client, failurePairs.map(_._1))
               case None =>
-                log.error("Dropping failed events (consider setting a SQS Buffer in config.hocon)")
+                log.error(
+                  s"Dropping ${failurePairs.size} failed events (consider setting a SQS Buffer in config.hocon)"
+                )
             }
           }
         }
@@ -298,11 +300,13 @@ class KinesisSink private (
           log.error("Writing failed.", f)
           sqs match {
             case Some(client) =>
-              log.error(s"Sending all events from a batch to SQS buffer queue: $sqsBufferName")
+              log.info(
+                s"Sending all (${batch.size}) events from a batch to SQS buffer queue: $sqsBufferName"
+              )
               putToSqs(client, batch)
             case None =>
               log.error(
-                "Dropping all events from a batch (consider setting a SQS Buffer in config.hocon)"
+                s"Dropping all (${batch.size}) events from a batch (consider setting a SQS Buffer in config.hocon)"
               )
           }
         }
@@ -357,15 +361,6 @@ class KinesisSink private (
       }
       client.putRecords(putRecordsRequest)
     }
-
-  /**
-   * How long to wait before sending the next request
-   * @param lastBackoff The previous backoff time
-   * @return Minimum of maxBackoff and a random number between minBackoff and three times lastBackoff
-   */
-  // private def getNextBackoff(lastBackoff: Long): Long =
-  //   (minBackoff + randomGenerator.nextDouble() * (lastBackoff * 3 - minBackoff)).toLong
-  //     .min(maxBackoff)
 
   def shutdown(): Unit = {
     executorService.shutdown()
