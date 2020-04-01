@@ -321,6 +321,9 @@ class KinesisSink private (
       log.info(s"Writing ${batch.size} messages to SQS queue: ${sqs.sqsBufferName}")
       val encoded = batch.map {
         case (msg, key) =>
+          // The key is either IP or random UUID, so neither should contin `|`.
+          // Sqs doesn't support keys, so `|` is used as a separator. The same needs to be set up in
+          // sqs2kinesis project to decode the key - value pair.
           val msgWithKey = ByteBuffer.wrap(Array.concat(key.getBytes, "|".getBytes, msg.array))
           val b64Encoded = encode(msgWithKey)
           new SendMessageBatchRequestEntry(UUID.randomUUID.toString, b64Encoded)
