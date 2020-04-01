@@ -109,7 +109,8 @@ package model {
     backoffPolicy: KinesisBackoffPolicyConfig,
     customEndpoint: Option[String],
     sqsGoodBuffer: Option[String],
-    sqsBadBuffer: Option[String]
+    sqsBadBuffer: Option[String],
+    sqsKeyValueSeparator: Option[String]
   ) extends SinkConfig {
     val endpoint = customEndpoint.getOrElse(region match {
       case cn @ "cn-north-1" => s"https://kinesis.$cn.amazonaws.com.cn"

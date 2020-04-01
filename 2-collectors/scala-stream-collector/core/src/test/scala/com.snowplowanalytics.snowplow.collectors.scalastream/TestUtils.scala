@@ -55,7 +55,8 @@ object TestUtils {
         backoffPolicy = KinesisBackoffPolicyConfig(3000L, 60000L),
         customEndpoint = None,
         sqsGoodBuffer = Some("good-buffer"),
-        sqsBadBuffer = Some("bad-buffer")
+        sqsBadBuffer = Some("bad-buffer"),
+        sqsKeyValueSeparator = Some("|")
       ),
       buffer = BufferConfig(4000000L, 500L, 60000L)
     ),
