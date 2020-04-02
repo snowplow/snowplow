@@ -153,7 +153,7 @@ object KinesisSink {
     ).toEither
 
   private def queueExists(client: AmazonSQS, name: String): Either[Throwable, Boolean] =
-    Try(client.getQueueUrl(name)).map(_ => true).toEither
+    Try(client.getQueueAttributes(name, List("QueueArn").asJava)).map(_ => true).toEither
 
   def sqsBuffer(
     sqsBufferName: Option[String],
