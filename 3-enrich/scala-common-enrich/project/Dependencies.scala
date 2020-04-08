@@ -57,7 +57,7 @@ object Dependencies {
     val gatlingJsonpath  = "0.6.14"
     val scalaUri         = "1.4.5"
     val scalaLruMap      = "0.3.0"
-    val badRows          = "1.0.0"
+    val badRows          = "1.0.0-M1"
     // Thrift schemas
     val snowplowRawEvent = "0.1.0"
     val collectorPayload = "0.0.0"
