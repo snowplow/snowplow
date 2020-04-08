@@ -14,6 +14,7 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 
 import com.snowplowanalytics.snowplow.badrows.Payload.{RawEvent => RE}
+import com.snowplowanalytics.snowplow.badrows.NVP
 
 import loaders.CollectorPayload
 
@@ -37,7 +38,7 @@ object RawEvent {
     RE(
       re.api.vendor,
       re.api.version,
-      re.parameters,
+      re.parameters.toList.map { case (k, v) => NVP(k, Option(v)) },
       re.contentType,
       re.source.name,
       re.source.encoding,
