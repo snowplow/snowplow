@@ -60,10 +60,7 @@ object UnbounceAdapter extends Adapter {
    * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
-    payload: CollectorPayload,
-    client: Client[F, Json]
-  ): F[
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](payload: CollectorPayload, client: Client[F, Json]): F[
     ValidatedNel[FailureDetails.AdapterFailureOrTrackerProtocolViolation, NonEmptyList[RawEvent]]
   ] =
     (payload.body, payload.contentType) match {
@@ -115,8 +112,7 @@ object UnbounceAdapter extends Adapter {
                 NonEmptyList.one(
                   RawEvent(
                     api = payload.api,
-                    parameters =
-                      toUnstructEventParams(TrackerVersion, qsParams, schema, event, "srv"),
+                    parameters = toUnstructEventParams(TrackerVersion, qsParams, schema, event, "srv"),
                     contentType = payload.contentType,
                     source = payload.source,
                     context = payload.context
@@ -127,9 +123,7 @@ object UnbounceAdapter extends Adapter {
         }
     }
 
-  private def payloadBodyToEvent(
-    bodyMap: Map[String, String]
-  ): Either[FailureDetails.AdapterFailure, Json] =
+  private def payloadBodyToEvent(bodyMap: Map[String, String]): Either[FailureDetails.AdapterFailure, Json] =
     (
       bodyMap.get("page_id"),
       bodyMap.get("page_name"),

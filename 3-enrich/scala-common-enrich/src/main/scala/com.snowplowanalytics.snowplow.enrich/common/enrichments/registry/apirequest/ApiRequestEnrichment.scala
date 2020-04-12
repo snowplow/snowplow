@@ -148,9 +148,7 @@ final case class ApiRequestEnrichment[F[_]: Monad: HttpClient](
    * @param validInputs map to build template context
    * @return validated list of lookups, whole lookup will be failed if any of outputs were failed
    */
-  private[apirequest] def getOutputs(
-    validInputs: Option[Map[String, String]]
-  ): EitherT[F, NonEmptyList[String], List[Json]] = {
+  private[apirequest] def getOutputs(validInputs: Option[Map[String, String]]): EitherT[F, NonEmptyList[String], List[Json]] = {
     import cats.instances.parallel._
     val result: List[F[Either[Throwable, Json]]] =
       for {

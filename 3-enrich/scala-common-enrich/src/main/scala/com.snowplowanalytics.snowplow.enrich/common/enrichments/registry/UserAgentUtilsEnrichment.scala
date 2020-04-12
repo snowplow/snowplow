@@ -76,9 +76,7 @@ final case class UserAgentUtilsEnrichment(schemaKey: SchemaKey) extends Enrichme
    * @param useragent to extract from. Should be encoded, i.e. not previously decoded.
    * @return the ClientAttributes or the message of the exception, boxed in a Scalaz Validation
    */
-  def extractClientAttributes(
-    useragent: String
-  ): Either[FailureDetails.EnrichmentFailure, ClientAttributes] =
+  def extractClientAttributes(useragent: String): Either[FailureDetails.EnrichmentFailure, ClientAttributes] =
     try {
       val ua = UserAgent.parseUserAgentString(useragent)
       val b = ua.getBrowser

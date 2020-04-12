@@ -55,17 +55,13 @@ object Tp2Adapter extends Adapter {
    * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
-    payload: CollectorPayload,
-    client: Client[F, Json]
-  ): F[
+  def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](payload: CollectorPayload, client: Client[F, Json]): F[
     ValidatedNel[FailureDetails.AdapterFailureOrTrackerProtocolViolation, NonEmptyList[RawEvent]]
   ] = {
     val qsParams = toMap(payload.querystring)
 
     // Verify: body + content type set; content type matches expected; body contains expected JSON Schema; body passes schema validation
-    val validatedParamsNel
-      : F[ValidatedNel[FailureDetails.TrackerProtocolViolation, NonEmptyList[RawEventParameters]]] =
+    val validatedParamsNel: F[ValidatedNel[FailureDetails.TrackerProtocolViolation, NonEmptyList[RawEventParameters]]] =
       (payload.body, payload.contentType) match {
         case (None, _) if qsParams.isEmpty =>
           val msg1 = "empty body: not a valid tracker protocol event"
@@ -186,9 +182,7 @@ object Tp2Adapter extends Adapter {
    * @param entry The (String, Json) to convert
    * @return a Validation boxing either our parameter on Success, or an error String on Failure.
    */
-  private def toParameter(
-    entry: (String, Json)
-  ): Validated[FailureDetails.TrackerProtocolViolation, (String, String)] = {
+  private def toParameter(entry: (String, Json)): Validated[FailureDetails.TrackerProtocolViolation, (String, String)] = {
     val (key, value) = entry
 
     value.asString match {

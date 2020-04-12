@@ -118,10 +118,7 @@ object MapTransformer {
      * @param transformMap Determines how the data should be transformed before storing in the obj
      * @return a ValidationNel containing a Nel of error Strings, or the count of updated fields
      */
-    def transform(
-      sourceMap: SourceMap,
-      transformMap: TransformMap
-    ): ValidatedNel[FailureDetails.EnrichmentFailure, Int] =
+    def transform(sourceMap: SourceMap, transformMap: TransformMap): ValidatedNel[FailureDetails.EnrichmentFailure, Int] =
       _transform[T](obj, sourceMap, transformMap, setters)
   }
 

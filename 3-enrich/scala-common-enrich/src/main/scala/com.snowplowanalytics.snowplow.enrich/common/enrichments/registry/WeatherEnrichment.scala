@@ -90,8 +90,7 @@ object WeatherEnrichment extends ParseableEnrichment {
  * Contains weather enrichments based on geo coordinates and time
  * @param client OWM client to get the weather from
  */
-final case class WeatherEnrichment[F[_]: Monad](schemaKey: SchemaKey, client: OWMCacheClient[F])
-    extends Enrichment {
+final case class WeatherEnrichment[F[_]: Monad](schemaKey: SchemaKey, client: OWMCacheClient[F]) extends Enrichment {
   val Schema = SchemaKey("org.openweathermap", "weather", "jsonschema", SchemaVer.Full(1, 0, 0))
   private val enrichmentInfo =
     FailureDetails.EnrichmentInformation(schemaKey, "weather").some

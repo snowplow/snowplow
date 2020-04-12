@@ -61,10 +61,7 @@ object PagerdutyAdapter extends Adapter {
    * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
-    payload: CollectorPayload,
-    client: Client[F, Json]
-  ): F[
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](payload: CollectorPayload, client: Client[F, Json]): F[
     ValidatedNel[FailureDetails.AdapterFailureOrTrackerProtocolViolation, NonEmptyList[RawEvent]]
   ] =
     (payload.body, payload.contentType) match {
@@ -129,9 +126,7 @@ object PagerdutyAdapter extends Adapter {
    * @param body The payload body from the PagerDuty event
    * @return either a Successful List of JValue JSONs or a Failure String
    */
-  private[registry] def payloadBodyToEvents(
-    body: String
-  ): Either[FailureDetails.AdapterFailure, List[Json]] =
+  private[registry] def payloadBodyToEvents(body: String): Either[FailureDetails.AdapterFailure, List[Json]] =
     JsonUtils
       .extractJson(body)
       .leftMap(e => FailureDetails.AdapterFailure.NotJson("body", body.some, e))

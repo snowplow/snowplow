@@ -79,10 +79,7 @@ object EventFingerprintEnrichment extends ParseableEnrichment {
  * @param excludedParameters List of querystring parameters to exclude from the calculation
  * @return Event fingerprint
  */
-final case class EventFingerprintEnrichment(
-  algorithm: String => String,
-  excludedParameters: List[String]
-) extends Enrichment {
+final case class EventFingerprintEnrichment(algorithm: String => String, excludedParameters: List[String]) extends Enrichment {
 
   /**
    * Calculate an event fingerprint using all querystring fields except the excludedParameters

@@ -25,9 +25,7 @@ import com.snowplowanalytics.snowplow.badrows.Processor
 
 import org.apache.thrift.TSerializer
 
-import com.snowplowanalytics.snowplow.CollectorPayload.thrift.model1.{
-  CollectorPayload => tCollectorPayload
-}
+import com.snowplowanalytics.snowplow.CollectorPayload.thrift.model1.{CollectorPayload => tCollectorPayload}
 
 import io.circe.Json
 

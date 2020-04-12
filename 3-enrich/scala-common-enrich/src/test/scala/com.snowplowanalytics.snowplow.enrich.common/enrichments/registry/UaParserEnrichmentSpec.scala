@@ -72,15 +72,14 @@ class UaParserEnrichmentSpec extends Specification with DataTables {
   "useragent parser" should {
     "report initialization error" in {
       "Custom Rules" | "Input UserAgent" | "Parsed UserAgent" |
-        Some(badRulefile) !! mobileSafariUserAgent !! "Failed to initialize ua parser" |> {
-        (rules, input, errorPrefix) =>
-          (for {
-            c <- EitherT.rightT[Eval, String](UaParserConf(schemaKey, rules))
-            e <- c.enrichment[Eval]
-            res = e.extractUserAgent(input)
-          } yield res).value.value must beLeft.like {
-            case a => a must startWith(errorPrefix)
-          }
+        Some(badRulefile) !! mobileSafariUserAgent !! "Failed to initialize ua parser" |> { (rules, input, errorPrefix) =>
+        (for {
+          c <- EitherT.rightT[Eval, String](UaParserConf(schemaKey, rules))
+          e <- c.enrichment[Eval]
+          res = e.extractUserAgent(input)
+        } yield res).value.value must beLeft.like {
+          case a => a must startWith(errorPrefix)
+        }
       }
     }
 

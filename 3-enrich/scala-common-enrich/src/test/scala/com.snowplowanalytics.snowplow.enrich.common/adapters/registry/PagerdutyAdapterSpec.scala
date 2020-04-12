@@ -58,9 +58,8 @@ class PagerdutyAdapterSpec extends Specification with DataTables with ValidatedM
     "SPEC NAME" || "INPUT" | "EXPECTED OUTPUT" |
       "Valid, update one value" !! json"""{"type":"null"}""" ! json"""{"type":null}""" |
       "Valid, update multiple values" !! json"""{"type":"null","some":"null"}""" ! json"""{"type":null,"some":null}""" |
-      "Valid, update nested values" !! json"""{"type": {"some":"null"}}""" ! json"""{"type":{"some":null}}""" |> {
-      (_, input, expected) =>
-        PagerdutyAdapter.reformatParameters(input) mustEqual expected
+      "Valid, update nested values" !! json"""{"type": {"some":"null"}}""" ! json"""{"type":{"some":null}}""" |> { (_, input, expected) =>
+      PagerdutyAdapter.reformatParameters(input) mustEqual expected
     }
 
   def e2 = {

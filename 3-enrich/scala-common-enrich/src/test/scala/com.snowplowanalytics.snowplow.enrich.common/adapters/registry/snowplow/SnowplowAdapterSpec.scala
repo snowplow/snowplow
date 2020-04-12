@@ -35,11 +35,7 @@ import loaders._
 import utils.{ConversionUtils => CU}
 import utils.Clock._
 
-class SnowplowAdapterSpec
-    extends Specification
-    with DataTables
-    with ValidatedMatchers
-    with ScalaCheck {
+class SnowplowAdapterSpec extends Specification with DataTables with ValidatedMatchers with ScalaCheck {
   def is = s2"""
   Tp1.toRawEvents should return a NEL containing one RawEvent if the querystring is populated                             $e1
   Tp1.toRawEvents should return a Validation Failure if the querystring is empty                                          $e2
@@ -63,8 +59,7 @@ class SnowplowAdapterSpec
   """
 
   object Snowplow {
-    private val api: (String) => CollectorPayload.Api = version =>
-      CollectorPayload.Api("com.snowplowanalytics.snowplow", version)
+    private val api: (String) => CollectorPayload.Api = version => CollectorPayload.Api("com.snowplowanalytics.snowplow", version)
     val Tp1 = api("tp1")
     val Tp2 = api("tp2")
   }

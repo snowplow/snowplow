@@ -243,8 +243,7 @@ object EnrichmentManager {
       } yield res
 
     // Derive some contexts with custom SQL Query enrichment
-    val sqlQueryContexts
-      : F[ValidatedNel[FailureDetails.EnrichmentFailure, List[SelfDescribingData[Json]]]] =
+    val sqlQueryContexts: F[ValidatedNel[FailureDetails.EnrichmentFailure, List[SelfDescribingData[Json]]]] =
       getSqlQueryContexts[F](
         enriched,
         builtInContexts,
@@ -254,8 +253,7 @@ object EnrichmentManager {
       )
 
     // Derive some contexts with custom API Request enrichment
-    val apiRequestContexts
-      : F[ValidatedNel[FailureDetails.EnrichmentFailure, List[SelfDescribingData[Json]]]] =
+    val apiRequestContexts: F[ValidatedNel[FailureDetails.EnrichmentFailure, List[SelfDescribingData[Json]]]] =
       getApiRequestContexts[F](
         enriched,
         builtInContexts,
@@ -314,10 +312,7 @@ object EnrichmentManager {
     e
   }
 
-  def setCollectorTstamp(
-    event: EnrichedEvent,
-    timestamp: Option[DateTime]
-  ): Either[FailureDetails.EnrichmentFailure, Unit] =
+  def setCollectorTstamp(event: EnrichedEvent, timestamp: Option[DateTime]): Either[FailureDetails.EnrichmentFailure, Unit] =
     EE.formatCollectorTstamp(timestamp).map { t =>
       event.collector_tstamp = t
       ().asRight
@@ -362,10 +357,7 @@ object EnrichmentManager {
   // If our IpToGeo enrichment is enabled, get the geo-location from the IP address
   // enrichment doesn't fail to maintain the previous approach where failures were suppressed
   // c.f. https://github.com/snowplow/snowplow/issues/351
-  def geoLocation[F[_]: Monad](
-    event: EnrichedEvent,
-    ipLookups: Option[IpLookupsEnrichment[F]]
-  ): F[Unit] = {
+  def geoLocation[F[_]: Monad](event: EnrichedEvent, ipLookups: Option[IpLookupsEnrichment[F]]): F[Unit] = {
     val ipLookup = for {
       enrichment <- OptionT.fromOption[F](ipLookups)
       ip <- OptionT.fromOption[F](Option(event.user_ipaddress))
@@ -403,10 +395,7 @@ object EnrichmentManager {
   }
 
   // Potentially update the page_url and set the page URL components
-  def getPageUri(
-    refererUri: Option[String],
-    event: EnrichedEvent
-  ): Either[FailureDetails.EnrichmentFailure, Option[URI]] = {
+  def getPageUri(refererUri: Option[String], event: EnrichedEvent): Either[FailureDetails.EnrichmentFailure, Option[URI]] = {
     val pageUri = WPE.extractPageUri(refererUri, Option(event.page_url))
     for {
       uri <- pageUri
@@ -471,10 +460,7 @@ object EnrichmentManager {
       }
     }
 
-  def getUaUtils(
-    event: EnrichedEvent,
-    userAgentUtils: Option[UserAgentUtilsEnrichment]
-  ): Either[FailureDetails.EnrichmentFailure, Unit] =
+  def getUaUtils(event: EnrichedEvent, userAgentUtils: Option[UserAgentUtilsEnrichment]): Either[FailureDetails.EnrichmentFailure, Unit] =
     userAgentUtils match {
       case Some(uap) =>
         Option(event.useragent) match {
@@ -699,10 +685,7 @@ object EnrichmentManager {
   }
 
   // Fetch weather context
-  def getWeatherContext[F[_]: Monad](
-    event: EnrichedEvent,
-    weather: Option[WeatherEnrichment[F]]
-  ): F[
+  def getWeatherContext[F[_]: Monad](event: EnrichedEvent, weather: Option[WeatherEnrichment[F]]): F[
     Either[NonEmptyList[FailureDetails.EnrichmentFailure], Option[SelfDescribingData[Json]]]
   ] =
     weather match {
@@ -716,10 +699,7 @@ object EnrichmentManager {
       case None => Monad[F].pure(None.asRight)
     }
 
-  def getYauaaContext(
-    event: EnrichedEvent,
-    yauaa: Option[YauaaEnrichment]
-  ): Option[SelfDescribingData[Json]] =
+  def getYauaaContext(event: EnrichedEvent, yauaa: Option[YauaaEnrichment]): Option[SelfDescribingData[Json]] =
     yauaa.map(_.getYauaaContext(event.useragent))
 
   // Derive some contexts with custom SQL Query enrichment
@@ -758,10 +738,7 @@ object EnrichmentManager {
         List.empty[SelfDescribingData[Json]].validNel[FailureDetails.EnrichmentFailure].pure[F]
     }
 
-  def piiTransform(
-    event: EnrichedEvent,
-    piiPseudonymizer: Option[PiiPseudonymizerEnrichment]
-  ): Option[SelfDescribingData[Json]] =
+  def piiTransform(event: EnrichedEvent, piiPseudonymizer: Option[PiiPseudonymizerEnrichment]): Option[SelfDescribingData[Json]] =
     piiPseudonymizer.flatMap(_.transformer(event))
 
   /** Build `BadRow.EnrichmentFailures` from a list of `FailureDetails.EnrichmentFailure`s */

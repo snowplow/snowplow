@@ -69,10 +69,7 @@ object MandrillAdapter extends Adapter {
    * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
-    payload: CollectorPayload,
-    client: Client[F, Json]
-  ): F[
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](payload: CollectorPayload, client: Client[F, Json]): F[
     ValidatedNel[FailureDetails.AdapterFailureOrTrackerProtocolViolation, NonEmptyList[RawEvent]]
   ] =
     (payload.body, payload.contentType) match {
@@ -139,9 +136,7 @@ object MandrillAdapter extends Adapter {
    * @param rawEventString The encoded string from the Mandrill payload body
    * @return a list of single events formatted as JSONs or a Failure String
    */
-  private[registry] def payloadBodyToEvents(
-    rawEventString: String
-  ): Either[FailureDetails.AdapterFailure, List[Json]] =
+  private[registry] def payloadBodyToEvents(rawEventString: String): Either[FailureDetails.AdapterFailure, List[Json]] =
     for {
       bodyMap <- ConversionUtils
         .parseUrlEncodedForm(rawEventString)

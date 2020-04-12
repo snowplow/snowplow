@@ -29,11 +29,7 @@ import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import SpecHelpers._
 
-class ThriftLoaderSpec
-    extends Specification
-    with DataTables
-    with ValidatedMatchers
-    with ScalaCheck {
+class ThriftLoaderSpec extends Specification with DataTables with ValidatedMatchers with ScalaCheck {
   val Process = Processor("ThriftLoaderSpec", "v1")
 
   def is = s2"""

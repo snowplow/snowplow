@@ -212,10 +212,7 @@ final case class PiiJson(
     } yield (substituted.noSpaces, modifiedFields.toList)).getOrElse((null, List.empty))
 
   /** Map context top fields with strategy if they match. */
-  private def mapContextTopFields(
-    tuple: (String, Json),
-    strategy: PiiStrategy
-  ): (String, (Json, List[JsonModifiedField])) = tuple match {
+  private def mapContextTopFields(tuple: (String, Json), strategy: PiiStrategy): (String, (Json, List[JsonModifiedField])) = tuple match {
     case (k, contexts) if k == "data" =>
       (k, contexts.asArray match {
         case Some(array) =>
@@ -242,10 +239,7 @@ final case class PiiJson(
    * Tests whether the schema for this event matches the schema criterion and if it does modifies
    * it.
    */
-  private def modifyObjectIfSchemaMatches(
-    context: List[(String, Json)],
-    strategy: PiiStrategy
-  ): (JsonObject, List[JsonModifiedField]) = {
+  private def modifyObjectIfSchemaMatches(context: List[(String, Json)], strategy: PiiStrategy): (JsonObject, List[JsonModifiedField]) = {
     val fieldsObj = context.toMap
     (for {
       schema <- fieldsObj.get("schema")

@@ -22,11 +22,7 @@ import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
 import SpecHelpers._
 
-class CljTomcatLoaderSpec
-    extends Specification
-    with DataTables
-    with ValidatedMatchers
-    with ScalaCheck {
+class CljTomcatLoaderSpec extends Specification with DataTables with ValidatedMatchers with ScalaCheck {
   val Process = Processor("CljTomcatLoaderSpec", "v1")
 
   def is = s2"""

@@ -68,10 +68,7 @@ object SendgridAdapter extends Adapter {
    * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
-    payload: CollectorPayload,
-    client: Client[F, Json]
-  ): F[
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](payload: CollectorPayload, client: Client[F, Json]): F[
     ValidatedNel[FailureDetails.AdapterFailureOrTrackerProtocolViolation, NonEmptyList[RawEvent]]
   ] =
     (payload.body, payload.contentType) match {
@@ -108,10 +105,7 @@ object SendgridAdapter extends Adapter {
    * @return a list of validated events, successes will be the corresponding raw events failures
    * will contain a non empty list of the reason(s) for the particular event failing
    */
-  private def payloadBodyToEvents(
-    body: String,
-    payload: CollectorPayload
-  ): List[ValidatedNel[FailureDetails.AdapterFailure, RawEvent]] =
+  private def payloadBodyToEvents(body: String, payload: CollectorPayload): List[ValidatedNel[FailureDetails.AdapterFailure, RawEvent]] =
     JsonUtils.extractJson(body) match {
       case Right(json) =>
         json.asArray match {

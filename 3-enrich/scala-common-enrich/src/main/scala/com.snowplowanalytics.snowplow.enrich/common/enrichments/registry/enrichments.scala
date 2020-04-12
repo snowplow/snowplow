@@ -73,10 +73,7 @@ final case class SqlQueryConf(
   def enrichment[F[_]: Monad: CreateSqlQueryEnrichment]: F[SqlQueryEnrichment[F]] =
     SqlQueryEnrichment[F](this)
 }
-final case class AnonIpConf(
-  octets: AnonIPv4Octets.AnonIPv4Octets,
-  segments: AnonIPv6Segments.AnonIPv6Segments
-) extends EnrichmentConf {
+final case class AnonIpConf(octets: AnonIPv4Octets.AnonIPv4Octets, segments: AnonIPv6Segments.AnonIPv6Segments) extends EnrichmentConf {
   override val filesToCache: List[(URI, String)] = Nil
   def enrichment: AnonIpEnrichment = AnonIpEnrichment(octets, segments)
 }
@@ -109,8 +106,7 @@ final case class CurrencyConversionConf(
   def enrichment[F[_]: Monad: CreateForex]: F[CurrencyConversionEnrichment[F]] =
     CurrencyConversionEnrichment[F](this)
 }
-final case class EventFingerprintConf(algorithm: String => String, excludedParameters: List[String])
-    extends EnrichmentConf {
+final case class EventFingerprintConf(algorithm: String => String, excludedParameters: List[String]) extends EnrichmentConf {
   def enrichment: EventFingerprintEnrichment =
     EventFingerprintEnrichment(algorithm, excludedParameters)
 }
@@ -138,18 +134,15 @@ final case class IpLookupsConf(
   def enrichment[F[_]: Functor: CreateIpLookups]: F[IpLookupsEnrichment[F]] =
     IpLookupsEnrichment[F](this)
 }
-final case class JavascriptScriptConf(override val schemaKey: SchemaKey, script: Script)
-    extends EnrichmentConf {
+final case class JavascriptScriptConf(override val schemaKey: SchemaKey, script: Script) extends EnrichmentConf {
   def enrichment: JavascriptScriptEnrichment = JavascriptScriptEnrichment(schemaKey, script)
 }
-final case class RefererParserConf(refererDatabase: (URI, String), internalDomains: List[String])
-    extends EnrichmentConf {
+final case class RefererParserConf(refererDatabase: (URI, String), internalDomains: List[String]) extends EnrichmentConf {
   override val filesToCache: List[(URI, String)] = List(refererDatabase)
   def enrichment[F[_]: Monad: CreateParser]: EitherT[F, String, RefererParserEnrichment] =
     RefererParserEnrichment[F](this)
 }
-final case class UaParserConf(override val schemaKey: SchemaKey, uaDatabase: Option[(URI, String)])
-    extends EnrichmentConf {
+final case class UaParserConf(override val schemaKey: SchemaKey, uaDatabase: Option[(URI, String)]) extends EnrichmentConf {
   override val filesToCache: List[(URI, String)] = List(uaDatabase).flatten
   def enrichment[F[_]: Monad: CreateUaParser]: EitherT[F, String, UaParserEnrichment] =
     UaParserEnrichment[F](this)

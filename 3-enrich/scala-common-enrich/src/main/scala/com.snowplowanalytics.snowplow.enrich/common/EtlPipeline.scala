@@ -27,10 +27,7 @@ import com.snowplowanalytics.snowplow.badrows.{BadRow, Processor}
 import org.joda.time.DateTime
 
 import com.snowplowanalytics.snowplow.enrich.common.adapters.AdapterRegistry
-import com.snowplowanalytics.snowplow.enrich.common.enrichments.{
-  EnrichmentManager,
-  EnrichmentRegistry
-}
+import com.snowplowanalytics.snowplow.enrich.common.enrichments.{EnrichmentManager, EnrichmentRegistry}
 import com.snowplowanalytics.snowplow.enrich.common.loaders.CollectorPayload
 import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
 import com.snowplowanalytics.snowplow.enrich.common.utils.HttpClient

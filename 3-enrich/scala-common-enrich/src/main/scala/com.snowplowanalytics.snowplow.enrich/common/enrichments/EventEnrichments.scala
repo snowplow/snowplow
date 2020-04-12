@@ -49,9 +49,7 @@ object EventEnrichments {
    * @param Optional collectorTstamp
    * @return Validation boxing the result of making the timestamp Redshift-compatible
    */
-  def formatCollectorTstamp(
-    collectorTstamp: Option[DateTime]
-  ): Either[FailureDetails.EnrichmentFailure, String] =
+  def formatCollectorTstamp(collectorTstamp: Option[DateTime]): Either[FailureDetails.EnrichmentFailure, String] =
     (collectorTstamp match {
       case None =>
         FailureDetails.EnrichmentFailureMessage

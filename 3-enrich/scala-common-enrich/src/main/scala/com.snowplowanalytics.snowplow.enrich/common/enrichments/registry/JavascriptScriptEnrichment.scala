@@ -95,8 +95,7 @@ object JavascriptScriptEnrichment extends ParseableEnrichment {
  * Config for an JavaScript script enrichment
  * @param script The compiled script ready for
  */
-final case class JavascriptScriptEnrichment(schemaKey: SchemaKey, script: Script)
-    extends Enrichment {
+final case class JavascriptScriptEnrichment(schemaKey: SchemaKey, script: Script) extends Enrichment {
   private val enrichmentInfo =
     FailureDetails.EnrichmentInformation(schemaKey, "javascript-script").some
 
@@ -105,9 +104,7 @@ final case class JavascriptScriptEnrichment(schemaKey: SchemaKey, script: Script
    * @param event The enriched event to pass into our process function
    * @return either a JSON array of contexts on Success, or an error String on Failure
    */
-  def process(
-    event: EnrichedEvent
-  ): Either[FailureDetails.EnrichmentFailure, List[SelfDescribingData[Json]]] =
+  def process(event: EnrichedEvent): Either[FailureDetails.EnrichmentFailure, List[SelfDescribingData[Json]]] =
     process(script, event)
 
   import JavascriptScriptEnrichment.Variables

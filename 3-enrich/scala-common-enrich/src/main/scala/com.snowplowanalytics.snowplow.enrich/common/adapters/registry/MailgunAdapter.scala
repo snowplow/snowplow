@@ -71,10 +71,7 @@ object MailgunAdapter extends Adapter {
    * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
-    payload: CollectorPayload,
-    client: Client[F, Json]
-  ): F[
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](payload: CollectorPayload, client: Client[F, Json]): F[
     ValidatedNel[FailureDetails.AdapterFailureOrTrackerProtocolViolation, NonEmptyList[RawEvent]]
   ] =
     (payload.body, payload.contentType) match {
@@ -234,9 +231,7 @@ object MailgunAdapter extends Adapter {
    * Converts a querystring payload into an event
    * @param bodyMap The converted map from the querystring
    */
-  private def payloadBodyToEvent(
-    bodyMap: Map[String, String]
-  ): Either[FailureDetails.AdapterFailure, Json] =
+  private def payloadBodyToEvent(bodyMap: Map[String, String]): Either[FailureDetails.AdapterFailure, Json] =
     (bodyMap.get("timestamp"), bodyMap.get("token"), bodyMap.get("signature")) match {
       case (None, _, _) =>
         FailureDetails.AdapterFailure

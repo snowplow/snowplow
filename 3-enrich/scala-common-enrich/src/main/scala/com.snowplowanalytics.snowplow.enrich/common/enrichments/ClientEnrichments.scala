@@ -38,8 +38,7 @@ object ClientEnrichments {
    * @param res The packed string holding the screen dimensions
    * @return the ResolutionTuple or an error message, boxed in a Scalaz Validation
    */
-  val extractViewDimensions
-    : (String, String) => Either[FailureDetails.EnrichmentFailure, (JInteger, JInteger)] =
+  val extractViewDimensions: (String, String) => Either[FailureDetails.EnrichmentFailure, (JInteger, JInteger)] =
     (field, res) =>
       (res match {
         case ResRegex(width, height) =>

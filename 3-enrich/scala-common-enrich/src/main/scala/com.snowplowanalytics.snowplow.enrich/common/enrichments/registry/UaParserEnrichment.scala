@@ -60,9 +60,7 @@ object UaParserEnrichment extends ParseableEnrichment {
    * @param conf Configuration for the ua parser enrichment
    * @return a ua parser enrichment
    */
-  def apply[F[_]: Monad: CreateUaParser](
-    conf: UaParserConf
-  ): EitherT[F, String, UaParserEnrichment] =
+  def apply[F[_]: Monad: CreateUaParser](conf: UaParserConf): EitherT[F, String, UaParserEnrichment] =
     EitherT(CreateUaParser[F].create(conf.uaDatabase.map(_._2)))
       .map(p => UaParserEnrichment(conf.schemaKey, p))
 
@@ -113,9 +111,7 @@ final case class UaParserEnrichment(schemaKey: SchemaKey, parser: Parser) extend
    * @param useragent to extract from. Should be encoded, i.e. not previously decoded.
    * @return the json or the message of the exception, boxed in a Scalaz Validation
    */
-  def extractUserAgent(
-    useragent: String
-  ): Either[FailureDetails.EnrichmentFailure, SelfDescribingData[Json]] =
+  def extractUserAgent(useragent: String): Either[FailureDetails.EnrichmentFailure, SelfDescribingData[Json]] =
     Either
       .catchNonFatal(parser.parse(useragent))
       .leftMap { e =>

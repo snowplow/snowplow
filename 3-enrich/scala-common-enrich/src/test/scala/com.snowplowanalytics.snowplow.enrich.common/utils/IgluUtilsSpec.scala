@@ -327,8 +327,7 @@ class IgluUtilsSpec extends Specification with ValidatedMatchers {
       IgluUtils
         .extractAndValidateInputContexts(input, SpecHelpers.client)
         .value must beValid.like {
-        case sdjs: List[SelfDescribingData[Json]]
-            if sdjs.size == 2 && sdjs.forall(_.schema == emailSentSchema) =>
+        case sdjs: List[SelfDescribingData[Json]] if sdjs.size == 2 && sdjs.forall(_.schema == emailSentSchema) =>
           ok
         case res =>
           ko(s"[$res] are not 2 SDJs with expected schema [${emailSentSchema.toSchemaUri}]")
@@ -508,8 +507,7 @@ class IgluUtilsSpec extends Specification with ValidatedMatchers {
         )
         .value
         .value must beRight.like {
-        case (sdjs: List[SelfDescribingData[Json]], Some(sdj))
-            if sdjs.size == 2 && (sdj :: sdjs).forall(_.schema == emailSentSchema) =>
+        case (sdjs: List[SelfDescribingData[Json]], Some(sdj)) if sdjs.size == 2 && (sdj :: sdjs).forall(_.schema == emailSentSchema) =>
           ok
         case (list, opt) =>
           ko(
