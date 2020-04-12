@@ -234,12 +234,11 @@ class EnrichmentConfigsSpec extends Specification with ValidatedMatchers with Da
 
       "Configuration" | "Custom Rules" |
         configWithDefaultRules !! None |
-        configWithExternalRules !! Some((new URI(externalUri + database), "./ua-parser-rules.yml")) |> {
-        (config, expected) =>
-          {
-            val result = UaParserEnrichment.parse(config, schemaKey)
-            result must beValid(UaParserConf(schemaKey, expected))
-          }
+        configWithExternalRules !! Some((new URI(externalUri + database), "./ua-parser-rules.yml")) |> { (config, expected) =>
+        {
+          val result = UaParserEnrichment.parse(config, schemaKey)
+          result must beValid(UaParserConf(schemaKey, expected))
+        }
       }
     }
   }

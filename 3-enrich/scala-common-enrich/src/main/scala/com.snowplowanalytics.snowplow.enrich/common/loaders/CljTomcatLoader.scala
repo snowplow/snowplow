@@ -66,10 +66,7 @@ object CljTomcatLoader extends Loader[String] {
    * @return either a set of validation errors or an Option-boxed CanonicalInput object, wrapped
    * in a ValidatedNel.
    */
-  override def toCollectorPayload(
-    line: String,
-    processor: Processor
-  ): ValidatedNel[BadRow.CPFormatViolation, Option[CollectorPayload]] = {
+  override def toCollectorPayload(line: String, processor: Processor): ValidatedNel[BadRow.CPFormatViolation, Option[CollectorPayload]] = {
     def build(
       qs: String,
       date: String,

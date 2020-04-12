@@ -204,30 +204,29 @@ class MailchimpAdapterSpec extends Specification with DataTables with ValidatedM
       "Valid, type profile" !! "profile" ! "iglu:com.mailchimp/profile_update/jsonschema/1-0-0" |
       "Valid, type email" !! "upemail" ! "iglu:com.mailchimp/email_address_change/jsonschema/1-0-0" |
       "Valid, type cleaned" !! "cleaned" ! "iglu:com.mailchimp/cleaned_email/jsonschema/1-0-0" |
-      "Valid, type campaign" !! "campaign" ! "iglu:com.mailchimp/campaign_sending_status/jsonschema/1-0-0" |> {
-      (_, schema, expected) =>
-        val body = "type=" + schema
-        val payload = CollectorPayload(
-          Shared.api,
-          Nil,
-          ContentType.some,
-          body.some,
-          Shared.cljSource,
-          Shared.context
-        )
-        val expectedJson = "{\"schema\":\"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0\",\"data\":{\"schema\":\"" + expected + "\",\"data\":{\"type\":\"" + schema + "\"}}}"
-        val actual = MailchimpAdapter.toRawEvents(payload, SpecHelpers.client).value
-        actual must beValid(
-          NonEmptyList.one(
-            RawEvent(
-              Shared.api,
-              Map("tv" -> "com.mailchimp-v1", "e" -> "ue", "p" -> "srv", "ue_pr" -> expectedJson),
-              ContentType.some,
-              Shared.cljSource,
-              Shared.context
-            )
+      "Valid, type campaign" !! "campaign" ! "iglu:com.mailchimp/campaign_sending_status/jsonschema/1-0-0" |> { (_, schema, expected) =>
+      val body = "type=" + schema
+      val payload = CollectorPayload(
+        Shared.api,
+        Nil,
+        ContentType.some,
+        body.some,
+        Shared.cljSource,
+        Shared.context
+      )
+      val expectedJson = "{\"schema\":\"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0\",\"data\":{\"schema\":\"" + expected + "\",\"data\":{\"type\":\"" + schema + "\"}}}"
+      val actual = MailchimpAdapter.toRawEvents(payload, SpecHelpers.client).value
+      actual must beValid(
+        NonEmptyList.one(
+          RawEvent(
+            Shared.api,
+            Map("tv" -> "com.mailchimp-v1", "e" -> "ue", "p" -> "srv", "ue_pr" -> expectedJson),
+            ContentType.some,
+            Shared.cljSource,
+            Shared.context
           )
         )
+      )
     }
 
   def e9 =

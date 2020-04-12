@@ -167,9 +167,7 @@ final case class SqlQueryEnrichment[F[_]: Monad: DbExecutor](
       }
     } yield res.leftMap(_.getMessage)
 
-  private def put(
-    intMap: IntMap[Input.ExtractedValue]
-  ): F[Either[Throwable, List[SelfDescribingData[Json]]]] =
+  private def put(intMap: IntMap[Input.ExtractedValue]): F[Either[Throwable, List[SelfDescribingData[Json]]]] =
     for {
       res <- query(intMap).value
       _ <- cache.put(intMap, (res, System.currentTimeMillis() / 1000))
@@ -181,9 +179,7 @@ final case class SqlQueryEnrichment[F[_]: Monad: DbExecutor](
    * prepared statement
    * @return validated list of Self-describing contexts
    */
-  def query(
-    intMap: IntMap[Input.ExtractedValue]
-  ): EitherT[F, Throwable, List[SelfDescribingData[Json]]] =
+  def query(intMap: IntMap[Input.ExtractedValue]): EitherT[F, Throwable, List[SelfDescribingData[Json]]] =
     for {
       sqlQuery <- DbExecutor.createStatement(db, connection, query.sql, intMap)
       resultSet <- DbExecutor[F].execute(sqlQuery)

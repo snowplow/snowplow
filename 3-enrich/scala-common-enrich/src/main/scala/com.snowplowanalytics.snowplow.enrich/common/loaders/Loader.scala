@@ -39,10 +39,7 @@ abstract class Loader[T] {
    * @param processor processing asset (e.g. Spark enrich)
    * @return a CanonicalInput object, Option-boxed, or None if no input was extractable.
    */
-  def toCollectorPayload(
-    line: T,
-    processor: Processor
-  ): ValidatedNel[BadRow.CPFormatViolation, Option[CollectorPayload]]
+  def toCollectorPayload(line: T, processor: Processor): ValidatedNel[BadRow.CPFormatViolation, Option[CollectorPayload]]
 
   /**
    * Converts a querystring String into a non-empty list of NameValuePairs.
@@ -74,10 +71,7 @@ abstract class Loader[T] {
    * @param time The CloudFront log-format time
    * @return either the timestamp as a Joda DateTime or an error String
    */
-  protected[loaders] def toTimestamp(
-    date: String,
-    time: String
-  ): Either[FailureDetails.CPFormatViolationMessage, DateTime] =
+  protected[loaders] def toTimestamp(date: String, time: String): Either[FailureDetails.CPFormatViolationMessage, DateTime] =
     Either
       .catchNonFatal(DateTime.parse("%sT%s+00:00".format(date, time)))
       .leftMap { e =>

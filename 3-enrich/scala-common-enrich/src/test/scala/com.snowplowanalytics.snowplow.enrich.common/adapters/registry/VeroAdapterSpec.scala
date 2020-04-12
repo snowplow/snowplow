@@ -286,30 +286,29 @@ class VeroAdapterSpec extends Specification with DataTables with ValidatedMatche
       "Valid, type clicked" !! "clicked" ! "iglu:com.getvero/clicked/jsonschema/1-0-0" |
       "Valid, type created" !! "user_created" ! "iglu:com.getvero/created/jsonschema/1-0-0" |
       "Valid, type updated" !! "user_updated" ! "iglu:com.getvero/updated/jsonschema/1-0-0" |
-      "Valid, type bounced" !! "bounced" ! "iglu:com.getvero/bounced/jsonschema/1-0-0" |> {
-      (_, schema, expected) =>
-        val body = "{\"type\":\"" + schema + "\"}"
-        val payload = CollectorPayload(
-          Shared.api,
-          Nil,
-          ContentType.some,
-          body.some,
-          Shared.cljSource,
-          Shared.context
-        )
-        val expectedJson = "{\"schema\":\"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0\",\"data\":{\"schema\":\"" + expected + "\",\"data\":{}}}"
-        val actual = VeroAdapter.toRawEvents(payload, SpecHelpers.client).value
-        actual must beValid(
-          NonEmptyList.one(
-            RawEvent(
-              Shared.api,
-              Map("tv" -> "com.getvero-v1", "e" -> "ue", "p" -> "srv", "ue_pr" -> expectedJson),
-              ContentType.some,
-              Shared.cljSource,
-              Shared.context
-            )
+      "Valid, type bounced" !! "bounced" ! "iglu:com.getvero/bounced/jsonschema/1-0-0" |> { (_, schema, expected) =>
+      val body = "{\"type\":\"" + schema + "\"}"
+      val payload = CollectorPayload(
+        Shared.api,
+        Nil,
+        ContentType.some,
+        body.some,
+        Shared.cljSource,
+        Shared.context
+      )
+      val expectedJson = "{\"schema\":\"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0\",\"data\":{\"schema\":\"" + expected + "\",\"data\":{}}}"
+      val actual = VeroAdapter.toRawEvents(payload, SpecHelpers.client).value
+      actual must beValid(
+        NonEmptyList.one(
+          RawEvent(
+            Shared.api,
+            Map("tv" -> "com.getvero-v1", "e" -> "ue", "p" -> "srv", "ue_pr" -> expectedJson),
+            ContentType.some,
+            Shared.cljSource,
+            Shared.context
           )
         )
+      )
     }
 
   def e10 = {

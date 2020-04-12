@@ -33,10 +33,7 @@ final case class NdjsonLoader(adapter: String) extends Loader[String] {
    * @param line A line of data to convert
    * @return a CanonicalInput object, Option-boxed, or None if no input was extractable.
    */
-  override def toCollectorPayload(
-    line: String,
-    processor: Processor
-  ): ValidatedNel[BadRow.CPFormatViolation, Option[CollectorPayload]] = {
+  override def toCollectorPayload(line: String, processor: Processor): ValidatedNel[BadRow.CPFormatViolation, Option[CollectorPayload]] = {
     val collectorPayload =
       if (line.replaceAll("\r?\n", "").isEmpty)
         None.asRight

@@ -70,9 +70,7 @@ object RefererParserEnrichment extends ParseableEnrichment {
    * @param conf Configuration for the referer parser enrichment
    * @return a referer parser enrichment
    */
-  def apply[F[_]: Monad: CreateParser](
-    conf: RefererParserConf
-  ): EitherT[F, String, RefererParserEnrichment] =
+  def apply[F[_]: Monad: CreateParser](conf: RefererParserConf): EitherT[F, String, RefererParserEnrichment] =
     EitherT(CreateParser[F].create(conf.refererDatabase._2))
       .leftMap(_.getMessage)
       .map(p => RefererParserEnrichment(p, conf.internalDomains))

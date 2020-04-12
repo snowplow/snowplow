@@ -33,12 +33,7 @@ import scala.collection.immutable.IntMap
 trait DbExecutor[F[_]] {
 
   /** Lookup a connection from mutable reference or initialize and put into the cache */
-  def getConnection(
-    db: Rdbms,
-    connRef: ConnectionRef[F]
-  )(
-    implicit M: Monad[F]
-  ): F[Either[Throwable, Connection]]
+  def getConnection(db: Rdbms, connRef: ConnectionRef[F])(implicit M: Monad[F]): F[Either[Throwable, Connection]]
 
   /** Execute a SQL query */
   def execute(query: PreparedStatement): EitherT[F, Throwable, ResultSet]
@@ -49,10 +44,7 @@ trait DbExecutor[F[_]] {
    * @param resultSet rows fetched from DB
    * @return list of successful Self-describing JSON Objects or error
    */
-  def convert(
-    resultSet: ResultSet,
-    names: JsonOutput.PropertyNameMode
-  ): EitherT[F, Throwable, List[Json]]
+  def convert(resultSet: ResultSet, names: JsonOutput.PropertyNameMode): EitherT[F, Throwable, List[Json]]
 
   /** Lift failing ResultSet#getMetaData into scalaz disjunction with Throwable as left-side */
   def getMetaData(rs: ResultSet): EitherT[F, Throwable, ResultSetMetaData]
@@ -88,12 +80,7 @@ object DbExecutor {
   def apply[F[_]](implicit ev: DbExecutor[F]): DbExecutor[F] = ev
 
   implicit def syncDbExecutor[F[_]: Sync]: DbExecutor[F] = new DbExecutor[F] {
-    def getConnection(
-      rdbms: Rdbms,
-      connectionRef: ConnectionRef[F]
-    )(
-      implicit M: Monad[F]
-    ): F[Either[Throwable, Connection]] =
+    def getConnection(rdbms: Rdbms, connectionRef: ConnectionRef[F])(implicit M: Monad[F]): F[Either[Throwable, Connection]] =
       for {
         cachedConnection <- connectionRef.get(()).map(flattenCached)
         connection <- cachedConnection match {
@@ -117,10 +104,7 @@ object DbExecutor {
     def execute(query: PreparedStatement): EitherT[F, Throwable, ResultSet] =
       Sync[F].delay(query.executeQuery()).attemptT
 
-    def convert(
-      resultSet: ResultSet,
-      names: JsonOutput.PropertyNameMode
-    ): EitherT[F, Throwable, List[Json]] =
+    def convert(resultSet: ResultSet, names: JsonOutput.PropertyNameMode): EitherT[F, Throwable, List[Json]] =
       EitherT(Bracket[F, Throwable].bracket(Sync[F].pure(resultSet)) { set =>
         val hasNext = Sync[F].delay(set.next()).attemptT
         val convert = transform(set, names)(this, Monad[F])
@@ -159,12 +143,7 @@ object DbExecutor {
 
   implicit def evalDbExecutor: DbExecutor[Eval] = new DbExecutor[Eval] {
     self =>
-    def getConnection(
-      rdbms: Rdbms,
-      connectionRef: ConnectionRef[Eval]
-    )(
-      implicit M: Monad[Eval]
-    ): Eval[Either[Throwable, Connection]] =
+    def getConnection(rdbms: Rdbms, connectionRef: ConnectionRef[Eval])(implicit M: Monad[Eval]): Eval[Either[Throwable, Connection]] =
       for {
         cachedConnection <- connectionRef.get(()).map(flattenCached)
         connection <- cachedConnection match {
@@ -189,10 +168,7 @@ object DbExecutor {
     def execute(query: PreparedStatement): EitherT[Eval, Throwable, ResultSet] =
       EitherT(Eval.now(Either.catchNonFatal(query.executeQuery())))
 
-    def convert(
-      resultSet: ResultSet,
-      names: JsonOutput.PropertyNameMode
-    ): EitherT[Eval, Throwable, List[Json]] =
+    def convert(resultSet: ResultSet, names: JsonOutput.PropertyNameMode): EitherT[Eval, Throwable, List[Json]] =
       EitherT {
         Eval.always {
           try {
@@ -237,12 +213,7 @@ object DbExecutor {
   }
 
   implicit def idDbExecutor: DbExecutor[Id] = new DbExecutor[Id] {
-    def getConnection(
-      rdbms: Rdbms,
-      connectionRef: ConnectionRef[Id]
-    )(
-      implicit M: Monad[Id]
-    ): Id[Either[Throwable, Connection]] =
+    def getConnection(rdbms: Rdbms, connectionRef: ConnectionRef[Id])(implicit M: Monad[Id]): Id[Either[Throwable, Connection]] =
       flattenCached(connectionRef.get(())) match {
         case Right(conn) if !conn.isClosed =>
           conn.asRight
@@ -257,10 +228,7 @@ object DbExecutor {
     def execute(query: PreparedStatement): EitherT[Id, Throwable, ResultSet] =
       EitherT[Id, Throwable, ResultSet](Either.catchNonFatal(query.executeQuery()))
 
-    def convert(
-      resultSet: ResultSet,
-      names: JsonOutput.PropertyNameMode
-    ): EitherT[Id, Throwable, List[Json]] =
+    def convert(resultSet: ResultSet, names: JsonOutput.PropertyNameMode): EitherT[Id, Throwable, List[Json]] =
       EitherT(
         try {
           val buffer = ListBuffer.empty[EitherT[Id, Throwable, Json]]
@@ -305,10 +273,7 @@ object DbExecutor {
    * @return JSON object as right disjunction in case of success or throwable as left disjunction in
    *         case of any error
    */
-  def transform[F[_]: DbExecutor: Monad](
-    resultSet: ResultSet,
-    propertyNames: JsonOutput.PropertyNameMode
-  ): EitherT[F, Throwable, Json] =
+  def transform[F[_]: DbExecutor: Monad](resultSet: ResultSet, propertyNames: JsonOutput.PropertyNameMode): EitherT[F, Throwable, Json] =
     for {
       rsMeta <- DbExecutor[F].getMetaData(resultSet)
       columnNumbers <- DbExecutor[F].getColumnCount(rsMeta).map((x: Int) => (1 to x).toList)
@@ -372,9 +337,7 @@ object DbExecutor {
     "getConnection: connection is unitialized"
   )
 
-  private def flattenCached(
-    fromCache: Option[Either[Throwable, Connection]]
-  ): Either[Throwable, Connection] =
+  private def flattenCached(fromCache: Option[Either[Throwable, Connection]]): Either[Throwable, Connection] =
     fromCache match {
       case Some(connOrErr) =>
         connOrErr

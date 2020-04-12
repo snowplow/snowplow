@@ -285,10 +285,7 @@ object ConversionUtils {
    * @param uri URI containing the querystring
    * @param encoding Encoding of the URI
    */
-  def extractQuerystring(
-    uri: URI,
-    encoding: Charset
-  ): Either[FailureDetails.EnrichmentFailure, Map[String, String]] =
+  def extractQuerystring(uri: URI, encoding: Charset): Either[FailureDetails.EnrichmentFailure, Map[String, String]] =
     Try(URLEncodedUtils.parse(uri, encoding).asScala.map(p => (p.getName -> p.getValue)))
       .recoverWith {
         case NonFatal(_) =>
@@ -370,10 +367,7 @@ object ConversionUtils {
    * @param field The name of the field we are validating. To use in our error message
    * @return a Scalaz Validation, being either a Failure String or a Success Double
    */
-  def stringToMaybeDouble(
-    field: String,
-    str: String
-  ): Either[FailureDetails.EnrichmentFailure, Option[Double]] =
+  def stringToMaybeDouble(field: String, str: String): Either[FailureDetails.EnrichmentFailure, Option[Double]] =
     Either
       .catchNonFatal {
         if (Option(str).isEmpty || str == "null") {
@@ -423,8 +417,7 @@ object ConversionUtils {
    * @param field The name of the field we are trying to process. To use in our error message
    * @return either a Failure String or a Success Byte
    */
-  val stringToBooleanLikeJByte
-    : (String, String) => Either[FailureDetails.EnrichmentFailure, JByte] =
+  val stringToBooleanLikeJByte: (String, String) => Either[FailureDetails.EnrichmentFailure, JByte] =
     (field, str) =>
       str match {
         case "1" => (1.toByte: JByte).asRight

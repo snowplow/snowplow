@@ -79,10 +79,7 @@ object CloudfrontAccessLogAdapter extends Adapter {
    * @param client The Iglu client used for schema lookup and validation
    * @return a validation boxing either a NEL of raw events or a NEL of failure strings
    */
-  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
-    payload: CollectorPayload,
-    client: Client[F, Json]
-  ): F[
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](payload: CollectorPayload, client: Client[F, Json]): F[
     ValidatedNel[FailureDetails.AdapterFailureOrTrackerProtocolViolation, NonEmptyList[RawEvent]]
   ] =
     payload.body match {

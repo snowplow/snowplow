@@ -78,10 +78,7 @@ object IpLookupsEnrichment extends ParseableEnrichment {
    * @return None if the database isn't being used, Some(Failure) if its URI is invalid,
    * Some(Success) if it is found
    */
-  private def getArgumentFromName(
-    conf: Json,
-    name: String
-  ): Option[ValidatedNel[String, IpLookupsDatabase]] =
+  private def getArgumentFromName(conf: Json, name: String): Option[ValidatedNel[String, IpLookupsDatabase]] =
     if (conf.hcursor.downField("parameters").downField(name).focus.isDefined) {
       val uri = CirceUtils.extract[String](conf, "parameters", name, "uri")
       val db = CirceUtils.extract[String](conf, "parameters", name, "database")

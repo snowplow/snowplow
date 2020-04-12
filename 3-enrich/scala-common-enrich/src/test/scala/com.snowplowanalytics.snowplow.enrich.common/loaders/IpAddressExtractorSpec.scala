@@ -80,11 +80,10 @@ class IpAddressExtractorSpec extends Specification with DataTables {
         "No X-FORWARDED-FOR field" !! "-" ! Default |
         "Incorrect X-FORWARDED-FOR field" !! "incorrect" ! Default |
         "One IP in X-FORWARDED-FOR field" !! "129.78.138.66" ! "129.78.138.66" |
-        "Two IPs in X-FORWARDED-FOR field" !! "129.78.138.66,%20129.78.64.103" ! "129.78.138.66" |> {
-        (_, xForwardedFor, expected) =>
-          {
-            IpAddressExtractor.extractIpAddress(xForwardedFor, Default) must_== expected
-          }
+        "Two IPs in X-FORWARDED-FOR field" !! "129.78.138.66,%20129.78.64.103" ! "129.78.138.66" |> { (_, xForwardedFor, expected) =>
+        {
+          IpAddressExtractor.extractIpAddress(xForwardedFor, Default) must_== expected
+        }
       }
     }
   }

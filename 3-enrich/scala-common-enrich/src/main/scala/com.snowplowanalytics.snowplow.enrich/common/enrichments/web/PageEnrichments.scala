@@ -32,10 +32,7 @@ object PageEnrichments {
    * @param fromTracker The page URI reported by the tracker
    * @return either the chosen page URI, or an error, wrapped in a Validation
    */
-  def extractPageUri(
-    fromReferer: Option[String],
-    fromTracker: Option[String]
-  ): Either[FailureDetails.EnrichmentFailure, Option[URI]] =
+  def extractPageUri(fromReferer: Option[String], fromTracker: Option[String]): Either[FailureDetails.EnrichmentFailure, Option[URI]] =
     ((fromReferer, fromTracker) match {
       case (Some(r), None) => CU.stringToUri(r)
       case (None, Some(t)) => CU.stringToUri(t)
@@ -56,9 +53,7 @@ object PageEnrichments {
    * @param qsMap The querystring converted to a map
    * @return Validation boxing a pair of optional strings corresponding to the two fields
    */
-  def parseCrossDomain(
-    qsMap: Map[String, String]
-  ): Either[FailureDetails.EnrichmentFailure, (Option[String], Option[String])] =
+  def parseCrossDomain(qsMap: Map[String, String]): Either[FailureDetails.EnrichmentFailure, (Option[String], Option[String])] =
     qsMap.get("_sp") match {
       case Some("") => (None, None).asRight
       case Some(sp) =>

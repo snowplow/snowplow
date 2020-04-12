@@ -94,8 +94,7 @@ object IgluUtils {
     enriched: EnrichedEvent,
     client: Client[F, Json],
     field: String = "ue_properties",
-    criterion: SchemaCriterion = SchemaCriterion("com.snowplowanalytics.snowplow", "unstruct_event",
-      "jsonschema", 1, 0)
+    criterion: SchemaCriterion = SchemaCriterion("com.snowplowanalytics.snowplow", "unstruct_event", "jsonschema", 1, 0)
   ): F[Validated[FailureDetails.SchemaViolation, Option[SelfDescribingData[Json]]]] =
     (Option(enriched.unstruct_event) match {
       case Some(rawUnstructEvent) =>
@@ -131,8 +130,7 @@ object IgluUtils {
     enriched: EnrichedEvent,
     client: Client[F, Json],
     field: String = "contexts",
-    criterion: SchemaCriterion = SchemaCriterion("com.snowplowanalytics.snowplow", "contexts",
-      "jsonschema", 1, 0)
+    criterion: SchemaCriterion = SchemaCriterion("com.snowplowanalytics.snowplow", "contexts", "jsonschema", 1, 0)
   ): F[ValidatedNel[FailureDetails.SchemaViolation, List[SelfDescribingData[Json]]]] =
     (Option(enriched.contexts) match {
       case Some(rawContexts) =>
@@ -228,10 +226,7 @@ object IgluUtils {
     } yield data
 
   /** Check that the schema of a SDJ matches the expected one */
-  private def validateCriterion(
-    sdj: SelfDescribingData[Json],
-    criterion: SchemaCriterion
-  ): Boolean =
+  private def validateCriterion(sdj: SelfDescribingData[Json], criterion: SchemaCriterion): Boolean =
     criterion.matches(sdj.schema)
 
   /** Check that a SDJ is valid */

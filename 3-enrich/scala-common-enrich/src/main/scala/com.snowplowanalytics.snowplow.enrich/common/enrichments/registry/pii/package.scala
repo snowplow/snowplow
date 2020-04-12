@@ -80,10 +80,7 @@ package pii {
   /**
    * Parent class for classes that serialize the values that were modified during the PII enrichment
    */
-  private[pii] final case class PiiModifiedFields(
-    modifiedFields: ModifiedFields,
-    strategy: PiiStrategy
-  )
+  private[pii] final case class PiiModifiedFields(modifiedFields: ModifiedFields, strategy: PiiStrategy)
 
   /** Case class for capturing scalar field modifications. */
   private[pii] final case class ScalarModifiedField(

@@ -476,10 +476,7 @@ object GoogleAnalyticsAdapter extends Adapter {
    * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
-    payload: CollectorPayload,
-    client: Client[F, Json]
-  ): F[
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](payload: CollectorPayload, client: Client[F, Json]): F[
     ValidatedNel[FailureDetails.AdapterFailureOrTrackerProtocolViolation, NonEmptyList[RawEvent]]
   ] = {
     val events: Option[NonEmptyList[ValidatedNel[FailureDetails.AdapterFailure, RawEvent]]] = for {
@@ -509,10 +506,7 @@ object GoogleAnalyticsAdapter extends Adapter {
    * @param payload original CollectorPayload
    * @return a Validation boxing either a RawEvent or a NEL of Failure Strings
    */
-  private def parsePayload(
-    bodyPart: String,
-    payload: CollectorPayload
-  ): ValidatedNel[FailureDetails.AdapterFailure, RawEvent] =
+  private def parsePayload(bodyPart: String, payload: CollectorPayload): ValidatedNel[FailureDetails.AdapterFailure, RawEvent] =
     (for {
       params <- parseUrlEncodedForm(bodyPart)
         .leftMap(
@@ -556,8 +550,7 @@ object GoogleAnalyticsAdapter extends Adapter {
         val contextJsons = (contexts.toList ++ compContexts)
           .collect {
             // an unnecessary pageview context might have been built so we need to remove it
-            case (s, d)
-                if hitType != PageViewHitType || s != unstructEventData(PageViewHitType).schemaKey =>
+            case (s, d) if hitType != PageViewHitType || s != unstructEventData(PageViewHitType).schemaKey =>
               SelfDescribingData(s, d.asJson)
           }
         val contextParam: Map[String, String] =
@@ -610,10 +603,7 @@ object GoogleAnalyticsAdapter extends Adapter {
    * @param translationTable mapping between original params and the wanted format
    * @return a translated params
    */
-  private def translatePayload(
-    originalParams: Map[String, String],
-    translationTable: Map[String, String]
-  ): Map[String, String] =
+  private def translatePayload(originalParams: Map[String, String], translationTable: Map[String, String]): Map[String, String] =
     originalParams.foldLeft(Map.empty[String, String]) {
       case (m, (fieldName, value)) =>
         translationTable
@@ -778,9 +768,7 @@ object GoogleAnalyticsAdapter extends Adapter {
    * @param fieldName raw composite field name
    * @return the break down of the field or a failure if it couldn't be parsed
    */
-  private[registry] def breakDownCompField(
-    fieldName: String
-  ): Either[FailureDetails.AdapterFailure, (List[String], List[String])] =
+  private[registry] def breakDownCompField(fieldName: String): Either[FailureDetails.AdapterFailure, (List[String], List[String])] =
     fieldName match {
       case compositeFieldRegex(grps @ _*) => splitEvenOdd(grps.toList.filter(_.nonEmpty)).asRight
       case s if s.isEmpty =>

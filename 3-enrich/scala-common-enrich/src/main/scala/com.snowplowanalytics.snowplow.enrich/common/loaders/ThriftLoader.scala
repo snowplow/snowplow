@@ -25,9 +25,7 @@ import cats.implicits._
 
 import org.joda.time.{DateTime, DateTimeZone}
 
-import com.snowplowanalytics.snowplow.CollectorPayload.thrift.model1.{
-  CollectorPayload => CollectorPayload1
-}
+import com.snowplowanalytics.snowplow.CollectorPayload.thrift.model1.{CollectorPayload => CollectorPayload1}
 import com.snowplowanalytics.snowplow.SchemaSniffer.thrift.model1.SchemaSniffer
 import com.snowplowanalytics.snowplow.collectors.thrift.SnowplowRawEvent
 
@@ -113,9 +111,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
    * @return either a set of validation errors or an Option-boxed CanonicalInput object, wrapped in
    * a ValidatedNel.
    */
-  private def convertSchema1(
-    line: Array[Byte]
-  ): ValidatedNel[FailureDetails.CPFormatViolationMessage, Option[CollectorPayload]] = {
+  private def convertSchema1(line: Array[Byte]): ValidatedNel[FailureDetails.CPFormatViolationMessage, Option[CollectorPayload]] = {
     val collectorPayload = new CollectorPayload1
     this.synchronized {
       thriftDeserializer.deserialize(
@@ -178,9 +174,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
    * @return either a set of validation errors or an Option-boxed CanonicalInput object, wrapped in
    * a ValidatedNel.
    */
-  private def convertOldSchema(
-    line: Array[Byte]
-  ): ValidatedNel[FailureDetails.CPFormatViolationMessage, Option[CollectorPayload]] = {
+  private def convertOldSchema(line: Array[Byte]): ValidatedNel[FailureDetails.CPFormatViolationMessage, Option[CollectorPayload]] = {
     val snowplowRawEvent = new SnowplowRawEvent()
     this.synchronized {
       thriftDeserializer.deserialize(
@@ -214,9 +208,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
     }
   }
 
-  private def parseNetworkUserId(
-    str: String
-  ): Either[FailureDetails.CPFormatViolationMessage, UUID] =
+  private def parseNetworkUserId(str: String): Either[FailureDetails.CPFormatViolationMessage, UUID] =
     Either
       .catchOnly[IllegalArgumentException](UUID.fromString(str))
       .leftMap(

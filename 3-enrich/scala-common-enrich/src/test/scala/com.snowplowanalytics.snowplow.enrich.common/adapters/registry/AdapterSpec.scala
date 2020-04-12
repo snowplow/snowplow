@@ -54,10 +54,7 @@ class AdapterSpec extends Specification with DataTables with ValidatedMatchers {
   // TODO: add test for buildFormatter()
 
   object BaseAdapter extends Adapter {
-    override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
-      payload: CollectorPayload,
-      client: Client[F, Json]
-    ) = {
+    override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](payload: CollectorPayload, client: Client[F, Json]) = {
       val _ = client
       Monad[F].pure(
         FailureDetails.AdapterFailure

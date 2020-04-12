@@ -160,13 +160,12 @@ class ExplodeUriSpec extends Specification with DataTables {
       ) ! None ! None |
       "Tab & newline in #" !! "http://psy.bz/oracles/psycards.html?view=print#detail%09is%0Acorrupted" ! "http" ! "psy.bz" ! 80 ! Some(
         "/oracles/psycards.html"
-      ) ! Some("view=print") ! Some("detail%09is%0Acorrupted") |> {
-      (_, uri, scheme, host, port, path, query, fragment) =>
-        {
-          val actual = ConversionUtils.explodeUri(new URI(uri))
-          val expected = ConversionUtils.UriComponents(scheme, host, port, path, query, fragment)
-          actual must_== expected
-        }
+      ) ! Some("view=print") ! Some("detail%09is%0Acorrupted") |> { (_, uri, scheme, host, port, path, query, fragment) =>
+      {
+        val actual = ConversionUtils.explodeUri(new URI(uri))
+        val expected = ConversionUtils.UriComponents(scheme, host, port, path, query, fragment)
+        actual must_== expected
+      }
 
     }
 }

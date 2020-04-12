@@ -73,8 +73,7 @@ object AnonIPv4Octets extends Enumeration {
     Either
       .catchNonFatal(AnonIPv4Octets(anonIPv4Octets))
       .leftMap(
-        e =>
-          s"IPv4 address octets to anonymize must be 1, 2, 3 or 4. Value: $anonIPv4Octets was given. Error: [${e.getMessage}]"
+        e => s"IPv4 address octets to anonymize must be 1, 2, 3 or 4. Value: $anonIPv4Octets was given. Error: [${e.getMessage}]"
       )
 }
 
@@ -131,10 +130,8 @@ object AnonIPv6Segments extends Enumeration {
  * @param ipv4Octets The number of octets (IPv4) to anonymize, starting from the right
  * @param ipv6Segments The number of segments (IPv6) to anonymize, starting from the right
  */
-final case class AnonIpEnrichment(
-  ipv4Octets: AnonIPv4Octets.AnonIPv4Octets,
-  ipv6Segments: AnonIPv6Segments.AnonIPv6Segments
-) extends Enrichment {
+final case class AnonIpEnrichment(ipv4Octets: AnonIPv4Octets.AnonIPv4Octets, ipv6Segments: AnonIPv6Segments.AnonIPv6Segments)
+    extends Enrichment {
 
   val IPv4MappedAddressPrefix = "::FFFF:"
   val MaskChar = "x"

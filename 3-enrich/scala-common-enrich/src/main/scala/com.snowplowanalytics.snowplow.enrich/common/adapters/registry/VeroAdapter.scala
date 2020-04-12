@@ -58,10 +58,7 @@ object VeroAdapter extends Adapter {
    * @param client The Iglu client used for schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
-    payload: CollectorPayload,
-    client: Client[F, Json]
-  ): F[
+  override def toRawEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](payload: CollectorPayload, client: Client[F, Json]): F[
     ValidatedNel[FailureDetails.AdapterFailureOrTrackerProtocolViolation, NonEmptyList[RawEvent]]
   ] =
     (payload.body, payload.contentType) match {
@@ -85,10 +82,7 @@ object VeroAdapter extends Adapter {
    * @param payload The details of the payload
    * @return a Validation boxing either a NEL of RawEvents on Success, or a NEL of Failure Strings
    */
-  private def payloadBodyToEvent(
-    json: String,
-    payload: CollectorPayload
-  ): Either[FailureDetails.AdapterFailure, RawEvent] =
+  private def payloadBodyToEvent(json: String, payload: CollectorPayload): Either[FailureDetails.AdapterFailure, RawEvent] =
     for {
       parsed <- JsonUtils
         .extractJson(json)

@@ -210,10 +210,7 @@ object Input {
    * @param criterion part of URI
    * @return first (optional) self-desc JSON matched `schemaCriterion`
    */
-  def getBySchemaCriterion(
-    contexts: List[SelfDescribingData[JSON]],
-    criterion: SchemaCriterion
-  ): Option[JSON] =
+  def getBySchemaCriterion(contexts: List[SelfDescribingData[JSON]], criterion: SchemaCriterion): Option[JSON] =
     contexts.find(context => criterion.matches(context.schema)).map(_.data)
 
   /**

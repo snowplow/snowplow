@@ -78,9 +78,7 @@ object CurrencyConversionEnrichment extends ParseableEnrichment {
    * @param conf Configuration for the currency conversion enrichment
    * @return a currency conversion enrichment
    */
-  def apply[F[_]: Monad: CreateForex](
-    conf: CurrencyConversionConf
-  ): F[CurrencyConversionEnrichment[F]] =
+  def apply[F[_]: Monad: CreateForex](conf: CurrencyConversionConf): F[CurrencyConversionEnrichment[F]] =
     CreateForex[F]
       .create(
         ForexConfig(conf.apiKey, conf.accountType, baseCurrency = conf.baseCurrency)

@@ -242,8 +242,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
           ),
           PiiJson(
             fieldMutator = JsonMutators("unstruct_event"),
-            schemaCriterion =
-              SchemaCriterion("com.mailgun", "message_clicked", "jsonschema", 1, 0, 0),
+            schemaCriterion = SchemaCriterion("com.mailgun", "message_clicked", "jsonschema", 1, 0, 0),
             jsonPath = "$.ip"
           )
         ),
@@ -418,8 +417,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
         List(
           PiiJson(
             fieldMutator = JsonMutators.get("contexts").get,
-            schemaCriterion =
-              SchemaCriterion("com.acme", "email_sent", "jsonschema", 1.some, None, 0.some),
+            schemaCriterion = SchemaCriterion("com.acme", "email_sent", "jsonschema", 1.some, None, 0.some),
             jsonPath = "$.emailAddress"
           )
         ),
@@ -524,8 +522,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
           ),
           PiiJson(
             fieldMutator = JsonMutators("unstruct_event"),
-            schemaCriterion =
-              SchemaCriterion("com.mailgun", "message_clicked", "jsonschema", 1, 0, 0),
+            schemaCriterion = SchemaCriterion("com.mailgun", "message_clicked", "jsonschema", 1, 0, 0),
             jsonPath = "$.ip"
           )
         ),

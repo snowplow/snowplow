@@ -88,16 +88,12 @@ object CloudfrontLoader extends Loader[String] {
    * @return either a set of validation errors or an Option-boxed CanonicalInput object, wrapped
    * in a ValidatedNel.
    */
-  override def toCollectorPayload(
-    line: String,
-    processor: Processor
-  ): ValidatedNel[BadRow.CPFormatViolation, Option[CollectorPayload]] =
+  override def toCollectorPayload(line: String, processor: Processor): ValidatedNel[BadRow.CPFormatViolation, Option[CollectorPayload]] =
     (line match {
       // 1. Header row
       case h if h.startsWith("#Version:") || h.startsWith("#Fields:") => None.valid
       // 2. Not a GET request
-      case CfOriginalPlusAdditionalRegex(_, _, _, _, _, op, _, _, _, _, _, _)
-          if op.toUpperCase != "GET" =>
+      case CfOriginalPlusAdditionalRegex(_, _, _, _, _, op, _, _, _, _, _, _) if op.toUpperCase != "GET" =>
         val msg = "operation must be GET"
         FailureDetails.CPFormatViolationMessage
           .InputData("verb", op.toUpperCase().some, msg)
@@ -164,8 +160,7 @@ object CloudfrontLoader extends Loader[String] {
     qs: String,
     forwardedFor: String = "-"
   ) {
-    def toValidatedMaybeCollectorPayload
-      : ValidatedNel[FailureDetails.CPFormatViolationMessage, Option[CollectorPayload]] = {
+    def toValidatedMaybeCollectorPayload: ValidatedNel[FailureDetails.CPFormatViolationMessage, Option[CollectorPayload]] = {
       val timestamp = toTimestamp(date, time)
       val querystring =
         parseQuerystring(toOption(singleEncodePcts(qs)), CollectorEncoding)
@@ -178,12 +173,11 @@ object CloudfrontLoader extends Loader[String] {
 
       val collectorApi = CollectorPayload.parseApi(path)
 
-      (timestamp.toValidatedNel, querystring.toValidatedNel, collectorApi.toValidatedNel).mapN {
-        (t, q, a) =>
-          val source = CollectorPayload.Source(CollectorName, CollectorEncoding.toString, None)
-          val context =
-            CollectorPayload.Context(Some(t), toOption(ip), toOption(userAgent), referer, Nil, None)
-          CollectorPayload(a, q, None, None, source, context).some
+      (timestamp.toValidatedNel, querystring.toValidatedNel, collectorApi.toValidatedNel).mapN { (t, q, a) =>
+        val source = CollectorPayload.Source(CollectorName, CollectorEncoding.toString, None)
+        val context =
+          CollectorPayload.Context(Some(t), toOption(ip), toOption(userAgent), referer, Nil, None)
+        CollectorPayload(a, q, None, None, source, context).some
       }
     }
   }
