@@ -16,7 +16,7 @@ package registry
 package pii
 
 import cats.Id
-import cats.data.ValidatedNel
+import cats.data.Validated
 import cats.syntax.option._
 import cats.syntax.validated._
 
@@ -57,9 +57,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
   Hashing configured JSON fields in POJO should not create new fields                                         $e8
   """
 
-  def commonSetup(
-    enrichmentReg: EnrichmentRegistry[Id]
-  ): List[ValidatedNel[BadRow, EnrichedEvent]] = {
+  def commonSetup(enrichmentReg: EnrichmentRegistry[Id]): List[Validated[BadRow, EnrichedEvent]] = {
     val context =
       CollectorPayload.Context(
         Some(DateTime.parse("2017-07-14T03:39:39.000+00:00")),
