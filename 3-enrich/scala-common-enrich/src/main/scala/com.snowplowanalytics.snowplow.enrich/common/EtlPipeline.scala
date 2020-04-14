@@ -13,20 +13,27 @@
 package com.snowplowanalytics.snowplow.enrich.common
 
 import cats.Monad
-import cats.data.{EitherT, NonEmptyList, Validated, ValidatedNel}
+import cats.data.{Validated, ValidatedNel}
 import cats.effect.Clock
 import cats.implicits._
+
+import io.circe.Json
+
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
-import com.snowplowanalytics.snowplow.badrows._
-import io.circe.Json
+
+import com.snowplowanalytics.snowplow.badrows.{BadRow, Processor}
+
 import org.joda.time.DateTime
 
-import adapters.AdapterRegistry
-import enrichments.{EnrichmentManager, EnrichmentRegistry}
-import loaders.CollectorPayload
-import outputs.EnrichedEvent
-import utils.HttpClient
+import com.snowplowanalytics.snowplow.enrich.common.adapters.AdapterRegistry
+import com.snowplowanalytics.snowplow.enrich.common.enrichments.{
+  EnrichmentManager,
+  EnrichmentRegistry
+}
+import com.snowplowanalytics.snowplow.enrich.common.loaders.CollectorPayload
+import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
+import com.snowplowanalytics.snowplow.enrich.common.utils.HttpClient
 
 /** Expresses the end-to-end event pipeline supported by the Scala Common Enrich project. */
 object EtlPipeline {
@@ -52,37 +59,30 @@ object EtlPipeline {
     processor: Processor,
     etlTstamp: DateTime,
     input: ValidatedNel[BadRow, Option[CollectorPayload]]
-  ): F[List[ValidatedNel[BadRow, EnrichedEvent]]] = {
-    def flattenToList(
-      v: ValidatedNel[BadRow, Option[ValidatedNel[BadRow, NonEmptyList[EnrichedEvent]]]]
-    ): List[ValidatedNel[BadRow, EnrichedEvent]] =
-      v match {
-        case Validated.Valid(Some(Validated.Valid(nel))) => nel.toList.map(_.valid)
-        case Validated.Valid(Some(Validated.Invalid(f))) => List(f.invalid)
-        case Validated.Invalid(f) => List(f.invalid)
-        case Validated.Valid(None) => Nil
-      }
-
-    val e = for {
-      maybePayload <- input
-    } yield for {
-      payload <- maybePayload
-    } yield (for {
-      events <- EitherT(
+  ): F[List[Validated[BadRow, EnrichedEvent]]] =
+    input match {
+      case Validated.Valid(Some(payload)) =>
         adapterRegistry
           .toRawEvents(payload, client, processor)
-          .map(_.toValidatedNel.toEither)
-      )
-      enrichedEvents <- events.map { e =>
-        EitherT(
-          EnrichmentManager
-            .enrichEvent(enrichmentRegistry, client, processor, etlTstamp, e)
-            .value
-            .map(_.toEitherNel)
-        )
-      }.sequence
-    } yield enrichedEvents).value.map(_.toValidated)
-
-    e.map(_.sequence).sequence.map(flattenToList)
-  }
+          .flatMap {
+            case Validated.Valid(rawEvents) =>
+              rawEvents.toList.traverse { event =>
+                EnrichmentManager
+                  .enrichEvent(
+                    enrichmentRegistry,
+                    client,
+                    processor,
+                    etlTstamp,
+                    event
+                  )
+                  .toValidated
+              }
+            case Validated.Invalid(badRow) =>
+              Monad[F].pure(List(badRow.invalid[EnrichedEvent]))
+          }
+      case Validated.Invalid(badRows) =>
+        Monad[F].pure(badRows.map(_.invalid[EnrichedEvent])).map(_.toList)
+      case Validated.Valid(None) =>
+        Monad[F].pure(List.empty[Validated[BadRow, EnrichedEvent]])
+    }
 }
