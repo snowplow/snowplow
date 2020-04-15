@@ -305,16 +305,18 @@ object SpecHelpers {
   )
 
   val kafkaConfig: CloudAgnosticPlatformConfig =
-    Kafka(Some(AWSCredentials("access1", "secret1")), None, "", 0, None, None)
-  val nsqConfigWithoutCreds: CloudAgnosticPlatformConfig = Nsq(None, None, "", "", 0, "", 0)
+    Kafka(Some(AWSCredentials("access1", "secret1")), None, None, "", 0, None, None)
+  val nsqConfigWithoutCreds: CloudAgnosticPlatformConfig = Nsq(None, None, None, "", "", 0, "", 0)
   val nsqConfigWithCreds: CloudAgnosticPlatformConfig = Nsq(
     Some(AWSCredentials("access2", "secret2")),
     Some(GCPCredentials("credsPath1")),
+    None,
     "",
     "",
     0,
     "",
     0
   )
-  val stdinConfig: CloudAgnosticPlatformConfig = Stdin(None, Some(GCPCredentials("credsPath2")))
+  val stdinConfig: CloudAgnosticPlatformConfig =
+    Stdin(None, Some(GCPCredentials("credsPath2")), None)
 }

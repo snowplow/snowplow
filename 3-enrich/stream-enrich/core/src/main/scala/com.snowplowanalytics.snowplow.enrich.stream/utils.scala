@@ -138,11 +138,17 @@ object utils {
   def downloadFromS3(
     provider: AWSCredentialsProvider,
     uri: URI,
-    targetFile: File
+    targetFile: File,
+    region: Option[String]
   ): Either[String, Unit] =
     for {
       s3Client <- Either
-        .catchNonFatal(AmazonS3ClientBuilder.standard().withCredentials(provider).build())
+        .catchNonFatal(
+          region
+            .fold(AmazonS3ClientBuilder.standard().withCredentials(provider).build())(
+              r => AmazonS3ClientBuilder.standard().withCredentials(provider).withRegion(r).build()
+            )
+        )
         .leftMap(_.getMessage)
       bucketName = uri.getHost
       key = extractObjectKey(uri)

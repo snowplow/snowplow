@@ -44,7 +44,7 @@ object StdinSource {
   ): Either[String, StdinSource] =
     for {
       _ <- config.sourceSink match {
-        case Stdin(_, _) => ().asRight
+        case Stdin(_, _, _) => ().asRight
         case _ => "Configured source/sink is not Stdin".asLeft
       }
     } yield new StdinSource(

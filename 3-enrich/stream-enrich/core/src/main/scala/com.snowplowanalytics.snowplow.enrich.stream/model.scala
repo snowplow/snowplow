@@ -63,6 +63,14 @@ object model {
   sealed trait AWSNativePlatformConfig extends TargetPlatformConfig {
     def aws: AWSCredentials
     def gcp: Option[GCPCredentials]
+
+    /** Represents AWS region
+     *
+     *  Note: Stream Enrich has been configured for AWS only until 1.1.0 and
+     *  backward compatibility of the configuration requires not to change
+     *  field name.
+     */
+    def region: String
   }
 
   /** Represents configurations of all Stream Enrich targets that is cloud agnostic
@@ -72,6 +80,11 @@ object model {
   sealed trait CloudAgnosticPlatformConfig extends TargetPlatformConfig {
     def aws: Option[AWSCredentials]
     def gcp: Option[GCPCredentials]
+
+    /** Represents optional AWS region of the S3 bucket which stores private
+     *  data required for any enrichment
+     */
+    def region: Option[String]
   }
 
   final case class Kinesis(
@@ -101,6 +114,7 @@ object model {
   final case class Kafka(
     aws: Option[AWSCredentials],
     gcp: Option[GCPCredentials],
+    region: Option[String],
     brokers: String,
     retries: Int,
     consumerConf: Option[Map[String, String]],
@@ -109,14 +123,18 @@ object model {
   final case class Nsq(
     aws: Option[AWSCredentials],
     gcp: Option[GCPCredentials],
+    region: Option[String],
     rawChannel: String,
     host: String,
     port: Int,
     lookupHost: String,
     lookupPort: Int
   ) extends CloudAgnosticPlatformConfig
-  final case class Stdin(aws: Option[AWSCredentials], gcp: Option[GCPCredentials])
-      extends CloudAgnosticPlatformConfig
+  final case class Stdin(
+    aws: Option[AWSCredentials],
+    gcp: Option[GCPCredentials],
+    region: Option[String]
+  ) extends CloudAgnosticPlatformConfig
 
   final case class BufferConfig(
     byteLimit: Long,

@@ -63,13 +63,19 @@ trait Enrich {
     val trackerSource: Either[String, (Option[Tracker[Id]], Source)] = for {
       config <- parseConfig(args)
       (enrichConfig, resolverArg, enrichmentsArg, forceDownload) = config
-      credentials <- enrichConfig.streams.sourceSink match {
-        case c: CloudAgnosticPlatformConfig => extractCredentials(c).asRight
+      credsWithRegion <- enrichConfig.streams.sourceSink match {
+        case c: CloudAgnosticPlatformConfig => (extractCredentials(c), c.region).asRight
         case _ => "Configured source/sink is not a cloud agnostic target".asLeft
       }
       client <- parseClient(resolverArg)
       enrichmentsConf <- parseEnrichmentRegistry(enrichmentsArg, client)(implicitly)
-      _ <- cacheFiles(enrichmentsConf, forceDownload, credentials.aws, credentials.gcp)
+      _ <- cacheFiles(
+        enrichmentsConf,
+        forceDownload,
+        credsWithRegion._1.aws,
+        credsWithRegion._1.gcp,
+        credsWithRegion._2
+      )
       tracker = enrichConfig.monitoring.map(c => SnowplowTracking.initializeTracker(c.snowplow))
       enrichmentRegistry <- EnrichmentRegistry.build[Id](enrichmentsConf).value
       adapterRegistry = new AdapterRegistry(prepareRemoteAdapters(enrichConfig.remoteAdapters))
@@ -257,7 +263,8 @@ a  * @param creds optionally necessary credentials to download the resolver
     uri: URI,
     targetFile: File,
     awsCreds: Credentials,
-    gcpCreds: Credentials
+    gcpCreds: Credentials,
+    region: Option[String]
   ): Either[String, Unit] =
     uri.getScheme match {
       case "http" | "https" =>
@@ -268,7 +275,7 @@ a  * @param creds optionally necessary credentials to download the resolver
       case "s3" =>
         for {
           provider <- getAWSCredentialsProvider(awsCreds)
-          downloadResult <- downloadFromS3(provider, uri, targetFile)
+          downloadResult <- downloadFromS3(provider, uri, targetFile, region)
         } yield downloadResult
       case "gs" =>
         for {
@@ -290,7 +297,8 @@ a  * @param creds optionally necessary credentials to download the resolver
     confs: List[EnrichmentConf],
     forceDownload: Boolean,
     awsCreds: Credentials,
-    gcpCreds: Credentials
+    gcpCreds: Credentials,
+    region: Option[String]
   ): Either[String, Unit] =
     confs
       .flatMap(_.filesToCache)
@@ -307,7 +315,7 @@ a  * @param creds optionally necessary credentials to download the resolver
       }
       .map {
         case (cleanURI, targetFile) =>
-          download(cleanURI, targetFile, awsCreds, gcpCreds).leftMap { err =>
+          download(cleanURI, targetFile, awsCreds, gcpCreds, region).leftMap { err =>
             s"Attempt to download $cleanURI to $targetFile failed: $err"
           }
       }

@@ -55,14 +55,23 @@ object KinesisEnrich extends Enrich {
     val trackerSource = for {
       config <- parseConfig(args)
       (enrichConfig, resolverArg, enrichmentsArg, forceDownload) = config
-      creds <- enrichConfig.streams.sourceSink match {
-        case c: Kinesis =>
-          DualCloudCredentialsPair(c.aws, c.gcp.fold[Credentials](NoCredentials)(identity)).asRight
+      credsWithRegion <- enrichConfig.streams.sourceSink match {
+        case k: Kinesis =>
+          (
+            DualCloudCredentialsPair(k.aws, k.gcp.fold[Credentials](NoCredentials)(identity)),
+            k.region
+          ).asRight
         case _ => "Configured source/sink is not Kinesis".asLeft
       }
-      client <- parseClient(resolverArg)(creds.aws)
-      enrichmentsConf <- parseEnrichmentRegistry(enrichmentsArg, client)(creds.aws)
-      _ <- cacheFiles(enrichmentsConf, forceDownload, creds.aws, creds.gcp)
+      client <- parseClient(resolverArg)(credsWithRegion._1.aws)
+      enrichmentsConf <- parseEnrichmentRegistry(enrichmentsArg, client)(credsWithRegion._1.aws)
+      _ <- cacheFiles(
+        enrichmentsConf,
+        forceDownload,
+        credsWithRegion._1.aws,
+        credsWithRegion._1.gcp,
+        Option(credsWithRegion._2)
+      )
       enrichmentRegistry <- EnrichmentRegistry.build[Id](enrichmentsConf).value
       tracker = enrichConfig.monitoring.map(c => SnowplowTracking.initializeTracker(c.snowplow))
       adapterRegistry = new AdapterRegistry(prepareRemoteAdapters(enrichConfig.remoteAdapters))
