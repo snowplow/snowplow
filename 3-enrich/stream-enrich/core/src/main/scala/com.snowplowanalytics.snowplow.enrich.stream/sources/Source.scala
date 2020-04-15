@@ -27,7 +27,7 @@ import java.util.UUID
 import scala.util.Random
 
 import cats.Id
-import cats.data.ValidatedNel
+import cats.data.{Validated, ValidatedNel}
 import cats.data.Validated.{Invalid, Valid}
 import cats.syntax.option._
 import cats.syntax.validated._
@@ -198,10 +198,10 @@ abstract class Source(
    */
   def enrichEvents(
     binaryData: Array[Byte]
-  ): List[ValidatedNel[(BadRow, String), (String, String, Option[String])]] = {
+  ): List[Validated[(BadRow, String), (String, String, Option[String])]] = {
     val canonicalInput: ValidatedNel[BadRow, Option[CollectorPayload]] =
       ThriftLoader.toCollectorPayload(binaryData, processor)
-    val processedEvents: List[ValidatedNel[BadRow, EnrichedEvent]] =
+    val processedEvents: List[Validated[BadRow, EnrichedEvent]] =
       EtlPipeline.processEvents(
         adapterRegistry,
         enrichmentRegistry,
@@ -217,7 +217,7 @@ abstract class Source(
           getProprertyValue(ee, partitionKey),
           getPiiEvent(ee).map(tabSeparateEnrichedEvent)
         ).valid
-      case Invalid(nel) => nel.map(_ -> Random.nextInt().toString()).invalid
+      case Invalid(br) => (br, Random.nextInt().toString()).invalid
     }
   }
 
@@ -231,9 +231,9 @@ abstract class Source(
    */
   def enrichAndStoreEvents(binaryData: List[Array[Byte]]): Boolean = {
     val enrichedEvents = binaryData.flatMap(enrichEvents)
-    val successes = enrichedEvents.collect { case Valid(s) => s }
-    val sizeUnadjustedFailures = enrichedEvents.collect { case Invalid(s) => s }
-    val failures = sizeUnadjustedFailures.map(_.toList).flatten.map {
+    val successes = enrichedEvents.collect { case Valid(ee) => ee }
+    val sizeUnadjustedFailures = enrichedEvents.collect { case Invalid(br) => br }
+    val failures = sizeUnadjustedFailures.map {
       case (value, key) =>
         MaxRecordSize.flatMap(s => if (Source.getSizeBr(value) >= s) s.some else none) match {
           case None => value -> key
