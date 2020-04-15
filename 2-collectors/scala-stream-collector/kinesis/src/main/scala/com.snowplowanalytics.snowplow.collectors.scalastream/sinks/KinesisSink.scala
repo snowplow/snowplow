@@ -68,7 +68,7 @@ object KinesisSink {
             streamName,
             executorService,
             sqsClientAndName,
-            sqsKeyValueSeparator.getOrElse("|")
+            sqsKeyValueSeparator.flatMap(_.headOption).getOrElse('|')
           )
         ks.scheduleFlush()
 
@@ -177,7 +177,7 @@ class KinesisSink private (
   streamName: String,
   executorService: ScheduledExecutorService,
   maybeSqs: Option[SqsClientAndName],
-  sqsKeyValueSeparator: String
+  sqsKeyValueSeparator: Char
 ) extends Sink {
   // Records must not exceed MaxBytes - 1MB
   val MaxBytes = 1000000
@@ -324,7 +324,9 @@ class KinesisSink private (
           // Sqs doesn't support keys, so `|` is used as a separator. The same needs to be set up in
           // sqs2kinesis project to decode the key - value pair.
           val msgWithKey =
-            ByteBuffer.wrap(Array.concat(key.getBytes, sqsKeyValueSeparator.getBytes, msg.array))
+            ByteBuffer.wrap(
+              Array.concat(key.getBytes, Array(sqsKeyValueSeparator.toByte), msg.array)
+            )
           val b64Encoded = encode(msgWithKey)
           new SendMessageBatchRequestEntry(UUID.randomUUID.toString, b64Encoded)
       }
