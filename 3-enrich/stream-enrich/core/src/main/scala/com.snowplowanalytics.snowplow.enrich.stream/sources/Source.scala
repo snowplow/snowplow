@@ -100,7 +100,10 @@ object Source {
     )
   }
 
-  val brToString: BadRow => String = br => br.compact
+  val brToString: BadRow => String = br => {
+    println(s"--------- bad row [$br] ------------")
+    br.compact
+  }
 
   /** The size of a string in bytes */
   val getSize: String => Int = evt => ByteBuffer.wrap(evt.getBytes(UTF_8)).capacity
