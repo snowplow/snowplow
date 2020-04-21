@@ -32,6 +32,7 @@ object Dependencies {
     val slf4j                = "1.7.26"
     val config               = "1.3.4"
     val prometheus           = "0.6.0"
+    val cbor                 = "2.9.10" // See snowplow/snowplow/issues/4266
     // Scala
     val collectorPayload     = "0.0.0"
     val scalaz7              = "7.0.9"
@@ -47,16 +48,17 @@ object Dependencies {
 
   object Libraries {
     // Java
-    val kinesis              = "com.amazonaws"         %  "aws-java-sdk-kinesis"   % V.awsSdk
-    val pubsub               = "com.google.cloud"      %  "google-cloud-pubsub"    % V.pubsub
-    val kafkaClients         = "org.apache.kafka"      %  "kafka-clients"          % V.kafka
-    val nsqClient            = "com.snowplowanalytics" %  "nsq-java-client"        % V.nsqClient
-    val jodaTime             = "joda-time"             %  "joda-time"              % V.jodaTime
-    val slf4j                = "org.slf4j"             %  "slf4j-simple"           % V.slf4j
-    val log4jOverSlf4j       = "org.slf4j"             %  "log4j-over-slf4j"       % V.slf4j
-    val config               = "com.typesafe"          %  "config"                 % V.config
-    val prometheus           = "io.prometheus"         %  "simpleclient"           % V.prometheus
-    val prometheusCommon     = "io.prometheus"         %  "simpleclient_common"    % V.prometheus
+    val kinesis              = "com.amazonaws"                    %  "aws-java-sdk-kinesis"   % V.awsSdk
+    val pubsub               = "com.google.cloud"                 %  "google-cloud-pubsub"    % V.pubsub
+    val kafkaClients         = "org.apache.kafka"                 %  "kafka-clients"          % V.kafka
+    val nsqClient            = "com.snowplowanalytics"            %  "nsq-java-client"        % V.nsqClient
+    val jodaTime             = "joda-time"                        %  "joda-time"              % V.jodaTime
+    val slf4j                = "org.slf4j"                        %  "slf4j-simple"           % V.slf4j
+    val log4jOverSlf4j       = "org.slf4j"                        %  "log4j-over-slf4j"       % V.slf4j
+    val config               = "com.typesafe"                     %  "config"                 % V.config
+    val prometheus           = "io.prometheus"                    %  "simpleclient"           % V.prometheus
+    val prometheusCommon     = "io.prometheus"                    %  "simpleclient_common"    % V.prometheus
+    val cbor                 = "com.fasterxml.jackson.dataformat" % "jackson-dataformat-cbor" % V.cbor
 
     // Scala
     val collectorPayload     = "com.snowplowanalytics" %  "collector-payload-1"    % V.collectorPayload
