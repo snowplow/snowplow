@@ -69,6 +69,15 @@ enrich {
       # customEndpoint = {{kinesisEndpoint}}
       # customEndpoint = ${?ENRICH_STREAMS_SOURCE_SINK_CUSTOM_ENDPOINT}
 
+      ## Optional endpoint url configuration to override aws dyanomdb endpoints for Kinesis checkpoints lease table,
+      ## this can be used to specify local endpoints when using Localstack
+      # dynamodbCustomEndpoint = "http://localhost:4569"
+      # dynamodbCustomEndpoint = ${?ENRICH_DYNAMODB_CUSTOM_ENDPOINT}
+
+      # Optional override to disable cloudwatch
+      # disableCloudWatch = true
+      # disableCloudWatch = ${?ENRICH_DISABLE_CLOUDWATCH}
+
       # AWS credentials
       # If both are set to 'default', use the default AWS credentials provider chain.
       # If both are set to 'iam', use AWS IAM Roles to provision credentials.
