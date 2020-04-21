@@ -159,9 +159,8 @@ object KinesisSink {
   ): Either[Throwable, Option[SqsClientAndName]] =
     sqsBufferName match {
       case Some(name) =>
-        for {
-          amazonSqs <- createSqsClient(provider, region)
-        } yield Some(SqsClientAndName(amazonSqs, name))
+        createSqsClient(provider, region)
+          .map(amazonSqs => Some(SqsClientAndName(amazonSqs, name)))
       case None => None.asRight
     }
 
@@ -336,16 +335,19 @@ class KinesisSink private (
           new SendMessageBatchRequest()
             .withQueueUrl(sqs.sqsBufferName)
             .withEntries(encodedGroup.asJava)
-        Try {
-          sqs.sqsClient.sendMessageBatch(batchRequest)
-          log.info(
-            s"Batch of ${encodedGroup.size} was sent to SQS queue: ${sqs.sqsBufferName}"
-          )
-          ()
-        }.recover {
-          case e =>
-            log.error(s"Error sending to SQS queue(${sqs.sqsBufferName}): ${e.getMessage()}")
-        }
+
+        Either
+          .catchNonFatal {
+            sqs.sqsClient.sendMessageBatch(batchRequest)
+            log.info(
+              s"Batch of ${encodedGroup.size} was sent to SQS queue: ${sqs.sqsBufferName}"
+            )
+            ()
+          }
+          .recover {
+            case e =>
+              log.error(s"Error sending to SQS queue(${sqs.sqsBufferName}): ${e.getMessage()}")
+          }
       }
     }
 
