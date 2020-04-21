@@ -95,7 +95,9 @@ object model {
     initialPosition: String,
     initialTimestamp: Option[String],
     backoffPolicy: KinesisBackoffPolicyConfig,
-    customEndpoint: Option[String]
+    customEndpoint: Option[String],
+    dynamodbCustomEndpoint: Option[String],
+    disableCloudWatch: Option[Boolean]
   ) extends AWSNativePlatformConfig {
     val timestamp = initialTimestamp
       .toRight("An initial timestamp needs to be provided when choosing AT_TIMESTAMP")
@@ -109,6 +111,11 @@ object model {
     val streamEndpoint = customEndpoint.getOrElse(region match {
       case cn @ "cn-north-1" => s"https://kinesis.$cn.amazonaws.com.cn"
       case _ => s"https://kinesis.$region.amazonaws.com"
+    })
+
+    val dynamodbEndpoint = dynamodbCustomEndpoint.getOrElse(region match {
+      case cn @ "cn-north-1" => s"https://dynamodb.$cn.amazonaws.com.cn"
+      case _ => s"https://dynamodb.$region.amazonaws.com"
     })
   }
   final case class Kafka(
