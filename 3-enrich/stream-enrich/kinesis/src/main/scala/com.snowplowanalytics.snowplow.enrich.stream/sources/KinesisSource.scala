@@ -35,6 +35,7 @@ import com.amazonaws.services.kinesis.clientlibrary.interfaces._
 import com.amazonaws.services.kinesis.clientlibrary.exceptions._
 import com.amazonaws.services.kinesis.clientlibrary.lib.worker._
 import com.amazonaws.services.kinesis.model.Record
+import com.amazonaws.services.kinesis.metrics.impl.NullMetricsFactory
 import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.snowplow.badrows.Processor
 import com.snowplowanalytics.snowplow.enrich.common.adapters.AdapterRegistry
@@ -154,6 +155,7 @@ class KinesisSource private (
         .withRegionName(kinesisConfig.region)
         // If the record list is empty, we still check whether it is time to flush the buffer
         .withCallProcessRecordsEvenForEmptyRecordList(true)
+        .withDynamoDBEndpoint(kinesisConfig.dynamodbEndpoint)
 
       val position = InitialPositionInStream.valueOf(kinesisConfig.initialPosition)
       kinesisConfig.timestamp.right.toOption
@@ -166,10 +168,19 @@ class KinesisSource private (
     log.info(s"Processing raw input stream: ${config.in.raw}")
 
     val rawEventProcessorFactory = new RawEventProcessorFactory()
-    val worker = new Worker.Builder()
-      .recordProcessorFactory(rawEventProcessorFactory)
-      .config(kinesisClientLibConfiguration)
-      .build()
+    val worker = kinesisConfig.disableCloudWatch match {
+      case Some(true) =>
+        new Worker.Builder()
+          .recordProcessorFactory(rawEventProcessorFactory)
+          .config(kinesisClientLibConfiguration)
+          .metricsFactory(new NullMetricsFactory())
+          .build()
+      case _ =>
+        new Worker.Builder()
+          .recordProcessorFactory(rawEventProcessorFactory)
+          .config(kinesisClientLibConfiguration)
+          .build()
+    }
 
     worker.run()
   }
