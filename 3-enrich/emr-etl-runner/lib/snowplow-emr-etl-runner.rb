@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2012-2020 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -37,6 +37,6 @@ require_relative 'snowplow-emr-etl-runner/linter'
 module Snowplow
   module EmrEtlRunner
     NAME    = "snowplow-emr-etl-runner"
-    VERSION = "0.36.0"
+    VERSION = "0.37.0"
   end
 end
