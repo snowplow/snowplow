@@ -20,7 +20,14 @@ import com.snowplowanalytics.iglu.client.Client
 import com.snowplowanalytics.iglu.client.resolver.Resolver
 import com.snowplowanalytics.iglu.client.resolver.registries.Registry
 import com.snowplowanalytics.iglu.client.validator.CirceValidator
-import com.snowplowanalytics.snowplow.badrows.{BadRow, Processor}
+
+import com.snowplowanalytics.snowplow.badrows.Processor
+
+import org.apache.thrift.TSerializer
+
+import com.snowplowanalytics.snowplow.CollectorPayload.thrift.model1.{
+  CollectorPayload => tCollectorPayload
+}
 
 import io.circe.Json
 
@@ -37,21 +44,57 @@ import com.snowplowanalytics.snowplow.enrich.common.utils.Clock._
 
 class EtlPipelineSpec extends Specification with ValidatedMatchers {
   def is = s2"""
-  EtlPipeline should always produce either bad or good row $e1
+  EtlPipeline should always produce either bad or good row for each event of the payload   $e1
+  Processing of events with malformed query string should be supported                     $e2
   """
 
+  val adapterRegistry = new AdapterRegistry()
+  val enrichmentReg = EnrichmentRegistry[Id]()
+  val igluCentral = Registry.IgluCentral
+  val client = Client[Id, Json](Resolver(List(igluCentral), None), CirceValidator)
+  val processor = Processor("sce-test-suite", "1.0.0")
+  val dateTime = DateTime.now()
+
   def e1 = {
-    val enrichmentReg = EnrichmentRegistry[Id]()
-    val output = EtlPipelineSpec.commonSetup(enrichmentReg)
+    val collectorPayloadBatched = EtlPipelineSpec.buildBatchedPayload()
+    val output = EtlPipeline.processEvents[Id](
+      adapterRegistry,
+      enrichmentReg,
+      client,
+      processor,
+      dateTime,
+      Some(collectorPayloadBatched).validNel
+    )
     output must be like {
       case a :: b :: c :: d :: Nil =>
         (a must beValid).and(b must beInvalid).and(c must beInvalid).and(d must beInvalid)
     }
   }
+
+  def e2 = {
+    val thriftBytesMalformedQS = EtlPipelineSpec.buildThriftBytesMalformedQS()
+    ThriftLoader
+      .toCollectorPayload(thriftBytesMalformedQS, processor)
+      .map(_.get)
+      .map(
+        collectorPayload =>
+          EtlPipeline.processEvents[Id](
+            adapterRegistry,
+            enrichmentReg,
+            client,
+            processor,
+            dateTime,
+            Some(collectorPayload).validNel
+          )
+      ) must beValid.like {
+      case Validated.Valid(_: EnrichedEvent) :: Nil => ok
+      case res => ko(s"[$res] doesn't contain one enriched event")
+    }
+  }
 }
 
 object EtlPipelineSpec {
-  def commonSetup(enrichmentReg: EnrichmentRegistry[Id]): List[Validated[BadRow, EnrichedEvent]] = {
+  def buildBatchedPayload(): CollectorPayload = {
     val context =
       CollectorPayload.Context(
         Some(DateTime.parse("2017-07-14T03:39:39.000+00:00")),
@@ -62,7 +105,7 @@ object EtlPipelineSpec {
         None
       )
     val source = CollectorPayload.Source("clj-tomcat", "UTF-8", None)
-    val collectorPayload = CollectorPayload(
+    CollectorPayload(
       CollectorPayload.Api("com.snowplowanalytics.snowplow", "tp2"),
       Nil,
       Some("application/json"),
@@ -79,17 +122,25 @@ object EtlPipelineSpec {
       source,
       context
     )
-    val input = Some(collectorPayload).validNel
-    val reg = Registry.IgluCentral
-    val client = Client[Id, Json](Resolver(List(reg), None), CirceValidator)
-    EtlPipeline
-      .processEvents[Id](
-        new AdapterRegistry(),
-        enrichmentReg,
-        client,
-        Processor("sce-test-suite", "1.0.0"),
-        new DateTime(1500000000L),
-        input
-      )
+  }
+
+  def buildThriftBytesMalformedQS(): Array[Byte] = {
+    val tCP = new tCollectorPayload(
+      "iglu:com.snowplowanalytics.snowplow/CollectorPayload/thrift/1-0-0",
+      "1.2.3.4",
+      System.currentTimeMillis,
+      "UTF-8",
+      "EtlPipelineSpec collector"
+    )
+    tCP.setPath("com.snowplowanalytics.iglu/v1")
+    val schema = "iglu:com.mailgun/message_clicked/jsonschema/1-0-0"
+    val queryString = s"schema=$schema&city=Berlin&token=42&foo" // param foo has no value
+    tCP.setQuerystring(queryString)
+
+    val ThriftSerializer = new ThreadLocal[TSerializer] {
+      override def initialValue = new TSerializer()
+    }
+    val serializer = ThriftSerializer.get()
+    serializer.serialize(tCP)
   }
 }
