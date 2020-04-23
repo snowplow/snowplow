@@ -122,6 +122,7 @@ object JsonUtils {
     dateTimes: DateTimeFields
   ): (String, Json) = {
     val v = (value, dateTimes) match {
+      case (null, _) => Json.Null
       case ("", _) => Json.Null
       case _ if bools.contains(key) => booleanToJson(value)
       case _ if ints.contains(key) => integerToJson(value)
