@@ -197,7 +197,7 @@ class YauaaEnrichmentSpec extends Specification with ValidatedMatchers {
       val defaultJson =
         SelfDescribingData(
           yauaaEnrichment.outputSchema,
-          json"""{"deviceClass":"UNKNOWN"}"""
+          json"""{"deviceClass":"Unknown"}"""
         )
       yauaaEnrichment.getYauaaContext("") shouldEqual defaultJson
     }
