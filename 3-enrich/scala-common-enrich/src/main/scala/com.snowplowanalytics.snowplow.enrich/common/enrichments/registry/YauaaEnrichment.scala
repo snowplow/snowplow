@@ -82,7 +82,7 @@ final case class YauaaEnrichment(cacheSize: Option[Int]) extends Enrichment {
 
   val outputSchema = SchemaKey("nl.basjes", "yauaa_context", "jsonschema", SchemaVer.Full(1, 0, 0))
 
-  val defaultDeviceClass = "UNKNOWN"
+  val defaultDeviceClass = "Unknown"
   val defaultResult = Map(decapitalize(UserAgent.DEVICE_CLASS) -> defaultDeviceClass)
 
   /**
@@ -95,7 +95,7 @@ final case class YauaaEnrichment(cacheSize: Option[Int]) extends Enrichment {
 
   /** Gets the map of attributes retrieved by YAUAA from the user agent.
    * @return Map with all the fields extracted by YAUAA by parsing the user agent.
-   *         If the input is null or empty, a map with just the DeviceClass set to UNKNOWN is returned.
+   *         If the input is null or empty, a map with just the DeviceClass set to Unknown is returned.
    */
   def parseUserAgent(userAgent: String): Map[String, String] =
     userAgent match {
