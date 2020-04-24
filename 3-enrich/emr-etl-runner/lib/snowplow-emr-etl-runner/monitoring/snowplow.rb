@@ -169,6 +169,21 @@ module Snowplow
           )
         end
 
+        # Track a single step
+        Contract Elasticity::ClusterStepStatus => SnowplowTracker::Tracker
+        def track_single_step(step_status)
+          @tracker.track_unstruct_event(
+            SnowplowTracker::SelfDescribingJson.new(
+              STEP_STATUS_SCHEMA,
+              {
+                :name => step_status.name,
+                :state => step_status.state,
+                :created_at => Time.now.to_i
+              }
+            )
+          )
+        end
+
       end
     end
   end

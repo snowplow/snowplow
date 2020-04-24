@@ -45,6 +45,7 @@ aws:
       master_instance_type: m1.medium
       core_instance_count: 2
       core_instance_type: m1.medium
+      core_instance_bid: 0.015
       core_instance_ebs:    # Optional. Attach an EBS volume to each core instance.
         volume_size: 100    # Gigabytes
         volume_type: "gp2"
@@ -64,7 +65,7 @@ collectors:
   format: cloudfront # For example: 'clj-tomcat' for the Clojure Collector, 'thrift' for Thrift records, 'tsv/com.amazon.aws.cloudfront/wd_access_log' for Cloudfront access logs or 'ndjson/urbanairship.connect/v1' for UrbanAirship Connect events
 enrich:
   versions:
-    spark_enrich: 1.17.0 # Version of the Spark Enrichment process
+    spark_enrich: 1.18.0 # Version of the Spark Enrichment process
   continue_on_unexpected_error: false # Set to 'true' (and set :out_errors: above) if you don't want any exceptions thrown from ETL
   output_compression: NONE # Compression only supported with Redshift, set to NONE if you have Postgres targets. Allowed formats: NONE, GZIP
 storage:

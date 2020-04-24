@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2014-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,100 +10,92 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
-package enrichments
-package registry
+package com.snowplowanalytics.snowplow.enrich.common
+package enrichments.registry
 
-// Java
 import java.net.URI
 
-// Maven Artifact
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion
+import cats.Monad
+import cats.data.{EitherT, NonEmptyList, ValidatedNel}
+import cats.implicits._
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
+import com.snowplowanalytics.refererparser._
+import io.circe.Json
 
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// json4s
-import org.json4s.{DefaultFormats, JValue}
-
-// Iglu
-import iglu.client.{SchemaCriterion, SchemaKey}
-import iglu.client.validation.ProcessingMessageMethods._
-
-// Snowplow referer-parser
-import com.snowplowanalytics.refererparser.scala.{Parser => RefererParser}
-import com.snowplowanalytics.refererparser.scala.Referer
-
-// This project
 import utils.{ConversionUtils => CU}
-import utils.MapTransformer
-import utils.MapTransformer._
-import utils.ScalazJson4sUtils
+import utils.CirceUtils
 
-/**
- * Companion object. Lets us create a
- * RefererParserEnrichment from a JValue
- */
+/** Companion object. Lets us create a RefererParserEnrichment from a Json */
 object RefererParserEnrichment extends ParseableEnrichment {
+  override val supportedSchema =
+    SchemaCriterion("com.snowplowanalytics.snowplow", "referer_parser", "jsonschema", 2, 0)
 
-  implicit val formats = DefaultFormats
-
-  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "referer_parser", "jsonschema", 1, 0)
+  private val localFile = "./referer-parser.json"
 
   /**
-   * Creates a RefererParserEnrichment instance from a JValue.
-   *
-   * @param config The referer_parser enrichment JSON
-   * @param schemaKey The SchemaKey provided for the enrichment
-   *        Must be a supported SchemaKey for this enrichment
-   * @return a configured RefererParserEnrichment instance
+   * Creates a RefererParserConf from a Json.
+   * @param c The referer_parser enrichment JSON
+   * @param schemaKey provided for the enrichment, must be supported by this enrichment
+   * @return a referer parser enrichment configuration
    */
-  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[RefererParserEnrichment] =
-    isParseable(config, schemaKey).flatMap(conf => {
-      (for {
-        param <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "internalDomains")
-        enrich = RefererParserEnrichment(param)
-      } yield enrich).toValidationNel
-    })
+  override def parse(
+    c: Json,
+    schemaKey: SchemaKey,
+    localMode: Boolean
+  ): ValidatedNel[String, RefererParserConf] =
+    (for {
+      _ <- isParseable(c, schemaKey).leftMap(NonEmptyList.one)
+      // better-monadic-for
+      conf <- (
+        CirceUtils.extract[String](c, "parameters", "uri").toValidatedNel,
+        CirceUtils.extract[String](c, "parameters", "database").toValidatedNel,
+        CirceUtils.extract[List[String]](c, "parameters", "internalDomains").toValidatedNel
+      ).mapN { (uri, db, domains) =>
+        (uri, db, domains)
+      }.toEither
+      source <- getDatabaseUri(conf._1, conf._2).leftMap(NonEmptyList.one)
+    } yield RefererParserConf(file(source, conf._2, localFile, localMode), conf._3)).toValidated
 
+  private def file(
+    uri: URI,
+    db: String,
+    localFile: String,
+    localMode: Boolean
+  ): (URI, String) =
+    if (localMode) (uri, getClass.getResource(db).toURI.getPath)
+    else (uri, localFile)
+
+  /**
+   * Creates a RefererParserEnrichment from a RefererParserConf
+   * @param conf Configuration for the referer parser enrichment
+   * @return a referer parser enrichment
+   */
+  def apply[F[_]: Monad: CreateParser](
+    conf: RefererParserConf
+  ): EitherT[F, String, RefererParserEnrichment] =
+    EitherT(CreateParser[F].create(conf.refererDatabase._2))
+      .leftMap(_.getMessage)
+      .map(p => RefererParserEnrichment(p, conf.internalDomains))
 }
 
 /**
  * Config for a referer_parser enrichment
- *
+ * @param parser Referer parser
  * @param domains List of internal domains
  */
-case class RefererParserEnrichment(
-  domains: List[String]
-) extends Enrichment {
+final case class RefererParserEnrichment(parser: Parser, domains: List[String]) extends Enrichment {
 
   /**
-   * A Scalaz Lens to update the term within
-   * a Referer object.
-   */
-  private val termLens: Lens[Referer, MaybeString] = Lens.lensu((r, newTerm) => r.copy(term = newTerm), _.term)
-
-  /**
-   * Extract details about the referer (sic).
-   *
-   * Uses the referer-parser library.
-   *
-   * @param uri The referer URI to extract
-   *            referer details from
-   * @param pageHost The host of the current
-   *                 page (used to determine
-   *                 if this is an internal
-   *                 referer)
-   * @return a Tuple3 containing referer medium,
-   *         source and term, all Strings
+   * Extract details about the referer (sic). Uses the referer-parser library.
+   * @param uri The referer URI to extract referer details from
+   * @param pageHost The host of the current page (used to determine if this is an internal referer)
+   * @return a Tuple3 containing referer medium, source and term, all Strings
    */
   def extractRefererDetails(uri: URI, pageHost: String): Option[Referer] =
-    for {
-      r <- RefererParser.parse(uri, pageHost, domains)
-      t = r.term.flatMap(t => CU.fixTabsNewlines(t))
-    } yield termLens.set(r, t)
+    parser.parse(uri, Option(pageHost), domains).map {
+      case SearchReferer(m, s, t) =>
+        val fixedTerm = t.flatMap(CU.fixTabsNewlines)
+        SearchReferer(m, s, fixedTerm)
+      case o => o
+    }
 }

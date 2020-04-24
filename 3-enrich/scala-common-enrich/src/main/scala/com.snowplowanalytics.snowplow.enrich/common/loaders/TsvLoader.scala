@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -13,46 +13,47 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
-// Scalaz
-import scalaz._
-import Scalaz._
+import java.time.Instant
 
-/**
- * Loader for TSVs
- */
-case class TsvLoader(adapter: String) extends Loader[String] {
+import cats.data.ValidatedNel
+import cats.syntax.either._
+import cats.syntax.option._
+import cats.syntax.validated._
+import com.snowplowanalytics.snowplow.badrows._
+
+/** Loader for TSVs */
+final case class TsvLoader(adapter: String) extends Loader[String] {
+  private val CollectorName = "tsv"
+  private val CollectorEncoding = "UTF-8"
 
   /**
    * Converts the source TSV into a ValidatedMaybeCollectorPayload.
-   *
    * @param line A TSV
-   * @return either a set of validation errors or an Option-boxed
-   *         CanonicalInput object, wrapped in a Scalaz ValidationNel.
+   * @return either a set of validation errors or an Option-boxed CanonicalInput object, wrapped in
+   * a ValidatedNel.
    */
-  def toCollectorPayload(line: String): ValidatedMaybeCollectorPayload =
+  override def toCollectorPayload(
+    line: String,
+    processor: Processor
+  ): ValidatedNel[BadRow.CPFormatViolation, Option[CollectorPayload]] =
     // Throw away the first two lines of Cloudfront web distribution access logs
-    if (line.startsWith("#Version:") || line.startsWith("#Fields:")) {
-      None.success
-    } else {
-      CollectorApi
-        .parse(adapter)
-        .map(
-          CollectorPayload(
-            Nil,
-            "tsv",
-            "UTF-8",
-            None,
-            None,
-            None,
-            None,
-            None,
-            Nil,
-            None,
-            _,
-            None,
-            Some(line)
-          ).some
+    if (line.startsWith("#Version:") || line.startsWith("#Fields:"))
+      None.valid
+    else
+      CollectorPayload
+        .parseApi(adapter)
+        .map { api =>
+          val source = CollectorPayload.Source(CollectorName, CollectorEncoding, None)
+          val context = CollectorPayload.Context(None, None, None, None, Nil, None)
+          CollectorPayload(api, Nil, None, Some(line), source, context).some
+        }
+        .leftMap(
+          f =>
+            BadRow.CPFormatViolation(
+              processor,
+              Failure.CPFormatViolation(Instant.now(), CollectorName, f),
+              Payload.RawPayload(line)
+            )
         )
-        .toValidationNel
-    }
+        .toValidatedNel
 }

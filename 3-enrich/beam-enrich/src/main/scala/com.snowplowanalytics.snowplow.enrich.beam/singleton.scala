@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -12,29 +12,32 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and
  * limitations there under.
  */
-package com.snowplowanalytics
-package snowplow.enrich
-package beam
+package com.snowplowanalytics.snowplow.enrich.beam
 
-import org.json4s._
-
-import common.enrichments.EnrichmentRegistry
-import iglu.client.Resolver
+import cats.Id
+import cats.syntax.either._
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
+import com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.EnrichmentConf
+import io.circe.Json
 
 /** Singletons needed for unserializable classes. */
 object singleton {
+
   /** Singleton for Resolver to maintain one per node. */
-  object ResolverSingleton {
-    @volatile private var instance: Resolver = _
+  object ClientSingleton {
+    @volatile private var instance: Client[Id, Json] = _
+
     /**
      * Retrieve or build an instance of a Resolver.
      * @param resolverJson JSON representing the Resolver
      */
-    def get(resolverJson: JValue): Resolver = {
+    def get(resolverJson: Json): Client[Id, Json] = {
       if (instance == null) {
         synchronized {
           if (instance == null) {
-            instance = Resolver.parse(resolverJson)
+            instance = Client
+              .parseDefault[Id](resolverJson)
               .valueOr(e => throw new RuntimeException(e.toString))
           }
         }
@@ -45,16 +48,19 @@ object singleton {
 
   /** Singleton for EnrichmentRegistry. */
   object EnrichmentRegistrySingleton {
-    @volatile private var instance: EnrichmentRegistry = _
+    @volatile private var instance: EnrichmentRegistry[Id] = _
+
     /**
      * Retrieve or build an instance of EnrichmentRegistry.
-     * @param enrichmentsJson JSON representing the enrichments that need performing
+     * @param enrichmentConfs list of enabled enrichment configuration
      */
-    def get(enrichmentsJson: JObject)(implicit r: Resolver): EnrichmentRegistry = {
+    def get(enrichmentConfs: List[EnrichmentConf]): EnrichmentRegistry[Id] = {
       if (instance == null) {
         synchronized {
           if (instance == null) {
-            instance = EnrichmentRegistry.parse(enrichmentsJson, false)
+            instance = EnrichmentRegistry
+              .build[Id](enrichmentConfs)
+              .value
               .valueOr(e => throw new RuntimeException(e.toString))
           }
         }

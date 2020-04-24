@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -12,22 +12,25 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and
  * limitations there under.
  */
-package com.snowplowanalytics
-package snowplow.enrich
-package beam
+package com.snowplowanalytics.snowplow.enrich.beam
 
-import java.net.URI
 import java.nio.file.{Files, Paths}
+import java.time.Instant
+
+import com.snowplowanalytics.snowplow.badrows._
+import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
+import cats.implicits._
+import io.circe.parser
+import com.snowplowanalytics.iglu.core.SelfDescribingData
+import com.snowplowanalytics.iglu.core.circe.instances._
 
 import org.scalatest._
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
-import scalaz._
 
-import common.outputs.{EnrichedEvent, BadRow}
 import utils._
 
 class UtilsSpec extends FreeSpec with Matchers {
+  val processor = Processor("be", "1.0.0")
+
   "the utils object should" - {
     "make a timeMs function available" - {
       "which report the time spent doing an operation" in {
@@ -46,7 +49,9 @@ class UtilsSpec extends FreeSpec with Matchers {
       }
       "which fails if the symlink already exists" in {
         val f = Files.createTempFile("test2", ".txt").toFile
-        createSymLink(f, f.toString) shouldEqual Left(s"A file at path ${f.toString} already exists")
+        createSymLink(f, f.toString) shouldEqual Left(
+          s"A file at path ${f.toString} already exists"
+        )
         f.delete
       }
       "which fails if the symbolic link can't be created" in {
@@ -54,15 +59,6 @@ class UtilsSpec extends FreeSpec with Matchers {
         val s = "/proc/test3.txt-symlink"
         createSymLink(f, s) shouldEqual Left(s"Symlink can't be created: ${Paths.get(s)}")
         f.delete
-      }
-    }
-    "make a getFilesToCache function available" - {
-      "which sends back the files that need caching" in {
-        val res = parse(SpecHelpers.resolverConfig)
-        val reg = (("schema" -> "iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0") ~
-          ("data" -> List(parse(SpecHelpers.ipLookupsEnrichmentConfig))))
-        getFilesToCache(res, reg) should contain only (
-          (new URI("http://acme.com/GeoLite2-City.mmdb"), "./ip_geo"))
       }
     }
     "make a getEnrichedEventMetrics function available" - {
@@ -78,31 +74,60 @@ class UtilsSpec extends FreeSpec with Matchers {
     }
     "make a getStringSize function available" - {
       "which sends back the size of a string in bytes" in {
-        getStringSize("a" * 10) shouldEqual 10
+        getSize("a" * 10) shouldEqual 10
       }
     }
     "make a resizeBadRow function available" - {
       "which leaves the bad row as is if it doesn't exceed the max size" in {
-        val badRow = BadRow("abc", NonEmptyList("error"))
-        resizeBadRow(badRow, 10) shouldEqual badRow
+        val badRow = BadRow
+          .CPFormatViolation(
+            processor,
+            Failure.CPFormatViolation(
+              Instant.ofEpochSecond(12),
+              "tsv",
+              FailureDetails.CPFormatViolationMessage.Fallback("ah")
+            ),
+            Payload.RawPayload("ah")
+          )
+          .compact
+        resizeBadRow(badRow, 500, processor) shouldEqual badRow
       }
+
       "which truncates the event in the bad row as is if it exceeds the max size" in {
-        val badRow = BadRow("a" * 100, NonEmptyList("error"))
-        val resizedBadRow = resizeBadRow(badRow, 40)
-        resizedBadRow.line shouldEqual "a"
-        resizedBadRow.errors.map(_.getMessage) shouldEqual NonEmptyList(
-          "Size of bad row (100) is greater than allowed maximum size (40)",
-          "error"
-        )
+        val original = BadRow
+          .CPFormatViolation(
+            processor,
+            Failure.CPFormatViolation(
+              Instant.ofEpochSecond(12),
+              "tsv",
+              FailureDetails.CPFormatViolationMessage.Fallback("ah")
+            ),
+            Payload.RawPayload("ah")
+          )
+          .compact
+
+        val res = resizeBadRow(original, 150, processor)
+        val resSdd = parseBadRow(res).right.get
+        resSdd shouldBe a[BadRow.SizeViolation]
+        val badRowSizeViolation = resSdd.asInstanceOf[BadRow.SizeViolation]
+        badRowSizeViolation.failure.maximumAllowedSizeBytes shouldEqual 150
+        badRowSizeViolation.failure.actualSizeBytes shouldEqual 267
+        badRowSizeViolation.failure.expectation shouldEqual "bad row exceeded the maximum size"
+        badRowSizeViolation.payload.line shouldEqual "{\"schema\":\"iglu"
+        badRowSizeViolation.processor shouldEqual processor
       }
     }
     "make a resizeEnrichedEvent function available" - {
       "which truncates a formatted enriched event and wrap it in a bad row" in {
-        val badRow = resizeEnrichedEvent("a" * 100, 100, 400)
-        badRow.line shouldEqual "a" * 10
-        badRow.errors.map(_.getMessage) shouldEqual NonEmptyList(
-          "Size of enriched event (100) is greater than allowed maximum (400)"
-        )
+        val res = resizeEnrichedEvent("a" * 100, 100, 400, processor)
+        val resSdd = parseBadRow(res).right.get
+        resSdd shouldBe a[BadRow.SizeViolation]
+        val badRowSizeViolation = resSdd.asInstanceOf[BadRow.SizeViolation]
+        badRowSizeViolation.failure.maximumAllowedSizeBytes shouldEqual 400
+        badRowSizeViolation.failure.actualSizeBytes shouldEqual 100
+        badRowSizeViolation.failure.expectation shouldEqual "event passed enrichment but exceeded the maximum allowed size as a result"
+        badRowSizeViolation.payload.line shouldEqual ("a" * 40)
+        badRowSizeViolation.processor shouldEqual processor
       }
     }
     "make a tabSeparatedEnrichedEvent function available" - {
@@ -121,7 +146,7 @@ class UtilsSpec extends FreeSpec with Matchers {
           e.pii = "pii"
           e
         }
-        tabSeparatedEnrichedEvent(event) should not include("pii")
+        tabSeparatedEnrichedEvent(event) should not include ("pii")
       }
     }
     "make a getPii function available" - {
@@ -149,8 +174,15 @@ class UtilsSpec extends FreeSpec with Matchers {
         e.event_name shouldEqual "pii_transformation"
         e.event_version shouldEqual "1-0-0"
         e.contexts should include
-          """{"schema":"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0","data":[{"schema":"iglu:com.snowplowanalytics.snowplow/parent_event/jsonschema/1-0-0","data":{"parentEventId":"""
+        """{"schema":"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0","data":[{"schema":"iglu:com.snowplowanalytics.snowplow/parent_event/jsonschema/1-0-0","data":{"parentEventId":"""
       }
     }
   }
+
+  def parseBadRow(jsonStr: String): Either[String, BadRow] =
+    for {
+      json <- parser.parse(jsonStr).leftMap(_.getMessage)
+      sdj <- SelfDescribingData.parse(json).leftMap(_.code)
+      res <- sdj.data.as[BadRow].leftMap(_.getMessage)
+    } yield res
 }

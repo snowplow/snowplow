@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
  * you may not use this file except in compliance with the Apache License
@@ -304,7 +304,7 @@ class StructEventWithContextSpec extends Specification {
       val rawEvent = Base64.decodeBase64(StructEventWithContextSpec.raw)
 
       val enrichedEvent = TestSource.enrichEvents(rawEvent)(0)
-      enrichedEvent.isSuccess must beTrue
+      enrichedEvent.isValid must beTrue
 
       // "-1" prevents empty strings from being discarded from the end of the array
       val fields = enrichedEvent.toOption.get._1.split("\t", -1)
@@ -317,7 +317,8 @@ class StructEventWithContextSpec extends Specification {
           for (idx <- StructEventWithContextSpec.expected.indices) {
             fields(idx) must beFieldEqualTo(
               StructEventWithContextSpec.expected(idx),
-              withIndex = idx)
+              withIndex = idx
+            )
           }
           for (idx <- StructEventWithContextSpec.pii.indices) {
             piiFields(idx) must beFieldEqualTo(StructEventWithContextSpec.pii(idx), withIndex = idx)

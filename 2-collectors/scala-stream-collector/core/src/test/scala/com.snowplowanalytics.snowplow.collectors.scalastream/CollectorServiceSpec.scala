@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
  * you may not use this file except in compliance with the Apache License
@@ -12,20 +12,23 @@
  * implied.  See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow
-package collectors.scalastream
+package com.snowplowanalytics.snowplow.collectors.scalastream
 
 import java.net.InetAddress
 
+import scala.collection.immutable.Seq
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
-import org.apache.thrift.{TSerializer, TDeserializer}
+import akka.http.scaladsl.model.headers.CacheDirectives._
+
+import org.apache.thrift.{TDeserializer, TSerializer}
+
+import com.snowplowanalytics.snowplow.CollectorPayload.thrift.model1.CollectorPayload
 import org.specs2.mutable.Specification
 
-import CollectorPayload.thrift.model1.CollectorPayload
 import generated.BuildInfo
 import model._
 
@@ -70,14 +73,16 @@ class CollectorServiceSpec extends Specification {
       "not store stuff if bouncing and provide a location header" in {
         val (r, l) = bouncingService.cookie(None, Some("b"), "p", None, None, None, "h",
           RemoteAddress.Unknown, HttpRequest(), true, false)
-        r.headers must have size 5
+        r.headers must have size 6
         r.headers must contain(`Location`("/?bounce=true"))
+        r.headers must contain(`Cache-Control`(`no-cache`, `no-store`, `must-revalidate`))
         l must have size 0
       }
       "store stuff if having already bounced with the fallback nuid" in {
         val (r, l) = bouncingService.cookie(Some("bounce=true"), Some("b"), "p", None, None, None,
           "h", RemoteAddress.Unknown, HttpRequest(), true, false)
-        r.headers must have size 4
+        r.headers must have size 5
+        r.headers must contain(`Cache-Control`(`no-cache`, `no-store`, `must-revalidate`))
         l must have size 1
         val newEvent = new CollectorPayload(
           "iglu-schema", "ip", System.currentTimeMillis, "UTF-8", "collector")
@@ -199,17 +204,16 @@ class CollectorServiceSpec extends Specification {
     }
 
     "buildHttpResponse" in {
-      val sinkConf = TestUtils.testConf.streams.sink
       val redirConf = TestUtils.testConf.redirectMacro
       "rely on buildRedirectHttpResponse if redirect is true" in {
         val (res, Nil) = service.buildHttpResponse(
-          event, "k", Map("u" -> "12"), hs, true, true, false, sinkConf, redirConf)
+          event, Map("u" -> "12"), hs, true, true, false, redirConf)
         res shouldEqual HttpResponse(302)
           .withHeaders(`RawHeader`("Location", "12") :: hs)
       }
       "send back a gif if pixelExpected is true" in {
         val (res, Nil) = service.buildHttpResponse(
-          event, "k", Map.empty, hs, false, true, false, sinkConf, redirConf)
+          event, Map.empty, hs, false, true, false, redirConf)
         res shouldEqual HttpResponse(200)
           .withHeaders(hs)
           .withEntity(HttpEntity(contentType = ContentType(MediaTypes.`image/gif`),
@@ -217,13 +221,13 @@ class CollectorServiceSpec extends Specification {
       }
       "send back a found if pixelExpected and bounce is true" in {
         val (res, Nil) = service.buildHttpResponse(
-          event, "k", Map.empty, hs, false, true, true, sinkConf, redirConf)
+          event, Map.empty, hs, false, true, true, redirConf)
         res shouldEqual HttpResponse(302)
           .withHeaders(hs)
       }
       "send back ok otherwise" in {
         val (res, Nil) = service.buildHttpResponse(
-          event, "k", Map.empty, hs, false, false, false, sinkConf, redirConf)
+          event, Map.empty, hs, false, false, false, redirConf)
         res shouldEqual HttpResponse(200, entity = "ok")
           .withHeaders(hs)
       }
@@ -246,24 +250,23 @@ class CollectorServiceSpec extends Specification {
     "buildRedirectHttpResponse" in {
       val redirConf = TestUtils.testConf.redirectMacro
       "give back a 302 if redirecting and there is a u query param" in {
-        val (res, Nil) = service.buildRedirectHttpResponse(event, "k", Map("u" -> "12"), redirConf)
+        val (res, Nil) = service.buildRedirectHttpResponse(event, Map("u" -> "12"), redirConf)
         res shouldEqual HttpResponse(302).withHeaders(`RawHeader`("Location", "12"))
       }
-      /* scalaz incompat
       "give back a 400 if redirecting and there are no u query params" in {
-        val (res, _) = service.buildRedirectHttpResponse(event, "k", Map.empty, redirConf)
+        val (res, _) = service.buildRedirectHttpResponse(event, Map.empty, redirConf)
         res shouldEqual HttpResponse(400)
-      }*/
+      }
       "the redirect url should ignore a cookie replacement macro on redirect if not enabled" in {
         event.networkUserId = "1234"
         val (res, Nil) = service.buildRedirectHttpResponse(
-          event, "k", Map("u" -> s"http://localhost/?uid=$${SP_NUID}"), redirConf)
+          event, Map("u" -> s"http://localhost/?uid=$${SP_NUID}"), redirConf)
         res shouldEqual HttpResponse(302)
           .withHeaders(`RawHeader`("Location", s"http://localhost/?uid=$${SP_NUID}"))
       }
       "the redirect url should support a cookie replacement macro on redirect if enabled" in {
         event.networkUserId = "1234"
-        val (res, Nil) = service.buildRedirectHttpResponse(event, "k",
+        val (res, Nil) = service.buildRedirectHttpResponse(event,
           Map("u" -> s"http://localhost/?uid=$${SP_NUID}"), redirConf.copy(enabled = true))
         res shouldEqual HttpResponse(302)
           .withHeaders(`RawHeader`("Location", "http://localhost/?uid=1234"))
@@ -271,14 +274,14 @@ class CollectorServiceSpec extends Specification {
       "the redirect url should allow for custom token placeholders" in {
         event.networkUserId = "1234"
         val (res, Nil) = service.buildRedirectHttpResponse(
-          event, "k", Map("u" -> "http://localhost/?uid=[TOKEN]"),
+          event, Map("u" -> "http://localhost/?uid=[TOKEN]"),
           redirConf.copy(enabled = true, Some("[TOKEN]")))
         res shouldEqual HttpResponse(302)
           .withHeaders(`RawHeader`("Location", "http://localhost/?uid=1234"))
       }
       "the redirect url should allow for double encoding for return redirects" in {
         val (res, Nil) =
-          service.buildRedirectHttpResponse(event, "k", Map("u" -> "a%3Db"), redirConf)
+          service.buildRedirectHttpResponse(event, Map("u" -> "a%3Db"), redirConf)
         res shouldEqual HttpResponse(302).withHeaders(`RawHeader`("Location", "a%3Db"))
       }
     }
@@ -286,22 +289,34 @@ class CollectorServiceSpec extends Specification {
     "cookieHeader" in {
       "give back a cookie header with the appropriate configuration" in {
         val nuid = "nuid"
-        val conf = CookieConfig(true, "name", 5.seconds, Some("domain"))
-        val Some(`Set-Cookie`(cookie)) = service.cookieHeader(Some(conf), nuid, false)
+        val conf = CookieConfig(true, "name", 5.seconds, Some(List("domain")), None, secure = false, httpOnly = false, sameSite = None)
+        val Some(`Set-Cookie`(cookie)) = service.cookieHeader(HttpRequest(), Some(conf), nuid, false)
+
         cookie.name shouldEqual conf.name
         cookie.value shouldEqual nuid
-        cookie.domain shouldEqual conf.domain
+        cookie.domain shouldEqual None
         cookie.path shouldEqual Some("/")
         cookie.expires must beSome
         (cookie.expires.get - DateTime.now.clicks).clicks must beCloseTo(conf.expiration.toMillis, 1000L)
+        cookie.secure must beFalse
+        cookie.httpOnly must beFalse
+        cookie.extension must beEmpty
       }
       "give back None if no configuration is given" in {
-        service.cookieHeader(None, "nuid", false) shouldEqual None
+        service.cookieHeader(HttpRequest(), None, "nuid", false) shouldEqual None
       }
       "give back None if doNoTrack is true" in {
+        val conf = CookieConfig(true, "name", 5.seconds, Some(List("domain")), None, secure = false, httpOnly = false, sameSite = None)
+        service.cookieHeader(HttpRequest(), Some(conf), "nuid", true) shouldEqual None
+      }
+      "give back a cookie header with Secure, HttpOnly and SameSite=None" in {
         val nuid = "nuid"
-        val conf = CookieConfig(true, "name", 5.seconds, Some("domain"))
-        service.cookieHeader(Some(conf), "nuid", true) shouldEqual None
+        val conf = CookieConfig(true, "name", 5.seconds, Some(List("domain")), None, secure = true, httpOnly = true, sameSite = Some("None"))
+        val Some(`Set-Cookie`(cookie)) = service.cookieHeader(HttpRequest(), Some(conf), networkUserId = nuid, doNotTrack = false)
+        cookie.secure must beTrue
+        cookie.httpOnly must beTrue
+        cookie.extension must beSome("SameSite=None")
+        service.cookieHeader(HttpRequest(), Some(conf), nuid, true) shouldEqual None
       }
     }
 
@@ -396,6 +411,107 @@ class CollectorServiceSpec extends Specification {
         val request = HttpRequest()
         service.accessControlAllowOriginHeader(request) shouldEqual
           `Access-Control-Allow-Origin`(HttpOriginRange.`*`)
+      }
+    }
+
+    "cookieDomain" in {
+      "not return a domain" in {
+        "if a list of domains is not supplied in the config and there is no fallback domain" in {
+          val request = HttpRequest()
+          val cookieConfig = CookieConfig(true, "name", 5.seconds, None, None, false, false, None)
+          service.cookieDomain(request.headers, cookieConfig.domains, cookieConfig.fallbackDomain) shouldEqual None
+        }
+        "if a list of domains is supplied in the config but the Origin request header is empty and there is no fallback domain" in {
+          val request = HttpRequest()
+          val cookieConfig = CookieConfig(true, "name", 5.seconds, Some(List("domain.com")), None, false, false, None)
+          service.cookieDomain(request.headers, cookieConfig.domains, cookieConfig.fallbackDomain) shouldEqual None
+        }
+        "if none of the domains in the request's Origin header has a match in the list of domains supplied with the config and there is no fallback domain" in {
+          val origins = Seq(HttpOrigin("http", Host("origin.com")), HttpOrigin("http", Host("otherorigin.com", 8080)))
+          val request = HttpRequest().withHeaders(`Origin`(origins))
+          val cookieConfig = CookieConfig(true, "name", 5.seconds, Some(List("domain.com", "otherdomain.com")), None, false, false, None)
+          service.cookieDomain(request.headers, cookieConfig.domains, cookieConfig.fallbackDomain) shouldEqual None
+        }
+      }
+      "return the fallback domain" in {
+        "if a list of domains is not supplied in the config but a fallback domain is configured" in {
+          val request = HttpRequest()
+          val cookieConfig = CookieConfig(true, "name", 5.seconds, None, Some("fallbackDomain"), false, false, None)
+          service.cookieDomain(request.headers, cookieConfig.domains, cookieConfig.fallbackDomain) shouldEqual Some("fallbackDomain")
+        }
+        "if the Origin header is empty and a fallback domain is configured" in {
+          val request = HttpRequest()
+          val cookieConfig = CookieConfig(true, "name", 5.seconds, Some(List("domain.com")), Some("fallbackDomain"), false, false, None)
+          service.cookieDomain(request.headers, cookieConfig.domains, cookieConfig.fallbackDomain) shouldEqual Some("fallbackDomain")
+        }
+        "if none of the domains in the request's Origin header has a match in the list of domains supplied with the config but a fallback domain is configured" in {
+          val origins = Seq(HttpOrigin("http", Host("origin.com")), HttpOrigin("http", Host("otherorigin.com", 8080)))
+          val request = HttpRequest().withHeaders(`Origin`(origins))
+          val cookieConfig = CookieConfig(true, "name", 5.seconds, Some(List("domain.com", "otherdomain.com")), Some("fallbackDomain"), false, false, None)
+          service.cookieDomain(request.headers, cookieConfig.domains, cookieConfig.fallbackDomain) shouldEqual Some("fallbackDomain")
+        }
+      }
+      "return only the first match if multiple domains from the request's Origin header have matches in the list of domains supplied with the config" in {
+        val origins = Seq(HttpOrigin("http", Host("www.domain.com")), HttpOrigin("http", Host("www.otherdomain.com", 8080)))
+        val request = HttpRequest().withHeaders(`Origin`(origins))
+        val cookieConfig = CookieConfig(true, "name", 5.seconds, Some(List("domain.com", "otherdomain.com")), Some("fallbackDomain"), false, false, None)
+        service.cookieDomain(request.headers, cookieConfig.domains, cookieConfig.fallbackDomain) shouldEqual Some("domain.com")
+      }
+    }
+
+    "extractHosts" in {
+      "correctly extract the host names from a list of values in the request's Origin header" in {
+        val origins = Seq(HttpOrigin("http", Host("origin.com")), HttpOrigin("http", Host("subdomain.otherorigin.gov.co.uk", 8080)))
+        service.extractHosts(origins) shouldEqual Seq("origin.com", "subdomain.otherorigin.gov.co.uk")
+      }
+    }
+
+    "validMatch" in {
+      val domain = "snplow.com"
+      "true for valid matches" in {
+        val validHost1 = "snplow.com"
+        val validHost2 = "blog.snplow.com"
+        val validHost3 = "blog.snplow.com.snplow.com"
+        service.validMatch(validHost1, domain) shouldEqual true
+        service.validMatch(validHost2, domain) shouldEqual true
+        service.validMatch(validHost3, domain) shouldEqual true
+      }
+      "false for invalid matches" in {
+        val invalidHost1 = "notsnplow.com"
+        val invalidHost2 = "blog.snplow.comsnplow.com"
+        service.validMatch(invalidHost1, domain) shouldEqual false
+        service.validMatch(invalidHost2, domain) shouldEqual false
+      }
+    }
+
+    "determinePath" in {
+      val vendor = "com.acme"
+      val version1 = "track"
+      val version2 = "redirect"
+      val version3 = "iglu"
+
+      "should correctly replace the path in the request if a mapping is provided" in {
+        val expected1 = "/com.snowplowanalytics.snowplow/tp2"
+        val expected2 = "/r/tp2"
+        val expected3 = "/com.snowplowanalytics.iglu/v1"
+
+        service.determinePath(vendor, version1) shouldEqual expected1
+        service.determinePath(vendor, version2) shouldEqual expected2
+        service.determinePath(vendor, version3) shouldEqual expected3
+      }
+
+      "should pass on the original path if no mapping for it can be found" in {
+        val service = new CollectorService(
+          TestUtils.testConf.copy(paths = Map.empty[String, String]),
+          CollectorSinks(new TestSink, new TestSink)
+        )
+        val expected1 = "/com.acme/track"
+        val expected2 = "/com.acme/redirect"
+        val expected3 = "/com.acme/iglu"
+
+        service.determinePath(vendor, version1) shouldEqual expected1
+        service.determinePath(vendor, version2) shouldEqual expected2
+        service.determinePath(vendor, version3) shouldEqual expected3
       }
     }
   }

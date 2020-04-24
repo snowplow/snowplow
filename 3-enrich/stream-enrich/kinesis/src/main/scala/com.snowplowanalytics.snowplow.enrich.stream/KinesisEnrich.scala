@@ -16,67 +16,82 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package stream
+package com.snowplowanalytics.snowplow.enrich.stream
 
 import java.io.File
-import java.net.URI
 
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.io.Source
-import scala.sys.process._
-import scala.util.Try
-
+import cats.Id
+import cats.implicits._
 import com.amazonaws.auth._
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import com.amazonaws.services.dynamodbv2.model.{AttributeValue, ScanRequest}
 import com.amazonaws.services.dynamodbv2.document.{DynamoDB, Item}
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder
-import com.amazonaws.services.s3.AmazonS3ClientBuilder
-import com.amazonaws.services.s3.model.GetObjectRequest
-import org.json4s.jackson.JsonMethods._
-import org.json4s.JsonDSL._
-import scalaz.{Sink => _, Source => _, _}
-import Scalaz._
-
-import common.adapters.AdapterRegistry
-import common.enrichments.EnrichmentRegistry
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.core._
+import com.snowplowanalytics.iglu.core.circe.CirceIgluCodecs._
+import com.snowplowanalytics.snowplow.badrows.Processor
+import com.snowplowanalytics.snowplow.enrich.common.adapters.AdapterRegistry
+import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
+import com.snowplowanalytics.snowplow.enrich.common.utils.JsonUtils
+import com.snowplowanalytics.snowplow.scalatracker.Tracker
+import io.circe.Json
+import io.circe.syntax._
 import config._
-import iglu.client.Resolver
-import model.{AWSCredentials, Credentials, Kinesis, NoCredentials, StreamsConfig}
-import scalatracker.Tracker
+import model.{Credentials, DualCloudCredentialsPair, Kinesis, NoCredentials, StreamsConfig}
 import sources.KinesisSource
+import utils.getAWSCredentialsProvider
 
 /** The main entry point for Stream Enrich for Kinesis. */
 object KinesisEnrich extends Enrich {
 
-  val DynamoDBRegex    = "^dynamodb:([^/]*)/([^/]*)/([^/]*)$".r
+  val DynamoDBRegex = "^dynamodb:([^/]*)/([^/]*)/([^/]*)$".r
   private val regexMsg = "'file:[filename]' or 'dynamodb:[region/table/key]'"
 
   def main(args: Array[String]): Unit = {
     val trackerSource = for {
-      config <- parseConfig(args).validation
+      config <- parseConfig(args)
       (enrichConfig, resolverArg, enrichmentsArg, forceDownload) = config
-      creds <- enrichConfig.streams.sourceSink match {
-        case c: Kinesis => c.aws.success
-        case _          => "Configured source/sink is not Kinesis".failure
+      credsWithRegion <- enrichConfig.streams.sourceSink match {
+        case k: Kinesis =>
+          (
+            DualCloudCredentialsPair(k.aws, k.gcp.fold[Credentials](NoCredentials)(identity)),
+            k.region
+          ).asRight
+        case _ => "Configured source/sink is not Kinesis".asLeft
       }
-      resolver           <- parseResolver(resolverArg)(creds)
-      enrichmentRegistry <- parseEnrichmentRegistry(enrichmentsArg)(resolver, creds)
-      _                  <- cacheFiles(enrichmentRegistry, forceDownload)(creds)
+      (credentials, awsRegion) = credsWithRegion
+      client <- parseClient(resolverArg)(credsWithRegion._1.aws)
+      enrichmentsConf <- parseEnrichmentRegistry(enrichmentsArg, client)(credsWithRegion._1.aws)
+      _ <- cacheFiles(
+        enrichmentsConf,
+        forceDownload,
+        credentials.aws,
+        credentials.gcp,
+        Option(awsRegion)
+      )
+      enrichmentRegistry <- EnrichmentRegistry.build[Id](enrichmentsConf).value
       tracker = enrichConfig.monitoring.map(c => SnowplowTracking.initializeTracker(c.snowplow))
       adapterRegistry = new AdapterRegistry(prepareRemoteAdapters(enrichConfig.remoteAdapters))
-      source <- getSource(enrichConfig.streams, resolver, adapterRegistry, enrichmentRegistry, tracker)
+      processor = Processor(generated.BuildInfo.name, generated.BuildInfo.version)
+      source <- getSource(
+        enrichConfig.streams,
+        client,
+        adapterRegistry,
+        enrichmentRegistry,
+        tracker,
+        processor
+      )
     } yield (tracker, source)
 
     trackerSource match {
-      case Failure(e) =>
+      case Left(e) =>
         System.err.println(e)
         System.exit(1)
-      case Success((tracker, source)) =>
+      case Right((tracker, source)) =>
         tracker.foreach(SnowplowTracking.initializeSnowplowTracking)
         source.run()
     }
@@ -84,12 +99,20 @@ object KinesisEnrich extends Enrich {
 
   override def getSource(
     streamsConfig: StreamsConfig,
-    resolver: Resolver,
+    client: Client[Id, Json],
     adapterRegistry: AdapterRegistry,
-    enrichmentRegistry: EnrichmentRegistry,
-    tracker: Option[Tracker]
-  ): Validation[String, sources.Source] =
-    KinesisSource.createAndInitialize(streamsConfig, resolver, adapterRegistry, enrichmentRegistry, tracker)
+    enrichmentRegistry: EnrichmentRegistry[Id],
+    tracker: Option[Tracker[Id]],
+    processor: Processor
+  ): Either[String, sources.Source] =
+    KinesisSource.createAndInitialize(
+      streamsConfig,
+      client,
+      adapterRegistry,
+      enrichmentRegistry,
+      tracker,
+      processor
+    )
 
   override lazy val parser: scopt.OptionParser[FileConfig] =
     new scopt.OptionParser[FileConfig](generated.BuildInfo.name) with FileConfigOptions {
@@ -104,7 +127,7 @@ object KinesisEnrich extends Enrich {
         .action((r: String, c: FileConfig) => c.copy(resolver = r))
         .validate(_ match {
           case FilepathRegex(_) | DynamoDBRegex(_, _, _) => success
-          case _                                         => failure(s"Resolver doesn't match accepted uris: $regexMsg")
+          case _ => failure(s"Resolver doesn't match accepted uris: $regexMsg")
         })
       opt[String]("enrichments")
         .optional()
@@ -113,64 +136,27 @@ object KinesisEnrich extends Enrich {
         .action((e: String, c: FileConfig) => c.copy(enrichmentsDir = Some(e)))
         .validate(_ match {
           case FilepathRegex(_) | DynamoDBRegex(_, _, _) => success
-          case _                                         => failure(s"Enrichments directory doesn't match accepted uris: $regexMsg")
+          case _ => failure(s"Enrichments directory doesn't match accepted uris: $regexMsg")
         })
       forceCachedFilesDownloadOption()
     }
 
-  override def download(uri: URI, targetFile: File)(
-    implicit creds: Credentials): Validation[String, Int] =
-    uri.getScheme match {
-      case "http" | "https" => (uri.toURL #> targetFile).!.success
-      case "s3" =>
-        (for {
-          provider       <- getProvider(creds)
-          downloadResult <- downloadFromS3(provider, uri, targetFile).leftMap(_.getMessage)
-        } yield downloadResult).validation
-      case s => s"Scheme $s for file $uri not supported".failure
-    }
-
-  /**
-   * Downloads an object from S3 and returns whether or not it was successful.
-   * @param uri The URI to reconstruct into a signed S3 URL
-   * @param targetFile The file object to write to
-   * @param creds necessary credentials to download from S3
-   * @return the download result
-   */
-  private def downloadFromS3(
-    provider: AWSCredentialsProvider,
-    uri: URI,
-    targetFile: File
-  ): \/[Throwable, Int] = {
-    val s3Client = AmazonS3ClientBuilder
-      .standard()
-      .withCredentials(provider)
-      .build()
-    val bucket = uri.getHost
-    val key = uri.getPath match { // Need to remove leading '/'
-      case s if s.length > 0 && s.charAt(0) == '/' => s.substring(1)
-      case s                                       => s
-    }
-
-    utils.toEither(Try {
-      s3Client.getObject(new GetObjectRequest(bucket, key), targetFile)
-      0
-    })
-  }
-
-  override def extractResolver(resolverArgument: String)(
-    implicit creds: Credentials): Validation[String, String] =
+  override def extractResolver(
+    resolverArgument: String
+  )(
+    implicit creds: Credentials
+  ): Either[String, String] =
     resolverArgument match {
       case FilepathRegex(filepath) =>
         val file = new File(filepath)
-        if (file.exists) Source.fromFile(file).mkString.success
-        else "Iglu resolver configuration file \"%s\" does not exist".format(filepath).failure
+        if (file.exists) Source.fromFile(file).mkString.asRight
+        else "Iglu resolver configuration file \"%s\" does not exist".format(filepath).asLeft
       case DynamoDBRegex(region, table, key) =>
         for {
-          provider <- getProvider(creds).validation
+          provider <- getAWSCredentialsProvider(creds)
           resolver <- lookupDynamoDBResolver(provider, region, table, key)
         } yield resolver
-      case _ => s"Resolver argument [$resolverArgument] must match $regexMsg".failure
+      case _ => s"Resolver argument [$resolverArgument] must match $regexMsg".asLeft
     }
 
   /**
@@ -187,7 +173,7 @@ object KinesisEnrich extends Enrich {
     region: String,
     table: String,
     key: String
-  ): Validation[String, String] = {
+  ): Either[String, String] = {
     val dynamoDBClient = AmazonDynamoDBClientBuilder
       .standard()
       .withCredentials(provider)
@@ -197,42 +183,50 @@ object KinesisEnrich extends Enrich {
     for {
       // getTable doesn't involve any IO apparently so it's safe to chain
       item <- Option(dynamoDB.getTable(table).getItem("id", key))
-        .fold(s"Key $key doesn't exist in DynamoDB table $table".failure[Item])(_.success[String])
+        .fold(s"Key $key doesn't exist in DynamoDB table $table".asLeft[Item])(_.asRight[String])
       json <- Option(item.getString("json"))
-        .fold(s"""Field "json" not found at key $key in DynamoDB table $table""".failure[String])(
-          _.success[String])
+        .fold(s"""Field "json" not found at key $key in DynamoDB table $table""".asLeft[String])(
+          _.asRight[String]
+        )
     } yield json
   }
 
-  override def extractEnrichmentConfigs(enrichmentArg: Option[String])(
-    implicit creds: Credentials): Validation[String, String] = {
-    val jsons: Validation[String, List[String]] = enrichmentArg
+  override def extractEnrichmentConfigs(
+    enrichmentArg: Option[String]
+  )(
+    implicit creds: Credentials
+  ): Either[String, Json] = {
+    val jsons: Either[String, List[String]] = enrichmentArg
       .map {
         case FilepathRegex(dir) =>
           new File(dir).listFiles
             .filter(_.getName.endsWith(".json"))
             .map(scala.io.Source.fromFile(_).mkString)
             .toList
-            .success
+            .asRight
         case DynamoDBRegex(region, table, keyNamePrefix) =>
           for {
-            provider <- getProvider(creds).validation
+            provider <- getAWSCredentialsProvider(creds)
             enrichmentList = lookupDynamoDBEnrichments(provider, region, table, keyNamePrefix)
             enrichments <- enrichmentList match {
-              case Nil => s"No enrichments found with prefix $keyNamePrefix".failure
-              case js  => js.success
+              case Nil => s"No enrichments found with prefix $keyNamePrefix".asLeft
+              case js => js.asRight
             }
           } yield enrichments
-        case other => s"Enrichments argument [$other] must match $regexMsg".failure
+        case other => s"Enrichments argument [$other] must match $regexMsg".asLeft
       }
-      .getOrElse(Nil.success)
+      .getOrElse(Nil.asRight)
 
-    jsons.map { js =>
-      val combinedJson =
-        ("schema" -> "iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0") ~
-          ("data" -> js.toList.map(parse(_)))
-      compact(combinedJson)
-    }
+    val schemaKey = SchemaKey(
+      "com.snowplowanalytics.snowplow",
+      "enrichments",
+      "jsonschema",
+      SchemaVer.Full(1, 0, 0)
+    )
+
+    jsons
+      .flatMap(_.map(JsonUtils.extractJson).sequence[EitherS, Json])
+      .map(jsons => SelfDescribingData[Json](schemaKey, Json.fromValues(jsons)).asJson)
   }
 
   /**
@@ -259,7 +253,7 @@ object KinesisEnrich extends Enrich {
     // See http://techtraits.com/cloud/nosql/2012/06/27/Amazon-DynamoDB--Understanding-Query-and-Scan-operations/
     @tailrec
     def partialScan(
-      sofar: List[Map[String, String]] = Nil,
+      sofar: List[Map[String, String]],
       lastEvaluatedKey: java.util.Map[String, AttributeValue] = null
     ): List[Map[String, String]] = {
       val scanRequest = new ScanRequest().withTableName(table)
@@ -268,7 +262,7 @@ object KinesisEnrich extends Enrich {
       val combinedResults = sofar ++
         lastResult.getItems.asScala.map(_.asScala.toMap.mapValues(_.getS))
       lastResult.getLastEvaluatedKey match {
-        case null     => combinedResults
+        case null => combinedResults
         case startKey => partialScan(combinedResults, startKey)
       }
     }
@@ -277,44 +271,15 @@ object KinesisEnrich extends Enrich {
       .filter { item =>
         item.get("id") match {
           case Some(value) if value.startsWith(keyNamePrefix) => true
-          case _                                              => false
+          case _ => false
         }
       }
       .flatMap(_.get("json"))
   }
 
-  def getProvider(creds: Credentials): \/[String, AWSCredentialsProvider] = {
-    def isDefault(key: String): Boolean = key == "default"
-    def isIam(key: String): Boolean     = key == "iam"
-    def isEnv(key: String): Boolean     = key == "env"
-
-    for {
-      awsCreds <- creds match {
-        case NoCredentials     => "No AWS credentials provided".left
-        case c: AWSCredentials => c.right
-      }
-      provider <- awsCreds match {
-        case AWSCredentials(a, s) if isDefault(a) && isDefault(s) =>
-          new DefaultAWSCredentialsProviderChain().right
-        case AWSCredentials(a, s) if isDefault(a) || isDefault(s) =>
-          "accessKey and secretKey must both be set to 'default' or neither".left
-        case AWSCredentials(a, s) if isIam(a) && isIam(s) =>
-          InstanceProfileCredentialsProvider.getInstance().right
-        case AWSCredentials(a, s) if isIam(a) && isIam(s) =>
-          "accessKey and secretKey must both be set to 'iam' or neither".left
-        case AWSCredentials(a, s) if isEnv(a) && isEnv(s) =>
-          new EnvironmentVariableCredentialsProvider().right
-        case AWSCredentials(a, s) if isEnv(a) || isEnv(s) =>
-          "accessKey and secretKey must both be set to 'env' or neither".left
-        case AWSCredentials(a, s) =>
-          new AWSStaticCredentialsProvider(new BasicAWSCredentials(a, s)).right
-      }
-    } yield provider
-  }
-
   private def getDynamodbEndpoint(region: String): String =
     region match {
       case cn @ "cn-north-1" => s"https://dynamodb.$cn.amazonaws.com.cn"
-      case _                 => s"https://dynamodb.$region.amazonaws.com"
+      case _ => s"https://dynamodb.$region.amazonaws.com"
     }
 }

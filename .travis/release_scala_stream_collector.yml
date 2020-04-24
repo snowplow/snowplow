@@ -32,19 +32,19 @@ packages :
         prefix : "snowplow_scala_stream_collector_kinesis_"
         suffix : ""
         binary_paths :
-          - "2-collectors/scala-stream-collector/kinesis/target/scala-2.11/snowplow-stream-collector-kinesis-{{ packages.0.build_version }}.jar"
+          - "2-collectors/scala-stream-collector/kinesis/target/scala-2.12/snowplow-stream-collector-kinesis-{{ packages.0.build_version }}.jar"
       - type : "zip"
         prefix : "snowplow_scala_stream_collector_google_pubsub_"
         suffix : ""
         binary_paths :
-          - "2-collectors/scala-stream-collector/pubsub/target/scala-2.11/snowplow-stream-collector-google-pubsub-{{ packages.0.build_version }}.jar"
+          - "2-collectors/scala-stream-collector/pubsub/target/scala-2.12/snowplow-stream-collector-google-pubsub-{{ packages.0.build_version }}.jar"
       - type : "zip"
         prefix : "snowplow_scala_stream_collector_kafka_"
         suffix : ""
         binary_paths :
-          - "2-collectors/scala-stream-collector/kafka/target/scala-2.11/snowplow-stream-collector-kafka-{{ packages.0.build_version }}.jar"
+          - "2-collectors/scala-stream-collector/kafka/target/scala-2.12/snowplow-stream-collector-kafka-{{ packages.0.build_version }}.jar"
       - type : "zip"
         prefix : "snowplow_scala_stream_collector_nsq_"
         suffix : ""
         binary_paths :
-          - "2-collectors/scala-stream-collector/nsq/target/scala-2.11/snowplow-stream-collector-nsq-{{ packages.0.build_version }}.jar"
+          - "2-collectors/scala-stream-collector/nsq/target/scala-2.12/snowplow-stream-collector-nsq-{{ packages.0.build_version }}.jar"

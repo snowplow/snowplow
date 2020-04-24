@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -13,103 +13,113 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
-// Java
 import java.net.URI
+import java.nio.charset.Charset
 
-// Apache URLEncodedUtils
+import scala.collection.JavaConverters._
+
+import cats.data.ValidatedNel
+import cats.syntax.either._
+import cats.syntax.option._
+
+import com.snowplowanalytics.snowplow.badrows.{BadRow, FailureDetails, Processor}
+
+import org.apache.http.NameValuePair
 import org.apache.http.client.utils.URLEncodedUtils
+import org.joda.time.DateTime
 
-// Scala
-import scala.util.control.NonFatal
-import scala.collection.JavaConversions._
+import utils.JsonUtils
 
-// Scalaz
-import scalaz._
-import Scalaz._
-
-/**
- * Companion object to the CollectorLoader.
- * Contains factory methods.
- */
-object Loader {
-
-  private val TsvRegex    = "^tsv/(.*)$".r
-  private val NdjsonRegex = "^ndjson/(.*)$".r
+/** All loaders must implement this abstract base class. */
+abstract class Loader[T] {
 
   /**
-   * Factory to return a CollectorLoader
-   * based on the supplied collector
-   * identifier (e.g. "cloudfront" or
-   * "clj-tomcat").
-   *
-   * @param collector Identifier for the
-   *        event collector
-   * @return a CollectorLoader object, or
-   *         an an error message, boxed
-   *         in a Scalaz Validation
+   * Converts the source string into a CanonicalInput.
+   * @param line line (or binary payload) of data to convert
+   * @param processor processing asset (e.g. Spark enrich)
+   * @return a CanonicalInput object, Option-boxed, or None if no input was extractable.
    */
-  def getLoader(collectorOrProtocol: String): Validation[String, Loader[_]] = collectorOrProtocol match {
-    case "cloudfront"   => CloudfrontLoader.success
-    case "clj-tomcat"   => CljTomcatLoader.success
-    case "thrift"       => ThriftLoader.success // Finally - a data protocol rather than a piece of software
-    case TsvRegex(f)    => TsvLoader(f).success
-    case NdjsonRegex(f) => NdjsonLoader(f).success
-    case c              => "[%s] is not a recognised Snowplow event collector".format(c).fail
+  def toCollectorPayload(
+    line: T,
+    processor: Processor
+  ): ValidatedNel[BadRow.CPFormatViolation, Option[CollectorPayload]]
+
+  /**
+   * Converts a querystring String into a non-empty list of NameValuePairs.
+   * Returns a non-empty list of NameValuePairs on Success, or a Failure String.
+   * @param qs Option-boxed querystring String to extract name-value pairs from, or None
+   * @param encoding The encoding used by this querystring
+   * @return either a NEL of NameValuePairs or an error message
+   */
+  protected[loaders] def parseQuerystring(
+    qs: Option[String],
+    encoding: Charset
+  ): Either[FailureDetails.CPFormatViolationMessage, List[NameValuePair]] = qs match {
+    case Some(q) =>
+      Either
+        .catchNonFatal(URLEncodedUtils.parse(URI.create("http://localhost/?" + q), encoding))
+        .map(_.asScala.toList)
+        .leftMap { e =>
+          val msg = s"could not extract name-value pairs from querystring with encoding $encoding: " +
+            JsonUtils.stripInstanceEtc(e.getMessage).orNull
+          FailureDetails.CPFormatViolationMessage
+            .InputData("querystring", qs, msg)
+        }
+    case None => Nil.asRight
+  }
+
+  /**
+   * Converts a CloudFront log-format date and a time to a timestamp.
+   * @param date The CloudFront log-format date
+   * @param time The CloudFront log-format time
+   * @return either the timestamp as a Joda DateTime or an error String
+   */
+  protected[loaders] def toTimestamp(
+    date: String,
+    time: String
+  ): Either[FailureDetails.CPFormatViolationMessage, DateTime] =
+    Either
+      .catchNonFatal(DateTime.parse("%sT%s+00:00".format(date, time)))
+      .leftMap { e =>
+        val msg = s"could not convert timestamp: ${e.getMessage}"
+        FailureDetails.CPFormatViolationMessage.InputData(
+          "dateTime",
+          s"$date $time".some,
+          msg
+        )
+      }
+
+  /**
+   * Checks whether a String field is a hyphen "-", which is used by CloudFront to signal a null.
+   * @param field The field to check
+   * @return True if the String was a hyphen "-"
+   */
+  private[loaders] def toOption(field: String): Option[String] = Option(field) match {
+    case Some("-") => None
+    case Some("") => None
+    case s => s // Leaves any other Some(x) or None as-is
   }
 }
 
-/**
- * All loaders must implement this
- * abstract base class.
- */
-abstract class Loader[T] {
-
-  import CollectorPayload._
+/** Companion object to the CollectorLoader. Contains factory methods. */
+object Loader {
+  private val TsvRegex = "^tsv/(.*)$".r
+  private val NdjsonRegex = "^ndjson/(.*)$".r
 
   /**
-   * Converts the source string into a
-   * CanonicalInput.
-   *
-   * TODO: need to change this to
-   * handling some sort of validation
-   * object.
-   *
-   * @param line A line of data to convert
-   * @return a CanonicalInput object, Option-
-   *         boxed, or None if no input was
-   *         extractable.
+   * Factory to return a CollectorLoader based on the supplied collector identifier (e.g.
+   * "cloudfront" or "clj-tomcat").
+   * @param collectorOrProtocol Identifier for the event collector
+   * @return either a CollectorLoader object or an an error message
    */
-  def toCollectorPayload(line: T): ValidatedMaybeCollectorPayload
-
-  /**
-   * Converts a querystring String
-   * into a non-empty list of NameValuePairs.
-   *
-   * Returns a non-empty list of
-   * NameValuePairs on Success, or a Failure
-   * String.
-   *
-   * @param qs Option-boxed querystring
-   *        String to extract name-value
-   *        pairs from, or None
-   * @param encoding The encoding used
-   *        by this querystring
-   * @return either a NonEmptyList of
-   *         NameValuePairs or an error
-   *         message, boxed in a Scalaz
-   *         Validation
-   */
-  protected[loaders] def parseQuerystring(qs: Option[String], enc: String): ValidatedNameValuePairs = qs match {
-    case Some(q) => {
-      try {
-        URLEncodedUtils.parse(URI.create("http://localhost/?" + q), enc).toList.success
-      } catch {
-        case NonFatal(e) =>
-          "Exception extracting name-value pairs from querystring [%s] with encoding [%s]: [%s]"
-            .format(q, enc, e.getMessage)
-            .fail
-      }
+  def getLoader(collectorOrProtocol: String): Either[String, Loader[_]] =
+    collectorOrProtocol match {
+      case "cloudfront" => CloudfrontLoader.asRight
+      case "clj-tomcat" => CljTomcatLoader.asRight
+      // a data protocol rather than a piece of software
+      case "thrift" => ThriftLoader.asRight
+      case TsvRegex(f) => TsvLoader(f).asRight
+      case NdjsonRegex(f) => NdjsonLoader(f).asRight
+      case c => s"[$c] is not a recognised Snowplow event collector".asLeft
     }
-    case None => Nil.success
-  }
 }

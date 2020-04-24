@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2018-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -15,59 +15,57 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
-// Joda-Time
+import cats.data.NonEmptyList
+import cats.syntax.option._
+
 import org.joda.time.DateTime
 
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// Specs2
 import org.specs2.Specification
-import org.specs2.matcher.DataTables
-import org.specs2.scalaz.{DisjunctionMatchers, ValidationMatchers}
+import org.specs2.matcher.{DataTables, ValidatedMatchers}
 
-// Snowplow
-import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import com.snowplowanalytics.snowplow.badrows._
+
+import loaders._
 import GoogleAnalyticsAdapter._
+import utils.Clock._
 
-class GoogleAnalyticsAdapterSpec
-    extends Specification
-    with DataTables
-    with ValidationMatchers
-    with DisjunctionMatchers {
+class GoogleAnalyticsAdapterSpec extends Specification with DataTables with ValidatedMatchers {
 
   def is = s2"""
-    This is a specification to test the GoogleAnalyticsAdapter functionality
-    toRawEvents returns a failNel if the query string is empty               $e1
-    toRawEvents returns a failNel if there is no t param in the query string $e2
-    toRawEvents returns a failNel if there are no corresponding hit types    $e3
-    toRawEvents returns a succNel if the payload is correct                  $e4
-    toRawEvents returns a succNel containing the added contexts              $e5
-    toRawEvents returns a succNel containing the direct mappings             $e6
-    toRawEvents returns a succNel containing properly typed contexts         $e7
-    toRawEvents returns a succNel containing pageview as a context           $e8
-    toRawEvents returns a succNel with product composite contexts            $e9
-    toRawEvents returns a succNel with impression composite contexts         $e10
-    toRawEvents returns a succNel with conflicting composite contexts        $e11
-    toRawEvents returns a succNel with repeated composite contexts           $e12
-    toRawEvents returns a succNel with promo composite contexts              $e13
-    toRawEvents returns a succnel with multiple raw events                   $e14
-    toRawEvents returns a succNel with multiple composite contexts with cu   $e15
-    breakDownCompositeField should work properly                             $e20
+  toRawEvents returns a failNel if the query string is empty               $e1
+  toRawEvents returns a failNel if there is no t param in the query string $e2
+  toRawEvents returns a failNel if there are no corresponding hit types    $e3
+  toRawEvents returns a succNel if the payload is correct                  $e4
+  toRawEvents returns a succNel containing the added contexts              $e5
+  toRawEvents returns a succNel containing the direct mappings             $e6
+  toRawEvents returns a succNel containing properly typed contexts         $e7
+  toRawEvents returns a succNel containing pageview as a context           $e8
+  toRawEvents returns a succNel with product composite contexts            $e9
+  toRawEvents returns a succNel with impression composite contexts         $e10
+  toRawEvents returns a succNel with conflicting composite contexts        $e11
+  toRawEvents returns a succNel with repeated composite contexts           $e12
+  toRawEvents returns a succNel with promo composite contexts              $e13
+  toRawEvents returns a succnel with multiple raw events                   $e14
+  toRawEvents returns a succNel with multiple composite contexts with cu   $e15
+  breakDownCompositeField should work properly                             $e20
   """
 
-  implicit val resolver = SpecHelpers.IgluResolver
-
-  val api    = CollectorApi("com.google.analytics.measurement-protocol", "v1")
-  val source = CollectorSource("clj-tomcat", "UTF-8", None)
+  val api = CollectorPayload.Api("com.google.analytics.measurement-protocol", "v1")
+  val source = CollectorPayload.Source("clj-tomcat", "UTF-8", None)
   val context =
-    CollectorContext(DateTime.parse("2013-08-29T00:18:48.000+00:00").some, "37.157.33.123".some, None, None, Nil, None)
+    CollectorPayload.Context(
+      DateTime.parse("2013-08-29T00:18:48.000+00:00").some,
+      "37.157.33.123".some,
+      None,
+      None,
+      Nil,
+      None
+    )
 
   val static = Map(
     "tv" -> "com.google.analytics.measurement-protocol-v1",
-    "e"  -> "ue",
-    "p"  -> "srv"
+    "e" -> "ue",
+    "p" -> "srv"
   )
 
   val hitContext = (hitType: String) => s"""
@@ -78,30 +76,50 @@ class GoogleAnalyticsAdapterSpec
 
   def e1 = {
     val payload = CollectorPayload(api, Nil, None, None, source, context)
-    val actual  = toRawEvents(payload)
-    actual must beFailing(NonEmptyList("Request body is empty: no GoogleAnalytics events to process"))
+    val actual = toRawEvents(payload, SpecHelpers.client).value
+    actual must beInvalid(
+      NonEmptyList.one(
+        FailureDetails.AdapterFailure.InputData("body", None, "empty body")
+      )
+    )
   }
 
   def e2 = {
-    val body    = "dl=docloc"
+    val body = "dl=docloc"
     val payload = CollectorPayload(api, Nil, None, body.some, source, context)
-    val actual  = toRawEvents(payload)
-    actual must beFailing(NonEmptyList("No GoogleAnalytics t parameter provided: cannot determine hit type"))
+    val actual = toRawEvents(payload, SpecHelpers.client).value
+    actual must beInvalid(
+      NonEmptyList.one(
+        FailureDetails.AdapterFailure.InputData(
+          "body",
+          "dl=docloc".some,
+          "no t parameter provided: cannot determine hit type"
+        )
+      )
+    )
   }
 
   def e3 = {
-    val body    = "t=unknown&dl=docloc"
+    val body = "t=unknown&dl=docloc"
     val payload = CollectorPayload(api, Nil, None, body.some, source, context)
-    val actual  = toRawEvents(payload)
-    actual must beFailing(
-      NonEmptyList("No matching GoogleAnalytics hit type for hit type unknown",
-                   "GoogleAnalytics event failed: type parameter [unknown] not recognized"))
+    val actual = toRawEvents(payload, SpecHelpers.client).value
+    actual must beInvalid(
+      NonEmptyList.of(
+        FailureDetails.AdapterFailure
+          .InputData("t", "unknown".some, "no matching hit type"),
+        FailureDetails.AdapterFailure.SchemaMapping(
+          "unknown".some,
+          unstructEventData.mapValues(_.schemaKey),
+          "no schema associated with the provided type parameter"
+        )
+      )
+    )
   }
 
   def e4 = {
-    val body    = "t=pageview&dh=host&dp=path"
+    val body = "t=pageview&dh=host&dp=path"
     val payload = CollectorPayload(api, Nil, None, body.some, source, context)
-    val actual  = toRawEvents(payload)
+    val actual = toRawEvents(payload, SpecHelpers.client).value
 
     val expectedJson =
       """|{
@@ -120,13 +138,13 @@ class GoogleAnalyticsAdapterSpec
            |"data":[${hitContext("pageview")}]
          |}""".stripMargin.replaceAll("[\n\r]", "")
     val expectedParams = static ++ Map("ue_pr" -> expectedJson, "co" -> expectedCO)
-    actual must beSuccessful(NonEmptyList(RawEvent(api, expectedParams, None, source, context)))
+    actual must beValid(NonEmptyList.one(RawEvent(api, expectedParams, None, source, context)))
   }
 
   def e5 = {
-    val body    = "t=pageview&dh=host&cid=id&v=version"
+    val body = "t=pageview&dh=host&cid=id&v=version"
     val payload = CollectorPayload(api, Nil, None, body.some, source, context)
-    val actual  = toRawEvents(payload)
+    val actual = toRawEvents(payload, SpecHelpers.client).value
 
     val expectedUE =
       """|{
@@ -150,13 +168,13 @@ class GoogleAnalyticsAdapterSpec
            |}]
          |}""".stripMargin.replaceAll("[\n\r]", "")
     val expectedParams = static ++ Map("ue_pr" -> expectedUE, "co" -> expectedCO)
-    actual must beSuccessful(NonEmptyList(RawEvent(api, expectedParams, None, source, context)))
+    actual must beValid(NonEmptyList.one(RawEvent(api, expectedParams, None, source, context)))
   }
 
   def e6 = {
-    val body    = "t=pageview&dp=path&uip=ip"
+    val body = "t=pageview&dp=path&uip=ip"
     val payload = CollectorPayload(api, Nil, None, body.some, source, context)
-    val actual  = toRawEvents(payload)
+    val actual = toRawEvents(payload, SpecHelpers.client).value
 
     val expectedUE =
       """|{
@@ -176,13 +194,13 @@ class GoogleAnalyticsAdapterSpec
            |}]
          |}""".stripMargin.replaceAll("[\n\r]", "")
     val expectedParams = static ++ Map("ue_pr" -> expectedUE, "co" -> expectedCO, "ip" -> "ip")
-    actual must beSuccessful(NonEmptyList(RawEvent(api, expectedParams, None, source, context)))
+    actual must beValid(NonEmptyList.one(RawEvent(api, expectedParams, None, source, context)))
   }
 
   def e7 = {
-    val body    = "t=item&in=name&ip=12.228&iq=12&aip=0"
+    val body = "t=item&in=name&ip=12.228&iq=12&aip=0"
     val payload = CollectorPayload(api, Nil, None, body.some, source, context)
-    val actual  = toRawEvents(payload)
+    val actual = toRawEvents(payload, SpecHelpers.client).value
 
     val expectedUE =
       """|{
@@ -204,19 +222,21 @@ class GoogleAnalyticsAdapterSpec
              |"data":{"anonymizeIp":false}
            |},${hitContext("item")}]
          |}""".stripMargin.replaceAll("[\n\r]", "")
-    val expectedParams = static ++ Map("ue_pr" -> expectedUE,
-                                       "co" -> expectedCO,
-                                       // ip, iq and in are direct mappings too
-                                       "ti_pr" -> "12.228",
-                                       "ti_qu" -> "12",
-                                       "ti_nm" -> "name")
-    actual must beSuccessful(NonEmptyList(RawEvent(api, expectedParams, None, source, context)))
+    val expectedParams = static ++ Map(
+      "ue_pr" -> expectedUE,
+      "co" -> expectedCO,
+      // ip, iq and in are direct mappings too
+      "ti_pr" -> "12.228",
+      "ti_qu" -> "12",
+      "ti_nm" -> "name"
+    )
+    actual must beValid(NonEmptyList.one(RawEvent(api, expectedParams, None, source, context)))
   }
 
   def e8 = {
-    val body    = "t=exception&exd=desc&exf=1&dh=host"
+    val body = "t=exception&exd=desc&exf=1&dh=host"
     val payload = CollectorPayload(api, Nil, None, body.some, source, context)
-    val actual  = toRawEvents(payload)
+    val actual = toRawEvents(payload, SpecHelpers.client).value
 
     val expectedUE =
       """|{
@@ -235,13 +255,13 @@ class GoogleAnalyticsAdapterSpec
            |}]
          |}""".stripMargin.replaceAll("[\n\r]", "")
     val expectedParams = static ++ Map("ue_pr" -> expectedUE, "co" -> expectedCO)
-    actual must beSuccessful(NonEmptyList(RawEvent(api, expectedParams, None, source, context)))
+    actual must beValid(NonEmptyList.one(RawEvent(api, expectedParams, None, source, context)))
   }
 
   def e9 = {
-    val body    = "t=transaction&ti=tr&cu=EUR&pr12id=ident&pr12cd42=val"
+    val body = "t=transaction&ti=tr&cu=EUR&pr12id=ident&pr12cd42=val"
     val payload = CollectorPayload(api, Nil, None, body.some, source, context)
-    val actual  = toRawEvents(payload)
+    val actual = toRawEvents(payload, SpecHelpers.client).value
 
     val expectedUE =
       """|{
@@ -262,14 +282,19 @@ class GoogleAnalyticsAdapterSpec
              |"data":{"currencyCode":"EUR","sku":"ident","index":12}
            |}]
          |}""".stripMargin.replaceAll("[\n\r]", "")
-    val expectedParams = static ++ Map("ue_pr" -> expectedUE, "co" -> expectedCO, "tr_cu" -> "EUR", "tr_id" -> "tr")
-    actual must beSuccessful(NonEmptyList(RawEvent(api, expectedParams, None, source, context)))
+    val expectedParams = static ++ Map(
+      "ue_pr" -> expectedUE,
+      "co" -> expectedCO,
+      "tr_cu" -> "EUR",
+      "tr_id" -> "tr"
+    )
+    actual must beValid(NonEmptyList.one(RawEvent(api, expectedParams, None, source, context)))
   }
 
   def e10 = {
-    val body    = "t=pageview&dp=path&il12pi42id=s&il12pi42cd36=dim"
+    val body = "t=pageview&dp=path&il12pi42id=s&il12pi42cd36=dim"
     val payload = CollectorPayload(api, Nil, None, body.some, source, context)
-    val actual  = toRawEvents(payload)
+    val actual = toRawEvents(payload, SpecHelpers.client).value
 
     val expectedUE =
       """|{
@@ -291,13 +316,13 @@ class GoogleAnalyticsAdapterSpec
            |}]
          |}""".stripMargin.replaceAll("[\n\r]", "")
     val expectedParams = static ++ Map("ue_pr" -> expectedUE, "co" -> expectedCO)
-    actual must beSuccessful(NonEmptyList(RawEvent(api, expectedParams, None, source, context)))
+    actual must beValid(NonEmptyList.one(RawEvent(api, expectedParams, None, source, context)))
   }
 
   def e11 = {
-    val body    = "t=screenview&cd=name&cd12=dim"
+    val body = "t=screenview&cd=name&cd12=dim"
     val payload = CollectorPayload(api, Nil, None, body.some, source, context)
-    val actual  = toRawEvents(payload)
+    val actual = toRawEvents(payload, SpecHelpers.client).value
 
     val expectedUE =
       """|{
@@ -316,13 +341,13 @@ class GoogleAnalyticsAdapterSpec
            |}]
          |}""".stripMargin.replaceAll("[\n\r]", "")
     val expectedParams = static ++ Map("ue_pr" -> expectedUE, "co" -> expectedCO)
-    actual must beSuccessful(NonEmptyList(RawEvent(api, expectedParams, None, source, context)))
+    actual must beValid(NonEmptyList.one(RawEvent(api, expectedParams, None, source, context)))
   }
 
   def e12 = {
-    val body    = "t=pageview&dp=path&pr1id=s1&pr2id=s2&pr1cd1=v1&pr1cd2=v2"
+    val body = "t=pageview&dp=path&pr1id=s1&pr2id=s2&pr1cd1=v1&pr1cd2=v2"
     val payload = CollectorPayload(api, Nil, None, body.some, source, context)
-    val actual  = toRawEvents(payload)
+    val actual = toRawEvents(payload, SpecHelpers.client).value
 
     val expectedUE =
       """|{
@@ -350,13 +375,13 @@ class GoogleAnalyticsAdapterSpec
            |}]
          |}""".stripMargin.replaceAll("[\n\r]", "")
     val expectedParams = static ++ Map("ue_pr" -> expectedUE, "co" -> expectedCO)
-    actual must beSuccessful(NonEmptyList(RawEvent(api, expectedParams, None, source, context)))
+    actual must beValid(NonEmptyList.one(RawEvent(api, expectedParams, None, source, context)))
   }
 
   def e13 = {
-    val body    = "t=pageview&dp=path&promoa=action&promo12id=id"
+    val body = "t=pageview&dp=path&promoa=action&promo12id=id"
     val payload = CollectorPayload(api, Nil, None, body.some, source, context)
-    val actual  = toRawEvents(payload)
+    val actual = toRawEvents(payload, SpecHelpers.client).value
 
     val expectedUE =
       """|{
@@ -378,13 +403,13 @@ class GoogleAnalyticsAdapterSpec
            |}]
          |}""".stripMargin.replaceAll("[\n\r]", "")
     val expectedParams = static ++ Map("ue_pr" -> expectedUE, "co" -> expectedCO)
-    actual must beSuccessful(NonEmptyList(RawEvent(api, expectedParams, None, source, context)))
+    actual must beValid(NonEmptyList.one(RawEvent(api, expectedParams, None, source, context)))
   }
 
   def e14 = {
-    val body    = "t=pageview&dh=host&dp=path\nt=pageview&dh=host&dp=path"
+    val body = "t=pageview&dh=host&dp=path\nt=pageview&dh=host&dp=path"
     val payload = CollectorPayload(api, Nil, None, body.some, source, context)
-    val actual  = toRawEvents(payload)
+    val actual = toRawEvents(payload, SpecHelpers.client).value
 
     val expectedJson =
       """|{
@@ -403,15 +428,15 @@ class GoogleAnalyticsAdapterSpec
            |"data":[${hitContext("pageview")}]
          |}""".stripMargin.replaceAll("[\n\r]", "")
     val expectedParams = static ++ Map("ue_pr" -> expectedJson, "co" -> expectedCO)
-    val event          = RawEvent(api, expectedParams, None, source, context)
-    actual must beSuccessful(NonEmptyList(event, event))
+    val event = RawEvent(api, expectedParams, None, source, context)
+    actual must beValid(NonEmptyList.of(event, event))
   }
 
   def e15 = {
     val body =
       "t=pageview&dh=host&dp=path&cu=EUR&il1pi1pr=1&il1pi1nm=name1&il1pi1ps=1&il1pi1ca=cat1&il1pi1id=id1&il1pi1br=brand1&il1pi2pr=2&il1pi2nm=name2&il1pi2ps=2&il1pi2ca=cat2&il1pi2id=id2&il1pi2br=brand2&il2pi1pr=21&il2pi1nm=name21&il2pi1ps=21&il2pi1ca=cat21&il2pi1id=id21&il2pi1br=brand21"
     val payload = CollectorPayload(api, Nil, None, body.some, source, context)
-    val actual  = toRawEvents(payload)
+    val actual = toRawEvents(payload, SpecHelpers.client).value
 
     val expectedJson =
       """|{
@@ -438,26 +463,39 @@ class GoogleAnalyticsAdapterSpec
              |"data":{"productIndex":1,"name":"name21","sku":"id21","price":21.0,"brand":"brand21","currencyCode":"EUR","category":"cat21","position":21,"listIndex":2}
            |}]
          |}""".stripMargin.replaceAll("[\n\r]", "")
-    val expectedParams = static ++ Map("ue_pr" -> expectedJson, "co" -> expectedCO, "ti_cu" -> "EUR")
-    actual must beSuccessful(NonEmptyList(RawEvent(api, expectedParams, None, source, context)))
+    val expectedParams = static ++ Map(
+      "ue_pr" -> expectedJson,
+      "co" -> expectedCO,
+      "ti_cu" -> "EUR"
+    )
+    actual must beValid(NonEmptyList.one(RawEvent(api, expectedParams, None, source, context)))
   }
 
   def e20 = {
     val errorMessage = (s: String) =>
-      s"Cannot parse field name $s, it doesn't conform to the " +
-      """expected composite field regex: (pr|promo|il|cd|cm|cg)(\d+)([a-zA-Z]*)(\d*)([a-zA-Z]*)(\d*)$"""
+      FailureDetails.AdapterFailure.InputData(
+        s,
+        None,
+        "composite field name has to conform to regex " +
+          """(pr|promo|il|cd|cm|cg)(\d+)([a-zA-Z]*)(\d*)([a-zA-Z]*)(\d*)$"""
+      )
     val s = Seq(
-      breakDownCompField("pr") must beLeftDisjunction(errorMessage("pr")),
-      breakDownCompField("pr12id") must beRightDisjunction((List("pr", "id"), List("12"))),
-      breakDownCompField("12") must beLeftDisjunction(errorMessage("12")),
-      breakDownCompField("") must beLeftDisjunction("Cannot parse empty composite field name"),
-      breakDownCompField("pr12id", "identifier", "IF") must beRightDisjunction(
-        Map("IFpr" -> "12", "prid" -> "identifier")),
-      breakDownCompField("pr12cm42", "value", "IF") must beRightDisjunction(
-        Map("IFprcm" -> "12", "IFcm" -> "42", "prcm" -> "value")),
-      breakDownCompField("pr", "value", "IF") must beLeftDisjunction(errorMessage("pr")),
-      breakDownCompField("pr", "", "IF") must beLeftDisjunction(errorMessage("pr")),
-      breakDownCompField("pr12", "val", "IF") must beRightDisjunction(Map("IFpr" -> "12", "pr" -> "val"))
+      breakDownCompField("pr") must beLeft(errorMessage("pr")),
+      breakDownCompField("pr12id") must beRight((List("pr", "id"), List("12"))),
+      breakDownCompField("12") must beLeft(errorMessage("12")),
+      breakDownCompField("") must beLeft(
+        FailureDetails.AdapterFailure
+          .InputData("", None, "cannot parse empty field name")
+      ),
+      breakDownCompField("pr12id", "identifier", "IF") must beRight(
+        Map("IFpr" -> "12", "prid" -> "identifier")
+      ),
+      breakDownCompField("pr12cm42", "value", "IF") must beRight(
+        Map("IFprcm" -> "12", "IFcm" -> "42", "prcm" -> "value")
+      ),
+      breakDownCompField("pr", "value", "IF") must beLeft(errorMessage("pr")),
+      breakDownCompField("pr", "", "IF") must beLeft(errorMessage("pr")),
+      breakDownCompField("pr12", "val", "IF") must beRight(Map("IFpr" -> "12", "pr" -> "val"))
     )
     s.reduce(_ and _)
   }

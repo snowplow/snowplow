@@ -39,6 +39,7 @@ module Snowplow
       PARTFILE_GROUPBY_REGEXP = ".*(part-)\\d+-(.*)"
       ATOMIC_EVENTS_PARTFILE_GROUPBY_REGEXP = ".*\/atomic-events\/(part-)\\d+-(.*)"
       SHREDDED_TYPES_PARTFILE_GROUPBY_REGEXP = ".*\/shredded-types\/vendor=(.+)\/name=(.+)\/.+\/version=(.+)\/(part-)\\d+-(.*)"
+      SHREDDED_TSV_TYPES_PARTFILE_GROUPBY_REGEXP = ".*\/shredded-tsv\/vendor=(.+)\/name=(.+)\/.+\/version=(.+)\/(part-)\\d+-(.*)"
       STREAM_ENRICH_REGEXP = ".*\.gz"
       SUCCESS_REGEXP = ".*_SUCCESS"
       STANDARD_HOSTED_ASSETS = "s3://snowplow-hosted-assets"
@@ -47,6 +48,7 @@ module Snowplow
       SHRED_STEP_OUTPUT = 'hdfs:///local/snowplow/shredded-events/'
 
       SHRED_JOB_WITH_PROCESSING_MANIFEST = Gem::Version.new('0.14.0-rc1')
+      SHRED_JOB_WITH_TSV_OUTPUT = Gem::Version.new('0.16.0-rc1')
       RDB_LOADER_WITH_PROCESSING_MANIFEST = Gem::Version.new('0.15.0-rc4')
 
       AMI_4 = Gem::Version.new("4.0.0")
@@ -95,6 +97,7 @@ module Snowplow
           :region => config[:aws][:s3][:region])
 
         ami_version = Gem::Version.new(config[:aws][:emr][:ami_version])
+        shredder_version = Gem::Version.new(config[:storage][:versions][:rdb_shredder])
 
         # Configure Elasticity with your AWS credentials
         Elasticity.configure do |c|
@@ -114,7 +117,7 @@ module Snowplow
           if emr_jobflow_id.nil?
             @jobflow = Elasticity::JobFlow.new
           else
-            @jobflow = Elasticity::JobFlow.from_jobflow_id(emr_jobflow_id, config[:aws][:emr][:region])
+            @jobflow = get_emr_jobflow(emr_jobflow_id, config[:aws][:emr][:region])
             found_persistent_jobflow = true
           end
 
@@ -155,9 +158,7 @@ module Snowplow
         @jobflow.enable_debugging     = debug
         @jobflow.visible_to_all_users = true
 
-        @jobflow.instance_count       = config[:aws][:emr][:jobflow][:core_instance_count] + 1 # +1 for the master instance
         @jobflow.master_instance_type = config[:aws][:emr][:jobflow][:master_instance_type]
-        @jobflow.slave_instance_type  = config[:aws][:emr][:jobflow][:core_instance_type]
 
         @jobflow.timeout = 120
 
@@ -211,27 +212,6 @@ module Snowplow
           end
         end
 
-        # EBS
-        unless config[:aws][:emr][:jobflow][:core_instance_ebs].nil?
-          ebs_bdc = Elasticity::EbsBlockDeviceConfig.new
-
-          ebs_bdc.volume_type          = config[:aws][:emr][:jobflow][:core_instance_ebs][:volume_type]
-          ebs_bdc.size_in_gb           = config[:aws][:emr][:jobflow][:core_instance_ebs][:volume_size]
-          ebs_bdc.volumes_per_instance = 1
-          if config[:aws][:emr][:jobflow][:core_instance_ebs][:volume_type] == "io1"
-            ebs_bdc.iops = config[:aws][:emr][:jobflow][:core_instance_ebs][:volume_iops]
-          end
-
-          ebs_c = Elasticity::EbsConfiguration.new
-          ebs_c.add_ebs_block_device_config(ebs_bdc)
-          ebs_c.ebs_optimized = true
-
-          unless config[:aws][:emr][:jobflow][:core_instance_ebs][:ebs_optimized].nil?
-            ebs_c.ebs_optimized = config[:aws][:emr][:jobflow][:core_instance_ebs][:ebs_optimized]
-          end
-
-          @jobflow.set_core_ebs_configuration(ebs_c)
-        end
         @jobflow.add_application("Hadoop") unless found_persistent_jobflow
 
         if collector_format == 'thrift'
@@ -308,6 +288,22 @@ module Snowplow
           end
         end
 
+        # Now let's add our core group
+        core_instance_group = Elasticity::InstanceGroup.new.tap { |ig|
+          ig.type = config[:aws][:emr][:jobflow][:core_instance_type]
+          ig.count = config[:aws][:emr][:jobflow][:core_instance_count]
+          # check if bid exists
+          cib = config[:aws][:emr][:jobflow][:core_instance_bid]
+          if cib.nil?
+            ig.set_on_demand_instances
+          else
+            ig.set_spot_instances(cib)
+          end
+        }
+
+        @jobflow.set_core_instance_group(core_instance_group)
+
+
         # Now let's add our task group if required
         tic = config[:aws][:emr][:jobflow][:task_instance_count]
         if tic > 0
@@ -324,6 +320,28 @@ module Snowplow
           }
 
           @jobflow.set_task_instance_group(instance_group)
+        end
+
+        # EBS
+        unless config[:aws][:emr][:jobflow][:core_instance_ebs].nil?
+          ebs_bdc = Elasticity::EbsBlockDeviceConfig.new
+
+          ebs_bdc.volume_type          = config[:aws][:emr][:jobflow][:core_instance_ebs][:volume_type]
+          ebs_bdc.size_in_gb           = config[:aws][:emr][:jobflow][:core_instance_ebs][:volume_size]
+          ebs_bdc.volumes_per_instance = 1
+          if config[:aws][:emr][:jobflow][:core_instance_ebs][:volume_type] == "io1"
+            ebs_bdc.iops = config[:aws][:emr][:jobflow][:core_instance_ebs][:volume_iops]
+          end
+
+          ebs_c = Elasticity::EbsConfiguration.new
+          ebs_c.add_ebs_block_device_config(ebs_bdc)
+          ebs_c.ebs_optimized = true
+
+          unless config[:aws][:emr][:jobflow][:core_instance_ebs][:ebs_optimized].nil?
+            ebs_c.ebs_optimized = config[:aws][:emr][:jobflow][:core_instance_ebs][:ebs_optimized]
+          end
+
+          @jobflow.set_core_ebs_configuration(ebs_c)
         end
 
         stream_enrich_mode = !csbe[:stream].nil?
@@ -487,7 +505,7 @@ module Snowplow
           processing_manifest = get_processing_manifest(targets)
           processing_manifest_shred_args =
             if not processing_manifest.nil?
-              if Gem::Version.new(config[:storage][:versions][:rdb_shredder]) >= SHRED_JOB_WITH_PROCESSING_MANIFEST
+              if shredder_version >= SHRED_JOB_WITH_PROCESSING_MANIFEST
                 { 'processing-manifest-table' => processing_manifest, 'item-id' => shred_final_output }
               else
                 {}
@@ -495,6 +513,9 @@ module Snowplow
             else
               {}
             end
+
+          # Add target config JSON if necessary
+          storage_target_shred_args = get_rdb_shredder_target(config, targets[:ENRICHED_EVENTS])
 
           # If we enriched, we free some space on HDFS by deleting the raw events
           # otherwise we need to copy the enriched events back to HDFS
@@ -532,7 +553,7 @@ module Snowplow
                 },
                 {
                   'iglu-config' => build_iglu_config_json(resolver)
-                }.merge(duplicate_storage_config).merge(processing_manifest_shred_args)
+                }.merge(duplicate_storage_config).merge(processing_manifest_shred_args).merge(storage_target_shred_args)
               )
             else
               duplicate_storage_config = build_duplicate_storage_json(targets[:DUPLICATE_TRACKING])
@@ -575,6 +596,7 @@ module Snowplow
             copy_atomic_events_to_s3_step.name = "[shred] s3-dist-cp: Shredded atomic events HDFS -> S3"
             submit_jobflow_step(copy_atomic_events_to_s3_step, use_persistent_jobflow)
 
+            # Copy shredded JSONs (pre-R32)
             copy_shredded_types_to_s3_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
             copy_shredded_types_to_s3_step.arguments = [
               "--src"       , SHRED_STEP_OUTPUT,
@@ -586,8 +608,25 @@ module Snowplow
             if encrypted
               copy_shredded_types_to_s3_step.arguments = copy_shredded_types_to_s3_step.arguments + [ '--s3ServerSideEncryption' ]
             end
-            copy_shredded_types_to_s3_step.name = "[shred] s3-dist-cp: Shredded types HDFS -> S3"
+            copy_shredded_types_to_s3_step.name = "[shred] s3-dist-cp: Shredded JSON types HDFS -> S3"
             submit_jobflow_step(copy_shredded_types_to_s3_step, use_persistent_jobflow)
+
+            # Copy shredded TSVs (R32+)
+            if shredder_version >= SHRED_JOB_WITH_TSV_OUTPUT
+              copy_shredded_tsv_types_to_s3_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
+              copy_shredded_tsv_types_to_s3_step.arguments = [
+                "--src"       , SHRED_STEP_OUTPUT,
+                "--dest"      , shred_final_output,
+                "--groupBy"   , SHREDDED_TSV_TYPES_PARTFILE_GROUPBY_REGEXP,
+                "--targetSize", "24",
+                "--s3Endpoint", s3_endpoint
+              ] + output_codec
+              if encrypted
+                copy_shredded_tsv_types_to_s3_step.arguments = copy_shredded_tsv_types_to_s3_step.arguments + [ '--s3ServerSideEncryption' ]
+              end
+              copy_shredded_tsv_types_to_s3_step.name = "[shred] s3-dist-cp: Shredded TSV types HDFS -> S3"
+              submit_jobflow_step(copy_shredded_tsv_types_to_s3_step, use_persistent_jobflow)
+            end
           else
             copy_to_s3_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
             copy_to_s3_step.arguments = [
@@ -717,17 +756,31 @@ module Snowplow
       def run(config)
 
         snowplow_tracking_enabled = ! config[:monitoring][:snowplow].nil?
+        if snowplow_tracking_enabled
+          Monitoring::Snowplow.parameterize(config)
+        end
 
         @pending_jobflow_steps.each do |jobflow_step|
           begin
             retries ||= 0
             # if the job flow is already running this triggers an HTTP call
             @jobflow.add_step(jobflow_step)
-          rescue Elasticity::ThrottlingException, RestClient::RequestTimeout, RestClient::InternalServerError, RestClient::ServiceUnavailable, RestClient::SSLCertificateNotVerified
-            logger.warn "Got an error while trying to submit a jobflow step: #{jobflow_step.name}"
-            retries += 1
-            sleep(2 ** retries + 30)
-            retry if retries < 3
+          rescue Elasticity::ThrottlingException, RestClient::RequestTimeout, RestClient::InternalServerError, RestClient::ServiceUnavailable, RestClient::SSLCertificateNotVerified => e
+            if retries < 3
+              retries += 1
+              delay = 2 ** retries + 30
+              logger.warn "Got error [#{e.message}] while trying to submit jobflow step [#{jobflow_step.name}] to jobflow [#{@jobflow.jobflow_id}]. Retrying in #{delay} seconds"
+              sleep(delay)
+              retry
+            else
+              if snowplow_tracking_enabled
+                step_status = Elasticity::ClusterStepStatus.new
+                step_status.name = "Add step [#{jobflow_step.name}] to jobflow [#{@jobflow.jobflow_id}]. (Error: [#{e.message}])"
+                step_status.state = "FAILED"
+                Monitoring::Snowplow.instance.track_single_step(step_status)
+              end
+              raise EmrExecutionError, "Can't add step [#{jobflow_step.name}] to jobflow [#{@jobflow.jobflow_id}] (retried 3 times). Error: [#{e.message}]."
+            end
           end
         end
 
@@ -746,7 +799,6 @@ module Snowplow
         logger.debug "EMR jobflow #{jobflow_id} started, waiting for jobflow to complete..."
 
         if snowplow_tracking_enabled
-          Monitoring::Snowplow.parameterize(config)
           Monitoring::Snowplow.instance.track_job_started(jobflow_id, cluster_status(@jobflow), cluster_step_status_for_run(@jobflow))
         end
 
@@ -1043,6 +1095,18 @@ module Snowplow
 
         # Loop until we can quit...
         while true do
+          retries = 0
+
+          handleException = ->(ex, description) {
+            retries += 1
+            if retries < 4
+              logger.warn "Got #{description} #{ex}, waiting 5 minutes before checking jobflow again"
+              sleep(300)
+            else
+              raise ex
+            end
+          }
+
           begin
             cluster_step_status_for_run = cluster_step_status_for_run(@jobflow)
 
@@ -1069,70 +1133,45 @@ module Snowplow
             end
 
           rescue SocketError => se
-            logger.warn "Got socket error #{se}, waiting 5 minutes before checking jobflow again"
-            sleep(300)
+            handleException.call se, "socket error"
+            retry
           rescue Errno::ECONNREFUSED => ref
-            logger.warn "Got connection refused #{ref}, waiting 5 minutes before checking jobflow again"
-            sleep(300)
+            handleException.call ref, "connection refused"
+            retry
           rescue Errno::ECONNRESET => res
-            logger.warn "Got connection reset #{res}, waiting 5 minutes before checking jobflow again"
-            sleep(300)
+            handleException.call res, "connection reset"
+            retry
           rescue Errno::ETIMEDOUT => to
-            logger.warn "Got connection timeout #{to}, waiting 5 minutes before checking jobflow again"
-            sleep(300)
+            handleException.call to, "connection timeout"
+            retry
           rescue RestClient::InternalServerError => ise
-            logger.warn "Got internal server error #{ise}, waiting 5 minutes before checking jobflow again"
-            sleep(300)
+            handleException.call ise, "internal server error"
+            retry
           rescue Elasticity::ThrottlingException => te
-            logger.warn "Got Elasticity throttling exception #{te}, waiting 5 minutes before checking jobflow again"
-            sleep(300)
+            handleException.call te, "Elasticity throttling exception"
+            retry
           rescue ArgumentError => ae
-            logger.warn "Got Elasticity argument error #{ae}, waiting 5 minutes before checking jobflow again"
-            sleep(300)
+            handleException.call ae, "Elasticity argument error"
+            retry
           rescue IOError => ioe
-            logger.warn "Got IOError #{ioe}, waiting 5 minutes before checking jobflow again"
-            sleep(300)
+            handleException.call ioe, "IOError"
+            retry
           rescue RestClient::SSLCertificateNotVerified => sce
-            logger.warn "Got RestClient::SSLCertificateNotVerified #{sce}, waiting 5 minutes before checking jobflow again"
-            sleep(300)
+            handleException.call sce, "RestClient::SSLCertificateNotVerified"
+            retry
           rescue RestClient::RequestTimeout => rt
-            logger.warn "Got RestClient::RequestTimeout #{rt}, waiting 5 minutes before checking jobflow again"
-            sleep(300)
+            handleException.call rt, "RestClient::RequestTimeout"
+            retry
           rescue RestClient::ServiceUnavailable => su
-            logger.warn "Got RestClient::ServiceUnavailable #{su}, waiting 5 minutes before checking jobflow again"
-            sleep(300)
+            handleException.call su, "RestClient::ServiceUnavailable"
+            retry
+          rescue OpenSSL::SSL::SSLError => se
+            handleException.call se, "OpenSSL::SSL::SSLError"
+            retry
           end
         end
 
         JobResult.new(success, bootstrap_failure, rdb_loader_failure, rdb_loader_cancellation)
-      end
-
-      # Prettified string containing failure details
-      # for this job flow.
-      Contract String => String
-      def get_failure_details(jobflow_id, cluster_status, cluster_step_status_for_run)
-        [
-          "EMR jobflow #{jobflow_id} failed, check Amazon EMR console and Hadoop logs for details (help: https://github.com/snowplow/snowplow/wiki/Troubleshooting-jobs-on-Elastic-MapReduce). Data files not archived.",
-          "#{@jobflow.name}: #{cluster_status.state} [#{cluster_status.last_state_change_reason}] ~ #{self.class.get_elapsed_time(cluster_status.ready_at, cluster_status.ended_at)} #{self.class.get_timespan(cluster_status.ready_at, cluster_status.ended_at)}"
-        ].concat(cluster_step_status_for_run
-            .sort { |a,b|
-              self.class.nilable_spaceship(a.started_at, b.started_at)
-            }
-            .each_with_index
-            .map { |s,i|
-              " - #{i + 1}. #{s.name}: #{s.state} ~ #{self.class.get_elapsed_time(s.started_at, s.ended_at)} #{self.class.get_timespan(s.started_at, s.ended_at)}"
-            })
-          .join("\n")
-      end
-
-      # Gets the time span.
-      #
-      # Parameters:
-      # +start+:: start time
-      # +_end+:: end time
-      Contract Maybe[Time], Maybe[Time] => String
-      def self.get_timespan(start, _end)
-        "[#{start} - #{_end}]"
       end
 
       # Spaceship operator supporting nils
@@ -1151,32 +1190,6 @@ module Snowplow
           -1
         else
           a <=> b
-        end
-      end
-
-      # Gets the elapsed time in a
-      # human-readable format.
-      #
-      # Parameters:
-      # +start+:: start time
-      # +_end+:: end time
-      Contract Maybe[Time], Maybe[Time] => String
-      def self.get_elapsed_time(start, _end)
-        if start.nil? or _end.nil?
-          "elapsed time n/a"
-        else
-          # Adapted from http://stackoverflow.com/a/19596579/255627
-          seconds_diff = (start - _end).to_i.abs
-
-          hours = seconds_diff / 3600
-          seconds_diff -= hours * 3600
-
-          minutes = seconds_diff / 60
-          seconds_diff -= minutes * 60
-
-          seconds = seconds_diff
-
-          "#{hours.to_s.rjust(2, '0')}:#{minutes.to_s.rjust(2, '0')}:#{seconds.to_s.rjust(2, '0')}"
         end
       end
 
@@ -1200,6 +1213,7 @@ module Snowplow
       #
       # Parameters:
       # +jobflow+:: The jobflow to extract steps from
+      Contract Elasticity::JobFlow => ArrayOf[Elasticity::ClusterStepStatus]
       def cluster_step_status_for_run(jobflow)
         begin
           retries ||= 0
@@ -1213,6 +1227,7 @@ module Snowplow
         end
       end
 
+      Contract Elasticity::JobFlow => Elasticity::ClusterStatus
       def cluster_status(jobflow)
         begin
           retries ||= 0
@@ -1264,6 +1279,18 @@ module Snowplow
       Contract TargetsHash => Maybe[String]
       def get_processing_manifest(targets)
         targets[:ENRICHED_EVENTS].select { |t| not t.data[:processingManifest].nil? }.map { |t| t.data.dig(:processingManifest, :amazonDynamoDb, :tableName) }.first
+      end
+
+      Contract ConfigHash, ArrayOf[Iglu::SelfDescribingJson] => Hash
+      def get_rdb_shredder_target(config, targets)
+        supported_targets = targets.select { |target_config|
+          target_config.schema.name == 'redshift_config' && target_config.schema.version.model >= 4
+        }
+        if Gem::Version.new(config[:storage][:versions][:rdb_shredder]) >= SHRED_JOB_WITH_TSV_OUTPUT && !supported_targets.empty?
+          { 'target' => Base64.strict_encode64(supported_targets.first.to_json.to_json) }
+        else
+          {}
+        end
       end
     end
   end

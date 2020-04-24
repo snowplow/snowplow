@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,131 +10,183 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
-package enrichments
-package registry
+package com.snowplowanalytics.snowplow.enrich.common
+package enrichments.registry
 
-// Maven Artifact
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion
+import cats.data.ValidatedNel
+import cats.data.Validated
+import cats.syntax.either._
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
+import io.circe._
 
-// Scalaz
-import scalaz._
-import Scalaz._
+import utils.CirceUtils
 
-// json4s
-import org.json4s.{DefaultFormats, JValue}
+import java.net.{Inet4Address, Inet6Address}
+import com.google.common.net.{InetAddresses => GuavaInetAddress}
+import scala.util.Try
 
-// Iglu
-import iglu.client.{SchemaCriterion, SchemaKey}
-import iglu.client.validation.ProcessingMessageMethods._
-
-// This project
-import utils.ScalazJson4sUtils
-
-/**
- * Companion object. Lets us create a AnonIpEnrichment
- * from a JValue.
- */
+/** Companion object. Lets us create a AnonIpConf from a Json. */
 object AnonIpEnrichment extends ParseableEnrichment {
-
-  implicit val formats = DefaultFormats
-
-  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "anon_ip", "jsonschema", 1, 0)
+  override val supportedSchema =
+    SchemaCriterion("com.snowplowanalytics.snowplow", "anon_ip", "jsonschema", 1, 0)
 
   /**
-   * Creates an AnonIpEnrichment instance from a JValue.
-   *
-   * @param config The anon_ip enrichment JSON
-   * @param schemaKey The SchemaKey provided for the enrichment
-   *        Must be a supported SchemaKey for this enrichment
-   * @return a configured AnonIpEnrichment instance
+   * Creates an AnonIpEnrichment instance from a Json.
+   * @param c The anon_ip enrichment JSON
+   * @param schemaKey provided for the enrichment, must be supported by this enrichment
+   * @return an AnonIpEnrichment configuration
    */
-  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[AnonIpEnrichment] =
-    isParseable(config, schemaKey).flatMap(conf => {
-      (for {
-        param  <- ScalazJson4sUtils.extract[Int](config, "parameters", "anonOctets")
-        octets <- AnonOctets.fromInt(param)
-        enrich = AnonIpEnrichment(octets)
-      } yield enrich).toValidationNel
-    })
+  override def parse(
+    config: Json,
+    schemaKey: SchemaKey,
+    localMode: Boolean = false
+  ): ValidatedNel[String, AnonIpConf] =
+    (for {
+      _ <- isParseable(config, schemaKey)
+      paramIPv4Octet <- CirceUtils
+        .extract[Int](config, "parameters", "anonOctets")
+        .toEither
+      paramIPv6Segment <- CirceUtils
+        .extract[Int](config, "parameters", "anonSegments")
+        .orElse(Validated.valid(paramIPv4Octet))
+        .toEither
+      ipv4Octets <- AnonIPv4Octets.fromInt(paramIPv4Octet)
+      ipv6Segment <- AnonIPv6Segments.fromInt(paramIPv6Segment)
+    } yield AnonIpConf(ipv4Octets, ipv6Segment)).toValidatedNel
+}
 
+/** How many octets (ipv4) to anonymize */
+object AnonIPv4Octets extends Enumeration {
+  type AnonIPv4Octets = Value
+  val One = Value(1, "1")
+  val Two = Value(2, "2")
+  val Three = Value(3, "3")
+  val All = Value(4, "4")
+
+  /**
+   * Convert a Stringly-typed integer into the corresponding AnonOctets Enum Value.
+   * Update the Validation Error if the conversion isn't possible.
+   * @param anonIPv4Octets A String holding the number of IP address octets to anonymize
+   * @return `Right(AnonIPv4Octets)` or `Left(errorMsg)`
+   */
+  def fromInt(anonIPv4Octets: Int): Either[String, AnonIPv4Octets] =
+    Either
+      .catchNonFatal(AnonIPv4Octets(anonIPv4Octets))
+      .leftMap(
+        e =>
+          s"IPv4 address octets to anonymize must be 1, 2, 3 or 4. Value: $anonIPv4Octets was given. Error: [${e.getMessage}]"
+      )
 }
 
 /**
- * How many octets to anonymize?
+ * How many segments (ipv6) to anonymize?
  */
-object AnonOctets extends Enumeration {
+object AnonIPv6Segments extends Enumeration {
 
-  type AnonOctets = Value
+  type AnonIPv6Segments = Value
 
-  val One   = Value(1, "1")
-  val Two   = Value(2, "2")
+  val One = Value(1, "1")
+  val Two = Value(2, "2")
   val Three = Value(3, "3")
-  val All   = Value(4, "4")
+  val Four = Value(4, "4")
+  val Five = Value(5, "5")
+  val Six = Value(6, "6")
+  val Seven = Value(7, "7")
+  val All = Value(8, "8")
 
   /**
    * Convert a Stringly-typed integer
-   * into the corresponding AnonOctets
+   * into the corresponding AnonIPv6Segments
    * Enum Value.
    *
    * Update the Validation Error if the
    * conversion isn't possible.
    *
-   * @param anonOctets A String holding
-   *        the number of IP address
-   *        octets to anonymize
-   * @return a Validation-boxed AnonOctets
+   * @param anonIPv6Segments A String holding
+   *        the number of IPv6 address
+   *        segments to anonymize
+   * @return `Right(AnonIPv6Segments)` or `Left(errorMsg)`
    */
-  def fromInt(anonOctets: Int): ValidatedMessage[AnonOctets] =
-    try {
-      AnonOctets(anonOctets).success
-    } catch {
-      case nse: NoSuchElementException => "IP address octets to anonymize must be 1, 2, 3 or 4".toProcessingMessage.fail
-    }
+  def fromInt(anonIPv6Segments: Int): Either[String, AnonIPv6Segments] =
+    Either
+      .catchNonFatal(AnonIPv6Segments(anonIPv6Segments))
+      .leftMap(
+        e =>
+          s"IPv6 address segments to anonymize must be 1, 2, 3, 4, 5, 6, 7 or 8. Value $anonIPv6Segments was given. Error: [${e.getMessage}]"
+      )
 }
 
 /**
- * Config for an anon_ip enrichment
+ * Instance of AnonIP Enrichment
  *
- * @param octets The number of octets to anonymize
+ * Examples:
+ *
+ * val enrichment = AnonIpEnrichment(Three, Four)
+ * enrichment.anonymizeIp("94.15.223.151") => "94.x.x.x"
+ * enrichment.anonymizeIp("2605:2700:0:3::4713:93e3") => "2605:2700:0:3:x:x:x:x"
+ *
+ * For IPv6 either the form defined in RFC 2732
+ *  or the literal IPv6 address format defined in RFC 2373 is accepted
+ *
+ * @param ipv4Octets The number of octets (IPv4) to anonymize, starting from the right
+ * @param ipv6Segments The number of segments (IPv6) to anonymize, starting from the right
  */
-case class AnonIpEnrichment(
-  octets: AnonOctets.AnonOctets
+final case class AnonIpEnrichment(
+  ipv4Octets: AnonIPv4Octets.AnonIPv4Octets,
+  ipv6Segments: AnonIPv6Segments.AnonIPv6Segments
 ) extends Enrichment {
+
+  val IPv4MappedAddressPrefix = "::FFFF:"
+  val MaskChar = "x"
 
   /**
    * Anonymize the supplied IP address.
-   *
-   * octets is the number of octets
-   * in the IP address to anonymize, starting
-   * from the right. For example:
-   *
-   * anonymizeIp("94.15.223.151", One)
-   * => "94.15.223.x"
-   *
-   * anonymizeIp("94.15.223.151", Three)
-   * => "94.x.x.x"
    *
    * TODO: potentially update this to return
    * a Validation error or a null if the IP
    * address is somehow invalid or incomplete.
    *
-   * @param ip The IP address to anonymize
+   * @param ipOrNull The IP address to anonymize
    * @return the anonymized IP address
    */
-  import AnonOctets._
-  def anonymizeIp(ip: String): String =
-    Option(ip)
-      .map(
-        _.split("\\.").zipWithIndex
-          .map {
-            case (q, i) => {
-              if (octets.id >= All.id - i) "x" else q
-            }
-          }
-          .mkString("."))
-      .orNull
+  def anonymizeIp(ipOrNull: String): String =
+    Option(ipOrNull).map { ip =>
+      Try(GuavaInetAddress.forString(ip))
+        .map {
+          case _: Inet4Address => anonymizeIpV4(ip)
+          case ipv6: Inet6Address => anonymizeIpV6(ipv6.getHostAddress)
+        }
+        .getOrElse(tryAnonymizingInvalidIp(ip))
+    }.orNull
+
+  private def anonymizeIpV4(ip: String): String = {
+    def mask(ipv4: String) = {
+      val split = ipv4.split("\\.")
+      split
+        .take(AnonIPv4Octets.All.id - ipv4Octets.id)
+        .toList
+        .padTo(split.size, MaskChar)
+        .mkString(".")
+    }
+
+    if (ip.startsWith(IPv4MappedAddressPrefix))
+      IPv4MappedAddressPrefix + mask(ip.replace(IPv4MappedAddressPrefix, ""))
+    else mask(ip)
+  }
+
+  private def anonymizeIpV6(ip: String): String =
+    ip.split(":")
+      .take(AnonIPv6Segments.All.id - ipv6Segments.id)
+      .toList
+      .padTo(AnonIPv6Segments.All.id, MaskChar)
+      .mkString(":")
+
+  /**
+   * Mainly to not brake code that already exists, i.e. broken IP like this: "777.2.23"
+   * */
+  private def tryAnonymizingInvalidIp(ip: String): String =
+    if (ip.contains(".") || ip.isEmpty) anonymizeIpV4(ip)
+    else if (ip.contains(":")) anonymizeIpV6(ip)
+    else ip
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,43 +10,48 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common
-package enrichments.registry
-package apirequest
+package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.apirequest
 
-// specs2
+import io.circe._
+import io.circe.literal._
 import org.specs2.Specification
-import org.specs2.scalaz.ValidationMatchers
 
-// json4s
-import org.json4s.JObject
-import org.json4s.JsonDSL._
-
-class OutputSpec extends Specification with ValidationMatchers {
+class OutputSpec extends Specification {
   def is = s2"""
-  This is a specification to test the HTTP API of API Request Enrichment
   Not found value result in Failure                   $e1
   Successfully generate context                       $e2
   Successfully generate context out of complex object $e3
   """
 
   def e1 = {
-    val output = Output("iglu:com.snowplowanalytics/some_schema/jsonschema/1-0-0", Some(JsonOutput("$.value")))
-    output.extract(JObject(Nil)) must beFailing
+    val output =
+      Output("iglu:com.snowplowanalytics/some_schema/jsonschema/1-0-0", Some(JsonOutput("$.value")))
+    output.extract(Json.fromJsonObject(JsonObject.empty)) must beLeft
   }
 
   def e2 = {
-    val output = Output("iglu:com.snowplowanalytics/some_schema/jsonschema/1-0-0", Some(JsonOutput("$.value")))
-    output.parse("""{"value": 32}""").flatMap(output.extract).map(output.describeJson) must beSuccessful.like {
+    val output = Output(
+      "iglu:com.snowplowanalytics/some_schema/jsonschema/1-0-0",
+      Some(JsonOutput("$.value"))
+    )
+    output
+      .parseResponse("""{"value": 32}""")
+      .flatMap(output.extract)
+      .map(output.describeJson) must beRight.like {
       case context =>
-        context must be equalTo (("schema", "iglu:com.snowplowanalytics/some_schema/jsonschema/1-0-0") ~ ("data" -> 32))
+        context must be equalTo json"""{
+            "schema": "iglu:com.snowplowanalytics/some_schema/jsonschema/1-0-0",
+            "data": 32
+          }"""
     }
   }
 
   def e3 = {
-    val output = Output("iglu:com.snowplowanalytics/complex_schema/jsonschema/1-0-0",
-                        Some(JsonOutput("$.objects[1].deepNesting[3]")))
-    output.parse("""
+    val output = Output(
+      "iglu:com.snowplowanalytics/complex_schema/jsonschema/1-0-0",
+      Some(JsonOutput("$.objects[1].deepNesting[3]"))
+    )
+    output.parseResponse("""
         |{
         |  "value": 32,
         |  "objects":
@@ -56,10 +61,12 @@ class OutputSpec extends Specification with ValidationMatchers {
         |    {"wrongValue": 10}
         |  ]
         |}
-      """.stripMargin).flatMap(output.extract).map(output.describeJson) must beSuccessful.like {
+      """.stripMargin).flatMap(output.extract).map(output.describeJson) must beRight.like {
       case context =>
-        context must be equalTo (("schema", "iglu:com.snowplowanalytics/complex_schema/jsonschema/1-0-0") ~ ("data" -> 42))
-
+        context must be equalTo json"""{
+          "schema": "iglu:com.snowplowanalytics/complex_schema/jsonschema/1-0-0",
+          "data": 42
+        }"""
     }
 
   }

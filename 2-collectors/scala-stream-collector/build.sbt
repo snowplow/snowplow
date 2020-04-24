@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
  * you may not use this file except in compliance with the Apache License
@@ -12,10 +12,11 @@
  * implied.  See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
+import com.typesafe.sbt.packager.docker._
 
 lazy val commonDependencies = Seq(
   // Java
-  Dependencies.Libraries.yodaTime,
+  Dependencies.Libraries.jodaTime,
   Dependencies.Libraries.slf4j,
   Dependencies.Libraries.log4jOverSlf4j,
   Dependencies.Libraries.config,
@@ -24,33 +25,41 @@ lazy val commonDependencies = Seq(
   // Scala
   Dependencies.Libraries.scopt,
   Dependencies.Libraries.scalaz7,
+  Dependencies.Libraries.akkaStream,
   Dependencies.Libraries.akkaHttp,
+  Dependencies.Libraries.akkaStream,
   Dependencies.Libraries.akkaSlf4j,
-  Dependencies.Libraries.json4sJackson,
-  Dependencies.Libraries.snowplowCommonEnrich,
+  Dependencies.Libraries.badRows,
   Dependencies.Libraries.collectorPayload,
   Dependencies.Libraries.pureconfig,
   // Scala (test)
+  Dependencies.Libraries.akkaTestkit,
   Dependencies.Libraries.akkaHttpTestkit,
+  Dependencies.Libraries.akkaStreamTestkit,
   Dependencies.Libraries.specs2
 )
 
 lazy val buildSettings = Seq(
   organization  :=  "com.snowplowanalytics",
   name          :=  "snowplow-stream-collector",
-  version       :=  "0.15.0",
+  version       :=  "1.0.0",
   description   :=  "Scala Stream Collector for Snowplow raw events",
-  scalaVersion  :=  "2.11.11",
-  scalacOptions :=  BuildSettings.compilerOptions,
-  scalacOptions in (Compile, console) ~= { _.filterNot(Set("-Ywarn-unused-import")) },
-  scalacOptions in (Test, console)    := (scalacOptions in (Compile, console)).value,
-  javacOptions  :=  BuildSettings.javaCompilerOptions,
+  scalaVersion  :=  "2.12.10",
   resolvers     ++= Dependencies.resolutionRepos
+)
+
+lazy val dockerSettings = Seq(
+  maintainer in Docker := "Snowplow Analytics Ltd. <support@snowplowanalytics.com>",
+  dockerBaseImage := "snowplow-docker-registry.bintray.io/snowplow/base-debian:0.1.0",
+  daemonUser in Docker := "snowplow",
+  dockerUpdateLatest := true
 )
 
 lazy val allSettings = buildSettings ++
   BuildSettings.sbtAssemblySettings ++
-  Seq(libraryDependencies ++= commonDependencies)
+  BuildSettings.formatting ++
+  Seq(libraryDependencies ++= commonDependencies) ++
+  dockerSettings
 
 lazy val root = project.in(file("."))
   .settings(buildSettings)
@@ -69,28 +78,38 @@ lazy val core = project
 lazy val kinesis = project
   .settings(moduleName := "snowplow-stream-collector-kinesis")
   .settings(allSettings)
-  .settings(libraryDependencies ++= Seq(Dependencies.Libraries.kinesis))
+  .settings(packageName in Docker := "snowplow/scala-stream-collector-kinesis")
+  .settings(libraryDependencies ++= Seq(Dependencies.Libraries.kinesis, Dependencies.Libraries.cbor))
+  .enablePlugins(JavaAppPackaging, DockerPlugin)
   .dependsOn(core)
 
 lazy val pubsub = project
   .settings(moduleName := "snowplow-stream-collector-google-pubsub")
   .settings(allSettings)
+  .settings(packageName in Docker := "snowplow/scala-stream-collector-pubsub")
   .settings(libraryDependencies ++= Seq(Dependencies.Libraries.pubsub))
+  .enablePlugins(JavaAppPackaging, DockerPlugin)
   .dependsOn(core)
 
 lazy val kafka = project
   .settings(moduleName := "snowplow-stream-collector-kafka")
   .settings(allSettings)
+  .settings(packageName in Docker := "snowplow/scala-stream-collector-kafka")
   .settings(libraryDependencies ++= Seq(Dependencies.Libraries.kafkaClients))
+  .enablePlugins(JavaAppPackaging, DockerPlugin)
   .dependsOn(core)
 
 lazy val nsq = project
   .settings(moduleName := "snowplow-stream-collector-nsq")
   .settings(allSettings)
+  .settings(packageName in Docker := "snowplow/scala-stream-collector-nsq")
   .settings(libraryDependencies ++= Seq(Dependencies.Libraries.nsqClient))
+  .enablePlugins(JavaAppPackaging, DockerPlugin)
   .dependsOn(core)
 
 lazy val stdout = project
   .settings(moduleName := "snowplow-stream-collector-stdout")
   .settings(allSettings)
+  .settings(packageName in Docker := "snowplow/scala-stream-collector-stdout")
+  .enablePlugins(JavaAppPackaging, DockerPlugin)
   .dependsOn(core)

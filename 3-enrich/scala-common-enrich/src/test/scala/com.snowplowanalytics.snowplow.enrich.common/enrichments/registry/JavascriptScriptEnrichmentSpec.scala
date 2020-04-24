@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -11,35 +11,22 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich.common
-package enrichments
-package registry
+package enrichments.registry
 
-// Scalaz
-import scalaz._
-import Scalaz._
+import io.circe.literal._
 
-// Json4s
-import org.json4s._
-import org.json4s.JValue
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer, SelfDescribingData}
 
-// This project
+import org.specs2.Specification
+
 import outputs.EnrichedEvent
 
-// Specs2
-import org.specs2.Specification
-import org.specs2.scalaz.ValidationMatchers
-
-/**
- * Tests the anonymzeIp function
- */
-class JavascriptScriptEnrichmentSpec extends Specification with ValidationMatchers {
+/** Tests the anonymzeIp function */
+class JavascriptScriptEnrichmentSpec extends Specification {
   def is = s2"""
-  This is a specification to test the JavascriptScriptEnrichment
-  Compiling an invalid JavaScript script should fail              $e1
-  A JavaScript script should be able to throw an exception safely $e2
-  A JavaScript script should successfully generate a new context  $e3
+  compiling an invalid JavaScript script should fail              $e1
+  a JavaScript script should be able to throw an exception safely $e2
+  a JavaScript script should successfully generate a new context  $e3
   """
 
   val PreparedEnrichment = {
@@ -61,35 +48,38 @@ class JavascriptScriptEnrichmentSpec extends Specification with ValidationMatche
           |""".stripMargin
 
     val compiled = JavascriptScriptEnrichment.compile(script)
-    JavascriptScriptEnrichment(compiled.toOption.get)
+    val schemaKey = SchemaKey("vendor", "name", "format", SchemaVer.Full(1, 0, 0))
+    JavascriptScriptEnrichment(schemaKey, compiled.right.get)
   }
 
   def buildEvent(appId: String): EnrichedEvent = {
     val e = new EnrichedEvent()
     e.platform = "server"
-    e.app_id   = appId
+    e.app_id = appId
     e
   }
 
   def e1 = {
     val actual = JavascriptScriptEnrichment.compile("[")
-    actual must beFailing
+    actual must beLeft
   }
 
   def e2 = {
     val event = buildEvent("guess")
-
     val actual = PreparedEnrichment.process(event)
-    actual must beFailing
+    actual must beLeft
   }
 
   def e3 = {
     val event = buildEvent("secret")
+    val actual = PreparedEnrichment.process(event)
 
-    val actual   = PreparedEnrichment.process(event)
-    val expected = """{"schema":"iglu:com.acme/foo/jsonschema/1-0-0","data":{"appIdUpper":"SECRET"}}"""
-
-    actual must beSuccessful.like { case head :: Nil => compact(render(head)) must_== compact(render(parse(expected))) }
+    val expected =
+      SelfDescribingData(
+        SchemaKey("com.acme", "foo", "jsonschema", SchemaVer.Full(1, 0, 0)),
+        json"""{"appIdUpper":"SECRET"}"""
+      )
+    actual must beRight.like { case head :: Nil => head must_== expected }
   }
 
 }

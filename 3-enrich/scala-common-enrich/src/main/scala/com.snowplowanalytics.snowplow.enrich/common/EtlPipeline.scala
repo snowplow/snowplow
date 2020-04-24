@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,97 +10,79 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package common
+package com.snowplowanalytics.snowplow.enrich.common
 
-// Java
-import java.io.{PrintWriter, StringWriter}
+import cats.Monad
+import cats.data.{Validated, ValidatedNel}
+import cats.effect.Clock
+import cats.implicits._
 
-// Joda
+import io.circe.Json
+
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
+
+import com.snowplowanalytics.snowplow.badrows.{BadRow, Processor}
+
 import org.joda.time.DateTime
 
-// Iglu
-import iglu.client.Resolver
+import com.snowplowanalytics.snowplow.enrich.common.adapters.AdapterRegistry
+import com.snowplowanalytics.snowplow.enrich.common.enrichments.{
+  EnrichmentManager,
+  EnrichmentRegistry
+}
+import com.snowplowanalytics.snowplow.enrich.common.loaders.CollectorPayload
+import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
+import com.snowplowanalytics.snowplow.enrich.common.utils.HttpClient
 
-// Scala
-import scala.util.control.NonFatal
-
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// This project
-import adapters.AdapterRegistry
-import enrichments.{EnrichmentManager, EnrichmentRegistry}
-import outputs.EnrichedEvent
-
-/**
- * Expresses the end-to-end event pipeline
- * supported by the Scala Common Enrich
- * project.
- */
+/** Expresses the end-to-end event pipeline supported by the Scala Common Enrich project. */
 object EtlPipeline {
 
   /**
-   * A helper method to take a ValidatedMaybeCanonicalInput
-   * and transform it into a List (possibly empty) of
-   * ValidatedCanonicalOutputs.
-   *
-   * We have to do some unboxing because enrichEvent
-   * expects a raw CanonicalInput as its argument, not
-   * a MaybeCanonicalInput.
-   *
+   * A helper method to take a ValidatedMaybeCanonicalInput and transform it into a List (possibly
+   * empty) of ValidatedCanonicalOutputs.
+   * We have to do some unboxing because enrichEvent expects a raw CanonicalInput as its argument,
+   * not a MaybeCanonicalInput.
    * @param adapterRegistry Contains all of the events adapters
-   * @param enrichmentRegistry Contains configuration for all
-   *        enrichments to apply
-   * @param etlVersion The ETL version
+   * @param enrichmentRegistry Contains configuration for all enrichments to apply
+   * @param client Our Iglu client, for schema lookups and validation
+   * @param processor The ETL application (Spark/Beam/Stream enrich) and its version
    * @param etlTstamp The ETL timestamp
    * @param input The ValidatedMaybeCanonicalInput
-   * @param resolver (implicit) The Iglu resolver used for
-   *        schema lookup and validation
-   * @return the ValidatedMaybeCanonicalOutput. Thanks to
-   *         flatMap, will include any validation errors
-   *         contained within the ValidatedMaybeCanonicalInput
+   * @return the ValidatedMaybeCanonicalOutput. Thanks to flatMap, will include any validation
+   * errors contained within the ValidatedMaybeCanonicalInput
    */
-  def processEvents(
+  def processEvents[F[_]: Monad: RegistryLookup: Clock: HttpClient](
     adapterRegistry: AdapterRegistry,
-    enrichmentRegistry: EnrichmentRegistry,
-    etlVersion: String,
+    enrichmentRegistry: EnrichmentRegistry[F],
+    client: Client[F, Json],
+    processor: Processor,
     etlTstamp: DateTime,
-    input: ValidatedMaybeCollectorPayload)(implicit resolver: Resolver): List[ValidatedEnrichedEvent] = {
-
-    def flattenToList[A](v: Validated[Option[Validated[NonEmptyList[Validated[A]]]]]): List[Validated[A]] = v match {
-      case Success(Some(Success(nel))) => nel.toList
-      case Success(Some(Failure(f)))   => List(f.fail)
-      case Failure(f)                  => List(f.fail)
-      case Success(None)               => Nil
+    input: ValidatedNel[BadRow, Option[CollectorPayload]]
+  ): F[List[Validated[BadRow, EnrichedEvent]]] =
+    input match {
+      case Validated.Valid(Some(payload)) =>
+        adapterRegistry
+          .toRawEvents(payload, client, processor)
+          .flatMap {
+            case Validated.Valid(rawEvents) =>
+              rawEvents.toList.traverse { event =>
+                EnrichmentManager
+                  .enrichEvent(
+                    enrichmentRegistry,
+                    client,
+                    processor,
+                    etlTstamp,
+                    event
+                  )
+                  .toValidated
+              }
+            case Validated.Invalid(badRow) =>
+              Monad[F].pure(List(badRow.invalid[EnrichedEvent]))
+          }
+      case Validated.Invalid(badRows) =>
+        Monad[F].pure(badRows.map(_.invalid[EnrichedEvent])).map(_.toList)
+      case Validated.Valid(None) =>
+        Monad[F].pure(List.empty[Validated[BadRow, EnrichedEvent]])
     }
-
-    try {
-      val e: Validated[Option[Validated[NonEmptyList[ValidatedEnrichedEvent]]]] =
-        for {
-          maybePayload <- input
-        } yield
-          for {
-            payload <- maybePayload
-          } yield
-            for {
-              events <- adapterRegistry.toRawEvents(payload)
-            } yield
-              for {
-                event <- events
-                enriched = EnrichmentManager.enrichEvent(enrichmentRegistry, etlVersion, etlTstamp, event)
-              } yield enriched
-
-      flattenToList[EnrichedEvent](e)
-    } catch {
-      case NonFatal(nf) => {
-        val errorWriter = new StringWriter
-        nf.printStackTrace(new PrintWriter(errorWriter))
-        List(s"Unexpected error processing events: $errorWriter".failNel)
-      }
-    }
-  }
 }

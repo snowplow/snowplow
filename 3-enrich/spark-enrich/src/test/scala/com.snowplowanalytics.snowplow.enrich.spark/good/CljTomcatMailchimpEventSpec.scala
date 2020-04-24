@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -81,7 +81,7 @@ object CljTomcatMailchimpEventSpec {
     null, //
     null, //
     null, //
-    """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.mailchimp/subscribe/jsonschema/1-0-0","data":{"data":{"ip_opt":"f7fe27cbe23fdc69e682b9306b383a22706ff778","merges":{"LNAME":"Smith","FNAME":"Agent","EMAIL":"agentsmith@snowplowtest.com"},"email":"90e0d037faf42119f4ffac694a26d892f1f3d598","list_id":"f1243a3b12","email_type":"html","id":"e7c77d3852","web_id":"210833825"},"fired_at":"2014-11-04T09:42:31.000Z","type":"subscribe"}}}""",
+    """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.mailchimp/subscribe/jsonschema/1-0-0","data":{"data":{"merges":{"EMAIL":"agentsmith@snowplowtest.com","FNAME":"Agent","LNAME":"Smith"},"web_id":"210833825","id":"e7c77d3852","email_type":"html","list_id":"f1243a3b12","email":"90e0d037faf42119f4ffac694a26d892f1f3d598","ip_opt":"f7fe27cbe23fdc69e682b9306b383a22706ff778"},"type":"subscribe","fired_at":"2014-11-04T09:42:31.000Z"}}}""",
     null, // Transaction fields empty
     null, //
     null, //

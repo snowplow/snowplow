@@ -191,4 +191,116 @@ describe Utils do
       expect(subject.parse_duration("1w 5d 3h 13m")).to eq(1048380)
     end
   end
+
+  describe '#get_failure_details' do
+    let(:jobflow_id) { "JOB ID" }
+    let(:cluster_state) { 'TERMINATED' }
+    let(:timeline) do
+      <<-JSON
+        {
+          "CreationDateTime": 1436788464.415,
+          "EndDateTime": 1436791032.097,
+          "ReadyDateTime": 1436788842.195
+        }
+      JSON
+    end
+    let(:aws_cluster_status) do
+      <<-JSON
+        {
+          "Cluster": {
+            "Applications": [
+              {
+                "Name": "hadoop",
+                "Version": "1.0.3"
+              }
+            ],
+            "AutoTerminate": true,
+            "Configurations": [
+            ],
+            "Ec2InstanceAttributes": {
+              "Ec2AvailabilityZone": "us-east-1a",
+              "EmrManagedMasterSecurityGroup": "sg-b7de0adf",
+              "EmrManagedSlaveSecurityGroup": "sg-89de0ae1"
+            },
+            "Id": "j-3T0PHNUXCY7SX",
+            "MasterPublicDnsName": "ec2-54-81-173-103.compute-1.amazonaws.com",
+            "Name": "Elasticity Job Flow",
+            "NormalizedInstanceHours": 2,
+            "RequestedAmiVersion": "latest",
+            "RunningAmiVersion": "2.4.2",
+            "Status": {
+              "State": "#{cluster_state}",
+              "StateChangeReason": {
+                "Code": "ALL_STEPS_COMPLETED",
+                "Message": "Steps completed"
+              },
+              "Timeline": #{timeline}
+            },
+            "Tags": [
+              {
+                "Key": "key",
+                "Value": "value"
+              }
+            ],
+            "TerminationProtected": false,
+            "VisibleToAllUsers": false
+          }
+        }
+      JSON
+    end
+
+    let (:cluster_status) { Elasticity::ClusterStatus.from_aws_data(JSON.parse(aws_cluster_status)) }
+
+    let(:aws_cluster_steps) do
+      <<-JSON
+        {
+            "Steps": [
+                {
+                    "ActionOnFailure": "TERMINATE_CLUSTER",
+                    "Config": {
+                        "Args": [
+                            "36",
+                            "3",
+                            "0"
+                        ],
+                        "Jar": "s3n://elasticmapreduce/samples/cloudburst/cloudburst.jar",
+                        "MainClass" : "MAIN_CLASS",
+                        "Properties": {
+                            "Key1" : "Value1",
+                            "Key2" : "Value2"
+                        }
+                    },
+                    "Id": "s-OYPPAC4XPPUC",
+                    "Name": "Elasticity Custom Jar Step",
+                    "Status": {
+                        "State": "COMPLETED",
+                        "StateChangeReason": {
+                          "Code": "ALL_STEPS_COMPLETED",
+                          "Message": "Steps completed"
+                        },
+                        "Timeline": #{timeline}
+                    }
+                }
+            ]
+        }
+      JSON
+    end
+
+    let(:cluster_step_statuses) { Elasticity::ClusterStepStatus.from_aws_list_data(JSON.parse(aws_cluster_steps)) }
+
+    let(:expected_output) {
+      [
+        "EMR jobflow JOB ID failed, check Amazon EMR console and Hadoop logs for details (help: https://github.com/snowplow/snowplow/wiki/Troubleshooting-jobs-on-Elastic-MapReduce). Data files not archived.",
+        "JOB ID: TERMINATED [ALL_STEPS_COMPLETED] ~ 00:36:29 #{subject.get_timespan(cluster_status.ready_at, cluster_status.ended_at)}",
+        " - 1. Elasticity Custom Jar Step: COMPLETED ~ elapsed time n/a [ - #{cluster_status.ended_at}]"
+      ]
+        .join("\n")
+    }
+
+    it { should respond_to(:get_failure_details).with(3).argument }
+
+    it 'should create a string containing a summary of the failure' do
+      expect(subject.get_failure_details(jobflow_id, cluster_status, cluster_step_statuses)).to eq(expected_output)
+    end
+  end
 end

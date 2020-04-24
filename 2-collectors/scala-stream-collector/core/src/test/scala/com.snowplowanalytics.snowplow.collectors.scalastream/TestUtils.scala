@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2014-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
  * you may not use this file except in compliance with the Apache License
@@ -14,17 +14,18 @@
  */
 package com.snowplowanalytics.snowplow.collectors.scalastream
 
-import com.snowplowanalytics.snowplow.collectors.scalastream.model._
-
 import scala.concurrent.duration._
+
+import model._
 
 object TestUtils {
   val testConf = CollectorConfig(
     interface = "0.0.0.0",
     port = 8080,
+    paths = Map("/com.acme/track" -> "/com.snowplowanalytics.snowplow/tp2", "/com.acme/redirect" -> "/r/tp2", "/com.acme/iglu" -> "/com.snowplowanalytics.iglu/v1"),
     p3p = P3PConfig("/w3c/p3p.xml", "NOI DSP COR NID PSA OUR IND COM NAV STA"),
     CrossDomainConfig(enabled = true, List("*"), secure = false),
-    cookie = CookieConfig(true, "sp", 365.days, None),
+    cookie = CookieConfig(true, "sp", 365.days, None, None, secure = false, httpOnly = false, sameSite = None),
     doNotTrackCookie = DoNotTrackCookieConfig(false, "abc", "123"),
     cookieBounce = CookieBounceConfig(false, "bounce", "new-nuid", None),
     redirectMacro = RedirectMacroConfig(false, None),

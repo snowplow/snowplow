@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -81,7 +81,7 @@ object CljTomcatMandrillEventSpec {
     null, //
     null, //
     null, //
-    """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.mandrill/message_sent/jsonschema/1-0-0","data":{"msg":{"ts":"2013-04-04T21:13:19.000Z","subject":"This an example webhook message","email":"example.webhook@mandrillapp.com","sender":"example.sender@mandrillapp.com","tags":["webhook-example"],"opens":[],"clicks":[],"state":"sent","metadata":{"user_id":111},"_id":"exampleaaaaaaaaaaaaaaaaaaaaaaaaa","_version":"exampleaaaaaaaaaaaaaaa"},"_id":"exampleaaaaaaaaaaaaaaaaaaaaaaaaa","ts":"2014-11-11T07:47:15.000Z"}}}""",
+    """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.mandrill/message_sent/jsonschema/1-0-0","data":{"msg":{"_version":"exampleaaaaaaaaaaaaaaa","subject":"This an example webhook message","email":"example.webhook@mandrillapp.com","state":"sent","_id":"exampleaaaaaaaaaaaaaaaaaaaaaaaaa","tags":["webhook-example"],"ts":"2013-04-04T21:13:19.000Z","clicks":[],"metadata":{"user_id":111},"sender":"example.sender@mandrillapp.com","opens":[]},"_id":"exampleaaaaaaaaaaaaaaaaaaaaaaaaa","ts":"2014-11-11T07:47:15.000Z"}}}""",
     null, // Transaction fields empty
     null, //
     null, //

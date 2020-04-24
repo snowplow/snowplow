@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -19,14 +19,13 @@ import java.util.concurrent.ScheduledExecutorService
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util.{Success, Failure}
+import scala.util.{Failure, Success}
 
+import cats.syntax.either._
 import com.amazonaws.auth._
 import com.amazonaws.services.kinesis.model._
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import com.amazonaws.services.kinesis.{AmazonKinesis, AmazonKinesisClientBuilder}
-import scalaz._
-import Scalaz._
 
 import model._
 
@@ -46,13 +45,12 @@ object KinesisSink {
     bufferConfig: BufferConfig,
     streamName: String,
     executorService: ScheduledExecutorService
-  ): \/[Throwable, KinesisSink] = {
+  ): Either[Throwable, KinesisSink] = {
     val client = for {
       provider <- getProvider(kinesisConfig.aws)
       client = createKinesisClient(provider, kinesisConfig.endpoint, kinesisConfig.region)
-      exists <-
-        if (streamExists(client, streamName)) true.right
-        else new IllegalArgumentException(s"Kinesis stream $streamName doesn't exist").left
+      _ <- if (streamExists(client, streamName)) true.asRight
+      else new IllegalArgumentException(s"Kinesis stream $streamName doesn't exist").asLeft
     } yield client
 
     client.map { c =>
@@ -73,26 +71,28 @@ object KinesisSink {
   }
 
   /** Create an aws credentials provider through env variables and iam. */
-  private def getProvider(awsConfig: AWSConfig): \/[Throwable, AWSCredentialsProvider] = {
+  private def getProvider(awsConfig: AWSConfig): Either[Throwable, AWSCredentialsProvider] = {
     def isDefault(key: String): Boolean = key == "default"
     def isIam(key: String): Boolean = key == "iam"
     def isEnv(key: String): Boolean = key == "env"
 
     ((awsConfig.accessKey, awsConfig.secretKey) match {
       case (a, s) if isDefault(a) && isDefault(s) =>
-        new DefaultAWSCredentialsProviderChain().right
+        new DefaultAWSCredentialsProviderChain().asRight
       case (a, s) if isDefault(a) || isDefault(s) =>
-        "accessKey and secretKey must both be set to 'default' or neither".left
+        "accessKey and secretKey must both be set to 'default' or neither".asLeft
       case (a, s) if isIam(a) && isIam(s) =>
-        InstanceProfileCredentialsProvider.getInstance().right
+        InstanceProfileCredentialsProvider.getInstance().asRight
       case (a, s) if isIam(a) && isIam(s) =>
-        "accessKey and secretKey must both be set to 'iam' or neither".left
+        "accessKey and secretKey must both be set to 'iam' or neither".asLeft
       case (a, s) if isEnv(a) && isEnv(s) =>
-        new EnvironmentVariableCredentialsProvider().right
+        new EnvironmentVariableCredentialsProvider().asRight
       case (a, s) if isEnv(a) || isEnv(s) =>
-        "accessKey and secretKey must both be set to 'env' or neither".left
-      case _ => new AWSStaticCredentialsProvider(
-        new BasicAWSCredentials(awsConfig.accessKey, awsConfig.secretKey)).right
+        "accessKey and secretKey must both be set to 'env' or neither".asLeft
+      case _ =>
+        new AWSStaticCredentialsProvider(
+          new BasicAWSCredentials(awsConfig.accessKey, awsConfig.secretKey)
+        ).asRight
     }).leftMap(new IllegalArgumentException(_))
   }
 
@@ -120,13 +120,14 @@ object KinesisSink {
    * @param name Name of the stream
    * @return Whether the stream exists
    */
-  private def streamExists(client: AmazonKinesis, name: String): Boolean = try {
-    val describeStreamResult = client.describeStream(name)
-    val status = describeStreamResult.getStreamDescription.getStreamStatus
-    status == "ACTIVE" || status == "UPDATING"
-  } catch {
-    case rnfe: ResourceNotFoundException => false
-  }
+  private def streamExists(client: AmazonKinesis, name: String): Boolean =
+    try {
+      val describeStreamResult = client.describeStream(name)
+      val status = describeStreamResult.getStreamDescription.getStreamStatus
+      status == "ACTIVE" || status == "UPDATING"
+    } catch {
+      case _: ResourceNotFoundException => false
+    }
 }
 
 /**
@@ -140,7 +141,7 @@ class KinesisSink private (
   executorService: ScheduledExecutorService
 ) extends Sink {
   // Records must not exceed MaxBytes - 1MB
-  val MaxBytes = 1000000L
+  val MaxBytes = 1000000
   val BackoffTime = 3000L
 
   val ByteThreshold = bufferConfig.byteLimit
@@ -158,24 +159,27 @@ class KinesisSink private (
   /**
    * Recursively schedule a task to send everthing in EventStorage
    * Even if the incoming event flow dries up, all stored events will eventually get sent
-   *
    * Whenever TimeThreshold milliseconds have passed since the last call to flush, call flush.
-   *
    * @param interval When to schedule the next flush
    */
   def scheduleFlush(interval: Long = TimeThreshold): Unit = {
-    executorService.schedule(new Thread {
-      override def run(): Unit = {
-        val lastFlushed = EventStorage.getLastFlushTime()
-        val currentTime = System.currentTimeMillis()
-        if (currentTime - lastFlushed >= TimeThreshold) {
-          EventStorage.flush()
-          scheduleFlush(TimeThreshold)
-        } else {
-          scheduleFlush(TimeThreshold + lastFlushed - currentTime)
+    executorService.schedule(
+      new Thread {
+        override def run(): Unit = {
+          val lastFlushed = EventStorage.getLastFlushTime()
+          val currentTime = System.currentTimeMillis()
+          if (currentTime - lastFlushed >= TimeThreshold) {
+            EventStorage.flush()
+            scheduleFlush(TimeThreshold)
+          } else {
+            scheduleFlush(TimeThreshold + lastFlushed - currentTime)
+          }
         }
-      }
-    }, interval, MILLISECONDS)
+      },
+      interval,
+      MILLISECONDS
+    )
+    ()
   }
 
   object EventStorage {
@@ -187,7 +191,9 @@ class KinesisSink private (
       val eventBytes = ByteBuffer.wrap(event)
       val eventSize = eventBytes.capacity
       if (eventSize >= MaxBytes) {
-        log.error(s"Record of size $eventSize bytes is too large - must be less than $MaxBytes bytes")
+        log.error(
+          s"Record of size $eventSize bytes is too large - must be less than $MaxBytes bytes"
+        )
       } else {
         synchronized {
           storedEvents = (eventBytes, key) :: storedEvents
@@ -221,14 +227,14 @@ class KinesisSink private (
   def scheduleBatch(batch: List[(ByteBuffer, String)], lastBackoff: Long = minBackoff): Unit = {
     val nextBackoff = getNextBackoff(lastBackoff)
     executorService.schedule(new Thread {
-      override def run(): Unit = {
+      override def run(): Unit =
         sendBatch(batch, nextBackoff)
-      }
     }, lastBackoff, MILLISECONDS)
+    ()
   }
 
   // TODO: limit max retries?
-  def sendBatch(batch: List[(ByteBuffer, String)], nextBackoff: Long = minBackoff): Unit = {
+  def sendBatch(batch: List[(ByteBuffer, String)], nextBackoff: Long = minBackoff): Unit =
     if (batch.size > 0) {
       log.info(s"Writing ${batch.size} Thrift records to Kinesis stream ${streamName}")
       val putData = for {
@@ -239,9 +245,16 @@ class KinesisSink private (
         case Success(s) => {
           val results = s.getRecords.asScala.toList
           val failurePairs = batch zip results filter { _._2.getErrorMessage != null }
-          log.info(s"Successfully wrote ${batch.size-failurePairs.size} out of ${batch.size} records")
+          log.info(
+            s"Successfully wrote ${batch.size - failurePairs.size} out of ${batch.size} records"
+          )
           if (failurePairs.size > 0) {
-            failurePairs.foreach(f => log.error(s"Record failed with error code [${f._2.getErrorCode}] and message [${f._2.getErrorMessage}]"))
+            failurePairs.foreach(
+              f =>
+                log.error(
+                  s"Record failed with error code [${f._2.getErrorCode}] and message [${f._2.getErrorMessage}]"
+                )
+            )
             log.error(s"Retrying all failed records in $nextBackoff milliseconds...")
             val failures = failurePairs.map(_._1)
             scheduleBatch(failures, nextBackoff)
@@ -254,18 +267,18 @@ class KinesisSink private (
         }
       }
     }
-  }
 
   private def multiPut(name: String, batch: List[(ByteBuffer, String)]): Future[PutRecordsResult] =
     Future {
       val putRecordsRequest = {
         val prr = new PutRecordsRequest()
         prr.setStreamName(name)
-        val putRecordsRequestEntryList = batch.map { case (b, s) =>
-          val prre = new PutRecordsRequestEntry()
-          prre.setPartitionKey(s)
-          prre.setData(b)
-          prre
+        val putRecordsRequestEntryList = batch.map {
+          case (b, s) =>
+            val prre = new PutRecordsRequestEntry()
+            prre.setPartitionKey(s)
+            prre.setData(b)
+            prre
         }
         prr.setRecords(putRecordsRequestEntryList.asJava)
         prr
@@ -275,14 +288,16 @@ class KinesisSink private (
 
   /**
    * How long to wait before sending the next request
-   *
    * @param lastBackoff The previous backoff time
    * @return Minimum of maxBackoff and a random number between minBackoff and three times lastBackoff
    */
-  private def getNextBackoff(lastBackoff: Long): Long = (minBackoff + randomGenerator.nextDouble() * (lastBackoff * 3 - minBackoff)).toLong.min(maxBackoff)
+  private def getNextBackoff(lastBackoff: Long): Long =
+    (minBackoff + randomGenerator.nextDouble() * (lastBackoff * 3 - minBackoff)).toLong
+      .min(maxBackoff)
 
   def shutdown(): Unit = {
     executorService.shutdown()
     executorService.awaitTermination(10000, MILLISECONDS)
+    ()
   }
 }

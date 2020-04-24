@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,52 +10,39 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow
-package enrich
-package common
-package loaders
+package com.snowplowanalytics.snowplow.enrich.common.loaders
 
-// Commons Codec
-import org.apache.commons.codec.binary.Base64
+import cats.syntax.option._
+import org.specs2.Specification
+import org.specs2.matcher.{DataTables, ValidatedMatchers}
+import com.snowplowanalytics.snowplow.badrows._
 
-// Joda-Time
-import org.joda.time.DateTime
+class TsvLoaderSpec extends Specification with DataTables with ValidatedMatchers {
+  val processor = Processor("TsvLoaderSpec", "v1")
 
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// Snowplow
-import SpecHelpers._
-
-// Specs2
-import org.specs2.{ScalaCheck, Specification}
-import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
-
-// ScalaCheck
-import org.scalacheck._
-import org.scalacheck.Arbitrary._
-
-class TsvLoaderSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck {
   def is = s2"""
-  This is a specification to test the TsvLoader functionality
   toCollectorPayload should return a CollectorPayload for a normal TSV                                      $e1
   toCollectorPayload should return None for the first two lines of a Cloudfront web distribution access log $e2
   """
 
   def e1 = {
     val expected = CollectorPayload(
-      api         = CollectorApi("com.amazon.aws.cloudfront", "wd_access_log"),
+      api = CollectorPayload.Api("com.amazon.aws.cloudfront", "wd_access_log"),
       querystring = Nil,
-      body        = "a\tb".some,
+      body = "a\tb".some,
       contentType = None,
-      source      = CollectorSource("tsv", "UTF-8", None),
-      context     = CollectorContext(None, None, None, None, Nil, None)
+      source = CollectorPayload.Source("tsv", "UTF-8", None),
+      context = CollectorPayload.Context(None, None, None, None, Nil, None)
     )
-    TsvLoader("com.amazon.aws.cloudfront/wd_access_log").toCollectorPayload("a\tb") must beSuccessful(expected.some)
+    TsvLoader("com.amazon.aws.cloudfront/wd_access_log")
+      .toCollectorPayload("a\tb", processor) must beValid(
+      expected.some
+    )
   }
 
   def e2 =
-    TsvLoader("com.amazon.aws.cloudfront/wd_access_log").toCollectorPayload("#Version: 1.0") must beSuccessful(None)
+    TsvLoader("com.amazon.aws.cloudfront/wd_access_log")
+      .toCollectorPayload("#Version: 1.0", processor) must beValid(
+      None
+    )
 }

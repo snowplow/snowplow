@@ -11,7 +11,6 @@ The **Enrich** process takes raw Snowplow events logged by a [Collector][collect
 | ETL                             | Description                                                              | Status           |
 |---------------------------------|--------------------------------------------------------------------------|------------------|
 | [spark-enrich][e1] (1)  | The Snowplow Enrichment process built using Apache Spark   | Production-ready |
-| [hadoop-event-recovery][e2]    | A Hadoop job for retrieving raw Snowplow events from "bad bucket" errors | Production-ready |
 | [stream-enrich][e3] (3)        | The Snowplow Enrichment process built as an Amazon Kinesis application   | Production-ready |
 | [scala-common-enrich][e4]      | A shared library for processing raw Snowplow events, used in (1) and (3) | Production-ready |
 | [emr-etl-runner][e5]           | A Ruby app for running (1) and (2) on Amazon Elastic MapReduce           | Production-ready |
@@ -165,7 +164,6 @@ Add detailed page for the new enrichment.
 [collectors]: https://github.com/snowplow/snowplow/tree/master/2-collectors
 [storage]: https://github.com/snowplow/snowplow/tree/master/4-storage
 [e1]: ./spark-enrich/
-[e2]: ./hadoop-event-recovery/
 [e3]: ./stream-enrich/
 [e4]: ./scala-common-enrich/
 [e5]: ./emr-etl-runner/

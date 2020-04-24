@@ -1,0 +1,51 @@
+{
+  "schema": "iglu:com.snowplowanalytics.snowplow.enrichments/sql_query_enrichment_config/jsonschema/1-0-0",
+  "data": {
+    "vendor": "com.snowplowanalytics.snowplow.enrichments",
+    "name": "sql_query_enrichment_config",
+    "enabled": true,
+    "parameters": {
+      "inputs": [
+        {
+          "placeholder": 1,
+          "pojo": {
+            "field": "useragent"
+          }
+        },
+        {
+          "placeholder": 2,
+          "json": {
+            "field": "contexts",
+            "schemaCriterion": "iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/*-*-*",
+            "jsonPath": "$.speed"
+          }
+        }
+      ],
+      "database": {
+        "postgresql": {
+          "host": "localhost",
+          "port": 5432,
+          "sslMode": false,
+          "username": "enricher",
+          "password": "supersecret1",
+          "database": "sql_enrichment_test"
+        }
+      },
+      "query": {
+        "sql": "SELECT city, country, pk FROM enrichment_test WHERE city = ? and speed = ?"
+      },
+      "output": {
+        "expectedRows": "AT_LEAST_ONE",
+        "json": {
+          "schema": "iglu:com.acme/user/jsonschema/1-0-0",
+          "describes": "ALL_ROWS",
+          "propertyNames": "CAMEL_CASE"
+        }
+      },
+      "cache": {
+        "size": 1000,
+        "ttl": 60
+      }
+    }
+  }
+}

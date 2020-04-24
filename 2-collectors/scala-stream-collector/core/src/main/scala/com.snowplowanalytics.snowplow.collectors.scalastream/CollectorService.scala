@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
  * you may not use this file except in compliance with the Apache License
@@ -12,8 +12,7 @@
  * implied.  See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow
-package collectors.scalastream
+package com.snowplowanalytics.snowplow.collectors.scalastream
 
 import java.util.UUID
 
@@ -21,12 +20,12 @@ import scala.collection.JavaConverters._
 
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
+import akka.http.scaladsl.model.headers.CacheDirectives._
+
+import com.snowplowanalytics.snowplow.CollectorPayload.thrift.model1.CollectorPayload
 import org.apache.commons.codec.binary.Base64
 import org.slf4j.LoggerFactory
-import scalaz._
 
-import CollectorPayload.thrift.model1.CollectorPayload
-import enrich.common.outputs.BadRow
 import generated.BuildInfo
 import model._
 import utils.SplitBatch
@@ -55,6 +54,8 @@ trait Service {
   ): (HttpResponse, List[Array[Byte]])
   def cookieName: Option[String]
   def doNotTrackCookie: Option[DntCookieMatcher]
+  def determinePath(vendor: String, version: String): String
+  def enableDefaultRedirect: Boolean
 }
 
 object CollectorService {
@@ -75,6 +76,16 @@ class CollectorService(
 
   override val cookieName = config.cookieName
   override val doNotTrackCookie = config.doNotTrackHttpCookie
+  override val enableDefaultRedirect = config.enableDefaultRedirect
+
+  /**
+   * Determines the path to be used in the response,
+   * based on whether a mapping can be found in the config for the original request path.
+   */
+  override def determinePath(vendor: String, version: String): String = {
+    val original = s"/$vendor/$version"
+    config.paths.getOrElse(original, original)
+  }
 
   override def cookie(
     queryString: Option[String],
@@ -117,7 +128,8 @@ class CollectorService(
       request,
       config.cookieBounce,
       bounce) ++
-      cookieHeader(config.cookieConfig, nuid, doNotTrack) ++
+      cookieHeader(request, config.cookieConfig, nuid, doNotTrack) ++
+      cacheControl(pixelExpected) ++
       List(
         RawHeader("P3P", "policyref=\"%s\", CP=\"%s\"".format(config.p3p.policyRef, config.p3p.CP)),
         accessControlAllowOriginHeader(request),
@@ -125,8 +137,7 @@ class CollectorService(
       )
 
     val (httpResponse, badRedirectResponses) = buildHttpResponse(
-      event, partitionKey, queryParams, headers.toList, redirect, pixelExpected, bounce,
-      config.streams.sink, config.redirectMacro)
+      event, queryParams, headers.toList, redirect, pixelExpected, bounce, config.redirectMacro)
     (httpResponse, badRedirectResponses ++ sinkResponses)
   }
 
@@ -224,17 +235,15 @@ class CollectorService(
   /** Builds the final http response from  */
   def buildHttpResponse(
     event: CollectorPayload,
-    partitionKey: String,
     queryParams: Map[String, String],
     headers: List[HttpHeader],
     redirect: Boolean,
     pixelExpected: Boolean,
     bounce: Boolean,
-    sinkConfig: SinkConfig,
     redirectMacroConfig: RedirectMacroConfig
   ): (HttpResponse, List[Array[Byte]]) =
     if (redirect) {
-      val (r, l) = buildRedirectHttpResponse(event, partitionKey, queryParams, redirectMacroConfig)
+      val (r, l) = buildRedirectHttpResponse(event, queryParams, redirectMacroConfig)
       (r.withHeaders(r.headers ++ headers), l)
     } else {
       (buildUsualHttpResponse(pixelExpected, bounce).withHeaders(headers), Nil)
@@ -254,7 +263,6 @@ class CollectorService(
   /** Builds the appropriate http response when dealing with click redirects. */
   def buildRedirectHttpResponse(
     event: CollectorPayload,
-    partitionKey: String,
     queryParams: Map[String, String],
     redirectMacroConfig: RedirectMacroConfig
   ): (HttpResponse, List[Array[Byte]]) =
@@ -266,10 +274,7 @@ class CollectorService(
           if (canReplace) target.replaceAllLiterally(token, event.networkUserId)
           else target
         (HttpResponse(StatusCodes.Found).withHeaders(`RawHeader`("Location", replacedTarget)), Nil)
-      case None =>
-        val badRow = createBadRow(event, "Redirect failed due to lack of u parameter")
-        (HttpResponse(StatusCodes.BadRequest),
-          sinks.bad.storeRawEvents(List(badRow), partitionKey))
+      case None => (HttpResponse(StatusCodes.BadRequest), Nil)
     }
 
   /**
@@ -280,6 +285,7 @@ class CollectorService(
    * @return the build cookie wrapped in a header
    */
   def cookieHeader(
+    request: HttpRequest,
     cookieConfig: Option[CookieConfig],
     networkUserId: String,
     doNotTrack: Boolean
@@ -292,8 +298,11 @@ class CollectorService(
           name    = config.name,
           value   = networkUserId,
           expires = Some(DateTime.now + config.expiration.toMillis),
-          domain  = config.domain,
-          path    = Some("/")
+          domain  = cookieDomain(request.headers, config.domains, config.fallbackDomain),
+          path    = Some("/"),
+          secure    = config.secure,
+          httpOnly  = config.httpOnly,
+          extension = config.sameSite.map(value => s"SameSite=$value")
         )
         `Set-Cookie`(responseCookie)
       }
@@ -330,11 +339,49 @@ class CollectorService(
       None
     }
 
-  /** Retrieves all headers from the request except Remote-Address and Raw-Requet-URI */
+  /** Retrieves all headers from the request except Remote-Address and Raw-Request-URI */
   def headers(request: HttpRequest): Seq[String] = request.headers.flatMap {
     case _: `Remote-Address` | _: `Raw-Request-URI` => None
     case other => Some(other.toString)
   }
+
+  /** If the pixel is requested, this attaches cache control headers to the response to prevent any caching. */
+  def cacheControl(pixelExpected: Boolean): List[`Cache-Control`] =
+    if (pixelExpected) List(`Cache-Control`(`no-cache`, `no-store`, `must-revalidate`))
+    else Nil
+
+  /**
+   * Determines the cookie domain to be used by inspecting the Origin header of the request
+   * and trying to find a match in the list of domains specified in the config file.
+   * @param headers The headers from the http request.
+   * @param domains The list of cookie domains from the configuration.
+   * @param fallbackDomain The fallback domain from the configuration.
+   * @return The domain to be sent back in the response, unless no cookie domains are configured.
+   * The Origin header may include multiple domains. The first matching domain is returned.
+   * If no match is found, the fallback domain is used if configured. Otherwise, the cookie domain is not set.
+   */
+  def cookieDomain(headers: Seq[HttpHeader], domains: Option[List[String]], fallbackDomain: Option[String]): Option[String] =
+    (for {
+      domainList <- domains
+      origins <- headers.collectFirst { case header: `Origin` => header.origins }
+      originHosts = extractHosts(origins)
+      domainToUse <- domainList.find(domain => originHosts.exists(validMatch(_, domain)))
+    } yield domainToUse).orElse(fallbackDomain)
+
+  /** Extracts the host names from a list of values in the request's Origin header. */
+  def extractHosts(origins: Seq[HttpOrigin]): Seq[String] =
+    origins.map(origin => origin.host.host.address())
+
+  /**
+   * Ensures a match is valid.
+   * We only want matches where:
+   * a.) the Origin host is exactly equal to the cookie domain from the config
+   * b.) the Origin host is a subdomain of the cookie domain from the config.
+   * But we want to avoid cases where the cookie domain from the config is randomly
+   * a substring of the Origin host, without any connection between them.
+   */
+  def validMatch(host: String, domain: String): Boolean =
+    host == domain || host.endsWith("." + domain)
 
   /**
    * Gets the IP from a RemoteAddress. If ipAsPartitionKey is false, a UUID will be generated.
@@ -374,10 +421,4 @@ class CollectorService(
       case Some(`Origin`(origin)) => HttpOriginRange.Default(origin)
       case _ => HttpOriginRange.`*`
     })
-
-  /** Puts together a bad row ready for sinking */
-  private def createBadRow(event: CollectorPayload, message: String): Array[Byte] =
-    BadRow(new String(SplitBatch.ThriftSerializer.get().serialize(event)), NonEmptyList(message))
-      .toCompactJson
-      .getBytes("UTF-8")
 }

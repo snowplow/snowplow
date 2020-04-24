@@ -124,6 +124,7 @@ module Snowplow
             :master_instance_type => String,
             :core_instance_count => Num,
             :core_instance_type => String,
+            :core_instance_bid => Maybe[Num],
             :core_instance_ebs => Maybe[CoreInstanceEbsHash],
             :task_instance_count => Num,
             :task_instance_type => String,

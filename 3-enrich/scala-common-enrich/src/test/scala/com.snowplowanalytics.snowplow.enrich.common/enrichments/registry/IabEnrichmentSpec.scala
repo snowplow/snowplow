@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,86 +10,106 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow.enrich.common
-package enrichments
-package registry
+package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
-// Java
-import java.net.URI
+import cats.Eval
 
-// joda-time
+import io.circe.literal._
+
 import org.joda.time.DateTime
 
-// json4s
-import org.json4s.jackson.JsonMethods.parse
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer, SelfDescribingData}
 
-// iglu
-import iglu.client.SchemaKey
-
-// Specs2, Scalaz-Specs2 & ScalaCheck
+import org.specs2.Specification
 import org.specs2.matcher.DataTables
-import org.specs2.scalaz.ValidationMatchers
-import org.specs2.{ScalaCheck, Specification}
 
-// Scalaz
-import scalaz._
+class IabEnrichmentSpec extends Specification with DataTables {
 
-class IabEnrichmentSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck {
-  def is =
-    s2"""
-  This is a specification to test the IabEnrichment
-  performCheck should correctly perform IAB checks on valid input   $e1
-  performCheck should fail on invalid IP                            $e2
-  getIabContext should fail on missing fields                       $e3
-  getIabContext should return a valid JObject on valid input        $e4
+  def is = s2"""
+  performCheck should correctly perform IAB checks on valid input $e1
+  performCheck should fail on invalid IP                          $e2
+  getIabContext should fail on missing fields                     $e3
+  getIabContext should return a valid JObject on valid input      $e4
   """
 
   // When testing, localMode is set to true, so the URIs are ignored and the databases are loaded from test/resources
-  val validConfig = IabEnrichment(
-    Some(IabDatabase("ip", new URI("/ignored-in-local-mode/"), "ip_exclude_current_cidr.txt")),
-    Some(IabDatabase("ua_exclude", new URI("/ignored-in-local-mode/"), "exclude_current.txt")),
-    Some(IabDatabase("ua_include", new URI("/ignored-in-local-mode/"), "include_current.txt")),
-    true
-  )
+  val validConfig = IabEnrichment
+    .parse(
+      json"""{
+      "name": "iab_spiders_and_robots_enrichment",
+      "vendor": "com.snowplowanalytics.snowplow.enrichments",
+      "enabled": false,
+      "parameters": {
+        "ipFile": {
+          "database": "ip_exclude_current_cidr.txt",
+          "uri": "s3://my-private-bucket/iab"
+        },
+        "excludeUseragentFile": {
+          "database": "exclude_current.txt",
+          "uri": "s3://my-private-bucket/iab"
+        },
+        "includeUseragentFile": {
+          "database": "include_current.txt",
+          "uri": "s3://my-private-bucket/iab"
+        }
+      }
+    }""",
+      SchemaKey(
+        "com.snowplowanalytics.snowplow.enrichments",
+        "iab_spiders_and_robots_enrichment",
+        "jsonschema",
+        SchemaVer.Full(1, 0, 0)
+      ),
+      true
+    )
+    .toOption
+    .get
 
   def e1 =
-    "SPEC NAME"                 || "USER AGENT"  | "IP ADDRESS"     | "EXPECTED SPIDER OR ROBOT" | "EXPECTED CATEGORY" | "EXPECTED REASON"   | "EXPECTED PRIMARY IMPACT" |
-      "null UA/IP"              !! null          ! null             ! false                      ! "BROWSER"           ! "PASSED_ALL"        ! "NONE" |
-      "valid UA/IP"             !! "Xdroid"      ! "192.168.0.1"    ! false                      ! "BROWSER"           ! "PASSED_ALL"        ! "NONE" |
-      "valid UA, excluded IP"   !! "Mozilla/5.0" ! "192.168.151.21" ! true                       ! "SPIDER_OR_ROBOT"   ! "FAILED_IP_EXCLUDE" ! "UNKNOWN" |
-      "invalid UA, excluded IP" !! "xonitor"     ! "192.168.0.1"    ! true                       ! "SPIDER_OR_ROBOT"   ! "FAILED_UA_INCLUDE" ! "UNKNOWN" |> {
-      (_, userAgent, ipAddress, expectedSpiderOrRobot, expectedCategory, expectedReason, expectedPrimaryImpact) =>
-        {
-          validConfig.performCheck(userAgent, ipAddress, DateTime.now()) must beLike {
-            case Success(check) =>
-              check.spiderOrRobot must_== expectedSpiderOrRobot and
-                (check.category must_== expectedCategory) and
-                (check.reason must_== expectedReason) and
-                (check.primaryImpact must_== expectedPrimaryImpact)
-          }
+    "SPEC NAME" || "USER AGENT" | "IP ADDRESS" | "EXPECTED SPIDER OR ROBOT" | "EXPECTED CATEGORY" | "EXPECTED REASON" | "EXPECTED PRIMARY IMPACT" |
+      "null UA/IP" !! null ! null ! false ! "BROWSER" ! "PASSED_ALL" ! "NONE" |
+      "valid UA/IP" !! "Xdroid" ! "192.168.0.1" ! false ! "BROWSER" ! "PASSED_ALL" ! "NONE" |
+      "valid UA, excluded IP" !! "Mozilla/5.0" ! "192.168.151.21" ! true ! "SPIDER_OR_ROBOT" ! "FAILED_IP_EXCLUDE" ! "UNKNOWN" |
+      "invalid UA, excluded IP" !! "xonitor" ! "192.168.0.1" ! true ! "SPIDER_OR_ROBOT" ! "FAILED_UA_INCLUDE" ! "UNKNOWN" |> {
+      (
+        _,
+        userAgent,
+        ipAddress,
+        expectedSpiderOrRobot,
+        expectedCategory,
+        expectedReason,
+        expectedPrimaryImpact
+      ) =>
+        (for {
+          e <- validConfig.enrichment[Eval]
+          res = e.performCheck(userAgent, ipAddress, DateTime.now())
+        } yield res).value must beRight.like {
+          case check =>
+            check.spiderOrRobot must_== expectedSpiderOrRobot and
+              (check.category must_== expectedCategory) and
+              (check.reason must_== expectedReason) and
+              (check.primaryImpact must_== expectedPrimaryImpact)
         }
     }
 
   def e2 =
-    validConfig.performCheck("", "foo//bar", DateTime.now()) must beFailing
+    validConfig.enrichment[Eval].map(_.performCheck("", "foo//bar", DateTime.now())).value must
+      beLeft
 
   def e3 =
-    validConfig.getIabContext(None, None, None) must beFailing
+    validConfig.enrichment[Eval].map(_.getIabContext(None, None, None)).value must beLeft
 
   def e4 = {
-    val responseJson = parse("""
-                             |{
-                             |    "schema": "iglu:com.iab.snowplow/spiders_and_robots/jsonschema/1-0-0",
-                             |    "data": {
-                             |        "spiderOrRobot": false,
-                             |        "category": "BROWSER",
-                             |        "reason": "PASSED_ALL",
-                             |        "primaryImpact": "NONE"
-                             |    }
-                             |}
-                           """.stripMargin)
-    validConfig.getIabContext(Some("Xdroid"), Some("192.168.0.1"), Some(DateTime.now())) must beSuccessful(responseJson)
+    val responseJson =
+      SelfDescribingData(
+        SchemaKey("com.iab.snowplow", "spiders_and_robots", "jsonschema", SchemaVer.Full(1, 0, 0)),
+        json"""{"spiderOrRobot": false, "category": "BROWSER", "reason": "PASSED_ALL", "primaryImpact": "NONE"}"""
+      )
+    validConfig
+      .enrichment[Eval]
+      .map(_.getIabContext(Some("Xdroid"), Some("192.168.0.1"), Some(DateTime.now())))
+      .value must
+      beRight(responseJson)
   }
 
 }

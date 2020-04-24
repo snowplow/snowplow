@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2017-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,16 +10,17 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.pii
+package com.snowplowanalytics.snowplow.enrich.common
+package enrichments.registry.pii
 
-import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
+import outputs.EnrichedEvent
 
 object Mutators {
 
   /**
-   * This and the next constant maps from a configuration field name to an EnrichedEvent mutator. The structure is such so that
-   * it preserves type safety, and it can be easily replaced in the future by generated code that will use the configuration as
-   * input.
+   * This and the next constant maps from a configuration field name to an EnrichedEvent mutator.
+   * The structure is such so that it preserves type safety, and it can be easily replaced in the
+   * future by generated code that will use the configuration as input.
    */
   val ScalarMutators: Map[String, Mutator] = Map(
     "user_id" -> Mutator(

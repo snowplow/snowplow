@@ -16,54 +16,63 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package enrich
-package stream
+package com.snowplowanalytics.snowplow.enrich.stream
 package sources
 
 import java.util.Properties
 
 import scala.collection.JavaConverters._
+
+import cats.Id
+import cats.syntax.either._
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.snowplow.badrows.Processor
+import com.snowplowanalytics.snowplow.enrich.common.adapters.AdapterRegistry
+import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
+import io.circe.Json
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer._
-import scalaz._
-import Scalaz._
-import common.adapters.AdapterRegistry
-import common.enrichments.EnrichmentRegistry
-import iglu.client.Resolver
+
 import model.{Kafka, StreamsConfig}
-import scalatracker.Tracker
 import sinks.{KafkaSink, Sink}
+import java.time.Duration
 
 /** KafkaSubSource companion object with factory method */
 object KafkaSource {
   def create(
     config: StreamsConfig,
-    igluResolver: Resolver,
+    client: Client[Id, Json],
     adapterRegistry: AdapterRegistry,
-    enrichmentRegistry: EnrichmentRegistry,
-    tracker: Option[Tracker]
-  ): Validation[String, KafkaSource] = for {
-    kafkaConfig <- config.sourceSink match {
-      case c: Kafka => c.success
-      case _ => "Configured source/sink is not Kafka".failure
-    }
-    goodProducer <- KafkaSink
-      .validateAndCreateProducer(kafkaConfig, config.buffer, config.out.enriched)
-      .validation
-    emitPii = utils.emitPii(enrichmentRegistry)
-    _ <- utils.validatePii(emitPii, config.out.pii).validation
-    piiProducer <- config.out.pii match {
-      case Some(piiStreamName) =>
-        KafkaSink.validateAndCreateProducer(kafkaConfig, config.buffer, piiStreamName).validation
-          .map(Some(_))
-      case None => None.success
-    }
-    badProducer <- KafkaSink
-      .validateAndCreateProducer(kafkaConfig, config.buffer, config.out.bad)
-      .validation
-  } yield new KafkaSource(goodProducer, piiProducer, badProducer, igluResolver, adapterRegistry, enrichmentRegistry, tracker, config, kafkaConfig)
+    enrichmentRegistry: EnrichmentRegistry[Id],
+    processor: Processor
+  ): Either[String, KafkaSource] =
+    for {
+      kafkaConfig <- config.sourceSink match {
+        case c: Kafka => c.asRight
+        case _ => "Configured source/sink is not Kafka".asLeft
+      }
+      goodProducer <- KafkaSink.validateAndCreateProducer(kafkaConfig, config.buffer)
+      emitPii = utils.emitPii(enrichmentRegistry)
+      _ <- utils.validatePii(emitPii, config.out.pii)
+      piiProducer <- config.out.pii match {
+        case Some(_) =>
+          KafkaSink
+            .validateAndCreateProducer(kafkaConfig, config.buffer)
+            .map(Some(_))
+        case None => None.asRight
+      }
+      badProducer <- KafkaSink.validateAndCreateProducer(kafkaConfig, config.buffer)
+    } yield new KafkaSource(
+      goodProducer,
+      piiProducer,
+      badProducer,
+      client,
+      adapterRegistry,
+      enrichmentRegistry,
+      processor,
+      config,
+      kafkaConfig
+    )
 }
 
 /** Source to read events from a Kafka topic */
@@ -71,13 +80,13 @@ class KafkaSource private (
   goodProducer: KafkaProducer[String, String],
   piiProducer: Option[KafkaProducer[String, String]],
   badProducer: KafkaProducer[String, String],
-  igluResolver: Resolver,
+  client: Client[Id, Json],
   adapterRegistry: AdapterRegistry,
-  enrichmentRegistry: EnrichmentRegistry,
-  tracker: Option[Tracker],
+  enrichmentRegistry: EnrichmentRegistry[Id],
+  processor: Processor,
   config: StreamsConfig,
   kafkaConfig: Kafka
-) extends Source(igluResolver, adapterRegistry, enrichmentRegistry, tracker, config.out.partitionKey) {
+) extends Source(client, adapterRegistry, enrichmentRegistry, processor, config.out.partitionKey) {
 
   override val MaxRecordSize = None
 
@@ -86,11 +95,15 @@ class KafkaSource private (
       new KafkaSink(goodProducer, config.out.enriched)
   }
 
-  override val threadLocalPiiSink: Option[ThreadLocal[Sink]] = piiProducer.flatMap { somePiiProducer =>
-  config.out.pii.map { piiTopicName =>  new ThreadLocal[Sink] {
-    override def initialValue: Sink =
-      new KafkaSink(somePiiProducer, piiTopicName)
-  }}}
+  override val threadLocalPiiSink: Option[ThreadLocal[Sink]] = piiProducer.flatMap {
+    somePiiProducer =>
+      config.out.pii.map { piiTopicName =>
+        new ThreadLocal[Sink] {
+          override def initialValue: Sink =
+            new KafkaSink(somePiiProducer, piiTopicName)
+        }
+      }
+  }
 
   override val threadLocalBadSink: ThreadLocal[Sink] = new ThreadLocal[Sink] {
     override def initialValue: Sink =
@@ -107,7 +120,7 @@ class KafkaSource private (
     consumer.subscribe(List(config.in.raw).asJava)
     while (true) {
       val recordValues = consumer
-        .poll(100) // Wait 100 ms if data is not available
+        .poll(Duration.ofMillis(100)) // Wait 100 ms if data is not available
         .asScala
         .toList
         .map(_.value) // Get the values
@@ -118,7 +131,8 @@ class KafkaSource private (
 
   private def createConsumer(
     brokers: String,
-    groupId: String): KafkaConsumer[String, Array[Byte]] = {
+    groupId: String
+  ): KafkaConsumer[String, Array[Byte]] = {
     val properties = createProperties(brokers, groupId)
     properties.putAll(kafkaConfig.consumerConf.getOrElse(Map()).asJava)
     new KafkaConsumer[String, Array[Byte]](properties)

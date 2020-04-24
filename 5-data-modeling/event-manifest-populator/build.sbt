@@ -14,7 +14,7 @@
 lazy val root = project.in(file("."))
   .settings(
     name := "event-manifest-populator",
-    version := "0.1.1",
+    version := "0.1.2",
     scalaVersion := "2.11.8"
   )
   .settings(BuildSettings.buildSettings)
@@ -40,6 +40,3 @@ lazy val root = project.in(file("."))
       Dependencies.scalaCheck
     )
   )
-
-
-

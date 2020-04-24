@@ -38,6 +38,7 @@ aws:
       master_instance_type: m1.medium
       core_instance_count: 2
       core_instance_type: m1.medium
+      core_instance_bid: 0.015 # In USD. Adjust bid, or leave blank for on-demand core instances
       core_instance_ebs:    # Optional. Attach an EBS volume to each core instance.
         volume_size: 100    # Gigabytes
         volume_type: "gp2"
@@ -55,7 +56,7 @@ aws:
     additional_info:        # Optional JSON string for selecting additional features
 enrich:
   versions:
-    spark_enrich: 1.17.0 # Version of the Spark Enrichment process
+    spark_enrich: 1.18.0 # Version of the Spark Enrichment process
   output_compression: GZIP # Stream mode supports only GZIP
 storage:
   versions:

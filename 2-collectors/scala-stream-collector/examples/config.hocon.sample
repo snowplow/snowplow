@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2013-2020 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0, and
 # you may not use this file except in compliance with the Apache License
@@ -11,7 +11,7 @@
 # implied.  See the Apache License Version 2.0 for the specific language
 # governing permissions and limitations there under.
 
-# This file (application.conf.example) contains a template with
+# This file (config.hocon.sample) contains a template with
 # configuration options for the Scala Stream Collector.
 #
 # To use, copy this to 'application.conf' and modify the configuration options.
@@ -23,6 +23,34 @@ collector {
   interface = ${?COLLECTOR_INTERFACE}
   port = {{collectorPort}}
   port = ${?COLLECTOR_PORT}
+
+  # optional SSL/TLS configuration
+  ssl {
+    enable = false
+    enable = ${?COLLECTOR_SSL}
+    # whether to redirect HTTP to HTTPS
+    redirect = false
+    redirect = ${?COLLECTOR_SSL_REDIRECT}
+    port = 9543
+    port = ${?COLLECTOR_SSL_PORT}
+  }
+
+  # The collector responds with a cookie to requests with a path that matches the 'vendor/version' protocol.
+  # The expected values are:
+  # - com.snowplowanalytics.snowplow/tp2 for Tracker Protocol 2
+  # - r/tp2 for redirects
+  # - com.snowplowanalytics.iglu/v1 for the Iglu Webhook
+  # Any path that matches the 'vendor/version' protocol will result in a cookie response, for use by custom webhooks
+  # downstream of the collector.
+  # But you can also map any valid (i.e. two-segment) path to one of the three defaults.
+  # Your custom path must be the key and the value must be one of the corresponding default paths. Both must be full
+  # valid paths starting with a leading slash.
+  # Pass in an empty map to avoid mapping.
+  paths {
+    # "/com.acme/track" = "/com.snowplowanalytics.snowplow/tp2"
+    # "/com.acme/redirect" = "/r/tp2"
+    # "/com.acme/iglu" = "/com.snowplowanalytics.iglu/v1"
+  }
 
   # Configure the P3P policy header.
   p3p {
@@ -55,10 +83,39 @@ collector {
     name = {{collectorCookieName}}
     name = ${?COLLECTOR_COOKIE_NAME}
     # The domain is optional and will make the cookie accessible to other
-    # applications on the domain. Comment out this line to tie cookies to
-    # the collector's full domain
-    domain = "{{cookieDomain}}"
-    domain = ${?COLLECTOR_COOKIE_DOMAIN}
+    # applications on the domain. Comment out these lines to tie cookies to
+    # the collector's full domain.
+    # The domain is determined by matching the domains from the Origin header of the request
+    # to the list below. The first match is used. If no matches are found, the fallback domain will be used,
+    # if configured.
+    # If you specify a main domain, all subdomains on it will be matched.
+    # If you specify a subdomain, only that subdomain will be matched.
+    # Examples:
+    # domain.com will match domain.com, www.domain.com and secure.client.domain.com
+    # client.domain.com will match secure.client.domain.com but not domain.com or www.domain.com
+    domains = [
+        "{{cookieDomain1}}" # e.g. "domain.com" -> any origin domain ending with this will be matched and domain.com will be returned
+        "{{cookieDomain2}}" # e.g. "secure.anotherdomain.com" -> any origin domain ending with this will be matched and secure.anotherdomain.com will be returned
+        # ... more domains
+    ]
+    domains += ${?COLLECTOR_COOKIE_DOMAIN_1}
+    domains += ${?COLLECTOR_COOKIE_DOMAIN_2}
+    # ... more domains
+    # If specified, the fallback domain will be used if none of the Origin header hosts matches the list of
+    # cookie domains configured above. (For example, if there is no Origin header.)
+    fallbackDomain = "{{fallbackDomain}}"
+    fallbackDomain = ${?FALLBACK_DOMAIN}
+    secure = false
+    secure = ${?COLLECTOR_COOKIE_SECURE}
+    httpOnly = false
+    httpOnly = ${?COLLECTOR_COOKIE_HTTP_ONLY}
+    # The sameSite is optional. You can choose to not specify the attribute, or you can use `Strict`,
+    # `Lax` or `None` to limit the cookie sent context.
+    #   Strict: the cookie will only be sent along with "same-site" requests.
+    #   Lax: the cookie will be sent with same-site requests, and with cross-site top-level navigation.
+    #   None: the cookie will be sent with same-site and cross-site requests.
+    sameSite = "{{cookieSameSite}}"
+    sameSite = ${?COLLECTOR_COOKIE_SAME_SITE}
   }
 
   # If you have a do not track cookie in place, the Scala Stream Collector can respect it by
@@ -94,6 +151,12 @@ collector {
     forwardedProtocolHeader = "X-Forwarded-Proto"
     forwardedProtocolHeader = ${?COLLECTOR_COOKIE_BOUNCE_FORWARDED_PROTOCOL_HEADER}
   }
+
+  # When enabled, redirect prefix `r/` will be enabled and its query parameters resolved.
+  # Otherwise the request prefixed with `r/` will be dropped with `404 Not Found`
+  # Custom redirects configured in `paths` can still be used.
+  enableDefaultRedirect = true
+  enableDefaultRedirect = ${?COLLECTOR_ALLOW_REDIRECTS}
 
   # When enabled, the redirect url passed via the `u` query parameter is scanned for a placeholder
   # token. All instances of that token are replaced withe the network ID. If the placeholder isn't
@@ -137,17 +200,6 @@ collector {
     # If metrics are enabled then all requests will be logged as prometheus metrics
     # and '/metrics' endpoint will return the report about the requests
     enabled = false
-    enabled = ${?COLLECTOR_PROMETHEUS_METRICS_ENABLED}
-    # Custom buckets for http_request_duration_seconds_bucket duration metric
-    #durationBucketsInSeconds = [0.1, 3, 10]
-    #durationbucketsInSeconds = ${?COLLECTOR_PROMETHEUS_METRICS_DURATION_BUCKETS_IN_SECONDS}
-  }
-
-  # Configuration of prometheus http metrics
-  prometheusMetrics {
-    # If metrics are enabled then all requests will be logged as prometheus metrics
-    # and '/metrics' endpoint will return the report about the requests
-    enabled = false
     # Custom buckets for http_request_duration_seconds_bucket duration metric
     #durationBucketsInSeconds = [0.1, 3, 10]
   }
@@ -168,7 +220,7 @@ collector {
 
     # Enable the chosen sink by uncommenting the appropriate configuration
     sink {
-      # Choose between kinesis, googlepubsub, kafka, nsq, or stdout.
+      # Choose between kinesis, google-pub-sub, kafka, nsq, or stdout.
       # To use stdout, comment or remove everything in the "collector.streams.sink" section except
       # "enabled" which should be set to "stdout".
       enabled = kinesis
@@ -225,10 +277,9 @@ collector {
       # The kafka producer has a variety of possible configuration options defined at
       # https://kafka.apache.org/documentation/#producerconfigs
       # Some values are set to other values from this config by default:
-      # "bootstrap.servers" -> brokers
-      # retries             -> retries
-      # "buffer.memory"     -> buffer.byteLimit
-      # "linger.ms"         -> buffer.timeLimit
+      # "bootstrap.servers" = brokers
+      # "buffer.memory"     = buffer.byteLimit
+      # "linger.ms"         = buffer.timeLimit
       #producerConf {
       #  acks = all
       #  "key.serializer"     = "org.apache.kafka.common.serialization.StringSerializer"
@@ -288,4 +339,22 @@ akka {
       uri-parsing-mode = ${?AKKA_HTTP_SERVER_PARSING_URI_PARSING_MODE}
     }
   }
+
+  # By default setting `collector.ssl` relies on JSSE (Java Secure Socket
+  # Extension) to enable secure communication.
+  # To override the default settings set the following section as per
+  # https://lightbend.github.io/ssl-config/ExampleSSLConfig.html
+  # ssl-config {
+  #   debug = {
+  #     ssl = true
+  #   }
+  #   keyManager = {
+  #     stores = [
+  #       {type = "PKCS12", classpath = false, path = "/etc/ssl/mycert.p12", password = "mypassword" }
+  #     ]
+  #   }
+  #   loose {
+  #     disableHostnameVerification = false
+  #   }
+  # }
 }

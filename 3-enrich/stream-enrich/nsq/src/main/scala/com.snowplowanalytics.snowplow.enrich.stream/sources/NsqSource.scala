@@ -17,64 +17,59 @@
  * governing permissions and limitations there under.
  */
 
-package com.snowplowanalytics
-package snowplow
-package enrich
-package stream
+package com.snowplowanalytics.snowplow.enrich.stream
 package sources
 
-import scalaz._
-import Scalaz._
-import client.nsq.lookup.DefaultNSQLookup
-import client.nsq.{NSQConfig, NSQConsumer, NSQMessage, NSQProducer}
-import client.nsq.callbacks.NSQMessageCallback
-import client.nsq.callbacks.NSQErrorCallback
-import client.nsq.exceptions.NSQException
-import common.adapters.AdapterRegistry
-import iglu.client.Resolver
-import common.enrichments.EnrichmentRegistry
+import cats.Id
+import cats.syntax.either._
+import com.snowplowanalytics.client.nsq._
+import com.snowplowanalytics.client.nsq.callbacks._
+import com.snowplowanalytics.client.nsq.exceptions.NSQException
+import com.snowplowanalytics.client.nsq.lookup.DefaultNSQLookup
+import com.snowplowanalytics.iglu.client.Client
+import com.snowplowanalytics.snowplow.badrows.Processor
+import com.snowplowanalytics.snowplow.enrich.common.adapters.AdapterRegistry
+import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
+import io.circe.Json
+
 import model.{Nsq, StreamsConfig}
 import sinks.{NsqSink, Sink}
-import scalatracker.Tracker
 
 /** NsqSource companion object with factory method */
 object NsqSource {
   def create(
     config: StreamsConfig,
-    igluResolver: Resolver,
+    client: Client[Id, Json],
     adapterRegistry: AdapterRegistry,
-    enrichmentRegistry: EnrichmentRegistry,
-    tracker: Option[Tracker]
-  ): Validation[Throwable, NsqSource] =
+    enrichmentRegistry: EnrichmentRegistry[Id],
+    processor: Processor
+  ): Either[Throwable, NsqSource] =
     for {
       nsqConfig <- config.sourceSink match {
-        case c: Nsq => c.success
-        case _      => new IllegalArgumentException("Configured source/sink is not Nsq").failure
+        case c: Nsq => c.asRight
+        case _ => new IllegalArgumentException("Configured source/sink is not Nsq").asLeft
       }
-      goodProducer <- NsqSink
-        .validateAndCreateProducer(nsqConfig)
-        .validation
+      goodProducer <- NsqSink.validateAndCreateProducer(nsqConfig)
       emitPii = utils.emitPii(enrichmentRegistry)
-      _ <- utils.validatePii(emitPii, config.out.pii).validation
+      _ <- utils
+        .validatePii(emitPii, config.out.pii)
         .leftMap(new IllegalArgumentException(_))
       piiProducer <- config.out.pii match {
-        case Some(_) => NsqSink.validateAndCreateProducer(nsqConfig).validation.map(Some(_))
-        case None => None.success
+        case Some(_) => NsqSink.validateAndCreateProducer(nsqConfig).map(Some(_))
+        case None => None.asRight
       }
-      badProducer <- NsqSink
-        .validateAndCreateProducer(nsqConfig)
-        .validation
-    } yield
-      new NsqSource(
-        goodProducer,
-        piiProducer,
-        badProducer,
-        igluResolver,
-        adapterRegistry,
-        enrichmentRegistry,
-        tracker,
-        config,
-        nsqConfig)
+      badProducer <- NsqSink.validateAndCreateProducer(nsqConfig)
+    } yield new NsqSource(
+      goodProducer,
+      piiProducer,
+      badProducer,
+      client,
+      adapterRegistry,
+      enrichmentRegistry,
+      processor,
+      config,
+      nsqConfig
+    )
 }
 
 /** Source to read raw events from NSQ. */
@@ -82,13 +77,13 @@ class NsqSource private (
   goodProducer: NSQProducer,
   piiProducer: Option[NSQProducer],
   badProducer: NSQProducer,
-  igluResolver: Resolver,
+  client: Client[Id, Json],
   adapterRegistry: AdapterRegistry,
-  enrichmentRegistry: EnrichmentRegistry,
-  tracker: Option[Tracker],
+  enrichmentRegistry: EnrichmentRegistry[Id],
+  processor: Processor,
   config: StreamsConfig,
   nsqConfig: Nsq
-) extends Source(igluResolver, adapterRegistry, enrichmentRegistry, tracker, config.out.partitionKey) {
+) extends Source(client, adapterRegistry, enrichmentRegistry, processor, config.out.partitionKey) {
 
   override val MaxRecordSize = None
 
@@ -116,7 +111,7 @@ class NsqSource private (
       override def message(msg: NSQMessage): Unit = {
         val bytes = msg.getMessage()
         enrichAndStoreEvents(List(bytes)) match {
-          case true  => msg.finished()
+          case true => msg.finished()
           case false => log.error(s"Error while enriching the event")
         }
       }
@@ -136,7 +131,9 @@ class NsqSource private (
       nsqConfig.rawChannel,
       nsqCallback,
       new NSQConfig(),
-      errorCallback)
+      errorCallback
+    )
     consumer.start()
+    ()
   }
 }
