@@ -49,7 +49,7 @@ import sinks._
 import utils._
 
 object Source {
-  val processor = Processor("stream-enrich", "1.0.0") // TODO generate through code
+  val processor = Processor(generated.BuildInfo.name, generated.BuildInfo.version)
 
   val PiiEventName = "pii_transformation"
   val PiiEventVendor = "com.snowplowanalytics.snowplow"
