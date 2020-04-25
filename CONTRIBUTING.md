@@ -43,9 +43,6 @@ NSQ or PubSub)
 - [`3-enrich/scala-common-enrich`](https://github.com/snowplow/snowplow/tree/master/3-enrich/scala-common-enrich), a
 library common to all the enrichers listed below which turns the raw events outputted by a collector into validated and
 enriched events
-- [`3-enrich/spark-enrich`](https://github.com/snowplow/snowplow/tree/master/3-enrich/spark-enrich), the pipeline which
-turns batch of raw events into batch of validated and enriched events thanks to [Apache Spark](https://spark.apache.org/)
-and Scala Common Enrich
 - [`3-enrich/stream-enrich`](https://github.com/snowplow/snowplow/tree/master/3-enrich/stream-enrich), the pipeline which
 turns a stream of raw events into a stream of validated and enriched events and pushes them to a streaming platform (Kafka,
 Kinesis, NSQ or PubSub)
