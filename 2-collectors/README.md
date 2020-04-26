@@ -12,7 +12,7 @@ A Collector captures and logs these events in their raw form, ready to be proces
 
 | Collector                         | Description                                                  | Status           |
 |-----------------------------------|--------------------------------------------------------------|------------------|
-| [cloudfront-collector][c1]       | An Amazon CloudFront-based collector. No moving parts        | Production-ready |
+| [cloudfront-collector][c1]       | An Amazon CloudFront-based collector. No moving parts        | [Deprecated](https://github.com/snowplow/snowplow/issues/4319) |
 | [clojure-collector][c2]          | A Clojure collector which runs on Amazon Elastic Beanstalk   | [Deprecated](https://discourse.snowplowanalytics.com/t/deprecation-notice-clojure-collector-and-spark-enrich/3443) |
 | [scala-stream-collector][c3] (1) | A Scala stream-based collector which logs to Amazon Kinesis  | Production-ready |
 | [thrift-raw-event][c4]           | Thrift format for raw Snowplow events. Used in (1)           | Production-ready |
@@ -27,7 +27,7 @@ A Collector captures and logs these events in their raw form, ready to be proces
 [architecture-image]: https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/snowplow-architecture-2-collectors.png
 [trackers]: https://github.com/snowplow/snowplow/tree/master/1-trackers
 [enrich]: https://github.com/snowplow/snowplow/tree/master/3-enrich
-[c1]: https://github.com/snowplow/snowplow/tree/master/2-collectors/cloudfront-collector
+[c1]: https://github.com/snowplow-archive/cloudfront-collector
 [c2]: https://github.com/snowplow-archive/clojure-collector
 [c3]: https://github.com/snowplow/snowplow/tree/master/2-collectors/scala-stream-collector
 [c4]: https://github.com/snowplow/snowplow/tree/master/2-collectors/thrift-raw-event
