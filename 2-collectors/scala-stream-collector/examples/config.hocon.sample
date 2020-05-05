@@ -239,6 +239,14 @@ collector {
       threadPoolSize = 10
       threadPoolSize = ${?COLLECTOR_STREAMS_SINK_THREAD_POOL_SIZE}
 
+      # Optional SQS buffer for good and bad events (respectively); when Kinesis is not able to consume messages,
+      # failed message from Kinesis is sent to SQS 
+      sqsGoodBuffer = {{sqsGoodBuffer}}
+      sqsGoodBuffer = ${?COLLECTOR_STREAMS_SINK_SQS_GOOD_BUFFER}
+
+      sqsBadBuffer = {{sqsBadBuffer}}
+      sqsBadBuffer = ${?COLLECTOR_STREAMS_SINK_SQS_BAD_BUFFER}
+
       # The following are used to authenticate for the Amazon Kinesis sink.
       # If both are set to 'default', the default provider chain is used
       # (see http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/auth/DefaultAWSCredentialsProviderChain.html)
