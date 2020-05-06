@@ -25,7 +25,11 @@ import com.amazonaws.services.kinesis.model._
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import com.amazonaws.services.kinesis.{AmazonKinesis, AmazonKinesisClientBuilder}
 import com.amazonaws.services.sqs.{AmazonSQS, AmazonSQSClientBuilder}
-import com.amazonaws.services.sqs.model.{SendMessageBatchRequest, SendMessageBatchRequestEntry}
+import com.amazonaws.services.sqs.model.{
+  MessageAttributeValue,
+  SendMessageBatchRequest,
+  SendMessageBatchRequestEntry
+}
 import model._
 import scala.util.Try
 import java.util.UUID
@@ -339,15 +343,11 @@ class KinesisSink private (
       log.info(s"Writing ${batch.size} messages to SQS queue: ${sqs.sqsBufferName}")
       val encoded = batch.map {
         case (msg, key) =>
-          // The key is either IP or random UUID, so neither should contin `|`.
-          // Sqs doesn't support keys, so `|` is used as a separator. The same needs to be set up in
-          // sqs2kinesis project to decode the key - value pair.
-          val msgWithKey =
-            ByteBuffer.wrap(
-              Array.concat(key.getBytes, Array('|'.toByte), msg.array)
+          val b64EncodedMsg = encode(msg)
+          new SendMessageBatchRequestEntry(UUID.randomUUID.toString, b64EncodedMsg)
+            .withMessageAttributes(
+              Map("kinesisKey" -> new MessageAttributeValue().withStringValue(key)).asJava
             )
-          val b64Encoded = encode(msgWithKey)
-          new SendMessageBatchRequestEntry(UUID.randomUUID.toString, b64Encoded)
       }
       val MaxSqsBatchSize = 10
       encoded.grouped(MaxSqsBatchSize).foreach { encodedGroup =>
