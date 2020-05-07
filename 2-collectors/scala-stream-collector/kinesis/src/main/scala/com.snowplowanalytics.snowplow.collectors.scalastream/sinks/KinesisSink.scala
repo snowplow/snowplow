@@ -346,7 +346,12 @@ class KinesisSink private (
           val b64EncodedMsg = encode(msg)
           new SendMessageBatchRequestEntry(UUID.randomUUID.toString, b64EncodedMsg)
             .withMessageAttributes(
-              Map("kinesisKey" -> new MessageAttributeValue().withStringValue(key)).asJava
+              Map(
+                "kinesisKey" ->
+                  new MessageAttributeValue()
+                    .withDataType("String")
+                    .withStringValue(key)
+              ).asJava
             )
       }
       val MaxSqsBatchSize = 10
