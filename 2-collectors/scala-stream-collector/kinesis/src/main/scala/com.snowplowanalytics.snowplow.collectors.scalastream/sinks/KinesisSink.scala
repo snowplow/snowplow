@@ -356,18 +356,12 @@ class KinesisSink private (
             .withQueueUrl(sqs.sqsBufferName)
             .withEntries(encodedGroup.asJava)
 
-        Either
-          .catchNonFatal {
-            sqs.sqsClient.sendMessageBatch(batchRequest)
-            log.info(
-              s"Batch of ${encodedGroup.size} was sent to SQS queue: ${sqs.sqsBufferName}"
-            )
-            ()
-          }
-          .recover {
-            case e =>
-              log.error(s"Error sending to SQS queue(${sqs.sqsBufferName}): ${e.getMessage()}")
-          }
+        val res = sqs.sqsClient.sendMessageBatch(batchRequest)
+        log.info(
+          s"Batch of ${encodedGroup.size} was sent to SQS queue: ${sqs.sqsBufferName}, the result is: $res"
+        )
+        ()
+
       }
     }
 
