@@ -361,13 +361,25 @@ class KinesisSink private (
             .withQueueUrl(sqs.sqsBufferName)
             .withEntries(encodedGroup.asJava)
 
-        val res = sqs.sqsClient.sendMessageBatch(batchRequest)
-        log.info(
-          s"Batch of ${encodedGroup.size} was sent to SQS queue: ${sqs.sqsBufferName}, the result is: $res"
-        )
-        ()
-
+        Either
+          .catchNonFatal {
+            val res = sqs.sqsClient.sendMessageBatch(batchRequest)
+            val failed = res.getFailed().asScala
+            if (failed.nonEmpty) {
+              val errors = failed.map(_.toString).mkString(", ")
+              log.error(s"Sending to SQS queue: ${sqs.sqsBufferName} failed with: $errors")
+            } else
+              log.info(
+                s"Batch of ${encodedGroup.size} was successfully send to SQS queue: ${sqs.sqsBufferName}."
+              )
+            ()
+          }
+          .recover {
+            case e =>
+              log.error(s"Error sending to SQS queue(${sqs.sqsBufferName}): ${e.getMessage()}")
+          }
       }
+
     }
 
   private def encode(bufMsg: ByteBuffer): String = {
