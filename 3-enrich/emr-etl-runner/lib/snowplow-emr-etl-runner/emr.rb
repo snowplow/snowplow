@@ -56,7 +56,7 @@ module Snowplow
       end
 
       def get_emr_jobflow(emr_jobflow_id, region)
-        handle_common_errors { Elasticity::JobFlow.from_jobflow_id(emr_jobflow_id, region) }
+        retry_connection_issues { Elasticity::JobFlow.from_jobflow_id(emr_jobflow_id, region) }
       end
 
       private
@@ -66,19 +66,9 @@ module Snowplow
           states: ["WAITING", "RUNNING"],
         }
         options[:marker] = marker unless marker.nil?
-        handle_common_errors { client.list_clusters(options) }
+        retry_connection_issues { client.list_clusters(options) }
       end
 
-      def handle_common_errors
-        begin
-          retries ||= 0
-          yield
-        rescue Elasticity::ThrottlingException, RestClient::RequestTimeout, RestClient::InternalServerError, RestClient::ServiceUnavailable, RestClient::SSLCertificateNotVerified, OpenSSL::SSL::SSLError
-          retries += 1
-          sleep(2 ** retries + 30)
-          retry if retries < 3
-        end
-      end
 
     end
   end

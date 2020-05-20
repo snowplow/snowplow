@@ -278,6 +278,60 @@ module Snowplow
       def get_timespan(start, _end)
         "[#{start} - #{_end}]"
       end
+
+      def retry_connection_issues
+        retries = 0
+        handle_exception = ->(ex, description) {
+          retries += 1
+          delay = 4 ** retries + 30 # retry at 34, 46, 94, 286 seconds
+          if retries < 5
+            logger.warn "Got #{description} #{ex}, waiting #{delay} seconds before trying again"
+            sleep(delay)
+          else
+            raise ex
+          end
+        }
+
+        begin
+          yield
+        rescue SocketError => se
+          handle_exception.call se, "socket error"
+          retry
+        rescue Errno::ECONNREFUSED => ref
+          handle_exception.call ref, "connection refused"
+          retry
+        rescue Errno::ECONNRESET => res
+          handle_exception.call res, "connection reset"
+          retry
+        rescue Errno::ETIMEDOUT => to
+          handle_exception.call to, "connection timeout"
+          retry
+        rescue RestClient::InternalServerError => ise
+          handle_exception.call ise, "internal server error"
+          retry
+        rescue Elasticity::ThrottlingException => te
+          handle_exception.call te, "Elasticity throttling exception"
+          retry
+        rescue ArgumentError => ae
+          handle_exception.call ae, "Elasticity argument error"
+          retry
+        rescue IOError => ioe
+          handle_exception.call ioe, "IOError"
+          retry
+        rescue RestClient::SSLCertificateNotVerified => sce
+          handle_exception.call sce, "RestClient::SSLCertificateNotVerified"
+          retry
+        rescue RestClient::RequestTimeout => rt
+          handle_exception.call rt, "RestClient::RequestTimeout"
+          retry
+        rescue RestClient::ServiceUnavailable => su
+          handle_exception.call su, "RestClient::ServiceUnavailable"
+          retry
+        rescue OpenSSL::SSL::SSLError => se
+          handle_exception.call se, "OpenSSL::SSL::SSLError"
+          retry
+        end
+      end
     end
   end
 end

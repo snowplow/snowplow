@@ -762,39 +762,27 @@ module Snowplow
 
         @pending_jobflow_steps.each do |jobflow_step|
           begin
-            retries ||= 0
-            # if the job flow is already running this triggers an HTTP call
-            @jobflow.add_step(jobflow_step)
-          rescue Elasticity::ThrottlingException, RestClient::RequestTimeout, RestClient::InternalServerError, RestClient::ServiceUnavailable, RestClient::SSLCertificateNotVerified => e
-            if retries < 3
-              retries += 1
-              delay = 2 ** retries + 30
-              logger.warn "Got error [#{e.message}] while trying to submit jobflow step [#{jobflow_step.name}] to jobflow [#{@jobflow.jobflow_id}]. Retrying in #{delay} seconds"
-              sleep(delay)
-              retry
-            else
-              if snowplow_tracking_enabled
-                step_status = Elasticity::ClusterStepStatus.new
-                step_status.name = "Add step [#{jobflow_step.name}] to jobflow [#{@jobflow.jobflow_id}]. (Error: [#{e.message}])"
-                step_status.state = "FAILED"
-                Monitoring::Snowplow.instance.track_single_step(step_status)
-              end
-              raise EmrExecutionError, "Can't add step [#{jobflow_step.name}] to jobflow [#{@jobflow.jobflow_id}] (retried 3 times). Error: [#{e.message}]."
+            retry_connection_issues {
+              # if the job flow is already running this triggers an HTTP call
+              @jobflow.add_step(jobflow_step)
+            }
+          rescue => e
+            # This exception has already been retried the maximum number of times
+            if snowplow_tracking_enabled
+              step_status = Elasticity::ClusterStepStatus.new
+              step_status.name = "Add step [#{jobflow_step.name}] to jobflow [#{@jobflow.jobflow_id}]. (Error: [#{e.message}])"
+              step_status.state = "FAILED"
+              Monitoring::Snowplow.instance.track_single_step(step_status)
             end
+            raise EmrExecutionError, "Can't add step [#{jobflow_step.name}] to jobflow [#{@jobflow.jobflow_id}] (retried 3 times). Error: [#{e.message}]."
           end
         end
 
         jobflow_id = @jobflow.jobflow_id
         if jobflow_id.nil?
-          begin
-            retries ||= 0
+          retry_connection_issues {
             jobflow_id = @jobflow.run
-          rescue Elasticity::ThrottlingException, RestClient::RequestTimeout, RestClient::InternalServerError, RestClient::ServiceUnavailable, RestClient::SSLCertificateNotVerified
-            logger.warn "Got an error while trying to submit the jobflow"
-            retries += 1
-            sleep(2 ** retries + 30)
-            retry if retries < 3
-          end
+          }
         end
         logger.debug "EMR jobflow #{jobflow_id} started, waiting for jobflow to complete..."
 
@@ -842,14 +830,9 @@ module Snowplow
             @persistent_jobflow_duration_s > 0 and
             cluster_status.created_at + @persistent_jobflow_duration_s < @run_tstamp
           logger.debug "EMR jobflow has expired and will be shutdown."
-          begin
-            retries ||= 0
+          retry_connection_issues {
             @jobflow.shutdown
-          rescue Elasticity::ThrottlingException, RestClient::RequestTimeout, RestClient::InternalServerError, RestClient::ServiceUnavailable, RestClient::SSLCertificateNotVerified
-            retries += 1
-            sleep(2 ** retries + 30)
-            retry if retries < 3
-          end
+          }
         end
 
         nil
@@ -1095,79 +1078,30 @@ module Snowplow
 
         # Loop until we can quit...
         while true do
-          retries = 0
-
-          handleException = ->(ex, description) {
-            retries += 1
-            if retries < 4
-              logger.warn "Got #{description} #{ex}, waiting 5 minutes before checking jobflow again"
-              sleep(300)
-            else
-              raise ex
-            end
+          cluster_step_status_for_run = retry_connection_issues {
+            cluster_step_status_for_run(@jobflow)
           }
 
-          begin
-            cluster_step_status_for_run = cluster_step_status_for_run(@jobflow)
-
-            if cluster_step_status_for_run.nil?
-              logger.warn "Could not retrieve cluster status, waiting 5 minutes before checking jobflow again"
-              sleep(300)
-            else
-              # Count up running tasks and failures
-              statuses = cluster_step_status_for_run.map(&:state).inject([0, 0]) do |sum, state|
-                [ sum[0] + (@@running_states.include?(state) ? 1 : 0), sum[1] + (@@failed_states.include?(state) ? 1 : 0) ]
-              end
-
-              # If no step is still running, then quit
-              if statuses[0] == 0
-                success = statuses[1] == 0 # True if no failures
-                bootstrap_failure = EmrJob.bootstrap_failure?(@jobflow, cluster_step_status_for_run)
-                rdb_loader_failure = EmrJob.rdb_loader_failure?(cluster_step_status_for_run)
-                rdb_loader_cancellation = EmrJob.rdb_loader_cancellation?(cluster_step_status_for_run)
-                break
-              else
-                # Sleep a while before we check again
-                sleep(60)
-              end
+          if cluster_step_status_for_run.nil?
+            logger.warn "Could not retrieve cluster status, waiting 5 minutes before checking jobflow again"
+            sleep(300)
+          else
+            # Count up running tasks and failures
+            statuses = cluster_step_status_for_run.map(&:state).inject([0, 0]) do |sum, state|
+              [ sum[0] + (@@running_states.include?(state) ? 1 : 0), sum[1] + (@@failed_states.include?(state) ? 1 : 0) ]
             end
 
-          rescue SocketError => se
-            handleException.call se, "socket error"
-            retry
-          rescue Errno::ECONNREFUSED => ref
-            handleException.call ref, "connection refused"
-            retry
-          rescue Errno::ECONNRESET => res
-            handleException.call res, "connection reset"
-            retry
-          rescue Errno::ETIMEDOUT => to
-            handleException.call to, "connection timeout"
-            retry
-          rescue RestClient::InternalServerError => ise
-            handleException.call ise, "internal server error"
-            retry
-          rescue Elasticity::ThrottlingException => te
-            handleException.call te, "Elasticity throttling exception"
-            retry
-          rescue ArgumentError => ae
-            handleException.call ae, "Elasticity argument error"
-            retry
-          rescue IOError => ioe
-            handleException.call ioe, "IOError"
-            retry
-          rescue RestClient::SSLCertificateNotVerified => sce
-            handleException.call sce, "RestClient::SSLCertificateNotVerified"
-            retry
-          rescue RestClient::RequestTimeout => rt
-            handleException.call rt, "RestClient::RequestTimeout"
-            retry
-          rescue RestClient::ServiceUnavailable => su
-            handleException.call su, "RestClient::ServiceUnavailable"
-            retry
-          rescue OpenSSL::SSL::SSLError => se
-            handleException.call se, "OpenSSL::SSL::SSLError"
-            retry
+            # If no step is still running, then quit
+            if statuses[0] == 0
+              success = statuses[1] == 0 # True if no failures
+              bootstrap_failure = EmrJob.bootstrap_failure?(@jobflow, cluster_step_status_for_run)
+              rdb_loader_failure = EmrJob.rdb_loader_failure?(cluster_step_status_for_run)
+              rdb_loader_cancellation = EmrJob.rdb_loader_cancellation?(cluster_step_status_for_run)
+              break
+            else
+              # Sleep a while before we check again
+              sleep(60)
+            end
           end
         end
 
@@ -1215,28 +1149,18 @@ module Snowplow
       # +jobflow+:: The jobflow to extract steps from
       Contract Elasticity::JobFlow => ArrayOf[Elasticity::ClusterStepStatus]
       def cluster_step_status_for_run(jobflow)
-        begin
-          retries ||= 0
+        retry_connection_issues {
           jobflow.cluster_step_status
             .select { |a| a.created_at >= @run_tstamp }
             .sort_by { |a| a.created_at }
-        rescue Elasticity::ThrottlingException, RestClient::RequestTimeout, RestClient::InternalServerError, RestClient::ServiceUnavailable, RestClient::SSLCertificateNotVerified
-          retries += 1
-          sleep(2 ** retries + 30)
-          retry if retries < 3
-        end
+        }
       end
 
       Contract Elasticity::JobFlow => Elasticity::ClusterStatus
       def cluster_status(jobflow)
-        begin
-          retries ||= 0
+        retry_connection_issues {
           jobflow.cluster_status
-        rescue Elasticity::ThrottlingException, RestClient::RequestTimeout, RestClient::InternalServerError, RestClient::ServiceUnavailable, RestClient::SSLCertificateNotVerified
-          retries += 1
-          sleep(2 ** retries + 30)
-          retry if retries < 3
-        end
+        }
       end
 
       # Returns true if the jobflow failed at a rdb loader step
