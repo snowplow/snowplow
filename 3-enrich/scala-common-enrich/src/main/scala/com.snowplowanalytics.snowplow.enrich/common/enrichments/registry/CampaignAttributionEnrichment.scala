@@ -120,20 +120,21 @@ final case class CampaignAttributionEnrichment(
 
   /**
    * Extract the marketing fields from a URL.
-   * @param nvPairs The querystring to extract marketing fields from
+   * @param qsList The querystring to extract marketing fields from
    * @return the MarketingCampaign or an error message, boxed in a Scalaz Validation
    */
-  def extractMarketingFields(nvPairs: SourceMap): MarketingCampaign = {
-    val medium = getFirstParameter(mediumParameters, nvPairs)
-    val source = getFirstParameter(sourceParameters, nvPairs)
-    val term = getFirstParameter(termParameters, nvPairs)
-    val content = getFirstParameter(contentParameters, nvPairs)
-    val campaign = getFirstParameter(campaignParameters, nvPairs)
+  def extractMarketingFields(qsList: QueryStringParameters): MarketingCampaign = {
+    val qsMap = qsList.toMap.map { case (k, v) => (k, v.getOrElse("")) }
+    val medium = getFirstParameter(mediumParameters, qsMap)
+    val source = getFirstParameter(sourceParameters, qsMap)
+    val term = getFirstParameter(termParameters, qsMap)
+    val content = getFirstParameter(contentParameters, qsMap)
+    val campaign = getFirstParameter(campaignParameters, qsMap)
 
     val (clickId, network) =
       clickIdParameters
-        .find(pair => nvPairs.contains(pair._1))
-        .map(pair => (nvPairs(pair._1), pair._2))
+        .find(pair => qsMap.contains(pair._1))
+        .map(pair => (qsMap(pair._1), pair._2))
         .separate
 
     MarketingCampaign(medium, source, term, content, campaign, clickId, network)

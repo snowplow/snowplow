@@ -20,16 +20,25 @@ import org.specs2.matcher.DataTables
 
 class ParseCrossDomainSpec extends Specification with DataTables {
   def is = s2"""
-  parseCrossDomain should return None when the querystring contains no _sp parameter           $e1
-  parseCrossDomain should return a failure when the _sp timestamp is unparseable               $e2
-  parseCrossDomain should successfully extract the domain user ID when available               $e3
-  parseCrossDomain should successfully extract the domain user ID and timestamp when available $e4
-  parseCrossDomain should extract neither field from an empty _sp parameter                    $e5
+  parseCrossDomain should return None when the querystring is empty                             $e1
+  parseCrossDomain should return None when the querystring contains no _sp parameter            $e2
+  parseCrossDomain should return None when the querystring contains _sp parameter without value $e3
+  parseCrossDomain should return a failure when the _sp timestamp is unparseable                $e4
+  parseCrossDomain should successfully extract the domain user ID when available                $e5
+  parseCrossDomain should successfully extract the domain user ID and timestamp when available  $e6
+  parseCrossDomain should extract neither field from an empty _sp parameter                     $e7
   """
-  def e1 =
-    PageEnrichments.parseCrossDomain(Map()) must beRight((None, None))
 
-  def e2 = {
+  def e1 =
+    PageEnrichments.parseCrossDomain(Nil) must beRight((None, None))
+
+  def e2 =
+    PageEnrichments.parseCrossDomain(List(("foo" -> Some("bar")))) must beRight((None, None))
+
+  def e3 =
+    PageEnrichments.parseCrossDomain(List(("_sp" -> None))) must beRight((None, None))
+
+  def e4 = {
     val expected = FailureDetails.EnrichmentFailure(
       None,
       FailureDetails.EnrichmentFailureMessage.InputData(
@@ -38,17 +47,17 @@ class ParseCrossDomainSpec extends Specification with DataTables {
         "not in the expected format: ms since epoch"
       )
     )
-    PageEnrichments.parseCrossDomain(Map("_sp" -> "abc.not-a-timestamp")) must beLeft(expected)
+    PageEnrichments.parseCrossDomain(List(("_sp" -> Some("abc.not-a-timestamp")))) must beLeft(expected)
   }
 
-  def e3 =
-    PageEnrichments.parseCrossDomain(Map("_sp" -> "abc")) must beRight(("abc".some, None))
+  def e5 =
+    PageEnrichments.parseCrossDomain(List(("_sp" -> Some("abc")))) must beRight(("abc".some, None))
 
-  def e4 =
-    PageEnrichments.parseCrossDomain(Map("_sp" -> "abc.1426245561368")) must beRight(
+  def e6 =
+    PageEnrichments.parseCrossDomain(List(("_sp" -> Some("abc.1426245561368")))) must beRight(
       ("abc".some, "2015-03-13 11:19:21.368".some)
     )
 
-  def e5 =
-    PageEnrichments.parseCrossDomain(Map("_sp" -> "")) must beRight(None -> None)
+  def e7 =
+    PageEnrichments.parseCrossDomain(List(("_sp" -> Some("")))) must beRight(None -> None)
 }

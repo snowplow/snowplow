@@ -397,3 +397,27 @@ class StringToBooleanLikeJByteSpec extends Specification with DataTables {
       ConversionUtils.stringToBooleanLikeJByte(FieldName, str) must beRight(expected)
     }
 }
+
+class ExtractQueryStringSpec extends Specification {
+  import java.nio.charset.StandardCharsets.UTF_8
+  val baseUri = "http://foo.bar?"
+
+  def is = s2"""
+  extractQuerystring should extract a query string param          $e1
+  extractQuerystring should assign None to a param without value  $e2
+  extractQuerystring should assign "" to a param with empty value $e3
+  extractQuerystring should return several tuples with same key   $e4
+  """
+
+  def e1 =
+    ConversionUtils.extractQuerystring(new URI(s"${baseUri}a=b"), UTF_8) must beRight(List(("a" -> Some("b"))))
+
+  def e2 =
+    ConversionUtils.extractQuerystring(new URI(s"${baseUri}a"), UTF_8) must beRight(List(("a" -> None)))
+
+  def e3 =
+    ConversionUtils.extractQuerystring(new URI(s"${baseUri}a="), UTF_8) must beRight(List(("a" -> Some(""))))
+
+  def e4 =
+    ConversionUtils.extractQuerystring(new URI(s"${baseUri}a=b&a=c"), UTF_8) must beRight(List(("a" -> Some("b")), ("a" -> Some("c"))))
+}

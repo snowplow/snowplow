@@ -50,11 +50,13 @@ object PageEnrichments {
   /**
    * Extract the referrer domain user ID and timestamp from the "_sp={{DUID}}.{{TSTAMP}}"
    * portion of the querystring
-   * @param qsMap The querystring converted to a map
+   * @param qsMap The querystring parameters
    * @return Validation boxing a pair of optional strings corresponding to the two fields
    */
-  def parseCrossDomain(qsMap: Map[String, String]): Either[FailureDetails.EnrichmentFailure, (Option[String], Option[String])] =
-    qsMap.get("_sp") match {
+  def parseCrossDomain(qsMap: QueryStringParameters): Either[FailureDetails.EnrichmentFailure, (Option[String], Option[String])] =
+    qsMap.toMap
+      .map { case (k, v) => (k, v.getOrElse("")) }
+      .get("_sp") match {
       case Some("") => (None, None).asRight
       case Some(sp) =>
         val crossDomainElements = sp.split("\\.")

@@ -281,17 +281,17 @@ object ConversionUtils {
       }
 
   /**
-   * Attempt to extract the querystring from a URI as a map
+   * Attempt to extract the querystring from a URI
    * @param uri URI containing the querystring
    * @param encoding Encoding of the URI
    */
-  def extractQuerystring(uri: URI, encoding: Charset): Either[FailureDetails.EnrichmentFailure, Map[String, String]] =
-    Try(URLEncodedUtils.parse(uri, encoding).asScala.map(p => (p.getName -> p.getValue)))
+  def extractQuerystring(uri: URI, encoding: Charset): Either[FailureDetails.EnrichmentFailure, QueryStringParameters] =
+    Try(URLEncodedUtils.parse(uri, encoding).asScala.map(p => (p.getName -> Option(p.getValue))))
       .recoverWith {
         case NonFatal(_) =>
-          Try(Url.parse(uri.toString).query.params).map(l => l.map(t => (t._1, t._2.getOrElse(""))))
+          Try(Url.parse(uri.toString).query.params)
       } match {
-      case util.Success(s) => s.toMap.asRight
+      case util.Success(params) => params.toList.asRight
       case util.Failure(e) =>
         val msg = s"could not parse uri, expection was thrown: [$e]."
         val f = FailureDetails.EnrichmentFailureMessage.InputData(

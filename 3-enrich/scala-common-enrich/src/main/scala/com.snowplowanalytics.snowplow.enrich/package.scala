@@ -26,6 +26,9 @@ package object common {
   /** Parameters inside of a raw event */
   type RawEventParameters = Map[String, String]
 
+  /** Parameters extracted from query string */
+  type QueryStringParameters = List[(String, Option[String])]
+
   /**
    * Type alias for either Throwable or successful value
    * It has Monad instance unlike Validation

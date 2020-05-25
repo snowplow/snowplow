@@ -23,35 +23,35 @@ class CampaignAttributionEnrichmentSpec extends Specification {
   extractMarketingFields should create a MarketingCampaign with clickId and network fields            $e5
   """
 
-  val google_uri = Map(
-    "utm_source" -> "GoogleSearch",
-    "utm_medium" -> "cpc",
-    "utm_term" -> "native american tarot deck",
-    "utm_content" -> "39254295088",
-    "utm_campaign" -> "uk-tarot--native-american"
+  val google_uri = List(
+    ("utm_source" -> Some("GoogleSearch")),
+    ("utm_medium" -> Some("cpc")),
+    ("utm_term" -> Some("native american tarot deck")),
+    ("utm_content" -> Some("39254295088")),
+    ("utm_campaign" -> Some("uk-tarot--native-american"))
   )
 
-  val omniture_uri = Map("cid" -> "uk-tarot--native-american")
+  val omniture_uri = List(("cid" -> Some("uk-tarot--native-american")))
 
-  val heterogeneous_uri = Map(
-    "utm_source" -> "GoogleSearch",
-    "source" -> "bad_source",
-    "utm_medium" -> "cpc",
-    "legacy_term" -> "bad_term",
-    "utm_term" -> "native american tarot deck",
-    "legacy_campaign" -> "bad_campaign",
-    "cid" -> "uk-tarot--native-american"
+  val heterogeneous_uri = List(
+    ("utm_source" -> Some("GoogleSearch")),
+    ("source" -> Some("bad_source")),
+    ("utm_medium" -> Some("cpc")),
+    ("legacy_term" -> Some("bad_term")),
+    ("utm_term" -> Some("native american tarot deck")),
+    ("legacy_campaign" -> Some("bad_campaign")),
+    ("cid" -> Some("uk-tarot--native-american"))
   )
 
-  val clickid_uri = Map(
-    "utm_source" -> "GoogleSearch",
-    "source" -> "bad_source",
-    "utm_medium" -> "cpc",
-    "legacy_term" -> "bad_term",
-    "utm_term" -> "native american tarot deck",
-    "legacy_campaign" -> "bad_campaign",
-    "cid" -> "uk-tarot--native-american",
-    "msclkid" -> "500"
+  val clickid_uri = List(
+    ("utm_source" -> Some("GoogleSearch")),
+    ("source" -> Some("bad_source")),
+    ("utm_medium" -> Some("cpc")),
+    ("legacy_term" -> Some("bad_term")),
+    ("utm_term" -> Some("native american tarot deck")),
+    ("legacy_campaign" -> Some("bad_campaign")),
+    ("cid" -> Some("uk-tarot--native-american")),
+    ("msclkid" -> Some("500"))
   )
 
   def e1 = {

@@ -157,7 +157,7 @@ object EnrichmentManager {
       getRefererUri(enriched, registry.refererParser)
 
     // Parse the page URI's querystring
-    val pageQsMap: Either[FailureDetails.EnrichmentFailure, Option[Map[String, String]]] =
+    val pageQsMap: Either[FailureDetails.EnrichmentFailure, Option[QueryStringParameters]] =
       extractQueryString(pageUri, raw.source.encoding)
 
     // Marketing attribution
@@ -596,7 +596,7 @@ object EnrichmentManager {
   def extractQueryString(
     pageUri: Either[FailureDetails.EnrichmentFailure, Option[URI]],
     encoding: String
-  ): Either[FailureDetails.EnrichmentFailure, Option[Map[String, String]]] = pageUri match {
+  ): Either[FailureDetails.EnrichmentFailure, Option[QueryStringParameters]] = pageUri match {
     case Right(Some(u)) =>
       CU.extractQuerystring(u, Charset.forName(encoding)).map(_.some)
     case _ => None.asRight
@@ -604,13 +604,13 @@ object EnrichmentManager {
 
   def setCampaign(
     event: EnrichedEvent,
-    pageQsMap: Either[FailureDetails.EnrichmentFailure, Option[Map[String, String]]],
+    pageQsMap: Either[FailureDetails.EnrichmentFailure, Option[QueryStringParameters]],
     campaignAttribution: Option[CampaignAttributionEnrichment]
   ): Unit = pageQsMap match {
-    case Right(Some(qsMap)) =>
+    case Right(Some(qsList)) =>
       campaignAttribution match {
         case Some(ce) =>
-          val cmp = ce.extractMarketingFields(qsMap)
+          val cmp = ce.extractMarketingFields(qsList)
           event.mkt_medium = CU.makeTsvSafe(cmp.medium.orNull)
           event.mkt_source = CU.makeTsvSafe(cmp.source.orNull)
           event.mkt_term = CU.makeTsvSafe(cmp.term.orNull)
@@ -626,7 +626,7 @@ object EnrichmentManager {
 
   def getCrossDomain(
     event: EnrichedEvent,
-    pageQsMap: Either[FailureDetails.EnrichmentFailure, Option[Map[String, String]]]
+    pageQsMap: Either[FailureDetails.EnrichmentFailure, Option[QueryStringParameters]]
   ): Either[FailureDetails.EnrichmentFailure, Unit] = pageQsMap match {
     case Right(Some(qsMap)) =>
       val crossDomainParseResult = WPE.parseCrossDomain(qsMap)
