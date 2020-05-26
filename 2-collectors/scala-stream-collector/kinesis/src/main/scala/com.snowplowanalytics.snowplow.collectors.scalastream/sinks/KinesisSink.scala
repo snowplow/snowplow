@@ -31,7 +31,6 @@ import com.amazonaws.services.sqs.model.{
   SendMessageBatchRequestEntry
 }
 import model._
-import scala.util.Try
 import java.util.UUID
 import com.snowplowanalytics.snowplow.collectors.scalastream.sinks.KinesisSink.SqsClientAndName
 
@@ -144,13 +143,13 @@ object KinesisSink {
     }
 
   private def createSqsClient(provider: AWSCredentialsProvider, region: String) =
-    Try(
+    Either.catchNonFatal(
       AmazonSQSClientBuilder
         .standard()
         .withRegion(region)
         .withCredentials(provider)
         .build
-    ).toEither
+    )
 
   def sqsBuffer(
     sqsBufferName: Option[String],
@@ -306,81 +305,91 @@ class KinesisSink private (
                 )
             )
             val failures = failurePairs.map(_._1)
-            maybeSqs match {
-              case Some(sqs) =>
-                log.info(s"Sending all failed records to SQS buffer queue: ${sqs.sqsBufferName}")
-                putToSqs(sqs, failures)
-              case None =>
-                log.error(s"Retrying all failed records in $nextBackoff milliseconds...")
-                log.warn(
-                  s"${failurePairs.size} failed events scheduled for retry (consider setting a SQS Buffer in config.hocon)"
-                )
-                scheduleBatch(failures, nextBackoff)
-            }
+            val retryErrorMsg = s"Retrying all failed records in $nextBackoff milliseconds..."
+            sendToSqsOrRetry(failures, nextBackoff)(retryErrorMsg)
           }
         }
         case Failure(f) => {
           log.error("Writing failed.", f)
-          maybeSqs match {
-            case Some(sqs) =>
-              log.info(
-                s"Sending all (${batch.size}) events from a batch to SQS buffer queue: ${sqs.sqsBufferName}"
-              )
-              putToSqs(sqs, batch)
-            case None =>
-              log.error(s"Retrying in $nextBackoff milliseconds...")
-              log.warn(
-                s"All ${batch.size} events from a batch scheduled for retry (consider setting a SQS Buffer in config.hocon)"
-              )
-              scheduleBatch(batch, nextBackoff)
-          }
+          val retryErrorMsg = s"Retrying in $nextBackoff milliseconds..."
+          sendToSqsOrRetry(batch, nextBackoff)(retryErrorMsg)
         }
       }
+    }
+
+  private def sendToSqsOrRetry(
+    failures: List[(ByteBuffer, String)],
+    nextBackoff: Long
+  )(
+    retryErrorMsg: String
+  ): Unit =
+    maybeSqs match {
+      case Some(sqs) =>
+        log.info(
+          s"Sending ${failures.size} events from a batch to SQS buffer queue: ${sqs.sqsBufferName}"
+        )
+        putToSqs(sqs, failures)
+        ()
+      case None =>
+        log.error(retryErrorMsg)
+        log.warn(
+          s"${failures.size} failed events scheduled for retry (consider setting a SQS Buffer in config.hocon)"
+        )
+        scheduleBatch(failures, nextBackoff)
     }
 
   private def putToSqs(sqs: SqsClientAndName, batch: List[(ByteBuffer, String)]): Future[Unit] =
     Future {
       log.info(s"Writing ${batch.size} messages to SQS queue: ${sqs.sqsBufferName}")
-      val encoded = batch.map {
-        case (msg, key) =>
-          val b64EncodedMsg = encode(msg)
-          new SendMessageBatchRequestEntry(UUID.randomUUID.toString, b64EncodedMsg)
-            .withMessageAttributes(
-              Map(
-                "kinesisKey" ->
-                  new MessageAttributeValue()
-                    .withDataType("String")
-                    .withStringValue(key)
-              ).asJava
-            )
-      }
+      val sqsBatchEntries = batch.map(toSqsBatchEntry)
       val MaxSqsBatchSize = 10
-      encoded.grouped(MaxSqsBatchSize).foreach { encodedGroup =>
-        val batchRequest =
-          new SendMessageBatchRequest()
-            .withQueueUrl(sqs.sqsBufferName)
-            .withEntries(encodedGroup.asJava)
-
-        Either
-          .catchNonFatal {
-            val res = sqs.sqsClient.sendMessageBatch(batchRequest)
-            val failed = res.getFailed().asScala
-            if (failed.nonEmpty) {
-              val errors = failed.map(_.toString).mkString(", ")
-              log.error(s"Sending to SQS queue: ${sqs.sqsBufferName} failed with: $errors")
-            } else
-              log.info(
-                s"Batch of ${encodedGroup.size} was successfully send to SQS queue: ${sqs.sqsBufferName}."
-              )
-            ()
-          }
-          .recover {
-            case e =>
-              log.error(s"Error sending to SQS queue(${sqs.sqsBufferName}): ${e.getMessage()}")
-          }
+      sqsBatchEntries.grouped(MaxSqsBatchSize).foreach { batchEntryGroup =>
+        val batchRequest = createBatchRequest(sqs.sqsBufferName, batchEntryGroup)
+        sendBatchToSqs(sqs, batchRequest, batchEntryGroup.size)
       }
-
     }
+
+  private val toSqsBatchEntry: ((ByteBuffer, String)) => SendMessageBatchRequestEntry = {
+    case (msg, key) =>
+      val b64EncodedMsg = encode(msg)
+      new SendMessageBatchRequestEntry(UUID.randomUUID.toString, b64EncodedMsg)
+        .withMessageAttributes(
+          Map(
+            "kinesisKey" ->
+              new MessageAttributeValue()
+                .withDataType("String")
+                .withStringValue(key)
+          ).asJava
+        )
+  }
+
+  private def createBatchRequest(queueUrl: String, batch: List[SendMessageBatchRequestEntry]) =
+    new SendMessageBatchRequest()
+      .withQueueUrl(queueUrl)
+      .withEntries(batch.asJava)
+
+  private def sendBatchToSqs(
+    sqs: SqsClientAndName,
+    batchRequest: SendMessageBatchRequest,
+    batchSize: Int
+  ) =
+    Either
+      .catchNonFatal {
+        val res = sqs.sqsClient.sendMessageBatch(batchRequest)
+        val failed = res.getFailed().asScala
+        if (failed.nonEmpty) {
+          val errors = failed.map(_.toString).mkString(", ")
+          log.error(s"Sending to SQS queue: ${sqs.sqsBufferName} failed with: $errors")
+        } else
+          log.info(
+            s"Batch of $batchSize was successfully send to SQS queue: ${sqs.sqsBufferName}."
+          )
+        ()
+      }
+      .recover {
+        case e =>
+          log.error(s"Error sending to SQS queue(${sqs.sqsBufferName}): ${e.getMessage()}")
+      }
 
   private def encode(bufMsg: ByteBuffer): String = {
     val buffer = java.util.Base64.getEncoder.encode(bufMsg)
