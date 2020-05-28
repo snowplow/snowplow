@@ -29,7 +29,7 @@ object WeatherEnrichmentSpec {
 class WeatherEnrichmentSpec extends Specification {
   import WeatherEnrichmentSpec._
   def is =
-    skipAllIf(sys.env.get(OwmApiKey).isEmpty) ^ // Actually only e4 and e6 need to be skipped
+    skipAll ^
       s2"""
   This is a specification to test the WeatherEnrichment
   Fail event for null time          $e1
