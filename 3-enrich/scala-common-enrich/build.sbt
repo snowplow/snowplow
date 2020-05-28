@@ -19,7 +19,7 @@ lazy val root = project
   .in(file("."))
   .settings(
     name := "snowplow-common-enrich",
-    version := "1.1.0",
+    version := "1.1.1-M1",
     description := "Common functionality for enriching raw Snowplow events"
   )
   .settings(BuildSettings.formatting)
