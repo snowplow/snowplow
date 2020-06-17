@@ -33,7 +33,8 @@ import com.amazonaws.auth.{
   BasicAWSCredentials,
   DefaultAWSCredentialsProviderChain,
   EnvironmentVariableCredentialsProvider,
-  InstanceProfileCredentialsProvider
+  InstanceProfileCredentialsProvider,
+  WebIdentityTokenCredentialsProvider
 }
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.amazonaws.services.s3.model.GetObjectRequest
@@ -75,6 +76,7 @@ object utils {
     def isDefault(key: String): Boolean = key == "default"
     def isIam(key: String): Boolean = key == "iam"
     def isEnv(key: String): Boolean = key == "env"
+    def isOIDC(key: String): Boolean = key == "oidc"
 
     for {
       provider <- creds match {
@@ -92,6 +94,10 @@ object utils {
           new EnvironmentVariableCredentialsProvider().asRight
         case AWSCredentials(a, s) if isEnv(a) || isEnv(s) =>
           "accessKey and secretKey must both be set to 'env' or neither".asLeft
+        case AWSCredentials(a, s) if isOIDC(a) && isOIDC(s) =>
+          new WebIdentityTokenCredentialsProvider().asRight
+        case AWSCredentials(a, s) if isOIDC(a) || isOIDC(s) =>
+          "accessKey and secretKey must both be set to 'oicd' or neither".asLeft
         case AWSCredentials(a, s) =>
           new AWSStaticCredentialsProvider(new BasicAWSCredentials(a, s)).asRight
       }

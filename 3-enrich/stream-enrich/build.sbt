@@ -77,6 +77,7 @@ lazy val kinesis = project
   .settings(BuildSettings.formatting)
   .settings(libraryDependencies ++= Seq(
     Dependencies.Libraries.kinesisClient,
+    Dependencies.Libraries.sts,
     Dependencies.Libraries.kinesisSdk,
     Dependencies.Libraries.dynamodbSdk,
     Dependencies.Libraries.jacksonCbor

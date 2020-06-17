@@ -75,6 +75,7 @@ object KinesisSink {
     def isDefault(key: String): Boolean = key == "default"
     def isIam(key: String): Boolean = key == "iam"
     def isEnv(key: String): Boolean = key == "env"
+    def isOIDC(key: String): Boolean = key == "oidc"
 
     ((awsConfig.accessKey, awsConfig.secretKey) match {
       case (a, s) if isDefault(a) && isDefault(s) =>
@@ -89,6 +90,10 @@ object KinesisSink {
         new EnvironmentVariableCredentialsProvider().asRight
       case (a, s) if isEnv(a) || isEnv(s) =>
         "accessKey and secretKey must both be set to 'env' or neither".asLeft
+      case (a, s) if isOIDC(a) && isOIDC(s) =>
+        new WebIdentityTokenCredentialsProvider().asRight
+      case (a, s) if isOIDC(a) || isOIDC(s) =>
+        "accessKey and secretKey must both be set to 'oicd' or neither".asLeft
       case _ =>
         new AWSStaticCredentialsProvider(
           new BasicAWSCredentials(awsConfig.accessKey, awsConfig.secretKey)

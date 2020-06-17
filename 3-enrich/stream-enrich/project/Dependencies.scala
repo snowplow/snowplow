@@ -27,7 +27,7 @@ object Dependencies {
 
   object V {
     // Java
-    val awsSdk               = "1.11.566"
+    val awsSdk               = "1.11.797"
     val kinesisClient        = "1.10.0"
     val kafka                = "2.2.1"
     val nsqClient            = "1.2.0"
@@ -54,6 +54,7 @@ object Dependencies {
     val dynamodbSdk          = "com.amazonaws"                    %  "aws-java-sdk-dynamodb"     % V.awsSdk
     val s3Sdk                = "com.amazonaws"                    %  "aws-java-sdk-s3"           % V.awsSdk
     val kinesisClient        = "com.amazonaws"                    %  "amazon-kinesis-client"     % V.kinesisClient
+    val sts                  = "com.amazonaws"                    %  "aws-java-sdk-sts"          % V.awsSdk
     val kafkaClients         = "org.apache.kafka"                 %  "kafka-clients"             % V.kafka
     val nsqClient            = "com.snowplowanalytics"            %  "nsq-java-client"           % V.nsqClient
     val jacksonCbor          = "com.fasterxml.jackson.dataformat" %  "jackson-dataformat-cbor"   % V.jackson

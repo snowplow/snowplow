@@ -26,7 +26,7 @@ object Dependencies {
 
   object V {
     // Java
-    val awsSdk               = "1.11.573"
+    val awsSdk               = "1.11.797"
     val pubsub               = "1.78.0"
     val kafka                = "2.2.1"
     val nsqClient            = "1.2.0"
@@ -51,6 +51,7 @@ object Dependencies {
   object Libraries {
     // Java
     val kinesis              = "com.amazonaws"                    %  "aws-java-sdk-kinesis"   % V.awsSdk
+    val sts                  = "com.amazonaws"                    %  "aws-java-sdk-sts"       % V.awsSdk
     val pubsub               = "com.google.cloud"                 %  "google-cloud-pubsub"    % V.pubsub
     val kafkaClients         = "org.apache.kafka"                 %  "kafka-clients"          % V.kafka
     val nsqClient            = "com.snowplowanalytics"            %  "nsq-java-client"        % V.nsqClient
