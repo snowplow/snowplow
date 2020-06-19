@@ -26,10 +26,10 @@ A Collector captures and logs these events in their raw form, ready to be proces
 
 [architecture-image]: https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/snowplow-architecture-2-collectors.png
 [trackers]: https://github.com/snowplow/snowplow/tree/master/1-trackers
-[enrich]: https://github.com/snowplow/snowplow/tree/master/3-enrich
+[enrich]: https://github.com/snowplow/enrich
 [c1]: https://github.com/snowplow-archive/cloudfront-collector
 [c2]: https://github.com/snowplow-archive/clojure-collector
-[c3]: https://github.com/snowplow/snowplow/tree/master/2-collectors/scala-stream-collector
+[c3]: https://github.com/snowplow/stream-collector
 [c4]: https://github.com/snowplow/snowplow/tree/master/2-collectors/thrift-raw-event
 [setup]: https://github.com/snowplow/snowplow/wiki/setting-up-a-collector
 [techdocs]: https://github.com/snowplow/snowplow/wiki/collectors

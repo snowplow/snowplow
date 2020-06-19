@@ -8,14 +8,16 @@
 
 ## Available storage
 
-| Storage                          | Description                                                               | Status           |
-|----------------------------------|-------------------------------------------------------------------------- |------------------|
-| [s3 / hive-storage][s1]          | Snowplow events stored in a Hive-compatible flatfile format on Amazon S3  | Production-ready |
-| [redshift-storage][s3] (1)       | Snowplow events stored in a table in [Amazon Redshift][redshift]          | Production-ready |
-| [postgres-storage][s2] (2)       | Snowplow events stored in a table in [PostgreSQL][postgres]               | Production-ready |
-| [rdb-loader][s4]                 | An EMR Step for loading Snowplow events into (1) and (2)                  | Production-ready |
-| [kinesis-elasticsearch-sink][s5] | Snowplow events stored in [Elasticsearch][elasticsearch]                  | Production-ready |
-| [rdb-shredder][s6]               | The Snowplow Shred process for shredding JSONs for loading into Redshift  | Production-ready |
+| Storage                             | Description                                                               | Status           |
+|-------------------------------------|-------------------------------------------------------------------------- |------------------|
+| [hive-storage][s1]                  | Snowplow events stored in a Hive-compatible flatfile format on Amazon S3  | Deprecated       |
+| [redshift-storage][s3] (1)          | Snowplow events stored in a table in [Amazon Redshift][redshift]          | Production-ready |
+| [postgres-storage][s2] (2)          | Snowplow events stored in a table in [PostgreSQL][postgres]               | Production-ready |
+| [rdb-loader][s4]                    | An EMR Step for loading Snowplow events into (1) and (2)                  | Production-ready |
+| [snowplow-elasticsearch-loader][s5] | Snowplow events stored in [Elasticsearch][elasticsearch]                  | Production-ready |
+| [snowplow-s3-loader][s6]            | Snowplow events stored on Amazon S3 real-time                             | Production-ready |
+| [snowplow-bigquery-loader][s7]      | Snowplow events stored in GCP BigQuery real-time                          | Production-ready |
+| [snowplow-snowflake-loader][s8]     | Snowplow events stored in Snowflake                                       | Production-ready |
 
 ## Find out more
 
@@ -39,8 +41,10 @@
 [s2]: https://github.com/snowplow/snowplow/tree/master/4-storage/postgres-storage
 [s3]: https://github.com/snowplow/snowplow/tree/master/4-storage/redshift-storage
 [s4]: https://github.com/snowplow/snowplow-rdb-loader
-[s5]: https://github.com/snowplow/snowplow/tree/master/4-storage/kinesis-elasticsearch-sink
-[s6]: https://github.com/snowplow/snowplow-rdb-loader
+[s5]: https://github.com/snowplow/snowplow-elasticsearch-loader
+[s6]: https://github.com/snowplow/snowplow-s3-loader
+[s7]: https://github.com/snowplow/snowplow-bigquery-loader
+[s8]: https://github.com/snowplow/snowplow-snowflake-loader
 
 [techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
 [setup-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png

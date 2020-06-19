@@ -1,6 +1,5 @@
 # Snowplow
 
-[![Release][release-image]][releases]
 [![License][license-image]][license]
 [![Join the chat at https://gitter.im/snowplow/snowplow][gitter-image]][gitter]
 
@@ -13,7 +12,7 @@ Snowplow is an enterprise-strength marketing and product analytics platform. It 
 2. Stores your users' behavioural data in a scalable "event data warehouse" you control: in Amazon S3 and (optionally) Amazon Redshift or Postgres
 3. Lets you leverage the biggest range of tools to analyze that data, including big data tools (e.g. Spark) via EMR or more traditional tools e.g. Looker, Mode, Superset, Re:dash to analyze that behavioural data
 
-**To find out more, please check out the [Snowplow website][website] and the [Snowplow wiki][wiki].**
+**To find out more, please check out the [Snowplow website][website] and the [docs website][docs].**
 
 ## Snowplow technology 101
 
@@ -23,24 +22,19 @@ The repository structure follows the conceptual architecture of Snowplow, which 
 
 To briefly explain these six sub-systems:
 
-* **Trackers** fire Snowplow events. Currently we have 12 trackers, covering web, mobile, desktop, server and IoT
-* **Collectors** receive Snowplow events from trackers. Currently we have three different event collectors, sinking events either to Amazon S3, Apache Kafka or Amazon Kinesis
-* **Enrich** cleans up the raw Snowplow events, enriches them and puts them into storage. Currently we have a Hadoop-based enrichment process, and a Kinesis- or Kafka-based process
-* **Storage** is where the Snowplow events live. Currently we store the Snowplow events in a flatfile structure on S3, and in the Redshift and Postgres databases
+* **[Trackers][trackers]** fire Snowplow events. Currently we have 12 trackers, covering web, mobile, desktop, server and IoT
+* **[Collector][collector]** receives Snowplow events from trackers. Currently we have one official collector implementation with different sinks: Apache Kafka, Amazon Kinesis, NSQ
+* **[Enrich][enrich]** cleans up the raw Snowplow events, enriches them and puts them into storage. Currently we have several implementations, built for different environments (GCP, AWS, Apache Kafka) and one core library
+* **[Storage][storage]** is where the Snowplow events live. Currently we store the Snowplow events in a flatfile structure on S3, and in the Redshift, Postgres, Snowflake and BigQuery databases
 * **Data modeling** is where event-level data is joined with other data sets and aggregated into smaller data sets, and business logic is applied. This produces a clean set of tables which make it easier to perform analysis on the data. We have data models for Redshift and **[Looker][looker]**
 * **Analytics** are performed on the Snowplow events or on the aggregate tables.
 
 **For more information on the current Snowplow architecture, please see the [Technical architecture][architecture-doc]**.
 
-## Quickstart
+## About this repository
 
-Assuming git and [SBT](https://www.scala-sbt.org/) installed:
-
-```bash
-$ git clone https://github.com/snowplow/snowplow.git
-$ cd snowplow/3-enrich/scala-common-enrich
-$ sbt test
-```
+This repository used to be an umbrella repository for all loosely-coupled Snowplow Components.
+However, since June 2020 all components are extracted into their dedicated repositories and this repository serves as an entry point for OSS users and historical artifact.
 
 ## Find out more
 
@@ -71,17 +65,19 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-[release-image]: https://img.shields.io/badge/release-119_Tycho_Magnetic_Anomaly_Two-orange.svg?style=flat
-[releases]: https://github.com/snowplow/snowplow/releases
-
 [license-image]: http://img.shields.io/badge/license-Apache--2-blue.svg?style=flat
 [license]: http://www.apache.org/licenses/LICENSE-2.0
 
 [gitter-image]: https://badges.gitter.im/snowplow/snowplow.svg
 [gitter]: https://gitter.im/snowplow/snowplow?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
 
-[website]: http://snowplowanalytics.com
-[wiki]: https://github.com/snowplow/snowplow/wiki
+[trackers]: https://github.com/snowplow/snowplow/tree/master/1-trackers
+[collector]: https://github.com/snowplow/stream-collector/
+[enrich]: https://github.com/snowplow/enrich/
+[storage]: https://github.com/snowplow/snowplow/tree/master/4-storage
+
+[website]: https://snowplowanalytics.com
+[docs]: https://docs.snowplowanalytics.com/
 [architecture-image]: https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/snowplow-architecture.png
 [architecture-doc]: https://github.com/snowplow/snowplow/wiki/Technical-architecture
 [talk-to-us]: https://github.com/snowplow/snowplow/wiki/Talk-to-us
