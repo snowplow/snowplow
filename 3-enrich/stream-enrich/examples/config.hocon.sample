@@ -82,6 +82,7 @@ enrich {
       # If both are set to 'default', use the default AWS credentials provider chain.
       # If both are set to 'iam', use AWS IAM Roles to provision credentials.
       # If both are set to 'env', use env variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
+      # if both are set to 'oidc', use aws OIDC credentials (for running in EKS cluster with a K8S ServiceAccount with IAM Role - see https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html )      
       # aws {
       #   accessKey = iam
       #   accessKey = ${?ENRICH_STREAMS_SOURCE_SINK_AWS_ACCESS_KEY}

@@ -243,7 +243,10 @@ collector {
       # If both are set to 'default', the default provider chain is used
       # (see http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/auth/DefaultAWSCredentialsProviderChain.html)
       # If both are set to 'iam', use AWS IAM Roles to provision credentials.
-      # If both are set to 'env', use environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
+      # If both are set to 'env', use environment variables AWS_ACCESS_KEY_ID and 
+      # if both are set to 'oidc', use aws OIDC credentials (for running in EKS cluster with a K8S ServiceAccount with IAM Role - see https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html )
+
+      AWS_SECRET_ACCESS_KEY
       aws {
         accessKey = iam
         accessKey = ${?COLLECTOR_STREAMS_SINK_AWS_ACCESS_KEY}
