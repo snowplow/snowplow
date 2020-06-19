@@ -49,3 +49,6 @@
 [submodule "3-enrich/enrich"]
 	path = 3-enrich/enrich
 	url = git@github.com:snowplow/enrich.git
+[submodule "2-collectors/stream-collector"]
+	path = 2-collectors/stream-collector
+	url = git@github.com:snowplow/stream-collector.git
