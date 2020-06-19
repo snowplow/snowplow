@@ -46,3 +46,6 @@
 [submodule "4-storage/kinesis-s3"]
 	path = 4-storage/kinesis-s3
 	url = https://github.com/snowplow/kinesis-s3.git
+[submodule "3-enrich/enrich"]
+	path = 3-enrich/enrich
+	url = git@github.com:snowplow/enrich.git
