@@ -28,10 +28,10 @@ The **Enrich** process takes raw Snowplow events logged by a [Collector][collect
 [collectors]: https://github.com/snowplow/snowplow/tree/master/2-collectors
 [storage]: https://github.com/snowplow/snowplow/tree/master/4-storage
 [e1]: https://github.com/snowplow/spark-enrich
-[e3]: ./stream-enrich/
-[e4]: ./scala-common-enrich/
-[e5]: ./emr-etl-runner/
-[e6]: https://github.com/snowplow/beam-enrich
+[e3]: https://github.com/snowplow/enrich/tree/master/modules/stream
+[e4]: https://github.com/snowplow/enrich/tree/master/modules/common
+[e5]: https://github.com/snowplow/emr-etl-runner
+[e6]: https://github.com/snowplow/enrich/tree/master/modules/beam
 [setup]: https://github.com/snowplow/snowplow/wiki/setting-up-EmrEtlRunner
 [techdocs]: https://github.com/snowplow/snowplow/wiki/Enrichment
 [techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
