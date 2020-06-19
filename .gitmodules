@@ -61,3 +61,6 @@
 [submodule "4-storage/snowplow-bigquery-loader"]
 	path = 4-storage/snowplow-bigquery-loader
 	url = git@github.com:snowplow-incubator/snowplow-bigquery-loader.git
+[submodule "4-storage/snowplow-snowflake-loader"]
+	path = 4-storage/snowplow-snowflake-loader
+	url = git@github.com:snowplow-incubator/snowplow-snowflake-loader.git
