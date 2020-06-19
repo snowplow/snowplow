@@ -1,6 +1,5 @@
 # Snowplow
 
-[![Build Status][travis-image]][travis]
 [![Release][release-image]][releases]
 [![License][license-image]][license]
 [![Join the chat at https://gitter.im/snowplow/snowplow][gitter-image]][gitter]
@@ -71,9 +70,6 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
-
-[travis-image]: https://travis-ci.org/snowplow/snowplow.png?branch=master
-[travis]: http://travis-ci.org/snowplow/snowplow
 
 [release-image]: https://img.shields.io/badge/release-119_Tycho_Magnetic_Anomaly_Two-orange.svg?style=flat
 [releases]: https://github.com/snowplow/snowplow/releases
