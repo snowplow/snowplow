@@ -50,6 +50,7 @@ object Dependencies {
 
   object Libraries {
     // Java
+    val sts                  = "com.amazonaws"                    %  "aws-java-sdk-sts"          % V.awsSdk
     val kinesisSdk           = "com.amazonaws"                    %  "aws-java-sdk-kinesis"      % V.awsSdk
     val dynamodbSdk          = "com.amazonaws"                    %  "aws-java-sdk-dynamodb"     % V.awsSdk
     val s3Sdk                = "com.amazonaws"                    %  "aws-java-sdk-s3"           % V.awsSdk

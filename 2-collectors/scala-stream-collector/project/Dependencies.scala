@@ -50,6 +50,7 @@ object Dependencies {
 
   object Libraries {
     // Java
+    val sts                  = "com.amazonaws"                    %  "aws-java-sdk-sts"       % V.awsSdk
     val kinesis              = "com.amazonaws"                    %  "aws-java-sdk-kinesis"   % V.awsSdk
     val pubsub               = "com.google.cloud"                 %  "google-cloud-pubsub"    % V.pubsub
     val kafkaClients         = "org.apache.kafka"                 %  "kafka-clients"          % V.kafka

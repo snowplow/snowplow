@@ -79,7 +79,8 @@ lazy val kinesis = project
     Dependencies.Libraries.kinesisClient,
     Dependencies.Libraries.kinesisSdk,
     Dependencies.Libraries.dynamodbSdk,
-    Dependencies.Libraries.jacksonCbor
+    Dependencies.Libraries.jacksonCbor,
+    Dependencies.Libraries.sts
   ))
   .enablePlugins(JavaAppPackaging, DockerPlugin)
   .dependsOn(core)
