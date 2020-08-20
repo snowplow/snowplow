@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Snowplow Discourse forum
+    url: https://discourse.snowplowanalytics.com
+    about: Please ask questions here.

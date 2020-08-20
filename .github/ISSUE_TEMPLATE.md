@@ -1,25 +1,9 @@
-<!--
+  As explained in the blog post here https://snowplowanalytics.com/blog/2020/07/16/changing-releasing/ all the components of Snowplow pipeline have been moved to their own repo.
 
-** Please read the guidelines below. **
+Issues should be created directly on the appropriate repo: https://github.com/snowplow/snowplow/tree/master#trackers
 
-GitHub issues are reserved for bug reports.
-The best place to ask general questions or ask for community support is
-[on our Discourse](https://discourse.snowplowanalytics.com/).
+Please do not log an issue if you are asking for support, all of our community support requests go through
+our Discourse forum: https://discourse.snowplowanalytics.com/.
 
--->
-
-**Project**: <!-- e.g. Stream Enrich, Scala Stream Collector -->
-
-**Version**:
-
-**Expected behavior**:
-
-**Actual behavior**:
-
-**Steps to reproduce**:
-
-<!-- Please try to be as detailed as possible so that we can reproduce and fix the issue
-as quickly as possible. -->
- 1.
- 2.
-
+Posting your problem there ensures more people will see it and you should get support faster than creating a new issue on
+GitHub. Please do create a new issue on GitHub if you think you've found a bug though!
