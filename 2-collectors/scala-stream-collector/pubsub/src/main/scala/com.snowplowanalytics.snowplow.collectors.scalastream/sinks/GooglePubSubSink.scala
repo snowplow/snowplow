@@ -73,8 +73,8 @@ object GooglePubSubSink {
   private def batchingSettings(bufferConfig: BufferConfig): BatchingSettings =
     BatchingSettings
       .newBuilder()
-      .setElementCountThreshold(bufferConfig.recordLimit)
-      .setRequestByteThreshold(bufferConfig.byteLimit)
+      .setElementCountThreshold(bufferConfig.recordLimit.toLong)
+      .setRequestByteThreshold(bufferConfig.byteLimit.toLong)
       .setDelayThreshold(Duration.ofMillis(bufferConfig.timeLimit))
       .build()
 
