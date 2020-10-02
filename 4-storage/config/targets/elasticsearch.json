@@ -3,7 +3,7 @@
     "data": {
         "name": "Elasticsearch failed events storage",
         "host": "ADD HERE",
-        "index": "ADD HERE",
+        "index": "AD
         "port": 9200,
         "nodesWanOnly": false,
         "type": "ADD HERE",
