@@ -58,3 +58,6 @@
 [submodule "4-storage/gcs-loader"]
 	path = 4-storage/gcs-loader
 	url = git@github.com:snowplow-incubator/snowplow-google-cloud-storage-loader.git
+[submodule "4-storage/es-loader"]
+	path = 4-storage/es-loader
+	url = git@github.com:snowplow/snowplow-elasticsearch-loader.git
