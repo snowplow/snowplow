@@ -1,6 +1,3 @@
-[submodule "1-trackers/arduino-tracker"]
-	path = 1-trackers/arduino-tracker
-	url = https://github.com/snowplow/snowplow-arduino-tracker.git
 [submodule "1-trackers/lua-tracker"]
 	path = 1-trackers/lua-tracker
 	url = https://github.com/snowplow/snowplow-lua-tracker.git
