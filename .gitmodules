@@ -34,9 +34,9 @@
 [submodule "1-trackers/golang-tracker"]
 	path = 1-trackers/golang-tracker
 	url = https://github.com/snowplow/snowplow-golang-tracker.git
-[submodule "4-storage/kinesis-s3"]
-	path = 4-storage/kinesis-s3
-	url = https://github.com/snowplow/kinesis-s3.git
+[submodule "4-storage/s3-loader"]
+	path = 4-storage/s3-loader
+	url = https://github.com/snowplow/snowplow-s3-loader.git
 [submodule "3-enrich/enrich"]
 	path = 3-enrich/enrich
 	url = git@github.com:snowplow/enrich.git
