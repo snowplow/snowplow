@@ -1,3 +1,12 @@
+> # :warning: THIS REPO HAS BEEN SPLIT INTO SEPARATE ONES  :warning: 
+>
+> EMR ETL Runner - https://github.com/snowplow/emr-etl-runner \
+> Enrich (Common, Beam and Stream) - https://github.com/snowplow/enrich \
+> Stream Collector - https://github.com/snowplow/stream-collector
+> 
+> For more information about this restructure, please see https://snowplowanalytics.com/blog/2020/07/16/changing-releasing/
+
+
 # Snowplow
 
 [![Build Status][travis-image]][travis]
