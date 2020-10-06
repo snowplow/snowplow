@@ -1,41 +1,41 @@
 [submodule "1-trackers/javascript-tracker"]
-	path = 1-trackers/javascript-tracker
+	path = 1-trackers/javascript
 	url = https://github.com/snowplow/snowplow-javascript-tracker
 [submodule "1-trackers/python-tracker"]
-	path = 1-trackers/python-tracker
+	path = 1-trackers/python
 	url = https://github.com/snowplow/snowplow-python-tracker
 [submodule "1-trackers/java-tracker"]
-	path = 1-trackers/java-tracker
+	path = 1-trackers/java
 	url = https://github.com/snowplow/snowplow-java-tracker.git
 [submodule "1-trackers/ruby-tracker"]
-	path = 1-trackers/ruby-tracker
+	path = 1-trackers/ruby
 	url = https://github.com/snowplow/snowplow-ruby-tracker.git
 [submodule "1-trackers/nodejs-tracker"]
-	path = 1-trackers/nodejs-tracker
+	path = 1-trackers/nodejs
 	url = https://github.com/snowplow/snowplow-nodejs-tracker.git
 [submodule "1-trackers/objc-tracker"]
-	path = 1-trackers/objc-tracker
+	path = 1-trackers/objective-c
 	url = https://github.com/snowplow/snowplow-objc-tracker
 [submodule "1-trackers/android-tracker"]
-	path = 1-trackers/android-tracker
+	path = 1-trackers/android
 	url = https://github.com/snowplow/snowplow-android-tracker
 [submodule "1-trackers/dotnet-tracker"]
-	path = 1-trackers/dotnet-tracker
+	path = 1-trackers/dotnet
 	url = https://github.com/snowplow/snowplow-dotnet-tracker.git
 [submodule "1-trackers/php-tracker"]
-	path = 1-trackers/php-tracker
+	path = 1-trackers/php
 	url = https://github.com/snowplow/snowplow-php-tracker.git
 [submodule "1-trackers/scala-tracker"]
-	path = 1-trackers/scala-tracker
+	path = 1-trackers/scala
 	url = https://github.com/snowplow/snowplow-scala-tracker.git
 [submodule "1-trackers/unity-tracker"]
-	path = 1-trackers/unity-tracker
+	path = 1-trackers/unity
 	url = https://github.com/snowplow/snowplow-unity-tracker.git
 [submodule "1-trackers/golang-tracker"]
-	path = 1-trackers/golang-tracker
+	path = 1-trackers/golang
 	url = https://github.com/snowplow/snowplow-golang-tracker.git
 [submodule "4-storage/s3-loader"]
-	path = 4-storage/s3-loader
+	path = 4-storage/loaders/s3
 	url = https://github.com/snowplow/snowplow-s3-loader.git
 [submodule "3-enrich/enrich"]
 	path = 3-enrich/enrich
@@ -47,22 +47,22 @@
 	path = 3-enrich/emr-etl-runner
 	url = git@github.com:snowplow/emr-etl-runner.git
 [submodule "4-storage/snowplow-rdb-loader"]
-	path = 4-storage/snowplow-rdb-loader
+	path = 4-storage/loaders/redshift
 	url = git@github.com:snowplow/snowplow-rdb-loader.git
 [submodule "4-storage/snowplow-bigquery-loader"]
-	path = 4-storage/snowplow-bigquery-loader
+	path = 4-storage/loaders/bigquery
 	url = git@github.com:snowplow-incubator/snowplow-bigquery-loader.git
 [submodule "4-storage/snowplow-snowflake-loader"]
-	path = 4-storage/snowplow-snowflake-loader
+	path = 4-storage/loaders/snowflake
 	url = git@github.com:snowplow-incubator/snowplow-snowflake-loader.git
 [submodule "4-storage/gcs-loader"]
-	path = 4-storage/gcs-loader
+	path = 4-storage/loaders/google-cloud-storage
 	url = git@github.com:snowplow-incubator/snowplow-google-cloud-storage-loader.git
 [submodule "4-storage/es-loader"]
-	path = 4-storage/es-loader
+	path = 4-storage/loaders/elasticsearch
 	url = git@github.com:snowplow/snowplow-elasticsearch-loader.git
 [submodule "4-storage/postgres"]
-	path = 4-storage/postgres
+	path = 4-storage/loaders/postgres
 	url = git@github.com:snowplow-incubator/snowplow-postgres-loader.git
 [submodule "1-trackers/react-native"]
 	path = 1-trackers/react-native
