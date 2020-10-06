@@ -16,13 +16,12 @@ Storage of enriched events / bad rows happen thanks to a loader :
 - [Postgres (streaming)](https://github.com/snowplow-incubator/snowplow-postgres-loader)
 - [Elasticsearch (streaming)](https://github.com/snowplow/snowplow-elasticsearch-loader)
 
-## Table definitions
+## Table definition
 
-For [Postgres][postgres-definition] and [Redshidt][redshift-definition], tables need to be created beforehand. 
+For Redshift the table for atomic events needs to be created beforehand using the definition [here][redshift-definition].
 
 [architecture-image]: https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/snowplow-architecture-4-storage.png
 
 [enrich]: https://github.com/snowplow/enrich
 
-[postgres-definition]: https://github.com/snowplow/snowplow/tree/master/4-storage/postgres-storage
 [redshift-definition]: https://github.com/snowplow/snowplow/tree/master/4-storage/redshift-storage
