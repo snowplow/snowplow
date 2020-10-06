@@ -64,3 +64,6 @@
 [submodule "4-storage/postgres"]
 	path = 4-storage/postgres
 	url = git@github.com:snowplow-incubator/snowplow-postgres-loader.git
+[submodule "1-trackers/react-native"]
+	path = 1-trackers/react-native
+	url = git@github.com:snowplow-incubator/snowplow-react-native-tracker.git
