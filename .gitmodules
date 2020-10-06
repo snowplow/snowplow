@@ -70,3 +70,6 @@
 [submodule "testing/micro"]
 	path = testing/micro
 	url = git@github.com:snowplow-incubator/snowplow-react-native-tracker.git
+[submodule "testing/mini"]
+	path = testing/mini
+	url = git@github.com:snowplow/snowplow-mini.git
