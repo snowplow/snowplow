@@ -79,3 +79,6 @@
 [submodule "5-data-modeling/analytics-sdk/python"]
 	path = 5-data-modeling/analytics-sdk/python
 	url = git@github.com:snowplow/snowplow-python-analytics-sdk.git
+[submodule "5-data-modeling/analytics-sdk/dotnet"]
+	path = 5-data-modeling/analytics-sdk/dotnet
+	url = git@github.com:snowplow/snowplow-dotnet-analytics-sdk.git
