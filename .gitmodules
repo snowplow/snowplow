@@ -73,3 +73,6 @@
 [submodule "testing/mini"]
 	path = testing/mini
 	url = git@github.com:snowplow/snowplow-mini.git
+[submodule "5-data-modeling/analytics-sdk/scala"]
+	path = 5-data-modeling/analytics-sdk/scala
+	url = git@github.com:snowplow/snowplow-scala-analytics-sdk.git
