@@ -13,6 +13,7 @@ The up-to-date list of trackers and information about their setup can be found o
 ## Github repos
 
 - [Android](https://github.com/snowplow/snowplow-android-tracker)
+- [Command line](https://github.com/snowplow/snowplow-tracking-cli)
 - [.NET](https://github.com/snowplow/snowplow-dotnet-tracker)
 - [Go](https://github.com/snowplow/snowplow-golang-tracker)
 - [Java](https://github.com/snowplow/snowplow-java-tracker)

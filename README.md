@@ -45,6 +45,7 @@ Please use directly the repo of a component to report issues and create PRs:
 ### Trackers
 
 - [Android](https://github.com/snowplow/snowplow-android-tracker)
+- [Command line](https://github.com/snowplow/snowplow-tracking-cli)
 - [.NET](https://github.com/snowplow/snowplow-dotnet-tracker)
 - [Go](https://github.com/snowplow/snowplow-golang-tracker)
 - [Java](https://github.com/snowplow/snowplow-java-tracker)
