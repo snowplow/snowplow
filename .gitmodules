@@ -85,3 +85,6 @@
 [submodule "5-data-modeling/analytics-sdk/javascript"]
 	path = 5-data-modeling/analytics-sdk/javascript
 	url = git@github.com:snowplow-incubator/snowplow-js-analytics-sdk.git
+[submodule "1-trackers/command-line"]
+	path = 1-trackers/command-line
+	url = git@github.com:snowplow/snowplow-tracking-cli.git
