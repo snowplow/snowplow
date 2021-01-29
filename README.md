@@ -15,6 +15,10 @@ Snowplow is an enterprise-strength marketing and product analytics platform. It 
 
 If you wish to get everything setup and managed for you, you can take a look at our commercial offer, [Snowplow Insights][insights].
 
+### Try Snowplow
+Setting up a full open-source Snowplow pipeline requires a non-trivial amount of engineering expertise and time investment.
+You might be interested in finding out what Snowplow can do first, by setting up [Try Snowplow](https://try.snowplowanalytics.com/?utm_source=github&utm_medium=post&utm_campaign=try-snowplow).
+
 ## Snowplow technology 101
 
 The repository structure follows the conceptual architecture of Snowplow, which consists of six loosely-coupled sub-systems connected by five standardized data protocols/formats:
