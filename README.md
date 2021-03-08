@@ -1,6 +1,8 @@
 # Snowplow
 
 [![License][license-image]][license]
+[![Discourse posts][discourse-image]][discourse]
+
 
 <img src="https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/snowplow-new-logo-large.png"
  alt="Snowplow logo" title="Snowplow" align="right" />
@@ -153,6 +155,7 @@ limitations under the License.
 [split-blogpost]: https://snowplowanalytics.com/blog/2020/07/16/changing-releasing/
 [submodules]: https://git-scm.com/book/en/v2/Git-Tools-Submodules
 
+[discourse-image]: https://img.shields.io/discourse/posts?server=https%3A%2F%2Fdiscourse.snowplowanalytics.com%2F
 [discourse]: http://discourse.snowplowanalytics.com/
 [snowplow-twitter]: https://twitter.com/SnowplowData
 [snowplow-labs-twitter]: https://twitter.com/SnowplowLabs
