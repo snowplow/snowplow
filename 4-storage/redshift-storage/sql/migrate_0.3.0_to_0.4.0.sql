@@ -1,4 +1,4 @@
--- Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
+-- Copyright (c) 2014-2021 Snowplow Analytics Ltd. All rights reserved.
 --
 -- This program is licensed to you under the Apache License Version 2.0,
 -- and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -13,7 +13,7 @@
 -- URL:         -
 --
 -- Authors:     Fred Blundun
--- Copyright:   Copyright (c) 2014 Snowplow Analytics Ltd
+-- Copyright:   Copyright (c) 2014-2021 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
 -- First rename the existing table (don't delete it)
@@ -191,7 +191,7 @@ INSERT INTO atomic.events
 	NULL AS ip_isp,                                    -- Added in 0.4.0
 	NULL AS ip_organization,                           -- Added in 0.4.0
 	NULL AS ip_domain,                                 -- Added in 0.4.0
-	NULL AS ip_netspeed,                               -- Added in 0.4.0	
+	NULL AS ip_netspeed,                               -- Added in 0.4.0
 	page_url,
 	page_title,
 	page_referrer,
@@ -221,7 +221,7 @@ INSERT INTO atomic.events
 	se_label,
 	se_property,
 	se_value,
-	                                                   -- Removed ue_name in 0.4.0	
+	                                                   -- Removed ue_name in 0.4.0
 	ue_properties AS unstruct_event,                   -- Renamed ue_properties to unstruct_event in 0.4.0
 	tr_orderid,
 	tr_affiliation,

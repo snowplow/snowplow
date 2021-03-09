@@ -1,4 +1,4 @@
--- Copyright (c) 2013-2015 Snowplow Analytics Ltd. All rights reserved.
+-- Copyright (c) 2013-2021 Snowplow Analytics Ltd. All rights reserved.
 --
 -- This program is licensed to you under the Apache License Version 2.0,
 -- and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,7 +10,7 @@
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
 -- Authors: Christophe Bogaert
--- Copyright: Copyright (c) 2015 Snowplow Analytics Ltd
+-- Copyright: Copyright (c) 2015-2021 Snowplow Analytics Ltd
 -- License: Apache License Version 2.0
 --
 -- Data Model: deduplicate
@@ -244,7 +244,7 @@ COMMIT;
     --AND collector_tstamp > DATEADD(week, -4, CURRENT_DATE) -- restricts table scan for the previous 4 weeks to make queries more efficient; uncomment after running the first time
 
   );
-  
+
   --DELETE FROM atomic.events
   --WHERE event_id IN (SELECT event_id FROM duplicates.tmp_events_id_remaining)
     --AND collector_tstamp > DATEADD(week, -4, CURRENT_DATE) -- restricts table scan for the previous 4 weeks to make queries more efficient; uncomment after running the first time
