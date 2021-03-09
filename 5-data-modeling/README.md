@@ -16,11 +16,7 @@ Whilst it is possible to query the events directly, it is often more convenient 
 
 ### Web model
 
-The web model is a starting point for Snowplow users to get up and running with the Snowplow web
-data. We expect that each Snowplow user will want to extend and customize the data model with their
-own unique business logic.
-
-The code is located at https://github.com/snowplow/web-data-model.
+The [new generation][data-models-blogpost] of Snowplow offically-supported SQL data models for working with Snowplow data, supporting Redshift, Snowflake and Bigquery, can be found in the dedicated [data models GitHub repository][data-models].
 
 ### Mobile model
 
@@ -42,3 +38,5 @@ limitations under the License.
 [license]: http://www.apache.org/licenses/LICENSE-2.0
 [architecture-image]: https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/snowplow-architecture-5-data-modeling.png
 [storage]: https://github.com/snowplow/snowplow/tree/master/4-storage
+[data-models-blogpost]: https://snowplowanalytics.com/blog/2020/11/13/introducing-a-new-generation-of-our-web-data-model/
+[data-models]: https://github.com/snowplow/data-models

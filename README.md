@@ -153,7 +153,7 @@ limitations under the License.
 [storage]: https://github.com/snowplow/snowplow/tree/master/4-storage
 [looker]: http://www.looker.com/
 
-[architecture-doc]: https://github.com/snowplow/snowplow/wiki/Technical-architecture
+[architecture-doc]: https://docs.snowplowanalytics.com/docs/understanding-your-pipeline/architecture-overview-aws/
 
 [split-blogpost]: https://snowplowanalytics.com/blog/2020/07/16/changing-releasing/
 [submodules]: https://git-scm.com/book/en/v2/Git-Tools-Submodules

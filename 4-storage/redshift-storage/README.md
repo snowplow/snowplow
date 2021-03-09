@@ -10,15 +10,16 @@ enables you to plugin a wide variety of analytics tools directly onto SnowPlow d
 
 The contents of this folder are as follows:
 
-* In this folder is this `README.md` and the `LICENSE-20.txt` Apache license file
+* In this folder is this `README.md` and the `LICENSE-2.0.txt` Apache license file
 * `sql` contains Redshift-compatible SQL scripts to setup your database
 
 ## Documentation
 
-| Technical Docs              | Setup Guide           | Roadmap & Contributing               |         
-|-----------------------------|-----------------------|--------------------------------------|
-| ![i1][techdocs-image]      | ![i2][setup-image]   | ![i3][roadmap-image]                |
-| [Technical Docs][techdocs] | [Setup Guide][setup] | _coming soon_                        |
+| Technical Docs             | Setup Guide          |
+|----------------------------|----------------------|
+| ![i1][techdocs-image]      | ![i2][setup-image]   |
+| [Technical Docs][techdocs] | [Setup Guide][setup] |
+|                            |                      |
 
 ## Copyright and license
 
@@ -35,9 +36,7 @@ limitations under the License.
 
 [redshift]: http://aws.amazon.com/redshift/
 [license]: http://www.apache.org/licenses/LICENSE-2.0
-[setup]: https://github.com/snowplow/snowplow/wiki/setting-up-redshift
-[techdocs]: https://github.com/snowplow/snowplow/wiki/amazon-redshift-storage
-[wiki]: https://github.com/snowplow/snowplow/wiki
+[setup]: https://docs.snowplowanalytics.com/docs/getting-started-on-snowplow-open-source/setup-snowplow-on-aws/setup-destinations/setup-redshift/launch-a-redshift-cluster/
+[techdocs]: https://docs.snowplowanalytics.com/docs/getting-started-on-snowplow-open-source/setup-snowplow-on-aws/setup-destinations/setup-redshift/
 [techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
 [setup-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png
-[roadmap-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/roadmap.png
