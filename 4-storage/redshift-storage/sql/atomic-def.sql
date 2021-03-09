@@ -1,4 +1,4 @@
--- Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
+-- Copyright (c) 2013-2021 Snowplow Analytics Ltd. All rights reserved.
 --
 -- This program is licensed to you under the Apache License Version 2.0,
 -- and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -13,7 +13,7 @@
 -- URL:         -
 --
 -- Authors:     Yali Sassoon, Alex Dean, Peter van Wesep, Fred Blundun, Konstantinos Servis, Mike Robins
--- Copyright:   Copyright (c) 2013-2018 Snowplow Analytics Ltd
+-- Copyright:   Copyright (c) 2013-2021 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
 -- Create the schema

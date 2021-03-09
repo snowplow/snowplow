@@ -1,4 +1,4 @@
--- Copyright (c) 2013 Snowplow Analytics Ltd. All rights reserved.
+-- Copyright (c) 2013-2021 Snowplow Analytics Ltd. All rights reserved.
 --
 -- This program is licensed to you under the Apache License Version 2.0,
 -- and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -13,7 +13,7 @@
 -- URL:         -
 --
 -- Authors:     Yali Sassoon, Alex Dean
--- Copyright:   Copyright (c) 2013 Snowplow Analytics Ltd
+-- Copyright:   Copyright (c) 2013-2021 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
 -- First rename the existing table (don't delete it)
@@ -23,8 +23,8 @@ ALTER TABLE events RENAME TO events_001;
 -- Now create the new table (copy-and-pasted from table-def.sql)
 CREATE TABLE events (
 	-- App
-	app_id varchar(255) encode text255, 
-	platform varchar(255) encode text255, 
+	app_id varchar(255) encode text255,
+	platform varchar(255) encode text255,
 	-- Date/time
 	collector_tstamp timestamp not null,
 	dvce_tstamp timestamp,
@@ -34,11 +34,11 @@ CREATE TABLE events (
 	event_id varchar(38) not null unique,
 	txn_id int,
 	-- Versioning
-	v_tracker varchar(100) encode text255, 
+	v_tracker varchar(100) encode text255,
 	v_collector varchar(100) encode text255 not null,
-	v_etl varchar(100) encode text255 not null, 
+	v_etl varchar(100) encode text255 not null,
 	-- User and visit
-	user_id varchar(255) encode runlength, 
+	user_id varchar(255) encode runlength,
 	user_ipaddress varchar(19) encode runlength,
 	user_fingerprint varchar(50) encode runlength,
 	domain_userid varchar(16),
@@ -47,16 +47,16 @@ CREATE TABLE events (
 	-- Page
 	page_title varchar(2000),
 	-- Page URL components
-	page_urlscheme varchar(16) encode text255,    
-	page_urlhost varchar(255) encode text255,     
-	page_urlport smallint,        
+	page_urlscheme varchar(16) encode text255,
+	page_urlhost varchar(255) encode text255,
+	page_urlport smallint,
 	page_urlpath varchar(1000) encode text32k,
 	page_urlquery varchar(3000),
 	page_urlfragment varchar(255),
 	-- Referrer URL components
-	refr_urlscheme varchar(16) encode text255,    
-	refr_urlhost varchar(255) encode text255,     
-	refr_urlport smallint,        
+	refr_urlscheme varchar(16) encode text255,
+	refr_urlhost varchar(255) encode text255,
+	refr_urlport smallint,
 	refr_urlpath varchar(1000) encode text32k,
 	refr_urlquery varchar(3000),
 	refr_urlfragment varchar(255),
@@ -116,7 +116,7 @@ CREATE TABLE events (
 	br_features_silverlight boolean,
 	br_cookies boolean,
 	br_colordepth varchar(12) encode text255,
-	br_viewwidth integer, 
+	br_viewwidth integer,
 	br_viewheight integer,
 	-- Operating System
 	os_name varchar(50) encode text255,
@@ -142,8 +142,8 @@ SORTKEY (collector_tstamp);
 INSERT INTO events
 	SELECT
 	-- App
-	app_id, 
-	platform, 
+	app_id,
+	platform,
 	-- Date/time
 	collector_tstamp,
 	dvce_tstamp,
@@ -153,11 +153,11 @@ INSERT INTO events
 	event_id,
 	txn_id,
 	-- Versioning
-	v_tracker, 
+	v_tracker,
 	v_collector,
-	v_etl, 
+	v_etl,
 	-- User and visit
-	user_id, 
+	user_id,
 	user_ipaddress,
 	user_fingerprint,
 	domain_userid,
@@ -167,23 +167,23 @@ INSERT INTO events
 	page_title,
 	                          -- Don't select page_referrer
 	-- Page URL components
-	page_urlscheme,    
-	page_urlhost,     
-	page_urlport,        
+	page_urlscheme,
+	page_urlhost,
+	page_urlport,
 	page_urlpath,
 	page_urlquery,
 	page_urlfragment,
 	-- Referrer URL components
-	null AS refr_urlscheme,   -- Placeholder   
+	null AS refr_urlscheme,   -- Placeholder
 	null AS refr_urlhost,     -- Placeholder
-	null AS refr_urlport,     -- Placeholder  
-	null AS refr_urlpath,     -- Placeholder 
-	null AS refr_urlquery,    -- Placeholder 
-	null AS refr_urlfragment, -- Placeholder 
+	null AS refr_urlport,     -- Placeholder
+	null AS refr_urlpath,     -- Placeholder
+	null AS refr_urlquery,    -- Placeholder
+	null AS refr_urlfragment, -- Placeholder
 	-- Referrer details
-	null AS refr_medium,      -- Placeholder 
-	null AS refr_source,      -- Placeholder 
-	null AS refr_term,        -- Placeholder 
+	null AS refr_medium,      -- Placeholder
+	null AS refr_source,      -- Placeholder
+	null AS refr_term,        -- Placeholder
 	-- Marketing
 	mkt_source AS mkt_medium, -- Swap to fix #215
 	mkt_medium AS mkt_source, -- Swap to fix #215
@@ -236,7 +236,7 @@ INSERT INTO events
 	br_features_silverlight,
 	br_cookies,
 	br_colordepth,
-	br_viewwidth, 
+	br_viewwidth,
 	br_viewheight,
 	-- Operating System
 	os_name,
