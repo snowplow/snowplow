@@ -1,10 +1,10 @@
-# Amazon Redshift storage for SnowPlow
+# Amazon Redshift storage for Snowplow
 
 ## Introduction
 
 [Amazon Redshift][redshift] is a fully-managed, Petabyte scale datawarehouse
-provided by Amazon. It is an excellent location for storing SnowPlow data, as it
-enables you to plugin a wide variety of analytics tools directly onto SnowPlow data.
+provided by Amazon. It is an excellent location for storing Snowplow data, as it
+enables you to plugin a wide variety of analytics tools directly onto Snowplow data.
 
 ## Contents
 
