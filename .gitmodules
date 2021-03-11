@@ -39,52 +39,52 @@
 	url = https://github.com/snowplow/snowplow-s3-loader.git
 [submodule "3-enrich/enrich"]
 	path = 3-enrich/enrich
-	url = git@github.com:snowplow/enrich.git
+	url = https://github.com/snowplow/enrich.git
 [submodule "2-collectors/stream-collector"]
 	path = 2-collectors/stream-collector
-	url = git@github.com:snowplow/stream-collector.git
+	url = https://github.com/snowplow/stream-collector.git
 [submodule "3-enrich/eer"]
 	path = 3-enrich/emr-etl-runner
-	url = git@github.com:snowplow/emr-etl-runner.git
+	url = https://github.com/snowplow/emr-etl-runner.git
 [submodule "4-storage/snowplow-rdb-loader"]
 	path = 4-storage/loaders/redshift
-	url = git@github.com:snowplow/snowplow-rdb-loader.git
+	url = https://github.com/snowplow/snowplow-rdb-loader.git
 [submodule "4-storage/snowplow-bigquery-loader"]
 	path = 4-storage/loaders/bigquery
-	url = git@github.com:snowplow-incubator/snowplow-bigquery-loader.git
+	url = https://github.com/snowplow-incubator/snowplow-bigquery-loader.git
 [submodule "4-storage/snowplow-snowflake-loader"]
 	path = 4-storage/loaders/snowflake
-	url = git@github.com:snowplow-incubator/snowplow-snowflake-loader.git
+	url = https://github.com/snowplow-incubator/snowplow-snowflake-loader.git
 [submodule "4-storage/gcs-loader"]
 	path = 4-storage/loaders/google-cloud-storage
-	url = git@github.com:snowplow-incubator/snowplow-google-cloud-storage-loader.git
+	url = https://github.com/snowplow-incubator/snowplow-google-cloud-storage-loader.git
 [submodule "4-storage/es-loader"]
 	path = 4-storage/loaders/elasticsearch
-	url = git@github.com:snowplow/snowplow-elasticsearch-loader.git
+	url = https://github.com/snowplow/snowplow-elasticsearch-loader.git
 [submodule "4-storage/postgres"]
 	path = 4-storage/loaders/postgres
-	url = git@github.com:snowplow-incubator/snowplow-postgres-loader.git
+	url = https://github.com/snowplow-incubator/snowplow-postgres-loader.git
 [submodule "1-trackers/react-native"]
 	path = 1-trackers/react-native
-	url = git@github.com:snowplow-incubator/snowplow-react-native-tracker.git
+	url = https://github.com/snowplow-incubator/snowplow-react-native-tracker.git
 [submodule "testing/micro"]
 	path = testing/micro
-	url = git@github.com:snowplow-incubator/snowplow-micro.git
+	url = https://github.com/snowplow-incubator/snowplow-micro.git
 [submodule "testing/mini"]
 	path = testing/mini
-	url = git@github.com:snowplow/snowplow-mini.git
+	url = https://github.com/snowplow/snowplow-mini.git
 [submodule "5-data-modeling/analytics-sdk/scala"]
 	path = 5-data-modeling/analytics-sdk/scala
-	url = git@github.com:snowplow/snowplow-scala-analytics-sdk.git
+	url = https://github.com/snowplow/snowplow-scala-analytics-sdk.git
 [submodule "5-data-modeling/analytics-sdk/python"]
 	path = 5-data-modeling/analytics-sdk/python
-	url = git@github.com:snowplow/snowplow-python-analytics-sdk.git
+	url = https://github.com/snowplow/snowplow-python-analytics-sdk.git
 [submodule "5-data-modeling/analytics-sdk/dotnet"]
 	path = 5-data-modeling/analytics-sdk/dotnet
-	url = git@github.com:snowplow/snowplow-dotnet-analytics-sdk.git
+	url = https://github.com/snowplow/snowplow-dotnet-analytics-sdk.git
 [submodule "5-data-modeling/analytics-sdk/javascript"]
 	path = 5-data-modeling/analytics-sdk/javascript
-	url = git@github.com:snowplow-incubator/snowplow-js-analytics-sdk.git
+	url = https://github.com/snowplow-incubator/snowplow-js-analytics-sdk.git
 [submodule "1-trackers/command-line"]
 	path = 1-trackers/command-line
-	url = git@github.com:snowplow/snowplow-tracking-cli.git
+	url = https://github.com/snowplow/snowplow-tracking-cli.git
