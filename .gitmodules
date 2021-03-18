@@ -88,3 +88,6 @@
 [submodule "1-trackers/command-line"]
 	path = 1-trackers/command-line
 	url = https://github.com/snowplow/snowplow-tracking-cli.git
+[submodule "5-data-modeling/data-models"]
+	path = 5-data-modeling/data-models
+	url = https://github.com/snowplow/data-models
