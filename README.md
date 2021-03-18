@@ -4,8 +4,7 @@
 [![Discourse posts][discourse-image]][discourse]
 
 
-<img src="https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/snowplow-new-logo-large.png"
- alt="Snowplow logo" title="Snowplow" align="right" />
+[![Snowplow logo][logo-image]][website]
 
 Snowplow is an enterprise-strength marketing and product analytics platform. It does three things:
 
@@ -26,20 +25,20 @@ For compatibility assurance, the version compatibility matrix offers clarity on 
 
 ## Snowplow technology 101
 
-The repository structure follows the conceptual architecture of Snowplow, which consists of six loosely-coupled sub-systems connected by five standardized data protocols/formats:
+[![Snowplow architecture][architecture-image]][architecture]
 
-![architecture][architecture-image]
+The repository structure follows the conceptual architecture of Snowplow, which consists of six loosely-coupled sub-systems connected by five standardized data protocols/formats.
 
 To briefly explain these six sub-systems:
 
-* **[Trackers][trackers]** fire Snowplow events. Currently we have 12 trackers, covering web, mobile, desktop, server and IoT
+* **[Trackers][trackers]** fire Snowplow events. Currently we have 15 trackers, covering web, mobile, desktop, server and IoT
 * **[Collector][collector]** receives Snowplow events from trackers. Currently we have one official collector implementation with different sinks: Apache Kafka, Amazon Kinesis, NSQ
 * **[Enrich][enrich]** cleans up the raw Snowplow events, enriches them and puts them into storage. Currently we have several implementations, built for different environments (GCP, AWS, Apache Kafka) and one core library
 * **[Storage][storage]** is where the Snowplow events live. Currently we store the Snowplow events in a flatfile structure on S3, and in the Redshift, Postgres, Snowflake and BigQuery databases
-* **Data modeling** is where event-level data is joined with other data sets and aggregated into smaller data sets, and business logic is applied. This produces a clean set of tables which make it easier to perform analysis on the data. We have data models for Redshift and **[Looker][looker]**
-* **Analytics** are performed on the Snowplow events or on the aggregate tables.
+* **[Data modeling][data-modeling]** is where event-level data is joined with other data sets and aggregated into smaller data sets, and business logic is applied. This produces a clean set of tables which make it easier to perform analysis on the data. We officially support data models for Redshift, Snowflake and BigQuery.
+* **[Analytics][analytics-sdk]** are performed on the Snowplow events or on the aggregate tables.
 
-**For more information on the current Snowplow architecture, please see the [Technical architecture][architecture-doc]**.
+**For more information on the current Snowplow architecture, please see the [Technical architecture][architecture]**.
 
 ## About this repository
 
@@ -140,20 +139,21 @@ limitations under the License.
 [license-image]: http://img.shields.io/badge/license-Apache--2-blue.svg?style=flat
 [license]: http://www.apache.org/licenses/LICENSE-2.0
 
+[logo-image]: media/snowplow_logo.png
 [website]: https://snowplowanalytics.com
 [docs]: https://docs.snowplowanalytics.com/open-source-docs/
 
 [insights]: https://snowplowanalytics.com/products/snowplow-insights/
 
-[architecture-image]: https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/snowplow-architecture.png
+[architecture-image]: media/snowplow_architecture.png
+[architecture]: ./ARCHITECTURE.md
 
 [trackers]: https://github.com/snowplow/snowplow/tree/master/1-trackers
-[collector]: https://github.com/snowplow/stream-collector/
-[enrich]: https://github.com/snowplow/enrich/
+[collector]: https://github.com/snowplow/snowplow/tree/master/2-collectors
+[enrich]: https://github.com/snowplow/snowplow/tree/master/3-enrich
 [storage]: https://github.com/snowplow/snowplow/tree/master/4-storage
-[looker]: http://www.looker.com/
-
-[architecture-doc]: https://docs.snowplowanalytics.com/docs/understanding-your-pipeline/architecture-overview-aws/
+[data-modeling]: https://github.com/snowplow/snowplow/tree/master/5-data-modeling
+[analytics-sdk]: https://docs.snowplowanalytics.com/docs/modeling-your-data/analytics-sdk/
 
 [split-blogpost]: https://snowplowanalytics.com/blog/2020/07/16/changing-releasing/
 [submodules]: https://git-scm.com/book/en/v2/Git-Tools-Submodules
