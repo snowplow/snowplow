@@ -1,0 +1,33 @@
+name: Submodules_Update
+
+on:
+  schedule:
+    - cron: "0 */3 * * *"
+  workflow_dispatch:
+
+jobs:
+  submodules_update:
+    runs-on: ubuntu-20.04
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+        ref: master
+        submodules: true
+        token: ${{ github.token }}
+
+    - name: Set github-actions name and email
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+    - name: Update submodules
+      run: |
+        git submodule foreach '$toplevel/.scripts/per_module.sh $name $sm_path $sha1 $toplevel'
+
+    - name: Push tags and commits to master
+      run: |
+        git push --tags
+        git push origin master
