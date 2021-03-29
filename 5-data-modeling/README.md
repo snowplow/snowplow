@@ -20,7 +20,7 @@ The [new generation][data-models-blogpost] of Snowplow offically-supported SQL d
 
 ### Mobile model
 
-Coming soon.
+The first generation of Snowplow offically-supported SQL data models for working with Snowplow mobile data can be found in the dedicated [data models GitHub repository][data-models]. Currently only Redshift is supported, with Snowflake and BigQuery releases coming soon.
 
 ## Copyright and license
 
