@@ -91,3 +91,6 @@
 [submodule "5-data-modeling/data-models"]
 	path = 5-data-modeling/data-models
 	url = https://github.com/snowplow/data-models
+[submodule "5-data-modeling/analytics-sdk/golang"]
+	path = 5-data-modeling/analytics-sdk/golang
+	url = https://github.com/snowplow/snowplow-golang-analytics-sdk.git

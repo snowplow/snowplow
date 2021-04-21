@@ -46,6 +46,10 @@ function is_release_tag() (
             tag_pattern='v+([0-9]).+([0-9]).+([0-9])'
             [[ "${__tag}" = $tag_pattern ]] && echo "${__tag#v}" || return 1
             ;;
+        5-data-modeling/analytics-sdk/golang)
+            tag_pattern='v+([0-9]).+([0-9]).+([0-9])'
+            [[ "${__tag}" = $tag_pattern ]] && echo "${__tag#v}" || return 1
+            ;;
         5-data-modeling/data-models)
             tag_pattern='**/+([0-9]).+([0-9]).+([0-9])'
             [[ "${__tag}" = $tag_pattern ]] && echo "${__tag}" || return 1
