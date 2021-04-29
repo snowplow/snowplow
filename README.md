@@ -185,4 +185,4 @@ limitations under the License.
 [community-email]: mailto:community@snowplowanalytics.com
 
 [release]: https://github.com/snowplow/snowplow/releases/tag/21.04
-[release-badge]: https://img.shields.io/badge/Snowplow-21.04%20Pennie%20Alps-6638b8
+[release-badge]: https://img.shields.io/badge/Snowplow-21.04%20Pennine%20Alps-6638b8
