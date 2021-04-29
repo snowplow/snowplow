@@ -1,5 +1,6 @@
 # Snowplow
 
+[![Release][release-badge]][release]
 [![License][license-image]][license]
 [![Discourse posts][discourse-image]][discourse]
 
@@ -152,8 +153,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-[license-image]: http://img.shields.io/badge/license-Apache--2-blue.svg?style=flat
-[license]: http://www.apache.org/licenses/LICENSE-2.0
+[license-image]: https://img.shields.io/badge/license-Apache--2-blue.svg?style=flat
+[license]: https://www.apache.org/licenses/LICENSE-2.0
 
 [logo-image]: media/snowplow_logo.png
 [website]: https://snowplowanalytics.com
@@ -182,3 +183,6 @@ limitations under the License.
 [snowplow-twitter]: https://twitter.com/SnowplowData
 [snowplow-labs-twitter]: https://twitter.com/SnowplowLabs
 [community-email]: mailto:community@snowplowanalytics.com
+
+[release]: https://github.com/snowplow/snowplow/releases/tag/21.04
+[release-badge]: https://img.shields.io/badge/Snowplow-21.04%20Pennie%20Alps-6638b8
