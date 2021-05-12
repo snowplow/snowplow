@@ -16,16 +16,6 @@ Snowplow is an enterprise-strength marketing and product analytics platform. It 
 
 **To find out more, please check out the [Snowplow website][website] and the [docs website][docs].**
 
-
-
-### Try Snowplow
-
-Setting up a full open-source Snowplow pipeline requires a non-trivial amount of engineering expertise and time investment.
-You might be interested in finding out what Snowplow can do first, by setting up [Try Snowplow][try-snowplow].
-
-### Our Commercial Offering
-If you wish to get everything setup and managed for you, you can consider [Snowplow Insights][insights], our commercial offer, and [request a demo][request-a-demo].
-
 ### Version Compatibility Matrix
 
 For compatibility assurance, the version compatibility matrix offers clarity on our recommended stack. It is strongly recommended when setting up a Snowplow pipeline to use the versions listed in the version compatibility matrix which can be found [within our docs][version-compatibility].
@@ -33,6 +23,15 @@ For compatibility assurance, the version compatibility matrix offers clarity on 
 ### Public Roadmap
 
 This repository also contains the [Snowplow Public Roadmap][roadmap]. The Public Roadmap lets you stay up to date and find out what's happening on the Snowplow Platform. Help us prioritize our cards: open the issue and leave a 👍 to vote for your favorites. Want us to build a feature or function? Tell us by heading to our [Discourse forum][discourse] 💬.
+
+### Try Snowplow
+
+Setting up a full open-source Snowplow pipeline requires a non-trivial amount of engineering expertise and time investment.
+You might be interested in finding out what Snowplow can do first, by setting up [Try Snowplow][try-snowplow].
+
+### Our Commercial Offering
+
+If you wish to get everything setup and managed for you, you can consider [Snowplow Insights][insights]. You can also [request a demo][request-a-demo].
 
 ## Snowplow technology 101
 
