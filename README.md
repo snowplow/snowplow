@@ -29,6 +29,12 @@ This repository also contains the [Snowplow Public Roadmap][roadmap]. The Public
 Setting up a full open-source Snowplow pipeline requires a non-trivial amount of engineering expertise and time investment.
 You might be interested in finding out what Snowplow can do first, by setting up [Try Snowplow][try-snowplow].
 
+### Open Source Quick Start
+
+The [Open Source Quick Start][open-source-quick-start] will help you get up and running with a Snowplow open source pipeline. Snowplow publishes a [set of terraform modules][terraform-modules], which automate the setting up & deployment of the required infrastructure & applications for an operational Snowplow open source pipeline, with just a handful of input variables required on your side.
+
+Note: this is only available on AWS currently, GCP is coming soon!
+
 ### Our Commercial Offering
 
 If you wish to get everything setup and managed for you, you can consider [Snowplow Insights][insights]. You can also [request a demo][request-a-demo].
@@ -114,6 +120,8 @@ Components that have been extracted to their own repository are still here as [g
 
 ### [Bad rows](https://github.com/snowplow-incubator/snowplow-badrows)
 
+### [Terraform Modules][terraform-modules]
+
 ## Need help?
 
 We want to make it super-easy for Snowplow users and contributors to talk to us and connect with each other, to share ideas, solve problems and help make Snowplow awesome. Here are the main channels we're running currently, we'd love to hear from you on one of them:
@@ -167,6 +175,8 @@ limitations under the License.
 [try-snowplow]: https://try.snowplowanalytics.com/?utm_source=github&utm_medium=post&utm_campaign=try-snowplow
 [request-a-demo]: https://go.snowplowanalytics.com/l/571483/2021-05-04/3sv1pg8
 [roadmap]: https://github.com/snowplow/snowplow/projects
+[open-source-quick-start]: https://docs.snowplowanalytics.com/docs/open-source-quick-start/
+[terraform-modules]: https://registry.terraform.io/modules/snowplow-devops
 
 [architecture-image]: media/snowplow_architecture.png
 [architecture]: ./ARCHITECTURE.md
