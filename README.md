@@ -105,6 +105,17 @@ Components that have been extracted to their own repository are still here as [g
 * [Postgres (streaming)](https://github.com/snowplow-incubator/snowplow-postgres-loader)
 * [Elasticsearch (streaming)](https://github.com/snowplow/snowplow-elasticsearch-loader)
 
+### Data modeling
+
+#### Web
+
+* [Web model: SQL-Runner version](https://github.com/snowplow/data-models/tree/master/web/v1)
+* [Web model: dbt version](https://github.com/snowplow/dbt-snowplow-web)
+
+#### Mobile
+
+* [Mobile model: SQL-Runner version](https://github.com/snowplow/data-models/tree/master/mobile/v1)
+
 ### Testing
 
 * [Mini](https://github.com/snowplow/snowplow-mini)

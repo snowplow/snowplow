@@ -15,12 +15,22 @@ Whilst it is possible to query the events directly, it is often more convenient 
 ## What data models are available?
 
 ### Web model
+The [new generation][data-models-blogpost] of Snowplow officially-supported SQL data models for working with Snowplow data. There are two ways to run the Web model, depending on your choice of tooling to execute SQL against your database.
 
-The [new generation][data-models-blogpost] of Snowplow offically-supported SQL data models for working with Snowplow data, supporting Redshift, Snowflake and Bigquery, can be found in the dedicated [data models GitHub repository][data-models].
+#### SQL-Runner version
+
+- Supports Redshift, Snowflake and BigQuery.
+- Can be found in the dedicated [data models GitHub repository][data-models].
+
+#### dbt version
+
+- Supports Redshift only. BigQuery and Snowflake to follow.
+- Can be found in the dedicated [dbt-snowplow-web GitHub repository][dbt-snowplow-web-repo].
+- Leverages functionality provided by the [snowplow-utils dbt package][dbt-snowplow-utils-repo].
 
 ### Mobile model
 
-The first generation of Snowplow offically-supported SQL data models for working with Snowplow mobile data can be found in the dedicated [data models GitHub repository][data-models]. Currently only Redshift is supported, with Snowflake and BigQuery releases coming soon.
+The first generation of Snowplow officially-supported SQL data models for working with Snowplow mobile data can be found in the dedicated [data models GitHub repository][data-models]. Redshift, BigQuery and Snowflake are supported using SQL-Runner, with a dbt based model to follow soon.
 
 ## Copyright and license
 
@@ -40,3 +50,5 @@ limitations under the License.
 [storage]: https://github.com/snowplow/snowplow/tree/master/4-storage
 [data-models-blogpost]: https://snowplowanalytics.com/blog/2020/11/13/introducing-a-new-generation-of-our-web-data-model/
 [data-models]: https://github.com/snowplow/data-models
+[dbt-snowplow-web-repo]: https://github.com/snowplow/dbt-snowplow-web
+[dbt-snowplow-utils-repo]: https://github.com/snowplow/dbt-snowplow-utils
