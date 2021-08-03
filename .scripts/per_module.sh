@@ -27,7 +27,6 @@ set -e
 #
 
 DEF_REMOTE='origin'
-DEF_BRANCH='master'
 
 # -----------------------------------------------------------------------------
 #  FUNCTIONS & PROCEDURES
@@ -46,6 +45,8 @@ top_level="$4"
 # -----------------------------------------------------------------------------
 #  COMMANDS
 # -----------------------------------------------------------------------------
+REMOTE_HEAD_SYMREF=`git symbolic-ref --short "refs/remotes/${DEF_REMOTE}/HEAD"`
+DEF_BRANCH="${REMOTE_HEAD_SYMREF##*/}"
 
 git fetch --tags --quiet "${DEF_REMOTE}" "${DEF_BRANCH}"
 
