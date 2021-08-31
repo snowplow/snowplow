@@ -105,6 +105,12 @@ Components that have been extracted to their own repository are still here as [g
 * [Postgres (streaming)](https://github.com/snowplow-incubator/snowplow-postgres-loader)
 * [Elasticsearch (streaming)](https://github.com/snowplow/snowplow-elasticsearch-loader)
 
+### Iglu
+
+* [Iglu Server](https://github.com/snowplow-incubator/iglu-server/)
+* [igluctl](https://github.com/snowplow-incubator/igluctl/)
+* [Iglu Central](https://github.com/snowplow/iglu-central/)
+
 ### Data modeling
 
 #### Web
@@ -208,5 +214,5 @@ limitations under the License.
 [snowplow-labs-twitter]: https://twitter.com/SnowplowLabs
 [community-email]: mailto:community@snowplowanalytics.com
 
-[release]: https://github.com/snowplow/snowplow/releases/tag/21.04
-[release-badge]: https://img.shields.io/badge/Snowplow-21.04%20Pennine%20Alps-6638b8
+[release]: https://github.com/snowplow/snowplow/releases/tag/21.08
+[release-badge]: https://img.shields.io/badge/Snowplow-21.08%20North%20Cascades-6638b8
