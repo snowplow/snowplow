@@ -33,7 +33,9 @@ You might be interested in finding out what Snowplow can do first, by setting up
 
 The [Open Source Quick Start][open-source-quick-start] will help you get up and running with a Snowplow open source pipeline. Snowplow publishes a [set of terraform modules][terraform-modules], which automate the setting up & deployment of the required infrastructure & applications for an operational Snowplow open source pipeline, with just a handful of input variables required on your side.
 
-Note: this is only available on AWS currently, GCP is coming soon!
+### Join the Snowplow Research Panel and help shape the future of open source
+
+As part of our ongoing efforts to improve the Snowplow Open Source experience, we're looking for users of our open-source software and  members of our community to take part in research studies. [Join here][research-survey].
 
 ### Our Commercial Offering
 
@@ -194,6 +196,7 @@ limitations under the License.
 [roadmap]: https://github.com/snowplow/snowplow/projects
 [open-source-quick-start]: https://docs.snowplowanalytics.com/docs/open-source-quick-start/
 [terraform-modules]: https://registry.terraform.io/modules/snowplow-devops
+[research-survey]: https://forms.gle/pCtYx8naum7A8vvw5
 
 [architecture-image]: media/snowplow_architecture.png
 [architecture]: ./ARCHITECTURE.md
