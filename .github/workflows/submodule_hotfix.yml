@@ -1,0 +1,68 @@
+name: submodule_update_hotfix
+
+on:
+  workflow_dispatch:
+    inputs:
+      submodule_name:
+        description: 'Submodule name as specified in gitmodules'
+        required: true
+      commit_message:
+        description: 'The commit message to be used on submodule update'
+        required: true
+      do_retagging:
+        description: 'Whether to delete and retag, only yes confirms'
+        required: true
+        default: no
+      tag_name:
+        description: 'The tag name to re-tag if necessary'
+        required: false
+      snowplow_commit_sha1:
+        description: 'The commit in current repository the tag refers to'
+        required: false
+
+jobs:
+  submodule_update_hotfix:
+    runs-on: ubuntu-20.04
+
+    steps:
+    - name: Check input for retagging
+      if: ${{ github.event.inputs.do_retagging == 'yes' }}
+      run: |
+        if [ -z "${{ github.event.inputs.tag_name }}" ] ; then
+            echo "${INPUT_ERR_MSG}"
+            exit 1
+        fi
+        if [ -z "${{ github.event.inputs.snowplow_commit_sha1 }}" ] ; then
+            echo "${INPUT_ERR_MSG}"
+            exit 1
+        fi
+      env:
+        INPUT_ERR_MSG: 'ERROR: For retagging both tag_name and snowplow_commit_sha1 need to be provided.'
+
+
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+        ref: master
+        submodules: true
+        token: ${{ github.token }}
+
+    - name: Set github-actions name and email
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+    - name: Update submodule and retag accordingly
+      run: |
+        .scripts/hotfix.sh \
+            "${{ github.event.inputs.submodule_name }}" \
+            "${{ github.event.inputs.commit_message }}" \
+            "${{ github.event.inputs.do_retagging }}" \
+            "${{ github.event.inputs.tag_name }}" \
+            "${{ github.event.inputs.snowplow_commit_sha1 }}"
+
+    - name: Push tags and commits to master
+      run: |
+        git push --tags --verbose
+        git push origin master --verbose
