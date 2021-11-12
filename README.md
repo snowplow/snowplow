@@ -39,7 +39,7 @@ As part of our ongoing efforts to improve the Snowplow Open Source experience, w
 
 ### Our Commercial Offering
 
-If you wish to get everything setup and managed for you, you can consider [Snowplow Insights][insights]. You can also [request a demo][request-a-demo].
+If you wish to get everything setup and managed for you, you can consider [Snowplow BDP][snowplow-bdp]. You can also [request a demo][request-a-demo].
 
 ## Snowplow technology 101
 
@@ -189,7 +189,7 @@ limitations under the License.
 [website]: https://snowplowanalytics.com
 [docs]: https://docs.snowplowanalytics.com/open-source-docs/
 
-[insights]: https://snowplowanalytics.com/products/snowplow-insights/
+[snowplow-bdp]: https://snowplowanalytics.com/products/snowplow-bdp/
 [version-compatibility]: https://docs.snowplowanalytics.com/docs/pipeline-components-and-applications/version-compatibility-matrix/
 [try-snowplow]: https://try.snowplowanalytics.com/?utm_source=github&utm_medium=post&utm_campaign=try-snowplow
 [request-a-demo]: https://go.snowplowanalytics.com/l/571483/2021-05-04/3sv1pg8
