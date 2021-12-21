@@ -100,3 +100,6 @@
 [submodule "5-data-modeling/dbt-snowplow-web"]
 	path = 5-data-modeling/dbt-snowplow-web
 	url = https://github.com/snowplow/dbt-snowplow-web
+[submodule "1-trackers/roku-tracker"]
+	path = 1-trackers/roku-tracker
+	url = https://github.com/snowplow-incubator/snowplow-roku-tracker.git

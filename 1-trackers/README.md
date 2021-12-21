@@ -23,6 +23,7 @@ The up-to-date list of trackers and information about their setup can be found o
 - [PHP](https://github.com/snowplow/snowplow-php-tracker)
 - [Python](https://github.com/snowplow/snowplow-python-tracker)
 - [React Native](https://github.com/snowplow-incubator/snowplow-react-native-tracker)
+- [Roku](https://github.com/snowplow-incubator/snowplow-roku-tracker)
 - [Ruby](https://github.com/snowplow/snowplow-ruby-tracker)
 - [Scala](https://github.com/snowplow/snowplow-scala-tracker)
 - [Unity](https://github.com/snowplow/snowplow-unity-tracker)
