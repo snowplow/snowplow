@@ -23,7 +23,7 @@ The contents of this folder are as follows:
 
 ## Copyright and license
 
-redshift-storage is copyright 2012-2021 Snowplow Analytics Ltd.
+redshift-storage is copyright 2012-2022 Snowplow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0][license] (the "License");
 you may not use this software except in compliance with the License.

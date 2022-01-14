@@ -21,7 +21,7 @@ The Thrift IDL is defined within a Scala/SBT project to produce Java sources and
 
 ## Copyright and license
 
-The Thrift Raw Event is copyright 2013-2021 Snowplow Analytics Ltd.
+The Thrift Raw Event is copyright 2013-2022 Snowplow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0][license] (the "License");
 you may not use this software except in compliance with the License.

@@ -1,4 +1,4 @@
--- Copyright (c) 2015-2021 Snowplow Analytics Ltd. All rights reserved.
+-- Copyright (c) 2015-2022 Snowplow Analytics Ltd. All rights reserved.
 --
 -- This program is licensed to you under the Apache License Version 2.0,
 -- and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -13,7 +13,7 @@
 -- URL:         -
 --
 -- Authors:     Alex Dean
--- Copyright:   Copyright (c) 2015-2021 Snowplow Analytics Ltd
+-- Copyright:   Copyright (c) 2015-2022 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
 -- First rename the existing table (don't delete it)
