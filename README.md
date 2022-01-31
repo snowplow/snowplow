@@ -205,8 +205,8 @@ limitations under the License.
 [snowplow-labs-twitter]: https://twitter.com/SnowplowLabs
 [community-email]: mailto:community@snowplowanalytics.com
 
-[release]: https://github.com/snowplow/snowplow/releases/tag/21.08
-[release-badge]: https://img.shields.io/badge/Snowplow-21.08%20North%20Cascades-6638b8
+[release]: https://github.com/snowplow/snowplow/releases/tag/22.01
+[release-badge]: https://img.shields.io/badge/Snowplow-22.01%20Western%20Ghats-6638b8
 
 [javascript-tracker]: https://github.com/snowplow/snowplow-javascript-tracker
 [amp-tracker]: https://docs.snowplowanalytics.com/docs/collecting-data/collecting-from-own-applications/google-amp-tracker/
