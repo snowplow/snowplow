@@ -74,7 +74,7 @@ Components that have been extracted to their own repository are still here as [g
 | [JavaScript][javascript-tracker] | [Android][android-tracker] | [Unity][unity-tracker] | [Roku][roku-tracker] | [Command line][tracking-cli]  |
 | [AMP][amp-tracker]               | [iOS][ios-tracker]         |                        |                      | [.NET][dotnet-tracker]        |
 |                                  | [React Native][rn-tracker] |                        |                      | [Go][golang-tracker]          |
-|                                  |                            |                        |                      | [Java][java-tracker]          |
+|                                  | [Flutter][flutter-tracker] |                        |                      | [Java][java-tracker]          |
 |                                  |                            |                        |                      | [Node.js][javascript-tracker] |
 |                                  |                            |                        |                      | [PHP][php-tracker]            |
 |                                  |                            |                        |                      | [Python][python-tracker]      |
@@ -214,6 +214,7 @@ limitations under the License.
 [ios-tracker]: https://github.com/snowplow/snowplow-objc-tracker
 [rn-tracker]: https://github.com/snowplow-incubator/snowplow-react-native-tracker
 [roku-tracker]: https://github.com/snowplow-incubator/snowplow-roku-tracker
+[flutter-tracker]: https://github.com/snowplow-incubator/snowplow-flutter-tracker
 [tracking-cli]: https://github.com/snowplow/snowplow-tracking-cli
 [dotnet-tracker]: https://github.com/snowplow/snowplow-dotnet-tracker
 [golang-tracker]: https://github.com/snowplow/snowplow-golang-tracker

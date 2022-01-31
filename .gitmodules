@@ -103,3 +103,6 @@
 [submodule "1-trackers/roku-tracker"]
 	path = 1-trackers/roku-tracker
 	url = https://github.com/snowplow-incubator/snowplow-roku-tracker.git
+[submodule "1-trackers/flutter-tracker"]
+	path = 1-trackers/flutter
+	url = https://github.com/snowplow-incubator/snowplow-flutter-tracker
