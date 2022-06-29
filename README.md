@@ -1,8 +1,11 @@
 [![Snowplow logo][logo-image]][website]
 
 [![Release][release-badge]][release]
-[![License][license-image]][license]
+![Release activity](https://img.shields.io/github/commit-activity/m/snowplow/snowplow?label=release%20activity)
+![Latest release](https://img.shields.io/github/last-commit/snowplow/snowplow?label=latest%20release)
+[![Docker pulls](https://img.shields.io/docker/pulls/snowplow/scala-stream-collector-kinesis)](https://hub.docker.com/r/snowplow/scala-stream-collector-kinesis/)
 [![Discourse posts][discourse-image]][discourse]
+[![License][license-image]][license]
 
 ## Overview
 
