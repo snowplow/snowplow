@@ -1,45 +1,54 @@
-# Snowplow
+[![Snowplow logo][logo-image]][website]
 
 [![Release][release-badge]][release]
-[![License][license-image]][license]
+![Release activity](https://img.shields.io/github/commit-activity/m/snowplow/snowplow?label=release%20activity)
+![Latest release](https://img.shields.io/github/last-commit/snowplow/snowplow?label=latest%20release)
+[![Docker pulls](https://img.shields.io/docker/pulls/snowplow/scala-stream-collector-kinesis)](https://hub.docker.com/r/snowplow/scala-stream-collector-kinesis/)
 [![Discourse posts][discourse-image]][discourse]
-
-[![Snowplow logo][logo-image]][website]
+[![License][license-image]][license]
 
 ## Overview
 
-Snowplow is an enterprise-strength marketing and product analytics platform. It does three things:
+Snowplow is a developer-first engine for collecting behavioral data. In short, it allows you to:
 
-1. Identifies your users, and tracks the way they engage with your website or application
-2. Stores your users' behavioral data in a scalable "event data warehouse" you control: Amazon Redshift, Google BigQuery, Snowflake or Elasticsearch
-3. Lets you leverage the biggest range of tools to analyze that data, including big data tools (e.g. Spark) via EMR or more traditional tools e.g. Looker, Mode, Superset, Re:dash to analyze that behavioral data
+* Collect events such as impressions, clicks, video playback (or even custom events of your choosing).
+* Store the data in a scalable data warehouse you control ([Amazon Redshift](https://aws.amazon.com/redshift/), [Databricks](https://databricks.com/product/databricks-sql), [Elasticsearch](https://www.elastic.co/), [Google BigQuery](https://cloud.google.com/bigquery), [Snowflake](https://www.snowflake.com/workloads/data-warehouse-modernization/)) or emit it via a stream ([Amazon Kinesis](https://aws.amazon.com/kinesis/), [Google PubSub](https://cloud.google.com/pubsub/docs/overview), [Kafka](https://kafka.apache.org/)).
+* Leverage a wide range of tools to model and analyze the behavioral data: [dbt](https://www.getdbt.com/), [Looker](https://www.looker.com/), [Metabase](https://www.metabase.com/), [Mode](https://mode.com/), [Streamlit](https://streamlit.io/), [Superset](https://superset.apache.org/), [Redash](https://redash.io/), and more.
 
-**To find out more, please check out the [Snowplow website][website] and the [docs website][docs].**
+Thousands of organizations around the world generate, enhance, and model behavioral data with Snowplow to fuel [advanced analytics](https://snowplowanalytics.com/advanced-analytics/?utm_source=github&utm_content=main-repo), [AI/ML initiatives](https://snowplowanalytics.com/ai-ml/?utm_source=github&utm_content=main-repo), or [composable CDPs](https://snowplowanalytics.com/composable-cdp/?utm_source=github&utm_content=main-repo).
 
-### Version Compatibility Matrix
+### Table of contents
 
-For compatibility assurance, the version compatibility matrix offers clarity on our recommended stack. It is strongly recommended when setting up a Snowplow pipeline to use the versions listed in the version compatibility matrix which can be found [within our docs][version-compatibility].
+* [Why Snowplow?](#why-snowplow)
+* [Where to start?](#-where-to-start-%EF%B8%8F)
+* [Snowplow technology 101](#snowplow-technology-101)
+* [Version compatibility matrix](#version-compatibility-matrix)
+* [About this umbrella repository](#about-this-repository)
+* [Public roadmap](#public-roadmap)
+* [Community](#community)
 
-### Public Roadmap
+### Why Snowplow?
 
-This repository also contains the [Snowplow Public Roadmap][roadmap]. The Public Roadmap lets you stay up to date and find out what's happening on the Snowplow Platform. Help us prioritize our cards: open the issue and leave a 👍 to vote for your favorites. Want us to build a feature or function? Tell us by heading to our [Discourse forum][discourse] 💬.
+* 🏔️ **Rock solid architecture** capable of processing billions of events per day.
+* 🛠️ **Over [20 SDKs](https://docs.snowplowanalytics.com/docs/collecting-data/collecting-from-own-applications/?utm_source=github&utm_content=main-repo)** to collect data from web, mobile, server-side, and other sources.
+* ✅ A unique approach based on **[schemas and validation](https://docs.snowplowanalytics.com/docs/understanding-tracking-design/understanding-schemas-and-validation/?utm_source=github&utm_content=main-repo)** ensures your data is as clean as possible.
+* 🪄 **Over [15 enrichments](https://docs.snowplowanalytics.com/docs/enriching-your-data/available-enrichments/?utm_source=github&utm_content=main-repo)** to get the most out of your data.
+* 🏭 Send data to **popular warehouses and streams** — Snowplow fits nicely within the [Modern Data Stack](https://snowplowanalytics.com/blog/2021/05/12/modern-data-stack/?utm_source=github&utm_content=main-repo).
 
-### Try Snowplow
+### ➡ Where to start? ⬅️
 
-Setting up a full open-source Snowplow pipeline requires a non-trivial amount of engineering expertise and time investment.
-You might be interested in finding out what Snowplow can do first, by setting up [Try Snowplow][try-snowplow].
+| [Snowplow Open Source](https://snowplowanalytics.com/snowplow-open-source/?utm_source=github&utm_content=main-repo)  | [Snowplow Behavioral Data Platform](https://snowplowanalytics.com/snowplow-bdp/?utm_source=github&utm_content=main-repo) |
+| ------------- | ------------- |
+| Our Open Source solution equips you with everything you need to start creating behavioral data in a high-fidelity, machine-readable way. Head over to the [Quick Start Guide](https://docs.snowplowanalytics.com/docs/open-source-quick-start/what-is-the-quick-start-for-open-source/?utm_source=github&utm_content=main-repo) to set things up. | Looking for an enterprise solution with a console, APIs, data governance, workflow tooling? The Behavioral Data Platform is our managed service that runs in **your** AWS or GCP cloud. Check out [Try Snowplow][try-snowplow]. |
 
-### Open Source Quick Start
+The [documentation](https://docs.snowplowanalytics.com/?utm_source=github&utm_content=main-repo) is a great place to learn more, especially:
 
-The [Open Source Quick Start][open-source-quick-start] will help you get up and running with a Snowplow open source pipeline. Snowplow publishes a [set of terraform modules][terraform-modules], which automate the setting up & deployment of the required infrastructure & applications for an operational Snowplow open source pipeline, with just a handful of input variables required on your side.
+* [Tracking design](https://docs.snowplowanalytics.com/docs/understanding-tracking-design/?utm_source=github&utm_content=main-repo) — discover how to approach creating your data the Snowplow way.
+* [Pipelines](https://docs.snowplowanalytics.com/docs/understanding-your-pipeline/?utm_source=github&utm_content=main-repo) — understand what’s under the hood of Snowplow.
 
-### Join the Snowplow Research Panel and help shape the future of open source
+Would rather dive into the code? Then you are already in the right place!
 
-As part of our ongoing efforts to improve the Snowplow Open Source experience, we're looking for users of our open-source software and  members of our community to take part in research studies. [Join here][research-survey].
-
-### Our Commercial Offering
-
-If you wish to get everything setup and managed for you, you can consider [Snowplow BDP][snowplow-bdp]. You can also [request a demo][request-a-demo].
+---
 
 ## Snowplow technology 101
 
@@ -57,6 +66,12 @@ To briefly explain these six sub-systems:
 * **[Analytics][analytics-sdks]** are performed on the Snowplow events or on the aggregate tables.
 
 **For more information on the current Snowplow architecture, please see the [Technical architecture][architecture]**.
+
+### Version Compatibility Matrix
+
+To make sure all the components work well together, we strongly recommended you take a look at the [compatibility matrix][version-compatibility] when setting up a Snowplow pipeline.
+
+---
 
 ## About this repository
 
@@ -111,6 +126,11 @@ Components that have been extracted to their own repository are still here as [g
 #### Mobile
 
 * [Mobile model: SQL-Runner version](https://github.com/snowplow/data-models/tree/master/mobile/v1)
+* [Mobile model: dbt version](https://github.com/snowplow/dbt-snowplow-mobile)
+
+#### Media
+
+* [Media model: dbt version](https://github.com/snowplow/dbt-snowplow-media-player)
 
 ### Testing
 
@@ -129,35 +149,25 @@ Components that have been extracted to their own repository are still here as [g
 
 ### [Terraform Modules][terraform-modules]
 
-## Need help?
+---
 
-We want to make it super-easy for Snowplow users and contributors to talk to us and connect with each other, to share ideas, solve problems and help make Snowplow awesome. Here are the main channels we're running currently, we'd love to hear from you on one of them:
+### Public Roadmap
 
-### [Discourse][discourse]
+This repository also contains the [Snowplow Public Roadmap][roadmap]. The Public Roadmap lets you stay up to date and find out what's happening on the Snowplow Platform. Help us prioritize our cards: open the issue and leave a 👍 to vote for your favorites. Want us to build a feature or function? Tell us by heading to our [Discourse forum][discourse] 💬.
 
-This is for all Snowplow users: engineers setting up Snowplow, data modelers structuring the data and data consumers building insights. You can find guides, recipes, questions and answers from Snowplow users including the Snowplow team.
+### Community 
 
-We welcome all questions and contributions!
+We want to make it super easy for Snowplow users and contributors to talk to us and connect with one another, to share ideas, solve problems and help make Snowplow awesome. Join the conversation:
 
-### Twitter
+* **Meetups**. Don’t miss your chance to talk to us in person. We are often on the move with meetups in [Amsterdam](https://www.meetup.com/snowplow-analytics-amsterdam/), [Berlin](https://www.meetup.com/snowplow-analytics-berlin/), [Boston](https://www.meetup.com/snowplow-analytics-boston/), [London](https://www.meetup.com/snowplow-analytics-london/), and [more](https://www.meetup.com/topics/snowplow/all/).
+* **Discourse**. [Our forum](http://discourse.snowplowanalytics.com/) for all Snowplow users: engineers setting up Snowplow, data modelers structuring the data, and data consumers building insights. You can find guides, recipes, questions and answers from Snowplow users and the Snowplow team. All questions and contributions are welcome!
+* **Twitter**. Follow [@Snowplow](https://twitter.com/snowplow) for official news and [@SnowplowLabs](https://twitter.com/snowplowlabs) for engineering-heavy conversations and release announcements.
+* **GitHub**. If you spot a bug, please raise an issue in the GitHub repository of the component in question. Likewise, if you have developed a cool new feature or an improvement, please open a pull request, we’ll be glad to integrate it in the codebase! For brainstorming a potential new feature, [Discourse](http://discourse.snowplowanalytics.com/) is the best place to start.
+* **Email**. If you want to talk to Snowplow directly, email is the easiest way. Get in touch at community@snowplowanalytics.com.
 
-[@SnowplowData][snowplow-twitter] for official news or [@SnowplowLabs][snowplow-labs-twitter] for engineering-heavy conversations and release updates.
+---
 
-### GitHub
-
-If you spot a bug, then please raise an issue in the GitHub repository of the component in question.
-Likewise if you have developed a cool new feature or an improvement, please open a pull request,
-we'll be glad to integrate it in the codebase!
-
-If you want to brainstorm a potential new feature, then [Discourse][discourse] is the best place to start.
-
-### Email
-
-[community@snowplowanalytics.com][community-email]
-
-If you want to talk directly to us (e.g. about a commercially sensitive issue), email is the easiest way.
-
-## Copyright and license
+### Copyright and license
 
 Snowplow is copyright 2012-2022 Snowplow Analytics Ltd.
 
@@ -179,12 +189,9 @@ limitations under the License.
 
 [snowplow-bdp]: https://snowplowanalytics.com/products/snowplow-bdp/
 [version-compatibility]: https://docs.snowplowanalytics.com/docs/pipeline-components-and-applications/version-compatibility-matrix/
-[try-snowplow]: https://try.snowplowanalytics.com/?utm_source=github&utm_medium=post&utm_campaign=try-snowplow
-[request-a-demo]: https://go.snowplowanalytics.com/l/571483/2021-05-04/3sv1pg8
+[try-snowplow]: https://try.snowplowanalytics.com/?utm_source=github&utm_medium=post&utm_campaign=try-snowplow&utm_content=main-repo
 [roadmap]: https://github.com/snowplow/snowplow/projects
-[open-source-quick-start]: https://docs.snowplowanalytics.com/docs/open-source-quick-start/
 [terraform-modules]: https://registry.terraform.io/modules/snowplow-devops
-[research-survey]: https://forms.gle/pCtYx8naum7A8vvw5
 
 [architecture-image]: media/snowplow_architecture.png
 [architecture]: ./ARCHITECTURE.md
@@ -201,9 +208,6 @@ limitations under the License.
 
 [discourse-image]: https://img.shields.io/discourse/posts?server=https%3A%2F%2Fdiscourse.snowplowanalytics.com%2F
 [discourse]: http://discourse.snowplowanalytics.com/
-[snowplow-twitter]: https://twitter.com/SnowplowData
-[snowplow-labs-twitter]: https://twitter.com/SnowplowLabs
-[community-email]: mailto:community@snowplowanalytics.com
 
 [release]: https://github.com/snowplow/snowplow/releases/tag/22.01
 [release-badge]: https://img.shields.io/badge/Snowplow-22.01%20Western%20Ghats-6638b8
