@@ -9,13 +9,13 @@
 
 ## Overview
 
-Snowplow is the world’s largest developer-first engine for collecting behavioral data. In short, it allows you to:
+Snowplow is a developer-first engine for collecting behavioral data. In short, it allows you to:
 
 * Collect events such as impressions, clicks, video playback (or even custom events of your choosing).
-* Store the data in a scalable data warehouse you control ([Amazon Redshift](https://aws.amazon.com/redshift/), [Databricks](https://databricks.com/product/databricks-sql), [Elasticsearch](https://www.elastic.co/), [Google BigQuery](https://cloud.google.com/bigquery), [Snowflake](https://www.snowflake.com/workloads/data-warehouse-modernization/)) or emit it via a stream ([Amazon Kinesis](https://aws.amazon.com/kinesis/), [Google PubSub](https://cloud.google.com/pubsub/docs/overview)).
-* Leverage the biggest range of tools to model and analyze the behavioral data: [dbt](https://www.getdbt.com/), [Looker](https://www.looker.com/), [Metabase](https://www.metabase.com/), [Mode](https://mode.com/), [Superset](https://superset.apache.org/), [Redash](https://redash.io/), and more.
+* Store the data in a scalable data warehouse you control ([Amazon Redshift](https://aws.amazon.com/redshift/), [Databricks](https://databricks.com/product/databricks-sql), [Elasticsearch](https://www.elastic.co/), [Google BigQuery](https://cloud.google.com/bigquery), [Snowflake](https://www.snowflake.com/workloads/data-warehouse-modernization/)) or emit it via a stream ([Amazon Kinesis](https://aws.amazon.com/kinesis/), [Google PubSub](https://cloud.google.com/pubsub/docs/overview), [Kafka](https://kafka.apache.org/)).
+* Leverage a wide range of tools to model and analyze the behavioral data: [dbt](https://www.getdbt.com/), [Looker](https://www.looker.com/), [Metabase](https://www.metabase.com/), [Mode](https://mode.com/), [Streamlit](https://streamlit.io/), [Superset](https://superset.apache.org/), [Redash](https://redash.io/), and more.
 
-Thousands of organizations of all sizes around the world generate, enhance, and model behavioral data with Snowplow to fuel [advanced analytics](https://snowplowanalytics.com/advanced-analytics/?utm_source=github&utm_content=main-repo), [AI/ML initiatives](https://snowplowanalytics.com/ai-ml/?utm_source=github&utm_content=main-repo), or [composable CDPs](https://snowplowanalytics.com/composable-cdp/?utm_source=github&utm_content=main-repo).
+Thousands of organizations around the world generate, enhance, and model behavioral data with Snowplow to fuel [advanced analytics](https://snowplowanalytics.com/advanced-analytics/?utm_source=github&utm_content=main-repo), [AI/ML initiatives](https://snowplowanalytics.com/ai-ml/?utm_source=github&utm_content=main-repo), or [composable CDPs](https://snowplowanalytics.com/composable-cdp/?utm_source=github&utm_content=main-repo).
 
 ### Table of contents
 
@@ -29,7 +29,7 @@ Thousands of organizations of all sizes around the world generate, enhance, and 
 
 ### Why Snowplow?
 
-* 🚀 **Battle-tested architecture** capable of processing billions of events per day.
+* 🏔️ **Rock solid architecture** capable of processing billions of events per day.
 * 🛠️ **Over [20 SDKs](https://docs.snowplowanalytics.com/docs/collecting-data/collecting-from-own-applications/?utm_source=github&utm_content=main-repo)** to collect data from web, mobile, server-side, and other sources.
 * ✅ A unique approach based on **[schemas and validation](https://docs.snowplowanalytics.com/docs/understanding-tracking-design/understanding-schemas-and-validation/?utm_source=github&utm_content=main-repo)** ensures your data is as clean as possible.
 * 🪄 **Over [15 enrichments](https://docs.snowplowanalytics.com/docs/enriching-your-data/available-enrichments/?utm_source=github&utm_content=main-repo)** to get the most out of your data.
