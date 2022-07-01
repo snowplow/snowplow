@@ -84,17 +84,21 @@ Components that have been extracted to their own repository are still here as [g
 
 ### Trackers
 
-|                Web               |           Mobile           |         Gaming         |          TV          |       Desktop & Server        |
-|:--------------------------------:|:--------------------------:|:----------------------:|:--------------------:|:-----------------------------:|
-| [JavaScript][javascript-tracker] | [Android][android-tracker] | [Unity][unity-tracker] | [Roku][roku-tracker] | [Command line][tracking-cli]  |
-| [AMP][amp-tracker]               | [iOS][ios-tracker]         |                        |                      | [.NET][dotnet-tracker]        |
-|                                  | [React Native][rn-tracker] |                        |                      | [Go][golang-tracker]          |
-|                                  | [Flutter][flutter-tracker] |                        |                      | [Java][java-tracker]          |
-|                                  |                            |                        |                      | [Node.js][javascript-tracker] |
-|                                  |                            |                        |                      | [PHP][php-tracker]            |
-|                                  |                            |                        |                      | [Python][python-tracker]      |
-|                                  |                            |                        |                      | [Ruby][ruby-tracker]          |
-|                                  |                            |                        |                      | [Scala][scala-tracker]        |
+A full list of supported trackers can be found [on our documentation site](https://docs.snowplowanalytics.com/docs/collecting-data/collecting-from-own-applications/). Popular trackers and use cases include:
+
+|                Web               |           Mobile           |         Gaming         |          TV                |       Desktop & Server        |
+|:--------------------------------:|:--------------------------:|:----------------------:|:--------------------------:|:-----------------------------:|
+| [JavaScript][javascript-tracker] | [Android][android-tracker] | [Unity][unity-tracker] | [Roku][roku-tracker]       | [Command line][tracking-cli]  |
+| [AMP][amp-tracker]               | [iOS][ios-tracker]         | [C++][cpp-tracker]     | [iOS][ios-tracker]         | [.NET][dotnet-tracker]        |
+|                                  | [React Native][rn-tracker] | [Lua][lua-tracker]     | [Android][android-tracker] | [Go][golang-tracker]          |
+|                                  | [Flutter][flutter-tracker] |                        | [React Native][rn-tracker] | [Java][java-tracker]          |
+|                                  |                            |                        |                            | [Node.js][javascript-tracker] |
+|                                  |                            |                        |                            | [PHP][php-tracker]            |
+|                                  |                            |                        |                            | [Python][python-tracker]      |
+|                                  |                            |                        |                            | [Ruby][ruby-tracker]          |
+|                                  |                            |                        |                            | [Scala][scala-tracker]        |
+|                                  |                            |                        |                            | [C++][cpp-tracker]            |
+|                                  |                            |                        |                            | [Lua][lua-tracker]            |
 
 ### [Collector](https://github.com/snowplow/stream-collector)
 
@@ -228,3 +232,5 @@ limitations under the License.
 [ruby-tracker]: https://github.com/snowplow/snowplow-ruby-tracker
 [scala-tracker]: https://github.com/snowplow/snowplow-scala-tracker
 [unity-tracker]: https://github.com/snowplow/snowplow-unity-tracker
+[cpp-tracker]: https://github.com/snowplow/snowplow-cpp-tracker
+[lua-tracker]: https://github.com/snowplow/snowplow-lua-tracker
