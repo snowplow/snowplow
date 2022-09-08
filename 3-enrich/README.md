@@ -15,6 +15,6 @@ They are both part on [enrich][enrich] project.
 
 [storage]: https://github.com/snowplow/snowplow/tree/master/4-storage
 
-[docs-beam-enrich]: https://docs.snowplowanalytics.com/docs/setup-snowplow-on-gcp/setup-validation-and-enrich-beam-enrich/
-[docs-stream-enrich]: https://docs.snowplowanalytics.com/docs/setup-snowplow-on-aws/setup-validation-and-enrich/
+[docs-beam-enrich]: https://docs.snowplow.io/docs/getting-started-on-snowplow-open-source/setup-snowplow-on-gcp/setup-validation-and-enrich/
+[docs-stream-enrich]: https://docs.snowplow.io/docs/getting-started-on-snowplow-open-source/setup-snowplow-on-aws/setup-validation-enrich/
 [enrich]: https://github.com/snowplow/enrich
