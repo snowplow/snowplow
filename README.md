@@ -98,6 +98,7 @@ A full list of supported trackers can be found [on our documentation site](https
 |                                  |                            |                        |                            | [Ruby][ruby-tracker]          |
 |                                  |                            |                        |                            | [Scala][scala-tracker]        |
 |                                  |                            |                        |                            | [C++][cpp-tracker]            |
+|                                  |                            |                        |                            | [Rust][rust-tracker]            |
 |                                  |                            |                        |                            | [Lua][lua-tracker]            |
 
 ### [Collector](https://github.com/snowplow/stream-collector)
@@ -106,9 +107,10 @@ A full list of supported trackers can be found [on our documentation site](https
 
 ### Loaders
 
-* [BigQuery (streaming)](https://github.com/snowplow-incubator/snowplow-bigquery-loader)
 * [Redshift (batch)](https://github.com/snowplow/snowplow-rdb-loader)
-* [Snowflake (batch)](https://github.com/snowplow-incubator/snowplow-snowflake-loader)
+* [Snowflake (batch)](https://github.com/snowplow/snowplow-rdb-loader)
+* [Databricks (batch)](https://github.com/snowplow/snowplow-rdb-loader)
+* [BigQuery (streaming)](https://github.com/snowplow-incubator/snowplow-bigquery-loader)
 * [Google Cloud Storage (streaming)](https://github.com/snowplow-incubator/snowplow-google-cloud-storage-loader)
 * [Amazon S3 (streaming)](https://github.com/snowplow/snowplow-s3-loader)
 * [Postgres (streaming)](https://github.com/snowplow-incubator/snowplow-postgres-loader)
@@ -116,8 +118,8 @@ A full list of supported trackers can be found [on our documentation site](https
 
 ### Iglu
 
-* [Iglu Server](https://github.com/snowplow-incubator/iglu-server/)
-* [igluctl](https://github.com/snowplow-incubator/igluctl/)
+* [Iglu Server](https://github.com/snowplow/iglu-server/)
+* [igluctl](https://github.com/snowplow/igluctl/)
 * [Iglu Central](https://github.com/snowplow/iglu-central/)
 
 ### Data modeling
@@ -135,6 +137,10 @@ A full list of supported trackers can be found [on our documentation site](https
 #### Media
 
 * [Media model: dbt version](https://github.com/snowplow/dbt-snowplow-media-player)
+
+#### Retail
+
+* [E-Commerce model: dbt version](https://github.com/snowplow/dbt-snowplow-ecommerce)
 
 ### Testing
 
@@ -173,7 +179,7 @@ We want to make it super easy for Snowplow users and contributors to talk to us 
 
 ### Copyright and license
 
-Snowplow is copyright 2012-2022 Snowplow Analytics Ltd.
+Snowplow is copyright 2012-2023 Snowplow Analytics Ltd.
 
 Licensed under the **[Apache License, Version 2.0][license]** (the "License");
 you may not use this software except in compliance with the License.
@@ -233,4 +239,5 @@ limitations under the License.
 [scala-tracker]: https://github.com/snowplow/snowplow-scala-tracker
 [unity-tracker]: https://github.com/snowplow/snowplow-unity-tracker
 [cpp-tracker]: https://github.com/snowplow/snowplow-cpp-tracker
+[rust-tracker]: https://github.com/snowplow/snowplow-rust-tracker
 [lua-tracker]: https://github.com/snowplow/snowplow-lua-tracker
