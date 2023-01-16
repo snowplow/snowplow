@@ -77,7 +77,7 @@ function merge_bump() {
     cd "${__top_level}"
 
     # 3. get repo name for commit message
-    repo_url=`git submodule--helper config submodule."${__mod_name}".url`
+    repo_url=`git config -f .gitmodules submodule."${__mod_name}".url`
     [ -z "${repo_url}" ] && die "Submodule url not found for ${__mod_name}"
     repo_name=`basename "${repo_url}" .git`
     commit_msg="${repo_name}: Release ${__bump_tag}"

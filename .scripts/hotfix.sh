@@ -45,7 +45,7 @@ function commit_update() {
     local __mod_name="$1"
     local __commit_msg="$2"
 
-    submodule_path=`git submodule--helper config submodule."${__mod_name}".path`
+    submodule_path=`git config -f .gitmodules submodule."${__mod_name}".path`
     [ -z "${submodule_path}" ] && die "Exiting: Submodule path not found for ${__mod_name}"
 
     git submodule update --remote --checkout "${__mod_name}"
