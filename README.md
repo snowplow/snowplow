@@ -7,6 +7,16 @@
 [![Discourse posts][discourse-image]][discourse]
 [![License][license-image]][license]
 
+---
+
+As of January 8, 2024,  Snowplow is introducing the Snowplow Limited Use License Agreement, and we will be releasing new versions of our core behavioral data pipeline technology under this license.
+
+Our mission to empower everyone to own their first-party customer behavioral data remains the same. We value all of our users and remain dedicated to helping our community use Snowplow in the optimal capacity that fits their business goals and needs. 
+
+We reflect on our Snowplow origins and provide more information about these changes in our blog post here → https://eu1.hubs.ly/H06QJZw0
+
+---
+
 ## Overview
 
 Snowplow is a developer-first engine for collecting behavioral data. In short, it allows you to:
@@ -37,9 +47,9 @@ Thousands of organizations around the world generate, enhance, and model behavio
 
 ### ➡ Where to start? ⬅️
 
-| [Snowplow Open Source](https://snowplowanalytics.com/snowplow-open-source/?utm_source=github&utm_content=main-repo)  | [Snowplow Behavioral Data Platform](https://snowplowanalytics.com/snowplow-bdp/?utm_source=github&utm_content=main-repo) |
+| [Snowplow Community Edition](https://snowplow.io/get-started/community-edition-signup/?utm_source=github&utm_content=landing-page)  | [Snowplow Behavioral Data Platform](https://snowplow.io/snowplow-bdp/?utm_source=github&utm_content=landing-page) |
 | ------------- | ------------- |
-| Our Open Source solution equips you with everything you need to start creating behavioral data in a high-fidelity, machine-readable way. Head over to the [Quick Start Guide](https://docs.snowplowanalytics.com/docs/open-source-quick-start/what-is-the-quick-start-for-open-source/?utm_source=github&utm_content=main-repo) to set things up. | Looking for an enterprise solution with a console, APIs, data governance, workflow tooling? The Behavioral Data Platform is our managed service that runs in **your** AWS or GCP cloud. Check out [Try Snowplow][try-snowplow]. |
+| Community Edition equips you with everything you need to start creating behavioral data in a high-fidelity, machine-readable way. Head over to the [Quick Start Guide](https://docs.snowplow.io/docs/getting-started-on-community-edition/?utm_source=github&utm_content=landing-page) to set things up. | Looking for an enterprise solution with a console, APIs, data governance, workflow tooling? The Behavioral Data Platform is our managed service that runs in **your** AWS or GCP cloud. Check out [Try Snowplow](https://try.snowplowanalytics.com/?utm_source=github&utm_content=landing-page). |
 
 The [documentation](https://docs.snowplowanalytics.com/?utm_source=github&utm_content=main-repo) is a great place to learn more, especially:
 
