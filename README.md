@@ -32,9 +32,7 @@ Thousands of organizations around the world generate, enhance, and model behavio
 * [Why Snowplow?](#why-snowplow)
 * [Where to start?](#-where-to-start-%EF%B8%8F)
 * [Snowplow technology 101](#snowplow-technology-101)
-* [Version compatibility matrix](#version-compatibility-matrix)
 * [About this umbrella repository](#about-this-repository)
-* [Public roadmap](#public-roadmap)
 * [Community](#community)
 
 ### Why Snowplow?
@@ -77,10 +75,6 @@ To briefly explain these six sub-systems:
 
 **For more information on the current Snowplow architecture, please see the [Technical architecture][architecture]**.
 
-### Version Compatibility Matrix
-
-To make sure all the components work well together, we strongly recommended you take a look at the [compatibility matrix][version-compatibility] when setting up a Snowplow pipeline.
-
 ---
 
 ## About this repository
@@ -88,7 +82,7 @@ To make sure all the components work well together, we strongly recommended you 
 This repository is an umbrella repository for all loosely-coupled Snowplow components and is updated on each component release.
 
 Since June 2020, all components have been extracted into their dedicated repositories (more info [here][split-blogpost])
-and this repository serves as an entry point for Snowplow users, the home of our public roadmap and as a historical artifact.
+and this repository serves as an entry point for Snowplow users and as a historical artifact.
 
 Components that have been extracted to their own repository are still here as [git submodules][submodules].
 
@@ -171,10 +165,6 @@ A full list of supported trackers can be found [on our documentation site](https
 
 ---
 
-### Public Roadmap
-
-This repository also contains the [Snowplow Public Roadmap][roadmap]. The Public Roadmap lets you stay up to date and find out what's happening on the Snowplow Platform. Help us prioritize our cards: open the issue and leave a 👍 to vote for your favorites. Want us to build a feature or function? Tell us by heading to our [Discourse forum][discourse] 💬.
-
 ### Community 
 
 We want to make it super easy for Snowplow users and contributors to talk to us and connect with one another, to share ideas, solve problems and help make Snowplow awesome. Join the conversation:
@@ -208,8 +198,6 @@ limitations under the License.
 [docs]: https://docs.snowplowanalytics.com/open-source-docs/
 
 [snowplow-bdp]: https://snowplowanalytics.com/products/snowplow-bdp/
-[version-compatibility]: https://docs.snowplowanalytics.com/docs/pipeline-components-and-applications/version-compatibility-matrix/
-[roadmap]: https://github.com/snowplow/snowplow/projects
 [terraform-modules]: https://registry.terraform.io/modules/snowplow-devops
 
 [architecture-image]: media/snowplow_architecture.png
