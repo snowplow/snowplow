@@ -25,7 +25,7 @@ Snowplow is a developer-first engine for collecting behavioral data. In short, i
 * Store the data in a scalable data warehouse you control ([Amazon Redshift](https://aws.amazon.com/redshift/), [Databricks](https://databricks.com/product/databricks-sql), [Elasticsearch](https://www.elastic.co/), [Google BigQuery](https://cloud.google.com/bigquery), [Snowflake](https://www.snowflake.com/workloads/data-warehouse-modernization/)) or emit it via a stream ([Amazon Kinesis](https://aws.amazon.com/kinesis/), [Google PubSub](https://cloud.google.com/pubsub/docs/overview), [Kafka](https://kafka.apache.org/)).
 * Leverage a wide range of tools to model and analyze the behavioral data: [dbt](https://www.getdbt.com/), [Looker](https://www.looker.com/), [Metabase](https://www.metabase.com/), [Mode](https://mode.com/), [Streamlit](https://streamlit.io/), [Superset](https://superset.apache.org/), [Redash](https://redash.io/), and more.
 
-Thousands of organizations around the world generate, enhance, and model behavioral data with Snowplow to fuel [advanced analytics](https://snowplowanalytics.com/advanced-analytics/?utm_source=github&utm_content=main-repo), [AI/ML initiatives](https://snowplowanalytics.com/ai-ml/?utm_source=github&utm_content=main-repo), or [composable CDPs](https://snowplowanalytics.com/composable-cdp/?utm_source=github&utm_content=main-repo).
+Thousands of organizations like Burberry, Strava, and Auto Trader rely on Snowplow to collect, manage, and operationalize real-time event data from their central data platform to uncover deeper customer journey insights, predict customer behaviors, deliver differentiated customer experiences, and detect fraudulent activities.
 
 ### Table of contents
 
@@ -37,11 +37,11 @@ Thousands of organizations around the world generate, enhance, and model behavio
 
 ### Why Snowplow?
 
-* 🏔️ **Rock solid architecture** capable of processing billions of events per day.
-* 🛠️ **Over [20 SDKs](https://docs.snowplowanalytics.com/docs/collecting-data/collecting-from-own-applications/?utm_source=github&utm_content=main-repo)** to collect data from web, mobile, server-side, and other sources.
-* ✅ A unique approach based on **[schemas and validation](https://docs.snowplowanalytics.com/docs/understanding-tracking-design/understanding-schemas-and-validation/?utm_source=github&utm_content=main-repo)** ensures your data is as clean as possible.
-* 🪄 **Over [15 enrichments](https://docs.snowplowanalytics.com/docs/enriching-your-data/available-enrichments/?utm_source=github&utm_content=main-repo)** to get the most out of your data.
-* 🏭 Send data to **popular warehouses and streams** — Snowplow fits nicely within the [Modern Data Stack](https://snowplowanalytics.com/blog/2021/05/12/modern-data-stack/?utm_source=github&utm_content=main-repo).
+* 🏔️ “Glass-box” technical architecture capable of processing billions of events per day.
+* 🛠️ **Over [20 SDKs](https://docs.snowplow.io/docs/collecting-data/collecting-from-own-applications?utm_source=github&utm_content=landing-page)** to collect data from web, mobile, server-side, and other sources.
+* ✅ A unique approach based on **[schemas and validation](https://docs.snowplow.io/docs/understanding-tracking-design/understanding-schemas-and-validation?utm_source=github&utm_content=landing-page)** ensures your data is as clean as possible.
+* 🪄 **Over [15 enrichments](https://docs.snowplow.io/docs/enriching-your-data/available-enrichments?utm_source=github&utm_content=landing-page)** to get the most out of your data.
+* 🏭 Stream data to your data warehouse/lakehouse or SaaS destinations of choice — Snowplow fits nicely within the [Modern Data Stack](https://snowplow.io/blog/2021/05/12/modern-data-stack/?utm_source=github&utm_content=landing-page).
 
 ### ➡ Where to start? ⬅️
 
@@ -49,10 +49,7 @@ Thousands of organizations around the world generate, enhance, and model behavio
 | ------------- | ------------- |
 | Community Edition equips you with everything you need to start creating behavioral data in a high-fidelity, machine-readable way. Head over to the [Quick Start Guide](https://docs.snowplow.io/docs/getting-started-on-community-edition/?utm_source=github&utm_content=landing-page) to set things up. | Looking for an enterprise solution with a console, APIs, data governance, workflow tooling? The Behavioral Data Platform is our managed service that runs in **your** AWS, Azure or GCP cloud. [Book a demo](https://snowplow.io/get-started/book-a-demo-of-snowplow-bdp/?utm_source=github&utm_content=landing-page). |
 
-The [documentation](https://docs.snowplowanalytics.com/?utm_source=github&utm_content=main-repo) is a great place to learn more, especially:
-
-* [Tracking design](https://docs.snowplowanalytics.com/docs/understanding-tracking-design/?utm_source=github&utm_content=main-repo) — discover how to approach creating your data the Snowplow way.
-* [Pipelines](https://docs.snowplowanalytics.com/docs/understanding-your-pipeline/?utm_source=github&utm_content=main-repo) — understand what’s under the hood of Snowplow.
+The [documentation](https://docs.snowplowanalytics.com/?utm_source=github&utm_content=main-repo) is a great place to learn more.
 
 Would rather dive into the code? Then you are already in the right place!
 
