@@ -168,7 +168,6 @@ We want to make it super easy for Snowplow users and contributors to talk to us 
 
 * **Meetups**. Don’t miss your chance to talk to us in person. We are often on the move with meetups in [Amsterdam](https://www.meetup.com/snowplow-analytics-amsterdam/), [Berlin](https://www.meetup.com/snowplow-analytics-berlin/), [Boston](https://www.meetup.com/snowplow-analytics-boston/), [London](https://www.meetup.com/snowplow-analytics-london/), and [more](https://www.meetup.com/topics/snowplow/all/).
 * **Discourse**. [Our forum](http://discourse.snowplowanalytics.com/) for all Snowplow users: engineers setting up Snowplow, data modelers structuring the data, and data consumers building insights. You can find guides, recipes, questions and answers from Snowplow users and the Snowplow team. All questions and contributions are welcome!
-* **Twitter**. Follow [@Snowplow](https://twitter.com/snowplow) for official news and [@SnowplowLabs](https://twitter.com/snowplowlabs) for engineering-heavy conversations and release announcements.
 * **GitHub**. If you spot a bug, please raise an issue in the GitHub repository of the component in question. Likewise, if you have developed a cool new feature or an improvement, please open a pull request, we’ll be glad to integrate it in the codebase! For brainstorming a potential new feature, [Discourse](http://discourse.snowplowanalytics.com/) is the best place to start.
 * **Email**. If you want to talk to Snowplow directly, email is the easiest way. Get in touch at community@snowplowanalytics.com.
 
