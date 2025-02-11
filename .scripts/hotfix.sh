@@ -48,7 +48,7 @@ function commit_update() {
     submodule_path=`git config -f .gitmodules submodule."${__mod_name}".path`
     [ -z "${submodule_path}" ] && die "Exiting: Submodule path not found for ${__mod_name}"
 
-    git submodule update --remote --checkout "${__mod_name}"
+    git submodule update --remote --checkout "${submodule_path}"
     [[ -z `git status -s` ]] && die 'Exiting: No unstaged changes found!'
 
     git add "${submodule_path}"
