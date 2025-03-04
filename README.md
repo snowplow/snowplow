@@ -35,7 +35,7 @@ This repository contains the major Snowplow components as individual submodule r
 
 ### Community
 
-Check out our [Community](https://community.snowplow.io/) for support and updates.
+Check out our [Community](https://community.snowplow.io?utm_source=github&utm_content=main-repo) for support and updates.
 
 If you spot a bug, please raise an issue in the GitHub repository of the component in question.
 
@@ -48,4 +48,4 @@ Copyright 2012-2025 Snowplow Analytics Ltd.
 Snowplow components are licensed differently depending on their purpose. Read about our different licenses [here](https://docs.snowplow.io/docs/resources/copyright-license?utm_source=github&utm_content=main-repo).
 
 [logo-image]: media/snowplow_logo.png
-[website]: https://snowplow.io/
+[website]: https://snowplow.io?utm_source=github&utm_content=main-repo
