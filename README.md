@@ -2,6 +2,16 @@
 
 ---
 
+As of January 8, 2024, Snowplow introduced the [Snowplow Limited Use License Agreement](https://docs.snowplow.io/limited-use-license-1.1/), and we are releasing new versions of our core pipeline technology under this license. There will be no security patches made to versions of our software that pre-date January 2024.
+
+If you are currently using the pipeline in production, or in a way that is competitive with Snowplow, these changes affect you. If you wish to use the current version of Snowplow software, [please contact us](https://snowplow.io/snowplow-oss-license-change) to discuss a plan that works for you.
+
+We value all of our users and remain dedicated to helping our community use Snowplow in the optimal capacity that fits their business goals and needs.
+
+Read more about this change [here](https://docs.snowplow.io/docs/resources/limited-use-license-faq/).
+
+---
+
 Welcome to Snowplow, the leader in next-generation customer data infrastructure (CDI), enabling every data-driven organization to own and unlock the value of its customer behavioral data to fuel AI, advanced analytics, and personalized experiences from their central data platform.
 
 Thousands of organizations like Burberry, Strava, and Auto Trader rely on Snowplow to collect, manage, and operationalize real-time event data from their central data platform to uncover deeper customer journey insights, predict customer behaviors, deliver differentiated customer experiences, and detect fraudulent activities.
