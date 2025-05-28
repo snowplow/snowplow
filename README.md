@@ -12,22 +12,26 @@ Read more about this change [here](https://docs.snowplow.io/docs/resources/limit
 
 ---
 
-Welcome to Snowplow, the leader in next-generation customer data infrastructure (CDI), enabling every data-driven organization to own and unlock the value of its customer behavioral data to fuel AI, advanced analytics, and personalized experiences from their central data platform.
+### Introduction
 
-Thousands of organizations like Burberry, Strava, and Auto Trader rely on Snowplow to collect, manage, and operationalize real-time event data from their central data platform to uncover deeper customer journey insights, predict customer behaviors, deliver differentiated customer experiences, and detect fraudulent activities.
+Welcome to Snowplow, the leader in customer data infrastructure (CDI) for AI, enabling every organization to transform raw behavioral data into governed, high-fidelity fuel for AI-powered applications—including advanced analytics, real-time personalization engines, and AI agents.
 
-![diagram showing Snowplow architecture](media/snowplow-cdi.png)
+Digital-first companies like Strava, HelloFresh, Auto Trader, Burberry, and DPG Media rely on Snowplow to collect and process event-level data in real time—delivering it securely to their warehouse, lake, or stream—and to integrate deep customer context into their applications.
 
-### Why next-gen CDI?​
+---
 
-Snowplow is built from the ground up to not only lay the foundation for an organization's advanced analytics use cases, but to also power machine learning and AI use cases, including those powered by generative AI.
+### Why Customer Data Infrastructure (CDI)?
 
-Key benefits of Snowplow’s next-gen CDI:
-* Data depth and quality
-* Centralized data governance
-* Real-time operationalization
-* Privacy and compliance
-* AI and BI-ready behavioral data
+Snowplow lays the foundation for an organization’s advanced analytics, operational, and ML/AI use cases—including customer insights, predicting customer behaviors, hyper-personalizing customer experiences, and detecting fraud in real time.
+
+### Key benefits of Snowplow’s CDI:
+
+* Data depth and quality  
+* Centralized data governance  
+* Real-time operationalization  
+* Privacy and compliance  
+* AI- and BI-ready behavioral data
+
 
 ### Why Snowplow?
 
