@@ -32,6 +32,7 @@ Snowplow lays the foundation for an organization’s advanced analytics, operati
 * Privacy and compliance  
 * AI- and BI-ready behavioral data
 
+---
 
 ### Why Snowplow?
 
