@@ -70,8 +70,8 @@ function merge_bump() {
     local __bump_commit="$4"
     local __bump_tag="$5"
 
-    # 1. merge in submodule
-    git merge --ff "${__bump_commit}"
+    # 1. checkout new release commit in submodule
+    git checkout "${__bump_commit}"
 
     # 2. go toplevel
     cd "${__top_level}"
