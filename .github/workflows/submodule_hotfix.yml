@@ -20,9 +20,12 @@ on:
         description: 'The commit in current repository the tag refers to'
         required: false
 
+permissions:
+  contents: write
+
 jobs:
   submodule_update_hotfix:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
     - name: Check input for retagging
@@ -41,7 +44,7 @@ jobs:
 
 
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v6
       with:
         fetch-depth: 0
         ref: master
