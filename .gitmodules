@@ -112,3 +112,6 @@
 [submodule "schema-registry/iglu-server"]
 	path = schema-registry/iglu-server
 	url = https://github.com/snowplow/iglu-server.git
+[submodule "6-data-consumption/snowbridge"]
+	path = 6-data-consumption/snowbridge
+	url = https://github.com/snowplow/snowbridge.git
