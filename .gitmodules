@@ -103,3 +103,6 @@
 [submodule "1-trackers/flutter-tracker"]
 	path = 1-trackers/flutter
 	url = https://github.com/snowplow-incubator/snowplow-flutter-tracker
+[submodule "4-storage/loaders/databricks"]
+	path = 4-storage/loaders/databricks
+	url = https://github.com/snowplow-incubator/snowplow-databricks-loader.git
