@@ -61,9 +61,6 @@
 [submodule "4-storage/es-loader"]
 	path = 4-storage/loaders/elasticsearch
 	url = https://github.com/snowplow/snowplow-elasticsearch-loader.git
-[submodule "4-storage/postgres"]
-	path = 4-storage/loaders/postgres
-	url = https://github.com/snowplow-incubator/snowplow-postgres-loader.git
 [submodule "1-trackers/react-native"]
 	path = 1-trackers/react-native
 	url = https://github.com/snowplow-incubator/snowplow-react-native-tracker.git
@@ -106,3 +103,18 @@
 [submodule "1-trackers/flutter-tracker"]
 	path = 1-trackers/flutter
 	url = https://github.com/snowplow-incubator/snowplow-flutter-tracker
+[submodule "4-storage/loaders/databricks"]
+	path = 4-storage/loaders/databricks
+	url = https://github.com/snowplow-incubator/snowplow-databricks-loader.git
+[submodule "4-storage/loaders/lake-loader"]
+	path = 4-storage/loaders/lake-loader
+	url = https://github.com/snowplow/snowplow-lake-loader.git
+[submodule "schema-registry/iglu-server"]
+	path = schema-registry/iglu-server
+	url = https://github.com/snowplow/iglu-server.git
+[submodule "6-data-consumption/snowbridge"]
+	path = 6-data-consumption/snowbridge
+	url = https://github.com/snowplow/snowbridge.git
+[submodule "schema-registry/igluctl"]
+	path = schema-registry/igluctl
+	url = https://github.com/snowplow/igluctl.git
