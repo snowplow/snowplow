@@ -109,3 +109,6 @@
 [submodule "4-storage/loaders/lake-loader"]
 	path = 4-storage/loaders/lake-loader
 	url = https://github.com/snowplow/snowplow-lake-loader.git
+[submodule "schema-registry/iglu-server"]
+	path = schema-registry/iglu-server
+	url = https://github.com/snowplow/iglu-server.git
