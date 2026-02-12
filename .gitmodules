@@ -43,9 +43,6 @@
 [submodule "2-collectors/stream-collector"]
 	path = 2-collectors/stream-collector
 	url = https://github.com/snowplow/stream-collector.git
-[submodule "3-enrich/eer"]
-	path = 3-enrich/emr-etl-runner
-	url = https://github.com/snowplow/emr-etl-runner.git
 [submodule "4-storage/snowplow-rdb-loader"]
 	path = 4-storage/loaders/redshift
 	url = https://github.com/snowplow/snowplow-rdb-loader.git
