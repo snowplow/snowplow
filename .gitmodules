@@ -61,9 +61,6 @@
 [submodule "4-storage/es-loader"]
 	path = 4-storage/loaders/elasticsearch
 	url = https://github.com/snowplow/snowplow-elasticsearch-loader.git
-[submodule "4-storage/postgres"]
-	path = 4-storage/loaders/postgres
-	url = https://github.com/snowplow-incubator/snowplow-postgres-loader.git
 [submodule "1-trackers/react-native"]
 	path = 1-trackers/react-native
 	url = https://github.com/snowplow-incubator/snowplow-react-native-tracker.git
