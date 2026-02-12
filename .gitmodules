@@ -106,3 +106,6 @@
 [submodule "4-storage/loaders/databricks"]
 	path = 4-storage/loaders/databricks
 	url = https://github.com/snowplow-incubator/snowplow-databricks-loader.git
+[submodule "4-storage/loaders/lake-loader"]
+	path = 4-storage/loaders/lake-loader
+	url = https://github.com/snowplow/snowplow-lake-loader.git
