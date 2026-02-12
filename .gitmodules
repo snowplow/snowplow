@@ -115,3 +115,6 @@
 [submodule "6-data-consumption/snowbridge"]
 	path = 6-data-consumption/snowbridge
 	url = https://github.com/snowplow/snowbridge.git
+[submodule "schema-registry/igluctl"]
+	path = schema-registry/igluctl
+	url = https://github.com/snowplow/igluctl.git
