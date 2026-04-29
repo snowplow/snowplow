@@ -12,24 +12,24 @@ Read more about this change [here](https://docs.snowplow.io/docs/resources/limit
 
 ---
 
-### Introduction
+## Introduction
 
-Welcome to Snowplow, the leader in customer data infrastructure (CDI) for AI, enabling every organization to transform raw behavioral data into governed, high-fidelity fuel for AI-powered applications—including advanced analytics, real-time personalization engines, and AI agents.
+Welcome to Snowplow, the Customer Context Layer transforming raw behavioral data into real-time customer context for AI agents and advanced analytics. AI runs on models, but wins on context.
 
-Digital-first companies like Strava, HelloFresh, Auto Trader, Burberry, and DPG Media rely on Snowplow to collect and process event-level data in real time—delivering it securely to their warehouse, lake, or stream—and to integrate deep customer context into their applications.
+Digital-first companies like Strava, Burberry, Supercell, Michaels, Samsung, 1Password, HelloFresh, Experian, and Secret Escapes rely on Snowplow to collect and process event-level data in real time, delivering it securely to their warehouse, lake, or stream — without the engineering complexity of building data infrastructure.
 
 ---
 
-### Why Customer Data Infrastructure (CDI)?
+### Why a Customer Context Layer?
 
-Snowplow lays the foundation for an organization’s advanced analytics, operational, and ML/AI use cases—including customer insights, predicting customer behaviors, hyper-personalizing customer experiences, and detecting fraud in real time.
+Snowplow is the data foundation for an organization's most demanding use cases: advanced analytics, context-aware AI agents, and real-time personalization. From predicting customer behaviors to powering agentic AI systems and detecting fraud in real time, Snowplow provides the high-fidelity behavioral context that makes it all possible.
 
-### Key benefits of Snowplow’s CDI:
+Key benefits of Snowplow’s Customer Context Layer:
 
-* Data depth and quality  
-* Centralized data governance  
-* Real-time operationalization  
-* Privacy and compliance  
+* Data depth and quality
+* Centralized data governance
+* Real-time operationalization and personalization
+* Privacy and compliance
 * AI- and BI-ready behavioral data
 
 ---
@@ -37,14 +37,22 @@ Snowplow lays the foundation for an organization’s advanced analytics, operati
 ### Why Snowplow?
 
 * “Glass-box” technical architecture capable of processing billions of events per day
-* **Over [20 SDKs](https://docs.snowplow.io/docs/collecting-data/collecting-from-own-applications?utm_source=github&utm_content=main-repo)** to collect data from web, mobile, server-side, and other sources
-* A unique approach based on **[schemas and validation](https://docs.snowplow.io/docs/understanding-tracking-design/understanding-schemas-and-validation?utm_source=github&utm_content=main-repo)** ensures your data is as clean as possible
-* **Over [15 enrichments](https://docs.snowplow.io/docs/enriching-your-data/available-enrichments?utm_source=github&utm_content=main-repo)** to get the most out of your data
+* **Over [25 SDKs and webhooks](https://docs.snowplow.io/docs/sources?utm_source=github&utm_content=main-repo)** to collect data from web, mobile, server-side, and other sources
+* A unique approach based on **[schemas and validation](https://docs.snowplow.io/docs/fundamentals/schemas?utm_source=github&utm_content=main-repo)** ensures your data is as clean as possible
+* **Over [15 enrichments](https://docs.snowplow.io/docs/pipeline/enrichments?utm_source=github&utm_content=main-repo)** to get the most out of your data
 * Stream data to your data warehouse/lakehouse or SaaS destinations of choice
+* Build and manage behavioral tracking plans with [Event Studio](https://docs.snowplow.io/docs/event-studio?utm_source=github&utm_content=main-repo)
+* Power context-aware AI agents and proactive decisioning with [Signals](https://docs.snowplow.io/docs/signals/get-started?utm_source=github&utm_content=main-repo)
 
 Our [documentation](https://docs.snowplow.io/docs?utm_source=github&utm_content=main-repo) is a great place to learn more.
 
 This repository contains the major Snowplow components as individual submodule repositories.
+
+---
+
+### Build with Snowplow
+
+The Snowplow [Developer Hub](https://snowplow.io/developer-hub?utm_source=github&utm_content=main-repo) has solution accelerators, architecture guides, demo videos, and other helpful resources to get you started.
 
 ---
 
