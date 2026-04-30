@@ -68,7 +68,7 @@ If you spot a bug, please raise an issue in the GitHub repository of the compone
 
 Copyright 2012-2025 Snowplow Analytics Ltd.
 
-Snowplow components are licensed differently depending on their purpose. Read about our different licenses [here](https://docs.snowplow.io/docs/resources/copyright-license?utm_source=github&utm_content=main-repo).
+Snowplow components are licensed differently depending on their purpose. Read about our different licenses [here](https://docs.snowplow.io/docs/licensing?utm_source=github&utm_content=main-repo).
 
 [logo-image]: media/snowplow_logo.png
 [website]: https://snowplow.io?utm_source=github&utm_content=main-repo
