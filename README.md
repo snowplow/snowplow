@@ -16,7 +16,7 @@ Read more about this change [here](https://docs.snowplow.io/docs/resources/limit
 
 Welcome to Snowplow, the Customer Context Layer transforming raw behavioral data into real-time customer context for AI agents and advanced analytics. AI runs on models, but wins on context.
 
-Digital-first companies like Strava, Burberry, Supercell, Michaels, Samsung, 1Password, HelloFresh, Experian, and Secret Escapes rely on Snowplow to collect and process event-level data in real time, delivering it securely to their warehouse, lake, or stream — without the engineering complexity of building data infrastructure.
+Digital-first companies like Strava, Burberry, Supercell, Michaels, 1Password, HelloFresh, Experian, and Secret Escapes rely on Snowplow to collect and process event-level data in real time, delivering it securely to their warehouse, lake, or stream — without the engineering complexity of building data infrastructure.
 
 ---
 
