@@ -85,7 +85,10 @@ function merge_bump() {
     # 4. commit and tag in parent
     git add "${__rel_path}"
     git commit -m "${commit_msg}"
-    git tag -a "${repo_name}/${__bump_tag}" -m "${repo_name}/${__bump_tag}"
+    if git rev-parse --quiet --verify "refs/tags/${repo_name}/${__bump_tag}" >/dev/null ; then
+        echo "::warning::Moving existing tag ${repo_name}/${__bump_tag} (re-tagged upstream)"
+    fi
+    git tag -f -a "${repo_name}/${__bump_tag}" -m "${repo_name}/${__bump_tag}"
 
     # 5. go back
     cd "${__rel_path}"
